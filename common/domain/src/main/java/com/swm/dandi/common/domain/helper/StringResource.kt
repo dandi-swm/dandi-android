@@ -1,0 +1,18 @@
+package com.swm.dandi.common.domain.helper
+
+enum class StringResource {
+    APP_NAME,
+    MEDIA_EMPTY,
+    FAVORITE_EMPTY,
+    MEDIA_DEFAULT_TITLE,
+    NAV_TAB_SEARCH,
+    NAV_TAB_FAVORITE,
+    NAV_BACK_BUTTON,
+    FAVORITE_REGISTER_FAILED,
+    FAVORITE_REMOVE_FAILED,
+    SEARCH_HINT,
+    SEARCH_CLEAR,
+    SEARCH_FAILED,
+    SEARCH_PROMPT,
+    LIST_END_MARKER,
+}
