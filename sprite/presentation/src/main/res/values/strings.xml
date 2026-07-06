@@ -1,0 +1,24 @@
+<resources>
+    <string name="sprite_sample_title">Sprite samples</string>
+    <string name="sprite_sample_description">Select an animation, then check playback and loop behavior.</string>
+    <string name="sprite_sample_animation_hello">Hello</string>
+    <string name="sprite_sample_animation_eat">Eat</string>
+    <string name="sprite_sample_animation_sleep">Sleep</string>
+    <string name="sprite_sample_align_mode">Layout mode</string>
+    <string name="sprite_sample_align_grid">Grid</string>
+    <string name="sprite_sample_align_binary_tree">Binary tree</string>
+    <string name="sprite_sample_align_left_right">Left-right</string>
+    <string name="sprite_sample_align_top_down">Top-down</string>
+    <string name="sprite_sample_frame_speed">Frame speed</string>
+    <string name="sprite_sample_frame_speed_value">%1$dms / %2$d FPS</string>
+    <string name="sprite_sample_speed_slow">Slow</string>
+    <string name="sprite_sample_speed_fast">Fast</string>
+    <string name="sprite_sample_loop">Loop</string>
+    <string name="sprite_sample_play">Play</string>
+    <string name="sprite_sample_pause">Pause</string>
+    <string name="sprite_sample_previous_frame">Previous frame</string>
+    <string name="sprite_sample_next_frame">Next frame</string>
+    <string name="sprite_sample_frame_counter">Frame %1$d of %2$d</string>
+    <string name="sprite_sample_loop_on">Loop on</string>
+    <string name="sprite_sample_loop_off">Loop off</string>
+</resources>

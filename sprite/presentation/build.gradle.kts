@@ -5,11 +5,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.kotlinx.serialization)
 }
 
 android {
-    namespace = "com.swm.dandi.main.presentation"
+    namespace = "com.swm.dandi.sprite.presentation"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
@@ -54,18 +53,11 @@ composeCompiler {
 }
 
 dependencies {
-    implementation(project(":main:domain"))
-    implementation(project(":main:entity"))
-    implementation(project(":common:presentation"))
-
-    implementation(project(":sprite:presentation"))
     implementation(project(":sprite:domain"))
-
-    implementation(libs.androidx.activity.compose)
-    api(libs.androidx.navigation3.runtime)
-    implementation(libs.androidx.navigation3.ui)
-    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
-    implementation(libs.kotlinx.serialization.json)
+    implementation(project(":sprite:entity"))
+    implementation(project(":common:presentation"))
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.material.icons.extended)
 
     // Hilt
     implementation(libs.hilt.android)

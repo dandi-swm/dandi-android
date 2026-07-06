@@ -27,12 +27,15 @@ import com.swm.dandi.common.presentation.helper.LocalMessageHelper
 import com.swm.dandi.common.presentation.helper.LocalNavigationHelper
 import com.swm.dandi.common.presentation.ui.theme.DesignSystemTheme
 import com.swm.dandi.common.presentation.ui.theme.DesignSystemThemeImpl
+import com.swm.dandi.sprite.domain.SpritePage
 import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun RootComposable(
     modifier: Modifier = Modifier,
-    startStack: List<NavKey> = emptyList(),
+    // TODO: 실제 앱 시작 route가 생기면 SpritePage 대신 그 route를 기본 시작 스택으로 교체한다.
+    // startStack: List<NavKey> = emptyList(),
+    startStack: List<NavKey> = listOf(GenericNavKey(SpritePage.PATH)),
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
     var oneButtonDialogEffect by remember {

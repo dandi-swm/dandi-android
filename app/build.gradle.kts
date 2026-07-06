@@ -79,6 +79,11 @@ dependencies {
     implementation(project(":main:data"))
     implementation(project(":main:entity"))
 
+    implementation(project(":sprite:presentation"))
+    implementation(project(":sprite:domain"))
+    implementation(project(":sprite:data"))
+    implementation(project(":sprite:entity"))
+
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)

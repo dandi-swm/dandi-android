@@ -1,6 +1,6 @@
 # Dandi Android
 
-Dandi에서 가져온 Codex 스킬과 서브에이전트 운영 규칙을 사용한다. 현재 워크스페이스의 feature 모듈은 `main`만 유지한다. 새 feature를 추가할 때는 4모듈 구조와 `docs/architecture` 규칙을 따르고, 남아 있는 `main`/`common` 패턴을 우선 참고한다.
+Dandi에서 가져온 Codex 스킬과 서브에이전트 운영 규칙을 사용한다. 현재 워크스페이스의 feature 모듈은 `main`과 `sprite`만 유지한다. 새 feature를 추가할 때는 4모듈 구조와 `docs/architecture` 규칙을 따르고, 남아 있는 `main`/`sprite`/`common` 패턴을 우선 참고한다.
 
 ## 빌드 / 테스트
 
@@ -35,6 +35,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  
 - [docs/architecture/data-layer.md](docs/architecture/data-layer.md) — DTO/VO, DataSource, Hilt DataModule, 로컬 저장소
 - [docs/architecture/design-system.md](docs/architecture/design-system.md) — 토큰 구조, Figma 매핑 명세
 - [docs/architecture/performance.md](docs/architecture/performance.md) — TTI, JankStats, Baseline Profile
+- [docs/architecture/sprite.md](docs/architecture/sprite.md) — sprite 모듈 경계, 캐릭터 상태 분리, 범용 렌더러/프레임 계산기 규칙
 - [docs/DESIGN_TO_CODE_GUIDE.md](docs/DESIGN_TO_CODE_GUIDE.md) — 디자인 스펙 → 코드 사용자 가이드
 
 

@@ -35,6 +35,11 @@ include(":main:domain")
 include(":main:data")
 include(":main:entity")
 
+include(":sprite:presentation")
+include(":sprite:domain")
+include(":sprite:data")
+include(":sprite:entity")
+
 include(":tti")
 
 include(":baselineprofile")
