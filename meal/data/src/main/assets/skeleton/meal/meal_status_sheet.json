@@ -1,0 +1,64 @@
+{
+  "mealSessions": [
+    {
+      "mealType": "BREAKFAST",
+      "status": "RECORDED",
+      "mealRecordId": "meal_breakfast_001",
+      "displayName": "흰 쌀밥"
+    },
+    {
+      "mealType": "LUNCH",
+      "status": "NOT_RECORDED"
+    },
+    {
+      "mealType": "DINNER",
+      "status": "PENDING",
+      "mealRecordId": "meal_skeleton_001",
+      "displayName": "닭가슴살 샐러드"
+    },
+    {
+      "mealType": "SNACK",
+      "status": "FAILED",
+      "mealRecordId": "meal_snack_failed_001"
+    }
+  ],
+  "nutritionSummary": {
+    "nutrients": [
+      {
+        "nutrientType": "CALORIE",
+        "currentAmount": 1350.0,
+        "targetAmount": 1800.0,
+        "unit": "kcal",
+        "ratio": 0.75
+      },
+      {
+        "nutrientType": "CARBOHYDRATE",
+        "currentAmount": 185.0,
+        "targetAmount": 320.0,
+        "unit": "g",
+        "ratio": 0.58
+      },
+      {
+        "nutrientType": "PROTEIN",
+        "currentAmount": 22.0,
+        "targetAmount": 55.0,
+        "unit": "g",
+        "ratio": 0.4
+      },
+      {
+        "nutrientType": "FAT",
+        "currentAmount": 31.0,
+        "targetAmount": 60.0,
+        "unit": "g",
+        "ratio": 0.52
+      },
+      {
+        "nutrientType": "SODIUM",
+        "currentAmount": 1300.0,
+        "targetAmount": 2000.0,
+        "unit": "mg",
+        "ratio": 0.65
+      }
+    ]
+  }
+}

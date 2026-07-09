@@ -1,0 +1,36 @@
+{
+  "previousFoods": [
+    {
+      "foodHistoryId": "food_rice",
+      "displayName": "흰 쌀밥",
+      "iconImageUrl": "dandi://drawable/meal_ic_food_rice_pixel",
+      "lastRecordedAt": "2026-07-07T12:30:00+09:00",
+      "recordCount": 40,
+      "rankScore": 0.98
+    },
+    {
+      "foodHistoryId": "food_sandwich",
+      "displayName": "햄치즈 샌드위치",
+      "iconImageUrl": "dandi://drawable/meal_ic_food_sandwich_pixel",
+      "lastRecordedAt": "2026-07-05T08:10:00+09:00",
+      "recordCount": 18,
+      "rankScore": 0.83
+    },
+    {
+      "foodHistoryId": "food_salad",
+      "displayName": "닭가슴살 샐러드",
+      "iconImageUrl": "dandi://drawable/meal_ic_food_salad_pixel",
+      "lastRecordedAt": "2026-07-01T18:40:00+09:00",
+      "recordCount": 30,
+      "rankScore": 0.79
+    },
+    {
+      "foodHistoryId": "food_sushi",
+      "displayName": "연어 초밥 세트",
+      "iconImageUrl": "dandi://drawable/meal_ic_food_sushi_pixel",
+      "lastRecordedAt": "2026-06-24T12:05:00+09:00",
+      "recordCount": 5,
+      "rankScore": 0.61
+    }
+  ]
+}

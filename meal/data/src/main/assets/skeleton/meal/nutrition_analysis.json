@@ -1,0 +1,33 @@
+{
+  "mealRecordId": "meal_skeleton_001",
+  "analysisStatus": "COMPLETED",
+  "nutrients": [
+    {
+      "nutrientType": "CALORIE",
+      "amount": 430.0,
+      "unit": "kcal"
+    },
+    {
+      "nutrientType": "CARBOHYDRATE",
+      "amount": 52.0,
+      "unit": "g"
+    },
+    {
+      "nutrientType": "PROTEIN",
+      "amount": 31.0,
+      "unit": "g"
+    },
+    {
+      "nutrientType": "FAT",
+      "amount": 12.0,
+      "unit": "g"
+    },
+    {
+      "nutrientType": "SODIUM",
+      "amount": 620.0,
+      "unit": "mg"
+    }
+  ],
+  "analyzedAt": "2026-07-08T04:00:30Z",
+  "retryable": false
+}

@@ -1,0 +1,11 @@
+{
+  "mealRecordId": "meal_skeleton_001",
+  "foodHistoryId": "food_skeleton_001",
+  "inputMode": "NEW_FOOD",
+  "displayName": "",
+  "mealType": "LUNCH",
+  "eatenAt": "2026-07-08T12:30:00+09:00",
+  "photoUrl": "https://cdn-skeleton.dandi.local/photo_skeleton_001.jpg",
+  "analysisStatus": "PENDING",
+  "createdAt": "2026-07-08T04:00:00Z"
+}
