@@ -41,6 +41,7 @@ include(":meal:entity")
 include(":meal:presentation")
 
 include(":history:domain")
+include(":history:data")
 include(":history:entity")
 
 include(":tti")
