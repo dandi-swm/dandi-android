@@ -38,6 +38,7 @@ include(":main:entity")
 include(":meal:domain")
 include(":meal:data")
 include(":meal:entity")
+include(":meal:presentation")
 
 include(":tti")
 
