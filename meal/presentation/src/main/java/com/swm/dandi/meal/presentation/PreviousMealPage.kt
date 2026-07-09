@@ -1,7 +1,6 @@
 package com.swm.dandi.meal.presentation
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,9 +31,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -72,20 +68,13 @@ private val DefaultPreviousFoods = persistentListOf(
         lastRecordedLabel = "마지막: 1주일 전 저녁",
     ),
     PreviousFoodUiState(
-        id = "sushi",
-        name = "연어 초밥 세트",
-        iconImageUrl = "dandi://drawable/meal_ic_food_sushi_pixel",
+        id = "kimbap",
+        name = "김밥",
+        iconImageUrl = "dandi://drawable/meal_ic_food_kimbap_pixel",
         recordCountLabel = "5회 기록",
         lastRecordedLabel = "마지막: 2주일 전 점심",
     ),
 )
-
-private enum class MealFoodIconType {
-    Rice,
-    Sandwich,
-    Salad,
-    Sushi,
-}
 
 @Composable
 fun PreviousMealPage(
@@ -452,94 +441,15 @@ private fun FoodThumbnail(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        val mealFoodIconType = imageUrl.toMealFoodIconType()
-        if (mealFoodIconType != null) {
-            MealFoodPixelIcon(
-                type = mealFoodIconType,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
-            )
-        } else {
-            UrlImage(
-                imageUrl = imageUrl,
-                contentDescription = contentDescription,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
-                contentScale = ContentScale.Fit,
-            ) {
-                FoodFallbackIcon()
-            }
-        }
-    }
-}
-
-@Composable
-private fun MealFoodPixelIcon(
-    type: MealFoodIconType,
-    modifier: Modifier = Modifier,
-) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    Canvas(modifier = modifier) {
-        val unit = size.minDimension / PIXEL_ICON_GRID_SIZE
-        fun drawBlock(
-            x: Int,
-            y: Int,
-            width: Int,
-            height: Int,
-            color: Color,
+        UrlImage(
+            imageUrl = imageUrl,
+            contentDescription = contentDescription,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            contentScale = ContentScale.Fit,
         ) {
-            drawRect(
-                color = color,
-                topLeft = Offset(x = x * unit, y = y * unit),
-                size = Size(width = width * unit, height = height * unit),
-            )
-        }
-
-        when (type) {
-            MealFoodIconType.Rice -> {
-                drawBlock(2, 9, 8, 1, colors.borderDefaultLevel1)
-                drawBlock(1, 8, 10, 1, colors.borderDefaultLevel1)
-                drawBlock(2, 4, 8, 4, colors.contentDefaultLevel0)
-                drawBlock(3, 3, 6, 1, colors.bgDefaultLevel1)
-                drawBlock(2, 4, 8, 2, colors.bgDefaultLevel1)
-                drawBlock(3, 6, 6, 1, colors.bgDefaultLevel1)
-                drawBlock(4, 4, 1, 1, colors.contentDefaultLevel0)
-                drawBlock(7, 5, 1, 1, colors.contentDefaultLevel0)
-            }
-
-            MealFoodIconType.Sandwich -> {
-                drawBlock(2, 2, 8, 1, colors.contentDefaultLevel0)
-                drawBlock(1, 3, 10, 1, colors.bgDefaultLevel1)
-                drawBlock(2, 4, 8, 1, colors.contentDefaultLevel0)
-                drawBlock(2, 5, 8, 1, colors.contentAccent)
-                drawBlock(2, 6, 8, 1, colors.contentFavorite)
-                drawBlock(1, 7, 10, 1, colors.bgDefaultLevel1)
-                drawBlock(2, 8, 8, 1, colors.contentDefaultLevel0)
-                drawBlock(2, 9, 8, 1, colors.borderDefaultLevel1)
-            }
-
-            MealFoodIconType.Salad -> {
-                drawBlock(2, 9, 8, 1, colors.borderDefaultLevel1)
-                drawBlock(1, 7, 10, 2, colors.contentDefaultLevel0)
-                drawBlock(2, 7, 8, 1, colors.borderDefaultLevel1)
-                drawBlock(2, 5, 2, 2, colors.contentAccent)
-                drawBlock(5, 4, 2, 2, colors.contentDefaultLevel2)
-                drawBlock(8, 5, 2, 2, colors.contentAccent)
-                drawBlock(3, 6, 2, 1, colors.contentFavorite)
-                drawBlock(7, 6, 2, 1, colors.bgDefaultLevel1)
-            }
-
-            MealFoodIconType.Sushi -> {
-                drawBlock(2, 8, 8, 1, colors.borderDefaultLevel1)
-                drawBlock(1, 4, 10, 4, colors.contentDefaultLevel0)
-                drawBlock(2, 5, 8, 2, colors.bgDefaultLevel1)
-                drawBlock(5, 5, 2, 2, colors.contentAccent)
-                drawBlock(3, 2, 6, 2, colors.contentFavorite)
-                drawBlock(4, 1, 4, 1, colors.contentFavorite)
-                drawBlock(3, 8, 6, 1, colors.bgDefaultLevel1)
-            }
+            FoodFallbackIcon()
         }
     }
 }
@@ -553,17 +463,6 @@ private fun FoodFallbackIcon() {
         modifier = Modifier.size(34.dp),
     )
 }
-
-private fun String.toMealFoodIconType(): MealFoodIconType? =
-    when (substringAfterLast(delimiter = "/").substringBefore('?').substringBefore('#')) {
-        "meal_ic_food_rice_pixel" -> MealFoodIconType.Rice
-        "meal_ic_food_sandwich_pixel" -> MealFoodIconType.Sandwich
-        "meal_ic_food_salad_pixel" -> MealFoodIconType.Salad
-        "meal_ic_food_sushi_pixel" -> MealFoodIconType.Sushi
-        else -> null
-    }
-
-private const val PIXEL_ICON_GRID_SIZE = 12f
 
 @Composable
 private fun CountBadge(text: String) {

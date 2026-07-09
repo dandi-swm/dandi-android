@@ -25,9 +25,9 @@
       "rankScore": 0.79
     },
     {
-      "foodHistoryId": "food_sushi",
-      "displayName": "연어 초밥 세트",
-      "iconImageUrl": "dandi://drawable/meal_ic_food_sushi_pixel",
+      "foodHistoryId": "food_kimbap",
+      "displayName": "김밥",
+      "iconImageUrl": "dandi://drawable/meal_ic_food_kimbap_pixel",
       "lastRecordedAt": "2026-06-24T12:05:00+09:00",
       "recordCount": 5,
       "rankScore": 0.61

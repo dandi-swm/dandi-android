@@ -218,7 +218,9 @@ class PreviousMealViewModel @Inject constructor(
             "food_rice" -> "dandi://drawable/meal_ic_food_rice_pixel"
             "food_sandwich" -> "dandi://drawable/meal_ic_food_sandwich_pixel"
             "food_salad" -> "dandi://drawable/meal_ic_food_salad_pixel"
+            "food_kimbap" -> "dandi://drawable/meal_ic_food_kimbap_pixel"
             "food_sushi" -> "dandi://drawable/meal_ic_food_sushi_pixel"
+            "food_pasta" -> "dandi://drawable/meal_ic_food_pasta_pixel"
             else -> ""
         }
 
