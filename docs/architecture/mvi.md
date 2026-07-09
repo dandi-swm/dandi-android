@@ -38,6 +38,7 @@ abstract class MviViewModel<I : MviIntent, S : UiState, E : ReducerEvent>(
 | `{Feature}Page.kt` | `collectAsStateWithLifecycle()` + onIntent 호출만 | [SearchPage.kt](../../search/presentation/src/main/java/com/swm/dandi/search/presentation/SearchPage.kt) |
 
 > View 레이어는 화면마다 다르다 — 위 표는 Compose `Page` 변형(search/favorite)이고, intro 는 비-MVI 일반 ViewModel 변형(`IntroPage` 은 빈 Composable 스텁), fullScreenMedia 는 아래의 **Fragment 호스팅 MVI 변형**이다. Intent/UIState/ReducerEvent/MviViewModel 계약은 변형과 무관하게 동일하다.
+> 하나의 feature 안에 독립 화면이 여러 개 있으면 presentation MVI/Page 세트는 화면 prefix를 사용할 수 있다(예: `PreviousMealPage`, `NewFoodViewModel`). 이 경우에도 Repository/ApiService/DataSource/DataModule/ErrorType 같은 domain/data 계약은 feature prefix를 유지한다.
 
 ### Fragment 호스팅 MVI 변형 (fullScreenMedia 골든 예제)
 
