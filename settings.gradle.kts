@@ -40,6 +40,8 @@ include(":meal:data")
 include(":meal:entity")
 include(":meal:presentation")
 
+include(":history:entity")
+
 include(":tti")
 
 include(":baselineprofile")
