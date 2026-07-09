@@ -1,0 +1,45 @@
+{
+  "year": 2025,
+  "month": 7,
+  "days": [
+    { "date": "2025-06-29", "dayOfMonth": 29, "isCurrentMonth": false, "dailyNutritionEvaluation": "UNRECORDED", "foodImageUrls": [] },
+    { "date": "2025-06-30", "dayOfMonth": 30, "isCurrentMonth": false, "dailyNutritionEvaluation": "UNRECORDED", "foodImageUrls": [] },
+    { "date": "2025-07-01", "dayOfMonth": 1, "isCurrentMonth": true, "dailyNutritionEvaluation": "POSITIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_rice_pixel"] },
+    { "date": "2025-07-02", "dayOfMonth": 2, "isCurrentMonth": true, "dailyNutritionEvaluation": "POSITIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_sandwich_pixel", "dandi://drawable/meal_ic_food_pasta_pixel"] },
+    { "date": "2025-07-03", "dayOfMonth": 3, "isCurrentMonth": true, "dailyNutritionEvaluation": "NEUTRAL", "foodImageUrls": ["dandi://drawable/meal_ic_food_kimbap_pixel", "dandi://drawable/meal_ic_food_salad_pixel"] },
+    { "date": "2025-07-04", "dayOfMonth": 4, "isCurrentMonth": true, "dailyNutritionEvaluation": "POSITIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_rice_pixel"] },
+    { "date": "2025-07-05", "dayOfMonth": 5, "isCurrentMonth": true, "dailyNutritionEvaluation": "NEUTRAL", "foodImageUrls": ["dandi://drawable/meal_ic_food_salad_pixel"] },
+
+    { "date": "2025-07-06", "dayOfMonth": 6, "isCurrentMonth": true, "dailyNutritionEvaluation": "UNRECORDED", "foodImageUrls": [] },
+    { "date": "2025-07-07", "dayOfMonth": 7, "isCurrentMonth": true, "dailyNutritionEvaluation": "POSITIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_kimbap_pixel"] },
+    { "date": "2025-07-08", "dayOfMonth": 8, "isCurrentMonth": true, "dailyNutritionEvaluation": "POSITIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_rice_pixel", "dandi://drawable/meal_ic_food_sandwich_pixel"] },
+    { "date": "2025-07-09", "dayOfMonth": 9, "isCurrentMonth": true, "dailyNutritionEvaluation": "NEGATIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_pasta_pixel"] },
+    { "date": "2025-07-10", "dayOfMonth": 10, "isCurrentMonth": true, "dailyNutritionEvaluation": "POSITIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_salad_pixel"] },
+    { "date": "2025-07-11", "dayOfMonth": 11, "isCurrentMonth": true, "dailyNutritionEvaluation": "NEUTRAL", "foodImageUrls": ["dandi://drawable/meal_ic_food_sandwich_pixel"] },
+    { "date": "2025-07-12", "dayOfMonth": 12, "isCurrentMonth": true, "dailyNutritionEvaluation": "UNRECORDED", "foodImageUrls": [] },
+
+    { "date": "2025-07-13", "dayOfMonth": 13, "isCurrentMonth": true, "dailyNutritionEvaluation": "POSITIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_kimbap_pixel"] },
+    { "date": "2025-07-14", "dayOfMonth": 14, "isCurrentMonth": true, "dailyNutritionEvaluation": "NEUTRAL", "foodImageUrls": ["dandi://drawable/meal_ic_food_pasta_pixel"] },
+    { "date": "2025-07-15", "dayOfMonth": 15, "isCurrentMonth": true, "dailyNutritionEvaluation": "POSITIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_rice_pixel"] },
+    { "date": "2025-07-16", "dayOfMonth": 16, "isCurrentMonth": true, "dailyNutritionEvaluation": "UNRECORDED", "foodImageUrls": [] },
+    { "date": "2025-07-17", "dayOfMonth": 17, "isCurrentMonth": true, "dailyNutritionEvaluation": "NEUTRAL", "foodImageUrls": ["dandi://drawable/meal_ic_food_sandwich_pixel"] },
+    { "date": "2025-07-18", "dayOfMonth": 18, "isCurrentMonth": true, "dailyNutritionEvaluation": "POSITIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_kimbap_pixel", "dandi://drawable/meal_ic_food_salad_pixel"] },
+    { "date": "2025-07-19", "dayOfMonth": 19, "isCurrentMonth": true, "dailyNutritionEvaluation": "UNRECORDED", "foodImageUrls": [] },
+
+    { "date": "2025-07-20", "dayOfMonth": 20, "isCurrentMonth": true, "dailyNutritionEvaluation": "POSITIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_pasta_pixel"] },
+    { "date": "2025-07-21", "dayOfMonth": 21, "isCurrentMonth": true, "dailyNutritionEvaluation": "NEUTRAL", "foodImageUrls": ["dandi://drawable/meal_ic_food_salad_pixel"] },
+    { "date": "2025-07-22", "dayOfMonth": 22, "isCurrentMonth": true, "dailyNutritionEvaluation": "POSITIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_sandwich_pixel", "dandi://drawable/meal_ic_food_kimbap_pixel"] },
+    { "date": "2025-07-23", "dayOfMonth": 23, "isCurrentMonth": true, "dailyNutritionEvaluation": "NEGATIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_pasta_pixel"] },
+    { "date": "2025-07-24", "dayOfMonth": 24, "isCurrentMonth": true, "dailyNutritionEvaluation": "UNRECORDED", "foodImageUrls": [] },
+    { "date": "2025-07-25", "dayOfMonth": 25, "isCurrentMonth": true, "dailyNutritionEvaluation": "POSITIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_sandwich_pixel"] },
+    { "date": "2025-07-26", "dayOfMonth": 26, "isCurrentMonth": true, "dailyNutritionEvaluation": "UNRECORDED", "foodImageUrls": [] },
+
+    { "date": "2025-07-27", "dayOfMonth": 27, "isCurrentMonth": true, "dailyNutritionEvaluation": "UNRECORDED", "foodImageUrls": [] },
+    { "date": "2025-07-28", "dayOfMonth": 28, "isCurrentMonth": true, "dailyNutritionEvaluation": "NEUTRAL", "foodImageUrls": ["dandi://drawable/meal_ic_food_kimbap_pixel"] },
+    { "date": "2025-07-29", "dayOfMonth": 29, "isCurrentMonth": true, "dailyNutritionEvaluation": "POSITIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_salad_pixel"] },
+    { "date": "2025-07-30", "dayOfMonth": 30, "isCurrentMonth": true, "dailyNutritionEvaluation": "NEUTRAL", "foodImageUrls": ["dandi://drawable/meal_ic_food_sandwich_pixel"] },
+    { "date": "2025-07-31", "dayOfMonth": 31, "isCurrentMonth": true, "dailyNutritionEvaluation": "POSITIVE", "foodImageUrls": ["dandi://drawable/meal_ic_food_rice_pixel"] },
+    { "date": "2025-08-01", "dayOfMonth": 1, "isCurrentMonth": false, "dailyNutritionEvaluation": "UNRECORDED", "foodImageUrls": [] },
+    { "date": "2025-08-02", "dayOfMonth": 2, "isCurrentMonth": false, "dailyNutritionEvaluation": "UNRECORDED", "foodImageUrls": [] }
+  ]
+}

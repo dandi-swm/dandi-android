@@ -1,0 +1,44 @@
+{
+  "date": "2025-07-03",
+  "meals": [
+    {
+      "historyId": "history_2025_07_03_breakfast",
+      "mealType": "BREAKFAST",
+      "displayName": "김밥",
+      "foodImageUrl": "dandi://drawable/meal_ic_food_kimbap_pixel",
+      "nutrients": [
+        { "nutrientType": "CALORIE", "amount": 430.0, "unit": "kcal" },
+        { "nutrientType": "CARBOHYDRATE", "amount": 52.0, "unit": "g" },
+        { "nutrientType": "PROTEIN", "amount": 18.0, "unit": "g" },
+        { "nutrientType": "FAT", "amount": 11.0, "unit": "g" },
+        { "nutrientType": "SODIUM", "amount": 620.0, "unit": "mg" }
+      ]
+    },
+    {
+      "historyId": "history_2025_07_03_lunch",
+      "mealType": "LUNCH",
+      "displayName": "샐러드",
+      "foodImageUrl": "dandi://drawable/meal_ic_food_salad_pixel",
+      "nutrients": [
+        { "nutrientType": "CALORIE", "amount": 210.0, "unit": "kcal" },
+        { "nutrientType": "CARBOHYDRATE", "amount": 18.0, "unit": "g" },
+        { "nutrientType": "PROTEIN", "amount": 9.0, "unit": "g" },
+        { "nutrientType": "FAT", "amount": 8.0, "unit": "g" },
+        { "nutrientType": "SODIUM", "amount": 280.0, "unit": "mg" }
+      ]
+    },
+    {
+      "historyId": "history_2025_07_03_dinner",
+      "mealType": "DINNER",
+      "displayName": "파스타",
+      "foodImageUrl": "dandi://drawable/meal_ic_food_pasta_pixel",
+      "nutrients": [
+        { "nutrientType": "CALORIE", "amount": 560.0, "unit": "kcal" },
+        { "nutrientType": "CARBOHYDRATE", "amount": 82.0, "unit": "g" },
+        { "nutrientType": "PROTEIN", "amount": 21.0, "unit": "g" },
+        { "nutrientType": "FAT", "amount": 16.0, "unit": "g" },
+        { "nutrientType": "SODIUM", "amount": 760.0, "unit": "mg" }
+      ]
+    }
+  ]
+}
