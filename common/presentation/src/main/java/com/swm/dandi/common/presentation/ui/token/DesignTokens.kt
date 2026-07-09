@@ -19,17 +19,17 @@ import com.swm.dandi.common.presentation.ui.typo.pretendardTextFont
 // 예: palette/gray/900 → Gray900, palette/blue/400 → Blue400
 @Suppress("Unused")
 internal enum class ArchiPaletteColors(val colorValue: Color) {
-    Black(Color(0xFF000000)),
-    Gray300(Color(0xFF222222)),
-    Gray400(Color(0xFF444444)),
-    Gray500(Color(0xFF888888)),
-    Gray600(Color(0xFFC4C4C4)),
-    Gray700(Color(0xFFDDDDDD)),
-    Gray800(Color(0xFFE6E6E6)),
-    Gray900(Color(0xFFF7F7F7)),
+    Black(Color(0xFF2A1712)),
+    Gray300(Color(0xFF3D251D)),
+    Gray400(Color(0xFF66504A)),
+    Gray500(Color(0xFF8B766D)),
+    Gray600(Color(0xFFF3E5DA)),
+    Gray700(Color(0xFFE4CBBE)),
+    Gray800(Color(0xFFFFEEE7)),
+    Gray900(Color(0xFFFFFAF7)),
     White(Color(0xFFFFFFFF)),
-    Blue400(Color(0xFF465179)),
-    Red(Color(0xFFFF0000)),
+    Blue400(Color(0xFFA65A05)),
+    Red(Color(0xFFC9473F)),
 }
 
 // FIGMA-TOKEN-INJECTION-POINT: semantic-colors
