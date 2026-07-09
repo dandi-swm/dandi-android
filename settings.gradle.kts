@@ -40,6 +40,7 @@ include(":meal:data")
 include(":meal:entity")
 include(":meal:presentation")
 
+include(":history:domain")
 include(":history:entity")
 
 include(":tti")
