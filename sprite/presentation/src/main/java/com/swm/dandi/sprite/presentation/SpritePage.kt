@@ -92,6 +92,8 @@ private fun SpritePageContent(
     onIntent: (SpriteIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    SpriteFrameTimingLogEffect(uiState)
+
     val selectedSpec = uiState.selectedSpec
 
     Box(
