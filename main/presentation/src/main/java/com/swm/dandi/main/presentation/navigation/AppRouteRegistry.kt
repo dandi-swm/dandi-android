@@ -1,12 +1,22 @@
 package com.swm.dandi.main.presentation.navigation
 
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.swm.dandi.main.domain.deeplink.RoutePattern
+import com.swm.dandi.sprite.domain.SpritePage as SpriteRoute
+import com.swm.dandi.sprite.presentation.SpritePage
+import com.swm.dandi.sprite.presentation.SpriteViewModel
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
  * 새 화면 추가 시 본 리스트에 한 줄을 더한다.
  */
-val appRoutes: List<AppRoute> = emptyList()
+val appRoutes: List<AppRoute> = listOf(
+    // TODO: 실제 앱의 시작 화면이 생기면 sprite sample route는 제거하거나 debug/demo 전용으로 분리한다.
+    AppRoute(
+        path = SpriteRoute.PATH,
+        render = { SpritePage(viewModel = hiltViewModel<SpriteViewModel>()) },
+    ),
+)
 
 val appRouteByPath: Map<String, AppRoute> = appRoutes.associateBy { it.path }
 

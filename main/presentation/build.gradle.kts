@@ -58,6 +58,9 @@ dependencies {
     implementation(project(":main:entity"))
     implementation(project(":common:presentation"))
 
+    implementation(project(":sprite:presentation"))
+    implementation(project(":sprite:domain"))
+
     implementation(libs.androidx.activity.compose)
     api(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)

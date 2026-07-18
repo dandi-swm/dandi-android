@@ -8,6 +8,7 @@ import com.swm.dandi.main.domain.deeplink.matchRoute
 import com.swm.dandi.main.presentation.navigation.GenericNavKey
 import com.swm.dandi.main.presentation.navigation.appRouteByPath
 import com.swm.dandi.main.presentation.navigation.appRoutePatterns
+import com.swm.dandi.sprite.domain.SpritePage
 
 private const val TAG = "[DeepLink]"
 
@@ -49,10 +50,14 @@ fun resolveStartStack(uri: Uri?): List<NavKey> {
     val route = uri?.resolveRoute()
     if (route == null) {
         if (uri != null) Log.w(TAG, "No matching route for uri=$uri")
-        return emptyList()
+        // TODO: 실제 앱 시작 route가 생기면 SpritePage 대신 그 route로 fallback한다.
+        // return emptyList()
+        return listOf(GenericNavKey(SpritePage.PATH))
     }
     val appRoute = appRouteByPath[route.path]
-        ?: return emptyList()
+        ?: return listOf(GenericNavKey(SpritePage.PATH))
+        // TODO: 실제 앱 시작 route가 생기면 SpritePage 대신 그 route로 fallback한다.
+        // ?: return emptyList()
     return appRoute.syntheticStack(route.args)
 }
 
