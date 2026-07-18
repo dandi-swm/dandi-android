@@ -1,0 +1,24 @@
+<resources>
+    <string name="sprite_sample_title">스프라이트 예제</string>
+    <string name="sprite_sample_description">애니메이션을 선택하고 재생과 반복 동작을 확인합니다.</string>
+    <string name="sprite_sample_animation_hello">인사</string>
+    <string name="sprite_sample_animation_eat">먹기</string>
+    <string name="sprite_sample_animation_sleep">잠자기</string>
+    <string name="sprite_sample_align_mode">배치 방식</string>
+    <string name="sprite_sample_align_grid">그리드</string>
+    <string name="sprite_sample_align_binary_tree">바이너리 트리</string>
+    <string name="sprite_sample_align_left_right">가로 한 줄</string>
+    <string name="sprite_sample_align_top_down">세로 한 줄</string>
+    <string name="sprite_sample_frame_speed">프레임 속도</string>
+    <string name="sprite_sample_frame_speed_value">%1$dms · %2$d FPS</string>
+    <string name="sprite_sample_speed_slow">느리게</string>
+    <string name="sprite_sample_speed_fast">빠르게</string>
+    <string name="sprite_sample_loop">반복 재생</string>
+    <string name="sprite_sample_play">재생</string>
+    <string name="sprite_sample_pause">정지</string>
+    <string name="sprite_sample_previous_frame">이전 프레임</string>
+    <string name="sprite_sample_next_frame">다음 프레임</string>
+    <string name="sprite_sample_frame_counter">전체 %2$d프레임 중 %1$d번째</string>
+    <string name="sprite_sample_loop_on">반복 켬</string>
+    <string name="sprite_sample_loop_off">반복 끔</string>
+</resources>
