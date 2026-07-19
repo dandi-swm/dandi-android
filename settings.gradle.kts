@@ -40,6 +40,11 @@ include(":home:domain")
 include(":home:data")
 include(":home:entity")
 
+include(":meal:presentation")
+include(":meal:domain")
+include(":meal:data")
+include(":meal:entity")
+
 include(":tti")
 
 include(":baselineprofile")
