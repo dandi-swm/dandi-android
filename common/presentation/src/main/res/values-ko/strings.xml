@@ -1,16 +1,4 @@
 <resources>
     <string name="app_name">Dandi</string>
-    <string name="media_empty">표시할 내용이 없습니다.</string>
-    <string name="favorite_empty">나타낼 즐겨찾기 콘텐츠가 없습니다.</string>
-    <string name="media_default_title">제목</string>
-    <string name="nav_tab_search">검색</string>
-    <string name="nav_tab_favorite">즐겨찾기</string>
     <string name="nav_back_button">이전으로</string>
-    <string name="favorite_register_failed">즐겨찾기 등록에 실패했습니다.</string>
-    <string name="favorite_remove_failed">즐겨찾기 해제에 실패했습니다.</string>
-    <string name="search_hint">검색 하는 내용 입니다</string>
-    <string name="search_clear">검색어 지우기</string>
-    <string name="search_failed">검색에 실패했습니다.</string>
-    <string name="search_prompt">검색어를 입력해 보세요.</string>
-    <string name="list_end_marker">마지막</string>
 </resources>

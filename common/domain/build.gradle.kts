@@ -14,9 +14,4 @@ dependencies {
     api(project(":common:entity"))
     api(libs.kotlinx.coroutines.core)
     implementation(libs.javax.inject)
-
-    testImplementation(libs.junit)
-    testImplementation(libs.mockk)
-    testImplementation(libs.kotlinx.coroutines.test)
-
 }

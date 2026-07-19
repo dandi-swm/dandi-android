@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.swm.dandi.common.presentation"
+    namespace = "com.dandi.nyummy.common.presentation"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
@@ -76,15 +76,6 @@ dependencies {
     // Immutable collections — Compose 컴파일러가 ImmutableList/PersistentList 를 stable 로 인식하므로
     // UiState 의 List 필드를 안정적으로 노출시키기 위해 사용한다.
     api(libs.kotlinx.collections.immutable)
-
-    // Lottie
-    api(libs.lottie.compose)
-
-    // Coil 3 (image / GIF / video frame)
-    implementation(libs.coil.compose)
-    implementation(libs.coil.network.okhttp)
-    implementation(libs.coil.gif)
-    implementation(libs.coil.video)
 
     // JankStats — frame-level performance tracking
     api(libs.androidx.metrics.performance)

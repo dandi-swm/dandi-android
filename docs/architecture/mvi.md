@@ -7,7 +7,7 @@
 
 ## 계약 — MviViewModel
 
-골든 예제: [MviViewModel.kt](../../common/presentation/src/main/java/com/swm/dandi/common/presentation/mvi/MviViewModel.kt)
+골든 예제: [MviViewModel.kt](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/mvi/MviViewModel.kt)
 
 ```kotlin
 interface MviIntent      // View → ViewModel (사용자 입력)
@@ -29,19 +29,21 @@ abstract class MviViewModel<I : MviIntent, S : UiState, E : ReducerEvent>(
 
 ## 파일 세트 (feature/presentation)
 
+> `Search`/`Favorite`/`Intro`/`FullScreenMedia`는 패턴 설명을 위한 레거시 예시 이름입니다. 아래 파일명은 현재 저장소의 소스 경로로 연결되지 않습니다.
+
 | 파일 | 역할 | 골든 예제 |
 |---|---|---|
-| `{Feature}Intent.kt` | `sealed interface : MviIntent` — 사용자 입력 전수 | [SearchIntent.kt](../../search/presentation/src/main/java/com/swm/dandi/search/presentation/SearchIntent.kt) |
-| `{Feature}ReducerEvent.kt` | `sealed interface : ReducerEvent` — 상태 변이 원인 전수 | [SearchReducerEvent.kt](../../search/presentation/src/main/java/com/swm/dandi/search/presentation/SearchReducerEvent.kt) |
-| `{Feature}UIState.kt` | `data class : UiState` + `companion val empty` | [SearchUIState.kt](../../search/presentation/src/main/java/com/swm/dandi/search/presentation/SearchUIState.kt) |
-| `{Feature}ViewModel.kt` | `@HiltViewModel`, onIntent/reduce 구현 | [SearchViewModel.kt](../../search/presentation/src/main/java/com/swm/dandi/search/presentation/SearchViewModel.kt) |
-| `{Feature}Page.kt` | `collectAsStateWithLifecycle()` + onIntent 호출만 | [SearchPage.kt](../../search/presentation/src/main/java/com/swm/dandi/search/presentation/SearchPage.kt) |
+| `{Feature}Intent.kt` | `sealed interface : MviIntent` — 사용자 입력 전수 | `SearchIntent.kt` (레거시 예시) |
+| `{Feature}ReducerEvent.kt` | `sealed interface : ReducerEvent` — 상태 변이 원인 전수 | `SearchReducerEvent.kt` (레거시 예시) |
+| `{Feature}UIState.kt` | `data class : UiState` + `companion val empty` | `SearchUIState.kt` (레거시 예시) |
+| `{Feature}ViewModel.kt` | `@HiltViewModel`, onIntent/reduce 구현 | `SearchViewModel.kt` (레거시 예시) |
+| `{Feature}Page.kt` | `collectAsStateWithLifecycle()` + onIntent 호출만 | `SearchPage.kt` (레거시 예시) |
 
 > View 레이어는 화면마다 다르다 — 위 표는 Compose `Page` 변형(search/favorite)이고, intro 는 비-MVI 일반 ViewModel 변형(`IntroPage` 은 빈 Composable 스텁), fullScreenMedia 는 아래의 **Fragment 호스팅 MVI 변형**이다. Intent/UIState/ReducerEvent/MviViewModel 계약은 변형과 무관하게 동일하다.
 
 ### Fragment 호스팅 MVI 변형 (fullScreenMedia 골든 예제)
 
-상세화면은 Compose `Page` 가 **없다**. ViewBinding + ViewPager2 기반의 `Fragment` 가 동일한 `MviViewModel` 을 호스팅한다 — [FullScreenMediaFragment.kt](../../fullScreenMedia/presentation/src/main/java/com/swm/dandi/fullScreenMedia/presentation/FullScreenMediaFragment.kt) + [FullScreenMediaPagerAdapter.kt](../../fullScreenMedia/presentation/src/main/java/com/swm/dandi/fullScreenMedia/presentation/FullScreenMediaPagerAdapter.kt). fullScreenMedia 를 복제할 때 이 변형을 따른다.
+상세화면은 Compose `Page` 가 **없다**. ViewBinding + ViewPager2 기반의 `Fragment` 가 동일한 `MviViewModel` 을 호스팅한다 — 레거시 예시 `FullScreenMediaFragment.kt` + `FullScreenMediaPagerAdapter.kt`. fullScreenMedia 를 복제할 때 이 변형을 따른다.
 
 - **ViewModel 주입**: ViewModel 은 `@HiltViewModel(assistedFactory = Factory::class)` + `@AssistedInject` (라우트 Args 를 `@Assisted` 로 받음). Fragment 는 `by viewModels(extrasProducer = { ...withCreationCallback<Factory> { it.create(args) } })` 로 주입.
 - **상태 수집**: `collectAsStateWithLifecycle()` 대신 `viewLifecycleOwner.lifecycleScope.launch { repeatOnLifecycle(STARTED) { viewModel.uiState.collect(::render) } }` 로 collect → `render(state)` 가 ViewBinding 갱신.
@@ -65,4 +67,4 @@ abstract class MviViewModel<I : MviIntent, S : UiState, E : ReducerEvent>(
 
 ## 단순 화면 변형 (intro 골든 예제)
 
-상태가 없는 화면은 MviViewModel 없이 일반 ViewModel + `init { useCase() }`도 허용 — [IntroViewModel.kt](../../intro/presentation/src/main/java/com/swm/dandi/intro/presentation/IntroViewModel.kt). 단, 상태가 1개라도 생기면 MVI 세트로 작성한다.
+상태가 없는 화면은 MviViewModel 없이 일반 ViewModel + `init { useCase() }`도 허용 — 레거시 예시 `IntroViewModel.kt`. 단, 상태가 1개라도 생기면 MVI 세트로 작성한다.

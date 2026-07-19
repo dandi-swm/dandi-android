@@ -1,17 +1,4 @@
 <resources>
     <string name="app_name">Dandi</string>
-
-    <string name="media_empty">No contents to display.</string>
-    <string name="favorite_empty">No favorite contents to display.</string>
-    <string name="media_default_title">Title</string>
-    <string name="nav_tab_search">Search</string>
-    <string name="nav_tab_favorite">Favorites</string>
     <string name="nav_back_button">Back to previous</string>
-    <string name="favorite_register_failed">Failed to register favorite.</string>
-    <string name="favorite_remove_failed">Failed to remove favorite.</string>
-    <string name="search_hint">Input search words</string>
-    <string name="search_clear">Delete words</string>
-    <string name="search_failed">Failed search.</string>
-    <string name="search_prompt">Please input search words.</string>
-    <string name="list_end_marker">Last</string>
 </resources>

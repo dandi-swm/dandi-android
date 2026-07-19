@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.swm.dandi.common.data"
+    namespace = "com.dandi.nyummy.common.data"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {

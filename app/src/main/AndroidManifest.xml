@@ -8,11 +8,9 @@
         android:allowBackup="true"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Dandi"
-        android:usesCleartextTraffic="true">
+        android:theme="@style/Theme.Dandi">
         <activity
-            android:name="com.swm.dandi.main.presentation.MainActivity"
-            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|fontScale|locale|layoutDirection"
+            android:name="com.dandi.nyummy.main.presentation.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Dandi">

@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "com.swm.dandi"
+    namespace = "com.dandi.nyummy"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.swm.dandi"
+        applicationId = "com.dandi.nyummy"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1

@@ -7,6 +7,8 @@
 
 ## 구조
 
+> `intro`/`search`/`favorite`/`fullScreenMedia`는 원본 구조를 설명하기 위한 레거시 feature 예시이며, 현재 저장소에 존재하는 모듈 경로가 아닙니다.
+
 ```
 app                                  실행 가능한 Application (모든 feature 모듈을 implementation)
 ├─ common/{entity,domain,data,presentation}   공유 베이스 (MviViewModel, BaseUseCase, 테마/토큰, NetworkModule)
@@ -25,7 +27,7 @@ data ──────────▶ domain ──▶ entity
 ```
 
 - `entity`/`domain`/`tti` = 순수 Kotlin/JVM (`kotlin-jvm` 플러그인, Android 의존 금지)
-- `data`/`presentation` = `com.android.library` (presentation은 대개 compose 활성 — 단 `fullScreenMedia/presentation` 은 예외로 ViewBinding Fragment 화면이라 `kotlin.compose`/`composeCompiler {}` 없이 `viewBinding = true`)
+- `data`/`presentation` = `com.android.library` (presentation은 대개 compose 활성 — 레거시 `fullScreenMedia` 예시는 ViewBinding Fragment 화면이라 `kotlin.compose`/`composeCompiler {}` 없이 `viewBinding = true`)
 - 모든 모듈 공통: JVM 17, `-Xexplicit-backing-fields`
 
 ## build.gradle.kts 3종 템플릿
@@ -34,17 +36,17 @@ data ──────────▶ domain ──▶ entity
 
 | 타입 | 골든 예제 | 핵심 |
 |---|---|---|
-| kotlin-jvm (entity/domain) | [intro/entity/build.gradle.kts](../../intro/entity/build.gradle.kts), [intro/domain/build.gradle.kts](../../intro/domain/build.gradle.kts) | `alias(libs.plugins.kotlin.jvm)` + `jvmToolchain(17)`. entity는 `api(project(":common:entity"))` |
-| android-library data | [intro/data/build.gradle.kts](../../intro/data/build.gradle.kts) | `android.library` + `kotlinx.serialization` + `hilt.android` + `ksp`. retrofit/serialization 의존 |
-| android-library presentation | [intro/presentation/build.gradle.kts](../../intro/presentation/build.gradle.kts) | `android.library` + `kotlin.compose` + `hilt.android` + `ksp`. `composeCompiler { stabilityConfigurationFiles += compose_stability.conf }` |
+| kotlin-jvm (entity/domain) | entity/domain `build.gradle.kts` (레거시 intro 예시) | `alias(libs.plugins.kotlin.jvm)` + `jvmToolchain(17)`. entity는 `api(project(":common:entity"))` |
+| android-library data | data `build.gradle.kts` (레거시 intro 예시) | `android.library` + `kotlinx.serialization` + `hilt.android` + `ksp`. retrofit/serialization 의존 |
+| android-library presentation | presentation `build.gradle.kts` (레거시 intro 예시) | `android.library` + `kotlin.compose` + `hilt.android` + `ksp`. `composeCompiler { stabilityConfigurationFiles += compose_stability.conf }` |
 
-namespace = `com.swm.dandi.<feature>.<layer>`.
+namespace = `com.dandi.nyummy.<feature>.<layer>`.
 
 ## 새 feature 배선 (3곳에 추가만, 기존 수정 금지)
 
 1. [settings.gradle.kts](../../settings.gradle.kts) — `include(":<feature>:{presentation,domain,data,entity}")` 4줄
 2. [app/build.gradle.kts](../../app/build.gradle.kts) — 4모듈 `implementation(project(...))` 블록
-3. [AppRouteRegistry.kt](../../main/presentation/src/main/java/com/swm/dandi/main/presentation/navigation/AppRouteRegistry.kt) — `AppRoute` 항목 (navigation.md 참고)
+3. [AppRouteRegistry.kt](../../main/presentation/src/main/java/com/dandi/nyummy/main/presentation/navigation/AppRouteRegistry.kt) — `AppRoute` 항목 (navigation.md 참고)
 
 전체 절차는 `make-new-feature-module` 스킬이 자동화한다.
 

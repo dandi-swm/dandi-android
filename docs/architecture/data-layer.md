@@ -7,14 +7,16 @@
 
 ## 구성 요소와 골든 예제 (intro = 표준형)
 
+> 아래 `Intro`/`Search`/`MediaSearch`/`Favorite` 이름은 레거시 아키텍처 예시입니다. 현재 저장소의 모듈이나 파일 경로를 뜻하지 않습니다.
+
 ```
-[domain]  {Feature}Repository (인터페이스)        intro/domain/IntroRepository.kt
-[data]    {Feature}ApiService (Retrofit)          intro/data/IntroApiService.kt
-[data]    {Feature}DataSource : BaseRemoteDataSource   intro/data/IntroDataSource.kt
-[data]    dto/{Feature}DTO (@Serializable, all-nullable, toVO())   intro/data/dto/IntroDTO.kt
-[data]    {Feature}RepositoryImpl                 intro/data/IntroRepositoryImpl.kt
-[data]    {Feature}DataModule (Hilt 바인딩)        intro/data/IntroDataModule.kt
-[entity]  {Feature}VO (비-nullable, 기본값, companion empty)   intro/entity/IntroVO.kt
+[domain]  {Feature}Repository (인터페이스)        IntroRepository.kt
+[data]    {Feature}ApiService (Retrofit)          IntroApiService.kt
+[data]    {Feature}DataSource : BaseRemoteDataSource   IntroDataSource.kt
+[data]    dto/{Feature}DTO (@Serializable, all-nullable, toVO())   IntroDTO.kt
+[data]    {Feature}RepositoryImpl                 IntroRepositoryImpl.kt
+[data]    {Feature}DataModule (Hilt 바인딩)        IntroDataModule.kt
+[entity]  {Feature}VO (비-nullable, 기본값, companion empty)   IntroVO.kt
 ```
 
 핵심 패턴:
@@ -42,7 +44,7 @@ object IntroDataModule {
 
 ## NetworkModule (공용, 단일 생성처)
 
-[NetworkModule.kt](../../common/data/src/main/java/com/swm/dandi/common/data/di/NetworkModule.kt) — OkHttp/Retrofit/Json을 한 곳에서 생성.
+[NetworkModule.kt](../../common/data/src/main/java/com/dandi/nyummy/common/data/di/NetworkModule.kt) — OkHttp/Retrofit/Json을 한 곳에서 생성.
 
 - `API-CONFIG-INJECTION-POINT` 마커 2곳: base URL과 인증 헤더 포맷. 값은 `local.properties`(`API_KEY`, `API_BASE_URL`) → BuildConfig 주입 ([common/data/build.gradle.kts](../../common/data/build.gradle.kts))
 - Json 정책: `ignoreUnknownKeys / explicitNulls=false / coerceInputValues`
@@ -52,9 +54,9 @@ object IntroDataModule {
 
 | 상황 | 패턴 | 골든 예제 |
 |---|---|---|
-| 자체 API 없이 공용 Repository 소비 | data 모듈 비움, UseCase가 `:common:domain` 인터페이스 주입 | `search` ([MediaSearchRepository](../../common/domain/src/main/java/com/swm/dandi/common/domain/media/MediaSearchRepository.kt) ← 구현은 [common/data/mediaSearch](../../common/data/src/main/java/com/swm/dandi/common/data/mediaSearch/)) |
-| 병렬 API 호출 머지 | `coroutineScope { async/async → await }` 후 머지/정렬 | [MediaSearchRepositoryImpl.kt](../../common/data/src/main/java/com/swm/dandi/common/data/mediaSearch/MediaSearchRepositoryImpl.kt) |
-| 로컬 저장소 (KV + 변경 구독) | SharedPreferences + `callbackFlow` observe + 쓰기 Mutex | [FavoriteKVStorage.kt](../../favorite/data/src/main/java/com/swm/dandi/favorite/data/local/FavoriteKVStorage.kt) |
+| 자체 API 없이 공용 Repository 소비 | data 모듈 비움, UseCase가 `:common:domain` 인터페이스 주입 | 레거시 `search` 예시: `MediaSearchRepository` ← `MediaSearchRepositoryImpl` |
+| 병렬 API 호출 머지 | `coroutineScope { async/async → await }` 후 머지/정렬 | `MediaSearchRepositoryImpl.kt` (레거시 예시) |
+| 로컬 저장소 (KV + 변경 구독) | SharedPreferences + `callbackFlow` observe + 쓰기 Mutex | `FavoriteKVStorage.kt` (레거시 예시) |
 
 로컬 저장소 핵심: 읽기는 `observeString(key): Flow<String?>`(리스너 등록 + 초기값 emit), 쓰기는 `writeMutex.withLock { read-modify-write }`로 유실 방지. DTO(저장용)↔VO 변환은 data 레이어의 `toVO()`/`toDto()` 확장 함수가 담당하고 Repository가 이를 호출한다.
 

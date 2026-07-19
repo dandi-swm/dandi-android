@@ -17,7 +17,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  
 1. **의존 방향**: `presentation → domain → entity`, `data → domain → entity`. presentation↔data 직접 의존 금지. entity/domain은 순수 Kotlin/JVM(Android 의존 금지).
 2. **feature = 4모듈**: `<feature>/{entity,domain,data,presentation}`. 생성은 `make-new-feature-module` 스킬로만.
 3. **MVI**: View→`onIntent(Intent)` 단일 진입, 상태 변이는 `dispatch(ReducerEvent)`→`reduce()` 한 곳에서만. UIState 컬렉션은 ImmutableList/ImmutableSet.
-4. **디자인 토큰**: 색은 `ArchiThemeImpl.archiColor.*`, 타이포는 `ArchiThemeImpl.typeScale.*`(ArchiText 경유)만. raw hex / raw sp 금지. 토큰 기본값 수정은 `common/presentation/.../ui/token/DesignTokens.kt`의 FIGMA-TOKEN-INJECTION-POINT 구간만.
+4. **디자인 토큰**: 색은 `DesignSystemThemeImpl.designSystemColor.*`, 타이포는 `DesignSystemThemeImpl.typeScale.*`(`DandiText` 경유)만. raw hex / raw sp 금지. 토큰 기본값 수정은 `common/presentation/.../ui/token/DesignTokens.kt`의 FIGMA-TOKEN-INJECTION-POINT 구간만.
 5. **DTO/VO**: DTO는 `@Serializable`+전 필드 nullable, VO는 비-nullable+기본값. 변환은 data 레이어 `toVO()`에서만.
 6. **에러**: data는 `HttpResponseException` throw만, 처리(다이얼로그/네비게이션)는 domain UseCase에서 `isCommonErrorHandling()`/`handlingErrorOnUseCase<ErrorType>()`로.
 7. **네비게이션**: 화면 이동은 `navigationHelper.navigateTo(Page)`만. 새 화면은 `AppRouteRegistry.kt`에 등록. 기존 feature 모듈은 수정하지 않고 추가만.
@@ -30,7 +30,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  
 
 - [docs/architecture/module-structure.md](docs/architecture/module-structure.md) — 모듈 규칙, build.gradle.kts 3종 템플릿
 - [docs/architecture/mvi.md](docs/architecture/mvi.md) — MviViewModel 계약, 페이징 상태 패턴
-- [docs/architecture/navigation.md](docs/architecture/navigation.md) — Navigation3, synthetic backstack, 딥링크, Fragment 호스팅
+- [docs/architecture/navigation.md](docs/architecture/navigation.md) — Navigation3, synthetic backstack, 딥링크
 - [docs/architecture/error-handling.md](docs/architecture/error-handling.md) — 에러 전파/처리 체인
 - [docs/architecture/data-layer.md](docs/architecture/data-layer.md) — DTO/VO, DataSource, Hilt DataModule, 로컬 저장소
 - [docs/architecture/design-system.md](docs/architecture/design-system.md) — 토큰 구조, Figma 매핑 명세

@@ -19,7 +19,7 @@ Figma 링크 (MCP) ──┐
 ### 1.1 실행 위치
 
 반드시 **Dandi 프로젝트 루트**(또는 이 템플릿에서 파생한 프로젝트 루트)에서 `claude` 를 실행합니다.
-`.claude/skills/` 의 스킬과 README 의 아키텍처 규칙이 자동으로 Context에 잡힙니다.
+`.agents/skills/` 의 스킬과 README 의 아키텍처 규칙이 자동으로 Context에 잡힙니다.
 
 ### 1.2 디자인 입력 3가지 방법
 
@@ -60,10 +60,12 @@ claude mcp add --transport http figma-desktop http://127.0.0.1:3845/mcp
 > 디자인 스펙(Figma 링크/이미지/PDF)을 함께 주세요 — 템플릿 복제 후 아래 Step 1~2가 이어서 실행됩니다.
 > 이미 프로젝트가 있다면 아래 Step 1부터 진행합니다.
 
+> `intro`/`search`/`favorite`/`fullScreenMedia`는 원본 아키텍처를 설명하기 위한 레거시 예시 이름입니다. 현재 저장소의 모듈이나 복제할 소스 경로를 뜻하지 않으며, 실제 모듈은 `settings.gradle.kts`를 기준으로 확인합니다.
+
 ### Step 1 — 토큰 동기화: `/design-token-sync`
 
 새 디자인 시스템을 적용할 때 **가장 먼저 1회** 실행합니다. 모든 색/타이포 기본값은
-[DesignTokens.kt](../common/presentation/src/main/java/com/swm/dandi/common/presentation/ui/token/DesignTokens.kt)
+[DesignTokens.kt](../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/ui/token/DesignTokens.kt)
 한 파일에 모여 있고, 스킬은 이 파일의 `FIGMA-TOKEN-INJECTION-POINT` 마커 구간만 수정합니다.
 
 ```text
@@ -117,7 +119,7 @@ API는 GET /v1/products 이고 응답 예시는 아래 JSON이야: {...}
 
 ```bash
 ./gradlew :app:installDebug
-adb shell 'am start -W -a android.intent.action.VIEW -d "https://www.dandi.com/productList" com.swm.dandi'
+adb shell 'am start -W -a android.intent.action.VIEW -d "https://www.dandi.com/productList" com.dandi.nyummy'
 ```
 
 스크린샷 비교까지 시키려면:
@@ -147,7 +149,7 @@ adb shell 'am start -W -a android.intent.action.VIEW -d "https://www.dandi.com/p
 
 스킬들이 강제하는 핵심 규칙입니다. 결과물 리뷰 시 이 기준으로 보면 됩니다.
 
-1. **색/타이포 하드코딩 금지** — `ArchiThemeImpl.archiColor.*` / `typeScale.*` 만 사용. raw hex/sp 가 보이면 버그입니다.
+1. **색/타이포 하드코딩 금지** — `DesignSystemThemeImpl.designSystemColor.*` / `typeScale.*` 만 사용. raw hex/sp 가 보이면 버그입니다.
 2. **의존 방향** — `presentation → domain → entity`, `data → domain → entity`. presentation↔data 직접 의존 금지.
 3. **4-모듈 세트** — feature = entity/domain/data/presentation. 골든 예제(intro/search/favorite/fullScreenMedia) 중 하나를 베이스로 복제.
 4. **MVI 네이밍** — `{Feature}Page / UIState / Intent / ReducerEvent / ViewModel`, UIState 컬렉션은 ImmutableList/Set.
@@ -165,7 +167,7 @@ adb shell 'am start -W -a android.intent.action.VIEW -d "https://www.dandi.com/p
 | 디자인에 없는 색이 결과물에 있음 | 토큰 기본값(템플릿 값)이 남은 것 — `/design-token-sync` 부터 다시 |
 | 빌드 실패 반복 | `/gradle-build-check` 단독 실행으로 에러를 분리 → 해당 에러만 고치게 지시 |
 | 이미지 기반 결과의 수치가 어긋남 | 이미지 해상도를 높이거나, 여백/크기 수치를 프롬프트에 텍스트로 명시 (이미지는 근사치임) |
-| 에뮬레이터에서 딥링크가 안 열림 (`unable to resolve Intent`) | App Links 도메인 미검증 상태 — `am start` 에 `-n com.swm.dandi/.main.presentation.MainActivity` 명시적 컴포넌트 추가 |
+| 에뮬레이터에서 딥링크가 안 열림 (`unable to resolve Intent`) | App Links 도메인 미검증 상태 — `am start` 에 `-n com.dandi.nyummy/.main.presentation.MainActivity` 명시적 컴포넌트 추가 |
 | JDK 못 찾음 (`Unable to locate a Java Runtime`) | `export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"` 후 재시도 |
 
 ---
