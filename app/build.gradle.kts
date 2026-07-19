@@ -89,6 +89,11 @@ dependencies {
     implementation(project(":meal:data"))
     implementation(project(":meal:entity"))
 
+    implementation(project(":history:presentation"))
+    implementation(project(":history:domain"))
+    implementation(project(":history:data"))
+    implementation(project(":history:entity"))
+
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)

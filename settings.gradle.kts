@@ -45,6 +45,11 @@ include(":meal:domain")
 include(":meal:data")
 include(":meal:entity")
 
+include(":history:presentation")
+include(":history:domain")
+include(":history:data")
+include(":history:entity")
+
 include(":tti")
 
 include(":baselineprofile")
