@@ -35,6 +35,11 @@ include(":main:domain")
 include(":main:data")
 include(":main:entity")
 
+include(":home:presentation")
+include(":home:domain")
+include(":home:data")
+include(":home:entity")
+
 include(":tti")
 
 include(":baselineprofile")

@@ -1,43 +1,27 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.androidx.baselineprofile)
 }
 
 android {
-    namespace = "com.dandi.nyummy"
+    namespace = "com.dandi.nyummy.home.presentation"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.dandi.nyummy"
         minSdk = libs.versions.minSdk.get().toInt()
-        targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-        }
-        create("benchmark") {
-            initWith(getByName("release"))
-            signingConfig = signingConfigs.getByName("debug")
-            matchingFallbacks += listOf("release")
-            isDebuggable = false
-            isProfileable = true
         }
     }
     compileOptions {
@@ -69,25 +53,10 @@ composeCompiler {
 }
 
 dependencies {
-    implementation(project(":common:presentation"))
-    implementation(project(":common:domain"))
-    implementation(project(":common:data"))
-    implementation(project(":common:entity"))
-
-    implementation(project(":main:presentation"))
-    implementation(project(":main:domain"))
-    implementation(project(":main:data"))
-    implementation(project(":main:entity"))
-
-    implementation(project(":home:presentation"))
     implementation(project(":home:domain"))
-    implementation(project(":home:data"))
     implementation(project(":home:entity"))
+    implementation(project(":common:presentation"))
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.androidx.hilt.navigation.compose)
-    implementation(libs.androidx.profileinstaller)
-
-    "baselineProfile"(project(":baselineprofile"))
 }
