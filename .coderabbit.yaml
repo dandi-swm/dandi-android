@@ -156,6 +156,7 @@ reviews:
 
 chat:
   auto_reply: true
+  allow_non_org_members: false
 
 knowledge_base:
   code_guidelines:
