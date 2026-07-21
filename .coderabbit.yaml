@@ -1,0 +1,165 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "ko-KR"
+tone_instructions: "한국어로 간결하게 리뷰하고, 근거와 실패 시나리오가 있는 문제만 지적하세요. 취향·포맷·칭찬·추측성 의견은 생략하세요."
+early_access: false
+enable_free_tier: true
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: true
+  high_level_summary: true
+  high_level_summary_in_walkthrough: true
+  review_status: true
+  review_details: false
+  collapse_walkthrough: true
+  sequence_diagrams: false
+  estimate_code_review_effort: false
+  related_issues: false
+  related_prs: false
+  suggested_labels: false
+  suggested_reviewers: false
+  auto_assign_reviewers: false
+  poem: false
+  in_progress_fortune: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+
+  finishing_touches:
+    unit_tests:
+      enabled: false
+
+  path_filters:
+    - "!**/.gradle/**"
+    - "!**/build/**"
+    - "!**/generated/**"
+    - "!**/.idea/**"
+
+  path_instructions:
+    - path: "**/*"
+      instructions: |
+        변경된 코드와 그 변경이 직접 만든 교차 파일 문제만 리뷰한다.
+        빌드·런타임 오류, 데이터 손실, 보안 문제, 사용자 동작 회귀, 아래 아키텍처 계약 위반을 우선한다.
+        각 지적에는 문제 위치, 실제 실패 시나리오, 최소 수정 방향을 포함한다.
+        구체적인 코드 근거가 없는 추측, 포맷·사소한 네이밍, 칭찬, 선택적 리팩터링은 코멘트하지 않는다.
+        테스트 추가나 새 테스트 코드 작성을 요구하지 말고, 테스트 부재 자체를 결함으로 판단하지 않는다.
+        API 명세가 저장소나 PR에 없으면 endpoint나 DTO를 추측하지 말고 stub과 TODO-API-SPEC 유지 여부만 확인한다.
+        intro, search, favorite, fullScreenMedia와 /articleList/...는 문서의 레거시·가상 예시다.
+        이를 현행 모듈이나 라우트로 요구하지 말고 settings.gradle.kts와 AppRouteRegistry.kt의 현재 코드를 기준으로 판단한다.
+
+    - path: "**/*.gradle.kts"
+      instructions: |
+        의존 방향은 presentation -> domain -> entity, data -> domain -> entity만 허용한다.
+        presentation과 data의 직접 의존, entity/domain/tti의 Android 플러그인·Android 의존은 차단한다.
+        entity/domain/tti는 Kotlin/JVM, data/presentation은 Android library 구성을 유지한다.
+        모든 모듈의 JVM 17과 -Xexplicit-backing-fields 설정을 확인하고 버전은 libs.versions.toml을 사용한다.
+        Compose presentation은 Compose 플러그인과 루트 compose_stability.conf를 연결한다.
+        ViewBinding Fragment 전용 presentation은 Compose 없이 viewBinding=true일 수 있다.
+        새 feature라면 entity/domain/data/presentation 4개 모듈, settings include, app 의존성, AppRouteRegistry 등록이 함께 반영됐는지 확인한다.
+        공용 Repository만 소비하는 feature의 data 모듈은 비어 있을 수 있다.
+
+    - path: "**/entity/src/**/*.kt"
+      instructions: |
+        entity는 Android, Retrofit, DTO, DataSource, RepositoryImpl에 의존하지 않는 순수 Kotlin이어야 한다.
+        API 변환 결과인 *VO는 비-null 필드와 안전한 기본값을 갖는지 확인한다.
+        Compose 파라미터로 새 VO를 사용하면 안정성 조건을 만족할 때 compose_stability.conf 등록도 확인한다.
+        모든 entity 타입이 VO라고 가정하지 않는다.
+
+    - path: "**/domain/src/**/*.kt"
+      instructions: |
+        domain은 Android, Retrofit, DTO, DataSource, RepositoryImpl에 의존하지 않는 순수 Kotlin이어야 한다.
+        Repository 인터페이스, Page, feature ErrorType은 domain에 둔다.
+        화면 이동은 navigationHelper.navigateTo(Page)를 사용하고 NavRoute args는 String으로 유지한다.
+        복잡한 인자는 NavRouteJson으로 직렬화한다.
+        HTTP 오류를 처리하는 UseCase는 공통 오류를 isCommonErrorHandling()으로 먼저 처리한 뒤
+        feature 오류를 handlingErrorOnUseCase<ErrorType>()으로 매핑하고, UI 상태 복구가 가능하도록 실패를 전파한다.
+        단순 위임 UseCase는 형식적인 catch 없이 ViewModel로 오류를 전파해도 된다.
+        같은 오류를 UseCase와 ViewModel 양쪽에서 중복 노출하지 않는다.
+        TTIPage 정의는 domain에 둘 수 있지만 실제 TTI 측정 호출은 presentation에서만 한다.
+
+    - path: "**/data/src/**/*.kt"
+      instructions: |
+        DTO는 data 밖으로 노출하지 않고, API DTO는 @Serializable이며 모든 필드가 nullable이고 = null 기본값을 가져야 한다.
+        wire 이름과 Kotlin 이름이 다를 때 @SerialName을 사용한다.
+        DTO/저장 모델과 VO의 변환은 data의 toVO()/toDto()에서만 수행한다.
+        원격 DataSource는 BaseRemoteDataSource.checkResponse()를 사용하고 response.body()!! 직접 접근을 금지한다.
+        RepositoryImpl은 변환·병합·정렬만 담당하며 HTTP 오류 UX나 다이얼로그를 처리하지 않는다.
+        표준 원격 API DataModule은 SingletonComponent에 Repository, DataSource, ApiService를 제공한다.
+        공용 OkHttp/Retrofit/Json 생성은 common data의 NetworkModule 한 곳에 두고, 새 호스트만 @Named로 분리한다.
+        API 키와 base URL 리터럴 추가를 차단하고 BuildConfig 주입을 유지한다.
+        로컬 저장소에는 checkResponse를 요구하지 않는다. 관찰형 저장소라면 초기값 emit, listener 해제,
+        read-modify-write의 Mutex 보호 누락으로 인한 데이터 유실을 확인한다.
+
+    - path: "**/presentation/src/**/*.kt"
+      instructions: |
+        상태가 있는 화면은 View -> onIntent(Intent) -> dispatch(ReducerEvent) -> reduce -> uiState 흐름을 지킨다.
+        View의 별도 ViewModel 액션 호출, dispatch를 우회한 상태 변경, reduce 안의 UseCase·네비게이션·메시지·코루틴 부수효과를 지적한다.
+        UIState 컬렉션은 ImmutableList/ImmutableSet을 사용하고 복잡한 상태 가공은 UIState 메서드에 둔다.
+        Compose Page는 collectAsStateWithLifecycle(), Fragment 화면은 viewLifecycleOwner와 repeatOnLifecycle(STARTED)을 사용한다.
+        상태가 전혀 없는 화면에는 MVI 전체 세트를 요구하지 않는다.
+        페이징 코드에만 중복 요청 가드, 안정 ID 중복 제거, 기존 순서 보존, 종료 신호 처리를 확인한다.
+        화면 색·타이포는 DesignSystemThemeImpl.designSystemColor.*와 typeScale.*를 사용한다.
+        DesignTokens.kt 팔레트 외부의 직접 Color 값과 raw sp를 지적하되 Color.Unspecified와 레이아웃 dp는 허용한다.
+        텍스트는 DandiText를 우선하되 Material Text 사용 자체만으로 오류 처리하지 않는다.
+        LazyList/LazyGrid 등 스크롤 화면은 실제 컴포넌트와 같은 ScrollableState로 JankScrollWatcher를 연결한다.
+        TTI는 핵심 화면의 선택 사항이므로 부재를 지적하지 않는다. 적용했다면 start/end 쌍,
+        최초 의미 있는 렌더의 endTTITracking, 화면 이탈의 shotTTILogging과 presentation 내 API 측정을 확인한다.
+
+    - path: "main/**/src/**/*.kt"
+      instructions: |
+        새 화면은 AppRouteRegistry.kt 단일 등록처에 추가하고 앱 내 이동과 딥링크는 같은 템플릿 path를 사용한다.
+        콜드 스타트 부모 스택은 syntheticStack 한 곳에서만 정의한다.
+        정적 exact route는 동적 template보다 먼저 매칭하고, 동적 결과 path는 실제 URL이 아닌 템플릿 path여야 한다.
+        path parameter는 같은 이름의 query parameter보다 우선한다.
+        순수 route matching은 main/domain, Android Uri 변환과 registry 주입은 main/presentation에 둔다.
+        웜 leaf 딥링크는 기존 스택을 보존하며 동일 키를 제거한 뒤 최상단으로 이동한다.
+        탭 route는 일반 bring-to-front가 아니라 기존 탭 루트 처리로 위임한다.
+        isBottomTab은 실제 상단 탭을 나타내는 기존 이름이므로 rename을 요구하지 않는다.
+        AppNavHost의 중앙 JankPageEffect를 제거·우회하거나 Page마다 중복 추가하지 않는다.
+
+    - path: "app/src/main/AndroidManifest.xml"
+      instructions: |
+        App Link 변경은 등록된 라우트와 같은 host/path 계약을 유지하고 기존 autoVerify intent-filter를 깨뜨리지 않는지 확인한다.
+
+    - path: "common/presentation/src/main/java/**/ui/token/DesignTokens.kt"
+      instructions: |
+        토큰 동기화 변경은 palette, semantic-colors, type-scale의 FIGMA-TOKEN-INJECTION-POINT 영역에 한정하고 마커를 보존한다.
+        Color 리터럴은 ArchiPaletteColors 팔레트 정의에서만 허용하고 시맨틱 기본값은 팔레트를 참조해야 한다.
+        새 색·타이포 슬롯은 구조 필드, withStringKey 매핑, DesignTokens 기본값이 원자적으로 함께 변경됐는지 확인한다.
+        디자인 근거 없이 새 슬롯 추가를 해결책으로 제안하지 않는다.
+
+    - path: "common/presentation/src/main/java/**/ui/**/*.kt"
+      instructions: |
+        시맨틱 색 슬롯 변경은 DesignSystemSemanticColors 필드, withStringKey, DesignTokens 기본값을 함께 갱신한다.
+        타이포 슬롯 변경은 backing field, 공개 getter, withStringKey, DesignTokens 기본값을 함께 갱신하고 문자열 키를 일치시킨다.
+        이미 같은 역할의 공통 컴포넌트가 실제로 존재할 때만 재사용을 제안한다.
+
+    - path: "common/presentation/src/main/java/**/jank/**/*.kt"
+      instructions: |
+        Debug/Remote 구현 선택은 BuildConfig.DEBUG가 아니라 ApplicationInfo.FLAG_DEBUGGABLE을 유지한다.
+        PAGE_EXIT·SCROLL_END flush, frozen frame 및 표본/비율 임계치 변경은 명시적 의도가 있는지 확인한다.
+        bucket reset 누락, 페이지 간 통계 혼합, 중복 보고 회귀를 우선 검토한다.
+
+    - path: "compose_stability.conf"
+      instructions: |
+        Compose에서 실제 사용하는 entity VO 중 모든 필드가 val이며 primitive/enum/String인 타입만 stable로 등록한다.
+        mutable 필드나 불안정 참조를 가진 타입을 stable로 선언하면 지적한다.
+        kotlinx.collections.immutable 타입은 이미 stable이므로 별도 등록을 요구하지 않는다.
+
+    - path: "baselineprofile/**"
+      instructions: |
+        generator가 실제 사용하는 testTag를 제거·변경했다면 시나리오도 함께 갱신한다.
+        핵심 startup/navigation flow가 명확히 바뀐 경우에만 generator와 profile 재생성 누락을 지적한다.
+        문서의 레거시 검색 시나리오를 현행 요구사항으로 강요하지 않는다.
+        benchmark buildType은 release 최적화 상속, isDebuggable=false, isProfileable=true를 유지한다.
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "docs/architecture/*.md"
+      - "docs/DESIGN_TO_CODE_GUIDE.md"
