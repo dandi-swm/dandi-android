@@ -28,6 +28,7 @@ uiautomator = "2.3.0"
 androidxTestRunner = "1.7.0"
 jankStats = "1.0.0-beta02"
 kotlinxCollectionsImmutable = "0.4.0"
+paparazzi = "2.0.0-alpha05"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -79,3 +80,4 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 android-test = { id = "com.android.test", version.ref = "agp" }
 androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "benchmark" }
+paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
