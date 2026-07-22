@@ -5,8 +5,20 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import com.dandi.nyummy.common.presentation.R
 
-internal val pretendardTextFont = FontFamily(
-    Font(R.font.pretendard_bold, weight = FontWeight.Bold),
-    Font(R.font.pretendard_regular),
-    Font(R.font.pretendard_semibold, weight = FontWeight.SemiBold),
+internal val notoSansKrTextFont = FontFamily(
+    Font(R.font.noto_sans_kr_wght, weight = FontWeight.Normal),
+    Font(R.font.noto_sans_kr_wght, weight = FontWeight.Medium),
+    Font(R.font.noto_sans_kr_wght, weight = FontWeight.Bold),
+)
+
+internal val juaDisplayFont = FontFamily(
+    Font(R.font.jua_regular, weight = FontWeight.Normal),
+)
+
+internal val gowunDodumVoiceFont = FontFamily(
+    Font(R.font.gowun_dodum_regular, weight = FontWeight.Normal),
+)
+
+internal val fredokaNumberFont = FontFamily(
+    Font(R.font.fredoka_wdth_wght, weight = FontWeight.Bold),
 )
