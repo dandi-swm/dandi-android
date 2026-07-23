@@ -505,8 +505,7 @@ private fun NavigationCatalogSection() {
                                     NyummyBottomNavigation(
                                         selectedDestination = selected,
                                         style = style,
-                                        onDestinationSelected = {},
-                                    )
+                                    ) {}
                                 }
                             }
                         }
@@ -755,11 +754,9 @@ private fun ReferenceIntegrationSection() {
                     CatalogMealSummarySheet()
                 }
                 NyummyBottomNavigation(
-                    selectedDestination = selectedDestination,
                     modifier = Modifier.align(Alignment.BottomCenter),
-                    style = NyummyBottomNavigationStyle.Floating,
-                    onDestinationSelected = { selectedDestination = it },
-                )
+                    selectedDestination = selectedDestination,
+                ) { selectedDestination = it }
             }
         }
     }

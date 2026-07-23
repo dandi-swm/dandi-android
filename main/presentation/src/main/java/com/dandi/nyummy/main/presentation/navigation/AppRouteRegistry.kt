@@ -1,12 +1,20 @@
 package com.dandi.nyummy.main.presentation.navigation
 
 import com.dandi.nyummy.main.domain.deeplink.RoutePattern
+import com.dandi.nyummy.home.domain.HomePage as HomeNavigationPage
+import com.dandi.nyummy.home.presentation.HomePage as HomeScreen
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
  * 새 화면 추가 시 본 리스트에 한 줄을 더한다.
  */
-val appRoutes: List<AppRoute> = emptyList()
+val appRoutes: List<AppRoute> = listOf(
+    AppRoute(
+        path = HomeNavigationPage.PATH,
+        isBottomTab = true,
+        render = { HomeScreen() },
+    ),
+)
 
 val appRouteByPath: Map<String, AppRoute> = appRoutes.associateBy { it.path }
 

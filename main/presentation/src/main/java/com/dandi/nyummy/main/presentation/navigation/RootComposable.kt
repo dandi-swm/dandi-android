@@ -22,6 +22,8 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.presentation.component.DandiText
+import com.dandi.nyummy.common.presentation.component.NyummyBottomNavigation
+import com.dandi.nyummy.common.presentation.component.NyummyNavigationDestination
 import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
@@ -30,7 +32,7 @@ import kotlinx.coroutines.flow.Flow
 @Composable
 fun RootComposable(
     modifier: Modifier = Modifier,
-    startStack: List<NavKey> = emptyList(),
+    startStack: List<NavKey>,
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
     var oneButtonDialogEffect by remember {
@@ -39,6 +41,9 @@ fun RootComposable(
 
     DesignSystemTheme {
         val backStack = rememberNavBackStack(*startStack.toTypedArray())
+        val currentKey = backStack.lastOrNull() as? GenericNavKey
+        val currentRoute = currentKey?.let { appRouteByPath[it.path] }
+
         val messageHelper = LocalMessageHelper.current
 
         val onShowOneButtonDialog = remember<(MessageEffect.ShowOneButtonDialog) -> Unit> {
@@ -99,6 +104,14 @@ fun RootComposable(
                 .fillMaxSize()
                 .background(DesignSystemThemeImpl.designSystemColor.bgDefaultLevel1),
             snackbarHost = { SnackbarHost(snackBarHostState) },
+            bottomBar = {
+                if (currentRoute?.isBottomTab == true) {
+                    NyummyBottomNavigation(
+                        selectedDestination = NyummyNavigationDestination.Home,
+                        onDestinationSelected = {},
+                    )
+                }
+            }
         ) { innerPadding ->
             AppNavHost(
                 backStack = backStack,

@@ -95,11 +95,9 @@ class DesignSystemContractTest {
         composeRule.setContent {
             DesignSystemTheme {
                 NyummyBottomNavigation(
-                    selectedDestination = selected.value,
                     modifier = Modifier.testTag(NavigationTag),
-                    style = NyummyBottomNavigationStyle.Floating,
-                    onDestinationSelected = { selected.value = it },
-                )
+                    selectedDestination = selected.value,
+                ) { selected.value = it }
             }
         }
 
@@ -128,7 +126,6 @@ class DesignSystemContractTest {
             DesignSystemTheme {
                 NyummyBottomNavigation(
                     selectedDestination = selected.value,
-                    style = NyummyBottomNavigationStyle.Floating,
                     onDestinationSelected = { selected.value = it },
                 )
             }
