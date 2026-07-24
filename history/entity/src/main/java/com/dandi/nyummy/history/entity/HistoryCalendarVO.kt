@@ -18,6 +18,24 @@ enum class DailyNutritionStatus {
 
     /** 기록은 있으나 영양 판정이 없는 날 */
     NOT_RECORDED,
+    ;
+
+    companion object {
+        private const val IN_RANGE_MIN_PERCENT = 85
+        private const val IN_RANGE_MAX_PERCENT = 105
+
+        /** 하루 누적 열량과 목표 열량으로 목표 범위 상태를 판정합니다. */
+        fun of(totalCalorieKcal: Int, targetCalorieKcal: Int, hasRecord: Boolean): DailyNutritionStatus =
+            when {
+                !hasRecord -> NOT_RECORDED
+                targetCalorieKcal <= 0 -> NOT_RECORDED
+                totalCalorieKcal * 100 in
+                    (targetCalorieKcal * IN_RANGE_MIN_PERCENT)..(targetCalorieKcal * IN_RANGE_MAX_PERCENT)
+                -> IN_RANGE
+
+                else -> OUT_OF_RANGE
+            }
+    }
 }
 
 /**

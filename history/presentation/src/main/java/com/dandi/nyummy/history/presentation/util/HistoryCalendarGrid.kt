@@ -40,6 +40,10 @@ fun buildCalendarCells(year: Int, month: Int): List<HistoryCalendarCell> {
 /** 그리드 칸의 열 위치(index % 7)입니다. 0 = 일요일, 6 = 토요일. */
 fun columnOf(index: Int): Int = index % 7
 
+/** 해당 연/월의 말일(28~31)을 돌려줍니다. */
+fun lastDayOf(year: Int, month: Int): Int =
+    GregorianCalendar(year, month - 1, 1).getActualMaximum(Calendar.DAY_OF_MONTH)
+
 /** 기준 연/월의 이전 달 (연, 월) 쌍을 돌려줍니다. */
 fun previousMonthOf(year: Int, month: Int): Pair<Int, Int> =
     if (month == 1) year - 1 to 12 else year to month - 1

@@ -80,12 +80,13 @@ internal object HistoryMockData {
                 mealCount = 0,
             )
         }
-        val totalCalorie = meals.sumOf { it.calorieKcal }
-        val inRange = totalCalorie in
-            (TARGET_CALORIE_KCAL * 85 / 100)..(TARGET_CALORIE_KCAL * 105 / 100)
         return HistoryCalendarDayVO(
             date = date,
-            status = if (inRange) DailyNutritionStatus.IN_RANGE else DailyNutritionStatus.OUT_OF_RANGE,
+            status = DailyNutritionStatus.of(
+                totalCalorieKcal = meals.sumOf { it.calorieKcal },
+                targetCalorieKcal = TARGET_CALORIE_KCAL,
+                hasRecord = true,
+            ),
             foodIconIds = meals.take(2).map { it.foodIconId },
             mealCount = meals.size,
         )
