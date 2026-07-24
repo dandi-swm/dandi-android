@@ -91,7 +91,10 @@ internal fun HistoryMealDetailOverlay(
                     fieldLabel = stringResource(R.string.history_edit_dialog_field_label),
                     fieldValue = detail.nameDraft,
                     onFieldValueChange = { onIntent(HistoryIntent.ChangeMealNameDraft(it)) },
-                    timeLabel = "촬영 시각 · ${detail.meal.recordedAt} · 수정 불가",
+                    timeLabel = stringResource(
+                        R.string.history_edit_dialog_time_label,
+                        detail.meal.recordedAt,
+                    ),
                     cancelLabel = stringResource(R.string.history_edit_dialog_cancel),
                     confirmLabel = stringResource(R.string.history_edit_dialog_confirm),
                     onCancel = { onIntent(HistoryIntent.CancelEditMealName) },

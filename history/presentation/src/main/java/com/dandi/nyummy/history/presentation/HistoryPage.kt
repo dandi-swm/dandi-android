@@ -98,7 +98,10 @@ private fun HistoryScreen(
             )
             Spacer(Modifier.height(DailySectionTopGap))
             HistoryDailySection(
-                dayTitle = "${dayLabelOf(uiState.selectedDate)} 식사",
+                dayTitle = stringResource(
+                    R.string.history_day_meals_title,
+                    dayLabelOf(uiState.selectedDate),
+                ),
                 mealCountLabel = mealCountLabelOf(uiState.selectedDayMeals.size),
                 nutrition = uiState.dailyNutrition,
                 isNutritionExpanded = uiState.isNutritionExpanded,

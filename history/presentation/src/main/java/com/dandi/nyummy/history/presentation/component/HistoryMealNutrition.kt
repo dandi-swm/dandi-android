@@ -74,19 +74,19 @@ internal fun HistoryMealNutritionSection(
             style = DesignSystemThemeImpl.typeScale.labelStrongS,
         )
         NutrientRow(
-            label = "탄수화물",
+            label = stringResource(R.string.history_macro_carbohydrate),
             progress = nutrition.carbohydrate,
             mealGram = meal.carbohydrateGram,
             modifier = Modifier.offset(y = FirstNutrientOffsetY),
         )
         NutrientRow(
-            label = "단백질",
+            label = stringResource(R.string.history_macro_protein),
             progress = nutrition.protein,
             mealGram = meal.proteinGram,
             modifier = Modifier.offset(y = SecondNutrientOffsetY),
         )
         NutrientRow(
-            label = "지방",
+            label = stringResource(R.string.history_macro_fat),
             progress = nutrition.fat,
             mealGram = meal.fatGram,
             modifier = Modifier.offset(y = ThirdNutrientOffsetY),

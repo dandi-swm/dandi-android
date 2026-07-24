@@ -208,9 +208,24 @@ private fun HistoryDailyNutritionCard(
             if (expanded) {
                 Spacer(Modifier.height(NutritionMacroTopGap))
                 Row(horizontalArrangement = Arrangement.spacedBy(NutritionMacroGap)) {
-                    NutritionMacro("탄수", nutrition.carbohydrate, colors.dataNutrientCarbohydrate, isLoading)
-                    NutritionMacro("단백질", nutrition.protein, colors.dataNutrientProtein, isLoading)
-                    NutritionMacro("지방", nutrition.fat, colors.dataNutrientFat, isLoading)
+                    NutritionMacro(
+                        label = stringResource(R.string.history_macro_carb_short),
+                        progress = nutrition.carbohydrate,
+                        color = colors.dataNutrientCarbohydrate,
+                        isLoading = isLoading,
+                    )
+                    NutritionMacro(
+                        label = stringResource(R.string.history_macro_protein),
+                        progress = nutrition.protein,
+                        color = colors.dataNutrientProtein,
+                        isLoading = isLoading,
+                    )
+                    NutritionMacro(
+                        label = stringResource(R.string.history_macro_fat),
+                        progress = nutrition.fat,
+                        color = colors.dataNutrientFat,
+                        isLoading = isLoading,
+                    )
                 }
             }
         }
