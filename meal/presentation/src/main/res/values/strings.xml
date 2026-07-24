@@ -1,0 +1,17 @@
+<resources>
+    <string name="meal_record_title">Meal Record</string>
+    <string name="meal_record_heading">Leave a photo and a description</string>
+    <string name="meal_record_back_content_description">Back</string>
+    <string name="meal_record_description_label">Description · Required</string>
+    <string name="meal_record_description_helper">Describe the food in the photo in one sentence.</string>
+    <string name="meal_record_time_label">Captured at</string>
+    <string name="meal_record_time_photo_required">Shown after you add a photo</string>
+    <string name="meal_record_icon_section_label">Food icon · Required</string>
+    <string name="meal_record_icon_view_all">View all ›</string>
+    <string name="meal_record_icon_salad">Salad</string>
+    <string name="meal_record_icon_rice">Rice</string>
+    <string name="meal_record_icon_sandwich">Sandwich</string>
+    <string name="meal_record_icon_sushi">Sushi</string>
+    <string name="meal_record_cta">Save meal</string>
+    <string name="meal_record_cta_note">Check the photo, description, and icon before saving.</string>
+</resources>
