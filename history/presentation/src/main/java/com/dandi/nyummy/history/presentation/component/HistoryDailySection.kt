@@ -1,18 +1,12 @@
 package com.dandi.nyummy.history.presentation.component
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,7 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +31,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.component.DandiText
+import com.dandi.nyummy.common.presentation.component.NyummyBadge
+import com.dandi.nyummy.common.presentation.component.NyummyBadgeTone
+import com.dandi.nyummy.common.presentation.component.NyummyLinearProgress
 import com.dandi.nyummy.common.presentation.component.NyummyMealRow
 import com.dandi.nyummy.common.presentation.component.NyummyMealRowData
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
@@ -197,25 +193,14 @@ private fun HistoryDailyNutritionCard(
                     color = if (isLoading) colors.contentDefaultLevel1 else colors.contentDefaultLevel0,
                     style = DesignSystemThemeImpl.typeScale.textStrongM,
                 )
-                Surface(
-                    modifier = Modifier.size(NutritionRatioWidth, NutritionRatioHeight),
-                    shape = DesignSystemThemeImpl.designSystemShape.pill,
-                    color = colors.bgStatusWarning,
-                    contentColor = colors.contentStatusWarning,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        DandiText(
-                            text = if (isLoading) {
-                                "—"
-                            } else {
-                                "${percentOf(nutrition.currentCalorieKcal, nutrition.targetCalorieKcal)}%"
-                            },
-                            color = colors.contentStatusWarning,
-                            style = DesignSystemThemeImpl.typeScale.labelStrongS,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
+                NyummyBadge(
+                    label = if (isLoading) {
+                        "—"
+                    } else {
+                        "${percentOf(nutrition.currentCalorieKcal, nutrition.targetCalorieKcal)}%"
+                    },
+                    tone = NyummyBadgeTone.Warning,
+                )
             }
             if (expanded) {
                 Spacer(Modifier.height(NutritionMacroTopGap))
@@ -267,9 +252,12 @@ private fun NutritionMacro(
     val targetFraction = if (isLoading) {
         0f
     } else {
-        progressOf(progress.dailyGram, progress.goalGram).coerceIn(0f, 1f)
+        progressOf(progress.dailyGram, progress.goalGram)
     }
-    val animatedFraction by animateBarFillAsState(targetFraction)
+    // 첫 표시·펼침 시 0에서 목표 값으로 차오르도록 한 프레임 뒤에 목표를 밀어 넣는다.
+    // (값 사이 이동 애니메이션은 NyummyLinearProgress 가 내장)
+    var displayedFraction by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(targetFraction) { displayedFraction = targetFraction }
     Column(modifier = Modifier.width(NutritionMacroWidth)) {
         DandiText(
             text = if (isLoading) {
@@ -281,40 +269,14 @@ private fun NutritionMacro(
             style = DesignSystemThemeImpl.typeScale.labelStrongS,
         )
         Spacer(Modifier.height(NutritionMacroTrackGap))
-        Box(
+        NyummyLinearProgress(
+            progress = displayedFraction,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(NutritionMacroTrackHeight)
-                .background(colors.bgProgressTrack, DesignSystemThemeImpl.designSystemShape.pill),
-        ) {
-            if (animatedFraction > 0f) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(animatedFraction)
-                        .fillMaxHeight()
-                        .background(color, DesignSystemThemeImpl.designSystemShape.pill),
-                )
-            }
-        }
+                .height(NutritionMacroTrackHeight),
+            color = color,
+        )
     }
-}
-
-/**
- * 진행바 채움 비율을 애니메이션합니다.
- * 첫 표시에는 0에서 목표 값까지 차오르고, 이후 값 변경(날짜 선택 등)에도 부드럽게 이동합니다.
- */
-@Composable
-private fun animateBarFillAsState(targetFraction: Float): State<Float> {
-    var fraction by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(targetFraction) { fraction = targetFraction }
-    return animateFloatAsState(
-        targetValue = fraction,
-        animationSpec = tween(
-            durationMillis = BAR_FILL_ANIMATION_MILLIS,
-            easing = FastOutSlowInEasing,
-        ),
-        label = "nutritionBarFill",
-    )
 }
 
 private val DailySectionWidth = 350.dp
@@ -330,14 +292,11 @@ private val NutritionToggleChevronStroke = 1.6.dp
 private val NutritionCardInset = 16.dp
 private val NutritionCardVerticalInset = 10.dp
 private val NutritionTitleBottomGap = 2.dp
-private val NutritionRatioWidth = 62.dp
-private val NutritionRatioHeight = 26.dp
 private val NutritionMacroTopGap = 7.dp
 private val NutritionMacroGap = 10.dp
 private val NutritionMacroWidth = 96.dp
 private val NutritionMacroTrackGap = 7.dp
 private val NutritionMacroTrackHeight = 6.dp
-private const val BAR_FILL_ANIMATION_MILLIS = 600
 
 private val previewNutrition = DailyNutritionVO(
     currentCalorieKcal = 2_129,

@@ -413,11 +413,17 @@ fun NyummyBadge(
     }
 }
 
-/** Canonical determinate progress bar from Figma node `993:753`. */
+/**
+ * Canonical determinate progress bar from Figma node `993:753`.
+ *
+ * @param color 채움 색. 기본은 진행바 기본 토큰이며, 영양소별 색 등 데이터 시맨틱 색이
+ * 필요한 화면에서만 지정한다.
+ */
 @Composable
 fun NyummyLinearProgress(
     progress: Float,
     modifier: Modifier = Modifier,
+    color: Color? = null,
 ) {
     val coercedProgress = progress.coerceIn(0f, 1f)
     val animatedProgress by animateFloatAsState(
@@ -448,7 +454,7 @@ fun NyummyLinearProgress(
             size.width * animatedProgress
         }
         drawRoundRect(
-            color = colors.dataProgressDefault,
+            color = color ?: colors.dataProgressDefault,
             size = size.copy(width = visualWidth.coerceAtMost(size.width)),
             cornerRadius = CornerRadius(radius, radius),
         )

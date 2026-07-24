@@ -19,10 +19,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.component.DandiText
+import com.dandi.nyummy.common.presentation.component.NyummyButton
+import com.dandi.nyummy.common.presentation.component.NyummyButtonStyle
 import com.dandi.nyummy.common.presentation.component.NyummyDestructiveDialog
 import com.dandi.nyummy.common.presentation.component.NyummyEditDialog
 import com.dandi.nyummy.common.presentation.component.NyummyMealNutritionIndicator
@@ -151,12 +152,9 @@ private fun HistoryMealDetailCard(
                         style = DesignSystemThemeImpl.typeScale.displayRegularL,
                     )
                 }
-                DetailPillButton(
+                NyummyButton(
                     label = stringResource(R.string.history_detail_close),
-                    container = colors.bgActionSecondaryDefault,
-                    content = colors.contentActionSecondary,
-                    border = colors.borderActionSecondary,
-                    width = DetailCloseWidth,
+                    style = NyummyButtonStyle.Secondary,
                     onClick = { onIntent(HistoryIntent.DismissMealDetail) },
                 )
             }
@@ -205,21 +203,15 @@ private fun HistoryMealDetailCard(
                     }
                     Spacer(Modifier.height(DetailTimeChipBottomGap))
                     Row {
-                        DetailPillButton(
+                        NyummyButton(
                             label = stringResource(R.string.history_detail_edit_name),
-                            container = colors.bgActionSecondaryDefault,
-                            content = colors.contentActionSecondary,
-                            border = colors.borderActionSecondary,
-                            width = DetailEditWidth,
+                            style = NyummyButtonStyle.Secondary,
                             onClick = { onIntent(HistoryIntent.ClickEditMealName) },
                         )
                         Spacer(Modifier.width(DetailActionGap))
-                        DetailPillButton(
+                        NyummyButton(
                             label = stringResource(R.string.history_detail_delete),
-                            container = colors.bgDangerSoft,
-                            content = colors.contentError,
-                            border = colors.borderDangerDefault,
-                            width = DetailDeleteWidth,
+                            style = NyummyButtonStyle.Danger,
                             onClick = { onIntent(HistoryIntent.ClickDeleteMeal) },
                         )
                     }
@@ -276,40 +268,11 @@ private fun HistoryMealDetailCard(
     }
 }
 
-@Composable
-private fun DetailPillButton(
-    label: String,
-    container: androidx.compose.ui.graphics.Color,
-    content: androidx.compose.ui.graphics.Color,
-    border: androidx.compose.ui.graphics.Color,
-    width: androidx.compose.ui.unit.Dp,
-    onClick: () -> Unit,
-) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.size(width, DetailActionHeight),
-        shape = DesignSystemThemeImpl.designSystemShape.pill,
-        color = container,
-        contentColor = content,
-        border = BorderStroke(DetailBorderWidth, border),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            DandiText(
-                text = label,
-                color = content,
-                style = DesignSystemThemeImpl.typeScale.labelStrongS,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}
-
 private val OverlayVerticalInset = 24.dp
 private val DetailCardWidth = 342.dp
 private val DetailCardInset = 20.dp
 private val DetailBorderWidth = 1.dp
 private val DetailTitleTopGap = 6.dp
-private val DetailCloseWidth = 64.dp
 private val DetailHeaderBottomGap = 12.dp
 private val DetailPhotoSize = 86.dp
 private val DetailPhotoPadding = 14.dp
@@ -317,10 +280,7 @@ private val DetailPhotoRightGap = 12.dp
 private val DetailTimeChipHeight = 60.dp
 private val DetailTimeChipInset = 12.dp
 private val DetailTimeChipBottomGap = 3.dp
-private val DetailEditWidth = 96.dp
-private val DetailDeleteWidth = 100.dp
 private val DetailActionGap = 8.dp
-private val DetailActionHeight = 44.dp
 private val DetailPhotoBottomGap = 12.dp
 private val DetailGoalChipWidth = 132.dp
 private val DetailGoalChipHeight = 56.dp
