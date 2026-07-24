@@ -1,12 +1,12 @@
 package com.dandi.nyummy.common.presentation.component
 
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -32,16 +32,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -54,29 +49,45 @@ import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.common.presentation.ui.theme.designSystemDropShadow
 
+/**
+ * 하단 내비게이션의 배치 형태.
+ *
+ * - [Compact]: 외곽선이 있는 기본 형태
+ * - [Floating]: 화면 위에 떠 있는 것처럼 그림자가 적용된 형태
+ * - [FullWidth]: 부모 영역의 가로 폭을 모두 사용하는 형태
+ */
 enum class NyummyBottomNavigationStyle {
     Compact,
     Floating,
     FullWidth,
 }
 
+/**
+ * 하단 내비게이션에 표시되는 화면 목록.
+ *
+ * 각 항목은 사용자에게 보여 줄 [label]과 아이콘 리소스인 [iconRes]를 가진다.
+ * 선언된 순서는 실제 하단 내비게이션의 표시 순서로 사용된다.
+ */
 enum class NyummyNavigationDestination(
     val label: String,
-    internal val icon: ImageVector,
+    @DrawableRes internal val iconRes: Int,
 ) {
-    Home("홈", NyummyNavigationIcons.Home),
-    History("히스토리", NyummyNavigationIcons.History),
-    Quest("퀘스트", NyummyNavigationIcons.Quest),
-    Collection("컬렉션", NyummyNavigationIcons.Collection),
-    Shop("상점", NyummyNavigationIcons.Shop),
+    Home("홈", R.drawable.nyummy_navigation_home),
+    History("히스토리", R.drawable.nyummy_navigation_history),
+    Quest("퀘스트", R.drawable.nyummy_navigation_quest),
+    Collection("컬렉션", R.drawable.nyummy_navigation_collection),
+    Shop("상점", R.drawable.nyummy_navigation_shop),
 }
 
 /**
- * Canonical rc.3 five-destination navigation.
+ * 앱의 주요 화면으로 이동할 때 사용하는 하단 내비게이션.
  *
- * Compact and Floating occupy the 370dp inset width from the 390dp reference viewport;
- * FullWidth consumes its parent width. The selected destination is the only state input so an
- * arbitrary tab order or an unsupported destination cannot accidentally drift from Figma.
+ * [NyummyNavigationDestination]에 정의된 화면을 순서대로 표시하며,
+ * [selectedDestination]에 해당하는 항목을 선택된 상태로 강조한다.
+ *
+ * 화면 이동 상태는 호출부에서 관리한다. 사용자가 항목을 누르면
+ * [onDestinationSelected]로 선택 결과를 전달하므로, 호출부에서 해당 화면으로 이동하면 된다.
+ * 배치 형태는 [style]로 지정할 수 있다.
  */
 @Composable
 fun NyummyBottomNavigation(
@@ -240,7 +251,7 @@ private fun NyummyBottomNavigationItem(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = destination.icon,
+                painter = painterResource(destination.iconRes),
                 contentDescription = null,
                 modifier = Modifier.size(NavigationIconSize),
                 tint = iconColor,
@@ -268,7 +279,12 @@ private fun NyummyBottomNavigationItem(
     }
 }
 
-/** Home quick action mapped to LIVE / Component / Home / Floating Today Meals. */
+/**
+ * 홈 화면에서 오늘의 식사 현황으로 이동할 때 사용하는 플로팅 버튼.
+ *
+ * [leadingIcon]을 전달하지 않으면 기본 음식 아이콘을 표시하며,
+ * 버튼을 누르면 [onClick]을 호출한다.
+ */
 @Composable
 fun NyummyFloatingTodayMeals(
     label: String,
@@ -336,120 +352,6 @@ fun NyummyFloatingTodayMeals(
     }
 }
 
-private object NyummyNavigationIcons {
-    // Icon applies the semantic tint at render time; black supplies only the vector alpha mask.
-    private val NavStroke = SolidColor(Color.Black)
-    private const val NavStrokeWidth = 2f
-
-    val Home: ImageVector = navVector {
-        path(stroke = NavStroke, fill = null, strokeLineWidth = NavStrokeWidth, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
-            moveTo(3f, 10.5f)
-            lineTo(12f, 3f)
-            lineTo(21f, 10.5f)
-            lineTo(21f, 21f)
-            lineTo(15f, 21f)
-            lineTo(15f, 15f)
-            lineTo(9f, 15f)
-            lineTo(9f, 21f)
-            lineTo(3f, 21f)
-            close()
-        }
-    }
-
-    val History: ImageVector = navVector {
-        path(stroke = NavStroke, fill = null, strokeLineWidth = NavStrokeWidth, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
-            moveTo(6f, 4f)
-            lineTo(18f, 4f)
-            curveTo(19.6569f, 4f, 21f, 5.3431f, 21f, 7f)
-            lineTo(21f, 18f)
-            curveTo(21f, 19.6569f, 19.6569f, 21f, 18f, 21f)
-            lineTo(6f, 21f)
-            curveTo(4.3431f, 21f, 3f, 19.6569f, 3f, 18f)
-            lineTo(3f, 7f)
-            curveTo(3f, 5.3431f, 4.3431f, 4f, 6f, 4f)
-            close()
-        }
-        path(stroke = NavStroke, fill = null, strokeLineWidth = NavStrokeWidth, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
-            moveTo(8f, 2f)
-            lineTo(8f, 6f)
-            moveTo(16f, 2f)
-            lineTo(16f, 6f)
-            moveTo(3f, 9f)
-            lineTo(21f, 9f)
-            moveTo(7f, 13f)
-            lineTo(10f, 13f)
-            moveTo(14f, 13f)
-            lineTo(17f, 13f)
-            moveTo(7f, 17f)
-            lineTo(10f, 17f)
-        }
-    }
-
-    val Quest: ImageVector = navVector {
-        path(stroke = NavStroke, fill = null, strokeLineWidth = NavStrokeWidth, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
-            moveTo(21f, 12f)
-            curveTo(21f, 16.9706f, 16.9706f, 21f, 12f, 21f)
-            curveTo(7.0294f, 21f, 3f, 16.9706f, 3f, 12f)
-            curveTo(3f, 7.0294f, 7.0294f, 3f, 12f, 3f)
-            curveTo(16.9706f, 3f, 21f, 7.0294f, 21f, 12f)
-            close()
-        }
-        path(stroke = NavStroke, fill = null, strokeLineWidth = NavStrokeWidth, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
-            moveTo(8f, 12f)
-            lineTo(10.5f, 14.5f)
-            lineTo(16f, 9f)
-        }
-    }
-
-    val Collection: ImageVector = navVector {
-        roundedCollectionSquare(3f, 3f)
-        roundedCollectionSquare(14f, 3f)
-        roundedCollectionSquare(3f, 14f)
-        roundedCollectionSquare(14f, 14f)
-    }
-
-    val Shop: ImageVector = navVector {
-        path(stroke = NavStroke, fill = null, strokeLineWidth = NavStrokeWidth, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
-            moveTo(5f, 8f)
-            lineTo(19f, 8f)
-            lineTo(18f, 21f)
-            lineTo(6f, 21f)
-            close()
-        }
-        path(stroke = NavStroke, fill = null, strokeLineWidth = NavStrokeWidth, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
-            moveTo(9f, 10f)
-            lineTo(9f, 6f)
-            curveTo(9f, 4.3431f, 10.3431f, 3f, 12f, 3f)
-            curveTo(13.6569f, 3f, 15f, 4.3431f, 15f, 6f)
-            lineTo(15f, 10f)
-        }
-    }
-
-    private fun ImageVector.Builder.roundedCollectionSquare(x: Float, y: Float) {
-        path(stroke = NavStroke, fill = null, strokeLineWidth = NavStrokeWidth, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
-            moveTo(x + 2f, y)
-            lineTo(x + 5f, y)
-            curveTo(x + 6.1046f, y, x + 7f, y + 0.8954f, x + 7f, y + 2f)
-            lineTo(x + 7f, y + 5f)
-            curveTo(x + 7f, y + 6.1046f, x + 6.1046f, y + 7f, x + 5f, y + 7f)
-            lineTo(x + 2f, y + 7f)
-            curveTo(x + 0.8954f, y + 7f, x, y + 6.1046f, x, y + 5f)
-            lineTo(x, y + 2f)
-            curveTo(x, y + 0.8954f, x + 0.8954f, y, x + 2f, y)
-            close()
-        }
-    }
-
-    private fun navVector(content: ImageVector.Builder.() -> Unit): ImageVector =
-        ImageVector.Builder(
-            defaultWidth = NavigationIconSize,
-            defaultHeight = NavigationIconSize,
-            viewportWidth = 24f,
-            viewportHeight = 24f,
-        ).apply(content).build()
-
-}
-
 private val NavigationBorderWidth = 1.dp
 private val InsetNavigationWidth = 370.dp
 private val InsetNavigationInset = 10.dp
@@ -485,11 +387,7 @@ private val FloatingMealsDotBorderWidth = 2.dp
 private fun NyummyBottomNavigationPreview() {
     DesignSystemTheme {
         Box(Modifier.width(390.dp), contentAlignment = Alignment.Center) {
-            NyummyBottomNavigation(
-                selectedDestination = NyummyNavigationDestination.History,
-                style = NyummyBottomNavigationStyle.Floating,
-                onDestinationSelected = {},
-            )
+            NyummyBottomNavigation(selectedDestination = NyummyNavigationDestination.History) {}
         }
     }
 }
