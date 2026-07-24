@@ -18,8 +18,6 @@ val appRoutes: List<AppRoute> = listOf(
 
 val appRouteByPath: Map<String, AppRoute> = appRoutes.associateBy { it.path }
 
-val bottomTabRoutes: List<AppRoute> = appRoutes.filter { it.isBottomTab }
-
 /**
  * 동적 구간(`{param}`)을 가진 계층형 라우트의 (패턴, 라우트) 목록.
  *
