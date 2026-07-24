@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -1031,7 +1032,9 @@ fun NyummyPhotoPicker(
 
     Surface(
         modifier = modifier
-            .size(PhotoPickerWidth, PhotoPickerHeight)
+            .widthIn(max = PhotoPickerWidth)
+            .fillMaxWidth()
+            .height(PhotoPickerHeight)
             .semantics {
                 this.contentDescription = contentDescription
                 stateDescription = status
@@ -1041,10 +1044,15 @@ fun NyummyPhotoPicker(
         contentColor = rootContent,
         border = BorderStroke(PhotoPickerBorderWidth, rootBorder),
     ) {
-        Box(Modifier.fillMaxSize()) {
+        // 350dp 기준 디자인 좌표를 유지하되, 좁은 화면에서는 우측 컬럼이 남은 폭에 맞춰 줄어든다.
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = PhotoPickerPhotoInset, end = PhotoPickerContentEndInset),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Box(
                 modifier = Modifier
-                    .offset(x = PhotoPickerPhotoOffsetX, y = PhotoPickerPhotoOffsetY)
                     .size(PhotoPickerPhotoSize)
                     .clip(photoShape)
                     .background(
@@ -1067,46 +1075,56 @@ fun NyummyPhotoPicker(
                     )
                 }
             }
-            DandiText(
-                text = "사진 · 필수",
+            Spacer(Modifier.width(PhotoPickerPhotoContentGap))
+            Column(
                 modifier = Modifier
-                    .offset(x = PhotoPickerContentOffsetX, y = PhotoPickerLabelOffsetY)
-                    .size(PhotoPickerLabelWidth, PhotoPickerLabelHeight),
-                color = if (state == NyummyPhotoPickerState.Disabled) {
-                    colors.contentInputDisabled
-                } else {
-                    colors.contentDefaultLevel1
-                },
-                style = DesignSystemThemeImpl.typeScale.labelRegularXS,
-            )
-            DandiText(
-                text = status,
-                modifier = Modifier
-                    .offset(x = PhotoPickerContentOffsetX, y = PhotoPickerStatusOffsetY)
-                    .size(PhotoPickerLabelWidth, PhotoPickerStatusHeight),
-                color = statusColor,
-                style = DesignSystemThemeImpl.typeScale.textStrongXL,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Surface(
-                onClick = onClick,
-                modifier = Modifier
-                    .offset(x = PhotoPickerContentOffsetX, y = PhotoPickerActionOffsetY)
-                    .size(PhotoPickerActionWidth, DesignSystemThemeImpl.designSystemSize.minimumTouchTarget),
-                enabled = actionEnabled,
-                shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius22),
-                color = actionContainer,
-                contentColor = actionContent,
-                border = BorderStroke(PhotoPickerBorderWidth, actionBorder),
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(top = PhotoPickerContentTopInset, bottom = PhotoPickerContentBottomInset),
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    DandiText(
-                        text = action,
-                        color = actionContent,
-                        style = DesignSystemThemeImpl.typeScale.labelStrongXS,
-                        textAlign = TextAlign.Center,
-                    )
+                DandiText(
+                    text = "사진 · 필수",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(PhotoPickerLabelHeight),
+                    color = if (state == NyummyPhotoPickerState.Disabled) {
+                        colors.contentInputDisabled
+                    } else {
+                        colors.contentDefaultLevel1
+                    },
+                    style = DesignSystemThemeImpl.typeScale.labelRegularXS,
+                )
+                Spacer(Modifier.height(PhotoPickerLabelStatusGap))
+                DandiText(
+                    text = status,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(PhotoPickerStatusHeight),
+                    color = statusColor,
+                    style = DesignSystemThemeImpl.typeScale.textStrongXL,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.weight(1f))
+                Surface(
+                    onClick = onClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(DesignSystemThemeImpl.designSystemSize.minimumTouchTarget),
+                    enabled = actionEnabled,
+                    shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius22),
+                    color = actionContainer,
+                    contentColor = actionContent,
+                    border = BorderStroke(PhotoPickerBorderWidth, actionBorder),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        DandiText(
+                            text = action,
+                            color = actionContent,
+                            style = DesignSystemThemeImpl.typeScale.labelStrongXS,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
             }
         }
@@ -1218,17 +1236,15 @@ private val MealDetailActionHeight = 52.dp
 private val PhotoPickerWidth = 350.dp
 private val PhotoPickerHeight = 166.dp
 private val PhotoPickerBorderWidth = 1.dp
-private val PhotoPickerPhotoOffsetX = 12.dp
-private val PhotoPickerPhotoOffsetY = 15.dp
+private val PhotoPickerPhotoInset = 12.dp
 private val PhotoPickerPhotoSize = 136.dp
-private val PhotoPickerContentOffsetX = 166.dp
-private val PhotoPickerLabelOffsetY = 20.dp
-private val PhotoPickerLabelWidth = 150.dp
+private val PhotoPickerPhotoContentGap = 18.dp
+private val PhotoPickerContentEndInset = 18.dp
+private val PhotoPickerContentTopInset = 20.dp
+private val PhotoPickerContentBottomInset = 32.dp
 private val PhotoPickerLabelHeight = 20.dp
-private val PhotoPickerStatusOffsetY = 42.dp
+private val PhotoPickerLabelStatusGap = 2.dp
 private val PhotoPickerStatusHeight = 34.dp
-private val PhotoPickerActionOffsetY = 86.dp
-private val PhotoPickerActionWidth = 166.dp
 
 @Preview(showBackground = true)
 @Composable
