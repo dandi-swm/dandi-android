@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
@@ -269,7 +270,8 @@ private fun FoodIconSection(
             }
         }
         Spacer(Modifier.height(spacing.space4))
-        Row {
+        // 고정 76dp 셀 4개(328dp)가 좁은 화면(360dp 이하) 가용 폭을 넘을 수 있어 가로 스크롤로 접근성 보장.
+        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
             foodIcons.forEach { icon ->
                 FoodIconCell(
                     icon = icon,
