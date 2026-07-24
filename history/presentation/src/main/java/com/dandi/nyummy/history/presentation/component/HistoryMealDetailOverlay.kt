@@ -26,8 +26,6 @@ import com.dandi.nyummy.common.presentation.component.NyummyButton
 import com.dandi.nyummy.common.presentation.component.NyummyButtonStyle
 import com.dandi.nyummy.common.presentation.component.NyummyDestructiveDialog
 import com.dandi.nyummy.common.presentation.component.NyummyEditDialog
-import com.dandi.nyummy.common.presentation.component.NyummyMealNutritionIndicator
-import com.dandi.nyummy.common.presentation.component.NyummyMealNutritionState
 import com.dandi.nyummy.common.presentation.component.NyummyModalScrim
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
@@ -44,7 +42,6 @@ import com.dandi.nyummy.history.presentation.model.dayLabelOf
 import com.dandi.nyummy.history.presentation.model.mealOrderLabelOf
 import com.dandi.nyummy.history.presentation.model.numberLabelOf
 import com.dandi.nyummy.history.presentation.model.percentOf
-import com.dandi.nyummy.history.presentation.model.toMealNutritionData
 
 /**
  * 히스토리 위에 뜨는 식사 상세 오버레이입니다.
@@ -260,9 +257,9 @@ private fun HistoryMealDetailCard(
                 }
             }
             Spacer(Modifier.height(DetailCalorieBottomGap))
-            NyummyMealNutritionIndicator(
-                data = toMealNutritionData(dailyNutrition, meal),
-                state = NyummyMealNutritionState.Final,
+            HistoryMealNutritionSection(
+                nutrition = dailyNutrition,
+                meal = meal,
             )
         }
     }

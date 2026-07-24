@@ -1,8 +1,5 @@
 package com.dandi.nyummy.common.presentation.component
 
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -27,23 +24,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -955,227 +944,6 @@ private fun MealDetailAction(
     }
 }
 
-enum class NyummyMealNutritionState {
-    Start,
-    DailyGoal,
-    Final,
-}
-
-@Immutable
-data class NyummyNutrientProgress(
-    val label: String,
-    val dailyValueLabel: String,
-    val goalValueLabel: String,
-    val mealValueLabel: String,
-    val dailyProgress: Float,
-    val mealProgress: Float,
-    val unit: String = "g",
-)
-
-@Immutable
-data class NyummyMealNutritionData(
-    val carbohydrate: NyummyNutrientProgress,
-    val protein: NyummyNutrientProgress,
-    val fat: NyummyNutrientProgress,
-)
-
-@Composable
-fun NyummyMealNutritionIndicator(
-    data: NyummyMealNutritionData,
-    modifier: Modifier = Modifier,
-    state: NyummyMealNutritionState = NyummyMealNutritionState.Final,
-    coachCharacter: @Composable () -> Unit = {},
-) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    Box(modifier.size(MealNutritionWidth, MealNutritionHeight)) {
-        DandiText(
-            text = "영양 섭취 현황",
-            modifier = Modifier.size(MealNutritionTitleWidth, MealNutritionTitleHeight),
-            color = colors.contentDefaultLevel0,
-            style = DesignSystemThemeImpl.typeScale.textStrongM,
-            overflow = TextOverflow.Clip,
-        )
-        NutritionLegendDot(
-            color = colors.dataProgressDailyTotal,
-            modifier = Modifier.offset(x = DailyLegendDotOffsetX, y = NutritionLegendDotOffsetY),
-        )
-        DandiText(
-            text = "하루 누적",
-            modifier = Modifier.offset(x = DailyLegendTextOffsetX, y = NutritionLegendTextOffsetY),
-            color = colors.contentNutritionLabel,
-            style = DesignSystemThemeImpl.typeScale.labelStrongS,
-        )
-        NutritionLegendDot(
-            color = colors.dataProgressMealContribution,
-            modifier = Modifier.offset(x = MealLegendDotOffsetX, y = NutritionLegendDotOffsetY),
-        )
-        DandiText(
-            text = "이 식사",
-            modifier = Modifier.offset(x = MealLegendTextOffsetX, y = NutritionLegendTextOffsetY),
-            color = colors.contentNutritionLabel,
-            style = DesignSystemThemeImpl.typeScale.labelStrongS,
-        )
-        NutrientProgressRow(
-            nutrient = data.carbohydrate,
-            state = state,
-            modifier = Modifier.offset(y = FirstNutrientOffsetY),
-        )
-        NutrientProgressRow(
-            nutrient = data.protein,
-            state = state,
-            modifier = Modifier.offset(y = SecondNutrientOffsetY),
-        )
-        NutrientProgressRow(
-            nutrient = data.fat,
-            state = state,
-            modifier = Modifier.offset(y = ThirdNutrientOffsetY),
-        )
-        Box(
-            modifier = Modifier
-                .offset(x = CoachTailOffsetX, y = CoachTailOffsetY)
-                .size(CoachTailSize)
-                .rotate(CoachTailRotation)
-                .background(colors.bgCoachBubble)
-                .border(CoachBorderWidth, colors.borderCoachBubble),
-        )
-        Surface(
-            modifier = Modifier
-                .offset(x = CoachBubbleOffsetX, y = CoachBubbleOffsetY)
-                .size(CoachBubbleWidth, CoachBubbleHeight),
-            shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius16),
-            color = colors.bgCoachBubble,
-            contentColor = colors.contentDefaultLevel0,
-            border = BorderStroke(CoachBorderWidth, colors.borderCoachBubble),
-        ) {
-            Box(Modifier.fillMaxSize()) {
-                DandiText(
-                    text = "냐미가 알려줄게!",
-                    modifier = Modifier.offset(x = CoachTextInsetX, y = CoachTitleOffsetY),
-                    color = colors.contentNutritionLabel,
-                    style = DesignSystemThemeImpl.typeScale.labelStrongS,
-                )
-                DandiText(
-                    text = "연한 바는 하루 누적,\n진한 바는 이 식사 양이야!",
-                    modifier = Modifier
-                        .offset(x = CoachTextInsetX, y = CoachCopyOffsetY)
-                        .width(CoachCopyWidth),
-                    color = colors.contentDefaultLevel0,
-                    style = DesignSystemThemeImpl.typeScale.voiceRegularM,
-                    maxLines = 2,
-                    overflow = TextOverflow.Clip,
-                )
-            }
-        }
-        Box(
-            modifier = Modifier
-                .offset(x = CoachCharacterOffsetX, y = CoachCharacterOffsetY)
-                .size(CoachCharacterWidth, CoachCharacterHeight),
-            contentAlignment = Alignment.Center,
-        ) {
-            coachCharacter()
-        }
-    }
-}
-
-@Composable
-private fun NutritionLegendDot(
-    color: Color,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier
-            .size(NutritionLegendDotSize)
-            .background(color, DesignSystemThemeImpl.designSystemShape.pill),
-    )
-}
-
-@Composable
-private fun NutrientProgressRow(
-    nutrient: NyummyNutrientProgress,
-    state: NyummyMealNutritionState,
-    modifier: Modifier = Modifier,
-) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    val dailyFraction by animateNutrientFillAsState(
-        targetFraction = if (state != NyummyMealNutritionState.Start) {
-            nutrient.dailyProgress.coerceIn(0f, 1f)
-        } else {
-            0f
-        },
-        label = "nutrientDailyFill",
-    )
-    val mealFraction by animateNutrientFillAsState(
-        targetFraction = if (state == NyummyMealNutritionState.Final) {
-            nutrient.mealProgress.coerceIn(0f, 1f)
-        } else {
-            0f
-        },
-        label = "nutrientMealFill",
-    )
-    Box(modifier.size(MealNutritionWidth, NutrientRowHeight)) {
-        DandiText(
-            text = nutrient.label,
-            modifier = Modifier.size(MealNutritionWidth, NutrientLabelHeight),
-            color = colors.contentNutritionLabel,
-            style = DesignSystemThemeImpl.typeScale.labelStrongS,
-        )
-        DandiText(
-            text = "하루 ${nutrient.dailyValueLabel} / ${nutrient.goalValueLabel}${nutrient.unit}",
-            modifier = Modifier
-                .offset(y = NutrientDailyLabelOffsetY)
-                .size(MealNutritionWidth, NutrientLabelHeight),
-            color = colors.contentNutritionLabel,
-            style = DesignSystemThemeImpl.typeScale.textRegularS,
-        )
-        Box(
-            modifier = Modifier
-                .offset(y = NutrientTrackOffsetY)
-                .size(MealNutritionWidth, NutrientTrackHeight)
-                .background(colors.bgProgressNutritionTrack, DesignSystemThemeImpl.designSystemShape.pill),
-        ) {
-            if (dailyFraction > 0f) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(dailyFraction)
-                        .fillMaxHeight()
-                        .background(colors.dataProgressDailyTotal, DesignSystemThemeImpl.designSystemShape.pill),
-                )
-            }
-            if (mealFraction > 0f) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(mealFraction)
-                        .fillMaxHeight()
-                        .background(colors.dataProgressMealContribution, DesignSystemThemeImpl.designSystemShape.pill),
-                )
-            }
-        }
-    }
-}
-
-/**
- * 영양 진행바 채움 비율을 애니메이션합니다.
- * 첫 표시에는 0에서 목표 값까지 차오르고, 상태 전환/값 변경 시에도 부드럽게 이동합니다.
- * 정적 프리뷰(Inspection 모드)에서는 애니메이션 없이 목표 값을 바로 그립니다.
- */
-@Composable
-private fun animateNutrientFillAsState(
-    targetFraction: Float,
-    label: String,
-): State<Float> {
-    val isInspection = LocalInspectionMode.current
-    var fraction by remember { mutableFloatStateOf(if (isInspection) targetFraction else 0f) }
-    LaunchedEffect(targetFraction) { fraction = targetFraction }
-    return animateFloatAsState(
-        targetValue = fraction,
-        animationSpec = tween(
-            durationMillis = NutrientFillAnimationMillis,
-            easing = LinearOutSlowInEasing,
-        ),
-        label = label,
-    )
-}
-
 enum class NyummyPhotoPickerState {
     Selected,
     Empty,
@@ -1446,44 +1214,6 @@ private val MealDetailThirdActionOffsetX = 432.dp
 private val MealDetailActionWidth = 192.dp
 private val MealDetailActionHeight = 52.dp
 
-private const val NutrientFillAnimationMillis = 600
-
-private val MealNutritionWidth = 302.dp
-private val MealNutritionHeight = 326.dp
-private val MealNutritionTitleWidth = 158.dp
-private val MealNutritionTitleHeight = 22.dp
-private val DailyLegendDotOffsetX = 168.dp
-private val MealLegendDotOffsetX = 240.dp
-private val NutritionLegendDotOffsetY = 9.dp
-private val NutritionLegendDotSize = 6.dp
-private val DailyLegendTextOffsetX = 178.dp
-private val MealLegendTextOffsetX = 250.dp
-private val NutritionLegendTextOffsetY = 3.dp
-private val FirstNutrientOffsetY = 36.dp
-private val SecondNutrientOffsetY = 104.dp
-private val ThirdNutrientOffsetY = 172.dp
-private val NutrientRowHeight = 50.dp
-private val NutrientLabelHeight = 18.dp
-private val NutrientDailyLabelOffsetY = 19.dp
-private val NutrientTrackOffsetY = 42.dp
-private val NutrientTrackHeight = 8.dp
-private val CoachTailOffsetX = 55.dp
-private val CoachTailOffsetY = 271.dp
-private val CoachTailSize = 14.dp
-private const val CoachTailRotation = 45f
-private val CoachBubbleOffsetX = 58.dp
-private val CoachBubbleOffsetY = 244.dp
-private val CoachBubbleWidth = 244.dp
-private val CoachBubbleHeight = 78.dp
-private val CoachBorderWidth = 1.dp
-private val CoachTextInsetX = 18.dp
-private val CoachTitleOffsetY = 11.dp
-private val CoachCopyOffsetY = 31.dp
-private val CoachCopyWidth = 208.dp
-private val CoachCharacterOffsetX = 0.dp
-private val CoachCharacterOffsetY = 258.dp
-private val CoachCharacterWidth = 62.dp
-private val CoachCharacterHeight = 66.dp
 
 private val PhotoPickerWidth = 350.dp
 private val PhotoPickerHeight = 166.dp
@@ -1525,42 +1255,6 @@ private fun NyummyHistoryComponentsPreview() {
             )
             NyummyPhotoPicker(state = NyummyPhotoPickerState.Empty, onClick = {})
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun NyummyMealNutritionIndicatorPreview() {
-    DesignSystemTheme {
-        NyummyMealNutritionIndicator(
-            data = NyummyMealNutritionData(
-                carbohydrate = NyummyNutrientProgress(
-                    label = "탄수화물",
-                    dailyValueLabel = "265",
-                    goalValueLabel = "300",
-                    mealValueLabel = "18",
-                    dailyProgress = 265f / 300f,
-                    mealProgress = 18f / 300f,
-                ),
-                protein = NyummyNutrientProgress(
-                    label = "단백질",
-                    dailyValueLabel = "124",
-                    goalValueLabel = "120",
-                    mealValueLabel = "42",
-                    dailyProgress = 124f / 120f,
-                    mealProgress = 42f / 120f,
-                ),
-                fat = NyummyNutrientProgress(
-                    label = "지방",
-                    dailyValueLabel = "68",
-                    goalValueLabel = "70",
-                    mealValueLabel = "21",
-                    dailyProgress = 68f / 70f,
-                    mealProgress = 21f / 70f,
-                ),
-            ),
-            state = NyummyMealNutritionState.Final,
-        )
     }
 }
 

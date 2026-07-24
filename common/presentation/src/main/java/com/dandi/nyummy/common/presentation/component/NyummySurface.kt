@@ -33,8 +33,12 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -42,6 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -459,6 +464,71 @@ fun NyummyLinearProgress(
             cornerRadius = CornerRadius(radius, radius),
         )
     }
+}
+
+/**
+ * 하루 누적(연한 채움) 위에 이 식사 기여(진한 채움)를 겹쳐 그리는 이중 진행바입니다.
+ *
+ * 첫 표시에는 0에서 목표 값까지 차오르고 값 변경 시 부드럽게 이동합니다.
+ * 정적 프리뷰(Inspection 모드)에서는 목표 값을 즉시 그립니다.
+ */
+@Composable
+fun NyummyDualLinearProgress(
+    primaryProgress: Float,
+    secondaryProgress: Float,
+    modifier: Modifier = Modifier,
+) {
+    val coercedPrimary = primaryProgress.coerceIn(0f, 1f)
+    val coercedSecondary = secondaryProgress.coerceIn(0f, 1f)
+    val animatedPrimary by animateIntroProgressAsState(coercedPrimary, "NyummyDualProgressPrimary")
+    val animatedSecondary by animateIntroProgressAsState(coercedSecondary, "NyummyDualProgressSecondary")
+    val colors = DesignSystemThemeImpl.designSystemColor
+    Canvas(
+        modifier = modifier
+            .height(ProgressTrackHeight)
+            .semantics {
+                progressBarRangeInfo = ProgressBarRangeInfo(coercedPrimary, 0f..1f)
+            },
+    ) {
+        val radius = size.height / 2f
+        drawRoundRect(
+            color = colors.bgProgressNutritionTrack,
+            cornerRadius = CornerRadius(radius, radius),
+        )
+        if (animatedPrimary > 0f) {
+            drawRoundRect(
+                color = colors.dataProgressDailyTotal,
+                size = size.copy(width = size.width * animatedPrimary),
+                cornerRadius = CornerRadius(radius, radius),
+            )
+        }
+        if (animatedSecondary > 0f) {
+            drawRoundRect(
+                color = colors.dataProgressMealContribution,
+                size = size.copy(width = size.width * animatedSecondary),
+                cornerRadius = CornerRadius(radius, radius),
+            )
+        }
+    }
+}
+
+/** 첫 표시에는 0에서 목표 값으로 차오르는 진행 애니메이션입니다. 프리뷰에서는 즉시 목표 값을 그립니다. */
+@Composable
+private fun animateIntroProgressAsState(
+    targetFraction: Float,
+    label: String,
+): State<Float> {
+    val isInspection = LocalInspectionMode.current
+    var fraction by remember { mutableFloatStateOf(if (isInspection) targetFraction else 0f) }
+    LaunchedEffect(targetFraction) { fraction = targetFraction }
+    return animateFloatAsState(
+        targetValue = fraction,
+        animationSpec = tween(
+            durationMillis = ProgressAnimationMillis,
+            easing = LinearOutSlowInEasing,
+        ),
+        label = label,
+    )
 }
 
 enum class NyummyLoadingSize {
