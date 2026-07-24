@@ -1,15 +1,9 @@
 package com.dandi.nyummy.history.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
-import com.dandi.nyummy.history.entity.DailyMealHistoryVO
-import com.dandi.nyummy.history.entity.DailyNutritionStatus
-import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
-import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.presentation.mock.HistoryMockData
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
-import com.dandi.nyummy.history.presentation.model.toCalendarNutritionStatus
-import com.dandi.nyummy.history.presentation.util.isAfter
 import com.dandi.nyummy.history.presentation.util.lastDayOf
 import com.dandi.nyummy.history.presentation.util.nextMonthOf
 import com.dandi.nyummy.history.presentation.util.previousMonthOf
@@ -56,11 +50,9 @@ class HistoryViewModel @Inject constructor() :
             is HistoryIntent.ChangeMealNameDraft ->
                 dispatch(HistoryReducerEvent.MealNameDraftChanged(intent.text))
 
-            HistoryIntent.ConfirmEditMealName -> {
-                // TODO: 식사 이름 수정 API 연동 (백엔드 미구현) — 현재는 화면 상태만 갱신
-                val draft = currentState.mealDetail?.nameDraft.orEmpty()
-                if (draft.isNotBlank()) dispatch(HistoryReducerEvent.MealNameEditCommitted)
-            }
+            // TODO: 식사 이름 수정 API 연동 (백엔드 미구현) — 현재는 화면 상태만 갱신
+            HistoryIntent.ConfirmEditMealName ->
+                dispatch(HistoryReducerEvent.MealNameEditCommitted)
 
             HistoryIntent.CancelEditMealName ->
                 dispatch(HistoryReducerEvent.MealNameEditCanceled)
@@ -68,7 +60,9 @@ class HistoryViewModel @Inject constructor() :
             HistoryIntent.ClickDeleteMeal ->
                 dispatch(HistoryReducerEvent.MealDeleteRequested)
 
-            HistoryIntent.ConfirmDeleteMeal -> deleteSelectedMeal()
+            // TODO: 식사 기록 삭제 API 연동 (백엔드 미구현) — 현재는 화면 상태만 갱신
+            HistoryIntent.ConfirmDeleteMeal ->
+                dispatch(HistoryReducerEvent.MealDeleted)
 
             HistoryIntent.CancelDeleteMeal ->
                 dispatch(HistoryReducerEvent.MealDeleteCanceled)
@@ -117,7 +111,7 @@ class HistoryViewModel @Inject constructor() :
                 detail.copy(nameDraft = event.text)
             }
 
-            HistoryReducerEvent.MealNameEditCommitted -> state.renameDetailMeal()
+            HistoryReducerEvent.MealNameEditCommitted -> state.commitMealNameEdit()
 
             HistoryReducerEvent.MealNameEditCanceled -> state.withMealDetail { detail ->
                 detail.copy(mode = HistoryMealDetailMode.Viewing, nameDraft = "")
@@ -131,21 +125,7 @@ class HistoryViewModel @Inject constructor() :
                 detail.copy(mode = HistoryMealDetailMode.Viewing)
             }
 
-            is HistoryReducerEvent.MealDeleted -> state.copy(
-                selectedDayMeals = event.dailyDetail.meals.toImmutableList(),
-                dailyNutrition = event.dailyDetail.nutrition,
-                mealDetail = null,
-                calendarDays = state.calendarDays.map { cell ->
-                    if (cell.inCurrentMonth && cell.date == event.dailyDetail.date) {
-                        cell.copy(
-                            nutritionStatus = event.calendarDay.status.toCalendarNutritionStatus(),
-                            foodIconIds = event.calendarDay.foodIconIds.toImmutableList(),
-                        )
-                    } else {
-                        cell
-                    }
-                }.toImmutableList(),
-            )
+            HistoryReducerEvent.MealDeleted -> state.deleteDetailMeal()
         }
 
     // TODO: 월 캘린더/일별 기록 조회 API 연동 시 아래 두 함수 본문을 UseCase 호출로 대체 (백엔드 미구현)
@@ -182,68 +162,4 @@ class HistoryViewModel @Inject constructor() :
         val day = currentState.selectedDate.day.coerceIn(1, lastDayOf(year, month))
         loadMonth(year = year, month = month, selectedDate = HistoryDateVO(year, month, day))
     }
-
-    private fun deleteSelectedMeal() {
-        // TODO: 식사 기록 삭제 API 연동 (백엔드 미구현) — 현재는 화면 상태만 갱신
-        val target = currentState.mealDetail?.meal ?: return
-        val remaining = currentState.selectedDayMeals
-            .filterNot { it.id == target.id }
-            .mapIndexed { index, meal -> meal.copy(orderIndex = index + 1) }
-        dispatch(
-            HistoryReducerEvent.MealDeleted(
-                dailyDetail = rebuildDailyDetail(remaining),
-                calendarDay = rebuildCalendarDay(remaining),
-            ),
-        )
-    }
-
-    private fun rebuildDailyDetail(meals: List<MealHistoryVO>): DailyMealHistoryVO {
-        val nutrition = currentState.dailyNutrition
-        return DailyMealHistoryVO(
-            date = currentState.selectedDate,
-            meals = meals,
-            nutrition = nutrition.copy(
-                currentCalorieKcal = meals.sumOf { it.calorieKcal },
-                carbohydrate = nutrition.carbohydrate.copy(dailyGram = meals.sumOf { it.carbohydrateGram }),
-                protein = nutrition.protein.copy(dailyGram = meals.sumOf { it.proteinGram }),
-                fat = nutrition.fat.copy(dailyGram = meals.sumOf { it.fatGram }),
-            ),
-        )
-    }
-
-    private fun rebuildCalendarDay(meals: List<MealHistoryVO>): HistoryCalendarDayVO {
-        val date = currentState.selectedDate
-        val hasRecord = meals.isNotEmpty() && !date.isAfter(currentState.today)
-        return HistoryCalendarDayVO(
-            date = date,
-            status = DailyNutritionStatus.of(
-                totalCalorieKcal = meals.sumOf { it.calorieKcal },
-                targetCalorieKcal = currentState.dailyNutrition.targetCalorieKcal,
-                hasRecord = hasRecord,
-            ),
-            foodIconIds = meals.take(2).map { it.foodIconId },
-            mealCount = meals.size,
-        )
-    }
-}
-
-private inline fun HistoryUIState.withMealDetail(
-    transform: (HistoryMealDetailUiState) -> HistoryMealDetailUiState,
-): HistoryUIState = mealDetail?.let { copy(mealDetail = transform(it)) } ?: this
-
-private fun HistoryUIState.renameDetailMeal(): HistoryUIState {
-    val detail = mealDetail ?: return this
-    val newName = detail.nameDraft.trim()
-    if (newName.isEmpty()) return this
-    val renamed = detail.meal.copy(name = newName)
-    return copy(
-        selectedDayMeals = selectedDayMeals
-            .map { meal -> if (meal.id == renamed.id) renamed else meal }
-            .toImmutableList(),
-        mealDetail = detail.copy(
-            meal = renamed,
-            mode = HistoryMealDetailMode.Viewing,
-            nameDraft = "",
-        ),
-    )
 }

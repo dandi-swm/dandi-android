@@ -2,7 +2,6 @@ package com.dandi.nyummy.history.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
-import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
@@ -51,14 +50,6 @@ sealed interface HistoryReducerEvent : ReducerEvent {
     /** 삭제가 취소되었습니다. */
     data object MealDeleteCanceled : HistoryReducerEvent
 
-    /**
-     * 식사 기록이 삭제되어 선택 날짜의 데이터가 갱신되었습니다.
-     *
-     * @property dailyDetail 삭제 후 다시 계산한 선택 날짜 상세
-     * @property calendarDay 삭제 후 다시 계산한 캘린더 셀 요약
-     */
-    data class MealDeleted(
-        val dailyDetail: DailyMealHistoryVO,
-        val calendarDay: HistoryCalendarDayVO,
-    ) : HistoryReducerEvent
+    /** 상세 오버레이에 열린 식사 기록의 삭제가 확정되었습니다. */
+    data object MealDeleted : HistoryReducerEvent
 }
