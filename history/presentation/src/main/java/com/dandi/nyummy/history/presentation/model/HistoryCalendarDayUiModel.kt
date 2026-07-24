@@ -5,10 +5,14 @@ import androidx.compose.runtime.Immutable
 import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.component.NyummyCalendarNutritionStatus
 import com.dandi.nyummy.common.presentation.component.NyummyCalendarWeekday
+import com.dandi.nyummy.common.presentation.component.NyummyMealNutritionData
+import com.dandi.nyummy.common.presentation.component.NyummyNutrientProgress
 import com.dandi.nyummy.history.entity.DailyNutritionStatus
+import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
+import com.dandi.nyummy.history.entity.NutrientProgressVO
 import com.dandi.nyummy.history.presentation.util.buildCalendarCells
 import com.dandi.nyummy.history.presentation.util.columnOf
 import kotlinx.collections.immutable.ImmutableList
@@ -111,3 +115,29 @@ fun mealCountLabelOf(count: Int): String = "${count}회 기록"
 
 /** 식사 행의 보조 정보("08:10 · 사진 기록") 라벨입니다. */
 fun mealRowMetaOf(meal: MealHistoryVO): String = "${timeLabelOf(meal.recordedAtMillis)} · 사진 기록"
+
+/** 천 단위 구분 기호가 들어간 숫자 라벨("2,129")입니다. */
+fun numberLabelOf(value: Int): String = String.format(Locale.KOREA, "%,d", value)
+
+/** 하루 누적과 이 식사의 영양 진행을 공용 이중 진행바 데이터로 변환합니다. */
+fun toMealNutritionData(
+    nutrition: DailyNutritionVO,
+    meal: MealHistoryVO,
+): NyummyMealNutritionData = NyummyMealNutritionData(
+    carbohydrate = nutrientProgressOf("탄수화물", nutrition.carbohydrate, meal.carbohydrateGram),
+    protein = nutrientProgressOf("단백질", nutrition.protein, meal.proteinGram),
+    fat = nutrientProgressOf("지방", nutrition.fat, meal.fatGram),
+)
+
+private fun nutrientProgressOf(
+    label: String,
+    progress: NutrientProgressVO,
+    mealGram: Int,
+): NyummyNutrientProgress = NyummyNutrientProgress(
+    label = label,
+    dailyValueLabel = progress.dailyGram.toString(),
+    goalValueLabel = progress.goalGram.toString(),
+    mealValueLabel = mealGram.toString(),
+    dailyProgress = progressOf(progress.dailyGram, progress.goalGram),
+    mealProgress = progressOf(mealGram, progress.goalGram),
+)
