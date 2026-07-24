@@ -1,5 +1,8 @@
 package com.dandi.nyummy.common.presentation.component
 
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -24,6 +27,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -1086,6 +1095,22 @@ private fun NutrientProgressRow(
     modifier: Modifier = Modifier,
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
+    val dailyFraction by animateNutrientFillAsState(
+        targetFraction = if (state != NyummyMealNutritionState.Start) {
+            nutrient.dailyProgress.coerceIn(0f, 1f)
+        } else {
+            0f
+        },
+        label = "nutrientDailyFill",
+    )
+    val mealFraction by animateNutrientFillAsState(
+        targetFraction = if (state == NyummyMealNutritionState.Final) {
+            nutrient.mealProgress.coerceIn(0f, 1f)
+        } else {
+            0f
+        },
+        label = "nutrientMealFill",
+    )
     Box(modifier.size(MealNutritionWidth, NutrientRowHeight)) {
         DandiText(
             text = nutrient.label,
@@ -1107,24 +1132,45 @@ private fun NutrientProgressRow(
                 .size(MealNutritionWidth, NutrientTrackHeight)
                 .background(colors.bgProgressNutritionTrack, DesignSystemThemeImpl.designSystemShape.pill),
         ) {
-            if (state != NyummyMealNutritionState.Start) {
+            if (dailyFraction > 0f) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(nutrient.dailyProgress.coerceIn(0f, 1f))
+                        .fillMaxWidth(dailyFraction)
                         .fillMaxHeight()
                         .background(colors.dataProgressDailyTotal, DesignSystemThemeImpl.designSystemShape.pill),
                 )
             }
-            if (state == NyummyMealNutritionState.Final) {
+            if (mealFraction > 0f) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(nutrient.mealProgress.coerceIn(0f, 1f))
+                        .fillMaxWidth(mealFraction)
                         .fillMaxHeight()
                         .background(colors.dataProgressMealContribution, DesignSystemThemeImpl.designSystemShape.pill),
                 )
             }
         }
     }
+}
+
+/**
+ * 영양 진행바 채움 비율을 애니메이션합니다.
+ * 첫 표시에는 0에서 목표 값까지 차오르고, 상태 전환/값 변경 시에도 부드럽게 이동합니다.
+ */
+@Composable
+private fun animateNutrientFillAsState(
+    targetFraction: Float,
+    label: String,
+): State<Float> {
+    var fraction by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(targetFraction) { fraction = targetFraction }
+    return animateFloatAsState(
+        targetValue = fraction,
+        animationSpec = tween(
+            durationMillis = NutrientFillAnimationMillis,
+            easing = LinearOutSlowInEasing,
+        ),
+        label = label,
+    )
 }
 
 enum class NyummyPhotoPickerState {
@@ -1396,6 +1442,8 @@ private val MealDetailSecondActionOffsetX = 224.dp
 private val MealDetailThirdActionOffsetX = 432.dp
 private val MealDetailActionWidth = 192.dp
 private val MealDetailActionHeight = 52.dp
+
+private const val NutrientFillAnimationMillis = 600
 
 private val MealNutritionWidth = 302.dp
 private val MealNutritionHeight = 326.dp
