@@ -289,6 +289,7 @@ private fun HistoryDailySectionPreview() {
                     id = "preview-1",
                     name = "치킨 샐러드",
                     foodIconId = "salad",
+                    recordedAt = "08:10",
                     calorieKcal = 412,
                     orderIndex = 1,
                 ),

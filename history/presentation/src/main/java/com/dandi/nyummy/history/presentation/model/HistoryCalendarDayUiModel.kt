@@ -17,8 +17,6 @@ import com.dandi.nyummy.history.presentation.util.buildCalendarCells
 import com.dandi.nyummy.history.presentation.util.columnOf
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 /**
@@ -81,10 +79,6 @@ fun monthLabelOf(year: Int, month: Int): String = "${year}년 ${month}월"
 /** "7월 18일" 형태의 날짜 라벨입니다. */
 fun dayLabelOf(date: HistoryDateVO): String = "${date.month}월 ${date.day}일"
 
-/** 촬영 시각 epoch millis 를 "08:10" 형태로 바꿉니다. */
-fun timeLabelOf(recordedAtMillis: Long): String =
-    SimpleDateFormat("HH:mm", Locale.KOREA).format(Date(recordedAtMillis))
-
 /**
  * 하루 안의 순서 라벨입니다. 디자인 시안의 표기(첫 끼 → n 번째 끼니 → 마지막 끼니)를 따릅니다.
  */
@@ -114,7 +108,7 @@ fun progressOf(current: Int, goal: Int): Float =
 fun mealCountLabelOf(count: Int): String = "${count}회 기록"
 
 /** 식사 행의 보조 정보("08:10 · 사진 기록") 라벨입니다. */
-fun mealRowMetaOf(meal: MealHistoryVO): String = "${timeLabelOf(meal.recordedAtMillis)} · 사진 기록"
+fun mealRowMetaOf(meal: MealHistoryVO): String = "${meal.recordedAt} · 사진 기록"
 
 /** 천 단위 구분 기호가 들어간 숫자 라벨("2,129")입니다. */
 fun numberLabelOf(value: Int): String = String.format(Locale.KOREA, "%,d", value)

@@ -110,8 +110,7 @@ internal object HistoryMockData {
                 name = template.name,
                 photoUrl = "",
                 foodIconId = template.foodIconId,
-                recordedAtMillis = GregorianCalendar(date.year, date.month - 1, date.day, hour, minute)
-                    .timeInMillis,
+                recordedAt = "%02d:%02d".format(hour, minute),
                 calorieKcal = template.calorieKcal,
                 carbohydrateGram = template.carbohydrateGram,
                 proteinGram = template.proteinGram,

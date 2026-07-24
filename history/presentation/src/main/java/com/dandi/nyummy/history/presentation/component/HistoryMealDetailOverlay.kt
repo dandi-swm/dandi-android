@@ -43,7 +43,6 @@ import com.dandi.nyummy.history.presentation.model.dayLabelOf
 import com.dandi.nyummy.history.presentation.model.mealOrderLabelOf
 import com.dandi.nyummy.history.presentation.model.numberLabelOf
 import com.dandi.nyummy.history.presentation.model.percentOf
-import com.dandi.nyummy.history.presentation.model.timeLabelOf
 import com.dandi.nyummy.history.presentation.model.toMealNutritionData
 
 /**
@@ -94,7 +93,7 @@ internal fun HistoryMealDetailOverlay(
                     fieldLabel = stringResource(R.string.history_edit_dialog_field_label),
                     fieldValue = detail.nameDraft,
                     onFieldValueChange = { onIntent(HistoryIntent.ChangeMealNameDraft(it)) },
-                    timeLabel = "촬영 시각 · ${timeLabelOf(detail.meal.recordedAtMillis)} · 수정 불가",
+                    timeLabel = "촬영 시각 · ${detail.meal.recordedAt} · 수정 불가",
                     cancelLabel = stringResource(R.string.history_edit_dialog_cancel),
                     confirmLabel = stringResource(R.string.history_edit_dialog_confirm),
                     onCancel = { onIntent(HistoryIntent.CancelEditMealName) },
@@ -104,7 +103,7 @@ internal fun HistoryMealDetailOverlay(
                 HistoryMealDetailMode.ConfirmingDelete -> NyummyDestructiveDialog(
                     title = stringResource(R.string.history_delete_dialog_title),
                     body = stringResource(R.string.history_delete_dialog_body),
-                    targetLabel = "${detail.meal.name} · ${timeLabelOf(detail.meal.recordedAtMillis)}",
+                    targetLabel = "${detail.meal.name} · ${detail.meal.recordedAt}",
                     helper = stringResource(R.string.history_delete_dialog_helper),
                     cancelLabel = stringResource(R.string.history_delete_dialog_cancel),
                     confirmLabel = stringResource(R.string.history_delete_dialog_confirm),
@@ -198,7 +197,7 @@ private fun HistoryMealDetailCard(
                                 style = DesignSystemThemeImpl.typeScale.labelStrongS,
                             )
                             DandiText(
-                                text = timeLabelOf(meal.recordedAtMillis),
+                                text = meal.recordedAt,
                                 color = colors.contentWarning,
                                 style = DesignSystemThemeImpl.typeScale.textStrongXL,
                             )
@@ -339,6 +338,7 @@ private fun HistoryMealDetailOverlayPreview() {
                     id = "preview-1",
                     name = "치킨 샐러드",
                     foodIconId = "salad",
+                    recordedAt = "08:10",
                     calorieKcal = 412,
                     carbohydrateGram = 18,
                     proteinGram = 42,
