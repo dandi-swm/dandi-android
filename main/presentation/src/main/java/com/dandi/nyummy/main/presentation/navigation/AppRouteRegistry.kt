@@ -1,8 +1,11 @@
 package com.dandi.nyummy.main.presentation.navigation
 
+import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.main.domain.deeplink.RoutePattern
 import com.dandi.nyummy.home.domain.HomePage as HomeNavigationPage
 import com.dandi.nyummy.home.presentation.HomePage as HomeScreen
+import com.dandi.nyummy.meal.domain.MealRecordPage as MealRecordNavigationPage
+import com.dandi.nyummy.meal.presentation.MealRecordPage as MealRecordScreen
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
@@ -12,7 +15,17 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = HomeNavigationPage.PATH,
         isBottomTab = true,
-        render = { HomeScreen() },
+        render = {
+            val navigationHelper = LocalNavigationHelper.current
+            HomeScreen(
+                onFeedClick = { navigationHelper.navigateTo(MealRecordNavigationPage) },
+            )
+        },
+    ),
+    AppRoute(
+        path = MealRecordNavigationPage.PATH,
+        isBottomTab = false,
+        render = { MealRecordScreen() },
     ),
 )
 
