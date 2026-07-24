@@ -1,6 +1,8 @@
 package com.dandi.nyummy.main.presentation.navigation
 
 import com.dandi.nyummy.main.domain.deeplink.RoutePattern
+import com.dandi.nyummy.history.domain.HistoryPage as HistoryNavigationPage
+import com.dandi.nyummy.history.presentation.HistoryPage as HistoryScreen
 import com.dandi.nyummy.home.domain.HomePage as HomeNavigationPage
 import com.dandi.nyummy.home.presentation.HomePage as HomeScreen
 
@@ -13,6 +15,11 @@ val appRoutes: List<AppRoute> = listOf(
         path = HomeNavigationPage.PATH,
         isBottomTab = true,
         render = { HomeScreen() },
+    ),
+    AppRoute(
+        path = HistoryNavigationPage.PATH,
+        isBottomTab = true,
+        render = { HistoryScreen() },
     ),
 )
 

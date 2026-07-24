@@ -57,6 +57,8 @@ dependencies {
     implementation(project(":main:domain"))
     implementation(project(":main:entity"))
     implementation(project(":common:presentation"))
+    implementation(project(":history:domain"))
+    implementation(project(":history:presentation"))
     implementation(project(":home:domain"))
     implementation(project(":home:presentation"))
 
