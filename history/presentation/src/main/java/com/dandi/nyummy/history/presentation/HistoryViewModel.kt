@@ -163,6 +163,11 @@ class HistoryViewModel @Inject constructor() :
 
     private fun selectDate(date: HistoryDateVO) {
         if (date == currentState.selectedDate) return
+        // 인접 월 날짜를 선택하면 해당 월로 이동하면서 그 날짜를 선택한다.
+        if (date.year != currentState.displayedYear || date.month != currentState.displayedMonth) {
+            loadMonth(year = date.year, month = date.month, selectedDate = date)
+            return
+        }
         dispatch(
             HistoryReducerEvent.DaySelected(
                 date = date,
