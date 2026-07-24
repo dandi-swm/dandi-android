@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -250,8 +251,9 @@ private fun NutritionMacro(
         progressOf(progress.dailyGram, progress.goalGram)
     }
     // 첫 표시·펼침 시 0에서 목표 값으로 차오르도록 한 프레임 뒤에 목표를 밀어 넣는다.
-    // (값 사이 이동 애니메이션은 NyummyLinearProgress 가 내장)
-    var displayedFraction by remember { mutableFloatStateOf(0f) }
+    // (값 사이 이동 애니메이션은 NyummyLinearProgress 가 내장, 프리뷰에서는 즉시 목표 값 표시)
+    val isInspection = LocalInspectionMode.current
+    var displayedFraction by remember { mutableFloatStateOf(if (isInspection) targetFraction else 0f) }
     LaunchedEffect(targetFraction) { displayedFraction = targetFraction }
     Column(modifier = Modifier.width(NutritionMacroWidth)) {
         DandiText(

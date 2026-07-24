@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -1155,13 +1156,15 @@ private fun NutrientProgressRow(
 /**
  * 영양 진행바 채움 비율을 애니메이션합니다.
  * 첫 표시에는 0에서 목표 값까지 차오르고, 상태 전환/값 변경 시에도 부드럽게 이동합니다.
+ * 정적 프리뷰(Inspection 모드)에서는 애니메이션 없이 목표 값을 바로 그립니다.
  */
 @Composable
 private fun animateNutrientFillAsState(
     targetFraction: Float,
     label: String,
 ): State<Float> {
-    var fraction by remember { mutableFloatStateOf(0f) }
+    val isInspection = LocalInspectionMode.current
+    var fraction by remember { mutableFloatStateOf(if (isInspection) targetFraction else 0f) }
     LaunchedEffect(targetFraction) { fraction = targetFraction }
     return animateFloatAsState(
         targetValue = fraction,
@@ -1522,6 +1525,42 @@ private fun NyummyHistoryComponentsPreview() {
             )
             NyummyPhotoPicker(state = NyummyPhotoPickerState.Empty, onClick = {})
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun NyummyMealNutritionIndicatorPreview() {
+    DesignSystemTheme {
+        NyummyMealNutritionIndicator(
+            data = NyummyMealNutritionData(
+                carbohydrate = NyummyNutrientProgress(
+                    label = "탄수화물",
+                    dailyValueLabel = "265",
+                    goalValueLabel = "300",
+                    mealValueLabel = "18",
+                    dailyProgress = 265f / 300f,
+                    mealProgress = 18f / 300f,
+                ),
+                protein = NyummyNutrientProgress(
+                    label = "단백질",
+                    dailyValueLabel = "124",
+                    goalValueLabel = "120",
+                    mealValueLabel = "42",
+                    dailyProgress = 124f / 120f,
+                    mealProgress = 42f / 120f,
+                ),
+                fat = NyummyNutrientProgress(
+                    label = "지방",
+                    dailyValueLabel = "68",
+                    goalValueLabel = "70",
+                    mealValueLabel = "21",
+                    dailyProgress = 68f / 70f,
+                    mealProgress = 21f / 70f,
+                ),
+            ),
+            state = NyummyMealNutritionState.Final,
+        )
     }
 }
 
