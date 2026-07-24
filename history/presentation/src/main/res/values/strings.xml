@@ -8,8 +8,8 @@
     <string name="history_legend_no_record">기록 없음</string>
 
     <string name="history_nutrition_title">하루 영양 현황</string>
-    <string name="history_nutrition_collapse">접기 ∧</string>
-    <string name="history_nutrition_expand">펼치기 ∨</string>
+    <string name="history_nutrition_collapse">접기</string>
+    <string name="history_nutrition_expand">펼치기</string>
     <string name="history_nutrition_loading">영양 정보를 불러오는 중</string>
 
     <string name="history_empty_meals">아직 기록한 식사가 없어요</string>

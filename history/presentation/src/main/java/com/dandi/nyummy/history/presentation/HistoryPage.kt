@@ -67,7 +67,6 @@ private fun HistoryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .statusBarsPadding()
                 .padding(top = PageTopGap, bottom = PageBottomGap),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
