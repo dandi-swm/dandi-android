@@ -3,8 +3,6 @@ package com.dandi.nyummy.meal.presentation
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,11 +21,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -45,6 +41,7 @@ import com.dandi.nyummy.common.presentation.component.NyummyButton
 import com.dandi.nyummy.common.presentation.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.component.NyummyButtonStyle
 import com.dandi.nyummy.common.presentation.component.NyummyPhotoPicker
+import com.dandi.nyummy.common.presentation.component.NyummyScreenHeader
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.meal.entity.MealRecordVO
@@ -85,8 +82,10 @@ private fun MealRecordScreen(
             .background(colors.bgSurfaceIvory)
             .statusBarsPadding(),
     ) {
-        MealRecordHeader(
+        NyummyScreenHeader(
+            title = stringResource(R.string.meal_record_title),
             onBackClick = { onIntent(MealRecordIntent.ClickBack) },
+            backContentDescription = stringResource(R.string.meal_record_back_content_description),
             modifier = Modifier.padding(horizontal = spacing.space16),
         )
         Column(
@@ -146,41 +145,6 @@ private fun MealRecordScreen(
             )
             Spacer(Modifier.height(spacing.space12))
         }
-    }
-}
-
-@Composable
-private fun MealRecordHeader(
-    onBackClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(DesignSystemThemeImpl.designSystemSize.minimumTouchTarget)
-                .clickable(
-                    role = Role.Button,
-                    onClick = onBackClick,
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_meal_back_chevron),
-                contentDescription = stringResource(R.string.meal_record_back_content_description),
-                tint = DesignSystemThemeImpl.designSystemColor.contentIconLevel0,
-            )
-        }
-        Spacer(Modifier.width(DesignSystemThemeImpl.designSystemSpacing.space8))
-        DandiText(
-            text = stringResource(R.string.meal_record_title),
-            color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel0,
-            style = DesignSystemThemeImpl.typeScale.displayRegularXL,
-        )
     }
 }
 
