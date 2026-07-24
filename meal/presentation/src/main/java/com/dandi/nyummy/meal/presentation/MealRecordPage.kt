@@ -10,10 +10,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -79,8 +77,7 @@ private fun MealRecordScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(colors.bgSurfaceIvory)
-            .statusBarsPadding(),
+            .background(colors.bgSurfaceIvory),
     ) {
         NyummyScreenHeader(
             title = stringResource(R.string.meal_record_title),
@@ -123,9 +120,7 @@ private fun MealRecordScreen(
             Spacer(Modifier.height(spacing.space24))
         }
         Column(
-            modifier = Modifier
-                .padding(horizontal = spacing.space20)
-                .navigationBarsPadding(),
+            modifier = Modifier.padding(horizontal = spacing.space20),
         ) {
             NyummyButton(
                 label = stringResource(R.string.meal_record_cta),
