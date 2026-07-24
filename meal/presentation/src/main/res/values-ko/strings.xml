@@ -1,0 +1,17 @@
+<resources>
+    <string name="meal_record_title">식사 기록</string>
+    <string name="meal_record_heading">사진과 음식 설명을 남겨주세요</string>
+    <string name="meal_record_back_content_description">뒤로 가기</string>
+    <string name="meal_record_description_label">음식 설명 · 필수</string>
+    <string name="meal_record_description_helper">사진 속 음식을 한 문장으로 적어주세요.</string>
+    <string name="meal_record_time_label">촬영 시각</string>
+    <string name="meal_record_time_photo_required">사진을 첨부하면 표시돼요</string>
+    <string name="meal_record_icon_section_label">음식 아이콘 · 필수</string>
+    <string name="meal_record_icon_view_all">전체보기 ›</string>
+    <string name="meal_record_icon_salad">샐러드</string>
+    <string name="meal_record_icon_rice">밥</string>
+    <string name="meal_record_icon_sandwich">샌드위치</string>
+    <string name="meal_record_icon_sushi">초밥</string>
+    <string name="meal_record_cta">식사 기록하기</string>
+    <string name="meal_record_cta_note">사진·음식 설명·아이콘을 확인한 뒤 기록해요.</string>
+</resources>
