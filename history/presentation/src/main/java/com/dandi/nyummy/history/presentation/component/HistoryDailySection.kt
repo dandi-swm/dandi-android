@@ -1,7 +1,7 @@
 package com.dandi.nyummy.history.presentation.component
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,9 +25,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -214,31 +216,24 @@ private fun HistoryDailyNutritionCard(
     }
 }
 
-/** 접힘 상태를 위/아래 방향으로 보여주는 셰브론입니다. 공용 캘린더 화살표와 같은 Canvas 방식으로 그립니다. */
+/** 접힘 상태를 위/아래 방향으로 보여주는 셰브론입니다. 전환 시 회전 애니메이션으로 뒤집힙니다. */
 @Composable
 private fun NutritionToggleChevron(
     pointsUp: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val color = DesignSystemThemeImpl.designSystemColor.contentActionSecondary
-    Canvas(modifier.size(NutritionToggleChevronSize)) {
-        val tipY = if (pointsUp) size.height * 0.3f else size.height * 0.7f
-        val baseY = if (pointsUp) size.height * 0.7f else size.height * 0.3f
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.15f, baseY),
-            end = Offset(size.width * 0.5f, tipY),
-            strokeWidth = NutritionToggleChevronStroke.toPx(),
-            cap = StrokeCap.Round,
-        )
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.5f, tipY),
-            end = Offset(size.width * 0.85f, baseY),
-            strokeWidth = NutritionToggleChevronStroke.toPx(),
-            cap = StrokeCap.Round,
-        )
-    }
+    val rotation by animateFloatAsState(
+        targetValue = if (pointsUp) 0f else 180f,
+        label = "nutritionToggleChevron",
+    )
+    Icon(
+        imageVector = Icons.Filled.KeyboardArrowUp,
+        contentDescription = null,
+        modifier = modifier
+            .size(NutritionToggleChevronSize)
+            .graphicsLayer { rotationZ = rotation },
+        tint = DesignSystemThemeImpl.designSystemColor.contentActionSecondary,
+    )
 }
 
 @Composable
@@ -286,9 +281,8 @@ private val EmptyMessageVerticalGap = 28.dp
 private val MealRowGap = 8.dp
 
 private val NutritionCardBorderWidth = 1.dp
-private val NutritionToggleChevronGap = 4.dp
-private val NutritionToggleChevronSize = 12.dp
-private val NutritionToggleChevronStroke = 1.6.dp
+private val NutritionToggleChevronGap = 2.dp
+private val NutritionToggleChevronSize = 16.dp
 private val NutritionCardInset = 16.dp
 private val NutritionCardVerticalInset = 10.dp
 private val NutritionTitleBottomGap = 2.dp
