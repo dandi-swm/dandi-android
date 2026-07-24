@@ -67,24 +67,24 @@ A screen's identity is its **`path`**. The same path drives in-app navigation, t
 
 ## In-app navigation vs deep links — two separate signals
 
-- **In-app** (tab click, list-item click): `navigateTo(Page)` → `NavSignal.GoToDestPage` → `handleNavRoute` → **push** (with `bringToFront` dedup). Navigating to `Search` (the home tab) resets to a single `Search` root (`navigateToSearchStack`).
+- **In-app** (tab click, list-item click): `navigateTo(Page)` → `NavSignal.GoToDestPage` → `handleNavRoute` → **push** (with `bringToFront` dedup). Navigating to a bottom-tab root (currently only `Home`) is handled by `handleNavRoute`, which brings the tab root to front instead of duplicating it.
 - **Deep link, cold start** (`MainActivity.onCreate`): `resolveStartStack(intent.data)` → 매칭된 라우트의 `syntheticStack`이 **전체 부모 체인**을 구성하고, URI 없음·미매칭이면 Nyummy에서는 `HomePage` 단일 스택으로 fallback한다. `rememberNavBackStack` 전에 구성한다.
 - **Deep link, warm start** (`MainActivity.onNewIntent`, `singleTop`): `resolveNewIntentRoute` → `navigateDeepLink` → `NavSignal.DeepLink` → `handleDeepLink`:
   - **leaf screen** → **bring-to-front**: keep the user's current stack, surface only the target key. (Preserving context is intended.)
   - **tab root** (`isBottomTab` — Nyummy에서는 `RootComposable`의 `Scaffold(bottomBar = …)`가 바텀 네비게이션을 표시한다) → `handleNavRoute`에 위임해 탭 루트 시맨틱을 유지한다.
 
-> ⚠️ **Illustrative example.** `/articleList/articlePage/{articleId}` (and the `123` rows below) is a **hypothetical** route used to show the nested/`{param}` mechanism. There is currently **no dynamic `{param}` route registered** in `appRoutes` (so `appRoutePatterns` is empty at runtime); the only registered paths are `""` (Intro), `/search`, `/favorite`, `/fullScreenMedia`. The example is validated only by the pure-logic unit tests (`RouteMatcherTest`/`RoutePatternTest`), which use a **fake** registry.
+> ⚠️ **Illustrative example.** `/articleList/articlePage/{articleId}` (and the `123` rows below) is a **hypothetical** route used to show the nested/`{param}` mechanism. There is currently **no dynamic `{param}` route registered** in `appRoutes` (so `appRoutePatterns` is empty at runtime); the **only registered path is `/home`** (`HomePage`, `isBottomTab = true`). The `""`(Intro)/`/search`/`/favorite`/`/fullScreenMedia` paths mentioned elsewhere in this skill are **legacy/hypothetical examples from the AndroidArchi template — none are registered in this project.** The nested example is validated only by the pure-logic unit tests (`RouteMatcherTest`/`RoutePatternTest`), which use a **fake** registry.
 
-| Entry | Back stack for `/articleList/articlePage/123` (current `[Search, Favorite]`) |
+| Entry | Back stack for `/articleList/articlePage/123` (current `[Home]`) |
 |---|---|
 | Cold start | `[Home, ArticleList, ArticlePage(123)]` (full `syntheticStack`) |
-| Warm, leaf | `[Search, Favorite, ArticlePage(123)]` (context preserved) |
+| Warm, leaf | `[Home, ArticlePage(123)]` (context preserved) |
 | Warm, tab path | in-app tab semantics (tab stays root) |
 
 ## Deep-link resolution (RoutePattern)
 
 `Uri.resolveRoute()` (host) extracts segments + query, then delegates to the pure `matchRoute(segments, query, literalPaths, templates)` in **`main/domain`**:
-1. **Exact literal match** first (`/search`, `/fullScreenMedia`).
+1. **Exact literal match** first (currently just `/home`; `/search`/`/fullScreenMedia` are legacy examples).
 2. **Template match** (`RoutePattern`) for paths with `{param}` — extracts path-segment values into `args`. Path params win over query params on name collision.
 
 A route whose `PATH` contains `{` is **auto-added to `appRoutePatterns`** (via `hasParams`) — no extra registration. `RoutePattern` / `matchRoute` are pure (Android-free) and live in `main/domain`, unit-tested there ([RoutePatternTest](main/domain/src/test/java/com/jongchan/androidarchi/main/domain/deeplink/RoutePatternTest.kt), [RouteMatcherTest](main/domain/src/test/java/com/jongchan/androidarchi/main/domain/deeplink/RouteMatcherTest.kt)) — add cases there when you add a template shape.
@@ -93,19 +93,21 @@ A route whose `PATH` contains `{` is **auto-added to `appRoutePatterns`** (via `
 
 All four shapes are scaffolded by `make-new-feature-module` (Page object → its §2.8; registry entry → its §5). Summary:
 
+The parenthesized route names below (intro/search/favorite/fullScreenMedia) are **legacy AndroidArchi examples** — only `/home` is registered today (the **Tab** shape). Use them as pattern references, not as active routes.
+
 | Shape | `Page` | Registry `AppRoute` |
 |---|---|---|
-| **Simple** (intro/search) | `object XPage : Page { const val PATH = "/x" }` | `path`, `render` |
-| **Tab** (search/favorite) — flag `isBottomTab`, rendered as a **TOP** tab bar (`TopTabBar`) | same | `+ isBottomTab = true`, `syntheticStack = [Search, X]` |
-| **Typed Args** (fullScreenMedia) | `object XPage { const val PATH = "/x"; data class Args(...) : Page { toRoute()/from() } }` | `syntheticStack = [Search, X(args)]`, `render` decodes `Args.from` |
-| **Nested / `{param}`** (articleList → articlePage — *illustrative; not currently registered*) | `PATH = "/parent/x/{id}"`, `Args(id)` (rules 2–3) | `syntheticStack = [Home, Parent, X(args)]`; template auto-registers for deep links |
+| **Simple** (*legacy: intro/search*) | `object XPage : Page { const val PATH = "/x" }` | `path`, `render` |
+| **Tab** (current `/home`; *legacy: search/favorite*) — flag `isBottomTab` | same | `+ isBottomTab = true` (default `syntheticStack = [X]`, or `[Home, X]` for a sub-tab) |
+| **Typed Args** (*legacy: fullScreenMedia*) | `object XPage { const val PATH = "/x"; data class Args(...) : Page { toRoute()/from() } }` | `syntheticStack = [Home, X(args)]`, `render` decodes `Args.from` |
+| **Nested / `{param}`** (*hypothetical: articleList → articlePage — not currently registered*) | `PATH = "/parent/x/{id}"`, `Args(id)` (rules 2–3) | `syntheticStack = [Home, Parent, X(args)]`; template auto-registers for deep links |
 
-A single feature module may host **multiple screens** (e.g. a list + its detail) — that's just multiple `Page` objects + multiple Composables + multiple registry entries. The parent referenced in a nested `syntheticStack` must itself be a registered route.
+A single feature module may host **multiple screens** (e.g. a list + its detail) — that's just multiple `Page` objects + multiple Composables + multiple registry entries. The parent referenced in a nested `syntheticStack` must itself be a registered route (today that root is `Home`).
 
 ## DO / DON'T
 
 - **DO** register every new path in `AppRouteRegistry.appRoutes`, and add the `:<feature>:domain` + `:<feature>:presentation` deps to `:main:presentation` so the host can import the `Page`/Composable.
-- **DO** define the cold stack only in `syntheticStack`; root nested stacks at `Search` (the home tab), mirroring `favorite`/`fullScreenMedia`.
+- **DO** define the cold stack only in `syntheticStack`; root nested stacks at `Home` (the current bottom-tab root). (`favorite`/`fullScreenMedia` were the AndroidArchi examples that rooted at `Search` — legacy, not registered here.)
 - **DO** use `navigateTo(Page)` for in-app moves and typed `Args` for parameters.
 - **DON'T** put a path-param value into `PATH` — `PATH` stays the `{param}` template; values go in `args`.
 - **DON'T** let the param name, `KEY_*`, and `Args.from` key drift apart.
