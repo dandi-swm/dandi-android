@@ -33,6 +33,7 @@ import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
+import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.home.domain.HomePage
 import kotlinx.coroutines.flow.Flow
 
@@ -50,10 +51,10 @@ fun RootComposable(
         val backStack = rememberNavBackStack(*startStack.toTypedArray())
         val navigationHelper = LocalNavigationHelper.current
         // TODO: 매 recomposition마다 재생성됨. 각 탭 화면 구현 후 remember/top-level 상수로 호이스팅.
-        // TODO: Home 외 탭은 화면 미구현으로 page=null(무동작). 화면 구현 후 각 Page 연결.
+        // TODO: Quest/Collection/Shop 탭은 화면 미구현으로 page=null(무동작). 화면 구현 후 각 Page 연결.
         val tabs = listOf(
             BottomNavTab(NyummyNavigationDestination.Home, HomePage),
-            BottomNavTab(NyummyNavigationDestination.History, null),
+            BottomNavTab(NyummyNavigationDestination.History, HistoryPage),
             BottomNavTab(NyummyNavigationDestination.Quest, null),
             BottomNavTab(NyummyNavigationDestination.Collection, null),
             BottomNavTab(NyummyNavigationDestination.Shop, null)

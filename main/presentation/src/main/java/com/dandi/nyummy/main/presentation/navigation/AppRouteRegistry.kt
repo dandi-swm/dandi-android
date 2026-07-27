@@ -2,6 +2,8 @@ package com.dandi.nyummy.main.presentation.navigation
 
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.main.domain.deeplink.RoutePattern
+import com.dandi.nyummy.history.domain.HistoryPage as HistoryNavigationPage
+import com.dandi.nyummy.history.presentation.HistoryPage as HistoryScreen
 import com.dandi.nyummy.home.domain.HomePage as HomeNavigationPage
 import com.dandi.nyummy.home.presentation.HomePage as HomeScreen
 import com.dandi.nyummy.meal.domain.MealRecordPage as MealRecordNavigationPage
@@ -26,6 +28,11 @@ val appRoutes: List<AppRoute> = listOf(
         path = MealRecordNavigationPage.PATH,
         isBottomTab = false,
         render = { MealRecordScreen() },
+    ),
+    AppRoute(
+        path = HistoryNavigationPage.PATH,
+        isBottomTab = true,
+        render = { HistoryScreen() },
     ),
 )
 

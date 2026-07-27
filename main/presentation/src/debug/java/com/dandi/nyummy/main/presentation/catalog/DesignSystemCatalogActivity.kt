@@ -62,22 +62,19 @@ import com.dandi.nyummy.common.presentation.component.NyummyEditDialog
 import com.dandi.nyummy.common.presentation.component.NyummyFloatingTodayMeals
 import com.dandi.nyummy.common.presentation.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.component.NyummyIconButtonStyle
+import com.dandi.nyummy.common.presentation.component.NyummyDualLinearProgress
 import com.dandi.nyummy.common.presentation.component.NyummyLinearProgress
 import com.dandi.nyummy.common.presentation.component.NyummyListRow
 import com.dandi.nyummy.common.presentation.component.NyummyLoading
 import com.dandi.nyummy.common.presentation.component.NyummyLoadingSize
 import com.dandi.nyummy.common.presentation.component.NyummyMealDetailCard
 import com.dandi.nyummy.common.presentation.component.NyummyMealDetailData
-import com.dandi.nyummy.common.presentation.component.NyummyMealNutritionData
-import com.dandi.nyummy.common.presentation.component.NyummyMealNutritionIndicator
-import com.dandi.nyummy.common.presentation.component.NyummyMealNutritionState
 import com.dandi.nyummy.common.presentation.component.NyummyMealRow
 import com.dandi.nyummy.common.presentation.component.NyummyMealRowData
 import com.dandi.nyummy.common.presentation.component.NyummyMealSummaryBottomSheet
 import com.dandi.nyummy.common.presentation.component.NyummyModalScrim
 import com.dandi.nyummy.common.presentation.component.NyummyNavigationDestination
 import com.dandi.nyummy.common.presentation.component.NyummyNoticeDialog
-import com.dandi.nyummy.common.presentation.component.NyummyNutrientProgress
 import com.dandi.nyummy.common.presentation.component.NyummyPhotoPicker
 import com.dandi.nyummy.common.presentation.component.NyummyPhotoPickerState
 import com.dandi.nyummy.common.presentation.component.NyummySheetMacroSummary
@@ -294,6 +291,18 @@ private fun CommonCatalogSection() {
                             Column(verticalArrangement = Arrangement.spacedBy(DesignSystemThemeImpl.designSystemSpacing.space8)) {
                                 FixtureLabel("${(progress * 100).toInt()}%")
                                 NyummyLinearProgress(progress = progress, modifier = Modifier.width(320.dp))
+                            }
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(DesignSystemThemeImpl.designSystemSpacing.space12)) {
+                        listOf(0.70f to 0.22f, 0.83f to 0.37f, 1f to 0.50f).forEach { (daily, meal) ->
+                            Column(verticalArrangement = Arrangement.spacedBy(DesignSystemThemeImpl.designSystemSpacing.space8)) {
+                                FixtureLabel("dual ${(daily * 100).toInt()}% · ${(meal * 100).toInt()}%")
+                                NyummyDualLinearProgress(
+                                    primaryProgress = daily,
+                                    secondaryProgress = meal,
+                                    modifier = Modifier.width(320.dp),
+                                )
                             }
                         }
                     }
@@ -540,7 +549,6 @@ private fun MealAndHistoryCatalogSection() {
         calories = "524 kcal",
     )
     val dailyNutrition = catalogDailyNutritionData()
-    val mealNutrition = catalogMealNutritionData()
 
     CatalogSection(
         title = "Meal / History",
@@ -676,23 +684,6 @@ private fun MealAndHistoryCatalogSection() {
                                         contentDescription = "샐러드 픽셀 아이콘",
                                     )
                                 },
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        CatalogGroup("Meal Nutrition 3 · 1044:66") {
-            WideFixture {
-                Row(horizontalArrangement = Arrangement.spacedBy(DesignSystemThemeImpl.designSystemSpacing.space12)) {
-                    NyummyMealNutritionState.entries.forEach { state ->
-                        Column(verticalArrangement = Arrangement.spacedBy(DesignSystemThemeImpl.designSystemSpacing.space8)) {
-                            FixtureLabel(state.name)
-                            NyummyMealNutritionIndicator(
-                                data = mealNutrition,
-                                state = state,
-                                coachCharacter = { RuntimeSlotFixture("runtime slot\ncoach cat") },
                             )
                         }
                     }
@@ -918,33 +909,6 @@ private fun catalogDailyNutritionData() = NyummyDailyNutritionData(
     carbohydrate = NyummyDailyMacroSummary("탄수화물", "68%", 0.68f),
     protein = NyummyDailyMacroSummary("단백질", "82%", 0.82f),
     fat = NyummyDailyMacroSummary("지방", "54%", 0.54f),
-)
-
-private fun catalogMealNutritionData() = NyummyMealNutritionData(
-    carbohydrate = NyummyNutrientProgress(
-        label = "탄수화물",
-        dailyValueLabel = "168",
-        goalValueLabel = "240",
-        mealValueLabel = "52",
-        dailyProgress = 0.70f,
-        mealProgress = 0.22f,
-    ),
-    protein = NyummyNutrientProgress(
-        label = "단백질",
-        dailyValueLabel = "62",
-        goalValueLabel = "75",
-        mealValueLabel = "28",
-        dailyProgress = 0.83f,
-        mealProgress = 0.37f,
-    ),
-    fat = NyummyNutrientProgress(
-        label = "지방",
-        dailyValueLabel = "38",
-        goalValueLabel = "60",
-        mealValueLabel = "12",
-        dailyProgress = 0.63f,
-        mealProgress = 0.20f,
-    ),
 )
 
 private fun stateNodeId(type: NyummyStateSurfaceType): String = when (type) {
