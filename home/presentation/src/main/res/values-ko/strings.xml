@@ -1,3 +1,19 @@
 <resources>
     <string name="home_feed_button">밥 주기</string>
+    <string name="home_wallet_label">보유 코인</string>
+    <string name="home_action_mail">우편</string>
+    <string name="home_action_notice">공지</string>
+    <string name="home_action_settings">설정</string>
+    <string name="home_streak_days">%1$d일째</string>
+    <string name="home_streak_message">냐미에게 밥을 챙겼어요!</string>
+    <string name="home_streak_next_reward">다음 상자 · 기록 %1$d회</string>
+    <string name="home_today_record_count">오늘 %1$d개 기록</string>
+    <string name="home_today_calorie">%1$s / %2$s kcal</string>
+    <string name="home_progress_percent">%1$d%%</string>
+    <string name="home_character_description">냐미</string>
+    <string name="home_action_menu_expand">룸 메뉴 펼치기</string>
+    <string name="home_action_menu_collapse">룸 메뉴 접기</string>
+    <string name="home_action_share">사진 찍어 공유</string>
+    <string name="home_action_room_edit">마이룸 꾸미기</string>
+    <string name="home_action_speech_replay">말풍선 다시 보기</string>
 </resources>

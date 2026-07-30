@@ -1,3 +1,19 @@
 <resources>
     <string name="home_feed_button">Feed</string>
+    <string name="home_wallet_label">Coins</string>
+    <string name="home_action_mail">Mail</string>
+    <string name="home_action_notice">Notice</string>
+    <string name="home_action_settings">Settings</string>
+    <string name="home_streak_days">Day %1$d</string>
+    <string name="home_streak_message">of feeding Nyummy!</string>
+    <string name="home_streak_next_reward">Next box · %1$d more</string>
+    <string name="home_today_record_count">%1$d meals today</string>
+    <string name="home_today_calorie">%1$s / %2$s kcal</string>
+    <string name="home_progress_percent">%1$d%%</string>
+    <string name="home_character_description">Nyummy</string>
+    <string name="home_action_menu_expand">Open room actions</string>
+    <string name="home_action_menu_collapse">Close room actions</string>
+    <string name="home_action_share">Share a photo</string>
+    <string name="home_action_room_edit">Decorate my room</string>
+    <string name="home_action_speech_replay">Replay speech bubble</string>
 </resources>
