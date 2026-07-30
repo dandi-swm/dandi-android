@@ -27,6 +27,7 @@ import com.dandi.nyummy.common.presentation.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.home.presentation.component.HomeMyRoomCard
+import com.dandi.nyummy.home.presentation.component.HomeTodaySummarySheet
 import com.dandi.nyummy.home.presentation.component.HomeServiceHud
 import com.dandi.nyummy.home.presentation.component.HomeStreakBanner
 import com.dandi.nyummy.home.presentation.mock.HomeMockData
@@ -76,6 +77,21 @@ private fun HomeScreen(
             onIntent = onIntent,
             onFeedClick = onFeedClick,
         )
+        if (uiState.isTodaySummarySheetVisible) {
+            HomeTodaySummarySheet(
+                todayRecordedCount = summary.todayRecordedCount,
+                todayCalorieKcal = summary.todayCalorieKcal,
+                goalCalorieKcal = summary.goalCalorieKcal,
+                calorieProgress = uiState.calorieProgress,
+                calorieProgressPercent = uiState.calorieProgressPercent,
+                remainingCalorieKcal = uiState.remainingCalorieKcal,
+                onDismiss = { onIntent(HomeIntent.DismissTodaySummarySheet) },
+                onAddMeal = {
+                    onIntent(HomeIntent.DismissTodaySummarySheet)
+                    onFeedClick()
+                },
+            )
+        }
     }
 }
 
@@ -172,6 +188,21 @@ private fun HomePagePreview() {
     DesignSystemTheme {
         HomeScreen(
             uiState = HomeUIState(summary = HomeMockData.summary),
+            onIntent = {},
+            onFeedClick = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun HomePageTodaySummarySheetPreview() {
+    DesignSystemTheme {
+        HomeScreen(
+            uiState = HomeUIState(
+                summary = HomeMockData.summary,
+                isTodaySummarySheetVisible = true,
+            ),
             onIntent = {},
             onFeedClick = {},
         )

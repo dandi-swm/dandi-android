@@ -16,4 +16,15 @@
     <string name="home_action_share">Share a photo</string>
     <string name="home_action_room_edit">Decorate my room</string>
     <string name="home_action_speech_replay">Replay speech bubble</string>
+    <string name="home_sheet_title">Today\'s Meals</string>
+    <string name="home_sheet_summary">%1$d recorded · %2$s / %3$s kcal</string>
+    <string name="home_sheet_macro_carbohydrate">Carbs</string>
+    <string name="home_sheet_macro_protein">Protein</string>
+    <string name="home_sheet_macro_fat">Fat</string>
+    <string name="home_sheet_macro_amount">%1$d / %2$dg</string>
+    <string name="home_sheet_section_title">Today\'s meals</string>
+    <string name="home_sheet_remaining">%1$s kcal left to today\'s goal</string>
+    <string name="home_sheet_add_meal">Add a meal</string>
+    <string name="home_sheet_meal_order">Record %1$d</string>
+    <string name="home_sheet_meal_calorie">%1$s kcal</string>
 </resources>

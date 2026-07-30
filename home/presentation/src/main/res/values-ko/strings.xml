@@ -16,4 +16,15 @@
     <string name="home_action_share">사진 찍어 공유</string>
     <string name="home_action_room_edit">마이룸 꾸미기</string>
     <string name="home_action_speech_replay">말풍선 다시 보기</string>
+    <string name="home_sheet_title">오늘 식사</string>
+    <string name="home_sheet_summary">%1$d개 기록 · %2$s / %3$s kcal</string>
+    <string name="home_sheet_macro_carbohydrate">탄수화물</string>
+    <string name="home_sheet_macro_protein">단백질</string>
+    <string name="home_sheet_macro_fat">지방</string>
+    <string name="home_sheet_macro_amount">%1$d / %2$dg</string>
+    <string name="home_sheet_section_title">오늘의 식사</string>
+    <string name="home_sheet_remaining">오늘 목표까지 %1$s kcal 남았어요</string>
+    <string name="home_sheet_add_meal">식사 추가하기</string>
+    <string name="home_sheet_meal_order">%1$d번째 기록</string>
+    <string name="home_sheet_meal_calorie">%1$s kcal</string>
 </resources>
