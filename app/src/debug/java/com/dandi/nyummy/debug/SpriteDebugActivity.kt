@@ -78,7 +78,7 @@ private val segments = listOf(
             framesPerRow = 4,
             frameDurationMillis = 100,
         ),
-        cycles = 1,
+        cycles = 3,
     ),
     SpriteSegment(
         label = "기상 wake",

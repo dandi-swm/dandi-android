@@ -66,7 +66,15 @@ data class NyummySpriteSheet(
     val totalFrames: Int,
     val framesPerRow: Int,
     val frameDurationMillis: Int = 50,
-)
+) {
+    init {
+        // frameWidth/totalFrames/framesPerRow는 그리기 시점 나눗셈·나머지 연산의 분모가 되므로 0을 허용하지 않는다.
+        require(frameWidth > 0) { "frameWidth는 양수여야 한다: $frameWidth" }
+        require(frameHeight > 0) { "frameHeight는 양수여야 한다: $frameHeight" }
+        require(totalFrames > 0) { "totalFrames는 양수여야 한다: $totalFrames" }
+        require(framesPerRow > 0) { "framesPerRow는 양수여야 한다: $framesPerRow" }
+    }
+}
 
 /**
  * 스프라이트 시트 애니메이션을 고정 dp 크기로 무한 반복 그린다.
@@ -127,7 +135,7 @@ fun NyummySpriteView(
     iterations: Int? = null,
     onAnimationEnd: (() -> Unit)? = null,
     flipX: Boolean = false,
-    pixelArt: Boolean = false,
+    pixelArt: Boolean = true,
     contentDescription: String? = null,
 ) {
     val displayHeight = displayWidth * (sheet.frameHeight.toFloat() / sheet.frameWidth)
