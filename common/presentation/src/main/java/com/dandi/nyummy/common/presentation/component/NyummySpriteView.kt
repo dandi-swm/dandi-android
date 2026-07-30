@@ -59,30 +59,37 @@ import kotlin.math.roundToInt
  * @param frameDurationMillis 프레임 1장이 화면에 머무는 시간. 기본 50ms(~20fps).
  */
 @Immutable
-data class NyummySpriteSheet(
+@ConsistentCopyVisibility
+data class NyummySpriteSheet private constructor(
     @DrawableRes val imageRes: Int,
     val frameWidth: Int,
     val frameHeight: Int,
     val totalFrames: Int,
     val framesPerRow: Int,
-    val frameDurationMillis: Int = 50,
-)
-
-/**
- * frameWidth/totalFrames/framesPerRow는 그리기 시점 나눗셈·나머지 연산의 분모가 되므로,
- * 0 이하 값이 들어와도 크래시하지 않도록 최소 1로 보정한 시트를 돌려준다.
- */
-private fun NyummySpriteSheet.coerced(): NyummySpriteSheet =
-    if (frameWidth > 0 && frameHeight > 0 && totalFrames > 0 && framesPerRow > 0) {
-        this
-    } else {
-        copy(
+    val frameDurationMillis: Int,
+) {
+    companion object {
+        /**
+         * frameWidth/frameHeight/totalFrames/framesPerRow는 그리기 시점 나눗셈·나머지 연산의
+         * 분모가 되므로, 0 이하 값이 들어오면 크래시 대신 최소 1로 보정해 생성한다.
+         */
+        operator fun invoke(
+            @DrawableRes imageRes: Int,
+            frameWidth: Int,
+            frameHeight: Int,
+            totalFrames: Int,
+            framesPerRow: Int,
+            frameDurationMillis: Int = 50,
+        ): NyummySpriteSheet = NyummySpriteSheet(
+            imageRes = imageRes,
             frameWidth = frameWidth.coerceAtLeast(1),
             frameHeight = frameHeight.coerceAtLeast(1),
             totalFrames = totalFrames.coerceAtLeast(1),
             framesPerRow = framesPerRow.coerceAtLeast(1),
+            frameDurationMillis = frameDurationMillis,
         )
     }
+}
 
 /**
  * 스프라이트 시트 애니메이션을 고정 dp 크기로 무한 반복 그린다.
@@ -146,10 +153,9 @@ fun NyummySpriteView(
     pixelArt: Boolean = true,
     contentDescription: String? = null,
 ) {
-    val safeSheet = sheet.coerced()
-    val displayHeight = displayWidth * (safeSheet.frameHeight.toFloat() / safeSheet.frameWidth)
+    val displayHeight = displayWidth * (sheet.frameHeight.toFloat() / sheet.frameWidth)
     val frameState = spriteFrameState(
-        sheet = safeSheet,
+        sheet = sheet,
         playing = playing,
         iterations = iterations,
         onAnimationEnd = onAnimationEnd,
@@ -167,15 +173,15 @@ fun NyummySpriteView(
             .then(semantics),
     ) {
         // onDraw()->: 프레임이 바뀌면 이 블록만 무효화되고 컴포지션은 건드리지 않는다.
-        val frame = frameState.value % safeSheet.totalFrames
-        val column = frame % safeSheet.framesPerRow
-        val row = frame / safeSheet.framesPerRow
+        val frame = frameState.value % sheet.totalFrames
+        val column = frame % sheet.framesPerRow
+        val row = frame / sheet.framesPerRow
 
         scale(scaleX = if (flipX) -1f else 1f, scaleY = 1f) {
             drawImage(
                 image = image,
-                srcOffset = IntOffset(column * safeSheet.frameWidth, row * safeSheet.frameHeight),
-                srcSize = IntSize(safeSheet.frameWidth, safeSheet.frameHeight),
+                srcOffset = IntOffset(column * sheet.frameWidth, row * sheet.frameHeight),
+                srcSize = IntSize(sheet.frameWidth, sheet.frameHeight),
                 // dstSize는 캔버스 px 크기(= displayWidth dp × 기기 density).
                 // 시트 1장으로 밀도 대응이 끝나는 지점이 여기다.
                 dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
