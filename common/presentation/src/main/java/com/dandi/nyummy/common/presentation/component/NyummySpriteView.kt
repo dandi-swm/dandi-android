@@ -71,7 +71,9 @@ data class NyummySpriteSheet private constructor(
     companion object {
         /**
          * frameWidth/frameHeight/totalFrames/framesPerRow는 그리기 시점 나눗셈·나머지 연산의
-         * 분모가 되므로, 0 이하 값이 들어오면 크래시 대신 최소 1로 보정해 생성한다.
+         * 분모가 되므로 0 이하 값이 들어오면 크래시 대신 최소 1로 보정하고,
+         * frameDurationMillis는 tween durationMillis의 곱셈 인자가 되므로
+         * 0 이하 값이 들어오면 기본값 50ms로 대체해 생성한다.
          */
         operator fun invoke(
             @DrawableRes imageRes: Int,
@@ -86,7 +88,7 @@ data class NyummySpriteSheet private constructor(
             frameHeight = frameHeight.coerceAtLeast(1),
             totalFrames = totalFrames.coerceAtLeast(1),
             framesPerRow = framesPerRow.coerceAtLeast(1),
-            frameDurationMillis = frameDurationMillis,
+            frameDurationMillis = if (frameDurationMillis > 0) frameDurationMillis else 50,
         )
     }
 }
