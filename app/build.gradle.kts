@@ -95,6 +95,7 @@ dependencies {
     implementation(project(":history:entity"))
 
     implementation(libs.hilt.android)
+    debugImplementation(libs.leakcanary)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.profileinstaller)

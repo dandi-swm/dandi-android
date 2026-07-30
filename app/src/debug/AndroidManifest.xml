@@ -7,6 +7,12 @@
             android:exported="true"
             android:label="Nyummy Design System Catalog"
             android:theme="@style/Theme.Dandi" />
+
+        <activity
+            android:name="com.dandi.nyummy.debug.SpriteDebugActivity"
+            android:exported="true"
+            android:label="Nyami Sprite Debug"
+            android:theme="@style/Theme.Dandi" />
     </application>
 
 </manifest>
