@@ -27,6 +27,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -46,15 +50,43 @@ import com.dandi.nyummy.home.presentation.R
 import java.util.Locale
 import com.dandi.nyummy.common.presentation.R as CommonR
 
-// TODO: pixellab 으로 idle 전용 스프라이트 시트를 생성해 교체한다. (현재는 sleep_loop 시트 복사본)
-private val HomeCharacterIdleSheet = NyummySpriteSheet(
-    imageRes = R.drawable.nyami_idle_grid_136,
+/** 엎드려 조는 루프 (8프레임). */
+private val HomeCharacterSleepLoopSheet = NyummySpriteSheet(
+    imageRes = R.drawable.nyami_sleep_loop_grid_136,
     frameWidth = 136,
     frameHeight = 136,
     totalFrames = 8,
     framesPerRow = 4,
     frameDurationMillis = 100,
 )
+
+/** 엎드린 자세에서 눈 뜨고 몸을 일으켜 앉는 전환 (17프레임). */
+private val HomeCharacterWakeSheet = NyummySpriteSheet(
+    imageRes = R.drawable.nyami_wake_grid_136,
+    frameWidth = 136,
+    frameHeight = 136,
+    totalFrames = 17,
+    framesPerRow = 4,
+    frameDurationMillis = 100,
+)
+
+/** 앉은 자세에서 졸다가 엎드리는 전환 (17프레임). */
+private val HomeCharacterDozeSheet = NyummySpriteSheet(
+    imageRes = R.drawable.nyami_doze_grid_136,
+    frameWidth = 136,
+    frameHeight = 136,
+    totalFrames = 17,
+    framesPerRow = 4,
+    frameDurationMillis = 100,
+)
+
+/**
+ * 홈 냐미의 행동 시퀀스 페이즈.
+ *
+ * LyingDown(앉아 있다 엎드림) → Dozing(엎드려 졺) → Waking(일어남) 순서로 각 시트를
+ * 1회씩 재생하고, 마지막 Waking 이 끝나면 일어나 앉은 프레임에 정지한 채 머문다.
+ */
+private enum class HomeCharacterPhase { LyingDown, Dozing, Waking }
 
 /**
  * 냐미가 사는 마이룸 카드.
@@ -98,17 +130,12 @@ internal fun HomeMyRoomCard(
                 contentScale = ContentScale.Crop,
             )
 
-            NyummyCharacterView(
-                sheet = HomeCharacterIdleSheet,
+            HomeCharacter(
+                speechTitle = speechTitle,
+                speechBody = speechBody,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = CharacterBottomGap),
-                speech = NyummySpeech(
-                    title = speechTitle.takeIf { it.isNotBlank() },
-                    body = speechBody,
-                ).takeIf { speechBody.isNotBlank() },
-                displayWidth = DesignSystemThemeImpl.designSystemSize.characterHome,
-                contentDescription = stringResource(R.string.home_character_description),
             )
 
             HomeRoomFloatingActions(
@@ -143,6 +170,47 @@ internal fun HomeMyRoomCard(
  * 오른쪽 끝 토글(햄버거 ↔ 닫기) 버튼을 누르면 공유 · 꾸미기 · 말풍선 다시 보기 버튼이
  * 토글에서 가까운 것부터 순서대로(스태거) 왼쪽으로 촤라락 펼쳐진다.
  */
+/**
+ * 행동 시퀀스를 1회 재생하는 홈 냐미.
+ *
+ * 페이즈마다 시트를 갈아끼우며, 유한 재생 종료 콜백([NyummyCharacterView.onAnimationEnd])으로
+ * 다음 페이즈로 넘어간다. 마지막 페이즈([HomeCharacterPhase.Waking])가 끝나면 시트 교체가
+ * 없으므로 마지막 프레임에 정지한 채 유지된다.
+ */
+@Composable
+private fun HomeCharacter(
+    speechTitle: String,
+    speechBody: String,
+    modifier: Modifier = Modifier,
+) {
+    var phase by remember { mutableStateOf(HomeCharacterPhase.LyingDown) }
+
+    val sheet = when (phase) {
+        HomeCharacterPhase.LyingDown -> HomeCharacterDozeSheet
+        HomeCharacterPhase.Dozing -> HomeCharacterSleepLoopSheet
+        HomeCharacterPhase.Waking -> HomeCharacterWakeSheet
+    }
+
+    NyummyCharacterView(
+        sheet = sheet,
+        modifier = modifier,
+        speech = NyummySpeech(
+            title = speechTitle.takeIf { it.isNotBlank() },
+            body = speechBody,
+        ).takeIf { speechBody.isNotBlank() },
+        displayWidth = DesignSystemThemeImpl.designSystemSize.characterHome,
+        iterations = 1,
+        onAnimationEnd = {
+            phase = when (phase) {
+                HomeCharacterPhase.LyingDown -> HomeCharacterPhase.Dozing
+                HomeCharacterPhase.Dozing -> HomeCharacterPhase.Waking
+                HomeCharacterPhase.Waking -> HomeCharacterPhase.Waking
+            }
+        },
+        contentDescription = stringResource(R.string.home_character_description),
+    )
+}
+
 @Composable
 private fun HomeRoomFloatingActions(
     isExpanded: Boolean,

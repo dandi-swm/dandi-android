@@ -44,6 +44,8 @@ data class NyummySpeech(
  * @param sheet 재생할 스프라이트 시트.
  * @param speech 말풍선 내용. null 이면 캐릭터만 그린다.
  * @param displayWidth 캐릭터 표시 폭(dp).
+ * @param iterations 재생 횟수. null 이면 무한 반복. [NyummySpriteView] 와 동일한 계약.
+ * @param onAnimationEnd 유한 재생이 끝났을 때 1회 호출. 시트를 갈아끼우는 시퀀스 연출에 쓴다.
  * @param contentDescription 캐릭터 접근성 설명.
  */
 @Composable
@@ -53,6 +55,8 @@ fun NyummyCharacterView(
     speech: NyummySpeech? = null,
     displayWidth: Dp = DesignSystemThemeImpl.designSystemSize.characterHome,
     playing: Boolean = true,
+    iterations: Int? = null,
+    onAnimationEnd: (() -> Unit)? = null,
     flipX: Boolean = false,
     contentDescription: String? = null,
 ) {
@@ -68,6 +72,8 @@ fun NyummyCharacterView(
             sheet = sheet,
             displayWidth = displayWidth,
             playing = playing,
+            iterations = iterations,
+            onAnimationEnd = onAnimationEnd,
             flipX = flipX,
             contentDescription = contentDescription,
         )
