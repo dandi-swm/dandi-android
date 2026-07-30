@@ -165,12 +165,6 @@ internal fun HomeMyRoomCard(
 }
 
 /**
- * 마이룸 카드 우상단의 가로 접이식 플로팅 액션 메뉴.
- *
- * 오른쪽 끝 토글(햄버거 ↔ 닫기) 버튼을 누르면 공유 · 꾸미기 · 말풍선 다시 보기 버튼이
- * 토글에서 가까운 것부터 순서대로(스태거) 왼쪽으로 촤라락 펼쳐진다.
- */
-/**
  * 행동 시퀀스를 1회 재생하는 홈 냐미.
  *
  * 페이즈마다 시트를 갈아끼우며, 유한 재생 종료 콜백([NyummyCharacterView.onAnimationEnd])으로
@@ -211,6 +205,12 @@ private fun HomeCharacter(
     )
 }
 
+/**
+ * 마이룸 카드 우상단의 가로 접이식 플로팅 액션 메뉴.
+ *
+ * 오른쪽 끝 토글(햄버거 ↔ 닫기) 버튼을 누르면 공유 · 꾸미기 · 말풍선 다시 보기 버튼이
+ * 토글에서 가까운 것부터 순서대로(스태거) 왼쪽으로 촤라락 펼쳐진다.
+ */
 @Composable
 private fun HomeRoomFloatingActions(
     isExpanded: Boolean,
