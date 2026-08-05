@@ -2,7 +2,7 @@
     <string name="auth_login_wordmark" translatable="false">NYUMMY</string>
     <string name="auth_login_headline">Nyummy is waiting for you!</string>
     <string name="auth_login_subtitle">Sign in and keep your meal log going.</string>
-    <string name="auth_login_kakao">Continue with Kakao</string>
+    <string name="auth_login_kakao">Login with Kakao</string>
     <string name="auth_login_or">or</string>
     <string name="auth_login_naver_description">Sign in with Naver</string>
     <string name="auth_login_google_description">Sign in with Google</string>

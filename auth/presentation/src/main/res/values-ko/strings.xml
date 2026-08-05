@@ -1,7 +1,7 @@
 <resources>
     <string name="auth_login_headline">냐미가 기다리고 있어요!</string>
     <string name="auth_login_subtitle">간편하게 로그인하고 식사 기록을 이어가요.</string>
-    <string name="auth_login_kakao">카카오로 계속하기</string>
+    <string name="auth_login_kakao">카카오 로그인</string>
     <string name="auth_login_or">또는</string>
     <string name="auth_login_naver_description">네이버로 로그인</string>
     <string name="auth_login_google_description">구글로 로그인</string>

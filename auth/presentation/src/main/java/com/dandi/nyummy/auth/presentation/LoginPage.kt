@@ -142,7 +142,12 @@ private fun LoginActions(
     }
 }
 
-/** 카카오 브랜드 가이드 필 버튼 (UI 전용 — MVP 미동작). */
+/**
+ * 카카오 브랜드 가이드 버튼 (UI 전용 — MVP 미동작).
+ *
+ * 카카오 디자인 가이드 준수: 컨테이너 #FEE500 · radius 12px · 라벨 "카카오 로그인"
+ * (검정 85% 투명도) · 공식 말풍선 심볼.
+ */
 @Composable
 private fun KakaoLoginButton(
     onClick: () -> Unit,
@@ -155,7 +160,7 @@ private fun KakaoLoginButton(
         modifier = modifier
             .fillMaxWidth()
             .height(KakaoButtonHeight),
-        shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius16),
+        shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius12),
         color = colors.brandKakaoContainer,
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -169,7 +174,7 @@ private fun KakaoLoginButton(
             )
             DandiText(
                 text = stringResource(R.string.auth_login_kakao),
-                color = colors.brandKakaoSymbol,
+                color = colors.brandKakaoSymbol.copy(alpha = KakaoLabelAlpha),
                 style = DesignSystemThemeImpl.typeScale.textStrongM,
                 modifier = Modifier.align(Alignment.Center),
             )
@@ -230,12 +235,19 @@ private fun SocialCircleRow(
                 modifier = Modifier.size(SocialCircleSize),
             )
         }
-        SocialCircleButton(
-            iconRes = R.drawable.auth_icon_google,
-            contentDescription = stringResource(R.string.auth_login_google_description),
-            borderColor = colors.brandGoogleOutline,
+        // 구글은 로고 재제작이 금지라 공식 아이콘 전용 버튼 에셋(signin-assets)을 그대로 그린다.
+        Surface(
             onClick = {},
-        )
+            modifier = Modifier.size(SocialCircleSize),
+            shape = CircleShape,
+            color = Color.Transparent,
+        ) {
+            Image(
+                painter = painterResource(R.drawable.auth_google_icon_button),
+                contentDescription = stringResource(R.string.auth_login_google_description),
+                modifier = Modifier.size(SocialCircleSize),
+            )
+        }
         SocialCircleButton(
             iconRes = R.drawable.auth_icon_email,
             contentDescription = stringResource(R.string.auth_login_email_description),
@@ -280,6 +292,7 @@ private val ActionsTopPadding = 120.dp
 private val ActionsBottomPadding = 40.dp
 private val KakaoButtonHeight = 52.dp
 private val KakaoIconStartPadding = 19.dp
+private const val KakaoLabelAlpha = 0.85f
 private val ProviderIconSize = 18.dp
 private val DividerLineWidth = 110.dp
 private val DividerLineHeight = 1.dp
