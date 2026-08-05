@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -143,42 +144,30 @@ private fun LoginActions(
 }
 
 /**
- * 카카오 브랜드 가이드 버튼 (UI 전용 — MVP 미동작).
+ * 카카오 로그인 버튼 (UI 전용 — MVP 미동작).
  *
- * 카카오 디자인 가이드 준수: 컨테이너 #FEE500 · radius 12px · 라벨 "카카오 로그인"
- * (검정 85% 투명도) · 공식 말풍선 심볼.
+ * 카카오 개발자센터 리소스 다운로드의 공식 버튼 에셋(large_wide, ko/en 로케일별)을
+ * 그대로 그린다 — 심볼·라벨·색·radius 전부 에셋에 포함.
  */
 @Composable
 private fun KakaoLoginButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-
     Surface(
         onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(KakaoButtonHeight),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius12),
-        color = colors.brandKakaoContainer,
+        color = Color.Transparent,
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(R.drawable.auth_icon_kakao),
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = KakaoIconStartPadding)
-                    .size(ProviderIconSize),
-            )
-            DandiText(
-                text = stringResource(R.string.auth_login_kakao),
-                color = colors.brandKakaoSymbol.copy(alpha = KakaoLabelAlpha),
-                style = DesignSystemThemeImpl.typeScale.textStrongM,
-                modifier = Modifier.align(Alignment.Center),
-            )
-        }
+        Image(
+            painter = painterResource(R.drawable.auth_kakao_login_button),
+            contentDescription = stringResource(R.string.auth_login_kakao),
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(KakaoButtonAspectRatio),
+            contentScale = ContentScale.FillWidth,
+        )
     }
 }
 
@@ -290,10 +279,8 @@ private const val ScrimMidAlpha = 0.45f
 private const val ScrimEndAlpha = 0.85f
 private val ActionsTopPadding = 120.dp
 private val ActionsBottomPadding = 40.dp
-private val KakaoButtonHeight = 52.dp
-private val KakaoIconStartPadding = 19.dp
-private const val KakaoLabelAlpha = 0.85f
-private val ProviderIconSize = 18.dp
+/** 공식 에셋 kakao_login_large_wide.png 원본 비율 (600×90). */
+private const val KakaoButtonAspectRatio = 600f / 90f
 private val DividerLineWidth = 110.dp
 private val DividerLineHeight = 1.dp
 private val SocialCircleSize = 56.dp
