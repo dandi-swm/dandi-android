@@ -50,6 +50,11 @@ include(":history:domain")
 include(":history:data")
 include(":history:entity")
 
+include(":auth:presentation")
+include(":auth:domain")
+include(":auth:data")
+include(":auth:entity")
+
 include(":tti")
 
 include(":baselineprofile")

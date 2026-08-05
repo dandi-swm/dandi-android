@@ -5,11 +5,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.kotlinx.serialization)
 }
 
 android {
-    namespace = "com.dandi.nyummy.main.presentation"
+    namespace = "com.dandi.nyummy.auth.presentation"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
@@ -54,25 +53,12 @@ composeCompiler {
 }
 
 dependencies {
-    implementation(project(":main:domain"))
-    implementation(project(":main:entity"))
-    implementation(project(":common:presentation"))
-    implementation(project(":history:domain"))
-    implementation(project(":history:presentation"))
-    implementation(project(":home:domain"))
-    implementation(project(":home:presentation"))
-    implementation(project(":meal:domain"))
-    implementation(project(":meal:presentation"))
     implementation(project(":auth:domain"))
-    implementation(project(":auth:presentation"))
+    implementation(project(":auth:entity"))
+    implementation(project(":common:presentation"))
 
-    implementation(libs.androidx.activity.compose)
-    api(libs.androidx.navigation3.runtime)
-    implementation(libs.androidx.navigation3.ui)
-    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
-    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
-    // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 }

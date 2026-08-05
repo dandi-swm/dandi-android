@@ -47,3 +47,4 @@ Thumbs.db
 
 # Claude Code hook marker (build-unverified flag)
 .claude/.kt-dirty
+.env
