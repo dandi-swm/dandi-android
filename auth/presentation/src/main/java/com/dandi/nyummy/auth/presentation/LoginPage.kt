@@ -1,13 +1,14 @@
 package com.dandi.nyummy.auth.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -261,7 +262,7 @@ private fun SocialCircleButton(
         modifier = modifier.size(SocialCircleSize),
         shape = CircleShape,
         color = colors.bgDefaultLevel1,
-        border = androidx.compose.foundation.BorderStroke(SocialCircleBorderWidth, borderColor),
+        border = BorderStroke(SocialCircleBorderWidth, borderColor),
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Image(
