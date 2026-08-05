@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <application>
+    <!-- 개발 서버(http://3.35.248.138:8080)가 비TLS라 debug 빌드에 한해 cleartext 허용 -->
+    <application android:usesCleartextTraffic="true">
         <activity
             android:name="com.dandi.nyummy.main.presentation.catalog.DesignSystemCatalogActivity"
             android:exported="true"
