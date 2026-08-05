@@ -31,7 +31,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -58,6 +60,8 @@ fun NyummyTextField(
     singleLine: Boolean = true,
     leadingIcon: (@Composable () -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
 ) {
     var focused by remember { mutableStateOf(false) }
     NyummyTextFieldCore(
@@ -73,6 +77,8 @@ fun NyummyTextField(
         singleLine = singleLine,
         leadingIcon = leadingIcon,
         trailingIcon = trailingIcon,
+        visualTransformation = visualTransformation,
+        keyboardOptions = keyboardOptions,
         focused = focused,
         onFocusChanged = { focused = it },
     )
@@ -92,6 +98,8 @@ private fun NyummyTextFieldCore(
     singleLine: Boolean,
     leadingIcon: (@Composable () -> Unit)?,
     trailingIcon: (@Composable () -> Unit)?,
+    visualTransformation: VisualTransformation,
+    keyboardOptions: KeyboardOptions,
     focused: Boolean,
     onFocusChanged: (Boolean) -> Unit,
 ) {
@@ -165,6 +173,8 @@ private fun NyummyTextFieldCore(
             singleLine = singleLine,
             maxLines = if (singleLine) 1 else InputMaximumLines,
             textStyle = DesignSystemThemeImpl.typeScale.textRegularM.merge(TextStyle(color = valueColor)),
+            visualTransformation = visualTransformation,
+            keyboardOptions = keyboardOptions,
             cursorBrush = SolidColor(colors.contentSelectionPrimary),
             interactionSource = interactionSource,
             decorationBox = { innerTextField ->
@@ -285,6 +295,8 @@ private fun PreviewTextField(
         singleLine = true,
         leadingIcon = null,
         trailingIcon = null,
+        visualTransformation = VisualTransformation.None,
+        keyboardOptions = KeyboardOptions.Default,
         focused = state == InputPreviewState.Focused,
         onFocusChanged = {},
     )

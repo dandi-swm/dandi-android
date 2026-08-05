@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma social-circle-naver (1253:15025). 네이버 브랜드 가이드 원형 버튼 — 틴트 금지 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp"
+    android:height="56dp"
+    android:viewportWidth="56"
+    android:viewportHeight="56">
+    <path
+        android:fillColor="#FF03C75A"
+        android:pathData="M28,0C43.464,0 56,12.536 56,28C56,43.464 43.464,56 28,56C12.536,56 0,43.464 0,28C0,12.536 12.536,0 28,0Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M18.0267,17H24.4067L31.5933,27.4133V17H37.9733V39H31.5933L24.4067,28.5867V39H18.0267V17Z" />
+</vector>

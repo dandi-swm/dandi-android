@@ -10,6 +10,7 @@ import com.dandi.nyummy.common.presentation.ui.color.DesignSystemContentColors
 import com.dandi.nyummy.common.presentation.ui.color.DesignSystemBorderColors
 import com.dandi.nyummy.common.presentation.ui.color.DesignSystemAssetColors
 import com.dandi.nyummy.common.presentation.ui.color.DesignSystemDataColors
+import com.dandi.nyummy.common.presentation.ui.color.DesignSystemBrandColors
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemEffects
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemElevation
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemLayout
@@ -61,6 +62,11 @@ internal enum class ArchiPaletteColors(val colorValue: Color) {
     BrandGoogleGreen(Color(0xFF34A853)),
     BrandGoogleRed(Color(0xFFEA4335)),
     BrandGoogleYellow(Color(0xFFFBBC05)),
+    BrandGoogleOutline(Color(0xFF747775)),
+    BrandKakaoContainer(Color(0xFFFEE500)),
+    BrandKakaoSymbol(Color(0xFF000000)),
+    BrandNaverContainer(Color(0xFF03C75A)),
+    BrandNaverSymbol(Color(0xFFFFFFFF)),
     Brick500(Color(0xFFB84848)),
     Brick600(Color(0xFFB84D4D)),
     Clay50(Color(0xFFFDEFE7)),
@@ -336,6 +342,14 @@ val DefaultDesignSystemColor = DesignSystemSemanticColors(
         dataCollectionCatPack = ArchiPaletteColors.Apricot800.colorValue,
         dataProgressDailyTotal = ArchiPaletteColors.Sage200.colorValue,
         dataProgressMealContribution = ArchiPaletteColors.Sage450.colorValue,
+    ),
+    brand = DesignSystemBrandColors(
+        brandKakaoContainer = ArchiPaletteColors.BrandKakaoContainer.colorValue,
+        brandKakaoSymbol = ArchiPaletteColors.BrandKakaoSymbol.colorValue,
+        brandNaverContainer = ArchiPaletteColors.BrandNaverContainer.colorValue,
+        brandNaverSymbol = ArchiPaletteColors.BrandNaverSymbol.colorValue,
+        brandGoogleOutline = ArchiPaletteColors.BrandGoogleOutline.colorValue,
+        brandWordmark = ArchiPaletteColors.Evergreen740.colorValue,
     ),
 )
 

@@ -17,6 +17,7 @@ class DesignSystemSemanticColors internal constructor(
     private val border: DesignSystemBorderColors,
     private val asset: DesignSystemAssetColors,
     private val data: DesignSystemDataColors,
+    private val brand: DesignSystemBrandColors,
 ) {
     val bgDefaultLevel0: Color get() = background.bgDefaultLevel0
     val bgCanvasAlt: Color get() = background.bgCanvasAlt
@@ -141,6 +142,12 @@ class DesignSystemSemanticColors internal constructor(
     val assetSceneWindowSky: Color get() = asset.assetSceneWindowSky
     val assetScenePixelOutline: Color get() = asset.assetScenePixelOutline
     val assetScenePixelShadow: Color get() = asset.assetScenePixelShadow
+    val brandKakaoContainer: Color get() = brand.brandKakaoContainer
+    val brandKakaoSymbol: Color get() = brand.brandKakaoSymbol
+    val brandNaverContainer: Color get() = brand.brandNaverContainer
+    val brandNaverSymbol: Color get() = brand.brandNaverSymbol
+    val brandGoogleOutline: Color get() = brand.brandGoogleOutline
+    val brandWordmark: Color get() = brand.brandWordmark
     val dataNutrientCalorie: Color get() = data.dataNutrientCalorie
     val dataNutrientCarbohydrate: Color get() = data.dataNutrientCarbohydrate
     val dataNutrientProtein: Color get() = data.dataNutrientProtein
@@ -443,6 +450,20 @@ internal class DesignSystemAssetColors internal constructor(
     val assetSceneWindowSky: Color,
     val assetScenePixelOutline: Color,
     val assetScenePixelShadow: Color,
+)
+
+/**
+ * 소셜 로그인 등 외부 브랜드 가이드라인 색 (Figma `palette/brand` 그룹).
+ * 브랜드 규정색이므로 테마에 따라 변형하지 않는다.
+ */
+@Immutable
+internal class DesignSystemBrandColors internal constructor(
+    val brandKakaoContainer: Color,
+    val brandKakaoSymbol: Color,
+    val brandNaverContainer: Color,
+    val brandNaverSymbol: Color,
+    val brandGoogleOutline: Color,
+    val brandWordmark: Color,
 )
 
 @Immutable

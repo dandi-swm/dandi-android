@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma Provider Vector / Kakao (518:15573). 카카오 심볼 — 사용처에서 brandKakaoSymbol 틴트 적용 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="18dp"
+    android:height="18dp"
+    android:viewportWidth="18"
+    android:viewportHeight="18">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M9,2.25C4.86,2.25 1.5,4.935 1.5,8.25C1.5,10.38 2.895,12.2475 4.995,13.3125L4.32,15.8025C4.30218,15.8705 4.30511,15.9423 4.32841,16.0087C4.35172,16.075 4.39434,16.1329 4.45079,16.1748C4.50724,16.2167 4.57494,16.2408 4.64519,16.244C4.71543,16.2471 4.78502,16.2292 4.845,16.1925L7.7775,14.2425C8.175,14.28 8.5875,14.3025 9,14.3025C13.14,14.3025 16.5,11.6175 16.5,8.25C16.5,4.8825 13.14,2.25 9,2.25Z" />
+</vector>

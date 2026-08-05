@@ -2,7 +2,9 @@ package com.dandi.nyummy.main.presentation.navigation
 
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.main.domain.deeplink.RoutePattern
+import com.dandi.nyummy.auth.domain.EmailLoginPage as EmailLoginNavigationPage
 import com.dandi.nyummy.auth.domain.LoginPage as LoginNavigationPage
+import com.dandi.nyummy.auth.presentation.EmailLoginPage as EmailLoginScreen
 import com.dandi.nyummy.auth.presentation.LoginPage as LoginScreen
 import com.dandi.nyummy.history.domain.HistoryPage as HistoryNavigationPage
 import com.dandi.nyummy.history.presentation.HistoryPage as HistoryScreen
@@ -39,7 +41,28 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = LoginNavigationPage.PATH,
         isBottomTab = false,
-        render = { LoginScreen() },
+        render = {
+            val navigationHelper = LocalNavigationHelper.current
+            LoginScreen(
+                onEmailLoginClick = { navigationHelper.navigateTo(EmailLoginNavigationPage) },
+            )
+        },
+    ),
+    AppRoute(
+        path = EmailLoginNavigationPage.PATH,
+        isBottomTab = false,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(LoginNavigationPage.PATH),
+                GenericNavKey(EmailLoginNavigationPage.PATH, args),
+            )
+        },
+        render = {
+            val navigationHelper = LocalNavigationHelper.current
+            EmailLoginScreen(
+                onBackClick = { navigationHelper.navigateToBack() },
+            )
+        },
     ),
 )
 
