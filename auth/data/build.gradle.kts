@@ -38,7 +38,6 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":auth:domain"))
     implementation(project(":common:data"))
 
     implementation(libs.kotlinx.coroutines.android)
