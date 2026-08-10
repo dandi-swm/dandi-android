@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.dandi.nyummy.home.data"
+    namespace = "com.dandi.nyummy.auth.data"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
@@ -38,8 +38,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":home:domain"))
-    implementation(project(":home:entity"))
+    implementation(project(":auth:domain"))
     implementation(project(":common:data"))
 
     implementation(libs.kotlinx.coroutines.android)
@@ -48,4 +47,8 @@ dependencies {
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.retrofit.converter.kotlinx.serialization)
 }
