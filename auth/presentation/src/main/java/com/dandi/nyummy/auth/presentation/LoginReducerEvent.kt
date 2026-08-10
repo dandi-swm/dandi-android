@@ -15,9 +15,4 @@ sealed interface LoginReducerEvent : ReducerEvent {
      */
     data object LoginFinished : LoginReducerEvent
 
-    /**
-     * 이메일 로그인 버튼이 클릭되어 이메일 로그인 화면으로 이동한다.
-     */
-    data object EmailLoginClicked : LoginReducerEvent
-
 }
