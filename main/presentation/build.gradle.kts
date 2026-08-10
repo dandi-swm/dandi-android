@@ -63,6 +63,8 @@ dependencies {
     implementation(project(":home:presentation"))
     implementation(project(":meal:domain"))
     implementation(project(":meal:presentation"))
+    implementation(project(":auth:domain"))
+    implementation(project(":auth:presentation"))
 
     implementation(libs.androidx.activity.compose)
     api(libs.androidx.navigation3.runtime)
