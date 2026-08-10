@@ -53,3 +53,5 @@ include(":history:entity")
 include(":tti")
 
 include(":baselineprofile")
+include(":auth:domain")
+include(":auth:data")
