@@ -11,5 +11,5 @@ kotlin {
 }
 
 dependencies {
-    api(project(":auth:entity"))
+    api(project(":common:entity"))
 }
