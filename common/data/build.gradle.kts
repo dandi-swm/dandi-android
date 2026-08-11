@@ -65,6 +65,9 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
 
+    // Local Storage
+    implementation(libs.androidx.datastore.preferences)
+
     // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
