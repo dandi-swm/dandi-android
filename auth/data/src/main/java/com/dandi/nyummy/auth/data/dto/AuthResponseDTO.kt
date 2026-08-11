@@ -1,5 +1,6 @@
 package com.dandi.nyummy.auth.data.dto
 
+import com.dandi.nyummy.auth.entity.AuthTokenVO
 import kotlinx.serialization.Serializable
 
 /**
@@ -14,4 +15,10 @@ data class AuthTokenDTO(
     val accessToken: String? = null,
     val refreshToken: String? = null,
     val redirectUrl: String? = null,
-)
+) {
+    fun toVO(): AuthTokenVO = AuthTokenVO(
+        accessToken = accessToken.orEmpty(),
+        refreshToken = refreshToken.orEmpty(),
+        redirectUrl = redirectUrl.orEmpty(),
+    )
+}
