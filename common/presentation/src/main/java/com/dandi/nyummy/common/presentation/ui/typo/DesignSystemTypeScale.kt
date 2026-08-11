@@ -27,6 +27,8 @@ data class DesignSystemTypeScale internal constructor(
     private val _textStrongM: ArchiStaticTypeScale,
     private val _textRegularS: ArchiStaticTypeScale,
     private val _titleStrongL: ArchiStaticTypeScale,
+    // Android 확장 슬롯 (Figma canonical text style 21개 외)
+    private val _titleStrongXL: ArchiStaticTypeScale,
     private val _textRegularL: ArchiStaticTypeScale,
     private val _textRegularXS: ArchiStaticTypeScale,
     private val _displayStrongXL: ArchiStaticTypeScale,
@@ -49,6 +51,7 @@ data class DesignSystemTypeScale internal constructor(
     val textStrongM: TextStyle get() = _textStrongM.textStyle
     val textRegularS: TextStyle get() = _textRegularS.textStyle
     val titleStrongL: TextStyle get() = _titleStrongL.textStyle
+    val titleStrongXL: TextStyle get() = _titleStrongXL.textStyle
     val textRegularL: TextStyle get() = _textRegularL.textStyle
     val textRegularXS: TextStyle get() = _textRegularXS.textStyle
     val displayStrongXL: TextStyle get() = _displayStrongXL.textStyle
@@ -73,6 +76,7 @@ data class DesignSystemTypeScale internal constructor(
         "textStrongM" -> DesignSystemThemeImpl.typeScale.textStrongM
         "textRegularS" -> DesignSystemThemeImpl.typeScale.textRegularS
         "titleStrongL" -> DesignSystemThemeImpl.typeScale.titleStrongL
+        "titleStrongXL" -> DesignSystemThemeImpl.typeScale.titleStrongXL
         "textRegularL" -> DesignSystemThemeImpl.typeScale.textRegularL
         "textRegularXS" -> DesignSystemThemeImpl.typeScale.textRegularXS
         "displayStrongXL" -> DesignSystemThemeImpl.typeScale.displayStrongXL

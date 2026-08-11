@@ -28,7 +28,7 @@ Feature screen (presentation)
 |---|---|
 | [`ui/token/DesignTokens.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/ui/token/DesignTokens.kt) | palette, semantic color, type-scale 기본값. `FIGMA-TOKEN-INJECTION-POINT` 3개만 `design-token-sync` 자동 동기화 대상으로 삼는다. |
 | [`ui/color/ColorSemantic.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/ui/color/ColorSemantic.kt) | Figma semantic color 이름과 1:1인 슬롯 구조. |
-| [`ui/typo/DesignSystemTypeScale.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/ui/typo/DesignSystemTypeScale.kt) | 21개 text-style 슬롯 구조. |
+| [`ui/typo/DesignSystemTypeScale.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/ui/typo/DesignSystemTypeScale.kt) | 21개 text-style 슬롯 + Android 확장 슬롯(`titleStrongXL`) 구조. |
 | [`ui/theme/DesignSystemTheme.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/ui/theme/DesignSystemTheme.kt) | CompositionLocal 주입, shape/effect 접근, Material3 fallback projection. |
 | [`ui/theme/DesignSystemDimensions.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/ui/theme/DesignSystemDimensions.kt) | radius, spacing, size, layout, shadow/effect 값. 자동 token injection 범위 밖이므로 별도 검증한다. |
 | [`component/`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/component/) | canonical P0의 stateless Compose API와 preview/catalog sample. |

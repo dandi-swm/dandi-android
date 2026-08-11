@@ -44,6 +44,9 @@ class DesignSystemSemanticColors internal constructor(
     val bgSurfaceIvory: Color get() = background.bgSurfaceIvory
     val bgScrimModal: Color get() = background.bgScrimModal
     val bgScrimDefault: Color get() = background.bgScrimDefault
+    val bgScrimGradientTop: Color get() = background.bgScrimGradientTop
+    val bgScrimGradientMiddle: Color get() = background.bgScrimGradientMiddle
+    val bgScrimGradientBottom: Color get() = background.bgScrimGradientBottom
     val bgStatusPositive: Color get() = background.bgStatusPositive
     val bgSelectionPrimary: Color get() = background.bgSelectionPrimary
     val bgActionPrimaryDisabled: Color get() = background.bgActionPrimaryDisabled
@@ -106,6 +109,8 @@ class DesignSystemSemanticColors internal constructor(
     val contentCalendarDate: Color get() = content.contentCalendarDate
     val contentEconomyBalance: Color get() = content.contentEconomyBalance
     val contentSelectionPrimary: Color get() = content.contentSelectionPrimary
+    val contentBrandWordmark: Color get() = content.contentBrandWordmark
+    val contentIconEmail: Color get() = content.contentIconEmail
     val borderDefaultLevel1: Color get() = border.borderDefaultLevel1
     val borderDefaultLevel0: Color get() = border.borderDefaultLevel0
     val borderBrandDefault: Color get() = border.borderBrandDefault
@@ -302,6 +307,11 @@ class DesignSystemSemanticColors internal constructor(
         "borderCoachBubble" -> borderCoachBubble
         "bgSheetHandle" -> bgSheetHandle
         "contentSelectionPrimary" -> contentSelectionPrimary
+        "bgScrimGradientTop" -> bgScrimGradientTop
+        "bgScrimGradientMiddle" -> bgScrimGradientMiddle
+        "bgScrimGradientBottom" -> bgScrimGradientBottom
+        "contentBrandWordmark" -> contentBrandWordmark
+        "contentIconEmail" -> contentIconEmail
         else -> contentDefaultLevel3
     }
 }
@@ -355,6 +365,10 @@ internal class DesignSystemBackgroundColors internal constructor(
     val bgProgressNutritionTrack: Color,
     val bgCoachBubble: Color,
     val bgSheetHandle: Color,
+    // Android 확장 슬롯 (Figma semantic collection 141개 외)
+    val bgScrimGradientTop: Color,
+    val bgScrimGradientMiddle: Color,
+    val bgScrimGradientBottom: Color,
 )
 
 @Immutable
@@ -400,6 +414,9 @@ internal class DesignSystemContentColors internal constructor(
     val contentCalendarDate: Color,
     val contentEconomyBalance: Color,
     val contentSelectionPrimary: Color,
+    // Android 확장 슬롯 (Figma semantic collection 141개 외)
+    val contentBrandWordmark: Color,
+    val contentIconEmail: Color,
 )
 
 @Immutable
