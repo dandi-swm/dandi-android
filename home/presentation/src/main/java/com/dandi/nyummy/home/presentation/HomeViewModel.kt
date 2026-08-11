@@ -1,12 +1,16 @@
 package com.dandi.nyummy.home.presentation
 
+import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.home.presentation.mock.HomeMockData
+import com.dandi.nyummy.meal.domain.MealRecordPage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor() :
+class HomeViewModel @Inject constructor(
+    val navigationHelper: NavigationHelper
+) :
     MviViewModel<HomeIntent, HomeUIState, HomeReducerEvent>(HomeUIState.empty) {
 
     init {
@@ -26,6 +30,9 @@ class HomeViewModel @Inject constructor() :
             HomeIntent.ClickShare -> Unit
             HomeIntent.ClickRoomEdit -> Unit
             HomeIntent.ClickSpeechReplay -> Unit
+            HomeIntent.ClickFeed -> {
+                navigationHelper.navigateTo(MealRecordPage)
+            }
             HomeIntent.ToggleRoomActionMenu ->
                 dispatch(
                     HomeReducerEvent.RoomActionMenuExpansionChanged(

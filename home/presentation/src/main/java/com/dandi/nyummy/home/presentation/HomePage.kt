@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -20,16 +19,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.component.NyummyButton
 import com.dandi.nyummy.common.presentation.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.home.presentation.component.HomeMyRoomCard
-import com.dandi.nyummy.home.presentation.component.HomeTodaySummarySheet
 import com.dandi.nyummy.home.presentation.component.HomeServiceHud
 import com.dandi.nyummy.home.presentation.component.HomeStreakBanner
+import com.dandi.nyummy.home.presentation.component.HomeTodaySummarySheet
 import com.dandi.nyummy.home.presentation.mock.HomeMockData
 import com.dandi.nyummy.common.presentation.R as CommonR
 
@@ -44,8 +43,6 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  */
 @Composable
 fun HomePage(
-    modifier: Modifier = Modifier,
-    onFeedClick: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -53,8 +50,6 @@ fun HomePage(
     HomeScreen(
         uiState = uiState,
         onIntent = viewModel::onIntent,
-        onFeedClick = onFeedClick,
-        modifier = modifier,
     )
 }
 
@@ -62,7 +57,6 @@ fun HomePage(
 private fun HomeScreen(
     uiState: HomeUIState,
     onIntent: (HomeIntent) -> Unit,
-    onFeedClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val summary = uiState.summary
@@ -75,7 +69,6 @@ private fun HomeScreen(
         HomeContent(
             uiState = uiState,
             onIntent = onIntent,
-            onFeedClick = onFeedClick,
         )
         if (uiState.isTodaySummarySheetVisible) {
             HomeTodaySummarySheet(
@@ -87,8 +80,8 @@ private fun HomeScreen(
                 remainingCalorieKcal = uiState.remainingCalorieKcal,
                 onDismiss = { onIntent(HomeIntent.DismissTodaySummarySheet) },
                 onAddMeal = {
-                    onIntent(HomeIntent.DismissTodaySummarySheet)
-                    onFeedClick()
+                    onIntent(HomeIntent.ClickFeed)
+//                    onIntent(HomeIntent.DismissTodaySummarySheet)
                 },
             )
         }
@@ -99,7 +92,6 @@ private fun HomeScreen(
 private fun HomeContent(
     uiState: HomeUIState,
     onIntent: (HomeIntent) -> Unit,
-    onFeedClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val summary = uiState.summary
@@ -150,7 +142,7 @@ private fun HomeContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(HomeFeedButtonTestTag),
-            onClick = onFeedClick,
+            onClick = { onIntent(HomeIntent.ClickFeed) },
         )
         Spacer(modifier = Modifier.height(FeedButtonBottomGap))
     }
@@ -189,7 +181,6 @@ private fun HomePagePreview() {
         HomeScreen(
             uiState = HomeUIState(summary = HomeMockData.summary),
             onIntent = {},
-            onFeedClick = {},
         )
     }
 }
@@ -204,7 +195,6 @@ private fun HomePageTodaySummarySheetPreview() {
                 isTodaySummarySheetVisible = true,
             ),
             onIntent = {},
-            onFeedClick = {},
         )
     }
 }
