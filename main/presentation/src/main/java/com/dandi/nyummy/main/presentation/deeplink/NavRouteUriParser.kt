@@ -3,6 +3,7 @@ package com.dandi.nyummy.main.presentation.deeplink
 import android.net.Uri
 import android.util.Log
 import androidx.navigation3.runtime.NavKey
+import com.dandi.nyummy.auth.domain.LoginPage
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.main.domain.deeplink.matchRoute
@@ -50,10 +51,10 @@ fun resolveStartStack(uri: Uri?): List<NavKey> {
     val route = uri?.resolveRoute()
     if (route == null) {
         if (uri != null) Log.w(TAG, "No matching route for uri=$uri")
-        return listOf(GenericNavKey(HomePage.PATH))
+        return listOf(GenericNavKey(LoginPage.PATH))
     }
     val appRoute = appRouteByPath[route.path]
-        ?: return listOf(GenericNavKey(HomePage.PATH))
+        ?: return listOf(GenericNavKey(LoginPage.PATH))
     return appRoute.syntheticStack(route.args)
 }
 
