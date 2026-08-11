@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -32,6 +34,7 @@ import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -58,6 +61,9 @@ fun NyummyTextField(
     singleLine: Boolean = true,
     leadingIcon: (@Composable () -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     var focused by remember { mutableStateOf(false) }
     NyummyTextFieldCore(
@@ -73,6 +79,9 @@ fun NyummyTextField(
         singleLine = singleLine,
         leadingIcon = leadingIcon,
         trailingIcon = trailingIcon,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        visualTransformation = visualTransformation,
         focused = focused,
         onFocusChanged = { focused = it },
     )
@@ -94,6 +103,9 @@ private fun NyummyTextFieldCore(
     trailingIcon: (@Composable () -> Unit)?,
     focused: Boolean,
     onFocusChanged: (Boolean) -> Unit,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
     val borderColor = when {
@@ -165,6 +177,9 @@ private fun NyummyTextFieldCore(
             singleLine = singleLine,
             maxLines = if (singleLine) 1 else InputMaximumLines,
             textStyle = DesignSystemThemeImpl.typeScale.textRegularM.merge(TextStyle(color = valueColor)),
+            keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions,
+            visualTransformation = visualTransformation,
             cursorBrush = SolidColor(colors.contentSelectionPrimary),
             interactionSource = interactionSource,
             decorationBox = { innerTextField ->

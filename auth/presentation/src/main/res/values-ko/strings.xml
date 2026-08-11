@@ -8,6 +8,11 @@
     <string name="auth_login_email_description">이메일로 로그인</string>
     <string name="auth_login_terms">계속하면 이용약관과 개인정보처리방침에 동의해요.</string>
     <string name="auth_email_login_title">이메일 로그인</string>
+    <string name="auth_email_login_headline">이메일로 계속하기</string>
+    <string name="auth_email_login_subtitle">가입한 이메일과 비밀번호를 입력해 주세요.</string>
+    <string name="auth_forgot_password">비밀번호를 잊었나요?</string>
+    <string name="auth_signup_button">새 계정 만들기</string>
+    <string name="auth_email_login_footer">로그인하면 저장된 냐미 진행 상태를 이어가요.</string>
     <string name="auth_email_label">이메일</string>
     <string name="auth_email_placeholder">example@nyummy.com</string>
     <string name="auth_password_label">비밀번호</string>
