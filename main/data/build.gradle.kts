@@ -40,6 +40,7 @@ dependencies {
     implementation(project(":main:domain"))
     implementation(project(":main:entity"))
     implementation(project(":common:data"))
+
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
     // Network

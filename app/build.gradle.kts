@@ -94,6 +94,11 @@ dependencies {
     implementation(project(":history:data"))
     implementation(project(":history:entity"))
 
+    implementation(project(":auth:presentation"))
+    implementation(project(":auth:domain"))
+    implementation(project(":auth:data"))
+    implementation(project(":auth:entity"))
+
     implementation(libs.hilt.android)
     debugImplementation(libs.leakcanary)
     ksp(libs.hilt.compiler)
