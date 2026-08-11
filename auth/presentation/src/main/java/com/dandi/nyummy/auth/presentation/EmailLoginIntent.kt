@@ -13,4 +13,5 @@ sealed interface EmailLoginIntent : MviIntent {
     data object ClickForgotPassword : EmailLoginIntent
 
     data object ClickSignUp : EmailLoginIntent
+
 }

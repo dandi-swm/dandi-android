@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dandi.nyummy.auth.domain.EmailLoginFieldError
 import com.dandi.nyummy.common.presentation.component.DandiText
 import com.dandi.nyummy.common.presentation.component.NyummyButton
 import com.dandi.nyummy.common.presentation.component.NyummyButtonSize
@@ -97,6 +98,8 @@ private fun EmailLoginContent(
             modifier = Modifier.fillMaxWidth(),
             placeholder = stringResource(R.string.auth_email_placeholder),
             label = stringResource(R.string.auth_email_label),
+            helperText = uiState.emailError?.let { stringResource(it.messageRes()) },
+            isError = uiState.emailError != null,
             enabled = !uiState.isLoading,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
@@ -167,6 +170,10 @@ private fun EmailLoginContent(
         )
         Spacer(modifier = Modifier.height(EmailLoginBottomPadding))
     }
+}
+
+private fun EmailLoginFieldError.messageRes(): Int = when (this) {
+    EmailLoginFieldError.EMAIL_FORMAT -> R.string.auth_email_error_format
 }
 
 private val EmailLoginWordmarkTopPadding = 16.dp

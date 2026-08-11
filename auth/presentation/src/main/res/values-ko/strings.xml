@@ -17,5 +17,6 @@
     <string name="auth_email_placeholder">example@nyummy.com</string>
     <string name="auth_password_label">비밀번호</string>
     <string name="auth_password_placeholder">비밀번호를 입력해 주세요</string>
+    <string name="auth_email_error_format">올바른 이메일 형식이 아니에요.</string>
     <string name="auth_login_button">로그인</string>
 </resources>

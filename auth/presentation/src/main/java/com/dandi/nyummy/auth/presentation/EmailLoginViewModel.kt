@@ -1,6 +1,6 @@
 package com.dandi.nyummy.auth.presentation
 
-import com.dandi.nyummy.common.domain.helper.MessageHelper
+import com.dandi.nyummy.auth.domain.EmailLoginValidator
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -9,7 +9,6 @@ import javax.inject.Inject
 @HiltViewModel
 class EmailLoginViewModel @Inject constructor(
     val navigationHelper: NavigationHelper,
-    val messageHelper: MessageHelper
 ) : MviViewModel<EmailLoginIntent, EmailLoginUIState, EmailLoginReducerEvent>(EmailLoginUIState.empty) {
 
     override fun onIntent(intent: EmailLoginIntent) {
@@ -24,13 +23,20 @@ class EmailLoginViewModel @Inject constructor(
 
     override fun reduce(state: EmailLoginUIState, event: EmailLoginReducerEvent): EmailLoginUIState =
         when (event) {
-            is EmailLoginReducerEvent.EmailChanged -> state.copy(email = event.value)
+            is EmailLoginReducerEvent.EmailChanged -> state.copy(email = event.value, emailError = null)
             is EmailLoginReducerEvent.PasswordChanged -> state.copy(password = event.value)
             EmailLoginReducerEvent.LoginStarted -> state.copy(isLoading = true)
             EmailLoginReducerEvent.LoginFinished -> state.copy(isLoading = false)
+            is EmailLoginReducerEvent.ValidationFailed -> state.copy(emailError = event.emailError)
         }
 
     private fun login() {
+        val emailError = EmailLoginValidator.validateEmail(currentState.email)
+        if (emailError != null) {
+            dispatch(EmailLoginReducerEvent.ValidationFailed(emailError))
+            return
+        }
+
         dispatch(EmailLoginReducerEvent.LoginStarted)
         // TODO: 이메일 로그인 UseCase 호출 후 성공 시 홈으로 이동
         dispatch(EmailLoginReducerEvent.LoginFinished)
