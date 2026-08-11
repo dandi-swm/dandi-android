@@ -16,7 +16,7 @@ class LoginViewModel @Inject constructor(
 
         when (intent) {
             is LoginIntent.ClickSocialLogin -> socialLogin(intent.socialType)
-            LoginIntent.ClickEmailLogin -> navigationHelper.navigateTo(EmailLoginPage)
+            LoginIntent.ClickEmailLogin -> emailLogin()
         }
     }
 
@@ -31,6 +31,10 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    private fun emailLogin() {
+        dispatch(LoginReducerEvent.EmailLoginClicked)
+        navigationHelper.navigateTo(EmailLoginPage)
+    }
     private fun socialLogin(socialType: SocialLoginType) {
         dispatch(LoginReducerEvent.SocialLoginStarted(socialType))
         // TODO: 소셜 로그인 UseCase 호출 후 성공 시 홈 이동, 실패 다이얼로그 모두 UseCase 가 처리한다.

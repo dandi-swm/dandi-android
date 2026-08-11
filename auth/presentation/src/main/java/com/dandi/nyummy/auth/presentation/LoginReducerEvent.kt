@@ -14,5 +14,6 @@ sealed interface LoginReducerEvent : ReducerEvent {
      * 로그인 요청이 끝났다 (성공 시 네비게이션은 UseCase 가 수행).
      */
     data object LoginFinished : LoginReducerEvent
+    data object EmailLoginClicked : LoginReducerEvent
 
 }

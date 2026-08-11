@@ -42,16 +42,20 @@ import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
  */
 @Composable
 fun LoginPage(
-    onEmailLoginClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    viewModel: LoginViewModel,
 ) {
+    LoginPageContent()
+}
+@Composable
+private fun LoginPageContent() {
 
 }
+
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun LoginPagePreview() {
     DesignSystemTheme {
-        LoginPage(onEmailLoginClick = {})
+        LoginPageContent()
     }
 }
