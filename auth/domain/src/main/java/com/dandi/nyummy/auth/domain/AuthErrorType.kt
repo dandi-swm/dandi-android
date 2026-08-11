@@ -16,10 +16,14 @@ enum class AuthErrorType(
 ) : HttpErrorType {
     MISSING_PARAMETER(
         type = "api.common.missingParameter",
-        errorMsg = "A required value is missing.",
+        errorMsg = "입력값이 누락 되었습니다. 다시 시도해주세요.",
+    ),
+    INVALID_CREDENTIALS(
+        type = "api.auth.invalid-credentials",
+        errorMsg = "올바른 이메일과 비밀번호를 입력해주세요.",
     ),
     UNKNOWN(
         type = "api.auth.unknown",
-        errorMsg = "A temporary error occurred.",
+        errorMsg = "알 수 없는 오류가 발생했습니다.",
     ),
 }

@@ -35,12 +35,15 @@ class LoginUseCase @Inject constructor(
     }
 
     private fun handleLoginError(e: HttpResponseException) {
-        if(e.isCommonErrorHandling()) {
-            executeCommonErrorHanding(e)
+
+        val errorType = e.handlingErrorOnUseCase<AuthErrorType>()
+        if (errorType != null) {
+            messageHelper.showOneButtonDialog(descText = errorType.errorMsg)
             return
         }
-        val errorType = e.handlingErrorOnUseCase<AuthErrorType>() ?: return
-        messageHelper.showOneButtonDialog(descText = errorType.errorMsg)
+        if (e.isCommonErrorHandling()) {
+            executeCommonErrorHanding(e)
+        }
     }
 
 }
