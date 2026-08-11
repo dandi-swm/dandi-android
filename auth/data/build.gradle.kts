@@ -39,6 +39,7 @@ kotlin {
 
 dependencies {
     implementation(project(":common:data"))
+    implementation(project(":auth:domain"))
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.retrofit)

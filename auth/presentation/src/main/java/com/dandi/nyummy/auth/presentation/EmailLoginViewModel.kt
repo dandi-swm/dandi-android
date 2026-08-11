@@ -1,14 +1,18 @@
 package com.dandi.nyummy.auth.presentation
 
+import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.auth.domain.EmailLoginValidator
+import com.dandi.nyummy.auth.domain.LoginUseCase
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class EmailLoginViewModel @Inject constructor(
     val navigationHelper: NavigationHelper,
+    val loginUseCase: LoginUseCase
 ) : MviViewModel<EmailLoginIntent, EmailLoginUIState, EmailLoginReducerEvent>(EmailLoginUIState.empty) {
 
     override fun onIntent(intent: EmailLoginIntent) {
@@ -38,8 +42,10 @@ class EmailLoginViewModel @Inject constructor(
         }
 
         dispatch(EmailLoginReducerEvent.LoginStarted)
-        // TODO: 이메일 로그인 UseCase 호출 후 성공 시 홈으로 이동
-        dispatch(EmailLoginReducerEvent.LoginFinished)
+        viewModelScope.launch {
+            loginUseCase.login(currentState.email, currentState.password)
+            dispatch(EmailLoginReducerEvent.LoginFinished)
+        }
     }
 
     private fun forgotPassword() {

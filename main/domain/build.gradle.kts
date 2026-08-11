@@ -12,6 +12,7 @@ kotlin {
 dependencies {
     implementation(project(":main:entity"))
     api(project(":common:domain"))
+
     implementation(libs.javax.inject)
 
     testImplementation(libs.junit)

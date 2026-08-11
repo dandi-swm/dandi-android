@@ -12,6 +12,7 @@ kotlin {
 dependencies {
     api(project(":common:domain"))
     api(project(":auth:entity"))
+    implementation(project(":home:domain"))
     implementation(libs.javax.inject)
     implementation(libs.kotlinx.coroutines.core)
 
