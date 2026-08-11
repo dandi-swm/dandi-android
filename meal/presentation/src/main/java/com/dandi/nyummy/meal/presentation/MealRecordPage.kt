@@ -3,6 +3,7 @@ package com.dandi.nyummy.meal.presentation
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
@@ -33,7 +33,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.component.DandiText
 import com.dandi.nyummy.common.presentation.component.NyummyButton
@@ -57,7 +57,7 @@ import java.util.Locale
 @Composable
 fun MealRecordPage(
     modifier: Modifier = Modifier,
-    viewModel: MealRecordViewModel = hiltViewModel(),
+    viewModel: MealRecordViewModel = hiltViewModel<MealRecordViewModel>(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     MealRecordScreen(
@@ -354,7 +354,8 @@ private fun FoodIconCell(
  * 형식이 예상과 다르면 원문을 그대로 보여준다. 서버 형식 확정 시 data 레이어 변환과 함께 정리한다.
  */
 private fun formatCapturedAt(capturedAt: String): String = runCatching {
-    val parsed = requireNotNull(SimpleDateFormat(ServerTimestampPattern, Locale.US).parse(capturedAt))
+    val parsed =
+        requireNotNull(SimpleDateFormat(ServerTimestampPattern, Locale.US).parse(capturedAt))
     SimpleDateFormat(CapturedAtPattern, Locale.getDefault()).format(parsed)
 }.getOrDefault(capturedAt)
 
