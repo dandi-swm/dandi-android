@@ -24,7 +24,7 @@ val appRoutes: List<AppRoute> = listOf(
         path = LoginPage.PATH,
         isBottomTab = false,
         render = {
-            LoginPage(viewModel = hiltViewModel<LoginViewModel>())
+            LoginPage()
         }
     ),
     AppRoute(
