@@ -1,11 +1,9 @@
 package com.dandi.nyummy.main.presentation.navigation
 
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.dandi.nyummy.auth.domain.EmailLoginPage
 import com.dandi.nyummy.auth.domain.LoginPage
 import com.dandi.nyummy.auth.presentation.EmailLoginPage
 import com.dandi.nyummy.auth.presentation.LoginPage
-import com.dandi.nyummy.auth.presentation.LoginViewModel
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.history.presentation.HistoryPage
@@ -21,12 +19,9 @@ import com.dandi.nyummy.meal.presentation.MealRecordPage
  */
 val appRoutes: List<AppRoute> = listOf(
     AppRoute(
-        path = LoginPage.PATH,
-        isBottomTab = false,
-        render = {
+        path = LoginPage.PATH, isBottomTab = false, render = {
             LoginPage()
-        }
-    ),
+        }),
     AppRoute(
         path = EmailLoginPage.PATH,
         isBottomTab = false,
@@ -42,10 +37,7 @@ val appRoutes: List<AppRoute> = listOf(
         path = HomePage.PATH,
         isBottomTab = true,
         render = {
-            val navigationHelper = LocalNavigationHelper.current
-            HomePage(
-                onFeedClick = { navigationHelper.navigateTo(MealRecordPage) },
-            )
+            HomePage()
         },
     ),
     AppRoute(

@@ -37,4 +37,7 @@ sealed interface HomeIntent : MviIntent {
 
     /** 오늘 식사 요약 바텀시트를 닫았다(스크림 탭). */
     data object DismissTodaySummarySheet : HomeIntent
+
+    /** 밥주기 버튼을 탭했다. */
+    data object ClickFeed : HomeIntent
 }

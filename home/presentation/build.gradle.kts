@@ -55,6 +55,7 @@ composeCompiler {
 dependencies {
     implementation(project(":home:domain"))
     implementation(project(":home:entity"))
+    implementation(project(":meal:domain"))
     implementation(project(":common:presentation"))
 
     implementation(libs.androidx.lifecycle.runtime.compose)
