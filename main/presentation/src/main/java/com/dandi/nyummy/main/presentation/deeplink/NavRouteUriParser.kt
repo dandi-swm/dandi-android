@@ -51,7 +51,7 @@ fun resolveStartStack(uri: Uri?): List<NavKey> {
     val route = uri?.resolveRoute()
     if (route == null) {
         if (uri != null) Log.w(TAG, "No matching route for uri=$uri")
-        return listOf(GenericNavKey(HomePage.PATH))
+        return listOf(GenericNavKey(LoginPage.PATH))
     }
     val appRoute = appRouteByPath[route.path]
         ?: return listOf(GenericNavKey(LoginPage.PATH))

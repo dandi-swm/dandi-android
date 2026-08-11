@@ -9,9 +9,15 @@
     <string name="auth_login_email_description">Sign in with email</string>
     <string name="auth_login_terms">By continuing, you agree to the Terms of Service and Privacy Policy.</string>
     <string name="auth_email_login_title">Email sign-in</string>
+    <string name="auth_email_login_headline">Continue with email</string>
+    <string name="auth_email_login_subtitle">Enter the email and password you signed up with.</string>
+    <string name="auth_forgot_password">Forgot your password?</string>
+    <string name="auth_signup_button">Create a new account</string>
+    <string name="auth_email_login_footer">Sign in to pick up your saved Nyummy progress.</string>
     <string name="auth_email_label">Email</string>
     <string name="auth_email_placeholder">example@nyummy.com</string>
     <string name="auth_password_label">Password</string>
     <string name="auth_password_placeholder">Enter your password</string>
+    <string name="auth_email_error_format">Please enter a valid email address.</string>
     <string name="auth_login_button">Sign in</string>
 </resources>
