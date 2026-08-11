@@ -1,13 +1,19 @@
 package com.dandi.nyummy.main.presentation.navigation
 
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.dandi.nyummy.auth.domain.EmailLoginPage
+import com.dandi.nyummy.auth.domain.LoginPage
+import com.dandi.nyummy.auth.presentation.EmailLoginPage
+import com.dandi.nyummy.auth.presentation.LoginPage
+import com.dandi.nyummy.auth.presentation.LoginViewModel
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
+import com.dandi.nyummy.history.domain.HistoryPage
+import com.dandi.nyummy.history.presentation.HistoryPage
+import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.home.presentation.HomePage
 import com.dandi.nyummy.main.domain.deeplink.RoutePattern
-import com.dandi.nyummy.history.domain.HistoryPage as HistoryNavigationPage
-import com.dandi.nyummy.history.presentation.HistoryPage as HistoryScreen
-import com.dandi.nyummy.home.domain.HomePage as HomeNavigationPage
-import com.dandi.nyummy.home.presentation.HomePage as HomeScreen
-import com.dandi.nyummy.meal.domain.MealRecordPage as MealRecordNavigationPage
-import com.dandi.nyummy.meal.presentation.MealRecordPage as MealRecordScreen
+import com.dandi.nyummy.meal.domain.MealRecordPage
+import com.dandi.nyummy.meal.presentation.MealRecordPage
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
@@ -15,24 +21,48 @@ import com.dandi.nyummy.meal.presentation.MealRecordPage as MealRecordScreen
  */
 val appRoutes: List<AppRoute> = listOf(
     AppRoute(
-        path = HomeNavigationPage.PATH,
+        path = LoginPage.PATH,
+        isBottomTab = false,
+        render = {
+            LoginPage()
+        }
+    ),
+    AppRoute(
+        path = EmailLoginPage.PATH,
+        isBottomTab = false,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(LoginPage.PATH),
+                GenericNavKey(EmailLoginPage.PATH, args),
+            )
+        },
+        render = { EmailLoginPage() },
+    ),
+    AppRoute(
+        path = HomePage.PATH,
         isBottomTab = true,
         render = {
             val navigationHelper = LocalNavigationHelper.current
-            HomeScreen(
-                onFeedClick = { navigationHelper.navigateTo(MealRecordNavigationPage) },
+            HomePage(
+                onFeedClick = { navigationHelper.navigateTo(MealRecordPage) },
             )
         },
     ),
     AppRoute(
-        path = MealRecordNavigationPage.PATH,
+        path = MealRecordPage.PATH,
         isBottomTab = false,
-        render = { MealRecordScreen() },
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(HomePage.PATH),
+                GenericNavKey(MealRecordPage.PATH, args),
+            )
+        },
+        render = { MealRecordPage() },
     ),
     AppRoute(
-        path = HistoryNavigationPage.PATH,
+        path = HistoryPage.PATH,
         isBottomTab = true,
-        render = { HistoryScreen() },
+        render = { HistoryPage() },
     ),
 )
 
@@ -45,6 +75,6 @@ val appRouteByPath: Map<String, AppRoute> = appRoutes.associateBy { it.path }
  * (예: "/articleList/articlePage/{articleId}")만 보관한다. deep-link URI 해석 시
  * exact 매칭이 실패한 경우에만 이 목록을 순차 매칭한다.
  */
-val appRoutePatterns: List<Pair<RoutePattern, AppRoute>> = appRoutes
-    .map { route -> RoutePattern(route.path) to route }
-    .filter { (pattern, _) -> pattern.hasParams }
+val appRoutePatterns: List<Pair<RoutePattern, AppRoute>> =
+    appRoutes.map { route -> RoutePattern(route.path) to route }
+        .filter { (pattern, _) -> pattern.hasParams }

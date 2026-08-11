@@ -21,6 +21,7 @@
 - variable alias는 해석한 최종 ARGB를 palette에 두고 semantic slot은 그 palette entry를 참조한다.
 - `bg/scrim/default`는 `palette/overlay/cocoa-40` (`#170D0966`)에 연결한다. `bg/scrim/modal`과 합치지 않는다.
 - 템플릿이 원래 제공하던 `Black`, `White`, `Gray300…Gray900`, `Blue400`, `Red` palette entry는 사용 여부와 관계없이 호환성을 위해 유지한다.
+- Android 확장 슬롯(Figma semantic collection 141개 외, 화면에서 palette 직참조/미바인딩된 값을 승격): `contentBrandWordmark`(`palette/evergreen/740`), `contentIconEmail`(`palette/evergreen/725`), `bgScrimGradientTop/Middle/Bottom`(Cocoa900 `#241610` alpha 0/45/85% → `OverlayCocoa0/45/85`). 로그인 화면(`73:53`)에서 사용한다.
 - Material3 `colorScheme`은 fallback projection일 뿐 canonical token을 대체하지 않는다. product component는 `DesignSystemThemeImpl.designSystemColor`를 직접 쓴다.
 
 ### Dimensions
@@ -65,6 +66,7 @@ Compose의 density 변환 뒤에도 Figma의 1px stroke가 사라지지 않게 b
 | `label/regular/XS` → `labelRegularXS` | Noto Sans KR Regular | 11/16 | `e4bcedce299162cc9a50d1b0c045c74affb82509` |
 | `number/strong/L` → `numberStrongL` | Fredoka Bold | 24/30 | `93ff718f7376b05ae322dcea48baa721d24f9729` |
 | `number/strong/M` → `numberStrongM` | Fredoka Bold | 18/24 | `371bf374222792804d89456c69ef8e03d75b4f30` |
+| (Android 확장) `titleStrongXL` | Jua Regular | 26/32 | canonical style 미등록 — 로그인 화면(`73:58`) 헤드라인의 미바인딩 스타일을 슬롯으로 승격 |
 
 Font assets are self-hosted Noto Sans KR variable, Jua Regular, Gowun Dodum Regular, and Fredoka variable under SIL Open Font License 1.1. Preview와 screenshot test에서 실제 bundled font가 로드된 상태로 비교한다.
 

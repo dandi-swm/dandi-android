@@ -1,0 +1,16 @@
+<resources>
+    <string name="auth_login_headline">냐미가 기다리고 있어요!</string>
+    <string name="auth_login_subtitle">간편하게 로그인하고 식사 기록을 이어가요.</string>
+    <string name="auth_login_kakao">카카오 로그인</string>
+    <string name="auth_login_or">또는</string>
+    <string name="auth_login_naver_description">네이버로 로그인</string>
+    <string name="auth_login_google_description">구글로 로그인</string>
+    <string name="auth_login_email_description">이메일로 로그인</string>
+    <string name="auth_login_terms">계속하면 이용약관과 개인정보처리방침에 동의해요.</string>
+    <string name="auth_email_login_title">이메일 로그인</string>
+    <string name="auth_email_label">이메일</string>
+    <string name="auth_email_placeholder">example@nyummy.com</string>
+    <string name="auth_password_label">비밀번호</string>
+    <string name="auth_password_placeholder">비밀번호를 입력해 주세요</string>
+    <string name="auth_login_button">로그인</string>
+</resources>
