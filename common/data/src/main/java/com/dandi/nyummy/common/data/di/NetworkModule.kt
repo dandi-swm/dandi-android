@@ -1,6 +1,8 @@
 package com.dandi.nyummy.common.data.di
 
+import android.util.Log
 import com.dandi.nyummy.common.data.BuildConfig
+import com.dandi.nyummy.common.data.token.TokenProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,9 +21,6 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    // API-CONFIG-INJECTION-POINT: base URL / API key 는 local.properties → BuildConfig 로 주입된다.
-    // (기본값은 빌드 가능한 placeholder. 실제 값은 배포 환경에서 주입한다.)
-
     @Provides
     @Singleton
     fun provideJson(): Json = Json {
@@ -32,15 +31,18 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(tokenProvider: TokenProvider): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
-        // API-CONFIG-INJECTION-POINT: 인증 헤더 포맷은 대상 API 에 맞게 교체한다.
+
         val authInterceptor = Interceptor { chain ->
             val requestBuilder = chain.request().newBuilder()
-            if (BuildConfig.API_KEY.isNotBlank()) {
-                requestBuilder.addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
+
+            // TokenProvider에서 토큰을 가져와서 Authorization 헤더에 추가
+            val assessToken = tokenProvider.accessToken
+            if (assessToken != null) {
+                requestBuilder.addHeader("Authorization", "Bearer $assessToken")
             }
             val request = requestBuilder.build()
             chain.proceed(request)
