@@ -19,4 +19,37 @@
     <string name="auth_password_placeholder">비밀번호를 입력해 주세요</string>
     <string name="auth_email_error_format">올바른 이메일 형식이 아니에요.</string>
     <string name="auth_login_button">로그인</string>
+
+    <string name="auth_signup_title">계정 만들기</string>
+    <string name="auth_signup_subtitle">첫 기록과 보상을 안전하게 저장해요.</string>
+    <string name="auth_signup_password_placeholder">8자 이상 입력</string>
+    <string name="auth_signup_password_helper">영문과 숫자를 포함해 주세요.</string>
+    <string name="auth_signup_password_confirm_label">비밀번호 확인</string>
+    <string name="auth_signup_password_confirm_placeholder">비밀번호 재입력</string>
+    <string name="auth_signup_cta">이메일로 가입</string>
+    <string name="auth_signup_error_password_policy">영문과 숫자를 포함해 8자 이상 입력해 주세요.</string>
+    <string name="auth_signup_error_password_mismatch">비밀번호가 일치하지 않아요.</string>
+    <string name="auth_signup_code_title">인증 코드를 입력해 주세요</string>
+    <string name="auth_signup_code_subtitle">%1$s(으)로 6자리 코드를 보냈어요.</string>
+    <string name="auth_signup_code_spam_hint">메일이 안 보이면 스팸함도 확인해 주세요.</string>
+    <string name="auth_signup_code_resend_question">코드를 못 받았나요?</string>
+    <string name="auth_signup_code_resend">다시 보내기</string>
+    <string name="auth_signup_code_resend_countdown">다시 보내기 (%1$s)</string>
+    <string name="auth_signup_code_cta">인증하기</string>
+    <string name="auth_signup_code_input_description">인증 코드 입력</string>
+    <string name="auth_signup_profile_title">집사님을 조금만\n알려주세요.</string>
+    <string name="auth_signup_profile_subtitle">맞춤 권장량을 계산하는 데만 사용해요.</string>
+    <string name="auth_signup_nickname_label">집사 이름</string>
+    <string name="auth_signup_nickname_placeholder">집사 이름을 입력해주세요</string>
+    <string name="auth_signup_gender_label">성별</string>
+    <string name="auth_signup_gender_male">남성</string>
+    <string name="auth_signup_gender_female">여성</string>
+    <string name="auth_signup_birth_label">생년월일</string>
+    <string name="auth_signup_height_label">키</string>
+    <string name="auth_signup_weight_label">몸무게</string>
+    <string name="auth_signup_privacy_notice_title">가입 후 프로필은 바꿀 수 없어요.</string>
+    <string name="auth_signup_privacy_notice_desc">입력 내용을 한 번 더 확인해주세요.</string>
+    <string name="auth_signup_profile_cta">Nyummy 시작하기</string>
+    <string name="auth_signup_error_nickname_empty_title">필수 정보를 확인해주세요.</string>
+    <string name="auth_signup_error_nickname_empty_desc">집사 이름은 비워둘 수 없어요.</string>
 </resources>

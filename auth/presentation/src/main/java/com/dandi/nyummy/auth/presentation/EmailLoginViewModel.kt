@@ -3,6 +3,7 @@ package com.dandi.nyummy.auth.presentation
 import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.auth.domain.EmailLoginValidator
 import com.dandi.nyummy.auth.domain.LoginUseCase
+import com.dandi.nyummy.auth.domain.SignUpPage
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -53,6 +54,6 @@ class EmailLoginViewModel @Inject constructor(
     }
 
     private fun signUp() {
-        // TODO: 회원가입 화면 미구현 — Page 추가 후 navigationHelper.navigateTo(...)
+        navigationHelper.navigateTo(SignUpPage)
     }
 }

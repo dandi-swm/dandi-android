@@ -2,8 +2,10 @@ package com.dandi.nyummy.main.presentation.navigation
 
 import com.dandi.nyummy.auth.domain.EmailLoginPage
 import com.dandi.nyummy.auth.domain.LoginPage
+import com.dandi.nyummy.auth.domain.SignUpPage
 import com.dandi.nyummy.auth.presentation.EmailLoginPage
 import com.dandi.nyummy.auth.presentation.LoginPage
+import com.dandi.nyummy.auth.presentation.SignUpPage
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.history.presentation.HistoryPage
@@ -32,6 +34,18 @@ val appRoutes: List<AppRoute> = listOf(
             )
         },
         render = { EmailLoginPage() },
+    ),
+    AppRoute(
+        path = SignUpPage.PATH,
+        isBottomTab = false,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(LoginPage.PATH),
+                GenericNavKey(EmailLoginPage.PATH),
+                GenericNavKey(SignUpPage.PATH, args),
+            )
+        },
+        render = { SignUpPage() },
     ),
     AppRoute(
         path = HomePage.PATH,

@@ -20,4 +20,39 @@
     <string name="auth_password_placeholder">Enter your password</string>
     <string name="auth_email_error_format">Please enter a valid email address.</string>
     <string name="auth_login_button">Sign in</string>
+
+    <string name="auth_signup_title">Create your account</string>
+    <string name="auth_signup_subtitle">Keep your first logs and rewards safe.</string>
+    <string name="auth_signup_password_placeholder">At least 8 characters</string>
+    <string name="auth_signup_password_helper">Include letters and numbers.</string>
+    <string name="auth_signup_password_confirm_label">Confirm password</string>
+    <string name="auth_signup_password_confirm_placeholder">Re-enter your password</string>
+    <string name="auth_signup_cta">Sign up with email</string>
+    <string name="auth_signup_error_password_policy">Use at least 8 characters with letters and numbers.</string>
+    <string name="auth_signup_error_password_mismatch">Passwords do not match.</string>
+    <string name="auth_signup_code_title">Enter the verification code</string>
+    <string name="auth_signup_code_subtitle">We sent a 6-digit code to %1$s.</string>
+    <string name="auth_signup_code_spam_hint">If you can\'t find the email, check your spam folder.</string>
+    <string name="auth_signup_code_resend_question">Didn\'t get the code?</string>
+    <string name="auth_signup_code_resend">Resend</string>
+    <string name="auth_signup_code_resend_countdown">Resend (%1$s)</string>
+    <string name="auth_signup_code_cta">Verify</string>
+    <string name="auth_signup_code_input_description">Verification code input</string>
+    <string name="auth_signup_profile_title">Tell us a little\nabout yourself.</string>
+    <string name="auth_signup_profile_subtitle">Used only to calculate your recommendations.</string>
+    <string name="auth_signup_nickname_label">Keeper name</string>
+    <string name="auth_signup_nickname_placeholder">Enter your keeper name</string>
+    <string name="auth_signup_gender_label">Gender</string>
+    <string name="auth_signup_gender_male">Male</string>
+    <string name="auth_signup_gender_female">Female</string>
+    <string name="auth_signup_birth_label">Date of birth</string>
+    <string name="auth_signup_height_label">Height</string>
+    <string name="auth_signup_weight_label">Weight</string>
+    <string name="auth_signup_unit_height" translatable="false">cm</string>
+    <string name="auth_signup_unit_weight" translatable="false">kg</string>
+    <string name="auth_signup_privacy_notice_title">Your profile can\'t be changed after sign-up.</string>
+    <string name="auth_signup_privacy_notice_desc">Please double-check what you entered.</string>
+    <string name="auth_signup_profile_cta">Start Nyummy</string>
+    <string name="auth_signup_error_nickname_empty_title">Please check the required info.</string>
+    <string name="auth_signup_error_nickname_empty_desc">Keeper name can\'t be empty.</string>
 </resources>
