@@ -31,8 +31,12 @@ class NavigationHelperImpl : NavigationHelper {
         emit(NavSignal.Back)
     }
 
-    override fun resetTo(page: Page) {
+    override fun navigateToAsRoot(page: Page) {
         emit(NavSignal.ResetToPage(page.toRoute()))
+    }
+
+    override fun navigateToInitial() {
+        emit(NavSignal.BackToInitialPage)
     }
 
     private fun emit(navSignal: NavSignal) {
