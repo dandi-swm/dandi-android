@@ -9,10 +9,13 @@ import kotlinx.serialization.json.jsonPrimitive
 import retrofit2.Response
 
 abstract class BaseRemoteDataSource {
-    protected fun <T> checkResponse(response: Response<T>): T {
+    protected inline fun <reified T> checkResponse(response: Response<T>): T {
         if (response.isSuccessful) {
-            return response.body()
-                ?: throw IllegalStateException("Successful response with null body: ${response.raw().request.url}")
+            response.body()?.let { return it }
+            // 204 No Content 처럼 바디 없는 성공 응답은 Retrofit 이 body 를 null 로 반환한다.
+            // 호출부가 Unit 응답을 기대하는 경우에만 정상 처리한다.
+            if (Unit is T) return Unit
+            throw IllegalStateException("Successful response with null body: ${response.raw().request.url}")
         }
         throw response.toHttpResponseException()
     }
