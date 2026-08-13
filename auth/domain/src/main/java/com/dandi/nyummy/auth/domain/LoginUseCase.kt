@@ -27,7 +27,7 @@ class LoginUseCase @Inject constructor(
      */
     suspend fun login(email: String, password: String): Result<Unit> = try {
         repository.login(email = email, password = password)
-        navigationHelper.navigateTo(HomePage)
+        navigationHelper.resetTo(HomePage)
         Result.success(Unit)
     } catch (e: HttpResponseException) {
         handleLoginError(e)
