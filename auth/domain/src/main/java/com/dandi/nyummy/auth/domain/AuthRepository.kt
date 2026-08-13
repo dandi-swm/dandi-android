@@ -10,5 +10,6 @@ interface AuthRepository {
     /** 이메일 로그인  */
     suspend fun login(email: String, password: String)
 
-
+    /** 이메일 인증 코드 발송 */
+    suspend fun requestEmailVerification(email: String)
 }

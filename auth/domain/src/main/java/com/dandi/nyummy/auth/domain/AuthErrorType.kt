@@ -22,6 +22,10 @@ enum class AuthErrorType(
         type = "api.auth.invalid-credentials",
         errorMsg = "올바른 이메일과 비밀번호를 입력해주세요.",
     ),
+    MAIL_RESEND_TOO_EARLY(
+        type = "api.auth.mail-resend-too-early",
+        errorMsg = "인증 코드를 발송한 지 5분이 지나지 않았습니다.",
+    ),
     UNKNOWN(
         type = "api.auth.unknown",
         errorMsg = "알 수 없는 오류가 발생했습니다.",
