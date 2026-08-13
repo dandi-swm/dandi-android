@@ -47,10 +47,12 @@ class AuthRepositoryImplTest {
     }
 
     @Test
-    fun `이메일 인증 코드 발송은 토큰을 저장하지 않는다`() = runBlocking {
+    fun `이메일 인증 코드 발송·확인은 토큰을 저장하지 않는다`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(200))
         server.enqueue(MockResponse().setResponseCode(200))
 
         repository.requestEmailVerification(email = "test@dandi.app")
+        repository.confirmEmailVerification(email = "test@dandi.app", verificationCode = "123456")
 
         assertNull(tokenProvider.accessToken)
         assertNull(tokenProvider.refreshToken)

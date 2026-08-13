@@ -1,5 +1,6 @@
 package com.dandi.nyummy.auth.data
 
+import com.dandi.nyummy.auth.data.dto.EmailVerificationConfirmRequestDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerificationRequestDTO
 import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
 import com.dandi.nyummy.auth.domain.AuthRepository
@@ -23,6 +24,12 @@ class AuthRepositoryImpl(
 
     override suspend fun requestEmailVerification(email: String) {
         dataSource.requestEmailVerification(EmailVerificationRequestDTO(email = email))
+    }
+
+    override suspend fun confirmEmailVerification(email: String, verificationCode: String) {
+        dataSource.confirmEmailVerification(
+            EmailVerificationConfirmRequestDTO(email = email, verificationCode = verificationCode),
+        )
     }
 
     /** 발급 토큰 영속화 — 이후 요청부터 인증 헤더/Authenticator 가 사용한다. */

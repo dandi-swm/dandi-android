@@ -27,6 +27,15 @@ class EmailVerificationUseCase @Inject constructor(
         Result.failure(e)
     }
 
+    /** 이메일 인증 코드 확인 */
+    suspend fun confirmCode(email: String, verificationCode: String): Result<Unit> = try {
+        repository.confirmEmailVerification(email = email, verificationCode = verificationCode)
+        Result.success(Unit)
+    } catch (e: HttpResponseException) {
+        handleEmailVerificationError(e)
+        Result.failure(e)
+    }
+
     private fun handleEmailVerificationError(e: HttpResponseException) {
         val errorType = e.handlingErrorOnUseCase<AuthErrorType>()
         if (errorType != null) {

@@ -26,6 +26,18 @@ enum class AuthErrorType(
         type = "api.auth.mail-resend-too-early",
         errorMsg = "인증 코드를 발송한 지 5분이 지나지 않았습니다.",
     ),
+    MAIL_NOT_FOUND(
+        type = "api.auth.mail-not-found",
+        errorMsg = "해당 이메일로 발송된 인증 코드가 없습니다.",
+    ),
+    MAIL_CODE_EXPIRED(
+        type = "api.auth.mail-code-expired",
+        errorMsg = "인증 코드 유효 시간이 지났습니다. 코드를 재발송 받으세요.",
+    ),
+    MAIL_CODE_MISMATCH(
+        type = "api.auth.mail-code-mismatch",
+        errorMsg = "인증 코드가 일치하지 않습니다.",
+    ),
     UNKNOWN(
         type = "api.auth.unknown",
         errorMsg = "알 수 없는 오류가 발생했습니다.",

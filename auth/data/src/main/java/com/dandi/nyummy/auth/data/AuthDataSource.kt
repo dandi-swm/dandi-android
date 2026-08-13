@@ -1,6 +1,7 @@
 package com.dandi.nyummy.auth.data
 
 import com.dandi.nyummy.auth.data.dto.AuthTokenDTO
+import com.dandi.nyummy.auth.data.dto.EmailVerificationConfirmRequestDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerificationRequestDTO
 import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
 import com.dandi.nyummy.common.data.BaseRemoteDataSource
@@ -15,5 +16,9 @@ class AuthDataSource(
 
     suspend fun requestEmailVerification(request: EmailVerificationRequestDTO) {
         checkResponse(apiService.requestEmailVerification(request))
+    }
+
+    suspend fun confirmEmailVerification(request: EmailVerificationConfirmRequestDTO) {
+        checkResponse(apiService.confirmEmailVerification(request))
     }
 }
