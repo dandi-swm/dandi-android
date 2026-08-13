@@ -13,6 +13,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.dandi.nyummy.auth.domain.LoginPage
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
@@ -32,6 +33,7 @@ fun AppNavHost(
                 is NavSignal.DeepLink -> handleDeepLink(signal.route, backStack)
                 NavSignal.Back -> backStack.removeLastOrNull()
                 is NavSignal.ResetToPage -> handleResetTo(signal.route, backStack)
+                NavSignal.BackToInitialPage -> navigateToInitialStack(backStack)
             }
         }
     }
@@ -111,6 +113,19 @@ fun handleDeepLink(route: NavRoute, backStack: NavBackStack<NavKey>) {
     if (backStack.lastOrNull() == target) return   // 이미 최전면 — no-op.
     backStack.bringToFront(target)
     Log.d(TAG, "deepLink bringToFront: $target")
+}
+
+/**
+ * 세션 만료(401) 처리. 스택을 비우고 로그인 화면 단독으로 교체한다.
+ *
+ * 인증이 필요한 화면들이 백스택에 남아 있으면 뒤로가기 시 만료된 세션 상태로
+ * 다시 노출되기 때문이다. 목적지는 domain 이 아닌 여기서 결정한다 —
+ * common:domain 이 feature 의 Page 를 참조하면 순환 의존이 된다.
+ */
+fun navigateToInitialStack(backStack: NavBackStack<NavKey>) {
+    backStack.clear()
+    backStack.add(GenericNavKey(LoginPage.PATH))
+    Log.d(TAG, "backToInitial: reset stack to Login")
 }
 
 /**

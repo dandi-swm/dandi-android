@@ -20,7 +20,12 @@ open class BaseUseCase(
                     cantIgnore = true,
                     descText = "Session expired. Please login again.",
                     buttonText = "Move to login",
-                    onClickButton = {},
+                    onClickButton = {
+                        // 목적지(로그인 화면)를 직접 지정하지 않는다.
+                        // common:domain 이 feature 의 Page 를 참조하면 순환 의존이 되므로
+                        // "초기 화면으로 이동" 신호만 날리고 실제 이동은 NavHost 가 결정한다.
+                        navigationHelper.navigateToInitial()
+                    },
                 )
             }
 

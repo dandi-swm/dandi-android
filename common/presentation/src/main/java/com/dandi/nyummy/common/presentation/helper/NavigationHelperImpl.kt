@@ -35,6 +35,10 @@ class NavigationHelperImpl : NavigationHelper {
         emit(NavSignal.ResetToPage(page.toRoute()))
     }
 
+    override fun navigateToInitial() {
+        emit(NavSignal.BackToInitialPage)
+    }
+
     private fun emit(navSignal: NavSignal) {
         val result = _navigationFlow.trySend(navSignal)
         if (result.isFailure) Log.w("NavigationHelper", "dropped: $navSignal")
