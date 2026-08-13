@@ -7,11 +7,10 @@ import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
-import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
 
-class LoginUseCase @Inject constructor(
+class EmailVerificationUseCase @Inject constructor(
     private val repository: AuthRepository,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
@@ -19,23 +18,25 @@ class LoginUseCase @Inject constructor(
     ttiHelper: TTIHelper,
 ) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
 
-
-    /**
-     * 이메일 로그인. 성공 시 홈으로 이동한다.
-     *
-     * 발급 토큰 저장은 data 레이어에서 담당한다.
-     */
-    suspend fun login(email: String, password: String): Result<Unit> = try {
-        repository.login(email = email, password = password)
-        navigationHelper.resetTo(HomePage)
+    /** 이메일 인증 코드 발송 */
+    suspend fun sendCode(email: String): Result<Unit> = try {
+        repository.requestEmailVerification(email = email)
         Result.success(Unit)
     } catch (e: HttpResponseException) {
-        handleLoginError(e)
+        handleEmailVerificationError(e)
         Result.failure(e)
     }
 
-    private fun handleLoginError(e: HttpResponseException) {
+    /** 이메일 인증 코드 확인 */
+    suspend fun confirmCode(email: String, verificationCode: String): Result<Unit> = try {
+        repository.confirmEmailVerification(email = email, verificationCode = verificationCode)
+        Result.success(Unit)
+    } catch (e: HttpResponseException) {
+        handleEmailVerificationError(e)
+        Result.failure(e)
+    }
 
+    private fun handleEmailVerificationError(e: HttpResponseException) {
         val errorType = e.handlingErrorOnUseCase<AuthErrorType>()
         if (errorType != null) {
             messageHelper.showOneButtonDialog(descText = errorType.errorMsg)
@@ -45,5 +46,4 @@ class LoginUseCase @Inject constructor(
             executeCommonErrorHanding(e)
         }
     }
-
 }

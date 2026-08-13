@@ -5,7 +5,7 @@ import com.dandi.nyummy.auth.data.dto.EmailVerificationConfirmRequestDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerificationRequestDTO
 import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
 import com.dandi.nyummy.auth.data.dto.RefreshTokenRequestDTO
-import com.dandi.nyummy.auth.data.dto.SignupRequestDTO
+import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -20,7 +20,7 @@ interface AuthApiService {
 
     /** 회원가입 */
     @POST("${AUTH_PATH}/signup")
-    suspend fun signup(@Body signupRequest: SignupRequestDTO): Response<AuthTokenDTO>
+    suspend fun signUp(@Body signUpRequest: SignUpRequestDTO): Response<AuthTokenDTO>
 
     /** 이메일 인증 코드 발송 */
     @POST("${AUTH_PATH}/email-verification")

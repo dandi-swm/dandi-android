@@ -46,6 +46,9 @@ fun RootComposable(
     var oneButtonDialogEffect by remember {
         mutableStateOf<MessageEffect.ShowOneButtonDialog?>(null)
     }
+    var twoButtonDialogEffect by remember {
+        mutableStateOf<MessageEffect.ShowTwoButtonDialog?>(null)
+    }
 
     DesignSystemTheme {
         val backStack = rememberNavBackStack(*startStack.toTypedArray())
@@ -70,10 +73,14 @@ fun RootComposable(
         val onShowOneButtonDialog = remember<(MessageEffect.ShowOneButtonDialog) -> Unit> {
             { oneButtonDialogEffect = it }
         }
+        val onShowTwoButtonDialog = remember<(MessageEffect.ShowTwoButtonDialog) -> Unit> {
+            { twoButtonDialogEffect = it }
+        }
         MessageEffect(
             messageEffectFlow = messageHelper.effect,
             snackBarHostState = snackBarHostState,
             onShowOneButtonDialog = onShowOneButtonDialog,
+            onShowTwoButtonDialog = onShowTwoButtonDialog,
         )
 
         oneButtonDialogEffect?.let { dialog ->
@@ -110,6 +117,64 @@ fun RootComposable(
                             text = dialog.buttonText,
                             style = DesignSystemThemeImpl.typeScale.textStrongL,
                             color = DesignSystemThemeImpl.designSystemColor.contentAccent,
+                        )
+                    }
+                },
+                properties = DialogProperties(
+                    dismissOnBackPress = !dialog.cantIgnore,
+                    dismissOnClickOutside = !dialog.cantIgnore,
+                ),
+            )
+        }
+
+        twoButtonDialogEffect?.let { dialog ->
+            AlertDialog(
+                onDismissRequest = {
+                    if (!dialog.cantIgnore) twoButtonDialogEffect = null
+                },
+                title = dialog.titleText?.let { titleText ->
+                    {
+                        DandiText(
+                            text = titleText,
+                            style = DesignSystemThemeImpl.typeScale.titleStrongL,
+                            color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel1,
+                            maxLines = Int.MAX_VALUE,
+                        )
+                    }
+                },
+                text = {
+                    DandiText(
+                        text = dialog.descText,
+                        style = DesignSystemThemeImpl.typeScale.textRegularL,
+                        color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel2,
+                        maxLines = Int.MAX_VALUE,
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            dialog.onClickRightButton?.invoke()
+                            twoButtonDialogEffect = null
+                        }
+                    ) {
+                        DandiText(
+                            text = dialog.rightButtonText,
+                            style = DesignSystemThemeImpl.typeScale.textStrongL,
+                            color = DesignSystemThemeImpl.designSystemColor.contentAccent,
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            dialog.onClickLeftButton?.invoke()
+                            twoButtonDialogEffect = null
+                        }
+                    ) {
+                        DandiText(
+                            text = dialog.leftButtonText,
+                            style = DesignSystemThemeImpl.typeScale.textStrongL,
+                            color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel2,
                         )
                     }
                 },
@@ -164,6 +229,7 @@ private fun MessageEffect(
     messageEffectFlow: Flow<MessageEffect>,
     snackBarHostState: SnackbarHostState,
     onShowOneButtonDialog: (MessageEffect.ShowOneButtonDialog) -> Unit,
+    onShowTwoButtonDialog: (MessageEffect.ShowTwoButtonDialog) -> Unit,
 ) {
     val appContext = LocalContext.current.applicationContext
 
@@ -178,6 +244,7 @@ private fun MessageEffect(
 
                 is MessageEffect.ShowSnackBarError -> snackBarHostState.showSnackbar(effect.message)
                 is MessageEffect.ShowOneButtonDialog -> onShowOneButtonDialog(effect)
+                is MessageEffect.ShowTwoButtonDialog -> onShowTwoButtonDialog(effect)
             }
         }
     }

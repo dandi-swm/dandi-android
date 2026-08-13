@@ -63,7 +63,17 @@ class MessageHelperImpl(val context: Context) : MessageHelper {
         rightButtonText: String,
         onClickRightButton: (() -> Unit)?,
     ) {
-        // TBD
+        emit(
+            MessageEffect.ShowTwoButtonDialog(
+                titleText = titleText,
+                descText = descText,
+                cantIgnore = cantIgnore,
+                leftButtonText = leftButtonText,
+                onClickLeftButton = onClickLeftButton,
+                rightButtonText = rightButtonText,
+                onClickRightButton = onClickRightButton,
+            )
+        )
     }
 
     private fun emit(messageEffect: MessageEffect) {

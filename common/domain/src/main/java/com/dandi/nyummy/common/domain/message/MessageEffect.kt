@@ -10,4 +10,14 @@ sealed interface MessageEffect {
         val buttonText: String,
         val onClickButton: (() -> Unit)?,
     ) : MessageEffect
+
+    data class ShowTwoButtonDialog(
+        val titleText: String?,
+        val descText: String,
+        val cantIgnore: Boolean,
+        val leftButtonText: String,
+        val onClickLeftButton: (() -> Unit)?,
+        val rightButtonText: String,
+        val onClickRightButton: (() -> Unit)?,
+    ) : MessageEffect
 }

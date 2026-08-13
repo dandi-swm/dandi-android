@@ -57,6 +57,7 @@ dependencies {
     implementation(project(":auth:entity"))
     implementation(project(":common:presentation"))
 
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
     implementation(libs.hilt.android)

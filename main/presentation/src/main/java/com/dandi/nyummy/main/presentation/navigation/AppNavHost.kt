@@ -31,6 +31,7 @@ fun AppNavHost(
                 is NavSignal.GoToDestPage -> handleNavRoute(signal.route, backStack)
                 is NavSignal.DeepLink -> handleDeepLink(signal.route, backStack)
                 NavSignal.Back -> backStack.removeLastOrNull()
+                is NavSignal.ResetToPage -> handleResetTo(signal.route, backStack)
             }
         }
     }
@@ -110,6 +111,21 @@ fun handleDeepLink(route: NavRoute, backStack: NavBackStack<NavKey>) {
     if (backStack.lastOrNull() == target) return   // 이미 최전면 — no-op.
     backStack.bringToFront(target)
     Log.d(TAG, "deepLink bringToFront: $target")
+}
+
+/**
+ * 백스택을 전부 비우고 대상 키만 루트로 남긴다(앱 내 리셋 전환).
+ * 로그인/회원가입 완료처럼 이전 플로우로 Back 이 되돌아가면 안 되는 경우에 사용한다.
+ * 미등록 path 는 무시 + 경고 로그 — 스택을 비우기 전에 검증하므로 빈 스택이 되지 않는다.
+ */
+fun handleResetTo(route: NavRoute, backStack: NavBackStack<NavKey>) {
+    if (appRouteByPath[route.path] == null) {
+        Log.w(TAG, "Unhandled reset route: ${route.path}")
+        return
+    }
+    backStack.clear()
+    backStack.add(GenericNavKey.of(route))
+    Log.d(TAG, "resetTo: ${route.path}")
 }
 
 /**
