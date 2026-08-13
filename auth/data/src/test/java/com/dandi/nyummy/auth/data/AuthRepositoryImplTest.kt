@@ -1,13 +1,17 @@
 package com.dandi.nyummy.auth.data
 
+import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.common.data.token.TokenProvider
+import com.dandi.nyummy.common.domain.error.HttpResponseException
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import retrofit2.Retrofit
@@ -44,6 +48,54 @@ class AuthRepositoryImplTest {
     @After
     fun tearDown() {
         server.shutdown()
+    }
+
+    @Test
+    fun `회원가입 성공 시 발급 토큰을 저장한다`() = runBlocking {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """{"accessToken":"access-123","refreshToken":"refresh-456"}"""
+            )
+        )
+
+        repository.signUp(
+            email = "test@dandi.app",
+            password = "pw1234",
+            nickname = "단디",
+            gender = Gender.MALE,
+            birth = "2000-01-15",
+            height = 175,
+            weight = 70,
+        )
+
+        assertEquals("access-123", tokenProvider.accessToken)
+        assertEquals("refresh-456", tokenProvider.refreshToken)
+    }
+
+    @Test
+    fun `회원가입 실패 시 예외를 던지고 토큰을 저장하지 않는다`() {
+        server.enqueue(
+            MockResponse().setResponseCode(400).setBody(
+                """{"code":"api.common.missingParameter","message":"입력값이 누락되었습니다."}"""
+            )
+        )
+
+        assertThrows(HttpResponseException::class.java) {
+            runBlocking {
+                repository.signUp(
+                    email = "test@dandi.app",
+                    password = "pw1234",
+                    nickname = "단디",
+                    gender = Gender.MALE,
+                    birth = "2000-01-15",
+                    height = 175,
+                    weight = 70,
+                )
+            }
+        }
+
+        assertNull(tokenProvider.accessToken)
+        assertNull(tokenProvider.refreshToken)
     }
 
     @Test

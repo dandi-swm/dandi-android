@@ -3,8 +3,10 @@ package com.dandi.nyummy.auth.data
 import com.dandi.nyummy.auth.data.dto.EmailVerificationConfirmRequestDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerificationRequestDTO
 import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
+import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
 import com.dandi.nyummy.auth.domain.AuthRepository
 import com.dandi.nyummy.auth.entity.AuthTokenVO
+import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.common.data.token.TokenProvider
 
@@ -18,6 +20,30 @@ class AuthRepositoryImpl(
 
     override suspend fun login(email: String, password: String) {
         dataSource.login(LoginRequestDTO(email = email, password = password))
+            .toVO()
+            .also { saveToken(it) }
+    }
+
+    override suspend fun signUp(
+        email: String,
+        password: String,
+        nickname: String,
+        gender: Gender,
+        birth: String,
+        height: Int,
+        weight: Int,
+    ) {
+        dataSource.signUp(
+            SignUpRequestDTO(
+                email = email,
+                password = password,
+                nickname = nickname,
+                gender = gender.name,
+                birth = birth,
+                height = height,
+                weight = weight,
+            ),
+        )
             .toVO()
             .also { saveToken(it) }
     }
