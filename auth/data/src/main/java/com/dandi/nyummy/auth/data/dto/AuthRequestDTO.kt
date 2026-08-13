@@ -31,6 +31,14 @@ data class SignupRequestDTO(
 )
 
 /**
+ * 토큰 재발급 요청 바디입니다.
+ */
+@Serializable
+data class RefreshTokenRequestDTO(
+    val refreshToken: String,
+)
+
+/**
  * 이메일 인증 코드 발송 요청 바디입니다.
  */
 @Serializable
