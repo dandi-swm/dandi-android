@@ -47,7 +47,7 @@ class SignUpUseCase @Inject constructor(
             height = height,
             weight = weight,
         )
-        navigationHelper.resetTo(HomePage)
+        navigationHelper.navigateToAsRoot(HomePage)
         Result.success(Unit)
     } catch (e: HttpResponseException) {
         handleSignUpError(e)

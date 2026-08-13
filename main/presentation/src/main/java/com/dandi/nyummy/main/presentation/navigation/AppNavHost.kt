@@ -140,7 +140,7 @@ fun handleResetTo(route: NavRoute, backStack: NavBackStack<NavKey>) {
     }
     backStack.clear()
     backStack.add(GenericNavKey.of(route))
-    Log.d(TAG, "resetTo: ${route.path}")
+    Log.d(TAG, "navigateToAsRoot: ${route.path}")
 }
 
 /**
