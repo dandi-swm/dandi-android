@@ -20,7 +20,7 @@ data class LoginRequestDTO(
  * @property weight 몸무게 (kg)
  */
 @Serializable
-data class SignupRequestDTO(
+data class SignUpRequestDTO(
     val email: String,
     val password: String,
     val nickname: String,

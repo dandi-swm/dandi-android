@@ -3,7 +3,7 @@ package com.dandi.nyummy.auth.data
 import com.dandi.nyummy.auth.data.dto.EmailVerificationConfirmRequestDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerificationRequestDTO
 import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
-import com.dandi.nyummy.auth.data.dto.SignupRequestDTO
+import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -78,8 +78,8 @@ class AuthApiServiceTest {
             )
         )
 
-        val response = apiService.signup(
-            SignupRequestDTO(
+        val response = apiService.signUp(
+            SignUpRequestDTO(
                 email = "test@dandi.app",
                 password = "pw1234",
                 nickname = "단디",
@@ -96,7 +96,7 @@ class AuthApiServiceTest {
         val recorded = server.takeRequest()
         assertEquals("POST", recorded.method)
         assertEquals("/api/v1/auth/signup", recorded.path)
-        val sentBody = json.decodeFromString<SignupRequestDTO>(recorded.body.readUtf8())
+        val sentBody = json.decodeFromString<SignUpRequestDTO>(recorded.body.readUtf8())
         assertEquals("단디", sentBody.nickname)
         assertEquals("2000-01-15", sentBody.birth)
         assertEquals(175, sentBody.height)
