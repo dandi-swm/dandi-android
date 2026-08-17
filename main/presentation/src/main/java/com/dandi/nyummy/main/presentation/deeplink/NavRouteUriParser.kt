@@ -3,9 +3,8 @@ package com.dandi.nyummy.main.presentation.deeplink
 import android.net.Uri
 import android.util.Log
 import androidx.navigation3.runtime.NavKey
-import com.dandi.nyummy.auth.domain.LoginPage
 import com.dandi.nyummy.common.domain.navigation.NavRoute
-import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.intro.domain.IntroPage
 import com.dandi.nyummy.main.domain.deeplink.matchRoute
 import com.dandi.nyummy.main.presentation.navigation.GenericNavKey
 import com.dandi.nyummy.main.presentation.navigation.appRouteByPath
@@ -40,7 +39,7 @@ fun Uri.resolveRoute(): NavRoute? {
 
 /**
  * App Link 콜드 스타트의 시작 백스택을 구성한다.
- * - URI 없음 / 미매칭 → 홈 단일 스택으로 fallback.
+ * - URI 없음 / 미매칭 → 인트로 단일 스택으로 fallback (인트로가 홈/로그인 분기를 담당).
  * - 매칭 → 해당 [com.dandi.nyummy.main.presentation.navigation.AppRoute.syntheticStack]
  *   (부모 체인을 포함한 정식 스택). 계층형 path 도 동일하게 동작한다.
  *
@@ -51,10 +50,10 @@ fun resolveStartStack(uri: Uri?): List<NavKey> {
     val route = uri?.resolveRoute()
     if (route == null) {
         if (uri != null) Log.w(TAG, "No matching route for uri=$uri")
-        return listOf(GenericNavKey(LoginPage.PATH))
+        return listOf(GenericNavKey(IntroPage.PATH))
     }
     val appRoute = appRouteByPath[route.path]
-        ?: return listOf(GenericNavKey(LoginPage.PATH))
+        ?: return listOf(GenericNavKey(IntroPage.PATH))
     return appRoute.syntheticStack(route.args)
 }
 
