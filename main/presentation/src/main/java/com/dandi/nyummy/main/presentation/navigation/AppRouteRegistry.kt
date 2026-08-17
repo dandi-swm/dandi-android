@@ -11,6 +11,8 @@ import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.history.presentation.HistoryPage
 import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.home.presentation.HomePage
+import com.dandi.nyummy.intro.domain.IntroPage
+import com.dandi.nyummy.intro.presentation.IntroPage
 import com.dandi.nyummy.main.domain.deeplink.RoutePattern
 import com.dandi.nyummy.meal.domain.MealRecordPage
 import com.dandi.nyummy.meal.presentation.MealRecordPage
@@ -20,6 +22,11 @@ import com.dandi.nyummy.meal.presentation.MealRecordPage
  * 새 화면 추가 시 본 리스트에 한 줄을 더한다.
  */
 val appRoutes: List<AppRoute> = listOf(
+    AppRoute(
+        path = IntroPage.PATH,
+        isBottomTab = false,
+        render = { IntroPage() },
+    ),
     AppRoute(
         path = LoginPage.PATH, isBottomTab = false, render = {
             LoginPage()

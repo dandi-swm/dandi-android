@@ -58,3 +58,8 @@ include(":auth:domain")
 include(":auth:data")
 include(":auth:presentation")
 include(":auth:entity")
+
+include(":intro:presentation")
+include(":intro:domain")
+include(":intro:data")
+include(":intro:entity")
