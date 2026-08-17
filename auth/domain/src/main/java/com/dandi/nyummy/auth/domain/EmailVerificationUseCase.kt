@@ -27,13 +27,28 @@ class EmailVerificationUseCase @Inject constructor(
         Result.failure(e)
     }
 
-    /** 이메일 인증 코드 확인 */
+    /**
+     * 이메일 인증 코드 확인.
+     *
+     * 도메인 에러(코드 불일치/만료 등)는 다이얼로그 대신 코드 입력란 아래
+     * 인라인으로 보여줘야 하므로 [CodeVerificationFailedException]으로 반환한다.
+     */
     suspend fun confirmCode(email: String, verificationCode: String): Result<Unit> = try {
         repository.confirmEmailVerification(email = email, verificationCode = verificationCode)
         Result.success(Unit)
     } catch (e: HttpResponseException) {
-        handleEmailVerificationError(e)
-        Result.failure(e)
+        val errorType = e.handlingErrorOnUseCase<AuthErrorType>()
+        when {
+            errorType == AuthErrorType.MAIL_CODE_MISMATCH -> Result.failure(
+                CodeVerificationFailedException(errorType.errorMsg)
+            )
+            e.isCommonErrorHandling() -> {
+                executeCommonErrorHanding(e)
+                Result.failure(e)
+            }
+
+            else -> Result.failure(CodeVerificationFailedException(AuthErrorType.UNKNOWN.errorMsg))
+        }
     }
 
     private fun handleEmailVerificationError(e: HttpResponseException) {
@@ -47,3 +62,6 @@ class EmailVerificationUseCase @Inject constructor(
         }
     }
 }
+
+/** 인증 코드 확인 실패 — 코드 입력란에 인라인으로 표시할 메시지를 담는다. */
+class CodeVerificationFailedException(override val message: String) : Exception(message)

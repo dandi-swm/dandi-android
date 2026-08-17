@@ -1,6 +1,7 @@
 package com.dandi.nyummy.auth.presentation
 
 import androidx.lifecycle.viewModelScope
+import com.dandi.nyummy.auth.domain.CodeVerificationFailedException
 import com.dandi.nyummy.auth.domain.EmailVerificationUseCase
 import com.dandi.nyummy.auth.domain.SignUpUseCase
 import com.dandi.nyummy.auth.domain.SignUpValidator
@@ -56,8 +57,10 @@ class SignUpViewModel @Inject constructor(
                 passwordError = event.passwordError,
                 passwordConfirmError = event.passwordConfirmError,
             )
-            is SignUpReducerEvent.CodeChanged -> state.copy(code = event.value)
-            SignUpReducerEvent.MovedToCode -> state.copy(step = SignUpStep.CODE, code = "")
+            is SignUpReducerEvent.CodeChanged -> state.copy(code = event.value, codeError = null)
+            is SignUpReducerEvent.CodeVerificationFailed -> state.copy(codeError = event.message)
+            SignUpReducerEvent.MovedToCode ->
+                state.copy(step = SignUpStep.CODE, code = "", codeError = null)
             SignUpReducerEvent.MovedToProfile -> state.copy(step = SignUpStep.PROFILE)
             is SignUpReducerEvent.ResendTicked ->
                 state.copy(resendRemainingSeconds = event.remainingSeconds)
@@ -75,7 +78,7 @@ class SignUpViewModel @Inject constructor(
             SignUpReducerEvent.SteppedBack -> when (state.step) {
                 SignUpStep.ACCOUNT -> state
                 SignUpStep.CODE -> state.copy(step = SignUpStep.ACCOUNT)
-                SignUpStep.PROFILE -> state.copy(step = SignUpStep.CODE, code = "")
+                SignUpStep.PROFILE -> state.copy(step = SignUpStep.CODE, code = "", codeError = null)
             }
         }
 
@@ -110,6 +113,11 @@ class SignUpViewModel @Inject constructor(
                     resendTimerJob?.cancel()
                     dispatch(SignUpReducerEvent.ResendTicked(0))
                     dispatch(SignUpReducerEvent.MovedToProfile)
+                }
+                .onFailure { e ->
+                    if (e is CodeVerificationFailedException) {
+                        dispatch(SignUpReducerEvent.CodeVerificationFailed(e.message))
+                    }
                 }
             dispatch(SignUpReducerEvent.LoadingFinished)
         }
