@@ -15,6 +15,7 @@ sealed interface SignUpReducerEvent : ReducerEvent {
     ) : SignUpReducerEvent
 
     data class CodeChanged(val value: String) : SignUpReducerEvent
+    data class CodeVerificationFailed(val message: String) : SignUpReducerEvent
     data object MovedToCode : SignUpReducerEvent
     data object MovedToProfile : SignUpReducerEvent
     data class ResendTicked(val remainingSeconds: Int) : SignUpReducerEvent

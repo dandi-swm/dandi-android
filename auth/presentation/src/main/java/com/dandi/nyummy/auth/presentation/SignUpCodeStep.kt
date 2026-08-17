@@ -54,9 +54,18 @@ internal fun SignUpCodeStep(
             value = uiState.code,
             onValueChange = { onIntent(SignUpIntent.InputCode(it)) },
             length = SignUpUIState.CODE_LENGTH,
+            isError = uiState.codeError != null,
             enabled = !uiState.isLoading,
             inputDescription = stringResource(R.string.auth_signup_code_input_description),
         )
+        uiState.codeError?.let { codeError ->
+            Spacer(Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space8))
+            DandiText(
+                text = codeError,
+                color = DesignSystemThemeImpl.designSystemColor.contentError,
+                style = DesignSystemThemeImpl.typeScale.textRegularS,
+            )
+        }
         Spacer(Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space20))
         DandiText(
             text = stringResource(R.string.auth_signup_code_spam_hint),

@@ -18,6 +18,7 @@ data class SignUpUIState(
     val passwordError: SignUpFieldError? = null,
     val passwordConfirmError: SignUpFieldError? = null,
     val code: String = "",
+    val codeError: String? = null,
     val resendRemainingSeconds: Int = 0,
     val nickname: String = "",
     val gender: Gender = Gender.MALE,
