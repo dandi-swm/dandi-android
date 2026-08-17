@@ -1,10 +1,13 @@
 package com.dandi.nyummy.intro.data
 
+import com.dandi.nyummy.common.data.token.TokenProvider
+import com.dandi.nyummy.common.domain.coroutine.IoDispatcher
 import com.dandi.nyummy.intro.domain.IntroRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
 import retrofit2.Retrofit
 import javax.inject.Singleton
 
@@ -24,6 +27,9 @@ object IntroDataModule {
 
     @Provides
     @Singleton
-    fun provideIntroRepository(dataSource: IntroDataSource): IntroRepository =
-        IntroRepositoryImpl(dataSource)
+    fun provideIntroRepository(
+        dataSource: IntroDataSource,
+        tokenProvider: TokenProvider,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher,
+    ): IntroRepository = IntroRepositoryImpl(dataSource, tokenProvider, ioDispatcher)
 }
