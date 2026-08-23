@@ -24,7 +24,7 @@ data class MonthlyMealsDTO(
         month = month ?: 0,
         // 엔티티 계약상 days 는 현재 월의 기록만 담는다. 인접 월 채움은 presentation 그리드가 담당한다.
         days = days.orEmpty()
-            .filter { it.currentMonth == true }
+            .filter { it.isCurrentMonth == true }
             .map { it.toVO() },
     )
 }
@@ -35,14 +35,14 @@ data class MonthlyMealsDTO(
  * @property date 날짜 (yyyy-MM-dd)
  * @property dailyNutritionEvaluation 하루 영양 평가 (POSITIVE / NEGATIVE / UNRECORDED)
  * @property foodIconIds 셀에 노출할 음식 아이콘 식별자 목록
- * @property currentMonth 조회 월에 속하는 날짜인지 여부
+ * @property isCurrentMonth 조회 월에 속하는 날짜인지 여부 (서버 JSON 키: isCurrentMonth)
  */
 @Serializable
 data class MonthlyMealDayDTO(
     val date: String? = null,
     val dailyNutritionEvaluation: String? = null,
     val foodIconIds: List<Long>? = null,
-    val currentMonth: Boolean? = null,
+    val isCurrentMonth: Boolean? = null,
 ) {
     fun toVO(): HistoryCalendarDayVO {
         // VO 계약상 셀 아이콘은 최대 2개.
