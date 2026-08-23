@@ -19,8 +19,14 @@ sealed interface HistoryReducerEvent : ReducerEvent {
     /** 식사 수정/삭제 등 액션이 실패했습니다. */
     data class MealActionFailed(val errorType: HistoryErrorType) : HistoryReducerEvent
 
-    /** 상세 오버레이에 열린 식사의 사진 URL 이 로드되었습니다. */
-    data class MealDetailPhotoLoaded(val photoUrl: String) : HistoryReducerEvent
+    /** 식사 수정/삭제 요청이 시작되었습니다(완료 전 중복 조작 차단). */
+    data object MealActionStarted : HistoryReducerEvent
+
+    /** 식사의 사진 URL 이 로드되었습니다. 현재 열린 상세가 [mealId]와 같을 때만 반영합니다. */
+    data class MealDetailPhotoLoaded(
+        val mealId: String,
+        val photoUrl: String,
+    ) : HistoryReducerEvent
 
     /** 표시할 달과 선택 날짜의 데이터가 준비되었습니다. */
     data class MonthLoaded(
@@ -51,8 +57,11 @@ sealed interface HistoryReducerEvent : ReducerEvent {
     /** 이름 수정 입력값이 바뀌었습니다. */
     data class MealNameDraftChanged(val text: String) : HistoryReducerEvent
 
-    /** 이름 수정이 확정되었습니다. */
-    data object MealNameEditCommitted : HistoryReducerEvent
+    /** [mealId] 식사의 이름 수정이 서버에 저장되었습니다. */
+    data class MealNameEditCommitted(
+        val mealId: String,
+        val newName: String,
+    ) : HistoryReducerEvent
 
     /** 이름 수정이 취소되었습니다. */
     data object MealNameEditCanceled : HistoryReducerEvent
@@ -63,6 +72,6 @@ sealed interface HistoryReducerEvent : ReducerEvent {
     /** 삭제가 취소되었습니다. */
     data object MealDeleteCanceled : HistoryReducerEvent
 
-    /** 상세 오버레이에 열린 식사 기록의 삭제가 확정되었습니다. */
-    data object MealDeleted : HistoryReducerEvent
+    /** [mealId] 식사 기록의 삭제가 서버에서 완료되었습니다. */
+    data class MealDeleted(val mealId: String) : HistoryReducerEvent
 }
