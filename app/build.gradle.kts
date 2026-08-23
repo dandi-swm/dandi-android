@@ -99,6 +99,11 @@ dependencies {
     implementation(project(":auth:data"))
     implementation(project(":auth:entity"))
 
+    implementation(project(":intro:presentation"))
+    implementation(project(":intro:domain"))
+    implementation(project(":intro:data"))
+    implementation(project(":intro:entity"))
+
     implementation(libs.hilt.android)
     debugImplementation(libs.leakcanary)
     ksp(libs.hilt.compiler)
