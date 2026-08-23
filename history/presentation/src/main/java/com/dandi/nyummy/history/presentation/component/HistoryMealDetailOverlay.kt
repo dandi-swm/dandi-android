@@ -18,9 +18,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.presentation.component.DandiText
 import com.dandi.nyummy.common.presentation.component.NyummyButton
 import com.dandi.nyummy.common.presentation.component.NyummyButtonStyle
@@ -166,12 +168,21 @@ private fun HistoryMealDetailCard(
                     color = colors.bgMealPhoto,
                     border = BorderStroke(DetailBorderWidth, colors.borderMealPhoto),
                 ) {
-                    Box(
-                        modifier = Modifier.padding(DetailPhotoPadding),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        // TODO: 사진 URL 로딩 연동 (백엔드 미구현) — 지금은 음식 아이콘으로 대체
-                        HistoryFoodIcon(meal.foodIconId)
+                    if (meal.photoUrl.isNotBlank()) {
+                        AsyncImage(
+                            model = meal.photoUrl,
+                            contentDescription = meal.name,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop,
+                        )
+                    } else {
+                        // 사진 URL 이 없으면 음식 아이콘으로 대체한다.
+                        Box(
+                            modifier = Modifier.padding(DetailPhotoPadding),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            HistoryFoodIcon(meal.foodIconId)
+                        }
                     }
                 }
                 Spacer(Modifier.width(DetailPhotoRightGap))

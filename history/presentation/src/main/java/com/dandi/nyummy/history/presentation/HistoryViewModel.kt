@@ -6,7 +6,6 @@ import com.dandi.nyummy.history.domain.DeleteMealUseCase
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.history.domain.GetMealDetailUseCase
 import com.dandi.nyummy.history.domain.GetMonthlyMealsUseCase
-import com.dandi.nyummy.history.domain.HistoryErrorType
 import com.dandi.nyummy.history.domain.UpdateMealNameUseCase
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
@@ -76,14 +75,9 @@ class HistoryViewModel @Inject constructor(
 
     override fun reduce(state: HistoryUIState, event: HistoryReducerEvent): HistoryUIState =
         when (event) {
-            HistoryReducerEvent.LoadStarted -> state.copy(isLoading = true, errorType = null)
+            HistoryReducerEvent.LoadStarted -> state.copy(isLoading = true)
 
-            HistoryReducerEvent.LoadFailed ->
-                state.copy(isLoading = false, errorType = HistoryErrorType.LOAD_FAILED)
-
-            is HistoryReducerEvent.MealActionFailed -> state
-                .copy(errorType = event.errorType)
-                .withMealDetail { it.copy(mode = HistoryMealDetailMode.Viewing) }
+            HistoryReducerEvent.LoadFailed -> state.copy(isLoading = false)
 
             is HistoryReducerEvent.MealDetailPhotoLoaded -> state.withMealDetail { detail ->
                 detail.copy(meal = detail.meal.copy(photoUrl = event.photoUrl))
@@ -102,7 +96,6 @@ class HistoryViewModel @Inject constructor(
                 selectedDayMeals = event.dailyDetail.meals.toImmutableList(),
                 dailyNutrition = event.dailyDetail.nutrition,
                 isLoading = false,
-                errorType = null,
                 mealDetail = null,
             )
 
@@ -110,7 +103,6 @@ class HistoryViewModel @Inject constructor(
                 selectedDate = event.date,
                 selectedDayMeals = event.dailyDetail.meals.toImmutableList(),
                 dailyNutrition = event.dailyDetail.nutrition,
-                errorType = null,
                 mealDetail = null,
             )
 
@@ -207,24 +199,20 @@ class HistoryViewModel @Inject constructor(
         val newName = detail.nameDraft.trim()
         if (newName.isEmpty()) return
         val id = detail.meal.id.toLongOrNull() ?: return
+        // 실패 시 에러 안내는 UseCase 의 스낵바가 담당하고, 수정 다이얼로그는 열어 둔 채 재시도를 허용한다.
         viewModelScope.launch {
             updateMealName(id, newName)
                 .onSuccess { dispatch(HistoryReducerEvent.MealNameEditCommitted) }
-                .onFailure {
-                    dispatch(HistoryReducerEvent.MealActionFailed(HistoryErrorType.EDIT_SAVE_FAILED))
-                }
         }
     }
 
     private fun confirmDeleteMeal() {
         val detail = currentState.mealDetail ?: return
         val id = detail.meal.id.toLongOrNull() ?: return
+        // 실패 시 에러 안내는 UseCase 의 스낵바가 담당하고, 삭제 확인 다이얼로그는 열어 둔 채 재시도를 허용한다.
         viewModelScope.launch {
             deleteMeal(id)
                 .onSuccess { dispatch(HistoryReducerEvent.MealDeleted) }
-                .onFailure {
-                    dispatch(HistoryReducerEvent.MealActionFailed(HistoryErrorType.DELETE_FAILED))
-                }
         }
     }
 

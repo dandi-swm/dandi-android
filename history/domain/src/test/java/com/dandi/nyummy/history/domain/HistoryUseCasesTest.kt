@@ -67,6 +67,24 @@ class HistoryUseCasesTest {
     }
 
     @Test
+    fun `월간 조회 중 비공통 에러면 에러 스낵바를 띄우고 실패를 돌려준다`() = runBlocking {
+        val useCase = GetMonthlyMealsUseCase(
+            repository = ThrowingHistoryRepository(httpException(400)),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(2026, 8)
+
+        val snackBar = messageHelper.snackBars.single()
+        assertEquals(IconType.ERROR, snackBar.iconType)
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+        assertTrue(result.isFailure)
+    }
+
+    @Test
     fun `일일 조회 성공 시 상세 VO 를 돌려준다`() = runBlocking {
         val daily = DailyMealHistoryVO.empty
         val useCase = GetDailyMealsUseCase(
@@ -174,7 +192,10 @@ class HistoryUseCasesTest {
             val onClickButton: (() -> Unit)?,
         )
 
+        data class SnackBarCall(val iconType: IconType, val messageText: String)
+
         val oneButtonDialogs = mutableListOf<OneButtonDialogCall>()
+        val snackBars = mutableListOf<SnackBarCall>()
 
         override val effect: Flow<MessageEffect> = emptyFlow()
         override fun showToast(toastMsg: String) = Unit
@@ -183,7 +204,9 @@ class HistoryUseCasesTest {
             messageText: String,
             callToActionText: String?,
             onClickCTA: (() -> Unit)?,
-        ) = Unit
+        ) {
+            snackBars += SnackBarCall(iconType, messageText)
+        }
 
         override fun showSnackBar(
             iconType: IconType,

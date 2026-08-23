@@ -23,15 +23,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.component.DandiText
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
+import com.dandi.nyummy.history.entity.DailyNutritionStatus
+import com.dandi.nyummy.history.entity.DailyNutritionVO
+import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
+import com.dandi.nyummy.history.entity.MealHistoryVO
+import com.dandi.nyummy.history.entity.NutrientProgressVO
 import com.dandi.nyummy.history.presentation.component.HistoryCalendarCard
 import com.dandi.nyummy.history.presentation.component.HistoryDailySection
 import com.dandi.nyummy.history.presentation.component.HistoryMealDetailOverlay
-import com.dandi.nyummy.history.presentation.mock.HistoryMockData
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
 import com.dandi.nyummy.history.presentation.model.dayLabelOf
 import com.dandi.nyummy.history.presentation.model.mealCountLabelOf
-import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /**
  * 히스토리(캘린더/식사 기록 조회) 화면입니다.
@@ -133,16 +137,58 @@ private val DailySectionTopGap = 30.dp
 private fun previewUiState(): HistoryUIState {
     val today = HistoryDateVO(2026, 7, 24)
     val selectedDate = HistoryDateVO(2026, 7, 18)
-    val calendar = HistoryMockData.monthOf(year = 2026, month = 7, today = today)
-    val day = HistoryMockData.dayOf(date = selectedDate, today = today)
+    val meals = persistentListOf(
+        MealHistoryVO(
+            id = "1",
+            name = "치킨 샐러드",
+            foodIconId = "salad",
+            recordedAt = "08:10",
+            calorieKcal = 412,
+            carbohydrateGram = 18,
+            proteinGram = 42,
+            fatGram = 21,
+            orderIndex = 1,
+        ),
+        MealHistoryVO(
+            id = "2",
+            name = "연어 덮밥",
+            foodIconId = "rice",
+            recordedAt = "12:30",
+            calorieKcal = 545,
+            carbohydrateGram = 78,
+            proteinGram = 31,
+            fatGram = 12,
+            orderIndex = 2,
+        ),
+    )
+    val records = mapOf(
+        selectedDate to HistoryCalendarDayVO(
+            date = selectedDate,
+            status = DailyNutritionStatus.IN_RANGE,
+            foodIconIds = listOf("salad", "rice"),
+            mealCount = 2,
+        ),
+        HistoryDateVO(2026, 7, 10) to HistoryCalendarDayVO(
+            date = HistoryDateVO(2026, 7, 10),
+            status = DailyNutritionStatus.OUT_OF_RANGE,
+            foodIconIds = listOf("pasta"),
+            mealCount = 1,
+        ),
+    )
     return HistoryUIState(
         displayedYear = 2026,
         displayedMonth = 7,
         today = today,
         selectedDate = selectedDate,
-        calendarDays = buildCalendarDayUiModels(2026, 7, calendar.days.associateBy { it.date }),
-        selectedDayMeals = day.meals.toImmutableList(),
-        dailyNutrition = day.nutrition,
+        calendarDays = buildCalendarDayUiModels(2026, 7, records),
+        selectedDayMeals = meals,
+        dailyNutrition = DailyNutritionVO(
+            currentCalorieKcal = 957,
+            targetCalorieKcal = 2_000,
+            carbohydrate = NutrientProgressVO(dailyGram = 96, goalGram = 300),
+            protein = NutrientProgressVO(dailyGram = 73, goalGram = 120),
+            fat = NutrientProgressVO(dailyGram = 33, goalGram = 70),
+        ),
     )
 }
 
@@ -160,10 +206,8 @@ private fun HistoryScreenEmptyPreview() {
     DesignSystemTheme {
         HistoryScreen(
             uiState = previewUiState().copy(
-                selectedDayMeals = kotlinx.collections.immutable.persistentListOf(),
-                dailyNutrition = com.dandi.nyummy.history.entity.DailyNutritionVO(
-                    targetCalorieKcal = 2_000,
-                ),
+                selectedDayMeals = persistentListOf(),
+                dailyNutrition = DailyNutritionVO(targetCalorieKcal = 2_000),
             ),
             onIntent = {},
         )
@@ -189,8 +233,7 @@ private fun HistoryScreenDetailPreview() {
         HistoryScreen(
             uiState = base.copy(
                 mealDetail = HistoryMealDetailUiState(
-                    meal = base.selectedDayMeals.firstOrNull()
-                        ?: com.dandi.nyummy.history.entity.MealHistoryVO.empty,
+                    meal = base.selectedDayMeals.firstOrNull() ?: MealHistoryVO.empty,
                 ),
             ),
             onIntent = {},

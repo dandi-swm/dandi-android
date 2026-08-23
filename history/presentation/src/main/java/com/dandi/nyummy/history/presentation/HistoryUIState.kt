@@ -1,7 +1,6 @@
 package com.dandi.nyummy.history.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.UiState
-import com.dandi.nyummy.history.domain.HistoryErrorType
 import com.dandi.nyummy.history.entity.DailyNutritionStatus
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
@@ -30,7 +29,6 @@ data class HistoryUIState(
     val dailyNutrition: DailyNutritionVO = DailyNutritionVO.empty,
     val isNutritionExpanded: Boolean = true,
     val isLoading: Boolean = false,
-    val errorType: HistoryErrorType? = null,
     val mealDetail: HistoryMealDetailUiState? = null,
 ) : UiState {
 
