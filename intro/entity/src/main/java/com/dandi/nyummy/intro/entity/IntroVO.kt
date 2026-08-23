@@ -8,9 +8,9 @@ package com.dandi.nyummy.intro.entity
  * @property recommendAppVersion 권장 앱 버전
  */
 data class IntroVO(
-    val devTestMsg: String,
-    val minAppVersion: String,
-    val recommendAppVersion: String,
+    val devTestMsg: String = "",
+    val minAppVersion: String = "",
+    val recommendAppVersion: String = "",
 ) {
     companion object {
         val empty: IntroVO = IntroVO("", "", "")
