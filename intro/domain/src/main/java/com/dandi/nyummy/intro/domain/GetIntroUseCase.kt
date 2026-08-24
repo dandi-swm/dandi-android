@@ -2,19 +2,19 @@ package com.dandi.nyummy.intro.domain
 
 import com.dandi.nyummy.auth.domain.LoginPage
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.handlingErrorOnUseCase
-import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
+import com.dandi.nyummy.common.domain.helper.DeviceHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.home.domain.HomePage
-import com.dandi.nyummy.intro.entity.IntroVO
+import com.dandi.nyummy.intro.entity.VersionCheckVO
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
 
 class GetIntroUseCase @Inject constructor(
     private val repository: IntroRepository,
+    private val remoteConfigHelper: RemoteConfigHelper,
+    private val deviceHelper: DeviceHelper,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -24,41 +24,45 @@ class GetIntroUseCase @Inject constructor(
     /**
      * 앱 시작 게이트 + 분기.
      *
-     * 1. (예정) GET /intro 로 버전 게이트 통과 여부 확인 — API 준비 전이라 주석.
-     * 2. 저장된 리프레시 토큰이 있으면 홈, 없으면 로그인을 루트로 이동한다.
+     * 1. RemoteConfig 로 최소 요구 버전을 조회해 현재 앱 versionCode 와 비교한다.
+     *    미만이면 닫을 수 없는 강제 업데이트 다이얼로그를 띄우고 홈/로그인 이동을 중단한다.
+     * 2. 통과하면 저장된 리프레시 토큰이 있으면 홈, 없으면 로그인을 루트로 이동한다.
      *
      * 토큰 유효성은 여기서 검증하지 않는다 — 만료된 토큰은 이후 요청에서
      * Authenticator 의 재발급 실패 → 공통 401 처리(세션 만료)로 걸러진다.
      */
-    suspend operator fun invoke(): Result<IntroVO> = try {
-//        val intro = repository.getIntro() // TODO: GET /intro 준비 시 주석 해제
+    suspend operator fun invoke(): Result<VersionCheckVO> = try {
+        val version = remoteConfigHelper.checkVersion()
+
+        if (isForceUpdateRequired(version)) {
+            showForceUpdateDialog(version)
+            return Result.success(version)
+        }
+
         if (repository.hasRefreshToken()) {
             navigationHelper.navigateToAsRoot(HomePage)
         } else {
             navigationHelper.navigateToAsRoot(LoginPage)
         }
-        Result.success(IntroVO.empty)
-    } catch (e: HttpResponseException) {
-        handleIntroError(e)
+        Result.success(version)
+    } catch (e: Throwable) {
         Result.failure(e)
     }
 
-    private fun handleIntroError(e: HttpResponseException) {
-        if (e.isCommonErrorHandling()) {
-            executeCommonErrorHanding(e)
-            return
-        }
-        val errorType = e.handlingErrorOnUseCase<IntroErrorType>() ?: return
-        when (errorType) {
-            IntroErrorType.REQUIRED_FORCE_UPDATE -> {
-                messageHelper.showOneButtonDialog(
-                    cantIgnore = true,
-                    descText = errorType.errorMsg,
-                    buttonText = "스토어로 이동",
-                    // TODO: Play Store 딥링크 연결 전까지 임시로 뒤로가기(앱 종료)
-                    onClickButton = { navigationHelper.navigateToBack() },
-                )
-            }
-        }
+    private fun isForceUpdateRequired(version: VersionCheckVO): Boolean =
+        version.minimumVersionCode > 0L && deviceHelper.appVersionCode < version.minimumVersionCode
+
+    private fun showForceUpdateDialog(version: VersionCheckVO) {
+        messageHelper.showOneButtonDialog(
+            cantIgnore = true,
+            descText = version.minimumVersionReleaseNote.ifBlank { DEFAULT_FORCE_UPDATE_MSG },
+            buttonText = "스토어로 이동",
+            onClickButton = { navigationHelper.navigateToExternalLink(version.latestVersionUpdateLink) },
+        )
+    }
+
+    companion object {
+        private const val DEFAULT_FORCE_UPDATE_MSG =
+            "현재 앱이 최소 요구 버전을 만족하지 않습니다.\n최신 버전으로 업데이트 해주세요."
     }
 }

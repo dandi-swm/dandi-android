@@ -6,12 +6,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
 class IntroRepositoryImpl(
-    private val dataSource: IntroDataSource,
     private val tokenProvider: TokenProvider,
     private val ioDispatcher: CoroutineDispatcher,
 ) : IntroRepository {
-
-    override suspend fun getIntro() = dataSource.getIntro().toVO()
 
     /**
      * [TokenProvider] 의 첫 읽기는 디스크 로드가 블로킹으로 일어나므로
