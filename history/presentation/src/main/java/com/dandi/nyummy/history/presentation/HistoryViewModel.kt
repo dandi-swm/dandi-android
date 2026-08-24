@@ -179,13 +179,17 @@ class HistoryViewModel @Inject constructor(
         loadJob = viewModelScope.launch {
             dispatch(HistoryReducerEvent.LoadStarted)
             val today = todayDate()
-            val calendar = getMonthlyMeals(year, month).getOrNull()
+            // 월간 조회가 실패하면 일간 조회를 건너뛴다 — 두 UseCase 가 같은 오류
+            // 스낵바를 각각 발행해 중복 노출되는 것을 막는다.
+            val calendar = getMonthlyMeals(year, month).getOrNull() ?: run {
+                dispatch(HistoryReducerEvent.LoadFailed)
+                return@launch
+            }
             val dailyDetail = getDailyMeals(
                 selectedDate.year,
                 selectedDate.month,
                 selectedDate.day,
-            ).getOrNull()
-            if (calendar == null || dailyDetail == null) {
+            ).getOrNull() ?: run {
                 dispatch(HistoryReducerEvent.LoadFailed)
                 return@launch
             }

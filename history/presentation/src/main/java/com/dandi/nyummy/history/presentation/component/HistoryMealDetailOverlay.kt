@@ -171,7 +171,8 @@ private fun HistoryMealDetailCard(
                     if (meal.photoUrl.isNotBlank()) {
                         AsyncImage(
                             model = meal.photoUrl,
-                            contentDescription = meal.name,
+                            // 위의 식사 이름 텍스트가 이미 안내하므로 장식 요소로 둔다(중복 낭독 방지).
+                            contentDescription = null,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop,
                         )

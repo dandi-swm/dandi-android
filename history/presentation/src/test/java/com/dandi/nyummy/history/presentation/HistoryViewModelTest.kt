@@ -242,13 +242,15 @@ class HistoryViewModelTest {
     }
 
     @Test
-    fun `월 조회가 실패하면 로딩이 해제된다`() = runTest(testDispatcher) {
+    fun `월 조회가 실패하면 로딩을 해제하고 일간 조회를 건너뛴다`() = runTest(testDispatcher) {
         repository.monthlyOverride = { _, _ -> throw httpException(500) }
         val viewModel = createViewModel()
 
         advanceUntilIdle()
 
         assertTrue(!viewModel.uiState.value.isLoading)
+        // 월/일 UseCase 가 같은 오류 스낵바를 중복 발행하지 않도록 후속 조회를 중단한다.
+        assertEquals(0, repository.dailyRequests.size)
     }
 
     private fun createViewModel(): HistoryViewModel {
@@ -291,6 +293,7 @@ class HistoryViewModelTest {
 
     private class FakeHistoryRepository : HistoryRepository {
         val monthlyRequests = mutableListOf<Pair<Int, Int>>()
+        val dailyRequests = mutableListOf<Triple<Int, Int, Int>>()
         val deleteRequests = mutableListOf<Long>()
 
         var monthlyOverride: suspend (Int, Int) -> HistoryCalendarVO =
@@ -308,8 +311,10 @@ class HistoryViewModelTest {
             return monthlyOverride(year, month)
         }
 
-        override suspend fun getDailyMeals(year: Int, month: Int, day: Int): DailyMealHistoryVO =
-            dailyOverride(year, month, day)
+        override suspend fun getDailyMeals(year: Int, month: Int, day: Int): DailyMealHistoryVO {
+            dailyRequests += Triple(year, month, day)
+            return dailyOverride(year, month, day)
+        }
 
         override suspend fun getMeal(mealId: Long): MealHistoryVO = mealOverride(mealId)
 
