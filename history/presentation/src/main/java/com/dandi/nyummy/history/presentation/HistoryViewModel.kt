@@ -15,6 +15,7 @@ import com.dandi.nyummy.history.presentation.util.previousMonthOf
 import com.dandi.nyummy.history.presentation.util.todayDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -25,10 +26,18 @@ class HistoryViewModel @Inject constructor(
     private val getMealDetail: GetMealDetailUseCase,
     private val updateMealName: UpdateMealNameUseCase,
     private val deleteMeal: DeleteMealUseCase,
-) : MviViewModel<HistoryIntent, HistoryUIState, HistoryReducerEvent>(HistoryUIState.empty) {
+) : MviViewModel<HistoryIntent, HistoryUIState, HistoryReducerEvent>(
+    HistoryUIState.initial(todayDate()),
+) {
+
+    /**
+     * 월/일 조회 job. 새 조회가 이전 조회를 취소해 늦게 도착한 과거 응답이
+     * 최신 화면을 덮어쓰지 않게 한다(최신 요청만 dispatch).
+     */
+    private var loadJob: Job? = null
 
     init {
-        val today = todayDate()
+        val today = currentState.selectedDate
         loadMonth(year = today.year, month = today.month, selectedDate = today)
     }
 
@@ -79,8 +88,22 @@ class HistoryViewModel @Inject constructor(
 
             HistoryReducerEvent.LoadFailed -> state.copy(isLoading = false)
 
+            HistoryReducerEvent.MealActionFailed -> state.withMealDetail {
+                // 에러 안내는 UseCase 의 스낵바가 담당한다. 다이얼로그는 열어 둔 채 재시도만 허용한다.
+                it.copy(isActionInFlight = false)
+            }
+
+            HistoryReducerEvent.MealActionStarted -> state.withMealDetail {
+                it.copy(isActionInFlight = true)
+            }
+
             is HistoryReducerEvent.MealDetailPhotoLoaded -> state.withMealDetail { detail ->
-                detail.copy(meal = detail.meal.copy(photoUrl = event.photoUrl))
+                // 늦게 도착한 다른 식사의 응답이 현재 열린 상세를 덮어쓰지 않게 한다.
+                if (detail.meal.id == event.mealId) {
+                    detail.copy(meal = detail.meal.copy(photoUrl = event.photoUrl))
+                } else {
+                    detail
+                }
             }
 
             is HistoryReducerEvent.MonthLoaded -> state.copy(
@@ -123,10 +146,16 @@ class HistoryViewModel @Inject constructor(
                 detail.copy(nameDraft = event.text)
             }
 
-            HistoryReducerEvent.MealNameEditCommitted -> state.commitMealNameEdit()
+            is HistoryReducerEvent.MealNameEditCommitted ->
+                state.commitMealNameEdit(mealId = event.mealId, newName = event.newName)
 
             HistoryReducerEvent.MealNameEditCanceled -> state.withMealDetail { detail ->
-                detail.copy(mode = HistoryMealDetailMode.Viewing, nameDraft = "")
+                // 저장 요청이 진행 중이면 취소를 무시해 결과 반영과의 경쟁을 막는다.
+                if (detail.isActionInFlight) {
+                    detail
+                } else {
+                    detail.copy(mode = HistoryMealDetailMode.Viewing, nameDraft = "")
+                }
             }
 
             HistoryReducerEvent.MealDeleteRequested -> state.withMealDetail { detail ->
@@ -134,15 +163,20 @@ class HistoryViewModel @Inject constructor(
             }
 
             HistoryReducerEvent.MealDeleteCanceled -> state.withMealDetail { detail ->
-                detail.copy(mode = HistoryMealDetailMode.Viewing)
+                if (detail.isActionInFlight) {
+                    detail
+                } else {
+                    detail.copy(mode = HistoryMealDetailMode.Viewing)
+                }
             }
 
-            HistoryReducerEvent.MealDeleted -> state.deleteDetailMeal()
+            is HistoryReducerEvent.MealDeleted -> state.deleteDetailMeal(event.mealId)
         }
 
-    /** 월 캘린더와 선택 날짜의 일별 기록을 함께 조회한다. */
+    /** 월 캘린더와 선택 날짜의 일별 기록을 함께 조회한다. 진행 중인 조회는 취소한다. */
     private fun loadMonth(year: Int, month: Int, selectedDate: HistoryDateVO) {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             dispatch(HistoryReducerEvent.LoadStarted)
             val today = todayDate()
             val calendar = getMonthlyMeals(year, month).getOrNull()
@@ -173,7 +207,8 @@ class HistoryViewModel @Inject constructor(
             loadMonth(year = date.year, month = date.month, selectedDate = date)
             return
         }
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             getDailyMeals(date.year, date.month, date.day)
                 .onSuccess { dispatch(HistoryReducerEvent.DaySelected(date = date, dailyDetail = it)) }
                 .onFailure { dispatch(HistoryReducerEvent.LoadFailed) }
@@ -188,7 +223,12 @@ class HistoryViewModel @Inject constructor(
         viewModelScope.launch {
             getMealDetail(id).onSuccess { detail ->
                 if (detail.photoUrl.isNotBlank()) {
-                    dispatch(HistoryReducerEvent.MealDetailPhotoLoaded(detail.photoUrl))
+                    dispatch(
+                        HistoryReducerEvent.MealDetailPhotoLoaded(
+                            mealId = mealId,
+                            photoUrl = detail.photoUrl,
+                        ),
+                    )
                 }
             }
         }
@@ -196,23 +236,39 @@ class HistoryViewModel @Inject constructor(
 
     private fun confirmEditMealName() {
         val detail = currentState.mealDetail ?: return
+        if (detail.isActionInFlight) return
         val newName = detail.nameDraft.trim()
         if (newName.isEmpty()) return
-        val id = detail.meal.id.toLongOrNull() ?: return
+        // 요청 시점의 대상을 캡처해, 응답이 늦게 와도 이 식사에만 반영한다.
+        val targetMealId = detail.meal.id
+        val id = targetMealId.toLongOrNull() ?: return
+        dispatch(HistoryReducerEvent.MealActionStarted)
         // 실패 시 에러 안내는 UseCase 의 스낵바가 담당하고, 수정 다이얼로그는 열어 둔 채 재시도를 허용한다.
         viewModelScope.launch {
             updateMealName(id, newName)
-                .onSuccess { dispatch(HistoryReducerEvent.MealNameEditCommitted) }
+                .onSuccess {
+                    dispatch(
+                        HistoryReducerEvent.MealNameEditCommitted(
+                            mealId = targetMealId,
+                            newName = newName,
+                        ),
+                    )
+                }
+                .onFailure { dispatch(HistoryReducerEvent.MealActionFailed) }
         }
     }
 
     private fun confirmDeleteMeal() {
         val detail = currentState.mealDetail ?: return
-        val id = detail.meal.id.toLongOrNull() ?: return
+        if (detail.isActionInFlight) return
+        val targetMealId = detail.meal.id
+        val id = targetMealId.toLongOrNull() ?: return
+        dispatch(HistoryReducerEvent.MealActionStarted)
         // 실패 시 에러 안내는 UseCase 의 스낵바가 담당하고, 삭제 확인 다이얼로그는 열어 둔 채 재시도를 허용한다.
         viewModelScope.launch {
             deleteMeal(id)
-                .onSuccess { dispatch(HistoryReducerEvent.MealDeleted) }
+                .onSuccess { dispatch(HistoryReducerEvent.MealDeleted(mealId = targetMealId)) }
+                .onFailure { dispatch(HistoryReducerEvent.MealActionFailed) }
         }
     }
 
