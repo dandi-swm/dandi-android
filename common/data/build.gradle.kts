@@ -58,6 +58,9 @@ dependencies {
     implementation(project(":common:domain"))
     implementation(project(":common:entity"))
 
+    // AndroidX core — PackageInfoCompat.getLongVersionCode (minSdk 24 대응)
+    implementation(libs.androidx.core.ktx)
+
     // Network
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.kotlinx.serialization)
