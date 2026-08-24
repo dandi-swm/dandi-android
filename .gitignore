@@ -34,8 +34,9 @@ captures/
 *.keystore
 keystore.properties
 
-# Google services (uncomment if used)
-# google-services.json
+# Google services (Firebase — 민감정보, 로컬/CI 에서 주입)
+google-services.json
+**/google-services.json
 
 # OS files
 .DS_Store
