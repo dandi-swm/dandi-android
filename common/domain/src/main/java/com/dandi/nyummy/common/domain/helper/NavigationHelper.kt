@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
  * - [navigateToBack] — 하드웨어 백 키와 동일하게 한 단계 뒤로 이동.
  * - [navigateToAsRoot] — 백스택을 전부 비우고 대상 페이지만 루트로 남긴다 (로그인/가입 완료 → 홈 전환).
  * - [navigateToInitial] — 세션 만료(401) 등으로 인한 초기 화면 이동 신호를 전달한다.
+ * - [navigateToExternalLink] — 외부 앱(브라우저/스토어)으로 URL 을 연다(앱 외부 이동).
  */
 interface NavigationHelper {
     val navigationFlow: Flow<NavSignal>
@@ -24,4 +25,5 @@ interface NavigationHelper {
     fun navigateToBack()
     fun navigateToAsRoot(page: Page)
     fun navigateToInitial()
+    fun navigateToExternalLink(url: String)
 }

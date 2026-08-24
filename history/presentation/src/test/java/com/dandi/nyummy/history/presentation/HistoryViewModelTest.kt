@@ -335,6 +335,7 @@ class HistoryViewModelTest {
         override fun navigateToBack() = Unit
         override fun navigateToAsRoot(page: Page) = Unit
         override fun navigateToInitial() = Unit
+        override fun navigateToExternalLink(url: String) = Unit
     }
 
     private class FakeResourceHelper : ResourceHelper {

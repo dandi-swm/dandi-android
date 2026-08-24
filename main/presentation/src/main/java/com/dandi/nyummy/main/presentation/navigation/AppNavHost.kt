@@ -1,5 +1,8 @@
 package com.dandi.nyummy.main.presentation.navigation
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -7,6 +10,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -25,6 +29,7 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
 ) {
     val navigationHelper = LocalNavigationHelper.current
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         navigationHelper.navigationFlow.collect { signal ->
@@ -34,6 +39,7 @@ fun AppNavHost(
                 NavSignal.Back -> backStack.removeLastOrNull()
                 is NavSignal.ResetToPage -> handleResetTo(signal.route, backStack)
                 NavSignal.BackToInitialPage -> navigateToInitialStack(backStack)
+                is NavSignal.GoToExternalLink -> openExternalLink(signal.url, context)
             }
         }
     }
@@ -66,6 +72,21 @@ fun AppNavHost(
 }
 
 private const val TAG = "[Navigation]"
+
+/**
+ * 외부 앱(브라우저/스토어)으로 [url] 을 연다. 앱 내 백스택과 무관한 외부 이동이다.
+ * Application/Service context 에서도 안전하도록 [Intent.FLAG_ACTIVITY_NEW_TASK] 를 부여하고,
+ * 링크가 비었거나 처리할 앱이 없으면 조용히 무시한다.
+ */
+fun openExternalLink(url: String, context: Context) {
+    if (url.isBlank()) return
+    runCatching {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    }.onFailure { Log.w(TAG, "openExternalLink failed: $url", it) }
+}
 
 /**
  * NavRoute 한 건을 받아 백스택에 push(앱 내 전진 이동).

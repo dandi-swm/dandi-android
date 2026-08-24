@@ -177,6 +177,8 @@ class HistoryUseCasesTest {
         override fun navigateToInitial() {
             initialCount++
         }
+
+        override fun navigateToExternalLink(url: String) = Unit
     }
 
     private class FakeResourceHelper : ResourceHelper {
