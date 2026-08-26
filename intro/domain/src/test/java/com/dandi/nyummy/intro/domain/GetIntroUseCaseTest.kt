@@ -1,7 +1,9 @@
 package com.dandi.nyummy.intro.domain
 
 import com.dandi.nyummy.auth.domain.LoginPage
+import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.domain.helper.DeviceHelper
+import com.dandi.nyummy.common.domain.helper.PermissionHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -117,6 +119,108 @@ class GetIntroUseCaseTest {
         assertEquals(1, retryCount)
     }
 
+    @Test
+    fun `권한 안내 미노출이고 미허용 권한이 있으면 게이트를 거친 뒤 노출 완료를 기록하고 이동한다`() = runBlocking {
+        val repository = FakeIntroRepository(hasRefreshToken = false, permissionNoticeShown = false)
+        var gateCount = 0
+        val useCase = buildUseCase(
+            repository = repository,
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+            permissionHelper = FakePermissionHelper(granted = false),
+        )
+
+        useCase(requestPermissions = { gateCount++ })
+
+        assertEquals(1, gateCount)
+        assertEquals(1, repository.markPermissionNoticeShownCount)
+        assertEquals(listOf<Page>(LoginPage), navigationHelper.rootPages)
+    }
+
+    @Test
+    fun `권한 안내를 이미 노출했으면 게이트를 건너뛴다`() = runBlocking {
+        val repository = FakeIntroRepository(hasRefreshToken = false, permissionNoticeShown = true)
+        var gateCount = 0
+        val useCase = buildUseCase(
+            repository = repository,
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+            permissionHelper = FakePermissionHelper(granted = false),
+        )
+
+        useCase(requestPermissions = { gateCount++ })
+
+        assertEquals(0, gateCount)
+        assertEquals(0, repository.markPermissionNoticeShownCount)
+        assertEquals(listOf<Page>(LoginPage), navigationHelper.rootPages)
+    }
+
+    @Test
+    fun `시작 권한이 전부 허용돼 있으면 게이트를 건너뛴다`() = runBlocking {
+        val repository = FakeIntroRepository(hasRefreshToken = false, permissionNoticeShown = false)
+        var gateCount = 0
+        val useCase = buildUseCase(
+            repository = repository,
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+            permissionHelper = FakePermissionHelper(granted = true),
+        )
+
+        useCase(requestPermissions = { gateCount++ })
+
+        assertEquals(0, gateCount)
+        assertEquals(0, repository.markPermissionNoticeShownCount)
+        assertEquals(listOf<Page>(LoginPage), navigationHelper.rootPages)
+    }
+
+    @Test
+    fun `이동 직전에 onBeforeNavigate 를 한 번 호출한다`() = runBlocking {
+        var beforeNavigateCount = 0
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = false),
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        useCase(onBeforeNavigate = { beforeNavigateCount++ })
+
+        assertEquals(1, beforeNavigateCount)
+        assertEquals(listOf<Page>(LoginPage), navigationHelper.rootPages)
+    }
+
+    @Test
+    fun `강제 업데이트 대상이면 onBeforeNavigate 를 호출하지 않는다`() = runBlocking {
+        var beforeNavigateCount = 0
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = false),
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 1),
+        )
+
+        useCase(onBeforeNavigate = { beforeNavigateCount++ })
+
+        assertEquals(0, beforeNavigateCount)
+        assertTrue(navigationHelper.rootPages.isEmpty())
+    }
+
+    @Test
+    fun `권한 게이트는 버전 체크보다 먼저 실행되고 강제 업데이트여도 이동은 하지 않는다`() = runBlocking {
+        val repository = FakeIntroRepository(hasRefreshToken = false, permissionNoticeShown = false)
+        var gateCount = 0
+        val useCase = buildUseCase(
+            repository = repository,
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 1),
+            permissionHelper = FakePermissionHelper(granted = false),
+        )
+
+        useCase(requestPermissions = { gateCount++ })
+
+        assertEquals(1, gateCount)
+        assertTrue(messageHelper.oneButtonDialogs.single().cantIgnore)
+        assertTrue(navigationHelper.rootPages.isEmpty())
+    }
+
     private fun versionCheck(
         minimumVersionCode: Long,
         latestVersionUpdateLink: String = "",
@@ -131,10 +235,12 @@ class GetIntroUseCaseTest {
         repository: IntroRepository,
         remoteConfigHelper: RemoteConfigHelper,
         deviceHelper: DeviceHelper,
+        permissionHelper: PermissionHelper = FakePermissionHelper(granted = true),
     ): GetIntroUseCase = GetIntroUseCase(
         repository = repository,
         remoteConfigHelper = remoteConfigHelper,
         deviceHelper = deviceHelper,
+        permissionHelper = permissionHelper,
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
@@ -143,8 +249,23 @@ class GetIntroUseCaseTest {
 
     private class FakeIntroRepository(
         private val hasRefreshToken: Boolean,
+        private var permissionNoticeShown: Boolean = true,
     ) : IntroRepository {
+        var markPermissionNoticeShownCount = 0
+            private set
+
         override suspend fun hasRefreshToken(): Boolean = hasRefreshToken
+        override suspend fun hasShownPermissionNotice(): Boolean = permissionNoticeShown
+        override suspend fun markPermissionNoticeShown() {
+            permissionNoticeShown = true
+            markPermissionNoticeShownCount++
+        }
+    }
+
+    private class FakePermissionHelper(
+        private val granted: Boolean,
+    ) : PermissionHelper {
+        override fun isGranted(permission: AppPermission): Boolean = granted
     }
 
     private class FakeRemoteConfigHelper(

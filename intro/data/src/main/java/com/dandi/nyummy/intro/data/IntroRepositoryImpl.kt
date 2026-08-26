@@ -1,5 +1,6 @@
 package com.dandi.nyummy.intro.data
 
+import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.intro.domain.IntroRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -7,6 +8,7 @@ import kotlinx.coroutines.withContext
 
 class IntroRepositoryImpl(
     private val tokenProvider: TokenProvider,
+    private val appPreferenceProvider: AppPreferenceProvider,
     private val ioDispatcher: CoroutineDispatcher,
 ) : IntroRepository {
 
@@ -16,5 +18,13 @@ class IntroRepositoryImpl(
      */
     override suspend fun hasRefreshToken(): Boolean = withContext(ioDispatcher) {
         !tokenProvider.refreshToken.isNullOrBlank()
+    }
+
+    override suspend fun hasShownPermissionNotice(): Boolean = withContext(ioDispatcher) {
+        appPreferenceProvider.hasShownPermissionNotice()
+    }
+
+    override suspend fun markPermissionNoticeShown() = withContext(ioDispatcher) {
+        appPreferenceProvider.markPermissionNoticeShown()
     }
 }

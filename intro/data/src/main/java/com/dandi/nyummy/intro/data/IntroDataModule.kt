@@ -2,6 +2,7 @@ package com.dandi.nyummy.intro.data
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
+import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.domain.coroutine.IoDispatcher
 import com.dandi.nyummy.common.domain.helper.DeviceHelper
@@ -52,6 +53,7 @@ object IntroDataModule {
     @Singleton
     fun provideIntroRepository(
         tokenProvider: TokenProvider,
+        appPreferenceProvider: AppPreferenceProvider,
         @IoDispatcher ioDispatcher: CoroutineDispatcher,
-    ): IntroRepository = IntroRepositoryImpl(tokenProvider, ioDispatcher)
+    ): IntroRepository = IntroRepositoryImpl(tokenProvider, appPreferenceProvider, ioDispatcher)
 }
