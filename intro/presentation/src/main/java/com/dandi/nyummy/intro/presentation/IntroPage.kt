@@ -10,8 +10,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
- * 앱 시작 부트스트랩 화면. [IntroViewModel] 이 시작 게이트를 수행해
- * 홈/로그인으로 루트 전환하며, 최초 1회 권한 안내가 필요할 때만 바텀시트를 띄운다.
+ * 앱 시작 부트스트랩 화면. 시작 게이트가 도는 동안 스플래시([IntroSplashContent])를
+ * 보여주고, [IntroViewModel] 이 완료되면 홈/로그인으로 루트 전환한다.
+ * 최초 1회 권한 안내가 필요하면 스플래시 위에 바텀시트를 오버레이한다.
  */
 @Composable
 fun IntroPage(
@@ -31,6 +32,11 @@ private fun IntroScreen(
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { onIntent(IntroIntent.OnPermissionsResult) }
+
+    IntroSplashContent(
+        isComplete = uiState.isSplashComplete,
+        isPermissionNoticeVisible = uiState.showPermissionNotice,
+    )
 
     PermissionNoticeBottomSheet(
         visible = uiState.showPermissionNotice,
