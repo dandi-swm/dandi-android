@@ -1,13 +1,11 @@
 package com.dandi.nyummy.intro.presentation
 
-import android.Manifest
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dandi.nyummy.common.domain.helper.AppPermission
+import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
 
 /**
  * 앱 시작 부트스트랩 화면. 시작 게이트가 도는 동안 스플래시([IntroSplashContent])를
@@ -27,11 +25,10 @@ private fun IntroScreen(
     uiState: IntroUIState,
     onIntent: (IntroIntent) -> Unit,
 ) {
-    // 시스템 권한 팝업은 Activity 가 필요한 view 레이어 행위 — launcher 로 요청하고
-    // 결과(허용/거부 무관)를 단일 진입점 onIntent 로 되돌린다.
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { onIntent(IntroIntent.OnPermissionsResult) }
+    // 허용 여부는 보지 않는다 — 시작 게이트는 비차단이라 결과 도착 자체가 신호다.
+    val permissionRequester = rememberPermissionRequester {
+        onIntent(IntroIntent.OnPermissionsResult)
+    }
 
     IntroSplashContent(
         isComplete = uiState.isSplashComplete,
@@ -40,21 +37,9 @@ private fun IntroScreen(
 
     PermissionNoticeBottomSheet(
         visible = uiState.showPermissionNotice,
-        onConfirm = {
-            val permissions = startupManifestPermissions()
-            if (permissions.isEmpty()) {
-                onIntent(IntroIntent.OnPermissionsResult)
-            } else {
-                permissionLauncher.launch(permissions)
-            }
-        },
+        onConfirm = { permissionRequester.request(STARTUP_PERMISSIONS) },
     )
 }
 
-/** 시작 권한의 Manifest 문자열 매핑. POST_NOTIFICATIONS 는 API 33+ 에만 존재한다. */
-private fun startupManifestPermissions(): Array<String> = buildList {
-    add(Manifest.permission.CAMERA)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        add(Manifest.permission.POST_NOTIFICATIONS)
-    }
-}.toTypedArray()
+/** 시작 시 안내/요청하는 권한. domain 게이트(GetIntroUseCase)의 목록과 동일해야 한다. */
+private val STARTUP_PERMISSIONS = listOf(AppPermission.CAMERA, AppPermission.NOTIFICATION)

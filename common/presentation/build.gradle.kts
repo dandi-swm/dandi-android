@@ -67,6 +67,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     api(libs.androidx.compose.material3)
     api(libs.androidx.compose.material.icons.core)
+    // PermissionRequester 의 rememberLauncherForActivityResult 용
+    implementation(libs.androidx.activity.compose)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
