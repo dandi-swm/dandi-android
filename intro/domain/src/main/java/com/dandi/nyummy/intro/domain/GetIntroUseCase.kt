@@ -24,15 +24,18 @@ class GetIntroUseCase @Inject constructor(
     /**
      * 앱 시작 게이트 + 분기.
      *
-     * 1. RemoteConfig 로 최소 요구 버전을 조회해 현재 앱 versionCode 와 비교한다.
+     * 1. RemoteConfig 를 sync(fetch/activate)한다 — 앱 전체에서 여기 1회뿐이며,
+     *    이후 다른 기능의 flag 조회는 활성화된 스냅샷만 읽는다.
+     * 2. 최소 요구 버전을 조회해 현재 앱 versionCode 와 비교한다.
      *    미만이면 닫을 수 없는 강제 업데이트 다이얼로그를 띄우고 홈/로그인 이동을 중단한다.
-     * 2. 통과하면 저장된 리프레시 토큰이 있으면 홈, 없으면 로그인을 루트로 이동한다.
+     * 3. 통과하면 저장된 리프레시 토큰이 있으면 홈, 없으면 로그인을 루트로 이동한다.
      *
      * 토큰 유효성은 여기서 검증하지 않는다 — 만료된 토큰은 이후 요청에서
      * Authenticator 의 재발급 실패 → 공통 401 처리(세션 만료)로 걸러진다.
      */
     suspend operator fun invoke(): Result<VersionCheckVO> = try {
-        val version = remoteConfigHelper.checkVersion()
+        remoteConfigHelper.sync()
+        val version = remoteConfigHelper.getVersionCheck()
 
         if (isForceUpdateRequired(version)) {
             showForceUpdateDialog(version)

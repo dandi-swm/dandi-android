@@ -6,6 +6,8 @@ import com.dandi.nyummy.common.domain.helper.DeviceHelper
 import com.dandi.nyummy.intro.domain.RemoteConfigHelper
 import com.dandi.nyummy.intro.entity.VersionCheckVO
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -26,20 +28,28 @@ class RemoteConfigHelperImpl(
     private val isDebuggable =
         (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
-    override suspend fun checkVersion(): VersionCheckVO {
-        runCatching {
-            // 기본값을 먼저 깔고(현재 앱 버전 기준), 그 위에 서버 값을 fetch 해 덮는다.
-            remoteConfig.setDefaultsAsync(buildDefaults()).await()
-            remoteConfig.fetchAndActivate().await()
-        }
+    private val syncMutex = Mutex()
 
-        return VersionCheckVO(
-            minimumVersion = remoteConfig.getString(key(KEY_MINIMUM_VERSION)),
-            minimumVersionCode = remoteConfig.getLong(key(KEY_MINIMUM_VERSION_CODE)),
-            latestVersionUpdateLink = remoteConfig.getString(key(KEY_LATEST_VERSION_UPDATE_LINK)),
-            minimumVersionReleaseNote = remoteConfig.getString(key(KEY_MINIMUM_VERSION_RELEASE_NOTE)),
-        )
+
+    private var isSynced = false
+
+    override suspend fun sync() {
+        syncMutex.withLock {
+            if (isSynced) return
+            runCatching {
+                // 기본값을 먼저 깔고(현재 앱 버전 기준), 그 위에 서버 값을 fetch 해 덮는다.
+                remoteConfig.setDefaultsAsync(buildDefaults()).await()
+                remoteConfig.fetchAndActivate().await()
+            }.onSuccess { isSynced = true } // 실패 시 다음 sync() 호출에서 재시도
+        }
     }
+
+    override fun getVersionCheck(): VersionCheckVO = VersionCheckVO(
+        minimumVersion = remoteConfig.getString(key(KEY_MINIMUM_VERSION)),
+        minimumVersionCode = remoteConfig.getLong(key(KEY_MINIMUM_VERSION_CODE)),
+        latestVersionUpdateLink = remoteConfig.getString(key(KEY_LATEST_VERSION_UPDATE_LINK)),
+        minimumVersionReleaseNote = remoteConfig.getString(key(KEY_MINIMUM_VERSION_RELEASE_NOTE)),
+    )
 
     /**
      * fetch 이전/실패 시 사용할 기본값. minimum 버전을 현재 앱 버전으로 두어

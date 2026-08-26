@@ -145,11 +145,13 @@ class GetIntroUseCaseTest {
     private class FakeRemoteConfigHelper(
         private val version: VersionCheckVO,
     ) : RemoteConfigHelper {
-        override suspend fun checkVersion(): VersionCheckVO = version
+        override suspend fun sync() = Unit
+        override fun getVersionCheck(): VersionCheckVO = version
     }
 
     private class ThrowingRemoteConfigHelper : RemoteConfigHelper {
-        override suspend fun checkVersion(): VersionCheckVO =
+        override suspend fun sync() = Unit
+        override fun getVersionCheck(): VersionCheckVO =
             throw IllegalStateException("remote config failed")
     }
 
