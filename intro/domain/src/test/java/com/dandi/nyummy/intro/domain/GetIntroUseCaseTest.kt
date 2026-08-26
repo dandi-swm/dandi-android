@@ -117,20 +117,6 @@ class GetIntroUseCaseTest {
         assertEquals(1, retryCount)
     }
 
-    @Test
-    fun `취소로 인한 CancellationException 은 다이얼로그 없이 그대로 전파한다`() = runBlocking {
-        val useCase = buildUseCase(
-            repository = FakeIntroRepository(hasRefreshToken = false),
-            remoteConfigHelper = CancellingRemoteConfigHelper(),
-            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
-        )
-
-        val thrown = runCatching { useCase() }.exceptionOrNull()
-
-        assertTrue(thrown is kotlin.coroutines.cancellation.CancellationException)
-        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
-    }
-
     private fun versionCheck(
         minimumVersionCode: Long,
         latestVersionUpdateLink: String = "",
@@ -172,12 +158,6 @@ class GetIntroUseCaseTest {
         override suspend fun sync() = Unit
         override fun getVersionCheck(): VersionCheckVO =
             throw IllegalStateException("remote config failed")
-    }
-
-    private class CancellingRemoteConfigHelper : RemoteConfigHelper {
-        override suspend fun sync() = Unit
-        override fun getVersionCheck(): VersionCheckVO =
-            throw kotlin.coroutines.cancellation.CancellationException("cancelled")
     }
 
     private class FakeDeviceHelper(

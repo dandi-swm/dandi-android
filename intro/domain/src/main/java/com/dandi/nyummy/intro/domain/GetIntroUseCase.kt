@@ -10,7 +10,6 @@ import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.intro.entity.VersionCheckVO
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 class GetIntroUseCase @Inject constructor(
     private val repository: IntroRepository,
@@ -53,9 +52,6 @@ class GetIntroUseCase @Inject constructor(
             navigationHelper.navigateToAsRoot(LoginPage)
         }
         Result.success(version)
-    } catch (e: CancellationException) {
-        // 화면 종료 등으로 취소된 경우 — 에러 다이얼로그를 띄우면 안 되므로 그대로 전파한다.
-        throw e
     } catch (e: Throwable) {
         showIntroErrorDialog(onRetry)
         Result.failure(e)
