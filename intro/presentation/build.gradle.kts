@@ -57,6 +57,9 @@ dependencies {
     implementation(project(":intro:entity"))
     implementation(project(":common:presentation"))
 
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 }
