@@ -11,6 +11,8 @@ package com.dandi.nyummy.common.domain.navigation
  *   이전 플로우로 되돌아가면 안 되는 전환에 사용한다.
  * - [BackToInitialPage]: 세션 만료(401). 스택을 비우고 초기 화면(로그인) 단독으로 교체한다.
  *   목적지를 인자로 받지 않는 의도(intent) 신호 — 실제 목적지는 NavHost 가 결정한다.
+ * - [GoToExternalLink]: 외부 앱(브라우저/스토어)으로 이동한다. 백스택을 건드리지 않는
+ *   앱 외부 이동 — 앱으로 들어오는 [DeepLink] 와 방향이 반대다.
  */
 sealed interface NavSignal {
     data class GoToDestPage(val route: NavRoute) : NavSignal
@@ -18,4 +20,5 @@ sealed interface NavSignal {
     data object Back : NavSignal
     data class ResetToPage(val route: NavRoute) : NavSignal
     data object BackToInitialPage : NavSignal
+    data class GoToExternalLink(val url: String) : NavSignal
 }

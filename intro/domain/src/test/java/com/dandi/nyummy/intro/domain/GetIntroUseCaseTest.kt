@@ -1,8 +1,7 @@
 package com.dandi.nyummy.intro.domain
 
 import com.dandi.nyummy.auth.domain.LoginPage
-import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.HttpResponseStatus
+import com.dandi.nyummy.common.domain.helper.DeviceHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -13,7 +12,7 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.home.domain.HomePage
-import com.dandi.nyummy.intro.entity.IntroVO
+import com.dandi.nyummy.intro.entity.VersionCheckVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -31,108 +30,144 @@ class GetIntroUseCaseTest {
     private val messageHelper = RecordingMessageHelper()
 
     @Test
-    fun `리프레시 토큰이 있으면 홈을 루트로 이동한다`() = runBlocking {
-        val useCase = buildUseCase(FakeIntroRepository(hasRefreshToken = true))
+    fun `버전 통과 후 리프레시 토큰이 있으면 홈을 루트로 이동한다`() = runBlocking {
+        val version = versionCheck(minimumVersionCode = 3)
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = true),
+            remoteConfigHelper = FakeRemoteConfigHelper(version),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
 
         val result = useCase()
 
         assertEquals(listOf<Page>(HomePage), navigationHelper.rootPages)
-        assertEquals(Result.success(IntroVO.empty), result)
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+        assertEquals(Result.success(version), result)
     }
 
     @Test
-    fun `리프레시 토큰이 없으면 로그인을 루트로 이동한다`() = runBlocking {
-        val useCase = buildUseCase(FakeIntroRepository(hasRefreshToken = false))
+    fun `버전 통과 후 리프레시 토큰이 없으면 로그인을 루트로 이동한다`() = runBlocking {
+        val version = versionCheck(minimumVersionCode = 3)
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = false),
+            remoteConfigHelper = FakeRemoteConfigHelper(version),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
 
         val result = useCase()
 
         assertEquals(listOf<Page>(LoginPage), navigationHelper.rootPages)
-        assertEquals(Result.success(IntroVO.empty), result)
+        assertEquals(Result.success(version), result)
     }
 
     @Test
-    fun `강제 업데이트 에러면 닫을 수 없는 다이얼로그를 띄우고 버튼 클릭 시 뒤로 이동한다`() = runBlocking {
-        val exception = httpException(400, errorCode = "api.intro.requiredForceUpdate")
-        val useCase = buildUseCase(ThrowingIntroRepository(exception))
+    fun `최소 버전 미만이면 닫을 수 없는 다이얼로그를 띄우고 이동하지 않으며 버튼 클릭 시 스토어 링크를 연다`() =
+        runBlocking {
+            val version = versionCheck(
+                minimumVersionCode = 3,
+                latestVersionUpdateLink = "https://play.google.com/store/apps/details?id=com.dandi.nyummy",
+            )
+            val useCase = buildUseCase(
+                repository = FakeIntroRepository(hasRefreshToken = true),
+                remoteConfigHelper = FakeRemoteConfigHelper(version),
+                deviceHelper = FakeDeviceHelper(appVersionCode = 1),
+            )
 
-        val result = useCase()
+            val result = useCase()
 
-        val dialog = messageHelper.oneButtonDialogs.single()
-        assertTrue(dialog.cantIgnore)
-        assertEquals(IntroErrorType.REQUIRED_FORCE_UPDATE.errorMsg, dialog.descText)
-        dialog.onClickButton?.invoke()
-        assertEquals(1, navigationHelper.backCount)
-        assertTrue(result.isFailure)
-    }
-
-    @Test
-    fun `401 이면 세션 만료 다이얼로그를 띄우고 버튼 클릭 시 초기 화면으로 이동한다`() = runBlocking {
-        val useCase = buildUseCase(ThrowingIntroRepository(httpException(401)))
-
-        val result = useCase()
-
-        val dialog = messageHelper.oneButtonDialogs.single()
-        assertTrue(dialog.cantIgnore)
-        dialog.onClickButton?.invoke()
-        assertEquals(1, navigationHelper.initialCount)
-        assertTrue(result.isFailure)
-    }
+            val dialog = messageHelper.oneButtonDialogs.single()
+            assertTrue(dialog.cantIgnore)
+            assertTrue(navigationHelper.rootPages.isEmpty())
+            dialog.onClickButton?.invoke()
+            assertEquals(listOf(version.latestVersionUpdateLink), navigationHelper.openedUrls)
+            assertEquals(Result.success(version), result)
+        }
 
     @Test
-    fun `5xx 이면 일시 오류 다이얼로그를 띄운다`() = runBlocking {
-        val useCase = buildUseCase(ThrowingIntroRepository(httpException(500)))
+    fun `최소 버전 코드가 0이면 강제 업데이트를 걸지 않는다`() = runBlocking {
+        val version = versionCheck(minimumVersionCode = 0)
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = false),
+            remoteConfigHelper = FakeRemoteConfigHelper(version),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 0),
+        )
 
-        val result = useCase()
-
-        assertEquals("A temporary error occurred.", messageHelper.oneButtonDialogs.single().titleText)
-        assertTrue(result.isFailure)
-    }
-
-    @Test
-    fun `매칭되는 에러 타입이 없으면 다이얼로그도 네비게이션도 없다`() = runBlocking {
-        val useCase = buildUseCase(ThrowingIntroRepository(httpException(403)))
-
-        val result = useCase()
+        useCase()
 
         assertTrue(messageHelper.oneButtonDialogs.isEmpty())
-        assertTrue(navigationHelper.rootPages.isEmpty())
-        assertTrue(result.isFailure)
+        assertEquals(listOf<Page>(LoginPage), navigationHelper.rootPages)
     }
 
-    private fun buildUseCase(repository: IntroRepository): GetIntroUseCase = GetIntroUseCase(
+    @Test
+    fun `시작 흐름이 실패하면 닫을 수 없는 재시도 다이얼로그를 띄우고 버튼 클릭 시 onRetry 를 호출한다`() = runBlocking {
+        var retryCount = 0
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = false),
+            remoteConfigHelper = ThrowingRemoteConfigHelper(),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        val result = useCase(onRetry = { retryCount++ })
+
+        assertTrue(result.isFailure)
+        assertTrue(navigationHelper.rootPages.isEmpty())
+        val dialog = messageHelper.oneButtonDialogs.single()
+        assertTrue(dialog.cantIgnore)
+        dialog.onClickButton?.invoke()
+        assertEquals(1, retryCount)
+    }
+
+    private fun versionCheck(
+        minimumVersionCode: Long,
+        latestVersionUpdateLink: String = "",
+    ): VersionCheckVO = VersionCheckVO(
+        minimumVersion = "",
+        minimumVersionCode = minimumVersionCode,
+        latestVersionUpdateLink = latestVersionUpdateLink,
+        minimumVersionReleaseNote = "",
+    )
+
+    private fun buildUseCase(
+        repository: IntroRepository,
+        remoteConfigHelper: RemoteConfigHelper,
+        deviceHelper: DeviceHelper,
+    ): GetIntroUseCase = GetIntroUseCase(
         repository = repository,
+        remoteConfigHelper = remoteConfigHelper,
+        deviceHelper = deviceHelper,
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
         ttiHelper = FakeTTIHelper(),
     )
 
-    private fun httpException(code: Int, errorCode: String? = null): HttpResponseException =
-        HttpResponseException(
-            status = HttpResponseStatus.create(code),
-            rawCode = code,
-            errorRequestUrl = "https://test/intro",
-            msg = "Http Request Failed ($code)",
-            cause = errorCode?.let(::Throwable),
-        )
-
     private class FakeIntroRepository(
         private val hasRefreshToken: Boolean,
     ) : IntroRepository {
-        override suspend fun getIntro(): IntroVO = IntroVO.empty
         override suspend fun hasRefreshToken(): Boolean = hasRefreshToken
     }
 
-    /** getIntro 주석 해제 전까지 hasRefreshToken 에서 예외를 던져 에러 경로를 검증한다. */
-    private class ThrowingIntroRepository(
-        private val exception: HttpResponseException,
-    ) : IntroRepository {
-        override suspend fun getIntro(): IntroVO = throw exception
-        override suspend fun hasRefreshToken(): Boolean = throw exception
+    private class FakeRemoteConfigHelper(
+        private val version: VersionCheckVO,
+    ) : RemoteConfigHelper {
+        override suspend fun sync() = Unit
+        override fun getVersionCheck(): VersionCheckVO = version
     }
+
+    private class ThrowingRemoteConfigHelper : RemoteConfigHelper {
+        override suspend fun sync() = Unit
+        override fun getVersionCheck(): VersionCheckVO =
+            throw IllegalStateException("remote config failed")
+    }
+
+    private class FakeDeviceHelper(
+        override val appVersionCode: Long,
+        override val appVersionName: String = "",
+    ) : DeviceHelper
 
     private class RecordingNavigationHelper : NavigationHelper {
         val rootPages = mutableListOf<Page>()
+        val openedUrls = mutableListOf<String>()
         var backCount = 0
         var initialCount = 0
 
@@ -150,6 +185,10 @@ class GetIntroUseCaseTest {
 
         override fun navigateToInitial() {
             initialCount++
+        }
+
+        override fun navigateToExternalLink(url: String) {
+            openedUrls += url
         }
     }
 

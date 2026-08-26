@@ -2,7 +2,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
 }
@@ -40,10 +39,14 @@ kotlin {
 dependencies {
     implementation(project(":common:data"))
     implementation(project(":intro:domain"))
+    implementation(project(":intro:entity"))
 
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.retrofit)
-    implementation(libs.kotlinx.serialization.json)
+
+    // Firebase RemoteConfig — 앱 시작 버전 체크
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.config)
+    implementation(libs.kotlinx.coroutines.play.services) // Task.await()
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

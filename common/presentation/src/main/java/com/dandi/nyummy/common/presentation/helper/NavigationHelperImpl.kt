@@ -39,6 +39,10 @@ class NavigationHelperImpl : NavigationHelper {
         emit(NavSignal.BackToInitialPage)
     }
 
+    override fun navigateToExternalLink(url: String) {
+        emit(NavSignal.GoToExternalLink(url))
+    }
+
     private fun emit(navSignal: NavSignal) {
         val result = _navigationFlow.trySend(navSignal)
         if (result.isFailure) Log.w("NavigationHelper", "dropped: $navSignal")
