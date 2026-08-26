@@ -99,17 +99,36 @@ class GetIntroUseCaseTest {
     }
 
     @Test
-    fun `RemoteConfig 조회가 실패하면 실패 결과를 반환한다`() = runBlocking {
+    fun `시작 흐름이 실패하면 닫을 수 없는 재시도 다이얼로그를 띄우고 버튼 클릭 시 onRetry 를 호출한다`() = runBlocking {
+        var retryCount = 0
         val useCase = buildUseCase(
             repository = FakeIntroRepository(hasRefreshToken = false),
             remoteConfigHelper = ThrowingRemoteConfigHelper(),
             deviceHelper = FakeDeviceHelper(appVersionCode = 5),
         )
 
-        val result = useCase()
+        val result = useCase(onRetry = { retryCount++ })
 
         assertTrue(result.isFailure)
         assertTrue(navigationHelper.rootPages.isEmpty())
+        val dialog = messageHelper.oneButtonDialogs.single()
+        assertTrue(dialog.cantIgnore)
+        dialog.onClickButton?.invoke()
+        assertEquals(1, retryCount)
+    }
+
+    @Test
+    fun `취소로 인한 CancellationException 은 다이얼로그 없이 그대로 전파한다`() = runBlocking {
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = false),
+            remoteConfigHelper = CancellingRemoteConfigHelper(),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        val thrown = runCatching { useCase() }.exceptionOrNull()
+
+        assertTrue(thrown is kotlin.coroutines.cancellation.CancellationException)
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
     }
 
     private fun versionCheck(
@@ -153,6 +172,12 @@ class GetIntroUseCaseTest {
         override suspend fun sync() = Unit
         override fun getVersionCheck(): VersionCheckVO =
             throw IllegalStateException("remote config failed")
+    }
+
+    private class CancellingRemoteConfigHelper : RemoteConfigHelper {
+        override suspend fun sync() = Unit
+        override fun getVersionCheck(): VersionCheckVO =
+            throw kotlin.coroutines.cancellation.CancellationException("cancelled")
     }
 
     private class FakeDeviceHelper(

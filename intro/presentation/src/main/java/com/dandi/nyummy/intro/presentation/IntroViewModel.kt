@@ -23,9 +23,14 @@ class IntroViewModel @Inject constructor(
 
     init {
         ttiHelper.startTTITracking(IntroTTIPage)
+        start()
+    }
+
+    /** 시작 흐름 실행. 실패 시 UseCase 가 띄우는 다이얼로그의 재시도 버튼이 이 함수를 다시 부른다. */
+    private fun start() {
         viewModelScope.launch {
             ttiHelper.startTTITimeline(IntroTTIPage, TimelineCategory.API_RESPONSE_TIME)
-            useCase()
+            useCase(onRetry = ::start)
             ttiHelper.endTTITimeline(IntroTTIPage, TimelineCategory.API_RESPONSE_TIME)
             ttiHelper.endTTITracking(IntroTTIPage)
             ttiHelper.shotTTILogging(IntroTTIPage)
