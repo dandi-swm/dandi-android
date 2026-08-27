@@ -14,7 +14,7 @@ import javax.inject.Inject
 /**
  * 시작 분기 ViewModel.
  *
- * 생성 즉시 [GetIntroUseCase] 가 버전 체크 → (최초 1회) 권한 안내 → 홈/로그인 루트 전환을
+ * 생성 즉시 [GetIntroUseCase] 가 (최초 1회) 권한 안내 → 버전 체크 → 홈/로그인 루트 전환을
  * 수행한다. 다이얼로그/네비게이션은 UseCase(domain)에서 종결되고, 권한 안내 바텀시트와
  * 시스템 권한 팝업만 UI 게이트([awaitPermissionFlow])로 이 레이어가 담당한다.
  */
