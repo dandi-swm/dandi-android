@@ -1,0 +1,9 @@
+<resources>
+    <string name="intro_splash_wordmark">NYUMMY</string>
+    <string name="intro_splash_headline_line1">맛있는 기록을</string>
+    <string name="intro_splash_headline_line2">모으는 중이야!</string>
+    <string name="intro_splash_bubble">음식 아이콘을 수집하고 있어요</string>
+    <string name="intro_splash_progress_label">아이콘을 모으는 중…</string>
+    <string name="intro_splash_progress_percent">%1$d%%</string>
+    <string name="intro_splash_tip">TIP! 매일 기록할수록 냐미가 더 건강해져요!</string>
+</resources>
