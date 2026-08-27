@@ -1,6 +1,7 @@
 package com.dandi.nyummy.intro.presentation
 
 import androidx.lifecycle.viewModelScope
+import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.intro.domain.GetIntroUseCase
 import com.dandi.nyummy.tti.TTIHelper
@@ -38,8 +39,14 @@ class IntroViewModel @Inject constructor(
 
     override fun reduce(state: IntroUIState, event: IntroReducerEvent): IntroUIState =
         when (event) {
-            IntroReducerEvent.PermissionNoticeShown -> state.copy(showPermissionNotice = true)
-            IntroReducerEvent.PermissionNoticeFinished -> state.copy(showPermissionNotice = false)
+            is IntroReducerEvent.PermissionNoticeShown -> state.copy(
+                showPermissionNotice = true,
+                pendingPermissions = event.permissions,
+            )
+            IntroReducerEvent.PermissionNoticeFinished -> state.copy(
+                showPermissionNotice = false,
+                pendingPermissions = emptyList(),
+            )
             IntroReducerEvent.SplashCompleted -> state.copy(isSplashComplete = true)
         }
 
@@ -48,7 +55,7 @@ class IntroViewModel @Inject constructor(
         viewModelScope.launch {
             useCase(
                 onRetry = ::start,
-                requestPermissions = ::awaitPermissionFlow,
+            requestPermissions = ::awaitPermissionFlow,
                 onBeforeNavigate = ::completeSplash,
                 ttiPage = IntroTTIPage,
             )
@@ -64,10 +71,10 @@ class IntroViewModel @Inject constructor(
     }
 
     /** 권한 안내 게이트 — 바텀시트를 띄우고 시스템 요청 결과가 돌아올 때까지 suspend 한다. */
-    private suspend fun awaitPermissionFlow() {
+    private suspend fun awaitPermissionFlow(permissions: List<AppPermission>) {
         val deferred = CompletableDeferred<Unit>()
         permissionResult = deferred
-        dispatch(IntroReducerEvent.PermissionNoticeShown)
+        dispatch(IntroReducerEvent.PermissionNoticeShown(permissions))
         deferred.await()
         dispatch(IntroReducerEvent.PermissionNoticeFinished)
     }

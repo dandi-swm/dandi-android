@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
 
 /**
@@ -37,9 +36,6 @@ private fun IntroScreen(
 
     PermissionNoticeBottomSheet(
         visible = uiState.showPermissionNotice,
-        onConfirm = { permissionRequester.request(STARTUP_PERMISSIONS) },
+        onConfirm = { permissionRequester.request(uiState.pendingPermissions) },
     )
 }
-
-/** 시작 시 안내/요청하는 권한. domain 게이트(GetIntroUseCase)의 목록과 동일해야 한다. */
-private val STARTUP_PERMISSIONS = listOf(AppPermission.CAMERA, AppPermission.NOTIFICATION)

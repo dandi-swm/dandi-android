@@ -130,7 +130,7 @@ class GetIntroUseCaseTest {
             permissionHelper = FakePermissionHelper(granted = false),
         )
 
-        useCase(requestPermissions = { gateCount++ })
+        useCase(requestPermissions = { _ -> gateCount++ })
 
         assertEquals(1, gateCount)
         assertEquals(1, repository.markPermissionNoticeShownCount)
@@ -148,7 +148,7 @@ class GetIntroUseCaseTest {
             permissionHelper = FakePermissionHelper(granted = false),
         )
 
-        useCase(requestPermissions = { gateCount++ })
+        useCase(requestPermissions = { _ -> gateCount++ })
 
         assertEquals(0, gateCount)
         assertEquals(0, repository.markPermissionNoticeShownCount)
@@ -166,7 +166,7 @@ class GetIntroUseCaseTest {
             permissionHelper = FakePermissionHelper(granted = true),
         )
 
-        useCase(requestPermissions = { gateCount++ })
+        useCase(requestPermissions = { _ -> gateCount++ })
 
         assertEquals(0, gateCount)
         assertEquals(0, repository.markPermissionNoticeShownCount)
@@ -214,7 +214,7 @@ class GetIntroUseCaseTest {
             permissionHelper = FakePermissionHelper(granted = false),
         )
 
-        useCase(requestPermissions = { gateCount++ })
+        useCase(requestPermissions = { _ -> gateCount++ })
 
         assertEquals(1, gateCount)
         assertTrue(messageHelper.oneButtonDialogs.single().cantIgnore)

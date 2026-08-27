@@ -1,10 +1,11 @@
 package com.dandi.nyummy.intro.presentation
 
+import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
 
 sealed interface IntroReducerEvent : ReducerEvent {
     /** 권한 안내 바텀시트 노출. */
-    data object PermissionNoticeShown : IntroReducerEvent
+    data class PermissionNoticeShown(val permissions: List<AppPermission>) : IntroReducerEvent
 
     /** 권한 흐름 종료 — 바텀시트 숨김. */
     data object PermissionNoticeFinished : IntroReducerEvent

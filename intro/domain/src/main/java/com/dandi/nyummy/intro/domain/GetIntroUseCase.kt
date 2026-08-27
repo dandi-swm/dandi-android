@@ -50,12 +50,13 @@ class GetIntroUseCase @Inject constructor(
      */
     suspend operator fun invoke(
         onRetry: () -> Unit = {},
-        requestPermissions: suspend () -> Unit = {},
+        requestPermissions: suspend (List<AppPermission>) -> Unit = {},
         onBeforeNavigate: suspend () -> Unit = {},
         ttiPage: TTIPage? = null,
     ): Result<VersionCheckVO> = try {
-        if (needsPermissionNotice()) {
-            requestPermissions()
+        val ungranted = ungrantedStartupPermissions()
+        if (ungranted.isNotEmpty() && !repository.hasShownPermissionNotice()) {
+            requestPermissions(ungranted)
             repository.markPermissionNoticeShown()
         }
 
@@ -88,9 +89,8 @@ class GetIntroUseCase @Inject constructor(
     private fun isForceUpdateRequired(version: VersionCheckVO): Boolean =
         version.minimumVersionCode > 0L && deviceHelper.appVersionCode < version.minimumVersionCode
 
-    private suspend fun needsPermissionNotice(): Boolean =
-        !repository.hasShownPermissionNotice() &&
-            STARTUP_PERMISSIONS.any { !permissionHelper.isGranted(it) }
+    private suspend fun ungrantedStartupPermissions(): List<AppPermission> =
+        STARTUP_PERMISSIONS.filter { !permissionHelper.isGranted(it) }
 
     private fun showForceUpdateDialog(version: VersionCheckVO) {
         messageHelper.showOneButtonDialog(
