@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Surface
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +47,7 @@ fun PermissionNoticeBottomSheet(
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
+        BackHandler(enabled = visible) {}
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(tween(SheetAnimationMillis)),
