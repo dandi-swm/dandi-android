@@ -10,6 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.dandi.nyummy.common.domain.helper.AppPermission
 
@@ -43,7 +45,11 @@ fun rememberPermissionRequester(
     onResult: (Map<AppPermission, Boolean>) -> Unit,
 ): PermissionRequester {
     val currentOnResult by rememberUpdatedState(onResult)
-    var requested by remember { mutableStateOf<List<AppPermission>>(emptyList()) }
+    val appPermissionSaver = listSaver<List<AppPermission>, String>(
+        save = { list -> list.map { it.name } },
+        restore = { names -> names.mapNotNull { name -> AppPermission.entries.find { it.name == name } } },
+    )
+    var requested by rememberSaveable(stateSaver = appPermissionSaver) { mutableStateOf(emptyList()) }
 
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
