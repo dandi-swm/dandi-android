@@ -11,6 +11,8 @@ import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.intro.entity.VersionCheckVO
 import com.dandi.nyummy.tti.TTIHelper
+import com.dandi.nyummy.tti.TTIPage
+import com.dandi.nyummy.tti.TimelineCategory
 import javax.inject.Inject
 
 class GetIntroUseCase @Inject constructor(
@@ -50,14 +52,20 @@ class GetIntroUseCase @Inject constructor(
         onRetry: () -> Unit = {},
         requestPermissions: suspend () -> Unit = {},
         onBeforeNavigate: suspend () -> Unit = {},
+        ttiPage: TTIPage? = null,
     ): Result<VersionCheckVO> = try {
         if (needsPermissionNotice()) {
             requestPermissions()
             repository.markPermissionNoticeShown()
         }
 
-        remoteConfigHelper.sync()
-        val version = remoteConfigHelper.getVersionCheck()
+        ttiPage?.let { ttiHelper.startTTITimeline(it, TimelineCategory.API_RESPONSE_TIME) }
+        val version = try {
+            remoteConfigHelper.sync()
+            remoteConfigHelper.getVersionCheck()
+        } finally {
+            ttiPage?.let { ttiHelper.endTTITimeline(it, TimelineCategory.API_RESPONSE_TIME) }
+        }
 
         if (isForceUpdateRequired(version)) {
             showForceUpdateDialog(version)

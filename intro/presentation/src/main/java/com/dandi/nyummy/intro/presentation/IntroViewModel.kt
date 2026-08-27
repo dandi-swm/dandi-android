@@ -4,7 +4,6 @@ import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.intro.domain.GetIntroUseCase
 import com.dandi.nyummy.tti.TTIHelper
-import com.dandi.nyummy.tti.TimelineCategory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
@@ -47,13 +46,12 @@ class IntroViewModel @Inject constructor(
     /** 시작 흐름 실행. 실패 시 UseCase 가 띄우는 다이얼로그의 재시도 버튼이 이 함수를 다시 부른다. */
     private fun start() {
         viewModelScope.launch {
-            ttiHelper.startTTITimeline(IntroTTIPage, TimelineCategory.API_RESPONSE_TIME)
             useCase(
                 onRetry = ::start,
                 requestPermissions = ::awaitPermissionFlow,
                 onBeforeNavigate = ::completeSplash,
+                ttiPage = IntroTTIPage,
             )
-            ttiHelper.endTTITimeline(IntroTTIPage, TimelineCategory.API_RESPONSE_TIME)
             ttiHelper.endTTITracking(IntroTTIPage)
             ttiHelper.shotTTILogging(IntroTTIPage)
         }
