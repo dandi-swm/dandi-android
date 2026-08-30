@@ -1,5 +1,6 @@
 package com.dandi.nyummy.auth.presentation
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -157,7 +158,9 @@ private fun LoginActions(
                 .aspectRatio(KakaoButtonAspectRatio)
                 .clip(DesignSystemThemeImpl.designSystemShape.buttonDefault)
                 .clickable(enabled = enabled, role = Role.Button) {
-                    onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO))
+                    // TODO: 임시로 클릭시 테스트 계정으로 로그인
+                    onIntent(LoginIntent.ClickTestLogin)
+                    //onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO))
                 },
             contentScale = ContentScale.Fit,
         )

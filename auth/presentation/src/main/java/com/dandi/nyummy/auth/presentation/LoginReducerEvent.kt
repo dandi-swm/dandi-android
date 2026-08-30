@@ -16,4 +16,6 @@ sealed interface LoginReducerEvent : ReducerEvent {
     data object LoginFinished : LoginReducerEvent
     data object EmailLoginClicked : LoginReducerEvent
 
+    data object TestLoginClicked : LoginReducerEvent
+
 }
