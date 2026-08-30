@@ -1,27 +1,31 @@
 package com.dandi.nyummy.meal.presentation
 
-import com.dandi.nyummy.common.presentation.component.NyummyPhotoPickerState
 import com.dandi.nyummy.common.presentation.mvi.UiState
-import com.dandi.nyummy.meal.entity.MealRecordVO
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
+
+/** 카메라 화면의 진행 단계입니다. */
+sealed interface MealCameraPhase {
+
+    /** 실시간 프리뷰를 보며 촬영을 준비하는 단계입니다. */
+    data object Preview : MealCameraPhase
+
+    /** 촬영본을 확인하고 취소/먹이기를 선택하는 단계입니다. [photoPath] 는 캐시 파일 절대 경로입니다. */
+    data class Captured(val photoPath: String) : MealCameraPhase
+}
+
+/** 카메라 권한 상태입니다. */
+enum class MealCameraPermission { Requesting, Granted, Denied }
 
 /**
- * 식사 기록 화면의 UI 상태입니다.
+ * 식사 기록(카메라) 화면의 UI 상태입니다.
  *
- * 초기 상태는 [MealRecordVO.empty] 그대로의 빈 기록이며, 필수 입력(사진·설명·아이콘)이
- * 모두 채워졌을 때만 [isSaveEnabled] 가 참이 됩니다.
+ * 진입 직후에는 [MealCameraPermission.Requesting] 으로 시작해 화면이 곧바로 권한을 요청하며,
+ * [isCapturing] 은 셔터 연타를 막고 촬영 실행을 View 에 지시하는 플래그입니다.
  */
 data class MealRecordUIState(
-    val record: MealRecordVO = MealRecordVO.empty,
-    val foodIcons: ImmutableList<MealFoodIcon> = MealFoodIcon.entries.toImmutableList(),
+    val phase: MealCameraPhase = MealCameraPhase.Preview,
+    val cameraPermission: MealCameraPermission = MealCameraPermission.Requesting,
+    val isCapturing: Boolean = false,
 ) : UiState {
-
-    val photoState: NyummyPhotoPickerState
-        get() = if (record.hasPhoto) NyummyPhotoPickerState.Selected else NyummyPhotoPickerState.Empty
-
-    val isSaveEnabled: Boolean
-        get() = record.hasPhoto && record.description.isNotBlank() && record.foodIconId.isNotEmpty()
 
     companion object {
         val empty = MealRecordUIState()

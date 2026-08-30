@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 프리뷰 우측 장식용 4포인트 스파클. 큰 별 + 우상단 작은 별. 색은 코드에서 tint 로 지정한다. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10.5,4.5c0.3,3.6 2.4,5.7 6,6 -3.6,0.3 -5.7,2.4 -6,6 -0.3,-3.6 -2.4,-5.7 -6,-6 3.6,-0.3 5.7,-2.4 6,-6Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M17.5,13.5c0.17,2 1.33,3.16 3.33,3.33 -2,0.17 -3.16,1.33 -3.33,3.33 -0.17,-2 -1.33,-3.16 -3.33,-3.33 2,-0.17 3.16,-1.33 3.33,-3.33Z" />
+</vector>

@@ -1,39 +1,84 @@
 package com.dandi.nyummy.meal.presentation
 
+import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class MealRecordViewModel @Inject constructor(
     private val navigationHelper: NavigationHelper,
+    private val messageHelper: MessageHelper,
 ) : MviViewModel<MealRecordIntent, MealRecordUIState, MealRecordReducerEvent>(MealRecordUIState.empty) {
 
     override fun onIntent(intent: MealRecordIntent) {
         when (intent) {
-            is MealRecordIntent.ChangeDescription ->
-                dispatch(MealRecordReducerEvent.DescriptionChanged(intent.text))
+            is MealRecordIntent.PermissionResult -> dispatch(
+                MealRecordReducerEvent.PermissionChanged(
+                    if (intent.granted) MealCameraPermission.Granted else MealCameraPermission.Denied,
+                ),
+            )
 
-            is MealRecordIntent.SelectFoodIcon ->
-                dispatch(MealRecordReducerEvent.FoodIconSelected(intent.iconId))
+            MealRecordIntent.ClickRequestPermission ->
+                dispatch(MealRecordReducerEvent.PermissionChanged(MealCameraPermission.Requesting))
 
-            MealRecordIntent.ClickChangePhoto -> Unit // TODO: 사진 촬영/선택 플로우 연결 (백엔드·카메라 미구현)
+            MealRecordIntent.ClickShutter -> {
+                val state = uiState.value
+                val canCapture = !state.isCapturing &&
+                    state.phase is MealCameraPhase.Preview &&
+                    state.cameraPermission == MealCameraPermission.Granted
+                if (canCapture) dispatch(MealRecordReducerEvent.CaptureStarted)
+            }
 
-            MealRecordIntent.ClickViewAllIcons -> Unit // TODO: 음식 아이콘 전체보기 화면 연결
+            is MealRecordIntent.PhotoCaptured ->
+                dispatch(MealRecordReducerEvent.CaptureSucceeded(intent.photoPath))
 
-            MealRecordIntent.ClickSave -> Unit // TODO: 식사 기록 저장 API 연동 (백엔드 미구현)
+            MealRecordIntent.CaptureFailed -> {
+                dispatch(MealRecordReducerEvent.CaptureEnded)
+                messageHelper.showSnackBar(
+                    iconType = IconType.ERROR,
+                    messageRes = R.string.meal_record_capture_failed,
+                )
+            }
 
-            MealRecordIntent.ClickBack -> navigationHelper.navigateToBack()
+            MealRecordIntent.ClickRetake -> {
+                deleteCapturedFile()
+                dispatch(MealRecordReducerEvent.ReturnedToPreview)
+            }
+
+            MealRecordIntent.ClickSubmit -> Unit // TODO: 음식 분석 제출 API 연동 (백엔드 미구현)
+
+            MealRecordIntent.ClickClose -> {
+                deleteCapturedFile()
+                navigationHelper.navigateToBack()
+            }
         }
     }
 
     override fun reduce(state: MealRecordUIState, event: MealRecordReducerEvent): MealRecordUIState =
         when (event) {
-            is MealRecordReducerEvent.DescriptionChanged ->
-                state.copy(record = state.record.copy(description = event.text))
+            is MealRecordReducerEvent.PermissionChanged ->
+                state.copy(cameraPermission = event.permission)
 
-            is MealRecordReducerEvent.FoodIconSelected ->
-                state.copy(record = state.record.copy(foodIconId = event.iconId))
+            MealRecordReducerEvent.CaptureStarted -> state.copy(isCapturing = true)
+
+            is MealRecordReducerEvent.CaptureSucceeded ->
+                state.copy(phase = MealCameraPhase.Captured(event.photoPath), isCapturing = false)
+
+            MealRecordReducerEvent.CaptureEnded -> state.copy(isCapturing = false)
+
+            MealRecordReducerEvent.ReturnedToPreview ->
+                state.copy(phase = MealCameraPhase.Preview, isCapturing = false)
         }
+
+    /** 확인 단계에서 이탈할 때 캐시에 남은 촬영 파일을 정리한다. */
+    private fun deleteCapturedFile() {
+        val phase = uiState.value.phase
+        if (phase is MealCameraPhase.Captured) {
+            runCatching { File(phase.photoPath).delete() }
+        }
+    }
 }
