@@ -10,4 +10,6 @@ sealed interface LoginIntent : MviIntent {
     // 이메일 로그인 버튼을 클릭했다.
     data object ClickEmailLogin : LoginIntent
 
+    data object ClickTestLogin : LoginIntent
+
 }

@@ -1,9 +1,9 @@
 package com.dandi.nyummy.meal.presentation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,46 +13,46 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
+import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.presentation.component.DandiText
 import com.dandi.nyummy.common.presentation.component.NyummyButton
 import com.dandi.nyummy.common.presentation.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.component.NyummyButtonStyle
-import com.dandi.nyummy.common.presentation.component.NyummyPhotoPicker
-import com.dandi.nyummy.common.presentation.component.NyummyScreenHeader
+import com.dandi.nyummy.common.presentation.component.NyummyIconButton
+import com.dandi.nyummy.common.presentation.component.NyummyIconButtonStyle
+import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
-import com.dandi.nyummy.meal.entity.MealRecordVO
-import kotlinx.collections.immutable.ImmutableList
-import java.text.SimpleDateFormat
-import java.util.Locale
+import com.dandi.nyummy.meal.presentation.component.MealCameraOverlay
+import com.dandi.nyummy.meal.presentation.component.MealCameraPreview
+import java.io.File
 
 /**
- * 식사 기록 화면입니다.
+ * 식사 기록(카메라) 화면입니다.
  *
- * 사진·음식 설명·촬영 시각·음식 아이콘을 확인하고 기록을 저장하는 화면으로,
- * 상태 수집과 [MealRecordIntent] 전달만 담당합니다.
+ * 실시간 프리뷰에서 촬영하면 같은 자리에서 촬영본을 확인하고 취소(재촬영)·먹이기를
+ * 선택합니다. 이 컴포저블은 상태 수집, 카메라 권한 요청, [MealRecordIntent] 전달만 담당합니다.
  */
 @Composable
 fun MealRecordPage(
@@ -60,6 +60,18 @@ fun MealRecordPage(
     viewModel: MealRecordViewModel = hiltViewModel<MealRecordViewModel>(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val permissionRequester = rememberPermissionRequester { result ->
+        viewModel.onIntent(MealRecordIntent.PermissionResult(result[AppPermission.CAMERA] == true))
+    }
+    // 진입 직후(초기 상태 Requesting)와 거부 화면의 재요청 모두 이 한 곳에서 시스템 팝업을 띄운다.
+    // 이미 허용된 상태면 팝업 없이 즉시 허용 콜백이 온다.
+    LaunchedEffect(uiState.cameraPermission) {
+        if (uiState.cameraPermission == MealCameraPermission.Requesting) {
+            permissionRequester.request(listOf(AppPermission.CAMERA))
+        }
+    }
+
     MealRecordScreen(
         uiState = uiState,
         onIntent = viewModel::onIntent,
@@ -75,158 +87,76 @@ private fun MealRecordScreen(
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
     val spacing = DesignSystemThemeImpl.designSystemSpacing
+
+    // 촬영본 확인 중의 시스템 백은 이탈 대신 재촬영 복귀로 처리해 제출 전 실수 이탈을 막는다.
+    BackHandler(enabled = uiState.phase is MealCameraPhase.Captured) {
+        onIntent(MealRecordIntent.ClickRetake)
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(colors.bgSurfaceIvory),
     ) {
-        NyummyScreenHeader(
-            title = stringResource(R.string.meal_record_title),
-            onBackClick = { onIntent(MealRecordIntent.ClickBack) },
-            backContentDescription = stringResource(R.string.meal_record_back_content_description),
-            modifier = Modifier.padding(horizontal = spacing.space16),
+        MealRecordHeader(
+            onCloseClick = { onIntent(MealRecordIntent.ClickClose) },
         )
-        Column(
+        Spacer(Modifier.height(spacing.space16))
+        Box(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = spacing.space20),
+                .fillMaxWidth()
+                .padding(horizontal = spacing.space20)
+                .clip(RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius24))
+                .background(colors.bgMealPhoto),
         ) {
-            Spacer(Modifier.height(spacing.space12))
-            DandiText(
-                text = stringResource(R.string.meal_record_heading),
-                color = colors.contentDefaultLevel0,
-                style = DesignSystemThemeImpl.typeScale.displayRegularXL,
-            )
-            Spacer(Modifier.height(spacing.space12))
-            NyummyPhotoPicker(
-                state = uiState.photoState,
-                onClick = { onIntent(MealRecordIntent.ClickChangePhoto) },
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-            Spacer(Modifier.height(spacing.space16))
-            MealDescriptionField(
-                value = uiState.record.description,
-                onValueChange = { onIntent(MealRecordIntent.ChangeDescription(it)) },
-            )
-            Spacer(Modifier.height(spacing.space16))
-            MealTimeRow(capturedAt = uiState.record.capturedAt)
-            Spacer(Modifier.height(spacing.space12))
-            FoodIconSection(
-                foodIcons = uiState.foodIcons,
-                selectedFoodIconId = uiState.record.foodIconId,
-                onIconSelect = { onIntent(MealRecordIntent.SelectFoodIcon(it)) },
-                onViewAllClick = { onIntent(MealRecordIntent.ClickViewAllIcons) },
-            )
-            Spacer(Modifier.height(spacing.space24))
-        }
-        Column(
-            modifier = Modifier.padding(horizontal = spacing.space20),
-        ) {
-            NyummyButton(
-                label = stringResource(R.string.meal_record_cta),
-                modifier = Modifier.fillMaxWidth(),
-                style = NyummyButtonStyle.Primary,
-                size = NyummyButtonSize.Large,
-                enabled = uiState.isSaveEnabled,
-                onClick = { onIntent(MealRecordIntent.ClickSave) },
-            )
-            Spacer(Modifier.height(spacing.space8))
-            DandiText(
-                text = stringResource(R.string.meal_record_cta_note),
-                modifier = Modifier.fillMaxWidth(),
-                color = colors.contentDefaultLevel2,
-                textAlign = TextAlign.Center,
-                style = DesignSystemThemeImpl.typeScale.textRegularS,
-            )
-            Spacer(Modifier.height(spacing.space12))
-        }
-    }
-}
+            when (val phase = uiState.phase) {
+                MealCameraPhase.Preview -> when (uiState.cameraPermission) {
+                    MealCameraPermission.Denied -> PermissionDeniedContent(
+                        onRetryClick = { onIntent(MealRecordIntent.ClickRequestPermission) },
+                        modifier = Modifier.fillMaxSize(),
+                    )
 
-@Composable
-private fun MealDescriptionField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    val spacing = DesignSystemThemeImpl.designSystemSpacing
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius20),
-        color = colors.bgInputDefault,
-        border = BorderStroke(MealCardBorderWidth, colors.borderMealPhoto),
-    ) {
-        Column(modifier = Modifier.padding(spacing.space16)) {
-            DandiText(
-                text = stringResource(R.string.meal_record_description_label),
-                color = colors.contentDefaultLevel0,
-                style = DesignSystemThemeImpl.typeScale.labelStrongS,
-            )
-            Spacer(Modifier.height(spacing.space8))
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                textStyle = DesignSystemThemeImpl.typeScale.textStrongM.merge(
-                    TextStyle(color = colors.contentInputValue),
-                ),
-                cursorBrush = SolidColor(colors.contentSelectionPrimary),
-            )
-            Spacer(Modifier.height(spacing.space8))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(MealDividerHeight)
-                    .background(colors.borderMealPhoto),
-            )
-            Spacer(Modifier.height(spacing.space12))
-            DandiText(
-                text = stringResource(R.string.meal_record_description_helper),
-                color = colors.contentDefaultLevel2,
-                style = DesignSystemThemeImpl.typeScale.textRegularS,
-            )
-        }
-    }
-}
+                    MealCameraPermission.Granted -> MealCameraPreview(
+                        isCapturing = uiState.isCapturing,
+                        onCaptured = { onIntent(MealRecordIntent.PhotoCaptured(it)) },
+                        onCaptureFailed = { onIntent(MealRecordIntent.CaptureFailed) },
+                        modifier = Modifier.fillMaxSize(),
+                    )
 
-@Composable
-private fun MealTimeRow(
-    capturedAt: String,
-    modifier: Modifier = Modifier,
-) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(MealTimeRowHeight),
-        shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius20),
-        color = colors.bgInputDefault,
-        border = BorderStroke(MealCardBorderWidth, colors.borderMealPhoto),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = DesignSystemThemeImpl.designSystemSpacing.space16),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            DandiText(
-                text = stringResource(R.string.meal_record_time_label),
-                color = colors.contentDefaultLevel2,
-                style = DesignSystemThemeImpl.typeScale.labelRegularXS,
-            )
-            Spacer(Modifier.weight(1f))
-            if (capturedAt.isEmpty()) {
-                DandiText(
-                    text = stringResource(R.string.meal_record_time_photo_required),
-                    color = colors.contentDefaultLevel2,
-                    style = DesignSystemThemeImpl.typeScale.textRegularS,
+                    MealCameraPermission.Requesting -> Unit // 권한 팝업 응답 대기: 어두운 뒤판만 노출
+                }
+
+                is MealCameraPhase.Captured -> AsyncImage(
+                    model = File(phase.photoPath),
+                    contentDescription = stringResource(
+                        R.string.meal_record_captured_photo_content_description,
+                    ),
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
                 )
-            } else {
-                DandiText(
-                    text = formatCapturedAt(capturedAt),
-                    color = colors.contentDefaultLevel0,
-                    style = DesignSystemThemeImpl.typeScale.textStrongXL,
+            }
+            if (uiState.cameraPermission != MealCameraPermission.Denied) {
+                MealCameraOverlay(showHint = uiState.phase is MealCameraPhase.Preview)
+            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(BottomBarHeight),
+            contentAlignment = Alignment.Center,
+        ) {
+            when (uiState.phase) {
+                MealCameraPhase.Preview -> ShutterButton(
+                    enabled = !uiState.isCapturing &&
+                        uiState.cameraPermission == MealCameraPermission.Granted,
+                    onClick = { onIntent(MealRecordIntent.ClickShutter) },
+                )
+
+                is MealCameraPhase.Captured -> CapturedActionBar(
+                    onRetakeClick = { onIntent(MealRecordIntent.ClickRetake) },
+                    onSubmitClick = { onIntent(MealRecordIntent.ClickSubmit) },
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
@@ -234,174 +164,170 @@ private fun MealTimeRow(
 }
 
 @Composable
-private fun FoodIconSection(
-    foodIcons: ImmutableList<MealFoodIcon>,
-    selectedFoodIconId: String,
-    onIconSelect: (String) -> Unit,
-    onViewAllClick: () -> Unit,
+private fun MealRecordHeader(
+    onCloseClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
     val spacing = DesignSystemThemeImpl.designSystemSpacing
     Column(modifier = modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            DandiText(
-                text = stringResource(R.string.meal_record_icon_section_label),
-                color = colors.contentDefaultLevel0,
-                style = DesignSystemThemeImpl.typeScale.labelStrongS,
-            )
-            Spacer(Modifier.weight(1f))
-            Surface(
-                onClick = onViewAllClick,
-                modifier = Modifier
-                    .width(ViewAllButtonWidth)
-                    .height(DesignSystemThemeImpl.designSystemSize.minimumTouchTarget),
-                shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius16),
-                color = colors.bgActionSecondaryDefault,
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = spacing.space16, vertical = spacing.space8),
+        ) {
+            NyummyIconButton(
+                contentDescription = stringResource(R.string.meal_record_close_content_description),
+                modifier = Modifier.align(Alignment.CenterStart),
+                style = NyummyIconButtonStyle.Filled,
+                onClick = onCloseClick,
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    DandiText(
-                        text = stringResource(R.string.meal_record_icon_view_all),
-                        color = colors.contentActionSecondary,
-                        textAlign = TextAlign.Center,
-                        style = DesignSystemThemeImpl.typeScale.labelStrongXS,
-                    )
-                }
-            }
-        }
-        Spacer(Modifier.height(spacing.space4))
-        // 고정 76dp 셀 4개(328dp)가 좁은 화면(360dp 이하) 가용 폭을 넘을 수 있어 가로 스크롤로 접근성 보장.
-        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-            foodIcons.forEach { icon ->
-                FoodIconCell(
-                    icon = icon,
-                    selected = icon.id == selectedFoodIconId,
-                    onClick = { onIconSelect(icon.id) },
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = null,
                 )
-                if (icon != foodIcons.last()) {
-                    Spacer(Modifier.width(spacing.space8))
-                }
             }
+            DandiText(
+                text = stringResource(R.string.meal_record_title),
+                modifier = Modifier.align(Alignment.Center),
+                color = colors.contentDefaultLevel0,
+                style = DesignSystemThemeImpl.typeScale.titleStrongL,
+            )
         }
+        DandiText(
+            text = stringResource(R.string.meal_record_subtitle),
+            modifier = Modifier.fillMaxWidth(),
+            color = colors.contentDefaultLevel1,
+            textAlign = TextAlign.Center,
+            style = DesignSystemThemeImpl.typeScale.textRegularM,
+        )
     }
 }
 
 @Composable
-private fun FoodIconCell(
-    icon: MealFoodIcon,
-    selected: Boolean,
+private fun PermissionDeniedContent(
+    onRetryClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = DesignSystemThemeImpl.designSystemColor
+    val spacing = DesignSystemThemeImpl.designSystemSpacing
+    Column(
+        modifier = modifier.padding(horizontal = spacing.space24),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        DandiText(
+            text = stringResource(R.string.meal_record_permission_denied_title),
+            color = colors.contentDefaultLevel0,
+            textAlign = TextAlign.Center,
+            style = DesignSystemThemeImpl.typeScale.textStrongL,
+        )
+        Spacer(Modifier.height(spacing.space8))
+        DandiText(
+            text = stringResource(R.string.meal_record_permission_denied_body),
+            color = colors.contentDefaultLevel1,
+            textAlign = TextAlign.Center,
+            style = DesignSystemThemeImpl.typeScale.textRegularM,
+        )
+        Spacer(Modifier.height(spacing.space24))
+        NyummyButton(
+            label = stringResource(R.string.meal_record_permission_retry),
+            style = NyummyButtonStyle.Secondary,
+            size = NyummyButtonSize.Medium,
+            onClick = onRetryClick,
+        )
+    }
+}
+
+@Composable
+private fun ShutterButton(
+    enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
     Surface(
-        modifier = modifier
-            .size(FoodIconCellWidth, FoodIconCellHeight)
-            .selectable(
-                selected = selected,
-                role = Role.RadioButton,
-                onClick = onClick,
-            ),
-        shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius16),
-        color = if (selected) colors.bgCalendarSelected else colors.bgSurfaceIvory,
-        border = if (selected) {
-            BorderStroke(FoodIconCellSelectedBorderWidth, colors.borderSelectionPrimary)
-        } else {
-            BorderStroke(MealCardBorderWidth, colors.borderActionSecondary)
-        },
+        onClick = onClick,
+        modifier = modifier.size(ShutterButtonSize),
+        enabled = enabled,
+        shape = CircleShape,
+        color = colors.bgActionPrimaryDefault,
+        border = BorderStroke(ShutterRingWidth, colors.contentInverseDefault),
     ) {
-        Box(Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(icon.iconRes),
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = FoodIconTopGap)
-                    .size(FoodIconImageSize),
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                painter = painterResource(R.drawable.ic_meal_camera),
+                contentDescription = stringResource(R.string.meal_record_shutter_content_description),
+                modifier = Modifier.size(ShutterIconSize),
+                tint = colors.contentInverseDefault,
             )
-            DandiText(
-                text = stringResource(icon.labelRes),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = FoodIconLabelBottomGap),
-                color = if (selected) colors.contentActionSecondary else colors.contentDefaultLevel1,
-                textAlign = TextAlign.Center,
-                style = DesignSystemThemeImpl.typeScale.labelStrongXS,
-            )
-            if (selected) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = FoodIconCheckBadgeGap, end = FoodIconCheckBadgeGap)
-                        .size(FoodIconCheckBadgeSize)
-                        .background(colors.bgSelectionPrimary, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    DandiText(
-                        text = SelectedCheckGlyph,
-                        color = colors.contentActionPrimary,
-                        textAlign = TextAlign.Center,
-                        style = DesignSystemThemeImpl.typeScale.labelStrongXS,
-                    )
-                }
-            }
         }
     }
 }
 
-/**
- * 서버 timestamp(ISO-8601) 문자열을 시각 표시 문자열로 바꾼다.
- * 형식이 예상과 다르면 원문을 그대로 보여준다. 서버 형식 확정 시 data 레이어 변환과 함께 정리한다.
- */
-private fun formatCapturedAt(capturedAt: String): String = runCatching {
-    val parsed =
-        requireNotNull(SimpleDateFormat(ServerTimestampPattern, Locale.US).parse(capturedAt))
-    SimpleDateFormat(CapturedAtPattern, Locale.getDefault()).format(parsed)
-}.getOrDefault(capturedAt)
+@Composable
+private fun CapturedActionBar(
+    onRetakeClick: () -> Unit,
+    onSubmitClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val spacing = DesignSystemThemeImpl.designSystemSpacing
+    Row(
+        modifier = modifier.padding(horizontal = spacing.space24),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        NyummyButton(
+            label = stringResource(R.string.meal_record_retake),
+            style = NyummyButtonStyle.Ghost,
+            size = NyummyButtonSize.Large,
+            onClick = onRetakeClick,
+        )
+        Spacer(Modifier.weight(1f))
+        NyummyButton(
+            label = stringResource(R.string.meal_record_submit),
+            style = NyummyButtonStyle.Ghost,
+            size = NyummyButtonSize.Large,
+            onClick = onSubmitClick,
+        )
+    }
+}
 
-private const val ServerTimestampPattern = "yyyy-MM-dd'T'HH:mm:ssXXX"
-private const val CapturedAtPattern = "H:mm"
-private const val SelectedCheckGlyph = "✓"
-private val MealCardBorderWidth = 1.dp
-private val MealDividerHeight = 1.dp
-private val MealTimeRowHeight = 64.dp
-private val ViewAllButtonWidth = 88.dp
-private val FoodIconCellWidth = 76.dp
-private val FoodIconCellHeight = 80.dp
-private val FoodIconCellSelectedBorderWidth = 2.dp
-private val FoodIconImageSize = 40.dp
-private val FoodIconTopGap = 4.dp
-private val FoodIconLabelBottomGap = 8.dp
-private val FoodIconCheckBadgeGap = 2.dp
-private val FoodIconCheckBadgeSize = 18.dp
+private val BottomBarHeight = 120.dp
+private val ShutterButtonSize = 76.dp
+private val ShutterRingWidth = 3.dp
+private val ShutterIconSize = 28.dp
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
-private fun MealRecordScreenEmptyPreview() {
+private fun MealRecordScreenPreviewPhase() {
     DesignSystemTheme {
         MealRecordScreen(
-            uiState = MealRecordUIState.empty,
+            uiState = MealRecordUIState(cameraPermission = MealCameraPermission.Granted),
             onIntent = {},
         )
     }
 }
 
-/** 프리뷰 전용 고정 촬영 시각. 디자인 시안의 예시 표기(12:36)와 같은 값으로 렌더링된다. */
-private const val PreviewCapturedAt = "2026-07-24T12:36:00+09:00"
-
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
-private fun MealRecordScreenFilledPreview() {
+private fun MealRecordScreenCapturedPhase() {
     DesignSystemTheme {
         MealRecordScreen(
             uiState = MealRecordUIState(
-                record = MealRecordVO(
-                    photoUri = "content://meal/sample",
-                    description = "닭가슴살 포케와 현미밥, 채소",
-                    capturedAt = PreviewCapturedAt,
-                    foodIconId = MealFoodIcon.Salad.id,
-                ),
+                phase = MealCameraPhase.Captured(photoPath = "/cache/meal_capture_preview.jpg"),
+                cameraPermission = MealCameraPermission.Granted,
             ),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun MealRecordScreenPermissionDenied() {
+    DesignSystemTheme {
+        MealRecordScreen(
+            uiState = MealRecordUIState(cameraPermission = MealCameraPermission.Denied),
             onIntent = {},
         )
     }

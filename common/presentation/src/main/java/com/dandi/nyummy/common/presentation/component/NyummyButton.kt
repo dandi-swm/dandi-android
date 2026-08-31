@@ -49,6 +49,7 @@ enum class NyummyButtonStyle {
     Secondary,
     Danger,
     Reward,
+    Ghost,
 }
 
 enum class NyummyButtonSize {
@@ -320,6 +321,11 @@ private fun buttonColors(
                 container = color.bgActionPrimaryDisabled,
                 content = color.contentActionDisabled,
             )
+
+            NyummyButtonStyle.Ghost -> NyummyButtonColors(
+                container = Color.Transparent,
+                content = color.contentDefaultLevel3,
+            )
         }
     }
 
@@ -344,6 +350,11 @@ private fun buttonColors(
             container = if (pressed) color.bgActionRewardPressed else color.bgActionRewardDefault,
             content = color.contentActionReward,
         )
+
+        NyummyButtonStyle.Ghost -> NyummyButtonColors(
+            container = if (pressed) color.bgActionSecondaryPressed else Color.Transparent,
+            content = color.contentDefaultLevel0,
+        )
     }
 
     if (!focused) return base
@@ -351,6 +362,7 @@ private fun buttonColors(
         NyummyButtonStyle.Primary -> color.contentActionPrimary
         NyummyButtonStyle.Secondary,
         NyummyButtonStyle.Reward,
+        NyummyButtonStyle.Ghost,
         -> color.contentDefaultLevel0
 
         NyummyButtonStyle.Danger -> color.contentError
