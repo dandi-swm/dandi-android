@@ -276,43 +276,19 @@ private fun CapturedActionBar(
         modifier = modifier.padding(horizontal = spacing.space24),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CapturedActionText(
+        NyummyButton(
             label = stringResource(R.string.meal_record_retake),
+            style = NyummyButtonStyle.Ghost,
+            size = NyummyButtonSize.Large,
             onClick = onRetakeClick,
         )
         Spacer(Modifier.weight(1f))
-        CapturedActionText(
+        NyummyButton(
             label = stringResource(R.string.meal_record_submit),
+            style = NyummyButtonStyle.Ghost,
+            size = NyummyButtonSize.Large,
             onClick = onSubmitClick,
         )
-    }
-}
-
-/** 촬영본 확인 단계의 텍스트 액션. 시안의 무배경 텍스트 버튼을 최소 터치 타깃으로 감싼다. */
-@Composable
-private fun CapturedActionText(
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    Surface(
-        onClick = onClick,
-        modifier = modifier.height(DesignSystemThemeImpl.designSystemSize.minimumTouchTarget),
-        color = colors.bgSurfaceIvory,
-    ) {
-        Box(
-            modifier = Modifier.padding(
-                horizontal = DesignSystemThemeImpl.designSystemSpacing.space16,
-            ),
-            contentAlignment = Alignment.Center,
-        ) {
-            DandiText(
-                text = label,
-                color = colors.contentDefaultLevel0,
-                style = DesignSystemThemeImpl.typeScale.textStrongL,
-            )
-        }
     }
 }
 
