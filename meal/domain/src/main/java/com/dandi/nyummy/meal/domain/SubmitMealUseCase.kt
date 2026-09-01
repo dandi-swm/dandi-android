@@ -41,6 +41,11 @@ class SubmitMealUseCase @Inject constructor(
             messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = SUBMIT_ERROR_MESSAGE)
         }
         Result.failure(e)
+    } catch (e: java.util.concurrent.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = SUBMIT_ERROR_MESSAGE)
+        Result.failure(e)
     }
 
     private companion object {
