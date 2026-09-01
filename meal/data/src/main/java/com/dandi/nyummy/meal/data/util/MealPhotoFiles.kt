@@ -182,24 +182,33 @@ private fun compressIntoLimit(file: File, maxBytes: Long) {
     val decoded = decodeSampledBitmap(file)
         ?: throw MealPhotoInvalidException("사진을 읽지 못했어요. 다시 촬영해주세요")
     var bitmap = decoded.rotatedBy(rotationDegrees)
+    if (bitmap !== decoded) decoded.recycle()
 
     // EXIF 복원분이 더해져도 상한을 넘지 않도록 여유분을 뺀 크기를 목표로 압축한다.
     val targetBytes = maxBytes - EXIF_SIZE_MARGIN_BYTES
-    var quality = INITIAL_JPEG_QUALITY
-    var bytes = bitmap.toJpegBytes(quality)
-    while (bytes.size > targetBytes && quality > MIN_JPEG_QUALITY) {
-        quality -= JPEG_QUALITY_STEP
-        bytes = bitmap.toJpegBytes(quality)
+    try {
+        var quality = INITIAL_JPEG_QUALITY
+        var bytes = bitmap.toJpegBytes(quality)
+        while (bytes.size > targetBytes && quality > MIN_JPEG_QUALITY) {
+            quality -= JPEG_QUALITY_STEP
+            bytes = bitmap.toJpegBytes(quality)
+        }
+        while (bytes.size > targetBytes && bitmap.width / 2 >= MIN_DIMENSION_PX && bitmap.height / 2 >= MIN_DIMENSION_PX) {
+            val previous = bitmap
+            bitmap = Bitmap.createScaledBitmap(previous, previous.width / 2, previous.height / 2, true)
+            if (bitmap !== previous) previous.recycle()
+            bytes = bitmap.toJpegBytes(MIN_JPEG_QUALITY)
+        }
+        if (bytes.size > targetBytes) {
+            throw MealPhotoInvalidException("사진 용량을 줄이지 못했어요. 다시 촬영해주세요")
+        }
+        file.writeBytes(bytes)
+        restoreExifMetadata(file, preservedAttributes)
+    } finally {
+        if (!bitmap.isRecycled) {
+            bitmap.recycle()
+        }
     }
-    while (bytes.size > targetBytes && bitmap.width / 2 >= MIN_DIMENSION_PX && bitmap.height / 2 >= MIN_DIMENSION_PX) {
-        bitmap = Bitmap.createScaledBitmap(bitmap, bitmap.width / 2, bitmap.height / 2, true)
-        bytes = bitmap.toJpegBytes(MIN_JPEG_QUALITY)
-    }
-    if (bytes.size > targetBytes) {
-        throw MealPhotoInvalidException("사진 용량을 줄이지 못했어요. 다시 촬영해주세요")
-    }
-    file.writeBytes(bytes)
-    restoreExifMetadata(file, preservedAttributes)
 }
 
 private fun decodeSampledBitmap(
