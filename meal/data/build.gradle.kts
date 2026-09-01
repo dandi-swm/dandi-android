@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.exifinterface)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

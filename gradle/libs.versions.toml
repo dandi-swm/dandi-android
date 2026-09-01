@@ -27,6 +27,7 @@ profileinstaller = "1.4.1"
 uiautomator = "2.3.0"
 androidxTestRunner = "1.7.0"
 jankStats = "1.0.0-beta02"
+exifinterface = "1.4.1"
 kotlinxCollectionsImmutable = "0.4.0"
 # material-icons 는 Compose BOM 에서 제외되어 별도 버전으로 관리한다.
 composeMaterialIcons = "1.7.8"
@@ -79,6 +80,7 @@ androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navig
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
+androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmark" }
 androidx-test-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }

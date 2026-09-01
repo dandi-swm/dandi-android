@@ -2,8 +2,11 @@ package com.dandi.nyummy.meal.data
 
 import com.dandi.nyummy.meal.data.dto.CreateMealRequestDTO
 import com.dandi.nyummy.meal.data.dto.UploadImageUrlRequestDTO
+import com.dandi.nyummy.meal.data.util.prepareMealPhotoFile
 import com.dandi.nyummy.meal.domain.MealRecordRepository
 import com.dandi.nyummy.meal.entity.MealImageUploadVO
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
@@ -11,6 +14,10 @@ import java.io.File
 class MealRecordRepositoryImpl(
     private val dataSource: MealRecordDataSource,
 ) : MealRecordRepository {
+
+    override suspend fun prepareUploadImage(photoPath: String) = withContext(Dispatchers.IO) {
+        prepareMealPhotoFile(photoPath)
+    }
 
     override suspend fun issueImageUploadUrl(photoPath: String): MealImageUploadVO =
         dataSource.issueImageUploadUrl(
