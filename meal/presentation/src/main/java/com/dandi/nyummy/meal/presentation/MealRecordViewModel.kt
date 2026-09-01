@@ -1,15 +1,19 @@
 package com.dandi.nyummy.meal.presentation
 
+import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
+import com.dandi.nyummy.meal.domain.SubmitMealUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class MealRecordViewModel @Inject constructor(
+    private val submitMeal: SubmitMealUseCase,
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
 ) : MviViewModel<MealRecordIntent, MealRecordUIState, MealRecordReducerEvent>(MealRecordUIState.empty) {
@@ -45,13 +49,16 @@ class MealRecordViewModel @Inject constructor(
             }
 
             MealRecordIntent.ClickRetake -> {
+                // 제출 중에는 업로드 대상 파일을 지우면 안 되므로 재촬영을 막는다.
+                if (currentState.isSubmitting) return
                 deleteCapturedFile()
                 dispatch(MealRecordReducerEvent.ReturnedToPreview)
             }
 
-            MealRecordIntent.ClickSubmit -> Unit // TODO: 음식 분석 제출 API 연동 (백엔드 미구현)
+            MealRecordIntent.ClickSubmit -> submitCapturedMeal()
 
             MealRecordIntent.ClickClose -> {
+                if (currentState.isSubmitting) return
                 deleteCapturedFile()
                 navigationHelper.navigateToBack()
             }
@@ -72,7 +79,30 @@ class MealRecordViewModel @Inject constructor(
 
             MealRecordReducerEvent.ReturnedToPreview ->
                 state.copy(phase = MealCameraPhase.Preview, isCapturing = false)
+
+            MealRecordReducerEvent.SubmitStarted -> state.copy(isSubmitting = true)
+
+            MealRecordReducerEvent.SubmitFailed -> state.copy(isSubmitting = false)
         }
+
+    /** 촬영본을 업로드해 식사를 생성한다. 성공하면 촬영 파일을 정리하고 화면을 닫는다. */
+    private fun submitCapturedMeal() {
+        val phase = currentState.phase as? MealCameraPhase.Captured ?: return
+        if (currentState.isSubmitting) return
+        dispatch(MealRecordReducerEvent.SubmitStarted)
+        viewModelScope.launch {
+            submitMeal(phase.photoPath)
+                .onSuccess {
+                    deleteCapturedFile()
+                    messageHelper.showSnackBar(
+                        iconType = IconType.SUCCESS,
+                        messageRes = R.string.meal_record_submit_success,
+                    )
+                    navigationHelper.navigateToBack()
+                }
+                .onFailure { dispatch(MealRecordReducerEvent.SubmitFailed) }
+        }
+    }
 
     /** 확인 단계에서 이탈할 때 캐시에 남은 촬영 파일을 정리한다. */
     private fun deleteCapturedFile() {

@@ -20,11 +20,13 @@ enum class MealCameraPermission { Requesting, Granted, Denied }
  *
  * 진입 직후에는 [MealCameraPermission.Requesting] 으로 시작해 화면이 곧바로 권한을 요청하며,
  * [isCapturing] 은 셔터 연타를 막고 촬영 실행을 View 에 지시하는 플래그입니다.
+ * [isSubmitting] 은 먹이기 제출이 진행 중임을 나타내며, 제출 중 재촬영·이탈·중복 제출을 막습니다.
  */
 data class MealRecordUIState(
     val phase: MealCameraPhase = MealCameraPhase.Preview,
     val cameraPermission: MealCameraPermission = MealCameraPermission.Requesting,
     val isCapturing: Boolean = false,
+    val isSubmitting: Boolean = false,
 ) : UiState {
 
     companion object {

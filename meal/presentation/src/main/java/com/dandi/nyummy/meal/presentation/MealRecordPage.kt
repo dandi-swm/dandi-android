@@ -154,6 +154,7 @@ private fun MealRecordScreen(
                 )
 
                 is MealCameraPhase.Captured -> CapturedActionBar(
+                    isSubmitting = uiState.isSubmitting,
                     onRetakeClick = { onIntent(MealRecordIntent.ClickRetake) },
                     onSubmitClick = { onIntent(MealRecordIntent.ClickSubmit) },
                     modifier = Modifier.fillMaxWidth(),
@@ -267,6 +268,7 @@ private fun ShutterButton(
 
 @Composable
 private fun CapturedActionBar(
+    isSubmitting: Boolean,
     onRetakeClick: () -> Unit,
     onSubmitClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -280,6 +282,7 @@ private fun CapturedActionBar(
             label = stringResource(R.string.meal_record_retake),
             style = NyummyButtonStyle.Ghost,
             size = NyummyButtonSize.Large,
+            enabled = !isSubmitting,
             onClick = onRetakeClick,
         )
         Spacer(Modifier.weight(1f))
@@ -287,6 +290,7 @@ private fun CapturedActionBar(
             label = stringResource(R.string.meal_record_submit),
             style = NyummyButtonStyle.Ghost,
             size = NyummyButtonSize.Large,
+            loading = isSubmitting,
             onClick = onSubmitClick,
         )
     }

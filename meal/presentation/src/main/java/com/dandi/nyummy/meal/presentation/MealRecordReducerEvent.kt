@@ -19,4 +19,10 @@ sealed interface MealRecordReducerEvent : ReducerEvent {
 
     /** 촬영본을 버리고 프리뷰 단계로 돌아갑니다. */
     data object ReturnedToPreview : MealRecordReducerEvent
+
+    /** 먹이기 제출이 시작됐습니다. */
+    data object SubmitStarted : MealRecordReducerEvent
+
+    /** 먹이기 제출이 실패해 제출 중 플래그만 해제합니다. */
+    data object SubmitFailed : MealRecordReducerEvent
 }

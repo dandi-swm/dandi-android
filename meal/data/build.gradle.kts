@@ -44,6 +44,7 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.retrofit)
+    implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.hilt.android)

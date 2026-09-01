@@ -78,7 +78,7 @@ fun MealCameraPreview(
 
     LaunchedEffect(isCapturing) {
         if (!isCapturing) return@LaunchedEffect
-        val photoFile = File(context.cacheDir, "meal_capture_${System.currentTimeMillis()}.jpg")
+        val photoFile = File(context.cacheDir, "meal_capture_${System.currentTimeMillis()}.jpeg")
         controller.takePicture(
             ImageCapture.OutputFileOptions.Builder(photoFile).build(),
             ContextCompat.getMainExecutor(context),

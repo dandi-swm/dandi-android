@@ -10,5 +10,6 @@
     <string name="meal_record_permission_denied_body">Allow camera access to record your meal.\nIf it stays off, enable it in Settings &gt; Apps &gt; Permissions.</string>
     <string name="meal_record_permission_retry">Allow camera</string>
     <string name="meal_record_capture_failed">Couldn\'t take the photo. Please try again.</string>
+    <string name="meal_record_submit_success">Yummy! Analysis has started 🌱</string>
     <string name="meal_record_captured_photo_content_description">Captured food photo</string>
 </resources>
