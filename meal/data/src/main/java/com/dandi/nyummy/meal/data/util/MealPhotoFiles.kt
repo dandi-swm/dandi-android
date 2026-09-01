@@ -21,6 +21,7 @@ private const val TAG = "MealPhoto"
 private const val INITIAL_JPEG_QUALITY = 90
 private const val MIN_JPEG_QUALITY = 50
 private const val JPEG_QUALITY_STEP = 10
+private const val DEFAULT_DECODE_BUDGET_BYTES = 64L * 1024 * 1024
 
 /** 더 줄여도 음식 판별이 불가능해지는 하한. 이 아래로는 다운스케일하지 않는다. */
 private const val MIN_DIMENSION_PX = 320
@@ -175,7 +176,7 @@ private fun compressIntoLimit(file: File, maxBytes: Long) {
         EXIF_TAGS_TO_PRESERVE.mapNotNull { tag -> exif.getAttribute(tag)?.let { tag to it } }
     }.orEmpty()
 
-    val decoded = BitmapFactory.decodeFile(file.absolutePath)
+    val decoded = decodeSampledBitmap(file)
         ?: throw MealPhotoInvalidException("사진을 읽지 못했어요. 다시 촬영해주세요")
     var bitmap = decoded.rotatedBy(rotationDegrees)
 
@@ -196,6 +197,32 @@ private fun compressIntoLimit(file: File, maxBytes: Long) {
     }
     file.writeBytes(bytes)
     restoreExifMetadata(file, preservedAttributes)
+}
+
+private fun decodeSampledBitmap(
+    file: File,
+    decodeBudgetBytes: Long = DEFAULT_DECODE_BUDGET_BYTES,
+): Bitmap? {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeFile(file.absolutePath, bounds)
+
+    val width = bounds.outWidth
+    val height = bounds.outHeight
+    if (width <= 0 || height <= 0) return null
+
+    val maxPixels = (decodeBudgetBytes / 4L).coerceAtLeast(1L)
+    var sampleSize = 1
+    while ((width.toLong() / sampleSize) * (height.toLong() / sampleSize) > maxPixels) {
+        sampleSize *= 2
+    }
+
+    while (true) {
+        val options = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+        val bitmap = runCatching { BitmapFactory.decodeFile(file.absolutePath, options) }.getOrNull()
+        if (bitmap != null) return bitmap
+        if (sampleSize >= Int.MAX_VALUE / 2) return null
+        sampleSize *= 2
+    }
 }
 
 /**
