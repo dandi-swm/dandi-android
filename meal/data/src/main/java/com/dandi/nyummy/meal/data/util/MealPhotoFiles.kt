@@ -126,7 +126,10 @@ private fun ensureExifTimeMetadata(file: File) {
             exif.saveAttributes()
             Log.d(TAG, "EXIF time filled (takenAt=$dateTime, offset=$utcOffset): ${file.name}")
         }
-    }.onFailure { Log.w(TAG, "EXIF time fill failed: ${file.name}", it) }
+    }.getOrElse {
+        Log.w(TAG, "EXIF time fill failed: ${file.name}", it)
+        throw MealPhotoInvalidException("사진 촬영 정보를 저장하지 못했어요. 다시 촬영해주세요")
+    }
 }
 
 /** epoch millis 를 EXIF 시각 포맷(`yyyy:MM:dd HH:mm:ss`, 기기 로컬 시각)으로 변환한다. */
