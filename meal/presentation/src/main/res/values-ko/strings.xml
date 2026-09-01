@@ -10,5 +10,6 @@
     <string name="meal_record_permission_denied_body">식사를 기록하려면 카메라를 허용해주세요.\n계속 꺼져 있으면 설정 &gt; 앱 &gt; 권한에서 켜주세요.</string>
     <string name="meal_record_permission_retry">다시 허용하기</string>
     <string name="meal_record_capture_failed">사진을 찍지 못했어요. 다시 시도해주세요.</string>
+    <string name="meal_record_submit_success">냠냠! 분석을 시작했어요 🌱</string>
     <string name="meal_record_captured_photo_content_description">촬영한 음식 사진</string>
 </resources>
