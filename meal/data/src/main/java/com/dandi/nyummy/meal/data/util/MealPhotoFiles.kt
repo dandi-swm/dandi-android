@@ -8,6 +8,11 @@ import androidx.exifinterface.media.ExifInterface
 import com.dandi.nyummy.meal.domain.MealPhotoInvalidException
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+import kotlin.math.abs
 
 /** 식사 사진 업로드 상한 (10MB). presigned 발급 전에 이 크기 이하로 맞춘다. */
 internal const val MAX_MEAL_PHOTO_SIZE_BYTES = 10L * 1024 * 1024
@@ -68,10 +73,71 @@ internal fun prepareMealPhotoFile(photoPath: String, maxBytes: Long = MAX_MEAL_P
     if (!file.isFile || file.length() == 0L) {
         throw MealPhotoInvalidException("촬영한 사진을 찾지 못했어요. 다시 촬영해주세요")
     }
+    ensureExifTimeMetadata(file)
     logExifMetadata(file)
     if (file.length() <= maxBytes) return
     compressIntoLimit(file, maxBytes)
     Log.d(TAG, "compressed to ${file.length()} bytes: ${file.name}")
+}
+
+private const val EXIF_DATE_TIME_PATTERN = "yyyy:MM:dd HH:mm:ss"
+
+private val EXIF_DATE_TIME_TAGS = listOf(
+    ExifInterface.TAG_DATETIME_ORIGINAL,
+    ExifInterface.TAG_DATETIME,
+    ExifInterface.TAG_DATETIME_DIGITIZED,
+)
+
+private val EXIF_OFFSET_TIME_TAGS = listOf(
+    ExifInterface.TAG_OFFSET_TIME_ORIGINAL,
+    ExifInterface.TAG_OFFSET_TIME,
+    ExifInterface.TAG_OFFSET_TIME_DIGITIZED,
+)
+
+/**
+ * 촬영 시각·타임존 오프셋 EXIF 태그가 비어 있으면 채워 넣는다.
+ *
+ * 카메라 파이프라인이 촬영 시각은 대체로 기록하지만 타임존 오프셋(OFFSET_TIME_*)은
+ * 누락하는 기기가 많다. 촬영은 방금 이 기기에서 일어났으므로, 파일 저장 시각과
+ * 기기 타임존으로 빈 태그만 보충한다(이미 있는 값은 건드리지 않는다).
+ */
+private fun ensureExifTimeMetadata(file: File) {
+    runCatching {
+        val exif = ExifInterface(file)
+        val captureMillis = file.lastModified().takeIf { it > 0 } ?: System.currentTimeMillis()
+        val dateTime = formatExifDateTime(captureMillis)
+        val utcOffset = formatUtcOffset(TimeZone.getDefault().getOffset(captureMillis))
+
+        var changed = false
+        EXIF_DATE_TIME_TAGS.forEach { tag ->
+            if (exif.getAttribute(tag).isNullOrBlank()) {
+                exif.setAttribute(tag, dateTime)
+                changed = true
+            }
+        }
+        EXIF_OFFSET_TIME_TAGS.forEach { tag ->
+            if (exif.getAttribute(tag).isNullOrBlank()) {
+                exif.setAttribute(tag, utcOffset)
+                changed = true
+            }
+        }
+        if (changed) {
+            exif.saveAttributes()
+            Log.d(TAG, "EXIF time filled (takenAt=$dateTime, offset=$utcOffset): ${file.name}")
+        }
+    }.onFailure { Log.w(TAG, "EXIF time fill failed: ${file.name}", it) }
+}
+
+/** epoch millis 를 EXIF 시각 포맷(`yyyy:MM:dd HH:mm:ss`, 기기 로컬 시각)으로 변환한다. */
+private fun formatExifDateTime(epochMillis: Long): String =
+    SimpleDateFormat(EXIF_DATE_TIME_PATTERN, Locale.US).format(Date(epochMillis))
+
+/** 타임존 오프셋 millis 를 EXIF 오프셋 포맷(`+09:00`)으로 변환한다. */
+private fun formatUtcOffset(offsetMillis: Int): String {
+    val totalMinutes = offsetMillis / 60_000
+    val sign = if (totalMinutes < 0) "-" else "+"
+    val absMinutes = abs(totalMinutes)
+    return String.format(Locale.US, "%s%02d:%02d", sign, absMinutes / 60, absMinutes % 60)
 }
 
 /** 촬영 직후 파일의 EXIF 메타데이터(촬영 시각·회전·크기 등)를 디버그 로그로 남긴다. */
