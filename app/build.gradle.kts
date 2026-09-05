@@ -105,6 +105,11 @@ dependencies {
     implementation(project(":intro:data"))
     implementation(project(":intro:entity"))
 
+    // FCM 리마인드 알림 + 냐미 홈 위젯 (임시 구현)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.androidx.glance.appwidget)
+
     implementation(libs.hilt.android)
     debugImplementation(libs.leakcanary)
     ksp(libs.hilt.compiler)

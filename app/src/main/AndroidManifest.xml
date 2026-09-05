@@ -13,6 +13,7 @@
     <application
         android:name=".DandiApplication"
         android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.Dandi"
@@ -37,6 +38,35 @@
                 <data android:host="www.dandi.com" />
             </intent-filter>
         </activity>
+
+        <!-- 냐미 리마인드 FCM 수신 (임시 구현) -->
+        <service
+            android:name=".reminder.NyummyMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+        <!-- notification-only 메시지가 백그라운드에서 자동 표시될 때 쓰는 기본 아이콘/채널 -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_nyami" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="nyami_reminder" />
+
+        <!-- 냐미 무드 홈 위젯 (임시 구현) -->
+        <receiver
+            android:name=".widget.NyamiWidgetReceiver"
+            android:exported="true"
+            android:label="@string/nyami_widget_description">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/nyami_widget_info" />
+        </receiver>
     </application>
 
 </manifest>
