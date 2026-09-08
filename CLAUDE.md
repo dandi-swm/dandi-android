@@ -1,6 +1,14 @@
-# Dandi
+# 냐미(Nyummy) Android
 
-멀티모듈 클린아키텍처 Android 프로젝트. 현재 워크스페이스의 feature 모듈은 `main`만 유지한다. 새 feature는 4모듈 구조와 `docs/architecture` 규칙을 따르고, 남아 있는 `main`/`common` 패턴을 우선 참고한다.
+단디 팀의 AI 식사 기록 앱 냐미(Nyummy)의 멀티모듈 클린아키텍처 Android 프로젝트. feature 모듈은 `intro`/`auth`/`home`/`meal`/`history` 5세트와 앱 셸 `main`이 있다(총 31모듈). 새 feature는 4모듈 구조와 `docs/architecture` 규칙을 따르고, 가장 완성도 높은 `auth`/`history`(실 API 연동)와 `common` 패턴을 우선 참고한다.
+
+## 현재 구현 현황 (2026-08-31)
+
+- 등록 라우트 7개: `""`(인트로 루트) `/login` `/login/email` `/signup` `/home` `/meal/record` `/history` — `AppRouteRegistry.kt` 기준.
+- ApiService 2개: `AuthApiService`(login/signup/email-verification/confirm/refresh 5개), `HistoryApiService`(monthly/daily/상세/이름수정/삭제 5개).
+- 빈 스캐폴드 4개: `main:entity` `main:data` `home:data` `meal:data`.
+- 홈은 100% 목업(`HomeMockData`), 식사 기록은 CameraX 촬영→확인까지만이고 제출(ClickSubmit) 미연동. 서버 식사 API는 구현 완료 상태이므로 `MealRecordViewModel.kt`의 "백엔드 미구현" TODO 주석은 낡은 서술이다 — 이 주석을 근거로 연동을 미루지 말 것.
+- 카카오 로그인 버튼은 테스트 계정 하드코딩(`LoginViewModel.kt`)으로 제거 예정. 소셜 로그인·비밀번호 찾기 미구현.
 
 ## 빌드 / 테스트
 
@@ -10,7 +18,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  
 ./gradlew test                  # 단위 테스트 (run-android-tests 스킬)
 ```
 
-코드를 수정한 턴은 반드시 빌드 검증 후 종료한다. API 키/BASE_URL은 `local.properties`(`API_KEY`, `API_BASE_URL`) → BuildConfig 주입.
+코드를 수정한 턴은 반드시 빌드 검증 후 종료한다. API 키/BASE_URL은 `local.properties`(`API_KEY`, `API_BASE_URL`) → BuildConfig 주입. `API_BASE_URL`은 개발용 EC2 서버 주소(cleartext HTTP)이며 값이 없으면 placeholder로 빌드만 된다. 단위 테스트는 auth/history/intro/main 모듈에, 디자인 시스템 계약 테스트는 androidTest에 있다.
 
 ## 불변 규칙 (위반 금지)
 
@@ -20,7 +28,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  
 4. **디자인 토큰**: 색은 `DesignSystemThemeImpl.designSystemColor.*`, 타이포는 `DesignSystemThemeImpl.typeScale.*`(`DandiText` 경유)만. raw hex / raw sp 금지. 토큰 기본값 수정은 `common/presentation/.../ui/token/DesignTokens.kt`의 FIGMA-TOKEN-INJECTION-POINT 구간만.
 5. **DTO/VO**: DTO는 `@Serializable`+전 필드 nullable, VO는 비-nullable+기본값. 변환은 data 레이어 `toVO()`에서만.
 6. **에러**: data는 `HttpResponseException` throw만, 처리(다이얼로그/네비게이션)는 domain UseCase에서 `isCommonErrorHandling()`/`handlingErrorOnUseCase<ErrorType>()`로.
-7. **네비게이션**: 화면 이동은 `navigationHelper.navigateTo(Page)`만. 새 화면은 `AppRouteRegistry.kt`에 등록. 기존 feature 모듈은 수정하지 않고 추가만.
+7. **네비게이션**: 화면 이동은 `navigationHelper.navigateTo(Page)`만. 새 화면은 `AppRouteRegistry.kt`에 등록.
 
 ## 네이밍
 
@@ -36,6 +44,8 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  
 - [docs/architecture/design-system.md](docs/architecture/design-system.md) — 토큰 구조, Figma 매핑 명세
 - [docs/architecture/performance.md](docs/architecture/performance.md) — TTI, JankStats, Baseline Profile
 - [docs/DESIGN_TO_CODE_GUIDE.md](docs/DESIGN_TO_CODE_GUIDE.md) — 디자인 스펙 → 코드 사용자 가이드
+
+일부 문서의 코드 예시는 템플릿 시절 레거시 예시(문서 내 주석 표기). 실제 패턴이 필요하면 auth/history/intro 모듈을 본다.
 
 ## 스킬 인덱스
 

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 리마인드 알림 채널 -->
+    <string name="nyami_reminder_channel_name">냐미 리마인드</string>
+    <string name="nyami_reminder_channel_description">식사 기록을 잊지 않도록 냐미가 보내는 알림</string>
+
+    <!-- 무드별 알림 기본 문구 (FCM data 에 title/body 가 없을 때 사용) -->
+    <string name="nyami_noti_title_happy">냐미가 행복해요!</string>
+    <string name="nyami_noti_body_happy">오늘 식사 기록 완료! 냐미가 배부르게 기다리고 있어요 🐾</string>
+    <string name="nyami_noti_title_sad">냐미가 시무룩해요…</string>
+    <string name="nyami_noti_body_sad">아직 오늘 식사 기록이 없어요. 냐미에게 밥 소식을 들려주세요.</string>
+    <string name="nyami_noti_title_crying">냐미가 울고 있어요 😿</string>
+    <string name="nyami_noti_body_crying">하루 종일 기록이 없어서 냐미 눈물이 그렁그렁해요…</string>
+    <string name="nyami_noti_title_angry">냐미가 화났어요!!</string>
+    <string name="nyami_noti_body_angry">밥 기록 안 한 지 한참 지났어요! 지금 바로 기록해 주세요 🔥</string>
+
+    <!-- 위젯 -->
+    <string name="nyami_widget_description">냐미의 기분으로 오늘의 식사 기록 상태를 보여줘요</string>
+    <string name="nyami_widget_msg_happy">오늘도 냠냠 기록 완료!</string>
+    <string name="nyami_widget_msg_sad">오늘 밥 기록 아직이에요…</string>
+    <string name="nyami_widget_msg_crying">냐미가 기다리다 울어요 😿</string>
+    <string name="nyami_widget_msg_angry">지금 당장 기록하라냥!!</string>
+</resources>

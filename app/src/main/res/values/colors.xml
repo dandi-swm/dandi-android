@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 런처 아이콘 배경 — 아이콘 아트웍의 무드그린과 동일 값 -->
+    <color name="ic_launcher_background">#97A877</color>
+</resources>
