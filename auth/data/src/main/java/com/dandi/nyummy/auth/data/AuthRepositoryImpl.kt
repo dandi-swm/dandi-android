@@ -6,6 +6,8 @@ import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
 import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
 import com.dandi.nyummy.auth.domain.AuthRepository
 import com.dandi.nyummy.auth.entity.AuthTokenVO
+import com.dandi.nyummy.auth.entity.EmailChallengeVO
+import com.dandi.nyummy.auth.entity.EmailVerifiedVO
 import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.common.data.token.TokenProvider
@@ -25,20 +27,22 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun signUp(
-        email: String,
+        emailVerifiedToken: String,
         password: String,
+        confirmPassword: String,
         nickname: String,
-        gender: Gender,
-        birth: String,
-        height: Int,
-        weight: Int,
+        gender: Gender?,
+        birth: String?,
+        height: Int?,
+        weight: Int?,
     ) {
         dataSource.signUp(
             SignUpRequestDTO(
-                email = email,
+                emailVerifiedToken = emailVerifiedToken,
                 password = password,
+                confirmPassword = confirmPassword,
                 nickname = nickname,
-                gender = gender.name,
+                gender = gender?.name,
                 birth = birth,
                 height = height,
                 weight = weight,
@@ -48,15 +52,19 @@ class AuthRepositoryImpl(
             .also { saveToken(it) }
     }
 
-    override suspend fun requestEmailVerification(email: String) {
-        dataSource.requestEmailVerification(EmailVerificationRequestDTO(email = email))
-    }
+    override suspend fun requestEmailVerification(email: String): EmailChallengeVO =
+        dataSource.requestEmailVerification(EmailVerificationRequestDTO(email = email)).toVO()
 
-    override suspend fun confirmEmailVerification(email: String, verificationCode: String) {
+    override suspend fun confirmEmailVerification(
+        authCode: String,
+        emailChallengeToken: String,
+    ): EmailVerifiedVO =
         dataSource.confirmEmailVerification(
-            EmailVerificationConfirmRequestDTO(email = email, verificationCode = verificationCode),
-        )
-    }
+            EmailVerificationConfirmRequestDTO(
+                authCode = authCode,
+                emailChallengeToken = emailChallengeToken,
+            ),
+        ).toVO()
 
     /** 발급 토큰 영속화 — 이후 요청부터 인증 헤더/Authenticator 가 사용한다. */
     private suspend fun saveToken(token: AuthTokenVO) {

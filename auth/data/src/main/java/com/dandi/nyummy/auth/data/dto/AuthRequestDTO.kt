@@ -14,20 +14,23 @@ data class LoginRequestDTO(
 /**
  * 회원가입 요청 바디입니다.
  *
- * @property gender 성별 문자열
- * @property birth 생년월일 (`yyyy-MM-dd` 형식)
- * @property height 키 (cm)
- * @property weight 몸무게 (kg)
+ * @property emailVerifiedToken 이메일 인증 완료 토큰
+ * @property confirmPassword 비밀번호 확인 값
+ * @property gender 성별 문자열 (선택)
+ * @property birth 생년월일 (`yyyy-MM-dd` 형식, 선택)
+ * @property height 키 (cm, 선택)
+ * @property weight 몸무게 (kg, 선택)
  */
 @Serializable
 data class SignUpRequestDTO(
-    val email: String,
+    val emailVerifiedToken: String,
     val password: String,
+    val confirmPassword: String,
     val nickname: String,
-    val gender: String,
-    val birth: String,
-    val height: Int,
-    val weight: Int,
+    val gender: String? = null,
+    val birth: String? = null,
+    val height: Int? = null,
+    val weight: Int? = null,
 )
 
 /**
@@ -49,10 +52,11 @@ data class EmailVerificationRequestDTO(
 /**
  * 이메일 인증 코드 확인 요청 바디입니다.
  *
- * @property verificationCode 이메일로 받은 인증 코드
+ * @property authCode 이메일로 받은 6자리 인증 코드
+ * @property emailChallengeToken 코드 발송 시 발급받은 챌린지 토큰
  */
 @Serializable
 data class EmailVerificationConfirmRequestDTO(
-    val email: String,
-    val verificationCode: String,
+    val authCode: String,
+    val emailChallengeToken: String,
 )

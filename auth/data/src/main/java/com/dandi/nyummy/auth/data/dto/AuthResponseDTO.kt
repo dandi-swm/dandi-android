@@ -1,6 +1,8 @@
 package com.dandi.nyummy.auth.data.dto
 
 import com.dandi.nyummy.auth.entity.AuthTokenVO
+import com.dandi.nyummy.auth.entity.EmailChallengeVO
+import com.dandi.nyummy.auth.entity.EmailVerifiedVO
 import kotlinx.serialization.Serializable
 
 /**
@@ -20,5 +22,33 @@ data class AuthTokenDTO(
         accessToken = accessToken.orEmpty(),
         refreshToken = refreshToken.orEmpty(),
         redirectUrl = redirectUrl.orEmpty(),
+    )
+}
+
+/**
+ * 이메일 인증 코드 발송 응답입니다.
+ *
+ * @property emailChallengeToken 코드 확인 요청에 함께 보내는 챌린지 토큰
+ */
+@Serializable
+data class EmailChallengeDTO(
+    val emailChallengeToken: String? = null,
+) {
+    fun toVO(): EmailChallengeVO = EmailChallengeVO(
+        emailChallengeToken = emailChallengeToken.orEmpty(),
+    )
+}
+
+/**
+ * 이메일 인증 코드 확인 응답입니다.
+ *
+ * @property emailVerifiedToken 회원가입 요청에 사용하는 인증 완료 토큰
+ */
+@Serializable
+data class EmailVerifiedDTO(
+    val emailVerifiedToken: String? = null,
+) {
+    fun toVO(): EmailVerifiedVO = EmailVerifiedVO(
+        emailVerifiedToken = emailVerifiedToken.orEmpty(),
     )
 }

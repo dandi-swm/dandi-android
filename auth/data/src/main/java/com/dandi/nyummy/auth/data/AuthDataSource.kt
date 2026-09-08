@@ -1,7 +1,9 @@
 package com.dandi.nyummy.auth.data
 
 import com.dandi.nyummy.auth.data.dto.AuthTokenDTO
+import com.dandi.nyummy.auth.data.dto.EmailChallengeDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerificationConfirmRequestDTO
+import com.dandi.nyummy.auth.data.dto.EmailVerifiedDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerificationRequestDTO
 import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
 import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
@@ -18,11 +20,9 @@ class AuthDataSource(
     suspend fun signUp(request: SignUpRequestDTO): AuthTokenDTO =
         checkResponse(apiService.signUp(request))
 
-    suspend fun requestEmailVerification(request: EmailVerificationRequestDTO) {
+    suspend fun requestEmailVerification(request: EmailVerificationRequestDTO): EmailChallengeDTO =
         checkResponse(apiService.requestEmailVerification(request))
-    }
 
-    suspend fun confirmEmailVerification(request: EmailVerificationConfirmRequestDTO) {
+    suspend fun confirmEmailVerification(request: EmailVerificationConfirmRequestDTO): EmailVerifiedDTO =
         checkResponse(apiService.confirmEmailVerification(request))
-    }
 }

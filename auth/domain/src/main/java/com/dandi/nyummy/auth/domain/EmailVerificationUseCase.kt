@@ -18,29 +18,32 @@ class EmailVerificationUseCase @Inject constructor(
     ttiHelper: TTIHelper,
 ) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
 
-    /** 이메일 인증 코드 발송 */
-    suspend fun sendCode(email: String): Result<Unit> = try {
-        repository.requestEmailVerification(email = email)
-        Result.success(Unit)
+    /** 이메일 인증 코드 발송. 성공 시 코드 확인에 쓸 챌린지 토큰을 반환한다. */
+    suspend fun sendCode(email: String): Result<String> = try {
+        val challenge = repository.requestEmailVerification(email = email)
+        Result.success(challenge.emailChallengeToken)
     } catch (e: HttpResponseException) {
         handleEmailVerificationError(e)
         Result.failure(e)
     }
 
     /**
-     * 이메일 인증 코드 확인.
+     * 이메일 인증 코드 확인. 성공 시 회원가입에 쓸 인증 완료 토큰을 반환한다.
      *
      * 도메인 에러(코드 불일치/만료 등)는 다이얼로그 대신 코드 입력란 아래
      * 인라인으로 보여줘야 하므로 [CodeVerificationFailedException]으로 반환한다.
      */
-    suspend fun confirmCode(email: String, verificationCode: String): Result<Unit> = try {
-        repository.confirmEmailVerification(email = email, verificationCode = verificationCode)
-        Result.success(Unit)
+    suspend fun confirmCode(authCode: String, emailChallengeToken: String): Result<String> = try {
+        val verified = repository.confirmEmailVerification(
+            authCode = authCode,
+            emailChallengeToken = emailChallengeToken,
+        )
+        Result.success(verified.emailVerifiedToken)
     } catch (e: HttpResponseException) {
         val errorType = e.handlingErrorOnUseCase<AuthErrorType>()
         when {
-            errorType == AuthErrorType.MAIL_CODE_MISMATCH -> Result.failure(
-                CodeVerificationFailedException(errorType.errorMsg)
+            errorType in INLINE_CODE_ERRORS -> Result.failure(
+                CodeVerificationFailedException(requireNotNull(errorType).errorMsg)
             )
             e.isCommonErrorHandling() -> {
                 executeCommonErrorHanding(e)
@@ -60,6 +63,15 @@ class EmailVerificationUseCase @Inject constructor(
         if (e.isCommonErrorHandling()) {
             executeCommonErrorHanding(e)
         }
+    }
+
+    companion object {
+        /** 코드 입력란 아래 인라인으로 표시하는 에러 — 재입력/재발송으로 사용자가 복구 가능한 경우 */
+        private val INLINE_CODE_ERRORS = setOf(
+            AuthErrorType.MAIL_CODE_MISMATCH,
+            AuthErrorType.MAIL_CODE_EXPIRED,
+            AuthErrorType.MAIL_NOT_FOUND,
+        )
     }
 }
 
