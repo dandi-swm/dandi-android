@@ -26,6 +26,9 @@ sealed interface MealRecordIntent : MviIntent {
     /** 촬영본 확인 중 `먹이기` 버튼을 눌렀습니다. */
     data object ClickSubmit : MealRecordIntent
 
+    /** 먹이기 세리머니 완료 후 `다음` 버튼(또는 백)을 눌러 화면을 마무리합니다. */
+    data object ClickNext : MealRecordIntent
+
     /** 닫기(X) 버튼을 눌렀습니다. */
     data object ClickClose : MealRecordIntent
 }

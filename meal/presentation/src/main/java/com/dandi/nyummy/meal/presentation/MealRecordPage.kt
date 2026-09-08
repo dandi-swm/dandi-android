@@ -1,6 +1,17 @@
 package com.dandi.nyummy.meal.presentation
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,10 +33,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -46,6 +63,8 @@ import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.meal.presentation.component.MealCameraOverlay
 import com.dandi.nyummy.meal.presentation.component.MealCameraPreview
+import com.dandi.nyummy.meal.presentation.component.MealFeedCeremony
+import com.dandi.nyummy.meal.presentation.component.rememberMealPixelChain
 import java.io.File
 
 /**
@@ -88,9 +107,20 @@ private fun MealRecordScreen(
     val colors = DesignSystemThemeImpl.designSystemColor
     val spacing = DesignSystemThemeImpl.designSystemSpacing
 
-    // 촬영본 확인 중의 시스템 백은 이탈 대신 재촬영 복귀로 처리해 제출 전 실수 이탈을 막는다.
-    BackHandler(enabled = uiState.phase is MealCameraPhase.Captured) {
-        onIntent(MealRecordIntent.ClickRetake)
+    // 확인 단계부터 픽셀 체인을 프리웜해 세리머니 시작 지연과 업로드 재작성 경합을 없앤다.
+    val chainResult = rememberMealPixelChain(uiState.phase.photoPathOrNull)
+    // phase 타입을 키로 써서 제출 성공 copy 로는 유지되고, 세리머니 이탈 시에만 리셋된다.
+    var ceremonyIdle by remember(uiState.phase::class) { mutableStateOf(false) }
+    val showNext = uiState.isSubmitSucceeded && ceremonyIdle
+
+    // 촬영본 확인 중의 시스템 백은 이탈 대신 재촬영 복귀로, 세리머니 중에는 `다음` 과
+    // 동일하게 처리한다(업로드 진행 중에는 ViewModel 이 무시).
+    BackHandler(enabled = uiState.phase !is MealCameraPhase.Preview) {
+        when (uiState.phase) {
+            is MealCameraPhase.Captured -> onIntent(MealRecordIntent.ClickRetake)
+            is MealCameraPhase.Feeding -> onIntent(MealRecordIntent.ClickNext)
+            MealCameraPhase.Preview -> Unit
+        }
     }
 
     Column(
@@ -135,8 +165,19 @@ private fun MealRecordScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
                 )
+
+                is MealCameraPhase.Feeding -> MealFeedCeremony(
+                    photoPath = phase.photoPath,
+                    chainResult = chainResult,
+                    showSuccessCaption = showNext,
+                    onIdleChanged = { ceremonyIdle = it },
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
-            if (uiState.cameraPermission != MealCameraPermission.Denied) {
+            // 세리머니 중에는 장식 오버레이(브래킷·마스코트)가 연출과 겹치지 않게 숨긴다.
+            if (uiState.cameraPermission != MealCameraPermission.Denied &&
+                uiState.phase !is MealCameraPhase.Feeding
+            ) {
                 MealCameraOverlay(showHint = uiState.phase is MealCameraPhase.Preview)
             }
         }
@@ -154,9 +195,14 @@ private fun MealRecordScreen(
                 )
 
                 is MealCameraPhase.Captured -> CapturedActionBar(
-                    isSubmitting = uiState.isSubmitting,
                     onRetakeClick = { onIntent(MealRecordIntent.ClickRetake) },
                     onSubmitClick = { onIntent(MealRecordIntent.ClickSubmit) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                is MealCameraPhase.Feeding -> FeedingBottomBar(
+                    showNext = showNext,
+                    onNextClick = { onIntent(MealRecordIntent.ClickNext) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -268,7 +314,6 @@ private fun ShutterButton(
 
 @Composable
 private fun CapturedActionBar(
-    isSubmitting: Boolean,
     onRetakeClick: () -> Unit,
     onSubmitClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -282,7 +327,6 @@ private fun CapturedActionBar(
             label = stringResource(R.string.meal_record_retake),
             style = NyummyButtonStyle.Ghost,
             size = NyummyButtonSize.Large,
-            enabled = !isSubmitting,
             onClick = onRetakeClick,
         )
         Spacer(Modifier.weight(1f))
@@ -290,9 +334,70 @@ private fun CapturedActionBar(
             label = stringResource(R.string.meal_record_submit),
             style = NyummyButtonStyle.Ghost,
             size = NyummyButtonSize.Large,
-            loading = isSubmitting,
             onClick = onSubmitClick,
         )
+    }
+}
+
+/**
+ * 세리머니 중의 하단 바. 스피너 없이 힌트 텍스트가 맥박치다가, 세리머니가 부유 단계에
+ * 도달하고 응답까지 도착하면 `다음` 버튼이 스프링으로 등장한다.
+ */
+@Composable
+private fun FeedingBottomBar(
+    showNext: Boolean,
+    onNextClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = DesignSystemThemeImpl.designSystemColor
+    val spacing = DesignSystemThemeImpl.designSystemSpacing
+    val haptic = LocalHapticFeedback.current
+    LaunchedEffect(showNext) {
+        if (showNext) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        AnimatedVisibility(
+            visible = !showNext,
+            enter = fadeIn(),
+            exit = fadeOut(tween(FeedingHintFadeOutMillis)),
+        ) {
+            val pulse = rememberInfiniteTransition(label = "FeedingHintPulse")
+            val hintAlpha by pulse.animateFloat(
+                initialValue = FeedingHintMinAlpha,
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(
+                    tween(FeedingHintPulseMillis),
+                    RepeatMode.Reverse,
+                ),
+                label = "hintAlpha",
+            )
+            DandiText(
+                text = stringResource(R.string.meal_record_feeding_in_progress),
+                modifier = Modifier.graphicsLayer { alpha = hintAlpha },
+                color = colors.contentDefaultLevel1,
+                style = DesignSystemThemeImpl.typeScale.textRegularM,
+            )
+        }
+        AnimatedVisibility(
+            visible = showNext,
+            enter = scaleIn(
+                initialScale = NextButtonStartScale,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMediumLow,
+                ),
+            ) + fadeIn(),
+        ) {
+            NyummyButton(
+                label = stringResource(R.string.meal_record_next),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = spacing.space24),
+                style = NyummyButtonStyle.Primary,
+                size = NyummyButtonSize.Large,
+                onClick = onNextClick,
+            )
+        }
     }
 }
 
@@ -300,6 +405,10 @@ private val BottomBarHeight = 120.dp
 private val ShutterButtonSize = 76.dp
 private val ShutterRingWidth = 3.dp
 private val ShutterIconSize = 28.dp
+private const val FeedingHintFadeOutMillis = 150
+private const val FeedingHintPulseMillis = 1100
+private const val FeedingHintMinAlpha = 0.45f
+private const val NextButtonStartScale = 0.5f
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
@@ -320,6 +429,21 @@ private fun MealRecordScreenCapturedPhase() {
             uiState = MealRecordUIState(
                 phase = MealCameraPhase.Captured(photoPath = "/cache/meal_capture_preview.jpg"),
                 cameraPermission = MealCameraPermission.Granted,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun MealRecordScreenFeedingPhase() {
+    DesignSystemTheme {
+        MealRecordScreen(
+            uiState = MealRecordUIState(
+                phase = MealCameraPhase.Feeding(photoPath = "/cache/meal_capture_preview.jpg"),
+                cameraPermission = MealCameraPermission.Granted,
+                isSubmitSucceeded = true,
             ),
             onIntent = {},
         )

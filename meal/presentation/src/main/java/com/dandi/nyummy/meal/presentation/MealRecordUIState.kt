@@ -10,7 +10,18 @@ sealed interface MealCameraPhase {
 
     /** 촬영본을 확인하고 취소/먹이기를 선택하는 단계입니다. [photoPath] 는 캐시 파일 절대 경로입니다. */
     data class Captured(val photoPath: String) : MealCameraPhase
+
+    /** 먹이기 세리머니(픽셀화 연출) 중이며 업로드가 진행되는 단계입니다. */
+    data class Feeding(val photoPath: String) : MealCameraPhase
 }
+
+/** 촬영본이 있는 단계(확인·세리머니)의 사진 경로, 그 외에는 null 입니다. */
+val MealCameraPhase.photoPathOrNull: String?
+    get() = when (this) {
+        MealCameraPhase.Preview -> null
+        is MealCameraPhase.Captured -> photoPath
+        is MealCameraPhase.Feeding -> photoPath
+    }
 
 /** 카메라 권한 상태입니다. */
 enum class MealCameraPermission { Requesting, Granted, Denied }
@@ -20,13 +31,14 @@ enum class MealCameraPermission { Requesting, Granted, Denied }
  *
  * 진입 직후에는 [MealCameraPermission.Requesting] 으로 시작해 화면이 곧바로 권한을 요청하며,
  * [isCapturing] 은 셔터 연타를 막고 촬영 실행을 View 에 지시하는 플래그입니다.
- * [isSubmitting] 은 먹이기 제출이 진행 중임을 나타내며, 제출 중 재촬영·이탈·중복 제출을 막습니다.
+ * [MealCameraPhase.Feeding] 중에는 재촬영·이탈이 차단되고, [isSubmitSucceeded] 가 켜진 뒤에만
+ * `다음` 으로 화면을 마무리할 수 있습니다.
  */
 data class MealRecordUIState(
     val phase: MealCameraPhase = MealCameraPhase.Preview,
     val cameraPermission: MealCameraPermission = MealCameraPermission.Requesting,
     val isCapturing: Boolean = false,
-    val isSubmitting: Boolean = false,
+    val isSubmitSucceeded: Boolean = false,
 ) : UiState {
 
     companion object {
