@@ -10,6 +10,11 @@
     <string name="meal_record_permission_denied_body">Allow camera access to record your meal.\nIf it stays off, enable it in Settings &gt; Apps &gt; Permissions.</string>
     <string name="meal_record_permission_retry">Allow camera</string>
     <string name="meal_record_capture_failed">Couldn\'t take the photo. Please try again.</string>
-    <string name="meal_record_submit_success">Yummy! Analysis has started 🌱</string>
     <string name="meal_record_captured_photo_content_description">Captured food photo</string>
+    <string name="meal_record_next">Next</string>
+    <string name="meal_record_feeding_in_progress">Delivering to Nyami…</string>
+    <string name="meal_record_feed_item_content_description">Food turned into a pixel item</string>
+    <string name="meal_record_feed_to_cat_hint">Feed it to Nyami!</string>
+    <string name="meal_record_feed_action">Feed to Nyami</string>
+    <string name="meal_record_cat_content_description">Nyami</string>
 </resources>
