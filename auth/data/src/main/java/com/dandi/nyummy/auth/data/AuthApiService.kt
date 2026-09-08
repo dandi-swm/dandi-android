@@ -1,7 +1,9 @@
 package com.dandi.nyummy.auth.data
 
 import com.dandi.nyummy.auth.data.dto.AuthTokenDTO
+import com.dandi.nyummy.auth.data.dto.EmailChallengeDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerificationConfirmRequestDTO
+import com.dandi.nyummy.auth.data.dto.EmailVerifiedDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerificationRequestDTO
 import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
 import com.dandi.nyummy.auth.data.dto.RefreshTokenRequestDTO
@@ -24,11 +26,11 @@ interface AuthApiService {
 
     /** 이메일 인증 코드 발송 */
     @POST("${AUTH_PATH}/email-verification")
-    suspend fun requestEmailVerification(@Body request: EmailVerificationRequestDTO): Response<Unit>
+    suspend fun requestEmailVerification(@Body request: EmailVerificationRequestDTO): Response<EmailChallengeDTO>
 
     /** 이메일 인증 코드 확인 */
     @POST("${AUTH_PATH}/email-verification/confirm")
-    suspend fun confirmEmailVerification(@Body request: EmailVerificationConfirmRequestDTO): Response<Unit>
+    suspend fun confirmEmailVerification(@Body request: EmailVerificationConfirmRequestDTO): Response<EmailVerifiedDTO>
 
     /** 토큰 재발급 */
     @POST("${AUTH_PATH}/refresh")

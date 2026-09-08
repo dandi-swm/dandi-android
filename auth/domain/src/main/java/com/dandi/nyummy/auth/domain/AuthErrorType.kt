@@ -23,19 +23,19 @@ enum class AuthErrorType(
         errorMsg = "올바른 이메일과 비밀번호를 입력해주세요.",
     ),
     MAIL_RESEND_TOO_EARLY(
-        type = "api.auth.mailResendTooEarly",
+        type = "api.auth.emailResendTooEarly",
         errorMsg = "인증 코드를 발송한 지 5분이 지나지 않았습니다.",
     ),
     MAIL_NOT_FOUND(
-        type = "api.auth.mailNotFound",
+        type = "api.auth.emailNotFound",
         errorMsg = "해당 이메일로 발송된 인증 코드가 없습니다.",
     ),
     MAIL_CODE_EXPIRED(
-        type = "api.auth.mailCodeExpired",
+        type = "api.auth.emailCodeExpired",
         errorMsg = "인증 코드 유효 시간이 지났습니다. 코드를 재발송 받으세요.",
     ),
     MAIL_CODE_MISMATCH(
-        type = "api.auth.mailCodeMismatch",
+        type = "api.auth.emailCodeMismatch",
         errorMsg = "인증 코드가 일치하지 않습니다.",
     ),
     UNKNOWN(

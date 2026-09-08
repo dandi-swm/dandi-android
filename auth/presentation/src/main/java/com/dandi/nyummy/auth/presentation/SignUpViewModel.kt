@@ -59,9 +59,19 @@ class SignUpViewModel @Inject constructor(
             )
             is SignUpReducerEvent.CodeChanged -> state.copy(code = event.value, codeError = null)
             is SignUpReducerEvent.CodeVerificationFailed -> state.copy(codeError = event.message)
-            SignUpReducerEvent.MovedToCode ->
-                state.copy(step = SignUpStep.CODE, code = "", codeError = null)
-            SignUpReducerEvent.MovedToProfile -> state.copy(step = SignUpStep.PROFILE)
+            is SignUpReducerEvent.MovedToCode -> state.copy(
+                step = SignUpStep.CODE,
+                emailChallengeToken = event.emailChallengeToken,
+                code = "",
+                codeError = null,
+            )
+            is SignUpReducerEvent.ChallengeTokenRefreshed -> state.copy(
+                emailChallengeToken = event.emailChallengeToken,
+                code = "",
+                codeError = null,
+            )
+            is SignUpReducerEvent.MovedToProfile ->
+                state.copy(step = SignUpStep.PROFILE, emailVerifiedToken = event.emailVerifiedToken)
             is SignUpReducerEvent.ResendTicked ->
                 state.copy(resendRemainingSeconds = event.remainingSeconds)
             is SignUpReducerEvent.NicknameChanged ->
@@ -77,8 +87,13 @@ class SignUpViewModel @Inject constructor(
             SignUpReducerEvent.LoadingFinished -> state.copy(isLoading = false)
             SignUpReducerEvent.SteppedBack -> when (state.step) {
                 SignUpStep.ACCOUNT -> state
-                SignUpStep.CODE -> state.copy(step = SignUpStep.ACCOUNT)
-                SignUpStep.PROFILE -> state.copy(step = SignUpStep.CODE, code = "", codeError = null)
+                SignUpStep.CODE -> state.copy(step = SignUpStep.ACCOUNT, emailChallengeToken = "")
+                SignUpStep.PROFILE -> state.copy(
+                    step = SignUpStep.CODE,
+                    emailVerifiedToken = "",
+                    code = "",
+                    codeError = null,
+                )
             }
         }
 
@@ -97,8 +112,8 @@ class SignUpViewModel @Inject constructor(
         dispatch(SignUpReducerEvent.LoadingStarted)
         viewModelScope.launch {
             emailVerificationUseCase.sendCode(currentState.email)
-                .onSuccess {
-                    dispatch(SignUpReducerEvent.MovedToCode)
+                .onSuccess { challengeToken ->
+                    dispatch(SignUpReducerEvent.MovedToCode(challengeToken))
                     startResendTimer()
                 }
             dispatch(SignUpReducerEvent.LoadingFinished)
@@ -108,11 +123,14 @@ class SignUpViewModel @Inject constructor(
     private fun verifyCode() {
         dispatch(SignUpReducerEvent.LoadingStarted)
         viewModelScope.launch {
-            emailVerificationUseCase.confirmCode(currentState.email, currentState.code)
-                .onSuccess {
+            emailVerificationUseCase.confirmCode(
+                authCode = currentState.code,
+                emailChallengeToken = currentState.emailChallengeToken,
+            )
+                .onSuccess { verifiedToken ->
                     resendTimerJob?.cancel()
                     dispatch(SignUpReducerEvent.ResendTicked(0))
-                    dispatch(SignUpReducerEvent.MovedToProfile)
+                    dispatch(SignUpReducerEvent.MovedToProfile(verifiedToken))
                 }
                 .onFailure { e ->
                     if (e is CodeVerificationFailedException) {
@@ -137,8 +155,8 @@ class SignUpViewModel @Inject constructor(
         dispatch(SignUpReducerEvent.LoadingStarted)
         viewModelScope.launch {
             emailVerificationUseCase.sendCode(currentState.email)
-                .onSuccess {
-                    dispatch(SignUpReducerEvent.CodeChanged(""))
+                .onSuccess { challengeToken ->
+                    dispatch(SignUpReducerEvent.ChallengeTokenRefreshed(challengeToken))
                     startResendTimer()
                 }
             dispatch(SignUpReducerEvent.LoadingFinished)
@@ -178,8 +196,9 @@ class SignUpViewModel @Inject constructor(
         dispatch(SignUpReducerEvent.LoadingStarted)
         viewModelScope.launch {
             signUpUseCase.signUp(
-                email = currentState.email,
+                emailVerifiedToken = currentState.emailVerifiedToken,
                 password = currentState.password,
+                confirmPassword = currentState.passwordConfirm,
                 nickname = currentState.nickname.trim(),
                 gender = currentState.gender,
                 birth = String.format(

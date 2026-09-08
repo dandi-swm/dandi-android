@@ -25,22 +25,25 @@ class SignUpUseCase @Inject constructor(
      *
      * 발급 토큰 저장은 data 레이어에서 담당한다.
      *
-     * @param birth 생년월일 (`yyyy-MM-dd` 형식)
-     * @param height 키 (cm)
-     * @param weight 몸무게 (kg)
+     * @param emailVerifiedToken 이메일 인증 완료 토큰
+     * @param birth 생년월일 (`yyyy-MM-dd` 형식, 선택)
+     * @param height 키 (cm, 선택)
+     * @param weight 몸무게 (kg, 선택)
      */
     suspend fun signUp(
-        email: String,
+        emailVerifiedToken: String,
         password: String,
+        confirmPassword: String,
         nickname: String,
-        gender: Gender,
-        birth: String,
-        height: Int,
-        weight: Int,
+        gender: Gender? = null,
+        birth: String? = null,
+        height: Int? = null,
+        weight: Int? = null,
     ): Result<Unit> = try {
         repository.signUp(
-            email = email,
+            emailVerifiedToken = emailVerifiedToken,
             password = password,
+            confirmPassword = confirmPassword,
             nickname = nickname,
             gender = gender,
             birth = birth,

@@ -17,6 +17,8 @@ data class SignUpUIState(
     val emailError: SignUpFieldError? = null,
     val passwordError: SignUpFieldError? = null,
     val passwordConfirmError: SignUpFieldError? = null,
+    val emailChallengeToken: String = "",
+    val emailVerifiedToken: String = "",
     val code: String = "",
     val codeError: String? = null,
     val resendRemainingSeconds: Int = 0,
