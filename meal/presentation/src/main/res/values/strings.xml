@@ -12,9 +12,9 @@
     <string name="meal_record_capture_failed">Couldn\'t take the photo. Please try again.</string>
     <string name="meal_record_captured_photo_content_description">Captured food photo</string>
     <string name="meal_record_next">Next</string>
-    <string name="meal_record_feeding_in_progress">Delivering to Nyummy…</string>
+    <string name="meal_record_feeding_in_progress">Delivering to Nyami…</string>
     <string name="meal_record_feed_item_content_description">Food turned into a pixel item</string>
-    <string name="meal_record_feed_to_cat_hint">Feed it to Nyummy!</string>
-    <string name="meal_record_feed_action">Feed to Nyummy</string>
-    <string name="meal_record_cat_content_description">Nyummy</string>
+    <string name="meal_record_feed_to_cat_hint">Feed it to Nyami!</string>
+    <string name="meal_record_feed_action">Feed to Nyami</string>
+    <string name="meal_record_cat_content_description">Nyami</string>
 </resources>
