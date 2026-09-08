@@ -196,18 +196,9 @@ internal fun MealFeedItemCard(
                         if (eating) return@detectDragGestures
                         change.consume()
                         val bounds = latestDragBounds
-                        // 손가락 이동보다 살짝 덜 움직여 묵직한 감도를 만든다.
                         dragTarget = Offset(
-                            softClampAxis(
-                                dragTarget.x + amount.x * DragInputRatio,
-                                bounds.left,
-                                bounds.right,
-                            ),
-                            softClampAxis(
-                                dragTarget.y + amount.y * DragInputRatio,
-                                bounds.top,
-                                bounds.bottom,
-                            ),
+                            softClampAxis(dragTarget.x + amount.x, bounds.left, bounds.right),
+                            softClampAxis(dragTarget.y + amount.y, bounds.top, bounds.bottom),
                         )
                         val nowInZone = isNearFeedTarget(dragTarget)
                         if (nowInZone != inFeedZone) {
@@ -217,7 +208,8 @@ internal fun MealFeedItemCard(
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             }
                         }
-                        // 리타겟 스프링이 손가락을 러버밴드처럼 따라오게 만든다.
+                        // 임계감쇠 스프링이라 속도를 승계해도 손가락을 절대 지나치지 않고,
+                        // 미세한 유기적 지연만 남아 먹이가 손끝 아래에 붙어 있다.
                         scope.launch { offset.animateTo(dragTarget, FollowSpring) }
                     },
                     onDragEnd = releaseDrag,
@@ -276,8 +268,6 @@ private const val DraggingScale = 0.55f
 /** 냐미 최근접 시 추가 축소 배율(누적 ≈0.30). */
 private const val NearCatScale = 0.55f
 
-/** 손가락 이동 대비 카드 이동 비율. 1보다 작을수록 묵직하다. */
-private const val DragInputRatio = 0.9f
 private const val DragTiltDegrees = 6f
 private val TiltReference = 160.dp
 private const val VelocityTiltDegrees = 3f
@@ -287,7 +277,8 @@ private const val EatTravelMillis = 220
 private const val EatConsumeMillis = 200
 private const val EatConsumeDelayMillis = 100
 
-private val FollowSpring = spring<Offset>(dampingRatio = 0.85f, stiffness = 320f)
+/** 드래그 팔로우. 임계감쇠(1.0)라 오버슈트가 없고, 강성이 높아 손끝에 밀착한다. */
+private val FollowSpring = spring<Offset>(dampingRatio = 1f, stiffness = 1400f)
 private val WobbleSpring = spring<Offset>(dampingRatio = 0.45f, stiffness = 300f)
 
 @Preview(showBackground = true)
