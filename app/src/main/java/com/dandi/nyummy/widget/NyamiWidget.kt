@@ -26,7 +26,6 @@ import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
-import androidx.glance.layout.defaultWeight
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.unit.ColorProvider

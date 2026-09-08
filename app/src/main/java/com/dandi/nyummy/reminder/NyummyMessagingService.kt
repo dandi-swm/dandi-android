@@ -6,9 +6,7 @@ import com.dandi.nyummy.widget.NyamiWidget
 import com.dandi.nyummy.widget.NyamiWidgetStateStore
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 /**
  * 냐미 리마인드 FCM 수신기 (임시 구현).
