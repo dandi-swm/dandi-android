@@ -169,8 +169,9 @@ private fun MealRecordScreen(
                 is MealCameraPhase.Feeding -> MealFeedCeremony(
                     photoPath = phase.photoPath,
                     chainResult = chainResult,
-                    showSuccessCaption = showNext,
+                    feedReady = showNext,
                     onIdleChanged = { ceremonyIdle = it },
+                    onFedToCat = { onIntent(MealRecordIntent.ClickNext) },
                     modifier = Modifier.fillMaxSize(),
                 )
             }
