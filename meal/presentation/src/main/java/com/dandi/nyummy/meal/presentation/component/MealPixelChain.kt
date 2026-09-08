@@ -75,7 +75,12 @@ private fun buildPixelChain(photoPath: String): MealPixelChain? {
 
     // coil 은 EXIF 회전을 자동 반영하지만 수동 디코드는 직접 픽셀에 구워야 한다.
     // 베이스를 정확히 상한으로 정규화해 메모리·차지업 선명도·축소 배율을 예측 가능하게 한다.
-    val base = decoded.rotatedBy(exifRotationDegrees(bytes)).scaledToLongEdge(BaseLongEdgePx)
+    // 화면에 오르지 않는 중간 비트맵은 즉시 recycle 해 피크 메모리를 줄인다
+    // (체인에 남는 레벨들은 드로우 중 recycle 위험이 있어 GC 에 위임).
+    val rotated = decoded.rotatedBy(exifRotationDegrees(bytes))
+    if (rotated !== decoded) decoded.recycle()
+    val base = rotated.scaledToLongEdge(BaseLongEdgePx)
+    if (base !== rotated) rotated.recycle()
 
     val levels = mutableListOf(base)
     var previous = base
@@ -89,15 +94,20 @@ private fun buildPixelChain(photoPath: String): MealPixelChain? {
 /**
  * 긴 변이 [targetEdge] 가 되도록 축소한다. 2배 이하 홉(연쇄 하프닝)으로만 내려가
  * 큰 배율에서도 바이리니어가 픽셀을 건너뛰지 않고 박스 필터처럼 평균내게 한다.
+ * 홉 과정에서 생긴 중간 비트맵은 recycle 하고, 수신 객체(this)는 건드리지 않는다.
  */
 private fun Bitmap.scaledToLongEdge(targetEdge: Int): Bitmap {
     var current = this
     while (maxOf(current.width, current.height) > targetEdge * 2) {
-        current = current.scaledByFactor(0.5f)
+        val halved = current.scaledByFactor(0.5f)
+        if (current !== this) current.recycle()
+        current = halved
     }
     val edge = maxOf(current.width, current.height)
     if (edge <= targetEdge) return current
-    return current.scaledByFactor(targetEdge / edge.toFloat())
+    val scaled = current.scaledByFactor(targetEdge / edge.toFloat())
+    if (current !== this) current.recycle()
+    return scaled
 }
 
 private fun Bitmap.scaledByFactor(factor: Float): Bitmap = Bitmap.createScaledBitmap(

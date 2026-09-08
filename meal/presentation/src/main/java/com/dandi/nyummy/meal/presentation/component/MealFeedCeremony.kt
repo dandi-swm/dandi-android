@@ -185,7 +185,13 @@ internal fun MealFeedCeremony(
                     val catCenterY = with(density) {
                         CatTopPadding.toPx() + CatDisplayWidth.toPx() / 2f
                     }
-                    val feedEnabled = feedReady && catSeated && !fedToCat
+                    val feedRadiusPx = with(density) { FeedAcceptRadius.toPx() }
+                    // 짧은 박스에서 휴식 지점이 판정 반경 안으로 되밀렸다면 즉시 발동을
+                    // 막기 위해 먹이기를 끄고, 완료는 하단 `다음` 버튼이 담당한다.
+                    val geometryAllowsFeeding = itemCenterY - catCenterY >
+                        feedRadiusPx + with(density) { FeedGeometrySlack.toPx() }
+                    val feedEnabled =
+                        feedReady && catSeated && !fedToCat && geometryAllowsFeeding
                     MealFeedItemCard(
                         image = chain.levels.last(),
                         // 포토 박스 전역을 소프트 한계로 삼아 냐미까지 자유롭게 오간다.
@@ -200,7 +206,7 @@ internal fun MealFeedCeremony(
                         } else {
                             null
                         },
-                        feedRadiusPx = with(density) { FeedAcceptRadius.toPx() },
+                        feedRadiusPx = feedRadiusPx,
                         onFed = { fedToCat = true },
                         modifier = Modifier
                             .align(Alignment.TopCenter)
@@ -406,13 +412,21 @@ private const val ItemRestCenterYFraction = 0.66f
  * 휴식 지점이 먹이기 반경 안에 들어가 즉시 발동하지 않도록 냐미 반경 밖으로 밀어낸다.
  */
 private fun Density.itemRestCenterY(boxHeightPx: Float): Float {
+    val cardHalf = FeedItemCardSize.toPx() / 2f
     val catCenterY = CatTopPadding.toPx() + CatDisplayWidth.toPx() / 2f
     val minCenterY = catCenterY + (FeedAcceptRadius + MinFeedTravel).toPx()
+    // 아주 짧은 박스에서는 '반경 밖 확보'보다 '카드가 보이고 잡힌다'가 우선이다.
+    // 이 보정으로 반경 안에 되밀리는 경우 먹이기는 지오메트리 게이트가 비활성화한다.
     return maxOf(boxHeightPx * ItemRestCenterYFraction, minCenterY)
+        .coerceAtMost(boxHeightPx - cardHalf)
+        .coerceAtLeast(cardHalf)
 }
 
 /** 휴식 지점에서 먹이기 반경까지 보장되는 최소 이동 거리. */
 private val MinFeedTravel = 64.dp
+
+/** 지오메트리 게이트 여유: 휴식→냐미 거리가 판정 반경보다 이만큼은 커야 먹이기를 켠다. */
+private val FeedGeometrySlack = 24.dp
 
 /** 캡션 한 줄 높이의 절반 근사값(앵커 중앙 정렬용). */
 private val CaptionHalfHeight = 14.dp
