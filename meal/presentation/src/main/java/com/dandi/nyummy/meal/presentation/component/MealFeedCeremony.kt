@@ -40,7 +40,9 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -213,7 +215,10 @@ internal fun MealFeedCeremony(
         ) {
             DandiText(
                 text = stringResource(R.string.meal_record_submit_success),
-                color = colors.contentInverseDefault,
+                // 아이템 카드 위쪽은 밝은 bgMealPhoto 배경이므로 기본 전경색으로 대비를 확보하고,
+                // 스낵바를 대체하는 유일한 성공 텍스트라 등장을 접근성으로도 고지한다.
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                color = colors.contentDefaultLevel0,
                 style = DesignSystemThemeImpl.typeScale.textStrongL,
             )
         }

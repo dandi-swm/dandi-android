@@ -28,4 +28,7 @@ sealed interface MealRecordReducerEvent : ReducerEvent {
 
     /** 먹이기 제출이 실패해 확인 단계로 되돌립니다. */
     data object SubmitFailed : MealRecordReducerEvent
+
+    /** 세리머니 마무리가 시작되어 추가 이탈 입력을 래치합니다. */
+    data object FinishStarted : MealRecordReducerEvent
 }

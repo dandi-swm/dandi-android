@@ -51,7 +51,7 @@ class MealRecordViewModel @Inject constructor(
             MealRecordIntent.ClickRetake -> {
                 // 세리머니(업로드) 중에는 업로드 대상 파일을 지우면 안 되므로 재촬영을 막는다.
                 val phase = currentState.phase as? MealCameraPhase.Captured ?: return
-                runCatching { File(phase.photoPath).delete() }
+                deletePhotoFile(phase.photoPath)
                 dispatch(MealRecordReducerEvent.ReturnedToPreview)
             }
 
@@ -111,6 +111,8 @@ class MealRecordViewModel @Inject constructor(
                         isSubmitSucceeded = false,
                     )
                 } ?: state.copy(isSubmitSucceeded = false)
+
+            MealRecordReducerEvent.FinishStarted -> state.copy(isFinishing = true)
         }
 
     /** 촬영본을 업로드해 식사를 생성한다. 성공 알림은 세리머니 화면이 담당한다. */
@@ -125,9 +127,14 @@ class MealRecordViewModel @Inject constructor(
         }
     }
 
-    /** 세리머니를 마치고 촬영 파일을 정리한 뒤 화면을 닫는다. */
+    /**
+     * 세리머니를 마치고 촬영 파일을 정리한 뒤 화면을 닫는다.
+     * 다음·닫기·백이 같은 프레임에 겹쳐도 뒤로가기 신호는 한 번만 나가도록 래치한다.
+     */
     private fun finishFeeding(photoPath: String) {
-        runCatching { File(photoPath).delete() }
+        if (currentState.isFinishing) return
+        dispatch(MealRecordReducerEvent.FinishStarted)
+        deletePhotoFile(photoPath)
         navigationHelper.navigateToBack()
     }
 
@@ -135,7 +142,11 @@ class MealRecordViewModel @Inject constructor(
     private fun deleteCapturedFile() {
         val phase = uiState.value.phase
         if (phase is MealCameraPhase.Captured) {
-            runCatching { File(phase.photoPath).delete() }
+            deletePhotoFile(phase.photoPath)
         }
+    }
+
+    private fun deletePhotoFile(photoPath: String) {
+        runCatching { File(photoPath).delete() }
     }
 }
