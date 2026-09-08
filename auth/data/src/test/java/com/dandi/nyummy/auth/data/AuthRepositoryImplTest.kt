@@ -59,8 +59,9 @@ class AuthRepositoryImplTest {
         )
 
         repository.signUp(
-            email = "test@dandi.app",
+            emailVerifiedToken = "verified-token",
             password = "pw1234",
+            confirmPassword = "pw1234",
             nickname = "단디",
             gender = Gender.MALE,
             birth = "2000-01-15",
@@ -83,8 +84,9 @@ class AuthRepositoryImplTest {
         assertThrows(HttpResponseException::class.java) {
             runBlocking {
                 repository.signUp(
-                    email = "test@dandi.app",
+                    emailVerifiedToken = "verified-token",
                     password = "pw1234",
+                    confirmPassword = "pw1234",
                     nickname = "단디",
                     gender = Gender.MALE,
                     birth = "2000-01-15",
@@ -99,13 +101,22 @@ class AuthRepositoryImplTest {
     }
 
     @Test
-    fun `이메일 인증 코드 발송·확인은 바디 없는 응답을 성공으로 처리하고 토큰을 저장하지 않는다`() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(204))
-        server.enqueue(MockResponse().setResponseCode(200))
+    fun `이메일 인증 코드 발송·확인은 각 토큰을 반환하고 인증 토큰을 저장하지 않는다`() = runBlocking {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody("""{"emailChallengeToken":"challenge-token"}""")
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody("""{"emailVerifiedToken":"verified-token"}""")
+        )
 
-        repository.requestEmailVerification(email = "test@dandi.app")
-        repository.confirmEmailVerification(email = "test@dandi.app", verificationCode = "123456")
+        val challenge = repository.requestEmailVerification(email = "test@dandi.app")
+        val verified = repository.confirmEmailVerification(
+            authCode = "123456",
+            emailChallengeToken = challenge.emailChallengeToken,
+        )
 
+        assertEquals("challenge-token", challenge.emailChallengeToken)
+        assertEquals("verified-token", verified.emailVerifiedToken)
         assertNull(tokenProvider.accessToken)
         assertNull(tokenProvider.refreshToken)
     }

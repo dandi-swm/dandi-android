@@ -11,6 +11,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -71,7 +72,7 @@ class AuthApiServiceTest {
     }
 
     @Test
-    fun `회원가입 요청이 신체 정보를 포함해 전송되고 토큰 응답을 파싱한다`() = runBlocking {
+    fun `회원가입 요청이 인증 완료 토큰과 신체 정보를 포함해 전송되고 토큰 응답을 파싱한다`() = runBlocking {
         server.enqueue(
             MockResponse().setResponseCode(200).setBody(
                 """{"accessToken":"access-123","refreshToken":"refresh-456"}"""
@@ -80,8 +81,9 @@ class AuthApiServiceTest {
 
         val response = apiService.signUp(
             SignUpRequestDTO(
-                email = "test@dandi.app",
+                emailVerifiedToken = "verified-token",
                 password = "pw1234",
+                confirmPassword = "pw1234",
                 nickname = "단디",
                 gender = "MALE",
                 birth = "2000-01-15",
@@ -96,19 +98,52 @@ class AuthApiServiceTest {
         val recorded = server.takeRequest()
         assertEquals("POST", recorded.method)
         assertEquals("/api/v1/auth/signup", recorded.path)
-        val sentBody = json.decodeFromString<SignUpRequestDTO>(recorded.body.readUtf8())
+        val rawBody = recorded.body.readUtf8()
+        assertFalse(rawBody.contains("\"email\""))
+        val sentBody = json.decodeFromString<SignUpRequestDTO>(rawBody)
+        assertEquals("verified-token", sentBody.emailVerifiedToken)
+        assertEquals("pw1234", sentBody.confirmPassword)
         assertEquals("단디", sentBody.nickname)
         assertEquals("2000-01-15", sentBody.birth)
         assertEquals(175, sentBody.height)
     }
 
     @Test
-    fun `이메일 인증 코드 발송은 빈 바디 200 응답을 성공으로 처리한다`() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(200))
+    fun `회원가입 요청에서 선택 프로필 필드는 null이면 직렬화에서 생략된다`() = runBlocking {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """{"accessToken":"access-123","refreshToken":"refresh-456"}"""
+            )
+        )
+
+        apiService.signUp(
+            SignUpRequestDTO(
+                emailVerifiedToken = "verified-token",
+                password = "pw1234",
+                confirmPassword = "pw1234",
+                nickname = "단디",
+            )
+        )
+
+        val rawBody = server.takeRequest().body.readUtf8()
+        assertFalse(rawBody.contains("gender"))
+        assertFalse(rawBody.contains("birth"))
+        assertFalse(rawBody.contains("height"))
+        assertFalse(rawBody.contains("weight"))
+    }
+
+    @Test
+    fun `이메일 인증 코드 발송은 챌린지 토큰 응답을 파싱한다`() = runBlocking {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """{"emailChallengeToken":"challenge-token"}"""
+            )
+        )
 
         val response = apiService.requestEmailVerification(EmailVerificationRequestDTO(email = "test@dandi.app"))
 
         assertTrue(response.isSuccessful)
+        assertEquals("challenge-token", response.body()?.emailChallengeToken)
 
         val recorded = server.takeRequest()
         assertEquals("POST", recorded.method)
@@ -116,20 +151,26 @@ class AuthApiServiceTest {
     }
 
     @Test
-    fun `이메일 인증 코드 확인 요청에 인증 코드가 포함된다`() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(200))
+    fun `이메일 인증 코드 확인 요청에 인증 코드와 챌린지 토큰이 포함되고 인증 완료 토큰 응답을 파싱한다`() = runBlocking {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """{"emailVerifiedToken":"verified-token"}"""
+            )
+        )
 
         val response = apiService.confirmEmailVerification(
-            EmailVerificationConfirmRequestDTO(email = "test@dandi.app", verificationCode = "123456")
+            EmailVerificationConfirmRequestDTO(authCode = "123456", emailChallengeToken = "challenge-token")
         )
 
         assertTrue(response.isSuccessful)
+        assertEquals("verified-token", response.body()?.emailVerifiedToken)
 
         val recorded = server.takeRequest()
         assertEquals("POST", recorded.method)
         assertEquals("/api/v1/auth/email-verification/confirm", recorded.path)
         val sentBody = json.decodeFromString<EmailVerificationConfirmRequestDTO>(recorded.body.readUtf8())
-        assertEquals("123456", sentBody.verificationCode)
+        assertEquals("123456", sentBody.authCode)
+        assertEquals("challenge-token", sentBody.emailChallengeToken)
     }
 
     @Test
