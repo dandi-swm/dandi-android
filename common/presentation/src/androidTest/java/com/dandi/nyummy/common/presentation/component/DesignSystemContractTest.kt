@@ -89,36 +89,45 @@ class DesignSystemContractTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun bottomNavigation_hasCanonicalFiveDestinations_and370By76FloatingFixture() {
+    fun bottomNavigation_hasFourTabsWithCenterCameraAction_and370By96FloatingFixture() {
         val selected = mutableStateOf(NyummyNavigationDestination.Home)
+        var cameraClickCount = 0
 
         composeRule.setContent {
             DesignSystemTheme {
                 NyummyBottomNavigation(
                     modifier = Modifier.testTag(NavigationTag),
                     selectedDestination = selected.value,
+                    onCameraClick = { cameraClickCount++ },
                 ) { selected.value = it }
             }
         }
 
         composeRule.onNodeWithTag(NavigationTag)
             .assertWidthIsEqualTo(370.dp)
-            .assertHeightIsEqualTo(76.dp)
+            .assertHeightIsEqualTo(96.dp)
 
         composeRule.onAllNodes(
             SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab),
-        ).assertCountEquals(5)
+        ).assertCountEquals(4)
         NyummyNavigationDestination.entries.forEach { destination ->
             composeRule.onNodeWithContentDescription(destination.label).assertHasClickAction()
         }
         composeRule.onNodeWithContentDescription("홈").assertIsSelected()
-        composeRule.onNodeWithContentDescription("히스토리").assertIsNotSelected().performClick()
-        composeRule.onNodeWithContentDescription("히스토리").assertIsSelected()
+        composeRule.onNodeWithContentDescription("기록").assertIsNotSelected().performClick()
+        composeRule.onNodeWithContentDescription("기록").assertIsSelected()
         composeRule.onNodeWithContentDescription("홈").assertIsNotSelected()
+
+        // 카메라 버튼은 탭이 아니라 액션: 클릭해도 선택 상태가 바뀌지 않는다.
+        composeRule.onNodeWithTag(NavigationCameraTag)
+            .assertHasClickAction()
+            .performClick()
+        composeRule.runOnIdle { assertEquals(1, cameraClickCount) }
+        composeRule.onNodeWithContentDescription("기록").assertIsSelected()
     }
 
     @Test
-    fun bottomNavigation_limitsPressedFeedbackToIndicator_andSlidesToSelectedTab() {
+    fun bottomNavigation_limitsPressedFeedbackToIndicator_andMovesPillToSelectedTab() {
         val selected = mutableStateOf(NyummyNavigationDestination.Home)
         composeRule.mainClock.autoAdvance = false
 
@@ -126,20 +135,16 @@ class DesignSystemContractTest {
             DesignSystemTheme {
                 NyummyBottomNavigation(
                     selectedDestination = selected.value,
+                    onCameraClick = {},
                     onDestinationSelected = { selected.value = it },
                 )
             }
         }
 
-        val indicator = composeRule.onNodeWithTag(
-            NavigationIndicatorTag,
-            useUnmergedTree = true,
-        )
         val historyItem = composeRule.onNodeWithTag(
             HistoryNavigationItemTag,
             useUnmergedTree = true,
         )
-        val startX = indicator.getUnclippedBoundsInRoot().left.value
         val restingItem = historyItem.captureToImage()
 
         historyItem.performTouchInput { down(center) }
@@ -165,22 +170,23 @@ class DesignSystemContractTest {
         historyItem.performTouchInput { up() }
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("히스토리").assertIsSelected()
+        composeRule.onNodeWithContentDescription("기록").assertIsSelected()
 
-        composeRule.mainClock.advanceTimeBy(NavigationIndicatorMidpointMillis)
+        // 선택 pill 은 슬라이드하지 않고 선택된 탭 안에서 나타난다: 정착 후 pill 이
+        // 기록 탭 아이템 영역 안에 있어야 한다.
+        composeRule.mainClock.advanceTimeBy(NavigationSelectionSettleMillis)
         composeRule.waitForIdle()
-        val midpointX = indicator.getUnclippedBoundsInRoot().left.value
-        composeRule.mainClock.advanceTimeBy(NavigationIndicatorSettleMillis)
-        composeRule.waitForIdle()
-        val endX = indicator.getUnclippedBoundsInRoot().left.value
-
-        assertTrue("indicator did not move after selection", midpointX > startX)
-        assertTrue("indicator jumped without an intermediate frame", midpointX < endX)
-        assertEquals(
-            "indicator did not settle one item width away",
-            startX + NavigationItemWidthDp,
-            endX,
-            NavigationIndicatorPositionTolerance,
+        val pillBounds = composeRule.onNodeWithTag(
+            NavigationIndicatorTag,
+            useUnmergedTree = true,
+        ).getUnclippedBoundsInRoot()
+        val itemBounds = historyItem.getUnclippedBoundsInRoot()
+        assertTrue(
+            "selection pill escaped the selected item bounds",
+            pillBounds.left >= itemBounds.left &&
+                pillBounds.right <= itemBounds.right &&
+                pillBounds.top >= itemBounds.top &&
+                pillBounds.bottom <= itemBounds.bottom,
         )
     }
 
@@ -684,10 +690,8 @@ class DesignSystemContractTest {
         const val KeyboardDismissTimeoutMillis = 5_000L
         const val ChipCenterTolerance = 0.5f
         const val NavigationPressedFeedbackMillis = 120L
-        const val NavigationIndicatorMidpointMillis = 140L
-        const val NavigationIndicatorSettleMillis = 240L
-        const val NavigationItemWidthDp = 70f
-        const val NavigationIndicatorPositionTolerance = 0.5f
+        const val NavigationSelectionSettleMillis = 240L
+        const val NavigationCameraTag = "nyummy_bottom_navigation_camera"
 
         val ButtonMinimumWidth = 96.dp
         val ButtonFullWidth = 320.dp

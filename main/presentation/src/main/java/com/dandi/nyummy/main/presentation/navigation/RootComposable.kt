@@ -1,7 +1,6 @@
 package com.dandi.nyummy.main.presentation.navigation
 
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,10 +30,13 @@ import com.dandi.nyummy.common.presentation.component.NyummyBottomNavigation
 import com.dandi.nyummy.common.presentation.component.NyummyNavigationDestination
 import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
+import com.dandi.nyummy.collection.domain.CollectionPage
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.meal.domain.MealRecordPage
+import com.dandi.nyummy.shop.domain.ShopPage
 import kotlinx.coroutines.flow.Flow
 
 @Composable
@@ -53,19 +55,10 @@ fun RootComposable(
     DesignSystemTheme {
         val backStack = rememberNavBackStack(*startStack.toTypedArray())
         val navigationHelper = LocalNavigationHelper.current
-        // TODO: 매 recomposition마다 재생성됨. 각 탭 화면 구현 후 remember/top-level 상수로 호이스팅.
-        // TODO: Quest/Collection/Shop 탭은 화면 미구현으로 page=null(무동작). 화면 구현 후 각 Page 연결.
-        val tabs = listOf(
-            BottomNavTab(NyummyNavigationDestination.Home, HomePage),
-            BottomNavTab(NyummyNavigationDestination.History, HistoryPage),
-            BottomNavTab(NyummyNavigationDestination.Quest, null),
-            BottomNavTab(NyummyNavigationDestination.Collection, null),
-            BottomNavTab(NyummyNavigationDestination.Shop, null)
-        )
         val currentKey = backStack.lastOrNull() as? GenericNavKey
         val currentRoute = currentKey?.let { appRouteByPath[it.path] }
-        val currentTab = tabs.firstOrNull { tab ->
-            tab.page != null && tab.page.toRoute().path == currentKey?.path
+        val currentTab = bottomNavTabs.firstOrNull { tab ->
+            tab.page.toRoute().path == currentKey?.path
         }
 
         val messageHelper = LocalMessageHelper.current
@@ -186,22 +179,25 @@ fun RootComposable(
         }
 
         Scaffold(
-            modifier = modifier
-                .fillMaxSize()
-                .background(DesignSystemThemeImpl.designSystemColor.bgDefaultLevel1),
+            modifier = modifier.fillMaxSize(),
+            // 탭 화면들이 칠하는 배경(bgSurfaceIvory)과 동일하게 맞춰, 플로팅 바텀 네비 주변이
+            // 사각형 띠처럼 달라 보이지 않게 한다.
+            containerColor = DesignSystemThemeImpl.designSystemColor.bgSurfaceIvory,
             snackbarHost = { SnackbarHost(snackBarHostState) },
             bottomBar = {
                 if (currentRoute?.isBottomTab == true && currentTab != null) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .navigationBarsPadding(),
+                            .navigationBarsPadding()
+                            .padding(bottom = DesignSystemThemeImpl.designSystemSpacing.space8),
                         contentAlignment = Alignment.Center,
                     ) {
                         NyummyBottomNavigation(
                             selectedDestination = currentTab.destination,
+                            onCameraClick = { navigationHelper.navigateTo(MealRecordPage) },
                             onDestinationSelected = { destination ->
-                                tabs.firstOrNull { it.destination == destination }
+                                bottomNavTabs.firstOrNull { it.destination == destination }
                                     ?.page
                                     ?.let { navigationHelper.navigateTo(it) }
                             },
@@ -220,8 +216,15 @@ fun RootComposable(
 
 private data class BottomNavTab(
     val destination: NyummyNavigationDestination,
-    // FIXME: Home 외 탭 화면 미구현으로 임시 nullable. 모든 탭 화면 구현 후 반드시 non-nullable(Page)로 되돌릴 것.
-    val page: Page?,
+    val page: Page,
+)
+
+/** 하단 내비게이션 탭 ↔ 화면 매핑. Page object 는 전역 싱글턴이므로 top-level 상수로 둔다. */
+private val bottomNavTabs = listOf(
+    BottomNavTab(NyummyNavigationDestination.Home, HomePage),
+    BottomNavTab(NyummyNavigationDestination.History, HistoryPage),
+    BottomNavTab(NyummyNavigationDestination.Collection, CollectionPage),
+    BottomNavTab(NyummyNavigationDestination.Shop, ShopPage),
 )
 
 @Composable
