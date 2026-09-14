@@ -13,7 +13,6 @@
 
     <string name="history_empty_meals">아직 기록한 식사가 없어요</string>
 
-    <string name="history_macro_carb_short">탄수</string>
     <string name="history_macro_carbohydrate">탄수화물</string>
     <string name="history_macro_protein">단백질</string>
     <string name="history_macro_fat">지방</string>

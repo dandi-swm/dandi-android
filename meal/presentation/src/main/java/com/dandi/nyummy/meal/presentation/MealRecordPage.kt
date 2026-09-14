@@ -59,6 +59,7 @@ import com.dandi.nyummy.common.presentation.component.NyummyMascotPose
 import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.meal.presentation.component.MealCameraOverlay
 import com.dandi.nyummy.meal.presentation.component.MealCameraPreview
 import com.dandi.nyummy.meal.presentation.component.MealFeedCeremony
@@ -133,7 +134,7 @@ private fun MealRecordScreen(
     ) {
         if (isCeremonyPhase) {
             Image(
-                painter = painterResource(R.drawable.meal_ceremony_bg),
+                painter = painterResource(CommonR.drawable.nyummy_pattern_bg),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,

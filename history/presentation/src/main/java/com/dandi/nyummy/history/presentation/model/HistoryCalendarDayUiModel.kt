@@ -6,7 +6,6 @@ import com.dandi.nyummy.common.presentation.component.NyummyCalendarWeekday
 import com.dandi.nyummy.history.entity.DailyNutritionStatus
 import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
-import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.presentation.util.buildCalendarCells
 import com.dandi.nyummy.history.presentation.util.columnOf
 import kotlinx.collections.immutable.ImmutableList
@@ -116,9 +115,6 @@ fun progressOf(current: Int, goal: Int): Float =
 
 /** "2끼 기록" 형태의 기록 횟수 라벨입니다. */
 fun mealCountLabelOf(count: Int): String = "${count}끼 기록"
-
-/** 식사 행의 보조 정보("08:10 · 사진 기록") 라벨입니다. */
-fun mealRowMetaOf(meal: MealHistoryVO): String = "${meal.recordedAt} · 사진 기록"
 
 /** 천 단위 구분 기호가 들어간 숫자 라벨("2,129")입니다. */
 fun numberLabelOf(value: Int): String = String.format(Locale.KOREA, "%,d", value)

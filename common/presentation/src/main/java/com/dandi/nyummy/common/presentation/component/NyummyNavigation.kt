@@ -42,6 +42,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -327,6 +328,7 @@ private fun NyummyNavigationCameraButton(
         animationSpec = spring(stiffness = Spring.StiffnessMedium),
         label = "NyummyNavigationCameraButtonScale",
     )
+    val cameraDescription = stringResource(R.string.nav_camera_button)
 
     Box(
         modifier = modifier
@@ -349,7 +351,7 @@ private fun NyummyNavigationCameraButton(
                 onClick = onClick,
             )
             .testTag(NavigationCameraButtonTestTag)
-            .semantics { contentDescription = "식사 기록하기" },
+            .semantics { contentDescription = cameraDescription },
         contentAlignment = Alignment.Center,
     ) {
         Icon(

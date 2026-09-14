@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Nyummy</string>
     <string name="nav_back_button">Back to previous</string>
+    <string name="nav_camera_button">Record a meal</string>
 </resources>

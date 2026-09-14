@@ -3,22 +3,26 @@ package com.dandi.nyummy.history.presentation.component
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.res.painterResource
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
 import com.dandi.nyummy.common.presentation.R
 
 /**
  * 음식 아이콘 식별자에 해당하는 CDN 이미지를 그립니다.
- * 식별자가 비어 있으면(일일/상세 API 미제공) 임시로 로컬 밥 아이콘을 보여줍니다.
+ * 식별자가 비어 있거나(일일/상세 API 미제공) CDN 로드에 실패하면(404·오프라인)
+ * 로컬 밥 아이콘을 같은 크기로 보여줍니다.
  *
  * @param sizeFraction 슬롯 대비 아이콘이 차지하는 비율. 캘린더 셀처럼 아이콘을
- * 슬롯 가득 보여줘야 하는 곳에서 키워 쓴다. 폴백 밥 PNG 는 캔버스의 75% 만
- * 그림이라 같은 크기로 보이도록 비율을 보정한다.
+ * 슬롯 가득 보여줘야 하는 곳에서 키워 쓴다.
  */
 @Composable
 internal fun HistoryFoodIcon(
@@ -26,7 +30,9 @@ internal fun HistoryFoodIcon(
     modifier: Modifier = Modifier,
     sizeFraction: Float = FOOD_ICON_SLOT_FRACTION,
 ) {
-    if (foodIconId.isBlank()) {
+    var loadFailed by remember(foodIconId) { mutableStateOf(false) }
+    if (foodIconId.isBlank() || loadFailed) {
+        // 밥 PNG 는 캔버스의 75% 만 그림이라, CDN 아이콘과 같은 크기로 보이도록 보정한다.
         Image(
             bitmap = ImageBitmap.imageResource(R.drawable.nyummy_food_rice),
             contentDescription = null,
@@ -37,13 +43,14 @@ internal fun HistoryFoodIcon(
         )
         return
     }
-    // CDN 404·오프라인 시 슬롯이 비어 보이지 않도록 로컬 밥 아이콘으로 대체한다.
     AsyncImage(
         model = FOOD_ICON_URL_FORMAT.format(foodIconId),
         contentDescription = null,
         modifier = modifier.fillMaxSize(sizeFraction),
         contentScale = ContentScale.Fit,
-        error = painterResource(R.drawable.nyummy_food_rice),
+        onState = { state ->
+            if (state is AsyncImagePainter.State.Error) loadFailed = true
+        },
     )
 }
 

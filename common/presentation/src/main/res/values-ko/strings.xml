@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">냐미</string>
     <string name="nav_back_button">이전으로</string>
+    <string name="nav_camera_button">식사 기록하기</string>
 </resources>

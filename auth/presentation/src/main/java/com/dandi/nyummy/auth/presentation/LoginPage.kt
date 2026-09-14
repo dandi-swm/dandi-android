@@ -28,13 +28,18 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.common.presentation.component.DandiText
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 
@@ -72,7 +77,7 @@ private fun LoginPageContent(
     ) {
         // 은은한 패턴 배경이라 별도 스크림 없이도 전 영역에서 텍스트 가독성이 유지된다.
         Image(
-            painter = painterResource(R.drawable.auth_login_bg),
+            painter = painterResource(CommonR.drawable.nyummy_pattern_bg),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
@@ -261,52 +266,33 @@ private fun LoginSocialCircles(
     }
 }
 
-/** "계속하면 [이용약관] 및 [개인정보처리방침]에 / 동의하게 됩니다." 2줄 고지. 링크 부분만 밑줄. */
+/**
+ * "계속하면 [이용약관] 및 [개인정보처리방침]에 동의하게 됩니다." 고지.
+ * 한 문장으로 조합해 자동 줄바꿈되므로 긴 로케일에서도 잘리지 않고, 링크 부분만 밑줄 처리한다.
+ */
 @Composable
 private fun LoginTermsNotice(
     modifier: Modifier = Modifier,
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
-    val style = DesignSystemThemeImpl.typeScale.textRegularS
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Row {
-            DandiText(
-                text = stringResource(R.string.auth_login_terms_prefix),
-                color = colors.contentDefaultLevel2,
-                style = style,
-            )
-            DandiText(
-                text = stringResource(R.string.auth_login_terms_service),
-                color = colors.contentDefaultLevel2,
-                textDecoration = TextDecoration.Underline,
-                style = style,
-            )
-            DandiText(
-                text = stringResource(R.string.auth_login_terms_and),
-                color = colors.contentDefaultLevel2,
-                style = style,
-            )
-            DandiText(
-                text = stringResource(R.string.auth_login_terms_privacy),
-                color = colors.contentDefaultLevel2,
-                textDecoration = TextDecoration.Underline,
-                style = style,
-            )
-            DandiText(
-                text = stringResource(R.string.auth_login_terms_suffix),
-                color = colors.contentDefaultLevel2,
-                style = style,
-            )
-        }
-        DandiText(
-            text = stringResource(R.string.auth_login_terms_line2),
-            color = colors.contentDefaultLevel2,
-            style = style,
-        )
+    val underline = SpanStyle(textDecoration = TextDecoration.Underline)
+    val notice = buildAnnotatedString {
+        append(stringResource(R.string.auth_login_terms_prefix))
+        withStyle(underline) { append(stringResource(R.string.auth_login_terms_service)) }
+        append(stringResource(R.string.auth_login_terms_and))
+        withStyle(underline) { append(stringResource(R.string.auth_login_terms_privacy)) }
+        append(stringResource(R.string.auth_login_terms_suffix))
+        append(" ")
+        append(stringResource(R.string.auth_login_terms_line2))
     }
+    DandiText(
+        text = notice,
+        modifier = modifier,
+        color = colors.contentDefaultLevel2,
+        textAlign = TextAlign.Center,
+        maxLines = 3,
+        style = DesignSystemThemeImpl.typeScale.textRegularS,
+    )
 }
 
 private const val LogoTopWeight = 0.9f
