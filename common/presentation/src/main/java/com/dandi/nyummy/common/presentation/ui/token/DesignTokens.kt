@@ -61,6 +61,8 @@ internal enum class ArchiPaletteColors(val colorValue: Color) {
     BrandGoogleGreen(Color(0xFF34A853)),
     BrandGoogleRed(Color(0xFFEA4335)),
     BrandGoogleYellow(Color(0xFFFBBC05)),
+    BrandKakaoContainer(Color(0xFFFEE500)),
+    BrandKakaoSymbol(Color(0xFF191919)),
     Brick500(Color(0xFFB84848)),
     Brick600(Color(0xFFB84D4D)),
     Clay50(Color(0xFFFDEFE7)),
@@ -240,6 +242,7 @@ val DefaultDesignSystemColor = DesignSystemSemanticColors(
         bgProgressNutritionTrack = ArchiPaletteColors.ExtendedEvergreenTone95Chroma25.colorValue,
         bgCoachBubble = ArchiPaletteColors.ExtendedApricotTone97Chroma100.colorValue,
         bgSheetHandle = ArchiPaletteColors.ExtendedEvergreenTone90Chroma15Hue143.colorValue,
+        bgBrandKakao = ArchiPaletteColors.BrandKakaoContainer.colorValue,
     ),
     content = DesignSystemContentColors(
         contentDefaultLevel0 = ArchiPaletteColors.Cocoa900.colorValue,
@@ -285,6 +288,7 @@ val DefaultDesignSystemColor = DesignSystemSemanticColors(
         contentSelectionPrimary = ArchiPaletteColors.Evergreen900.colorValue,
         contentBrandWordmark = ArchiPaletteColors.Evergreen740.colorValue,
         contentIconEmail = ArchiPaletteColors.Evergreen725.colorValue,
+        contentBrandKakao = ArchiPaletteColors.BrandKakaoSymbol.colorValue,
     ),
     border = DesignSystemBorderColors(
         borderDefaultLevel1 = ArchiPaletteColors.Cream300.colorValue,

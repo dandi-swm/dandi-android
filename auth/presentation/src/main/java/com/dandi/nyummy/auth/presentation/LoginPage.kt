@@ -1,6 +1,5 @@
 package com.dandi.nyummy.auth.presentation
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,13 +9,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -25,12 +24,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -63,119 +61,117 @@ private fun LoginPageContent(
     uiState: LoginUIState,
     onIntent: (LoginIntent) -> Unit,
 ) {
+    val colors = DesignSystemThemeImpl.designSystemColor
+    val spacing = DesignSystemThemeImpl.designSystemSpacing
+    val enabled = !uiState.isLoading
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DesignSystemThemeImpl.designSystemColor.bgDefaultLevel0),
+            .background(colors.bgDefaultLevel0),
     ) {
+        // 은은한 패턴 배경이라 별도 스크림 없이도 전 영역에서 텍스트 가독성이 유지된다.
         Image(
             painter = painterResource(R.drawable.auth_login_bg),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
+            alignment = Alignment.TopCenter,
         )
-        LoginHeader(
-            modifier = Modifier.align(Alignment.TopCenter),
-        )
-        LoginActions(
-            enabled = !uiState.isLoading,
-            onIntent = onIntent,
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
-    }
-}
-
-@Composable
-private fun LoginHeader(
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = LoginHeaderTopPadding)
-            .padding(horizontal = DesignSystemThemeImpl.designSystemLayout.mobileGutter),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        DandiText(
-            text = stringResource(R.string.auth_login_wordmark),
-            modifier = Modifier.fillMaxWidth(),
-            color = DesignSystemThemeImpl.designSystemColor.contentBrandWordmark,
-            textAlign = TextAlign.Center,
-            style = DesignSystemThemeImpl.typeScale.titleStrongL,
-        )
-        Spacer(modifier = Modifier.height(LoginWordmarkHeadlineSpacing))
-        DandiText(
-            text = stringResource(R.string.auth_login_headline),
-            modifier = Modifier.fillMaxWidth(),
-            color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel0,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            style = DesignSystemThemeImpl.typeScale.titleStrongXL,
-        )
-        Spacer(modifier = Modifier.height(LoginHeadlineSubtitleSpacing))
-        DandiText(
-            text = stringResource(R.string.auth_login_subtitle),
-            modifier = Modifier.fillMaxWidth(),
-            color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel1,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            style = DesignSystemThemeImpl.typeScale.textRegularL,
-        )
-    }
-}
-
-@Composable
-private fun LoginActions(
-    enabled: Boolean,
-    onIntent: (LoginIntent) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val scrimBrush = Brush.verticalGradient(
-        0f to DesignSystemThemeImpl.designSystemColor.bgScrimGradientTop,
-        ScrimGradientMiddleStop to DesignSystemThemeImpl.designSystemColor.bgScrimGradientMiddle,
-        1f to DesignSystemThemeImpl.designSystemColor.bgScrimGradientBottom,
-    )
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(LoginActionsPanelHeight)
-            .background(scrimBrush)
-            .navigationBarsPadding()
-            .padding(horizontal = DesignSystemThemeImpl.designSystemLayout.mobileGutter)
-            .padding(bottom = LoginActionsBottomPadding),
-        verticalArrangement = Arrangement.spacedBy(
-            space = DesignSystemThemeImpl.designSystemSpacing.space24,
-            alignment = Alignment.Bottom,
-        ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Image(
-            painter = painterResource(R.drawable.auth_kakao_login_button),
-            contentDescription = stringResource(R.string.auth_login_kakao),
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(KakaoButtonAspectRatio)
-                .clip(DesignSystemThemeImpl.designSystemShape.buttonDefault)
-                .clickable(enabled = enabled, role = Role.Button) {
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(horizontal = DesignSystemThemeImpl.designSystemLayout.mobileGutter),
+        ) {
+            Spacer(modifier = Modifier.weight(LogoTopWeight))
+            LoginWordmark(modifier = Modifier.align(Alignment.CenterHorizontally))
+            Spacer(modifier = Modifier.weight(LogoHeadlineWeight))
+            DandiText(
+                text = stringResource(R.string.auth_login_headline_line1),
+                color = colors.contentDefaultLevel0,
+                style = DesignSystemThemeImpl.typeScale.displayRegularXXL,
+            )
+            DandiText(
+                text = stringResource(R.string.auth_login_headline_line2),
+                color = colors.contentDefaultLevel0,
+                style = DesignSystemThemeImpl.typeScale.displayRegularXXL,
+            )
+            Spacer(modifier = Modifier.height(spacing.space12))
+            DandiText(
+                text = stringResource(R.string.auth_login_subtitle),
+                color = colors.contentDefaultLevel1,
+                maxLines = 2,
+                style = DesignSystemThemeImpl.typeScale.textRegularL,
+            )
+            Spacer(modifier = Modifier.height(spacing.space24))
+            KakaoLoginButton(
+                enabled = enabled,
+                onClick = {
                     // TODO: 임시로 클릭시 테스트 계정으로 로그인
                     onIntent(LoginIntent.ClickTestLogin)
                     //onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO))
                 },
-            contentScale = ContentScale.Fit,
-        )
-        LoginOrDivider()
-        LoginSocialCircles(
-            enabled = enabled,
-            onIntent = onIntent,
+            )
+            Spacer(modifier = Modifier.height(spacing.space16))
+            LoginOrDivider(modifier = Modifier.align(Alignment.CenterHorizontally))
+            Spacer(modifier = Modifier.height(spacing.space16))
+            LoginSocialCircles(
+                enabled = enabled,
+                onIntent = onIntent,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+            Spacer(modifier = Modifier.height(spacing.space16))
+            LoginTermsNotice(modifier = Modifier.align(Alignment.CenterHorizontally))
+            Spacer(modifier = Modifier.height(spacing.space16))
+        }
+    }
+}
+
+/** 새싹이 돋은 `냐미` 로고 이미지. */
+@Composable
+private fun LoginWordmark(
+    modifier: Modifier = Modifier,
+) {
+    Image(
+        painter = painterResource(R.drawable.auth_logo),
+        contentDescription = stringResource(R.string.auth_login_wordmark),
+        modifier = modifier.width(LogoWidth),
+        contentScale = ContentScale.Fit,
+    )
+}
+
+/** 카카오 심볼 + 라벨을 중앙 정렬한 카카오 브랜드 버튼. */
+@Composable
+private fun KakaoLoginButton(
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = DesignSystemThemeImpl.designSystemColor
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(KakaoButtonHeight)
+            .clip(DesignSystemThemeImpl.designSystemShape.buttonDefault)
+            .background(colors.bgBrandKakao)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.auth_icon_kakao_bubble),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = KakaoBubbleStartPadding)
+                .size(KakaoBubbleIconSize),
+            tint = colors.contentBrandKakao,
         )
         DandiText(
-            text = stringResource(R.string.auth_login_terms),
-            modifier = Modifier.fillMaxWidth(),
-            color = DesignSystemThemeImpl.designSystemColor.contentInverseDefault,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            style = DesignSystemThemeImpl.typeScale.textRegularS,
+            text = stringResource(R.string.auth_login_kakao),
+            color = colors.contentBrandKakao,
+            style = DesignSystemThemeImpl.typeScale.textStrongL,
         )
     }
 }
@@ -193,18 +189,18 @@ private fun LoginOrDivider(
             modifier = Modifier
                 .width(LoginDividerLineWidth)
                 .height(LoginDividerLineHeight)
-                .background(DesignSystemThemeImpl.designSystemColor.contentInverseDefault),
+                .background(DesignSystemThemeImpl.designSystemColor.borderDefaultLevel0),
         )
         DandiText(
             text = stringResource(R.string.auth_login_or),
-            color = DesignSystemThemeImpl.designSystemColor.contentInverseDefault,
+            color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel2,
             style = DesignSystemThemeImpl.typeScale.textRegularS,
         )
         Box(
             modifier = Modifier
                 .width(LoginDividerLineWidth)
                 .height(LoginDividerLineHeight)
-                .background(DesignSystemThemeImpl.designSystemColor.contentInverseDefault),
+                .background(DesignSystemThemeImpl.designSystemColor.borderDefaultLevel0),
         )
     }
 }
@@ -265,18 +261,65 @@ private fun LoginSocialCircles(
     }
 }
 
-private val LoginHeaderTopPadding = 300.dp
-private val LoginWordmarkHeadlineSpacing = 6.dp
-private val LoginHeadlineSubtitleSpacing = 10.dp
-private val LoginActionsPanelHeight = 424.dp
-private val LoginActionsBottomPadding = 40.dp
-private val LoginDividerLineWidth = 110.dp
+/** "계속하면 [이용약관] 및 [개인정보처리방침]에 / 동의하게 됩니다." 2줄 고지. 링크 부분만 밑줄. */
+@Composable
+private fun LoginTermsNotice(
+    modifier: Modifier = Modifier,
+) {
+    val colors = DesignSystemThemeImpl.designSystemColor
+    val style = DesignSystemThemeImpl.typeScale.textRegularS
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row {
+            DandiText(
+                text = stringResource(R.string.auth_login_terms_prefix),
+                color = colors.contentDefaultLevel2,
+                style = style,
+            )
+            DandiText(
+                text = stringResource(R.string.auth_login_terms_service),
+                color = colors.contentDefaultLevel2,
+                textDecoration = TextDecoration.Underline,
+                style = style,
+            )
+            DandiText(
+                text = stringResource(R.string.auth_login_terms_and),
+                color = colors.contentDefaultLevel2,
+                style = style,
+            )
+            DandiText(
+                text = stringResource(R.string.auth_login_terms_privacy),
+                color = colors.contentDefaultLevel2,
+                textDecoration = TextDecoration.Underline,
+                style = style,
+            )
+            DandiText(
+                text = stringResource(R.string.auth_login_terms_suffix),
+                color = colors.contentDefaultLevel2,
+                style = style,
+            )
+        }
+        DandiText(
+            text = stringResource(R.string.auth_login_terms_line2),
+            color = colors.contentDefaultLevel2,
+            style = style,
+        )
+    }
+}
+
+private const val LogoTopWeight = 0.9f
+private const val LogoHeadlineWeight = 1f
+private val LogoWidth = 150.dp
+private val KakaoButtonHeight = 56.dp
+private val KakaoBubbleStartPadding = 20.dp
+private val KakaoBubbleIconSize = 20.dp
+private val LoginDividerLineWidth = 72.dp
 private val LoginDividerLineHeight = 1.dp
 private val LoginSocialCircleSize = 56.dp
 private val LoginEmailIconSize = 24.dp
 private val LoginEmailCircleBorderWidth = 1.dp
-private const val KakaoButtonAspectRatio = 600f / 90f
-private const val ScrimGradientMiddleStop = 0.35f
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
