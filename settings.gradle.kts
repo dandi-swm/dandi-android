@@ -50,6 +50,16 @@ include(":history:domain")
 include(":history:data")
 include(":history:entity")
 
+include(":collection:presentation")
+include(":collection:domain")
+include(":collection:data")
+include(":collection:entity")
+
+include(":shop:presentation")
+include(":shop:domain")
+include(":shop:data")
+include(":shop:entity")
+
 include(":tti")
 
 include(":baselineprofile")

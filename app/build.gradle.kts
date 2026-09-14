@@ -95,6 +95,16 @@ dependencies {
     implementation(project(":history:data"))
     implementation(project(":history:entity"))
 
+    implementation(project(":collection:presentation"))
+    implementation(project(":collection:domain"))
+    implementation(project(":collection:data"))
+    implementation(project(":collection:entity"))
+
+    implementation(project(":shop:presentation"))
+    implementation(project(":shop:domain"))
+    implementation(project(":shop:data"))
+    implementation(project(":shop:entity"))
+
     implementation(project(":auth:presentation"))
     implementation(project(":auth:domain"))
     implementation(project(":auth:data"))

@@ -1,0 +1,7 @@
+<resources>
+    <string name="shop_title">상점</string>
+    <string name="shop_coming_title">상점을 준비하고 있어요</string>
+    <string name="shop_coming_body">냐미를 꾸밀 아이템들을\n하나씩 채워가고 있어요</string>
+    <string name="shop_badge_coming_soon">준비 중</string>
+    <string name="shop_mascot_content_description">냐미</string>
+</resources>
