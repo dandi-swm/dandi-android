@@ -12,6 +12,9 @@ sealed interface HistoryIntent : MviIntent {
     /** 캘린더 헤더의 다음 달 버튼을 눌렀습니다. */
     data object ClickNextMonth : HistoryIntent
 
+    /** 월 헤더의 `오늘` 칩을 눌러 오늘 날짜로 이동했다. */
+    data object ClickToday : HistoryIntent
+
     /** 캘린더에서 날짜 하나를 선택했습니다. */
     data class SelectDate(val date: HistoryDateVO) : HistoryIntent
 

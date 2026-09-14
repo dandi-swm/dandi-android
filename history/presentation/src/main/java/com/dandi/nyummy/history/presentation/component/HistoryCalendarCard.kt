@@ -1,7 +1,7 @@
 package com.dandi.nyummy.history.presentation.component
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,18 +12,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.component.DandiText
-import com.dandi.nyummy.common.presentation.component.NyummyCalendarDay
 import com.dandi.nyummy.common.presentation.component.NyummyCalendarHeaderAction
 import com.dandi.nyummy.common.presentation.component.NyummyCalendarHeaderDirection
 import com.dandi.nyummy.common.presentation.component.NyummyCalendarWeekday
@@ -34,10 +38,12 @@ import com.dandi.nyummy.history.presentation.R
 import com.dandi.nyummy.history.presentation.model.HistoryCalendarDayUiModel
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
 
 /**
- * 월 이동 헤더, 요일 헤더, 6주 날짜 그리드, 상태 범례로 이루어진 월간 캘린더 카드입니다.
+ * 월 이동 헤더(오늘 칩 포함), 요일 헤더, 6주 날짜 그리드, 하단 캡션으로 이루어진 월간 캘린더입니다.
+ *
+ * 카드 컨테이너 없이 화면 배경 위에 플랫하게 놓이고, 기록이 있는 날은 음식 아이콘과
+ * 초록 도트로 표시한다. 선택한 날은 소프트 그린 블록 + 진초록 원 안의 날짜로 강조한다.
  */
 @Composable
 internal fun HistoryCalendarCard(
@@ -46,58 +52,57 @@ internal fun HistoryCalendarCard(
     selectedDate: HistoryDateVO,
     onClickPreviousMonth: () -> Unit,
     onClickNextMonth: () -> Unit,
+    onClickToday: () -> Unit,
     onSelectDate: (HistoryDateVO) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
-    Surface(
-        modifier = modifier.width(CalendarCardWidth),
-        shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius20),
-        color = colors.bgSurfaceCardSubtle,
-        contentColor = colors.contentDefaultLevel0,
-        border = BorderStroke(CalendarCardBorderWidth, colors.borderCalendarOutline),
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = DesignSystemThemeImpl.designSystemLayout.mobileGutter),
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = CalendarCardInnerInset),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            CalendarMonthHeader(
-                monthLabel = monthLabel,
-                onClickPreviousMonth = onClickPreviousMonth,
-                onClickNextMonth = onClickNextMonth,
-            )
-            CalendarWeekdayHeader()
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(CalendarDividerHeight)
-                    .background(colors.borderCalendarGrid),
-            )
-            days.chunked(GRID_COLUMN_COUNT).forEach { week ->
-                Row {
-                    week.forEach { day ->
-                        NyummyCalendarDay(
-                            day = day.dayLabel,
-                            onClick = { onSelectDate(day.date) },
-                            selected = day.inCurrentMonth && day.date == selectedDate,
-                            inCurrentMonth = day.inCurrentMonth,
-                            weekday = day.weekday,
-                            nutritionStatus = day.nutritionStatus,
-                            firstFoodIcon = day.foodIconIds.getOrNull(0)?.let { iconId ->
-                                { HistoryFoodIcon(iconId) }
-                            },
-                            secondFoodIcon = day.foodIconIds.getOrNull(1)?.let { iconId ->
-                                { HistoryFoodIcon(iconId) }
-                            },
-                        )
-                    }
+        CalendarMonthHeader(
+            monthLabel = monthLabel,
+            onClickPreviousMonth = onClickPreviousMonth,
+            onClickNextMonth = onClickNextMonth,
+            onClickToday = onClickToday,
+        )
+        Spacer(Modifier.height(CalendarHeaderBottomGap))
+        CalendarWeekdayHeader()
+        Spacer(Modifier.height(CalendarWeekdayBottomGap))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(CalendarDividerHeight)
+                .background(colors.borderCalendarGrid),
+        )
+        Spacer(Modifier.height(CalendarGridTopGap))
+        days.chunked(GRID_COLUMN_COUNT).forEach { week ->
+            Row(modifier = Modifier.fillMaxWidth()) {
+                week.forEach { day ->
+                    HistoryCalendarDayCell(
+                        day = day,
+                        selected = day.inCurrentMonth && day.date == selectedDate,
+                        onClick = { onSelectDate(day.date) },
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
-            CalendarLegend(
-                modifier = Modifier.padding(
-                    top = CalendarLegendTopGap,
-                    bottom = CalendarLegendBottomGap,
-                ),
+        }
+        Spacer(Modifier.height(CalendarCaptionTopGap))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                painter = painterResource(R.drawable.ic_history_bowl),
+                contentDescription = null,
+                modifier = Modifier.size(CaptionIconSize),
+                tint = colors.contentDefaultLevel2,
+            )
+            Spacer(Modifier.width(DesignSystemThemeImpl.designSystemSpacing.space8))
+            DandiText(
+                text = stringResource(R.string.history_calendar_caption),
+                color = colors.contentDefaultLevel2,
+                style = DesignSystemThemeImpl.typeScale.textRegularS,
             )
         }
     }
@@ -108,25 +113,42 @@ private fun CalendarMonthHeader(
     monthLabel: String,
     onClickPreviousMonth: () -> Unit,
     onClickNextMonth: () -> Unit,
+    onClickToday: () -> Unit,
 ) {
+    val colors = DesignSystemThemeImpl.designSystemColor
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = CalendarHeaderVerticalGap),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        DandiText(
+            text = monthLabel,
+            modifier = Modifier.weight(1f),
+            color = colors.contentDefaultLevel0,
+            style = DesignSystemThemeImpl.typeScale.displayRegularL,
+            overflow = TextOverflow.Clip,
+        )
+        Box(
+            modifier = Modifier
+                .clip(DesignSystemThemeImpl.designSystemShape.pill)
+                .background(colors.bgSuccessSoft)
+                .clickable(role = Role.Button, onClick = onClickToday)
+                .padding(
+                    horizontal = DesignSystemThemeImpl.designSystemSpacing.space12,
+                    vertical = DesignSystemThemeImpl.designSystemSpacing.space8,
+                ),
+        ) {
+            DandiText(
+                text = stringResource(R.string.history_today_chip),
+                color = colors.contentAccentSage,
+                style = DesignSystemThemeImpl.typeScale.labelStrongS,
+            )
+        }
+        Spacer(Modifier.width(DesignSystemThemeImpl.designSystemSpacing.space8))
         NyummyCalendarHeaderAction(
             direction = NyummyCalendarHeaderDirection.Previous,
             onClick = onClickPreviousMonth,
         )
-        DandiText(
-            text = monthLabel,
-            modifier = Modifier.weight(1f),
-            color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel0,
-            style = DesignSystemThemeImpl.typeScale.displayRegularM,
-            textAlign = TextAlign.Center,
-            overflow = TextOverflow.Clip,
-        )
+        Spacer(Modifier.width(DesignSystemThemeImpl.designSystemSpacing.space8))
         NyummyCalendarHeaderAction(
             direction = NyummyCalendarHeaderDirection.Next,
             onClick = onClickNextMonth,
@@ -137,11 +159,11 @@ private fun CalendarMonthHeader(
 @Composable
 private fun CalendarWeekdayHeader() {
     val colors = DesignSystemThemeImpl.designSystemColor
-    Row(modifier = Modifier.padding(bottom = CalendarWeekdayBottomGap)) {
+    Row(modifier = Modifier.fillMaxWidth()) {
         WEEKDAY_LABELS.forEachIndexed { index, label ->
             DandiText(
                 text = label,
-                modifier = Modifier.width(CalendarCellWidth),
+                modifier = Modifier.weight(1f),
                 color = when (index) {
                     0 -> colors.contentCalendarSunday
                     WEEKDAY_LABELS.lastIndex -> colors.contentCalendarSaturday
@@ -154,64 +176,90 @@ private fun CalendarWeekdayHeader() {
     }
 }
 
+/**
+ * 날짜 셀. 날짜 숫자 아래에 기록 음식 아이콘(최대 2개)과 기록 도트를 쌓는다.
+ * 선택된 날은 셀 전체를 소프트 그린 라운드 블록으로 감싸고 날짜를 진초록 원으로 강조한다.
+ */
 @Composable
-private fun CalendarLegend(modifier: Modifier = Modifier) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(CalendarLegendItemGap),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        CalendarLegendItem(
-            color = colors.dataEvaluationPositive,
-            label = stringResource(R.string.history_legend_in_range),
-        )
-        CalendarLegendItem(
-            color = colors.dataEvaluationNegative,
-            label = stringResource(R.string.history_legend_out_of_range),
-        )
-        CalendarLegendItem(
-            color = colors.dataEvaluationUnrecorded,
-            label = stringResource(R.string.history_legend_no_record),
-        )
-    }
-}
-
-@Composable
-private fun CalendarLegendItem(
-    color: androidx.compose.ui.graphics.Color,
-    label: String,
+private fun HistoryCalendarDayCell(
+    day: HistoryCalendarDayUiModel,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    val colors = DesignSystemThemeImpl.designSystemColor
+    val hasRecord = day.foodIconIds.isNotEmpty()
+    val dateColor = when {
+        !day.inCurrentMonth -> colors.contentCalendarAdjacentMonth
+        day.weekday == NyummyCalendarWeekday.Sunday -> colors.contentCalendarSunday
+        day.weekday == NyummyCalendarWeekday.Saturday -> colors.contentCalendarSaturday
+        else -> colors.contentCalendarDate
+    }
+
+    Column(
+        modifier = modifier
+            .height(CalendarCellHeight)
+            .padding(CalendarCellPadding)
+            .clip(RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius12))
+            .background(if (selected) colors.bgCalendarSelected else Color.Transparent)
+            .clickable(role = Role.Button, onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Spacer(Modifier.height(CalendarCellTopGap))
         Box(
             modifier = Modifier
-                .size(CalendarLegendDotSize)
-                .background(color, DesignSystemThemeImpl.designSystemShape.pill),
-        )
-        Spacer(Modifier.width(CalendarLegendDotGap))
-        DandiText(
-            text = label,
-            color = DesignSystemThemeImpl.designSystemColor.contentNutritionLabel,
-            style = DesignSystemThemeImpl.typeScale.labelStrongS,
-        )
+                .size(CalendarDateCircleSize)
+                .clip(CircleShape)
+                .background(if (selected) colors.dataCalendarToday else Color.Transparent),
+            contentAlignment = Alignment.Center,
+        ) {
+            DandiText(
+                text = day.dayLabel,
+                color = if (selected) colors.contentInverseDefault else dateColor,
+                style = DesignSystemThemeImpl.typeScale.labelStrongS,
+            )
+        }
+        if (hasRecord) {
+            Spacer(Modifier.height(CalendarIconTopGap))
+            Row(horizontalArrangement = Arrangement.spacedBy(CalendarIconGap)) {
+                day.foodIconIds.forEach { iconId ->
+                    Box(
+                        modifier = Modifier.size(CalendarFoodIconSize),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        HistoryFoodIcon(iconId, sizeFraction = CalendarFoodIconFraction)
+                    }
+                }
+            }
+            Spacer(Modifier.height(CalendarDotTopGap))
+            Box(
+                modifier = Modifier
+                    .size(CalendarRecordDotSize)
+                    .background(colors.dataCalendarRecorded, CircleShape),
+            )
+        }
     }
 }
 
 private const val GRID_COLUMN_COUNT = 7
 private val WEEKDAY_LABELS = listOf("일", "월", "화", "수", "목", "금", "토")
 
-private val CalendarCardWidth = 366.dp
-private val CalendarCardBorderWidth = 1.dp
-private val CalendarCardInnerInset = 8.dp
-private val CalendarHeaderVerticalGap = 8.dp
-private val CalendarCellWidth = 50.dp
-private val CalendarWeekdayBottomGap = 6.dp
+private val CalendarHeaderBottomGap = 16.dp
+private val CalendarWeekdayBottomGap = 8.dp
 private val CalendarDividerHeight = 1.dp
-private val CalendarLegendTopGap = 17.dp
-private val CalendarLegendBottomGap = 14.dp
-private val CalendarLegendItemGap = 18.dp
-private val CalendarLegendDotSize = 6.dp
-private val CalendarLegendDotGap = 6.dp
+private val CalendarGridTopGap = 4.dp
+private val CalendarCellHeight = 74.dp
+private val CalendarCellPadding = 2.dp
+private val CalendarCellTopGap = 4.dp
+private val CalendarDateCircleSize = 20.dp
+private val CalendarIconTopGap = 1.dp
+private val CalendarIconGap = 1.dp
+private val CalendarFoodIconSize = 24.dp
+private const val CalendarFoodIconFraction = 0.95f
+private val CalendarDotTopGap = 2.dp
+private val CalendarRecordDotSize = 5.dp
+private val CalendarCaptionTopGap = 8.dp
+private val CaptionIconSize = 18.dp
 
 @Preview(showBackground = true, widthDp = 390)
 @Composable
@@ -223,6 +271,7 @@ private fun HistoryCalendarCardPreview() {
             selectedDate = HistoryDateVO(2026, 7, 18),
             onClickPreviousMonth = {},
             onClickNextMonth = {},
+            onClickToday = {},
             onSelectDate = {},
         )
     }

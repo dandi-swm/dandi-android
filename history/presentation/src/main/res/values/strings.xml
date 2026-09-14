@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="history_title">식사 히스토리</string>
-    <string name="history_subtitle">날짜를 선택하면 식사와 하루 영양 현황이 바뀌어요</string>
+    <string name="history_title">식사 기록</string>
+    <string name="history_subtitle">차곡차곡 쌓이는 나의 식습관</string>
 
-    <string name="history_legend_in_range">목표 범위</string>
-    <string name="history_legend_out_of_range">목표 범위 밖</string>
-    <string name="history_legend_no_record">기록 없음</string>
+    <string name="history_today_chip">오늘</string>
+    <string name="history_calendar_caption">한눈에 모아보는 한 달의 식사</string>
 
-    <string name="history_nutrition_title">하루 영양 현황</string>
+    <string name="history_nutrition_title">하루 영양</string>
     <string name="history_nutrition_collapse">접기</string>
-    <string name="history_nutrition_expand">펼치기</string>
+    <string name="history_nutrition_expand">자세히</string>
     <string name="history_nutrition_loading">영양 정보를 불러오는 중</string>
 
     <string name="history_empty_meals">아직 기록한 식사가 없어요</string>
-    <string name="history_day_meals_title">%1$s 식사</string>
 
     <string name="history_macro_carb_short">탄수</string>
     <string name="history_macro_carbohydrate">탄수화물</string>

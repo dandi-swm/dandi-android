@@ -53,6 +53,9 @@ class HistoryViewModel @Inject constructor(
 
             is HistoryIntent.SelectDate -> selectDate(intent.date)
 
+            // 오늘 날짜 선택과 동일한 경로 — 다른 달이면 그 달을 로드하며 선택한다.
+            HistoryIntent.ClickToday -> selectDate(todayDate())
+
             HistoryIntent.ToggleNutritionSummary ->
                 dispatch(HistoryReducerEvent.NutritionSummaryToggled)
 

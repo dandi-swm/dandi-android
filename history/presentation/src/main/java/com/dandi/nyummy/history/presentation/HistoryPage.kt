@@ -33,7 +33,7 @@ import com.dandi.nyummy.history.presentation.component.HistoryCalendarCard
 import com.dandi.nyummy.history.presentation.component.HistoryDailySection
 import com.dandi.nyummy.history.presentation.component.HistoryMealDetailOverlay
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
-import com.dandi.nyummy.history.presentation.model.dayLabelOf
+import com.dandi.nyummy.history.presentation.model.dayTitleOf
 import com.dandi.nyummy.history.presentation.model.mealCountLabelOf
 import kotlinx.collections.immutable.persistentListOf
 
@@ -98,14 +98,12 @@ private fun HistoryScreen(
                 selectedDate = uiState.selectedDate,
                 onClickPreviousMonth = { onIntent(HistoryIntent.ClickPreviousMonth) },
                 onClickNextMonth = { onIntent(HistoryIntent.ClickNextMonth) },
+                onClickToday = { onIntent(HistoryIntent.ClickToday) },
                 onSelectDate = { onIntent(HistoryIntent.SelectDate(it)) },
             )
             Spacer(Modifier.height(DailySectionTopGap))
             HistoryDailySection(
-                dayTitle = stringResource(
-                    R.string.history_day_meals_title,
-                    dayLabelOf(uiState.selectedDate),
-                ),
+                dayTitle = dayTitleOf(uiState.selectedDate),
                 mealCountLabel = mealCountLabelOf(uiState.selectedDayMeals.size),
                 nutrition = uiState.dailyNutrition,
                 isNutritionExpanded = uiState.isNutritionExpanded,
