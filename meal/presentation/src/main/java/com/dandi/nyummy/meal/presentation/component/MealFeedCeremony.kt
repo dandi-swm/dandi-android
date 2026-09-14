@@ -177,6 +177,26 @@ internal fun MealFeedCeremony(
 
             CeremonyStage.Idle -> {
                 val chain = (chainResult as? MealPixelChainResult.Ready)?.chain
+                // 배달 중(응답 대기)에는 냐미와 카드 사이를 점선 트레일로 이어 준다.
+                if (stageSize != IntSize.Zero && !feedReady && !fedToCat) {
+                    val trailColor = colors.dataCalendarRecorded
+                    Canvas(Modifier.fillMaxSize()) {
+                        val catBottom = CatTopPadding.toPx() + CatDisplayWidth.toPx()
+                        val itemTop = itemRestCenterY(size.height) -
+                            FeedItemCardSize.toPx() / 2f
+                        val startY = catBottom + TrailEndGap.toPx()
+                        val endY = itemTop - TrailEndGap.toPx()
+                        var y = startY
+                        while (y < endY) {
+                            drawCircle(
+                                color = trailColor,
+                                radius = TrailDotRadius.toPx(),
+                                center = Offset(center.x, y),
+                            )
+                            y += TrailDotSpacing.toPx()
+                        }
+                    }
+                }
                 if (chain != null && stageSize != IntSize.Zero) {
                     val cardHalfPx = with(density) { FeedItemCardSize.toPx() } / 2f
                     val itemCenterY = with(density) {
@@ -431,6 +451,11 @@ private val FeedGeometrySlack = 24.dp
 /** 캡션 한 줄 높이의 절반 근사값(앵커 중앙 정렬용). */
 private val CaptionHalfHeight = 14.dp
 
+/** 배달 중 냐미↔카드 사이 점선 트레일의 도트 크기·간격·양끝 여백. */
+private val TrailDotRadius = 2.5.dp
+private val TrailDotSpacing = 14.dp
+private val TrailEndGap = 12.dp
+
 /** 대기 중 상단에서 엎드려 조는 냐미 (홈·프리뷰와 동일 시트). */
 private val CeremonyCatSleepSheet = NyummySpriteSheet(
     imageRes = R.drawable.nyami_sleep_loop_grid_136,
@@ -451,7 +476,7 @@ private val CeremonyCatWakeSheet = NyummySpriteSheet(
     frameDurationMillis = 100,
 )
 
-private val CatDisplayWidth = 112.dp
+private val CatDisplayWidth = 148.dp
 private val CatTopPadding = 16.dp
 
 /** 냐미 중심을 기준으로 먹이기가 성립하는 반경. 근접 축소와 함께 '갖다 대는' 감각을 만든다. */

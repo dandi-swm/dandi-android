@@ -20,14 +20,17 @@ sealed interface MealRecordIntent : MviIntent {
     /** 촬영에 실패했습니다. */
     data object CaptureFailed : MealRecordIntent
 
-    /** 촬영본 확인 중 `취소` 버튼을 눌러 재촬영으로 돌아갑니다. */
+    /** 촬영본 확인 중 `다시 찍기` 버튼을 눌러 재촬영으로 돌아갑니다. */
     data object ClickRetake : MealRecordIntent
 
-    /** 촬영본 확인 중 `먹이기` 버튼을 눌렀습니다. */
+    /** 촬영본 확인 중 `냐미에게 주기` 버튼을 눌렀습니다. */
     data object ClickSubmit : MealRecordIntent
 
-    /** 업로드 성공 후 `다음` 버튼(또는 백·닫기)을 눌러 세리머니를 마무리합니다. */
+    /** 업로드 성공 후 `다음` 버튼(또는 백)을 눌러 세리머니를 마치고 완료 화면으로 넘어갑니다. */
     data object ClickNext : MealRecordIntent
+
+    /** 완료 화면에서 `완료` 버튼(또는 백·닫기)을 눌러 화면을 마무리합니다. */
+    data object ClickDone : MealRecordIntent
 
     /** 닫기(X) 버튼을 눌렀습니다. */
     data object ClickClose : MealRecordIntent

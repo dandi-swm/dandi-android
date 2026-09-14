@@ -2,19 +2,26 @@
     <string name="meal_record_title">Meal Record</string>
     <string name="meal_record_close_content_description">Close</string>
     <string name="meal_record_subtitle">Snap your food and analysis starts right away 🌱</string>
-    <string name="meal_record_camera_hint">Fit the food inside the frame</string>
-    <string name="meal_record_shutter_content_description">Take photo</string>
-    <string name="meal_record_retake">Cancel</string>
-    <string name="meal_record_submit">Feed</string>
+    <string name="meal_record_cancel">Cancel</string>
+    <string name="meal_record_capture">Capture</string>
+    <string name="meal_record_retake">Retake</string>
+    <string name="meal_record_submit">Give to Nyami</string>
     <string name="meal_record_permission_denied_title">Camera permission needed</string>
     <string name="meal_record_permission_denied_body">Allow camera access to record your meal.\nIf it stays off, enable it in Settings &gt; Apps &gt; Permissions.</string>
     <string name="meal_record_permission_retry">Allow camera</string>
     <string name="meal_record_capture_failed">Couldn\'t take the photo. Please try again.</string>
     <string name="meal_record_captured_photo_content_description">Captured food photo</string>
-    <string name="meal_record_next">Next</string>
+    <string name="meal_record_wordmark" translatable="false">nyummy</string>
     <string name="meal_record_feeding_in_progress">Delivering to Nyami…</string>
+    <string name="meal_record_ceremony_title_line1">Delivering a meal</string>
+    <string name="meal_record_ceremony_title_line2">to Nyami</string>
+    <string name="meal_record_ceremony_subtitle">Preparing a tasty record</string>
     <string name="meal_record_feed_item_content_description">Food turned into a pixel item</string>
     <string name="meal_record_feed_to_cat_hint">Feed it to Nyami!</string>
     <string name="meal_record_feed_action">Feed to Nyami</string>
     <string name="meal_record_cat_content_description">Nyami</string>
+    <string name="meal_record_done_title">Nyami loved the meal!</string>
+    <string name="meal_record_done_body">Keep building healthy days\ntogether with Nyami</string>
+    <string name="meal_record_done">Done</string>
+    <string name="meal_record_done_mascot_content_description">Nyami enjoying the meal</string>
 </resources>

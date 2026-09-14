@@ -13,6 +13,9 @@ sealed interface MealCameraPhase {
 
     /** 먹이기 세리머니(픽셀화 연출) 중이며 업로드가 진행되는 단계입니다. */
     data class Feeding(val photoPath: String) : MealCameraPhase
+
+    /** 냐미가 다 먹은 뒤 기록 완료를 확인하는 단계입니다. 촬영 파일은 이미 정리된 상태입니다. */
+    data object Done : MealCameraPhase
 }
 
 /** 촬영본이 있는 단계(확인·세리머니)의 사진 경로, 그 외에는 null 입니다. */
@@ -21,6 +24,7 @@ val MealCameraPhase.photoPathOrNull: String?
         MealCameraPhase.Preview -> null
         is MealCameraPhase.Captured -> photoPath
         is MealCameraPhase.Feeding -> photoPath
+        MealCameraPhase.Done -> null
     }
 
 /** 카메라 권한 상태입니다. */
@@ -32,8 +36,8 @@ enum class MealCameraPermission { Requesting, Granted, Denied }
  * 진입 직후에는 [MealCameraPermission.Requesting] 으로 시작해 화면이 곧바로 권한을 요청하며,
  * [isCapturing] 은 셔터 연타를 막고 촬영 실행을 View 에 지시하는 플래그입니다.
  * [MealCameraPhase.Feeding] 중에는 재촬영·이탈이 차단되고, [isSubmitSucceeded] 가 켜진 뒤에만
- * `다음` 으로 화면을 마무리할 수 있습니다. [isFinishing] 은 마무리(뒤로가기 신호)가 한 번만
- * 나가도록 다음·닫기·백의 동시 입력을 래치합니다.
+ * `다음` 으로 완료 화면([MealCameraPhase.Done])에 진입할 수 있습니다. [isFinishing] 은
+ * 마무리(뒤로가기 신호)가 한 번만 나가도록 완료·닫기·백의 동시 입력을 래치합니다.
  */
 data class MealRecordUIState(
     val phase: MealCameraPhase = MealCameraPhase.Preview,
