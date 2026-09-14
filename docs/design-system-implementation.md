@@ -172,7 +172,7 @@ Photo Picker copy/action:
 | Error | `사진을 올리지 못했어요` | `다시 선택` |
 | Disabled | `처리 중에는 바꿀 수 없어요` | `사진 바꾸기` |
 
-식사 API의 상태는 `ANALYSIS/COMPLETED/FAILED`다. `Retrying`은 Android 요청/폴링 상태에서 파생한다. 캘린더 `Positive/OutOfRange/NoRecord`는 각각 `POSITIVE/NEGATIVE/UNRECORDED` 표현이며, `None`은 marker 없음이다. `foodIconIds`는 Salad `125:44`, Pasta `125:42`, Rice `125:50` 같은 로컬 pixel asset으로 매핑하지만, 이 세 샘플을 product의 전체 ID 목록으로 고정하지 않는다.
+식사 API의 상태는 `ANALYSIS/COMPLETED/FAILED`다. `Retrying`은 Android 요청/폴링 상태에서 파생한다. 캘린더 `Positive/OutOfRange/NoRecord`는 각각 `POSITIVE/NEGATIVE/UNRECORDED` 표현이며, `None`은 marker 없음이다. `foodIconIds`는 CDN 이미지(`https://cdn.nyummy.co.kr/icons/{iconId}.jpeg`)로 표시하며, iconId가 빈 값이면 임시로 로컬 밥 아이콘(`nyummy_food_rice`)을 표시한다.
 
 ## Preview and catalog contract
 
