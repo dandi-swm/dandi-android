@@ -93,10 +93,10 @@ fun IntroSplashContent(
         ) {
             Spacer(Modifier.height(SplashTopSpacing))
             SplashWordmark()
-            Spacer(Modifier.height(spacing.space12))
+            Spacer(Modifier.height(spacing.space8))
             DandiText(
                 text = stringResource(R.string.intro_splash_headline_line1),
-                color = colors.contentDefaultLevel1,
+                color = colors.contentDefaultLevel0,
                 textAlign = TextAlign.Center,
                 style = DesignSystemThemeImpl.typeScale.displayRegularXXL,
             )
@@ -110,7 +110,7 @@ fun IntroSplashContent(
             SplashSpeechBubble()
             Spacer(Modifier.weight(1f))
             SplashProgressCard(progress = progress)
-            Spacer(Modifier.height(spacing.space16))
+            Spacer(Modifier.height(spacing.space12))
             SplashTipRow()
             Spacer(Modifier.height(spacing.space24))
         }
@@ -169,13 +169,6 @@ private fun SplashSpeechBubble() {
                 text = stringResource(R.string.intro_splash_bubble),
                 color = colors.contentDefaultLevel1,
                 style = DesignSystemThemeImpl.typeScale.textRegularM,
-            )
-            Spacer(Modifier.width(DesignSystemThemeImpl.designSystemSpacing.space8))
-            Icon(
-                painter = painterResource(R.drawable.intro_icon_heart),
-                contentDescription = null,
-                modifier = Modifier.size(SplashHeartIconSize),
-                tint = colors.contentAccentCoral,
             )
         }
     }
@@ -246,7 +239,12 @@ private const val SplashProgressDurationMillis = 1500
 
 /** 게이트 완료 시 100% 채움 시간. IntroViewModel 의 이동 대기(500ms)보다 짧아야 한다. */
 private const val SplashCompleteDurationMillis = 250
-private val SplashTopSpacing = 96.dp
+
+/**
+ * 텍스트 블록을 배경 일러스트 상단 빈 영역의 광학 중앙에 올린다.
+ * (배경 속 냐미 머리가 화면 높이의 약 46% 지점에서 시작한다)
+ */
+private val SplashTopSpacing = 64.dp
 private val SplashPawIconSize = 18.dp
 private val SplashHeartIconSize = 14.dp
 private val SplashBulbIconSize = 16.dp
