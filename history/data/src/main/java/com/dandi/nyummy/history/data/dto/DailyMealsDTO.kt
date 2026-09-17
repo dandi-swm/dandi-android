@@ -2,6 +2,7 @@ package com.dandi.nyummy.history.data.dto
 
 import com.dandi.nyummy.history.data.util.toDisplayTime
 import com.dandi.nyummy.history.data.util.toHistoryDateVO
+import com.dandi.nyummy.history.data.util.toMealAnalysisStatus
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
@@ -69,6 +70,7 @@ data class DailyMealDTO(
         proteinGram = protein ?: 0,
         fatGram = fat ?: 0,
         orderIndex = orderIndex,
+        status = status.toMealAnalysisStatus(name = name, calorieKcal = calory),
     )
 }
 

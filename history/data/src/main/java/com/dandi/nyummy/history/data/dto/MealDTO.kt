@@ -1,6 +1,7 @@
 package com.dandi.nyummy.history.data.dto
 
 import com.dandi.nyummy.history.data.util.toDisplayTime
+import com.dandi.nyummy.history.data.util.toMealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import kotlinx.serialization.Serializable
 
@@ -35,5 +36,6 @@ data class MealDTO(
         proteinGram = nutrition?.protein ?: 0,
         fatGram = nutrition?.fat ?: 0,
         orderIndex = 0,
+        status = status.toMealAnalysisStatus(name = name, calorieKcal = nutrition?.calory),
     )
 }

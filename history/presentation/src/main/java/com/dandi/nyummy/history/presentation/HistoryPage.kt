@@ -104,20 +104,23 @@ private fun HistoryScreen(
             Spacer(Modifier.height(DailySectionTopGap))
             HistoryDailySection(
                 dayTitle = dayTitleOf(uiState.selectedDate),
-                mealCountLabel = mealCountLabelOf(uiState.selectedDayMeals.size),
+                mealCountLabel = mealCountLabelOf(uiState.completedMealCount),
                 nutrition = uiState.dailyNutrition,
                 isNutritionExpanded = uiState.isNutritionExpanded,
                 isLoading = uiState.isLoading,
                 meals = uiState.selectedDayMeals,
+                reanalyzingMealIds = uiState.reanalyzingMealIds,
                 onToggleNutrition = { onIntent(HistoryIntent.ToggleNutritionSummary) },
                 onClickMeal = { onIntent(HistoryIntent.ClickMeal(it)) },
+                onRetryAnalysis = { onIntent(HistoryIntent.ClickRetryAnalysis(it)) },
+                onDeleteFailedMeal = { onIntent(HistoryIntent.ClickDeleteFailedMeal(it)) },
             )
         }
         uiState.mealDetail?.let { detail ->
             HistoryMealDetailOverlay(
                 detail = detail,
                 selectedDate = uiState.selectedDate,
-                mealCount = uiState.selectedDayMeals.size,
+                mealCount = uiState.completedMealCount,
                 dailyNutrition = uiState.dailyNutrition,
                 onIntent = onIntent,
             )

@@ -13,6 +13,16 @@
 
     <string name="history_empty_meals">아직 기록한 식사가 없어요</string>
 
+    <string name="history_analysis_failed_badge">분석 실패</string>
+    <string name="history_analysis_failed_title">이건 음식이 아닌 것 같아요</string>
+    <string name="history_analysis_failed_body">냐미가 사진에서 음식을 찾지 못했어요.\n다시 분석하거나 기록을 지울 수 있어요.</string>
+    <string name="history_analysis_retry">다시 분석하기</string>
+    <string name="history_analysis_delete">기록 삭제</string>
+    <string name="history_analysis_pending_badge">분석 중</string>
+    <string name="history_analysis_pending_title">냐미가 열심히 분석 중이에요</string>
+    <string name="history_analysis_pending_body">다 되면 알림으로 알려줄게!</string>
+    <string name="history_analysis_unknown_meal">분석하지 못한 기록</string>
+
     <string name="history_macro_carbohydrate">탄수화물</string>
     <string name="history_macro_protein">단백질</string>
     <string name="history_macro_fat">지방</string>

@@ -21,4 +21,7 @@ enum class HistoryErrorType {
 
     /** 식사 기록 삭제 실패 */
     DELETE_FAILED,
+
+    /** 식사 재분석 요청 실패 */
+    REANALYZE_FAILED,
 }

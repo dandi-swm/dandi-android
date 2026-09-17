@@ -24,6 +24,12 @@ sealed interface HistoryIntent : MviIntent {
     /** 식사 목록에서 기록 하나를 눌렀습니다. */
     data class ClickMeal(val mealId: String) : HistoryIntent
 
+    /** 분석 실패 카드의 `다시 분석하기` 를 눌렀습니다. */
+    data class ClickRetryAnalysis(val mealId: String) : HistoryIntent
+
+    /** 분석 실패 카드의 `기록 삭제` 를 눌렀습니다. */
+    data class ClickDeleteFailedMeal(val mealId: String) : HistoryIntent
+
     /** 식사 상세 오버레이의 닫기(또는 바깥 영역)를 눌렀습니다. */
     data object DismissMealDetail : HistoryIntent
 

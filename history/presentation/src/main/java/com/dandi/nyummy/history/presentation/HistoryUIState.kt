@@ -4,6 +4,7 @@ import com.dandi.nyummy.common.presentation.mvi.UiState
 import com.dandi.nyummy.history.entity.DailyNutritionStatus
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
+import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.presentation.model.HistoryCalendarDayUiModel
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
@@ -11,8 +12,11 @@ import com.dandi.nyummy.history.presentation.model.monthLabelOf
 import com.dandi.nyummy.history.presentation.model.toCalendarNutritionStatus
 import com.dandi.nyummy.history.presentation.util.isAfter
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 
 /**
  * 히스토리 화면의 UI 상태입니다.
@@ -30,6 +34,7 @@ data class HistoryUIState(
     val dailyNutrition: DailyNutritionVO = DailyNutritionVO.empty,
     val isNutritionExpanded: Boolean = true,
     val isLoading: Boolean = false,
+    val reanalyzingMealIds: ImmutableSet<String> = persistentSetOf(),
     val mealDetail: HistoryMealDetailUiState? = null,
 ) : UiState {
 
@@ -38,6 +43,30 @@ data class HistoryUIState(
 
     val hasNoMeals: Boolean
         get() = !isLoading && selectedDayMeals.isEmpty()
+
+    /** 영양 합계에 실제로 반영되는(분석이 끝난) 식사 수. 실패/분석 중 기록은 세지 않습니다. */
+    val completedMealCount: Int
+        get() = selectedDayMeals.count { it.isAnalysisCompleted }
+
+    /** [mealId] 식사의 재분석 요청이 진행 중인지 여부. */
+    fun isReanalyzing(mealId: String): Boolean = mealId in reanalyzingMealIds
+
+    /** [mealId] 식사의 분석 상태를 [status] 로 바꾸고 재분석 진행 표시를 해제합니다. */
+    fun withMealStatus(mealId: String, status: MealAnalysisStatus): HistoryUIState = copy(
+        selectedDayMeals = selectedDayMeals
+            .map { meal -> if (meal.id == mealId) meal.copy(status = status) else meal }
+            .withCompletedMealOrder(),
+        reanalyzingMealIds = (reanalyzingMealIds - mealId).toImmutableSet(),
+    )
+
+    /** [mealId] 식사의 재분석 진행 표시만 바꿉니다. */
+    fun withReanalyzing(mealId: String, inFlight: Boolean): HistoryUIState = copy(
+        reanalyzingMealIds = if (inFlight) {
+            (reanalyzingMealIds + mealId).toImmutableSet()
+        } else {
+            (reanalyzingMealIds - mealId).toImmutableSet()
+        },
+    )
 
     /** 상세 오버레이가 열려 있을 때만 [transform]을 적용합니다. */
     fun withMealDetail(
@@ -77,9 +106,7 @@ data class HistoryUIState(
     fun deleteDetailMeal(mealId: String): HistoryUIState {
         val closedDetail = if (mealDetail?.meal?.id == mealId) null else mealDetail
         if (selectedDayMeals.none { it.id == mealId }) return copy(mealDetail = closedDetail)
-        val remaining = selectedDayMeals
-            .filterNot { it.id == mealId }
-            .mapIndexed { index, meal -> meal.copy(orderIndex = index + 1) }
+        val remaining = selectedDayMeals.filterNot { it.id == mealId }.withCompletedMealOrder()
         val totalCalorie = remaining.sumOf { it.calorieKcal }
         val hasRecord = remaining.isNotEmpty() && !selectedDate.isAfter(today)
         val cellStatus = DailyNutritionStatus.of(
@@ -89,7 +116,8 @@ data class HistoryUIState(
         ).toCalendarNutritionStatus()
         val cellIcons = remaining.take(2).map { it.foodIconId }.toImmutableList()
         return copy(
-            selectedDayMeals = remaining.toImmutableList(),
+            selectedDayMeals = remaining,
+            reanalyzingMealIds = (reanalyzingMealIds - mealId).toImmutableSet(),
             dailyNutrition = dailyNutrition.copy(
                 currentCalorieKcal = totalCalorie,
                 carbohydrate = dailyNutrition.carbohydrate.copy(
@@ -154,4 +182,21 @@ enum class HistoryMealDetailMode {
 
     /** 삭제 확인 다이얼로그 */
     ConfirmingDelete,
+}
+
+/**
+ * "첫 끼 / 마지막 끼니" 라벨이 쓰는 하루 안의 순번을 **분석이 끝난 식사만** 세어 다시 매깁니다.
+ *
+ * 서버가 준 순번은 실패·분석 중 기록까지 포함한 값이라, 그대로 쓰면 실패 기록이 섞인 날의
+ * 라벨이 어긋납니다. 상태 카드는 순번을 쓰지 않으므로 0 으로 둡니다.
+ */
+internal fun List<MealHistoryVO>.withCompletedMealOrder(): ImmutableList<MealHistoryVO> {
+    var completedOrder = 0
+    return map { meal ->
+        if (meal.isAnalysisCompleted) {
+            meal.copy(orderIndex = ++completedOrder)
+        } else {
+            meal.copy(orderIndex = 0)
+        }
+    }.toImmutableList()
 }

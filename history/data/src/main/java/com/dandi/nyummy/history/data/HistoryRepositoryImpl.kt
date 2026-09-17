@@ -18,6 +18,9 @@ class HistoryRepositoryImpl(
     override suspend fun updateMealName(mealId: Long, name: String) =
         dataSource.updateMealName(mealId, name).toVO()
 
+    override suspend fun reanalyzeMeal(mealId: Long) =
+        dataSource.reanalyzeMeal(mealId).toVO()
+
     override suspend fun deleteMeal(mealId: Long) =
         dataSource.deleteMeal(mealId)
 }

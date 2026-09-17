@@ -61,6 +61,10 @@ fun DailyNutritionStatus.toCalendarNutritionStatus(): NyummyCalendarNutritionSta
 /** "2026년 7월" 형태의 월 라벨입니다. */
 fun monthLabelOf(year: Int, month: Int): String = "${year}년 ${month}월"
 
+/** 서버와 주고받는 "yyyy-MM-dd" 형태의 날짜 문자열입니다(푸시 payload 비교용). */
+fun isoDateOf(date: HistoryDateVO): String =
+    String.format(Locale.KOREA, "%04d-%02d-%02d", date.year, date.month, date.day)
+
 /** "7월 18일" 형태의 날짜 라벨입니다. */
 fun dayLabelOf(date: HistoryDateVO): String = "${date.month}월 ${date.day}일"
 

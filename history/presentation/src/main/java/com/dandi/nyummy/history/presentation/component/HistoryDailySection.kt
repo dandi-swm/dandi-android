@@ -41,6 +41,7 @@ import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.common.presentation.ui.theme.designSystemDropShadow
 import com.dandi.nyummy.history.entity.DailyNutritionVO
+import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.entity.NutrientProgressVO
 import com.dandi.nyummy.history.presentation.R
@@ -51,12 +52,19 @@ import com.dandi.nyummy.history.presentation.model.numberLabelOf
 import com.dandi.nyummy.history.presentation.model.percentOf
 import com.dandi.nyummy.history.presentation.model.progressOf
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 
 /**
  * 선택한 날짜의 식사 섹션입니다.
  * 날짜 헤더, 접을 수 있는 `하루 영양 현황` 카드, 식사 목록(없으면 안내 문구)으로 구성됩니다.
+ *
+ * 분석이 끝나지 않았거나 실패한 기록은 이름·열량이 비어 있어 일반 식사 행 대신
+ * 상태 카드([HistoryMealAnalyzingCard] / [HistoryMealFailedCard])로 그립니다.
+ *
+ * @param reanalyzingMealIds 재분석을 요청해 결과를 기다리는 중인 식사 식별자들
  */
 @Composable
 internal fun HistoryDailySection(
@@ -66,8 +74,11 @@ internal fun HistoryDailySection(
     isNutritionExpanded: Boolean,
     isLoading: Boolean,
     meals: ImmutableList<MealHistoryVO>,
+    reanalyzingMealIds: ImmutableSet<String>,
     onToggleNutrition: () -> Unit,
     onClickMeal: (String) -> Unit,
+    onRetryAnalysis: (String) -> Unit,
+    onDeleteFailedMeal: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -125,11 +136,22 @@ internal fun HistoryDailySection(
                 verticalArrangement = Arrangement.spacedBy(MealRowGap),
             ) {
                 meals.forEach { meal ->
-                    HistoryMealRow(
-                        meal = meal,
-                        mealCount = meals.size,
-                        onClick = { onClickMeal(meal.id) },
-                    )
+                    when {
+                        meal.isAnalyzing || meal.id in reanalyzingMealIds ->
+                            HistoryMealAnalyzingCard(meal = meal)
+
+                        meal.isAnalysisFailed -> HistoryMealFailedCard(
+                            meal = meal,
+                            onRetry = { onRetryAnalysis(meal.id) },
+                            onDelete = { onDeleteFailedMeal(meal.id) },
+                        )
+
+                        else -> HistoryMealRow(
+                            meal = meal,
+                            mealCount = meals.count { it.isAnalysisCompleted },
+                            onClick = { onClickMeal(meal.id) },
+                        )
+                    }
                 }
             }
         }
@@ -442,9 +464,18 @@ private fun HistoryDailySectionPreview() {
                     calorieKcal = 412,
                     orderIndex = 1,
                 ),
+                MealHistoryVO(
+                    id = "preview-2",
+                    recordedAt = "12:30",
+                    orderIndex = 2,
+                    status = MealAnalysisStatus.FAILED,
+                ),
             ).toImmutableList(),
+            reanalyzingMealIds = persistentSetOf(),
             onToggleNutrition = {},
             onClickMeal = {},
+            onRetryAnalysis = {},
+            onDeleteFailedMeal = {},
         )
     }
 }
@@ -460,8 +491,11 @@ private fun HistoryDailySectionCollapsedEmptyPreview() {
             isNutritionExpanded = false,
             isLoading = false,
             meals = persistentListOf(),
+            reanalyzingMealIds = persistentSetOf(),
             onToggleNutrition = {},
             onClickMeal = {},
+            onRetryAnalysis = {},
+            onDeleteFailedMeal = {},
         )
     }
 }
