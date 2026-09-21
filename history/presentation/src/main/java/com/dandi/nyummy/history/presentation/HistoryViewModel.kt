@@ -156,10 +156,11 @@ class HistoryViewModel @Inject constructor(
                 if (event.date != state.selectedDate) {
                     state
                 } else {
+                    // reanalyzingMealIds 는 건드리지 않는다 — 다른 식사의 분석 완료 푸시로 새로고침되는
+                    // 사이 진행 중인 재분석 표시가 지워지면 안 되고, 해제는 Succeeded/Failed 가 책임진다.
                     state.copy(
                         selectedDayMeals = event.dailyDetail.meals.withCompletedMealOrder(),
                         dailyNutrition = event.dailyDetail.nutrition,
-                        reanalyzingMealIds = persistentSetOf(),
                     )
                 }
 

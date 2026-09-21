@@ -331,6 +331,30 @@ class HistoryViewModelTest {
     }
 
     @Test
+    fun `조용한 새로고침이 끼어들어도 진행 중인 재분석 표시는 유지된다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
+        val gate = CompletableDeferred<MealHistoryVO>()
+        repository.reanalyzeOverride = { gate.await() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ClickRetryAnalysis("2"))
+        advanceUntilIdle()
+        // 다른 식사의 분석 완료 푸시가 같은 날짜의 조용한 새로고침을 트리거한다.
+        analysisEvents.publish(
+            MealAnalysisEvent(mealId = "1", date = isoDateOf(viewModel.uiState.value.selectedDate)),
+        )
+        advanceUntilIdle()
+
+        // 서버 응답에는 "2"가 아직 FAILED 지만, 재분석 요청이 끝나기 전이므로 진행 표시를 유지한다.
+        assertTrue(viewModel.uiState.value.isReanalyzing("2"))
+
+        gate.complete(MealHistoryVO(id = "2", status = MealAnalysisStatus.ANALYZING))
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isReanalyzing("2"))
+    }
+
+    @Test
     fun `다른 날짜의 분석 완료 알림은 화면을 다시 불러오지 않는다`() = runTest(testDispatcher) {
         val viewModel = createViewModel()
         advanceUntilIdle()
