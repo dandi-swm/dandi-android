@@ -2,13 +2,21 @@ package com.dandi.nyummy
 
 import android.app.Application
 import android.util.Log
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import com.dandi.nyummy.common.presentation.image.NyummyImageLoaderFactory
 import com.dandi.nyummy.reminder.FcmTokenStore
 import com.dandi.nyummy.reminder.ReminderNotifier
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
-class DandiApplication : Application() {
+class DandiApplication : Application(), SingletonImageLoader.Factory {
+
+    /** AsyncImage 등 Coil 싱글턴이 쓰는 전역 ImageLoader. 캐시 설정은 [NyummyImageLoaderFactory] 참고. */
+    override fun newImageLoader(context: PlatformContext): ImageLoader =
+        NyummyImageLoaderFactory.create(context)
 
     override fun onCreate() {
         super.onCreate()

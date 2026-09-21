@@ -80,6 +80,10 @@ dependencies {
     ksp(libs.hilt.compiler)
     api(libs.androidx.hilt.navigation.compose)
 
+    // Coil — 전 모듈이 같은 ImageLoader(NyummyImageLoaderFactory)를 쓰도록 여기서만 노출한다.
+    api(libs.coil.compose)
+    api(libs.coil.network.okhttp)
+
     // Coroutines
     api(libs.kotlinx.coroutines.android)
 

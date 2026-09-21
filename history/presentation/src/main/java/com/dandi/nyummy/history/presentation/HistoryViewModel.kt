@@ -212,11 +212,18 @@ class HistoryViewModel @Inject constructor(
                 detail.copy(mode = HistoryMealDetailMode.ConfirmingDelete)
             }
 
-            HistoryReducerEvent.MealDeleteCanceled -> state.withMealDetail { detail ->
-                if (detail.isActionInFlight) {
-                    detail
-                } else {
-                    detail.copy(mode = HistoryMealDetailMode.Viewing)
+            HistoryReducerEvent.MealDeleteCanceled -> {
+                val detail = state.mealDetail
+                when {
+                    detail == null || detail.isActionInFlight -> state
+
+                    // 분석 실패 카드에서 연 삭제 확인이면 돌아갈 상세 화면이 없으므로
+                    // 오버레이를 닫고 목록의 실패 카드로 되돌아간다.
+                    !detail.meal.isAnalysisCompleted -> state.copy(mealDetail = null)
+
+                    else -> state.copy(
+                        mealDetail = detail.copy(mode = HistoryMealDetailMode.Viewing),
+                    )
                 }
             }
 

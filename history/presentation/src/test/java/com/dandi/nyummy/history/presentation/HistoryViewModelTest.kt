@@ -377,6 +377,36 @@ class HistoryViewModelTest {
     }
 
     @Test
+    fun `실패 카드에서 연 삭제 확인을 취소하면 상세가 아니라 목록으로 돌아간다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.ClickDeleteFailedMeal("2"))
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.CancelDeleteMeal)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.mealDetail)
+    }
+
+    @Test
+    fun `완료된 식사의 삭제 확인을 취소하면 상세 보기로 돌아간다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.ClickMeal("1"))
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.ClickDeleteMeal)
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.CancelDeleteMeal)
+        advanceUntilIdle()
+
+        assertEquals(HistoryMealDetailMode.Viewing, viewModel.uiState.value.mealDetail?.mode)
+    }
+
+    @Test
     fun `끼니 순번은 분석이 끝난 식사만 세어 매긴다`() = runTest(testDispatcher) {
         repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
         val viewModel = createViewModel()

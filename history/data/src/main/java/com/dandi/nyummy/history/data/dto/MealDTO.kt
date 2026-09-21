@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializable
  *
  * @property mealId 식사 기록 식별자
  * @property name 음식 이름
- * @property mealAt 식사 시각 (ISO date-time)
+ * @property mealAt 식사 시각 (ISO date-time). 오프셋 유무와 무관하게 data 레이어가 KST 로 환산한다.
  * @property status 영양 분석 상태 (WAITING / ANALYZING / COMPLETED / FAILED / UNKNOWN)
  * @property nutrition 이 식사의 영양 정보
  * @property imageUrl 촬영 사진 URL

@@ -14,6 +14,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.auth.entity.Gender
+import com.dandi.nyummy.common.entity.time.KstTime
 import com.dandi.nyummy.common.presentation.component.DandiText
 import com.dandi.nyummy.common.presentation.component.NyummyButton
 import com.dandi.nyummy.common.presentation.component.NyummyButtonSize
@@ -25,7 +26,6 @@ import com.dandi.nyummy.common.presentation.component.NyummyTextField
 import com.dandi.nyummy.common.presentation.component.NyummyWheelPicker
 import com.dandi.nyummy.common.presentation.component.NyummyWheelPickerFrame
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
-import java.util.Calendar
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import com.dandi.nyummy.common.presentation.R as CommonR
@@ -197,7 +197,8 @@ private fun FieldLabel(text: String) {
 
 private fun toTwoDigits(value: Int): String = "%02d".format(value)
 
-private val BIRTH_YEAR_RANGE = 1900..Calendar.getInstance().get(Calendar.YEAR)
+// 기기 타임존이 아니라 한국 기준 올해까지 — 연말 자정 근처에서 한 해가 빠지지 않게 한다.
+private val BIRTH_YEAR_RANGE = 1900..KstTime.now().year
 private val MONTH_RANGE = 1..12
 private val HEIGHT_RANGE = 120..220
 private val WEIGHT_RANGE = 30..150
