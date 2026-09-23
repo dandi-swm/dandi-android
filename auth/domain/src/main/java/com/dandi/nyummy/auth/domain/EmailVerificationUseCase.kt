@@ -1,5 +1,6 @@
 package com.dandi.nyummy.auth.domain
 
+import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.handlingErrorOnUseCase
@@ -19,8 +20,8 @@ class EmailVerificationUseCase @Inject constructor(
 ) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
 
     /** 이메일 인증 코드 발송. 성공 시 코드 확인에 쓸 챌린지 토큰을 반환한다. */
-    suspend fun sendCode(email: String): Result<String> = try {
-        val challenge = repository.requestEmailVerification(email = email)
+    suspend fun sendCode(email: String, purpose: EmailVerificationPurpose): Result<String> = try {
+        val challenge = repository.requestEmailVerification(email = email, purpose = purpose)
         Result.success(challenge.emailChallengeToken)
     } catch (e: HttpResponseException) {
         handleEmailVerificationError(e)

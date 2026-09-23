@@ -53,7 +53,7 @@ class LoginViewModel @Inject constructor(
     private fun testLogin() {
         dispatch(LoginReducerEvent.TestLoginClicked)
         viewModelScope.launch {
-            loginUseCase.login(email = "test@dandi.com", password = "Test1234!")
+            loginUseCase.login(email = "test@dandi.com", password = "Test123!")
             dispatch(LoginReducerEvent.LoginFinished)
         }
     }

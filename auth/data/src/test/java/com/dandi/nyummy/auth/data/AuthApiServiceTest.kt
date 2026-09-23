@@ -140,7 +140,9 @@ class AuthApiServiceTest {
             )
         )
 
-        val response = apiService.requestEmailVerification(EmailVerificationRequestDTO(email = "test@dandi.app"))
+        val response = apiService.requestEmailVerification(
+            EmailVerificationRequestDTO(email = "test@dandi.app", purpose = "SIGNUP")
+        )
 
         assertTrue(response.isSuccessful)
         assertEquals("challenge-token", response.body()?.emailChallengeToken)
@@ -148,6 +150,9 @@ class AuthApiServiceTest {
         val recorded = server.takeRequest()
         assertEquals("POST", recorded.method)
         assertEquals("/api/v1/auth/email-verification", recorded.path)
+        val sentBody = json.decodeFromString<EmailVerificationRequestDTO>(recorded.body.readUtf8())
+        assertEquals("test@dandi.app", sentBody.email)
+        assertEquals("SIGNUP", sentBody.purpose)
     }
 
     @Test
