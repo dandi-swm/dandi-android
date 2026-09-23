@@ -3,8 +3,6 @@ package com.dandi.nyummy.main.presentation.catalog
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.DrawableRes
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -29,11 +27,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.component.DandiText
 import com.dandi.nyummy.common.presentation.component.NyummyAnalysisBanner
 import com.dandi.nyummy.common.presentation.component.NyummyAnalysisBannerState
@@ -243,10 +238,7 @@ private fun CommonCatalogSection() {
                         title = "닭가슴살 포케",
                         supportingText = "오늘 · 12:24 · 524 kcal",
                         leading = {
-                            FoodPixelAsset(
-                                resourceId = CommonR.drawable.nyummy_food_salad,
-                                contentDescription = "샐러드 픽셀 아이콘",
-                            )
+                            FoodIconSample()
                         },
                         trailing = { CatalogGlyph("›") },
                         onClick = {},
@@ -264,10 +256,7 @@ private fun CommonCatalogSection() {
                             label = "선택됨",
                             selected = true,
                             leadingIcon = {
-                                FoodPixelAsset(
-                                    resourceId = CommonR.drawable.nyummy_food_rice,
-                                    contentDescription = "밥 픽셀 아이콘",
-                                )
+                                FoodIconSample()
                             },
                             onClick = {},
                         )
@@ -455,9 +444,7 @@ private fun OverlayAndStateCatalogSection() {
                         eyebrow = "FOOD COLLECTION",
                         artworkDescription = "파스타 픽셀 아이콘",
                         artwork = {
-                            FoodPixelAsset(
-                                resourceId = CommonR.drawable.nyummy_food_pasta,
-                                contentDescription = "파스타 픽셀 아이콘",
+                            FoodIconSample(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(DesignSystemThemeImpl.designSystemSpacing.space8),
@@ -501,7 +488,7 @@ private fun OverlayAndStateCatalogSection() {
 private fun NavigationCatalogSection() {
     CatalogSection(
         title = "Navigation",
-        source = "Bottom Navigation root 634:11768 · Item 619:44573 · icons Home 619:44557 / History 619:44559 / Quest 619:44562 / Collection 619:44565 / Shop 619:44570 · Floating Today Meals 884:554",
+        source = "Bottom Navigation root 634:11768 · Item 619:44573 · icons Home 619:44557 / History 619:44559 / Collection 619:44565 / Shop 619:44570 + 중앙 카메라 버튼(리뉴얼) · Floating Today Meals 884:554",
     ) {
         NyummyBottomNavigationStyle.entries.forEach { style ->
             CatalogGroup("BottomNavigation ${style.name} · 634:11768") {
@@ -513,6 +500,7 @@ private fun NavigationCatalogSection() {
                                 Box(modifier = Modifier.width(390.dp), contentAlignment = Alignment.Center) {
                                     NyummyBottomNavigation(
                                         selectedDestination = selected,
+                                        onCameraClick = {},
                                         style = style,
                                     ) {}
                                 }
@@ -528,10 +516,7 @@ private fun NavigationCatalogSection() {
                 NyummyFloatingTodayMeals(
                     label = "오늘 현황",
                     leadingIcon = {
-                        FoodPixelAsset(
-                            resourceId = CommonR.drawable.nyummy_food_salad,
-                            contentDescription = "샐러드 픽셀 아이콘",
-                        )
+                        FoodIconSample()
                     },
                     onClick = {},
                 )
@@ -578,20 +563,14 @@ private fun MealAndHistoryCatalogSection() {
                                         nutritionStatus = status,
                                         firstFoodIcon = if (iconCount >= 1) {
                                             {
-                                                FoodPixelAsset(
-                                                    resourceId = CommonR.drawable.nyummy_food_salad,
-                                                    contentDescription = "샐러드 픽셀 아이콘",
-                                                )
+                                                FoodIconSample()
                                             }
                                         } else {
                                             null
                                         },
                                         secondFoodIcon = if (iconCount == 2) {
                                             {
-                                                FoodPixelAsset(
-                                                    resourceId = CommonR.drawable.nyummy_food_rice,
-                                                    contentDescription = "밥 픽셀 아이콘",
-                                                )
+                                                FoodIconSample()
                                             }
                                         } else {
                                             null
@@ -616,10 +595,7 @@ private fun MealAndHistoryCatalogSection() {
                                 data = meal,
                                 state = state,
                                 foodIcon = {
-                                    FoodPixelAsset(
-                                        resourceId = CommonR.drawable.nyummy_food_salad,
-                                        contentDescription = "샐러드 픽셀 아이콘",
-                                    )
+                                    FoodIconSample()
                                 },
                                 onClick = {},
                                 onRetry = {},
@@ -679,10 +655,7 @@ private fun MealAndHistoryCatalogSection() {
                                 state = state,
                                 photo = { RuntimeSlotFixture("runtime slot\nmeal photo") },
                                 foodIcon = {
-                                    FoodPixelAsset(
-                                        resourceId = CommonR.drawable.nyummy_food_salad,
-                                        contentDescription = "샐러드 픽셀 아이콘",
-                                    )
+                                    FoodIconSample()
                                 },
                             )
                         }
@@ -747,6 +720,7 @@ private fun ReferenceIntegrationSection() {
                 NyummyBottomNavigation(
                     modifier = Modifier.align(Alignment.BottomCenter),
                     selectedDestination = selectedDestination,
+                    onCameraClick = {},
                 ) { selectedDestination = it }
             }
         }
@@ -776,10 +750,7 @@ private fun CatalogMealSummarySheet(modifier: Modifier = Modifier) {
                     calories = "524 kcal",
                 ),
                 foodIcon = {
-                    FoodPixelAsset(
-                        resourceId = CommonR.drawable.nyummy_food_salad,
-                        contentDescription = "샐러드 픽셀 아이콘",
-                    )
+                    FoodIconSample()
                 },
                 onClick = {},
             )
@@ -888,17 +859,16 @@ private fun RuntimeSlotFixture(
     }
 }
 
+/** 음식 아이콘 슬롯 데모용 중립 도형입니다. 실제 아이콘은 CDN 이미지로 표시된다. */
 @Composable
-private fun FoodPixelAsset(
-    @DrawableRes resourceId: Int,
-    contentDescription: String,
-    modifier: Modifier = Modifier,
-) {
-    Image(
-        painter = painterResource(resourceId),
-        contentDescription = contentDescription,
-        modifier = modifier.fillMaxSize(),
-        contentScale = ContentScale.Fit,
+private fun FoodIconSample(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                DesignSystemThemeImpl.designSystemColor.dataEvaluationUnrecorded,
+                DesignSystemThemeImpl.designSystemShape.pill,
+            ),
     )
 }
 

@@ -1,0 +1,7 @@
+<resources>
+    <string name="collection_title">컬렉션</string>
+    <string name="collection_coming_title">컬렉션을 준비하고 있어요</string>
+    <string name="collection_coming_body">냐미와 함께 모은 기록을\n곧 이곳에서 볼 수 있어요</string>
+    <string name="collection_badge_coming_soon">준비 중</string>
+    <string name="collection_mascot_content_description">냐미</string>
+</resources>

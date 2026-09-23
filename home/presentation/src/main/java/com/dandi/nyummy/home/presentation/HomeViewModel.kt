@@ -30,7 +30,7 @@ class HomeViewModel @Inject constructor(
             HomeIntent.ClickShare -> Unit
             HomeIntent.ClickRoomEdit -> Unit
             HomeIntent.ClickSpeechReplay -> Unit
-            HomeIntent.ClickFeed -> {
+            HomeIntent.ClickAddMeal -> {
                 navigationHelper.navigateTo(MealRecordPage)
             }
             HomeIntent.ToggleRoomActionMenu ->

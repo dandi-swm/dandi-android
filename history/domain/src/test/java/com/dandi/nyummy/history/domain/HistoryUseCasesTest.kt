@@ -13,6 +13,7 @@ import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
+import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
@@ -132,6 +133,41 @@ class HistoryUseCasesTest {
         assertTrue(result.isFailure)
     }
 
+    @Test
+    fun `재분석 성공 시 갱신된 식사 VO 를 돌려준다`() = runBlocking {
+        val meal = MealHistoryVO(id = "7", status = MealAnalysisStatus.ANALYZING)
+        val useCase = ReanalyzeMealUseCase(
+            repository = FakeHistoryRepository(meal = meal),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(7L)
+
+        assertEquals(Result.success(meal), result)
+        assertTrue(messageHelper.snackBars.isEmpty())
+    }
+
+    @Test
+    fun `재분석 중 일반 오류면 안내 스낵바를 띄우고 실패를 돌려준다`() = runBlocking {
+        val useCase = ReanalyzeMealUseCase(
+            repository = ThrowingHistoryRepository(httpException(400)),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(7L)
+
+        val snackBar = messageHelper.snackBars.single()
+        assertEquals(IconType.ERROR, snackBar.iconType)
+        assertEquals("다시 분석하지 못했어요", snackBar.messageText)
+        assertTrue(result.isFailure)
+    }
+
     private fun httpException(code: Int): HttpResponseException = HttpResponseException(
         status = HttpResponseStatus.create(code),
         rawCode = code,
@@ -148,6 +184,7 @@ class HistoryUseCasesTest {
         override suspend fun getDailyMeals(year: Int, month: Int, day: Int) = daily
         override suspend fun getMeal(mealId: Long) = meal
         override suspend fun updateMealName(mealId: Long, name: String) = meal
+        override suspend fun reanalyzeMeal(mealId: Long) = meal
         override suspend fun deleteMeal(mealId: Long) = Unit
     }
 
@@ -158,6 +195,7 @@ class HistoryUseCasesTest {
         override suspend fun getDailyMeals(year: Int, month: Int, day: Int) = throw exception
         override suspend fun getMeal(mealId: Long) = throw exception
         override suspend fun updateMealName(mealId: Long, name: String) = throw exception
+        override suspend fun reanalyzeMeal(mealId: Long): MealHistoryVO = throw exception
         override suspend fun deleteMeal(mealId: Long) = throw exception
     }
 

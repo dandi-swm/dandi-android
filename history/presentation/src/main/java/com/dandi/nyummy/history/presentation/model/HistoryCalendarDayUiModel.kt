@@ -1,14 +1,12 @@
 package com.dandi.nyummy.history.presentation.model
 
-import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Immutable
-import com.dandi.nyummy.common.presentation.R
+import com.dandi.nyummy.common.entity.time.KstTime
 import com.dandi.nyummy.common.presentation.component.NyummyCalendarNutritionStatus
 import com.dandi.nyummy.common.presentation.component.NyummyCalendarWeekday
 import com.dandi.nyummy.history.entity.DailyNutritionStatus
 import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
-import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.presentation.util.buildCalendarCells
 import com.dandi.nyummy.history.presentation.util.columnOf
 import kotlinx.collections.immutable.ImmutableList
@@ -61,19 +59,39 @@ fun DailyNutritionStatus.toCalendarNutritionStatus(): NyummyCalendarNutritionSta
     DailyNutritionStatus.NONE -> NyummyCalendarNutritionStatus.None
 }
 
-/** 음식 아이콘 식별자를 공용 픽셀 아이콘 리소스로 매핑합니다. */
-@DrawableRes
-fun foodIconResOf(foodIconId: String): Int = when (foodIconId) {
-    "rice" -> R.drawable.nyummy_food_rice
-    "pasta" -> R.drawable.nyummy_food_pasta
-    else -> R.drawable.nyummy_food_salad
-}
-
 /** "2026년 7월" 형태의 월 라벨입니다. */
 fun monthLabelOf(year: Int, month: Int): String = "${year}년 ${month}월"
 
+/** 서버와 주고받는 "yyyy-MM-dd" 형태의 날짜 문자열입니다(푸시 payload 비교용). */
+fun isoDateOf(date: HistoryDateVO): String =
+    String.format(Locale.KOREA, "%04d-%02d-%02d", date.year, date.month, date.day)
+
 /** "7월 18일" 형태의 날짜 라벨입니다. */
 fun dayLabelOf(date: HistoryDateVO): String = "${date.month}월 ${date.day}일"
+
+/** "9월 8일 화요일" 형태로 요일까지 포함한 선택일 제목입니다. */
+fun dayTitleOf(date: HistoryDateVO): String {
+    // 기기 타임존에 의존하지 않는 순수 요일 계산(0 = 일요일).
+    val weekday = WEEKDAY_TITLE_LABELS[
+        KstTime.sundayBasedWeekdayOf(date.year, date.month, date.day),
+    ]
+    return "${dayLabelOf(date)} $weekday"
+}
+
+private val WEEKDAY_TITLE_LABELS =
+    listOf("일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일")
+
+/** "12:30" 시각을 "오후 12:30" 형태로 바꿉니다. 형식이 다르면 원문을 그대로 돌려줍니다. */
+fun meridiemTimeOf(time: String): String {
+    val hour = time.substringBefore(':').toIntOrNull() ?: return time
+    val minute = time.substringAfter(':', missingDelimiterValue = "").ifBlank { return time }
+    return when {
+        hour == 0 -> "오전 12:$minute"
+        hour < 12 -> "오전 $hour:$minute"
+        hour == 12 -> "오후 12:$minute"
+        else -> "오후 ${hour - 12}:$minute"
+    }
+}
 
 /**
  * 하루 안의 순서 라벨입니다. 디자인 시안의 표기(첫 끼 → n 번째 끼니 → 마지막 끼니)를 따릅니다.
@@ -100,11 +118,8 @@ fun percentOf(current: Int, goal: Int): Int =
 fun progressOf(current: Int, goal: Int): Float =
     if (goal <= 0) 0f else current.toFloat() / goal
 
-/** "5회 기록" 형태의 기록 횟수 라벨입니다. */
-fun mealCountLabelOf(count: Int): String = "${count}회 기록"
-
-/** 식사 행의 보조 정보("08:10 · 사진 기록") 라벨입니다. */
-fun mealRowMetaOf(meal: MealHistoryVO): String = "${meal.recordedAt} · 사진 기록"
+/** "2끼 기록" 형태의 기록 횟수 라벨입니다. */
+fun mealCountLabelOf(count: Int): String = "${count}끼 기록"
 
 /** 천 단위 구분 기호가 들어간 숫자 라벨("2,129")입니다. */
 fun numberLabelOf(value: Int): String = String.format(Locale.KOREA, "%,d", value)

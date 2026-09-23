@@ -1,6 +1,5 @@
 package com.dandi.nyummy.home.presentation
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,21 +7,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dandi.nyummy.common.presentation.component.NyummyButton
-import com.dandi.nyummy.common.presentation.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.home.presentation.component.HomeMyRoomCard
@@ -30,16 +24,14 @@ import com.dandi.nyummy.home.presentation.component.HomeServiceHud
 import com.dandi.nyummy.home.presentation.component.HomeStreakBanner
 import com.dandi.nyummy.home.presentation.component.HomeTodaySummarySheet
 import com.dandi.nyummy.home.presentation.mock.HomeMockData
-import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
  * 홈(마이룸) 화면. Figma `LIVE / Home · My Room` 시안을 구현한다.
  *
- * 위에서부터 HUD(지갑·퀵 액션) → 스트릭 배너 → 마이룸 카드 → `밥 주기` 버튼 순으로 쌓이며,
- * 하단 메뉴와 화면 이동은 앱 공통 Shell 이 담당한다.
+ * 위에서부터 HUD(지갑·퀵 액션) → 스트릭 배너 → 마이룸 카드 순으로 쌓이며,
+ * 식사 기록 진입은 앱 공통 Shell 의 하단 내비게이션 중앙 카메라 버튼이 담당한다.
  *
- * @param modifier 화면의 크기와 배치 방식을 조정합니다.
- * @param onFeedClick `밥 주기` 버튼을 눌렀을 때 호출됩니다.
+ * @param viewModel 홈 화면 상태를 관리하는 ViewModel.
  */
 @Composable
 fun HomePage(
@@ -80,7 +72,7 @@ private fun HomeScreen(
                 remainingCalorieKcal = uiState.remainingCalorieKcal,
                 onDismiss = { onIntent(HomeIntent.DismissTodaySummarySheet) },
                 onAddMeal = {
-                    onIntent(HomeIntent.ClickFeed)
+                    onIntent(HomeIntent.ClickAddMeal)
 //                    onIntent(HomeIntent.DismissTodaySummarySheet)
                 },
             )
@@ -134,45 +126,15 @@ private fun HomeContent(
             onSpeechReplayClick = { onIntent(HomeIntent.ClickSpeechReplay) },
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
+                .weight(1f)
+                .heightIn(max = RoomCardMaxHeight),
         )
-        Spacer(modifier = Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space20))
-        HomeFeedButton(
-            label = stringResource(R.string.home_feed_button),
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag(HomeFeedButtonTestTag),
-            onClick = { onIntent(HomeIntent.ClickFeed) },
-        )
-        Spacer(modifier = Modifier.height(FeedButtonBottomGap))
+        Spacer(modifier = Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space16))
     }
 }
 
-@Composable
-private fun HomeFeedButton(
-    label: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    NyummyButton(
-        label = label,
-        modifier = modifier.height(FeedButtonHeight),
-        size = NyummyButtonSize.Large,
-        leadingIcon = {
-            Image(
-                painter = painterResource(CommonR.drawable.nyummy_food_salad),
-                contentDescription = null,
-                modifier = Modifier.size(FeedButtonIconSize),
-            )
-        },
-        onClick = onClick,
-    )
-}
-
-private val FeedButtonHeight = 60.dp
-private val FeedButtonIconSize = 32.dp
-private val FeedButtonBottomGap = 16.dp
-private const val HomeFeedButtonTestTag = "home_feed_button"
+/** 밥 주기 버튼 제거로 방 카드가 길어질 때, 롱스크린에서 배경 크롭이 어색해지지 않도록 상한을 둔다. */
+private val RoomCardMaxHeight = 560.dp
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable

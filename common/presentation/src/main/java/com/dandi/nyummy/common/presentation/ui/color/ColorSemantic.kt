@@ -68,6 +68,7 @@ class DesignSystemSemanticColors internal constructor(
     val bgProgressNutritionTrack: Color get() = background.bgProgressNutritionTrack
     val bgCoachBubble: Color get() = background.bgCoachBubble
     val bgSheetHandle: Color get() = background.bgSheetHandle
+    val bgBrandKakao: Color get() = background.bgBrandKakao
     val contentDefaultLevel0: Color get() = content.contentDefaultLevel0
     val contentDefaultLevel1: Color get() = content.contentDefaultLevel1
     val contentDefaultLevel2: Color get() = content.contentDefaultLevel2
@@ -111,6 +112,7 @@ class DesignSystemSemanticColors internal constructor(
     val contentSelectionPrimary: Color get() = content.contentSelectionPrimary
     val contentBrandWordmark: Color get() = content.contentBrandWordmark
     val contentIconEmail: Color get() = content.contentIconEmail
+    val contentBrandKakao: Color get() = content.contentBrandKakao
     val borderDefaultLevel1: Color get() = border.borderDefaultLevel1
     val borderDefaultLevel0: Color get() = border.borderDefaultLevel0
     val borderBrandDefault: Color get() = border.borderBrandDefault
@@ -312,6 +314,8 @@ class DesignSystemSemanticColors internal constructor(
         "bgScrimGradientBottom" -> bgScrimGradientBottom
         "contentBrandWordmark" -> contentBrandWordmark
         "contentIconEmail" -> contentIconEmail
+        "bgBrandKakao" -> bgBrandKakao
+        "contentBrandKakao" -> contentBrandKakao
         else -> contentDefaultLevel3
     }
 }
@@ -365,6 +369,7 @@ internal class DesignSystemBackgroundColors internal constructor(
     val bgProgressNutritionTrack: Color,
     val bgCoachBubble: Color,
     val bgSheetHandle: Color,
+    val bgBrandKakao: Color,
     // Android 확장 슬롯 (Figma semantic collection 141개 외)
     val bgScrimGradientTop: Color,
     val bgScrimGradientMiddle: Color,
@@ -417,6 +422,7 @@ internal class DesignSystemContentColors internal constructor(
     // Android 확장 슬롯 (Figma semantic collection 141개 외)
     val contentBrandWordmark: Color,
     val contentIconEmail: Color,
+    val contentBrandKakao: Color,
 )
 
 @Immutable

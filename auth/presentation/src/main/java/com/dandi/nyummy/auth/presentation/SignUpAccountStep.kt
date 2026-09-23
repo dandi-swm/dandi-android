@@ -103,7 +103,7 @@ internal fun SignUpAccountStep(
         )
         Spacer(Modifier.height(SignUpAccountTermsSpacing))
         DandiText(
-            text = stringResource(R.string.auth_login_terms),
+            text = stringResource(R.string.auth_signup_terms),
             modifier = Modifier.fillMaxWidth(),
             color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel1,
             textAlign = TextAlign.Center,

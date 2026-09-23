@@ -1,13 +1,19 @@
 <resources>
-    <string name="auth_login_wordmark" translatable="false">NYUMMY</string>
-    <string name="auth_login_headline">Nyummy is waiting for you!</string>
-    <string name="auth_login_subtitle">Sign in and keep your meal log going.</string>
-    <string name="auth_login_kakao">Login with Kakao</string>
-    <string name="auth_login_or">or</string>
+    <string name="auth_login_wordmark" translatable="false">nyummy</string>
+    <string name="auth_login_headline_line1">Nyami is</string>
+    <string name="auth_login_headline_line2">waiting for you</string>
+    <string name="auth_login_subtitle">Log today\'s meal together with Nyami.</string>
+    <string name="auth_login_kakao">Start with Kakao</string>
+    <string name="auth_login_or">Or start another way</string>
     <string name="auth_login_naver_description">Sign in with Naver</string>
     <string name="auth_login_google_description">Sign in with Google</string>
     <string name="auth_login_email_description">Sign in with email</string>
-    <string name="auth_login_terms">By continuing, you agree to the Terms of Service and Privacy Policy.</string>
+    <string name="auth_login_terms_prefix">"By continuing, you agree to the "</string>
+    <string name="auth_login_terms_service">Terms of Service</string>
+    <string name="auth_login_terms_and">" and "</string>
+    <string name="auth_login_terms_privacy">Privacy Policy</string>
+    <string name="auth_login_terms_suffix">.</string>
+    <string name="auth_login_terms_line2">Please review them before you start.</string>
     <string name="auth_email_login_title">Email sign-in</string>
     <string name="auth_email_login_headline">Continue with email</string>
     <string name="auth_email_login_subtitle">Enter the email and password you signed up with.</string>
@@ -21,6 +27,7 @@
     <string name="auth_email_error_format">Please enter a valid email address.</string>
     <string name="auth_login_button">Sign in</string>
 
+    <string name="auth_signup_terms">By continuing, you agree to the Terms of Service and Privacy Policy.</string>
     <string name="auth_signup_title">Create your account</string>
     <string name="auth_signup_subtitle">Keep your first logs and rewards safe.</string>
     <string name="auth_signup_password_placeholder">At least 8 characters</string>

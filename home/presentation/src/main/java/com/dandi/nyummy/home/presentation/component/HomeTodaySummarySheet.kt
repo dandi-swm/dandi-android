@@ -1,11 +1,13 @@
 package com.dandi.nyummy.home.presentation.component
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -21,7 +23,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.heading
@@ -39,6 +44,7 @@ import com.dandi.nyummy.common.presentation.component.NyummySheetMacroSummary
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.home.presentation.R
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.home.presentation.mock.HomeMacroMock
 import com.dandi.nyummy.home.presentation.mock.HomeMockData
 import java.util.Locale
@@ -190,6 +196,15 @@ private fun HomeTodaySummarySheetContent(
                     ),
                     // TODO: 식사 상세 화면이 추가되면 해당 기록 상세로 연결한다.
                     onClick = {},
+                    // 공용 행에서 기본 폴백이 사라져 리딩 아이콘을 명시적으로 전달한다.
+                    foodIcon = {
+                        Image(
+                            bitmap = ImageBitmap.imageResource(CommonR.drawable.nyummy_food_rice),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            filterQuality = FilterQuality.None,
+                        )
+                    },
                 )
             }
         }

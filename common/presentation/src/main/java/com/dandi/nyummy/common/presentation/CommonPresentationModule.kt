@@ -3,9 +3,11 @@ package com.dandi.nyummy.common.presentation
 import android.content.Context
 import androidx.compose.runtime.compositionLocalOf
 import com.dandi.nyummy.common.domain.coroutine.IoDispatcher
+import com.dandi.nyummy.common.domain.helper.MealAnalysisEventHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.presentation.helper.MealAnalysisEventHelperImpl
 import com.dandi.nyummy.common.presentation.helper.MessageHelperImpl
 import com.dandi.nyummy.common.presentation.helper.NavigationHelperImpl
 import com.dandi.nyummy.common.presentation.helper.ResourceHelperImpl
@@ -35,6 +37,10 @@ object CommonPresentationModule {
     @Provides
     @Singleton
     fun provideNavigationHelper(): NavigationHelper = NavigationHelperImpl()
+
+    @Provides
+    @Singleton
+    fun provideMealAnalysisEventHelper(): MealAnalysisEventHelper = MealAnalysisEventHelperImpl()
 
     @Provides
     @Singleton

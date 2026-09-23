@@ -1,7 +1,9 @@
 package com.dandi.nyummy.history.presentation
 
+import com.dandi.nyummy.common.domain.analysis.MealAnalysisEvent
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.HttpResponseStatus
+import com.dandi.nyummy.common.domain.helper.MealAnalysisEventHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -16,11 +18,14 @@ import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.history.domain.GetMealDetailUseCase
 import com.dandi.nyummy.history.domain.GetMonthlyMealsUseCase
 import com.dandi.nyummy.history.domain.HistoryRepository
+import com.dandi.nyummy.history.domain.ReanalyzeMealUseCase
 import com.dandi.nyummy.history.domain.UpdateMealNameUseCase
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
+import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
+import com.dandi.nyummy.history.presentation.model.isoDateOf
 import com.dandi.nyummy.history.presentation.util.previousMonthOf
 import com.dandi.nyummy.history.presentation.util.todayDate
 import com.dandi.nyummy.tti.TTIHelper
@@ -31,6 +36,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -39,6 +45,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -49,6 +56,7 @@ class HistoryViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val repository = FakeHistoryRepository()
+    private val analysisEvents = FakeMealAnalysisEventHelper()
 
     @Before
     fun setUp() {
@@ -253,6 +261,187 @@ class HistoryViewModelTest {
         assertEquals(0, repository.dailyRequests.size)
     }
 
+    @Test
+    fun `재분석을 요청하면 그 식사만 분석 중으로 바뀐다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ClickRetryAnalysis("2"))
+        advanceUntilIdle()
+
+        val meals = viewModel.uiState.value.selectedDayMeals
+        assertEquals(listOf(2L), repository.reanalyzeRequests)
+        assertEquals(MealAnalysisStatus.ANALYZING, meals.single { it.id == "2" }.status)
+        assertEquals(MealAnalysisStatus.COMPLETED, meals.single { it.id == "1" }.status)
+        assertFalse(viewModel.uiState.value.isReanalyzing("2"))
+    }
+
+    @Test
+    fun `재분석이 실패하면 진행 표시가 풀려 다시 시도할 수 있다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
+        repository.reanalyzeOverride = { throw httpException(400) }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ClickRetryAnalysis("2"))
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isReanalyzing("2"))
+        assertEquals(MealAnalysisStatus.FAILED, state.selectedDayMeals.single { it.id == "2" }.status)
+    }
+
+    @Test
+    fun `재분석 응답 전에는 같은 식사의 재요청을 무시한다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
+        val gate = CompletableDeferred<MealHistoryVO>()
+        repository.reanalyzeOverride = { gate.await() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ClickRetryAnalysis("2"))
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.ClickRetryAnalysis("2"))
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isReanalyzing("2"))
+        assertEquals(listOf(2L), repository.reanalyzeRequests)
+        gate.complete(MealHistoryVO(id = "2", status = MealAnalysisStatus.ANALYZING))
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `분석 완료 알림을 받으면 로딩 표시 없이 선택 날짜를 다시 불러온다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        val requestsBefore = repository.dailyRequests.size
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+
+        analysisEvents.publish(
+            MealAnalysisEvent(mealId = "2", date = isoDateOf(viewModel.uiState.value.selectedDate)),
+        )
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(requestsBefore + 1, repository.dailyRequests.size)
+        assertFalse(state.isLoading)
+        assertEquals(2, state.completedMealCount)
+    }
+
+    @Test
+    fun `조용한 새로고침이 끼어들어도 진행 중인 재분석 표시는 유지된다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
+        val gate = CompletableDeferred<MealHistoryVO>()
+        repository.reanalyzeOverride = { gate.await() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ClickRetryAnalysis("2"))
+        advanceUntilIdle()
+        // 다른 식사의 분석 완료 푸시가 같은 날짜의 조용한 새로고침을 트리거한다.
+        analysisEvents.publish(
+            MealAnalysisEvent(mealId = "1", date = isoDateOf(viewModel.uiState.value.selectedDate)),
+        )
+        advanceUntilIdle()
+
+        // 서버 응답에는 "2"가 아직 FAILED 지만, 재분석 요청이 끝나기 전이므로 진행 표시를 유지한다.
+        assertTrue(viewModel.uiState.value.isReanalyzing("2"))
+
+        gate.complete(MealHistoryVO(id = "2", status = MealAnalysisStatus.ANALYZING))
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isReanalyzing("2"))
+    }
+
+    @Test
+    fun `다른 날짜의 분석 완료 알림은 화면을 다시 불러오지 않는다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        val requestsBefore = repository.dailyRequests.size
+
+        analysisEvents.publish(MealAnalysisEvent(mealId = "9", date = "1999-01-01"))
+        advanceUntilIdle()
+
+        assertEquals(requestsBefore, repository.dailyRequests.size)
+    }
+
+    @Test
+    fun `분석 실패 기록은 눌러도 상세가 열리지 않는다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ClickMeal("2"))
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.mealDetail)
+    }
+
+    @Test
+    fun `실패 카드의 삭제는 해당 식사의 삭제 확인 다이얼로그를 연다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ClickDeleteFailedMeal("2"))
+        advanceUntilIdle()
+
+        val detail = viewModel.uiState.value.mealDetail
+        assertEquals("2", detail?.meal?.id)
+        assertEquals(HistoryMealDetailMode.ConfirmingDelete, detail?.mode)
+
+        viewModel.onIntent(HistoryIntent.ConfirmDeleteMeal)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(listOf(2L), repository.deleteRequests)
+        assertNull(state.mealDetail)
+        assertEquals(listOf("1"), state.selectedDayMeals.map { it.id })
+    }
+
+    @Test
+    fun `실패 카드에서 연 삭제 확인을 취소하면 상세가 아니라 목록으로 돌아간다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.ClickDeleteFailedMeal("2"))
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.CancelDeleteMeal)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.mealDetail)
+    }
+
+    @Test
+    fun `완료된 식사의 삭제 확인을 취소하면 상세 보기로 돌아간다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.ClickMeal("1"))
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.ClickDeleteMeal)
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.CancelDeleteMeal)
+        advanceUntilIdle()
+
+        assertEquals(HistoryMealDetailMode.Viewing, viewModel.uiState.value.mealDetail?.mode)
+    }
+
+    @Test
+    fun `끼니 순번은 분석이 끝난 식사만 세어 매긴다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val meals = viewModel.uiState.value.selectedDayMeals
+        assertEquals(1, meals.single { it.id == "1" }.orderIndex)
+        assertEquals(0, meals.single { it.id == "2" }.orderIndex)
+        assertEquals(1, viewModel.uiState.value.completedMealCount)
+    }
+
     private fun createViewModel(): HistoryViewModel {
         val resourceHelper = FakeResourceHelper()
         val messageHelper = FakeMessageHelper()
@@ -274,6 +463,10 @@ class HistoryViewModelTest {
             deleteMeal = DeleteMealUseCase(
                 repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
             ),
+            reanalyzeMeal = ReanalyzeMealUseCase(
+                repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
+            ),
+            mealAnalysisEventHelper = analysisEvents,
         )
     }
 
@@ -281,6 +474,19 @@ class HistoryViewModelTest {
         meals = listOf(
             MealHistoryVO(id = "1", name = "김치찌개 A", orderIndex = 1),
             MealHistoryVO(id = "2", name = "김치찌개 B", orderIndex = 2),
+        ),
+    )
+
+    /** 완료 1건 + 분석 실패 1건이 섞인 하루. */
+    private fun dailyWithFailedMeal(): DailyMealHistoryVO = DailyMealHistoryVO(
+        meals = listOf(
+            MealHistoryVO(id = "1", name = "김치찌개 A", orderIndex = 1),
+            MealHistoryVO(
+                id = "2",
+                recordedAt = "12:30",
+                orderIndex = 2,
+                status = MealAnalysisStatus.FAILED,
+            ),
         ),
     )
 
@@ -305,6 +511,10 @@ class HistoryViewModelTest {
         var updateOverride: suspend (Long, String) -> MealHistoryVO =
             { mealId, name -> MealHistoryVO(id = mealId.toString(), name = name) }
         var deleteOverride: suspend (Long) -> Unit = { }
+        val reanalyzeRequests = mutableListOf<Long>()
+        var reanalyzeOverride: suspend (Long) -> MealHistoryVO = { mealId ->
+            MealHistoryVO(id = mealId.toString(), status = MealAnalysisStatus.ANALYZING)
+        }
 
         override suspend fun getMonthlyCalendar(year: Int, month: Int): HistoryCalendarVO {
             monthlyRequests += year to month
@@ -321,9 +531,23 @@ class HistoryViewModelTest {
         override suspend fun updateMealName(mealId: Long, name: String): MealHistoryVO =
             updateOverride(mealId, name)
 
+        override suspend fun reanalyzeMeal(mealId: Long): MealHistoryVO {
+            reanalyzeRequests += mealId
+            return reanalyzeOverride(mealId)
+        }
+
         override suspend fun deleteMeal(mealId: Long) {
             deleteRequests += mealId
             deleteOverride(mealId)
+        }
+    }
+
+    private class FakeMealAnalysisEventHelper : MealAnalysisEventHelper {
+        private val _events = MutableSharedFlow<MealAnalysisEvent>(extraBufferCapacity = 8)
+        override val events: Flow<MealAnalysisEvent> = _events
+
+        override fun publish(event: MealAnalysisEvent) {
+            _events.tryEmit(event)
         }
     }
 

@@ -1,5 +1,4 @@
 <resources>
-    <string name="home_feed_button">Feed</string>
     <string name="home_wallet_label">Coins</string>
     <string name="home_action_mail">Mail</string>
     <string name="home_action_notice">Notice</string>

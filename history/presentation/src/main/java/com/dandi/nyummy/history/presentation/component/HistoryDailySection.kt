@@ -2,8 +2,10 @@ package com.dandi.nyummy.history.presentation.component
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,16 +20,12 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -37,27 +35,36 @@ import com.dandi.nyummy.common.presentation.component.DandiText
 import com.dandi.nyummy.common.presentation.component.NyummyBadge
 import com.dandi.nyummy.common.presentation.component.NyummyBadgeTone
 import com.dandi.nyummy.common.presentation.component.NyummyLinearProgress
-import com.dandi.nyummy.common.presentation.component.NyummyMealRow
-import com.dandi.nyummy.common.presentation.component.NyummyMealRowData
+import com.dandi.nyummy.common.presentation.component.NyummyMascot
+import com.dandi.nyummy.common.presentation.component.NyummyMascotPose
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.common.presentation.ui.theme.designSystemDropShadow
 import com.dandi.nyummy.history.entity.DailyNutritionVO
+import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.entity.NutrientProgressVO
 import com.dandi.nyummy.history.presentation.R
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.history.presentation.model.mealOrderLabelOf
-import com.dandi.nyummy.history.presentation.model.mealRowMetaOf
+import com.dandi.nyummy.history.presentation.model.meridiemTimeOf
 import com.dandi.nyummy.history.presentation.model.numberLabelOf
 import com.dandi.nyummy.history.presentation.model.percentOf
 import com.dandi.nyummy.history.presentation.model.progressOf
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 
 /**
  * 선택한 날짜의 식사 섹션입니다.
  * 날짜 헤더, 접을 수 있는 `하루 영양 현황` 카드, 식사 목록(없으면 안내 문구)으로 구성됩니다.
+ *
+ * 분석이 끝나지 않았거나 실패한 기록은 이름·열량이 비어 있어 일반 식사 행 대신
+ * 상태 카드([HistoryMealAnalyzingCard] / [HistoryMealFailedCard])로 그립니다.
+ *
+ * @param reanalyzingMealIds 재분석을 요청해 결과를 기다리는 중인 식사 식별자들
  */
 @Composable
 internal fun HistoryDailySection(
@@ -67,12 +74,17 @@ internal fun HistoryDailySection(
     isNutritionExpanded: Boolean,
     isLoading: Boolean,
     meals: ImmutableList<MealHistoryVO>,
+    reanalyzingMealIds: ImmutableSet<String>,
     onToggleNutrition: () -> Unit,
     onClickMeal: (String) -> Unit,
+    onRetryAnalysis: (String) -> Unit,
+    onDeleteFailedMeal: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.width(DailySectionWidth),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = DesignSystemThemeImpl.designSystemLayout.mobileGutter),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(
@@ -83,13 +95,11 @@ internal fun HistoryDailySection(
                 text = dayTitle,
                 modifier = Modifier.weight(1f),
                 color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel0,
-                style = DesignSystemThemeImpl.typeScale.titleStrongL,
+                style = DesignSystemThemeImpl.typeScale.titleStrongXL,
             )
-            DandiText(
-                text = mealCountLabel,
-                color = DesignSystemThemeImpl.designSystemColor.contentNutritionLabel,
-                style = DesignSystemThemeImpl.typeScale.textRegularS,
-                textAlign = TextAlign.End,
+            NyummyBadge(
+                label = mealCountLabel,
+                tone = NyummyBadgeTone.Positive,
             )
         }
         Spacer(Modifier.height(DailyHeaderBottomGap))
@@ -101,28 +111,112 @@ internal fun HistoryDailySection(
         )
         Spacer(Modifier.height(DailyNutritionBottomGap))
         if (meals.isEmpty()) {
-            DandiText(
-                text = stringResource(R.string.history_empty_meals),
-                modifier = Modifier.padding(vertical = EmptyMessageVerticalGap),
-                color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel2,
-                style = DesignSystemThemeImpl.typeScale.textRegularM,
-                textAlign = TextAlign.Center,
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = EmptyMessageVerticalGap),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                NyummyMascot(
+                    pose = NyummyMascotPose.Sleeping,
+                    contentDescription = null,
+                    modifier = Modifier.size(EmptyMascotSize),
+                )
+                Spacer(Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space12))
+                DandiText(
+                    text = stringResource(R.string.history_empty_meals),
+                    color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel2,
+                    style = DesignSystemThemeImpl.typeScale.textRegularM,
+                    textAlign = TextAlign.Center,
+                )
+            }
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(MealRowGap)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(MealRowGap),
+            ) {
                 meals.forEach { meal ->
-                    NyummyMealRow(
-                        data = NyummyMealRowData(
-                            orderLabel = mealOrderLabelOf(meal.orderIndex, meals.size),
-                            name = meal.name,
-                            recordedMeta = mealRowMetaOf(meal),
-                            calories = "${meal.calorieKcal} kcal",
-                        ),
-                        onClick = { onClickMeal(meal.id) },
-                        foodIcon = { HistoryFoodIcon(meal.foodIconId) },
-                    )
+                    when {
+                        meal.isAnalyzing || meal.id in reanalyzingMealIds ->
+                            HistoryMealAnalyzingCard(meal = meal)
+
+                        meal.isAnalysisFailed -> HistoryMealFailedCard(
+                            meal = meal,
+                            onRetry = { onRetryAnalysis(meal.id) },
+                            onDelete = { onDeleteFailedMeal(meal.id) },
+                        )
+
+                        else -> HistoryMealRow(
+                            meal = meal,
+                            mealCount = meals.count { it.isAnalysisCompleted },
+                            onClick = { onClickMeal(meal.id) },
+                        )
+                    }
                 }
             }
+        }
+    }
+}
+
+/**
+ * 식사 한 건 카드. 상단에 "첫 끼 · 오후 12:30" 라벨, 가운데에 아이콘·이름·이동 셰브론,
+ * 하단에 열량을 쌓는다.
+ */
+@Composable
+private fun HistoryMealRow(
+    meal: MealHistoryVO,
+    mealCount: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = DesignSystemThemeImpl.designSystemColor
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius16),
+        color = colors.bgDefaultLevel1,
+        contentColor = colors.contentDefaultLevel0,
+        border = BorderStroke(MealRowBorderWidth, colors.borderCardSubtle),
+        onClick = onClick,
+    ) {
+        Column(
+            modifier = Modifier.padding(
+                horizontal = MealRowInset,
+                vertical = MealRowVerticalInset,
+            ),
+        ) {
+            DandiText(
+                text = "${mealOrderLabelOf(meal.orderIndex, mealCount)} · ${meridiemTimeOf(meal.recordedAt)}",
+                color = colors.contentAccentSage,
+                style = DesignSystemThemeImpl.typeScale.labelStrongS,
+            )
+            Spacer(Modifier.height(MealRowLabelGap))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.size(MealRowIconSize),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    HistoryFoodIcon(meal.foodIconId, sizeFraction = MealRowIconFraction)
+                }
+                Spacer(Modifier.width(MealRowIconGap))
+                DandiText(
+                    text = meal.name,
+                    modifier = Modifier.weight(1f),
+                    color = colors.contentDefaultLevel0,
+                    style = DesignSystemThemeImpl.typeScale.textStrongL,
+                )
+                Icon(
+                    painter = painterResource(CommonR.drawable.nyummy_icon_chevron_right),
+                    contentDescription = null,
+                    modifier = Modifier.size(MealRowChevronSize),
+                    tint = colors.contentIconLevel1,
+                )
+            }
+            Spacer(Modifier.height(MealRowCalorieGap))
+            DandiText(
+                text = "${numberLabelOf(meal.calorieKcal)} kcal",
+                color = colors.contentDefaultLevel2,
+                style = DesignSystemThemeImpl.typeScale.textRegularS,
+            )
         }
     }
 }
@@ -183,48 +277,74 @@ private fun HistoryDailyNutritionCard(
                     NutritionToggleChevron(pointsUp = expanded)
                 }
             }
-            Spacer(Modifier.height(NutritionTitleBottomGap))
+            Spacer(Modifier.height(NutritionCalorieTopGap))
+            Row(verticalAlignment = Alignment.Bottom) {
+                DandiText(
+                    text = if (isLoading) "—" else numberLabelOf(nutrition.currentCalorieKcal),
+                    color = colors.contentAccentSage,
+                    style = DesignSystemThemeImpl.typeScale.numberStrongL,
+                )
+                Spacer(Modifier.width(NutritionCalorieUnitGap))
+                DandiText(
+                    text = "/ ${numberLabelOf(nutrition.targetCalorieKcal)} kcal",
+                    modifier = Modifier.padding(bottom = NutritionCalorieUnitBaselineLift),
+                    color = colors.contentDefaultLevel2,
+                    style = DesignSystemThemeImpl.typeScale.textRegularL,
+                )
+            }
+            Spacer(Modifier.height(NutritionProgressTopGap))
             Row(verticalAlignment = Alignment.CenterVertically) {
+                NyummyLinearProgress(
+                    progress = if (isLoading) {
+                        0f
+                    } else {
+                        progressOf(nutrition.currentCalorieKcal, nutrition.targetCalorieKcal)
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(NutritionProgressHeight),
+                )
+                Spacer(Modifier.width(NutritionProgressPercentGap))
                 DandiText(
                     text = if (isLoading) {
-                        "— / ${numberLabelOf(nutrition.targetCalorieKcal)} kcal"
-                    } else {
-                        "${numberLabelOf(nutrition.currentCalorieKcal)} / " +
-                            "${numberLabelOf(nutrition.targetCalorieKcal)} kcal"
-                    },
-                    modifier = Modifier.weight(1f),
-                    color = if (isLoading) colors.contentDefaultLevel1 else colors.contentDefaultLevel0,
-                    style = DesignSystemThemeImpl.typeScale.textStrongM,
-                )
-                NyummyBadge(
-                    label = if (isLoading) {
                         "—"
                     } else {
                         "${percentOf(nutrition.currentCalorieKcal, nutrition.targetCalorieKcal)}%"
                     },
-                    tone = NyummyBadgeTone.Warning,
+                    color = colors.contentAccentSage,
+                    style = DesignSystemThemeImpl.typeScale.numberStrongM,
                 )
             }
             if (expanded) {
                 Spacer(Modifier.height(NutritionMacroTopGap))
-                Row(horizontalArrangement = Arrangement.spacedBy(NutritionMacroGap)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(NutritionDividerHeight)
+                        .background(colors.borderDefaultLevel1),
+                )
+                Spacer(Modifier.height(NutritionMacroTopGap))
+                Row(modifier = Modifier.fillMaxWidth()) {
                     NutritionMacro(
-                        label = stringResource(R.string.history_macro_carb_short),
+                        label = stringResource(R.string.history_macro_carbohydrate),
                         progress = nutrition.carbohydrate,
                         color = colors.dataNutrientCarbohydrate,
                         isLoading = isLoading,
+                        modifier = Modifier.weight(1f),
                     )
                     NutritionMacro(
                         label = stringResource(R.string.history_macro_protein),
                         progress = nutrition.protein,
                         color = colors.dataNutrientProtein,
                         isLoading = isLoading,
+                        modifier = Modifier.weight(1f),
                     )
                     NutritionMacro(
                         label = stringResource(R.string.history_macro_fat),
                         progress = nutrition.fat,
                         color = colors.dataNutrientFat,
                         isLoading = isLoading,
+                        modifier = Modifier.weight(1f),
                     )
                 }
             }
@@ -252,62 +372,70 @@ private fun NutritionToggleChevron(
     )
 }
 
+/** 색 도트 + 영양소 이름 위에 섭취 그램을 쌓아 보여주는 열입니다. */
 @Composable
 private fun NutritionMacro(
     label: String,
     progress: NutrientProgressVO,
     color: Color,
     isLoading: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
-    val targetFraction = if (isLoading) {
-        0f
-    } else {
-        progressOf(progress.dailyGram, progress.goalGram)
-    }
-    // 첫 표시·펼침 시 0에서 목표 값으로 차오르도록 한 프레임 뒤에 목표를 밀어 넣는다.
-    // (값 사이 이동 애니메이션은 NyummyLinearProgress 가 내장, 프리뷰에서는 즉시 목표 값 표시)
-    val isInspection = LocalInspectionMode.current
-    var displayedFraction by remember { mutableFloatStateOf(if (isInspection) targetFraction else 0f) }
-    LaunchedEffect(targetFraction) { displayedFraction = targetFraction }
-    Column(modifier = Modifier.width(NutritionMacroWidth)) {
+    Column(modifier = modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(NutritionMacroDotSize)
+                    .background(color, DesignSystemThemeImpl.designSystemShape.pill),
+            )
+            Spacer(Modifier.width(NutritionMacroDotGap))
+            DandiText(
+                text = label,
+                color = colors.contentDefaultLevel1,
+                style = DesignSystemThemeImpl.typeScale.textRegularS,
+            )
+        }
+        Spacer(Modifier.height(NutritionMacroValueGap))
         DandiText(
-            text = if (isLoading) {
-                "$label —"
-            } else {
-                "$label ${percentOf(progress.dailyGram, progress.goalGram)}%"
-            },
-            color = colors.contentNutritionLabel,
-            style = DesignSystemThemeImpl.typeScale.labelStrongS,
-        )
-        Spacer(Modifier.height(NutritionMacroTrackGap))
-        NyummyLinearProgress(
-            progress = displayedFraction,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(NutritionMacroTrackHeight),
-            color = color,
+            text = if (isLoading) "—" else "${progress.dailyGram}g",
+            color = colors.contentDefaultLevel0,
+            style = DesignSystemThemeImpl.typeScale.textStrongL,
         )
     }
 }
 
-private val DailySectionWidth = 350.dp
 private val DailyHeaderBottomGap = 14.dp
 private val DailyNutritionBottomGap = 14.dp
 private val EmptyMessageVerticalGap = 28.dp
+private val EmptyMascotSize = 160.dp
 private val MealRowGap = 8.dp
 
 private val NutritionCardBorderWidth = 1.dp
 private val NutritionToggleChevronGap = 2.dp
 private val NutritionToggleChevronSize = 16.dp
 private val NutritionCardInset = 16.dp
-private val NutritionCardVerticalInset = 10.dp
-private val NutritionTitleBottomGap = 2.dp
-private val NutritionMacroTopGap = 7.dp
-private val NutritionMacroGap = 10.dp
-private val NutritionMacroWidth = 96.dp
-private val NutritionMacroTrackGap = 7.dp
-private val NutritionMacroTrackHeight = 6.dp
+private val NutritionCardVerticalInset = 14.dp
+private val NutritionCalorieTopGap = 8.dp
+private val NutritionCalorieUnitGap = 6.dp
+private val NutritionCalorieUnitBaselineLift = 3.dp
+private val NutritionProgressTopGap = 10.dp
+private val NutritionProgressHeight = 8.dp
+private val NutritionProgressPercentGap = 12.dp
+private val NutritionMacroTopGap = 12.dp
+private val NutritionDividerHeight = 1.dp
+private val NutritionMacroDotSize = 8.dp
+private val NutritionMacroDotGap = 6.dp
+private val NutritionMacroValueGap = 4.dp
+private val MealRowBorderWidth = 1.dp
+private val MealRowInset = 16.dp
+private val MealRowVerticalInset = 12.dp
+private val MealRowLabelGap = 6.dp
+private val MealRowIconSize = 40.dp
+private const val MealRowIconFraction = 0.75f
+private val MealRowIconGap = 12.dp
+private val MealRowChevronSize = 20.dp
+private val MealRowCalorieGap = 4.dp
 
 private val previewNutrition = DailyNutritionVO(
     currentCalorieKcal = 2_129,
@@ -336,9 +464,18 @@ private fun HistoryDailySectionPreview() {
                     calorieKcal = 412,
                     orderIndex = 1,
                 ),
+                MealHistoryVO(
+                    id = "preview-2",
+                    recordedAt = "12:30",
+                    orderIndex = 2,
+                    status = MealAnalysisStatus.FAILED,
+                ),
             ).toImmutableList(),
+            reanalyzingMealIds = persistentSetOf(),
             onToggleNutrition = {},
             onClickMeal = {},
+            onRetryAnalysis = {},
+            onDeleteFailedMeal = {},
         )
     }
 }
@@ -354,8 +491,11 @@ private fun HistoryDailySectionCollapsedEmptyPreview() {
             isNutritionExpanded = false,
             isLoading = false,
             meals = persistentListOf(),
+            reanalyzingMealIds = persistentSetOf(),
             onToggleNutrition = {},
             onClickMeal = {},
+            onRetryAnalysis = {},
+            onDeleteFailedMeal = {},
         )
     }
 }

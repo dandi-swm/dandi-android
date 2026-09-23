@@ -33,7 +33,7 @@ import com.dandi.nyummy.history.presentation.component.HistoryCalendarCard
 import com.dandi.nyummy.history.presentation.component.HistoryDailySection
 import com.dandi.nyummy.history.presentation.component.HistoryMealDetailOverlay
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
-import com.dandi.nyummy.history.presentation.model.dayLabelOf
+import com.dandi.nyummy.history.presentation.model.dayTitleOf
 import com.dandi.nyummy.history.presentation.model.mealCountLabelOf
 import kotlinx.collections.immutable.persistentListOf
 
@@ -98,28 +98,29 @@ private fun HistoryScreen(
                 selectedDate = uiState.selectedDate,
                 onClickPreviousMonth = { onIntent(HistoryIntent.ClickPreviousMonth) },
                 onClickNextMonth = { onIntent(HistoryIntent.ClickNextMonth) },
+                onClickToday = { onIntent(HistoryIntent.ClickToday) },
                 onSelectDate = { onIntent(HistoryIntent.SelectDate(it)) },
             )
             Spacer(Modifier.height(DailySectionTopGap))
             HistoryDailySection(
-                dayTitle = stringResource(
-                    R.string.history_day_meals_title,
-                    dayLabelOf(uiState.selectedDate),
-                ),
-                mealCountLabel = mealCountLabelOf(uiState.selectedDayMeals.size),
+                dayTitle = dayTitleOf(uiState.selectedDate),
+                mealCountLabel = mealCountLabelOf(uiState.completedMealCount),
                 nutrition = uiState.dailyNutrition,
                 isNutritionExpanded = uiState.isNutritionExpanded,
                 isLoading = uiState.isLoading,
                 meals = uiState.selectedDayMeals,
+                reanalyzingMealIds = uiState.reanalyzingMealIds,
                 onToggleNutrition = { onIntent(HistoryIntent.ToggleNutritionSummary) },
                 onClickMeal = { onIntent(HistoryIntent.ClickMeal(it)) },
+                onRetryAnalysis = { onIntent(HistoryIntent.ClickRetryAnalysis(it)) },
+                onDeleteFailedMeal = { onIntent(HistoryIntent.ClickDeleteFailedMeal(it)) },
             )
         }
         uiState.mealDetail?.let { detail ->
             HistoryMealDetailOverlay(
                 detail = detail,
                 selectedDate = uiState.selectedDate,
-                mealCount = uiState.selectedDayMeals.size,
+                mealCount = uiState.completedMealCount,
                 dailyNutrition = uiState.dailyNutrition,
                 onIntent = onIntent,
             )

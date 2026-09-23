@@ -60,13 +60,23 @@ class MealRecordViewModel @Inject constructor(
             MealRecordIntent.ClickNext -> {
                 val phase = currentState.phase as? MealCameraPhase.Feeding ?: return
                 if (!currentState.isSubmitSucceeded) return
-                finishFeeding(phase.photoPath)
+                deletePhotoFile(phase.photoPath)
+                dispatch(MealRecordReducerEvent.FeedingCompleted)
             }
 
+            MealRecordIntent.ClickDone -> finishRecord()
+
             MealRecordIntent.ClickClose -> when (val phase = currentState.phase) {
-                // 업로드 진행 중 이탈은 차단하고, 성공 후에는 `다음` 과 동일하게 마무리한다.
+                // 업로드 진행 중 이탈은 차단하고, 성공 후에는 파일을 정리하고 곧장 마무리한다.
                 is MealCameraPhase.Feeding ->
-                    if (currentState.isSubmitSucceeded) finishFeeding(phase.photoPath) else Unit
+                    if (currentState.isSubmitSucceeded) {
+                        deletePhotoFile(phase.photoPath)
+                        finishRecord()
+                    } else {
+                        Unit
+                    }
+
+                MealCameraPhase.Done -> finishRecord()
 
                 else -> {
                     deleteCapturedFile()
@@ -112,6 +122,8 @@ class MealRecordViewModel @Inject constructor(
                     )
                 } ?: state.copy(isSubmitSucceeded = false)
 
+            MealRecordReducerEvent.FeedingCompleted -> state.copy(phase = MealCameraPhase.Done)
+
             MealRecordReducerEvent.FinishStarted -> state.copy(isFinishing = true)
         }
 
@@ -128,13 +140,12 @@ class MealRecordViewModel @Inject constructor(
     }
 
     /**
-     * 세리머니를 마치고 촬영 파일을 정리한 뒤 화면을 닫는다.
-     * 다음·닫기·백이 같은 프레임에 겹쳐도 뒤로가기 신호는 한 번만 나가도록 래치한다.
+     * 기록 플로우를 마치고 화면을 닫는다.
+     * 완료·닫기·백이 같은 프레임에 겹쳐도 뒤로가기 신호는 한 번만 나가도록 래치한다.
      */
-    private fun finishFeeding(photoPath: String) {
+    private fun finishRecord() {
         if (currentState.isFinishing) return
         dispatch(MealRecordReducerEvent.FinishStarted)
-        deletePhotoFile(photoPath)
         navigationHelper.navigateToBack()
     }
 

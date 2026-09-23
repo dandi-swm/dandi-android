@@ -1,13 +1,14 @@
 # 냐미(Nyummy) Android
 
-단디 팀의 AI 식사 기록 앱 냐미(Nyummy)의 멀티모듈 클린아키텍처 Android 프로젝트. feature 모듈은 `intro`/`auth`/`home`/`meal`/`history` 5세트와 앱 셸 `main`이 있다(총 31모듈). 새 feature는 4모듈 구조와 `docs/architecture` 규칙을 따르고, 가장 완성도 높은 `auth`/`history`(실 API 연동)와 `common` 패턴을 우선 참고한다.
+단디 팀의 AI 식사 기록 앱 냐미(Nyummy)의 멀티모듈 클린아키텍처 Android 프로젝트. feature 모듈은 `intro`/`auth`/`home`/`meal`/`history`/`collection`/`shop` 7세트와 앱 셸 `main`이 있다(총 39모듈). 새 feature는 4모듈 구조와 `docs/architecture` 규칙을 따르고, 가장 완성도 높은 `auth`/`history`(실 API 연동)와 `common` 패턴을 우선 참고한다.
 
-## 현재 구현 현황 (2026-08-31)
+## 현재 구현 현황 (2026-09-09)
 
-- 등록 라우트 7개: `""`(인트로 루트) `/login` `/login/email` `/signup` `/home` `/meal/record` `/history` — `AppRouteRegistry.kt` 기준.
+- 등록 라우트 9개: `""`(인트로 루트) `/login` `/login/email` `/signup` `/home` `/meal/record` `/history` `/collection` `/shop` — `AppRouteRegistry.kt` 기준.
+- 바텀 네비 4탭(홈·기록·컬렉션·상점) + 중앙 카메라 버튼(식사 기록 진입) — `NyummyNavigation.kt`/`RootComposable.kt`.
 - ApiService 2개: `AuthApiService`(login/signup/email-verification/confirm/refresh 5개), `HistoryApiService`(monthly/daily/상세/이름수정/삭제 5개).
-- 빈 스캐폴드 4개: `main:entity` `main:data` `home:data` `meal:data`.
-- 홈은 100% 목업(`HomeMockData`), 식사 기록은 CameraX 촬영→확인까지만이고 제출(ClickSubmit) 미연동. 서버 식사 API는 구현 완료 상태이므로 `MealRecordViewModel.kt`의 "백엔드 미구현" TODO 주석은 낡은 서술이다 — 이 주석을 근거로 연동을 미루지 말 것.
+- 빈 스캐폴드: `main:entity` `main:data` `home:data` `meal:data` + `collection`/`shop`의 entity·data.
+- 홈은 100% 목업(`HomeMockData`), 컬렉션·상점은 "준비 중" 플레이스홀더 화면. 식사 기록은 촬영→확인→제출(SubmitMealUseCase)→픽셀 세리머니→완료 화면까지 연동됨.
 - 카카오 로그인 버튼은 테스트 계정 하드코딩(`LoginViewModel.kt`)으로 제거 예정. 소셜 로그인·비밀번호 찾기 미구현.
 
 ## 빌드 / 테스트
@@ -29,6 +30,8 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  
 5. **DTO/VO**: DTO는 `@Serializable`+전 필드 nullable, VO는 비-nullable+기본값. 변환은 data 레이어 `toVO()`에서만.
 6. **에러**: data는 `HttpResponseException` throw만, 처리(다이얼로그/네비게이션)는 domain UseCase에서 `isCommonErrorHandling()`/`handlingErrorOnUseCase<ErrorType>()`로.
 7. **네비게이션**: 화면 이동은 `navigationHelper.navigateTo(Page)`만. 새 화면은 `AppRouteRegistry.kt`에 등록.
+8. **시간/타임존**: 모든 날짜·시각은 **KST 고정** — `common/entity/.../time/KstTime.kt`만 사용. 서버 시간 문자열 → KST 변환은 data 레이어 `toVO()`에서만, VO에는 변환이 끝난 값만. `Calendar.getInstance()`/`TimeZone.getDefault()`로 날짜·시각 계산 금지(기기 타임존 오염). `java.time`은 desugaring 미적용(minSdk 24)이라 사용 금지 — 다국가 타임존 요구가 생기면 그때 desugaring 전환.
+9. **이미지 로딩**: Coil 의존성은 `common:presentation`에서만 `api`로 노출, ImageLoader 설정은 `common/presentation/.../image/NyummyImageLoaderFactory.kt` 한 곳(presigned URL 캐시 키 정규화 포함). feature 모듈에 coil 의존 개별 선언 금지.
 
 ## 네이밍
 

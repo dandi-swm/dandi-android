@@ -3,16 +3,13 @@ package com.dandi.nyummy.meal.presentation
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,7 +26,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,9 +54,12 @@ import com.dandi.nyummy.common.presentation.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.component.NyummyButtonStyle
 import com.dandi.nyummy.common.presentation.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.component.NyummyIconButtonStyle
+import com.dandi.nyummy.common.presentation.component.NyummyMascot
+import com.dandi.nyummy.common.presentation.component.NyummyMascotPose
 import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.meal.presentation.component.MealCameraOverlay
 import com.dandi.nyummy.meal.presentation.component.MealCameraPreview
 import com.dandi.nyummy.meal.presentation.component.MealFeedCeremony
@@ -113,32 +112,82 @@ private fun MealRecordScreen(
     var ceremonyIdle by remember(uiState.phase::class) { mutableStateOf(false) }
     val showNext = uiState.isSubmitSucceeded && ceremonyIdle
 
-    // 촬영본 확인 중의 시스템 백은 이탈 대신 재촬영 복귀로, 세리머니 중에는 `다음` 과
-    // 동일하게 처리한다(업로드 진행 중에는 ViewModel 이 무시).
+    // 촬영본 확인 중의 시스템 백은 이탈 대신 재촬영 복귀로, 세리머니 중에는 `다음` 과,
+    // 완료 화면에서는 `완료` 와 동일하게 처리한다(업로드 진행 중에는 ViewModel 이 무시).
     BackHandler(enabled = uiState.phase !is MealCameraPhase.Preview) {
         when (uiState.phase) {
             is MealCameraPhase.Captured -> onIntent(MealRecordIntent.ClickRetake)
             is MealCameraPhase.Feeding -> onIntent(MealRecordIntent.ClickNext)
+            MealCameraPhase.Done -> onIntent(MealRecordIntent.ClickDone)
             MealCameraPhase.Preview -> Unit
         }
     }
 
-    Column(
+    // 세리머니·완료 단계는 카드 박스 대신 패턴 배경 위 풀블리드 연출로 전환된다.
+    val isCeremonyPhase = uiState.phase is MealCameraPhase.Feeding ||
+        uiState.phase is MealCameraPhase.Done
+
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(colors.bgSurfaceIvory),
     ) {
+        if (isCeremonyPhase) {
+            Image(
+                painter = painterResource(CommonR.drawable.nyummy_pattern_bg),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+                alignment = Alignment.TopCenter,
+            )
+        }
+        Column(modifier = Modifier.fillMaxSize()) {
         MealRecordHeader(
+            // 촬영 안내 문구는 촬영·확인 단계에서만 의미가 있다.
+            showSubtitle = uiState.phase is MealCameraPhase.Preview ||
+                uiState.phase is MealCameraPhase.Captured,
             onCloseClick = { onIntent(MealRecordIntent.ClickClose) },
         )
+        if (uiState.phase is MealCameraPhase.Feeding) {
+            Spacer(Modifier.height(CeremonyHeadlineTopGap))
+            DandiText(
+                text = stringResource(R.string.meal_record_ceremony_title_line1),
+                modifier = Modifier.fillMaxWidth(),
+                color = colors.contentDefaultLevel0,
+                textAlign = TextAlign.Center,
+                style = DesignSystemThemeImpl.typeScale.displayRegularXXL,
+            )
+            DandiText(
+                text = stringResource(R.string.meal_record_ceremony_title_line2),
+                modifier = Modifier.fillMaxWidth(),
+                color = colors.contentDefaultLevel0,
+                textAlign = TextAlign.Center,
+                style = DesignSystemThemeImpl.typeScale.displayRegularXXL,
+            )
+            Spacer(Modifier.height(spacing.space12))
+            DandiText(
+                text = stringResource(R.string.meal_record_ceremony_subtitle),
+                modifier = Modifier.fillMaxWidth(),
+                color = colors.contentDefaultLevel1,
+                textAlign = TextAlign.Center,
+                style = DesignSystemThemeImpl.typeScale.textRegularL,
+            )
+        }
         Spacer(Modifier.height(spacing.space16))
         Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = spacing.space20)
-                .clip(RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius24))
-                .background(colors.bgMealPhoto),
+            modifier = if (isCeremonyPhase) {
+                // 패턴 배경 위 풀블리드: 카드 프레임 없이 연출만 얹는다.
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            } else {
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = spacing.space20)
+                    .clip(RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius24))
+                    .background(colors.bgMealPhoto)
+            },
         ) {
             when (val phase = uiState.phase) {
                 MealCameraPhase.Preview -> when (uiState.cameraPermission) {
@@ -174,12 +223,19 @@ private fun MealRecordScreen(
                     onFedToCat = { onIntent(MealRecordIntent.ClickNext) },
                     modifier = Modifier.fillMaxSize(),
                 )
+
+                MealCameraPhase.Done -> MealFeedDoneContent(
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
-            // 세리머니 중에는 장식 오버레이(브래킷·마스코트)가 연출과 겹치지 않게 숨긴다.
+            // 세리머니·완료 화면에서는 장식 오버레이(브래킷)가 연출과 겹치지 않게 숨긴다.
             if (uiState.cameraPermission != MealCameraPermission.Denied &&
-                uiState.phase !is MealCameraPhase.Feeding
+                (
+                    uiState.phase is MealCameraPhase.Preview ||
+                        uiState.phase is MealCameraPhase.Captured
+                    )
             ) {
-                MealCameraOverlay(showHint = uiState.phase is MealCameraPhase.Preview)
+                MealCameraOverlay()
             }
         }
         Box(
@@ -189,10 +245,12 @@ private fun MealRecordScreen(
             contentAlignment = Alignment.Center,
         ) {
             when (uiState.phase) {
-                MealCameraPhase.Preview -> ShutterButton(
-                    enabled = !uiState.isCapturing &&
+                MealCameraPhase.Preview -> PreviewActionBar(
+                    captureEnabled = !uiState.isCapturing &&
                         uiState.cameraPermission == MealCameraPermission.Granted,
-                    onClick = { onIntent(MealRecordIntent.ClickShutter) },
+                    onCancelClick = { onIntent(MealRecordIntent.ClickClose) },
+                    onCaptureClick = { onIntent(MealRecordIntent.ClickShutter) },
+                    modifier = Modifier.fillMaxWidth(),
                 )
 
                 is MealCameraPhase.Captured -> CapturedActionBar(
@@ -203,16 +261,27 @@ private fun MealRecordScreen(
 
                 is MealCameraPhase.Feeding -> FeedingBottomBar(
                     showNext = showNext,
-                    onNextClick = { onIntent(MealRecordIntent.ClickNext) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxSize(),
+                )
+
+                MealCameraPhase.Done -> NyummyButton(
+                    label = stringResource(R.string.meal_record_done),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = spacing.space24),
+                    style = NyummyButtonStyle.Primary,
+                    size = NyummyButtonSize.Large,
+                    onClick = { onIntent(MealRecordIntent.ClickDone) },
                 )
             }
+        }
         }
     }
 }
 
 @Composable
 private fun MealRecordHeader(
+    showSubtitle: Boolean,
     onCloseClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -242,13 +311,15 @@ private fun MealRecordHeader(
                 style = DesignSystemThemeImpl.typeScale.titleStrongL,
             )
         }
-        DandiText(
-            text = stringResource(R.string.meal_record_subtitle),
-            modifier = Modifier.fillMaxWidth(),
-            color = colors.contentDefaultLevel1,
-            textAlign = TextAlign.Center,
-            style = DesignSystemThemeImpl.typeScale.textRegularM,
-        )
+        if (showSubtitle) {
+            DandiText(
+                text = stringResource(R.string.meal_record_subtitle),
+                modifier = Modifier.fillMaxWidth(),
+                color = colors.contentDefaultLevel1,
+                textAlign = TextAlign.Center,
+                style = DesignSystemThemeImpl.typeScale.textRegularM,
+            )
+        }
     }
 }
 
@@ -287,32 +358,47 @@ private fun PermissionDeniedContent(
     }
 }
 
+/** 프리뷰 단계 하단 바: 취소 · `담기`(촬영) 버튼. */
 @Composable
-private fun ShutterButton(
-    enabled: Boolean,
-    onClick: () -> Unit,
+private fun PreviewActionBar(
+    captureEnabled: Boolean,
+    onCancelClick: () -> Unit,
+    onCaptureClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
-    Surface(
-        onClick = onClick,
-        modifier = modifier.size(ShutterButtonSize),
-        enabled = enabled,
-        shape = CircleShape,
-        color = colors.bgActionPrimaryDefault,
-        border = BorderStroke(ShutterRingWidth, colors.contentInverseDefault),
+    val spacing = DesignSystemThemeImpl.designSystemSpacing
+    Row(
+        modifier = modifier.padding(horizontal = spacing.space20),
+        horizontalArrangement = Arrangement.spacedBy(spacing.space12),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                painter = painterResource(R.drawable.ic_meal_camera),
-                contentDescription = stringResource(R.string.meal_record_shutter_content_description),
-                modifier = Modifier.size(ShutterIconSize),
-                tint = colors.contentInverseDefault,
-            )
-        }
+        NyummyButton(
+            label = stringResource(R.string.meal_record_cancel),
+            style = NyummyButtonStyle.Secondary,
+            size = NyummyButtonSize.Large,
+            onClick = onCancelClick,
+        )
+        NyummyButton(
+            label = stringResource(R.string.meal_record_capture),
+            modifier = Modifier.weight(1f),
+            style = NyummyButtonStyle.Primary,
+            size = NyummyButtonSize.Large,
+            enabled = captureEnabled,
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_meal_camera),
+                    contentDescription = null,
+                    modifier = Modifier.size(CaptureIconSize),
+                    tint = colors.contentInverseDefault,
+                )
+            },
+            onClick = onCaptureClick,
+        )
     }
 }
 
+/** 촬영 확인 단계 하단 바: 다시 찍기 · `냐미에게 주기`(주 액션) 버튼. */
 @Composable
 private fun CapturedActionBar(
     onRetakeClick: () -> Unit,
@@ -321,46 +407,81 @@ private fun CapturedActionBar(
 ) {
     val spacing = DesignSystemThemeImpl.designSystemSpacing
     Row(
-        modifier = modifier.padding(horizontal = spacing.space24),
+        modifier = modifier.padding(horizontal = spacing.space20),
+        horizontalArrangement = Arrangement.spacedBy(spacing.space12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NyummyButton(
             label = stringResource(R.string.meal_record_retake),
-            style = NyummyButtonStyle.Ghost,
+            style = NyummyButtonStyle.Secondary,
             size = NyummyButtonSize.Large,
             onClick = onRetakeClick,
         )
-        Spacer(Modifier.weight(1f))
         NyummyButton(
             label = stringResource(R.string.meal_record_submit),
-            style = NyummyButtonStyle.Ghost,
+            modifier = Modifier.weight(1f),
+            style = NyummyButtonStyle.Primary,
             size = NyummyButtonSize.Large,
             onClick = onSubmitClick,
         )
     }
 }
 
-/**
- * 세리머니 중의 하단 바. 스피너 없이 힌트 텍스트가 맥박치다가, 세리머니가 부유 단계에
- * 도달하고 응답까지 도착하면 `다음` 버튼이 스프링으로 등장한다.
- */
+/** 완료 단계: 맛있게 먹은 냐미와 완료 카피. */
 @Composable
-private fun FeedingBottomBar(
-    showNext: Boolean,
-    onNextClick: () -> Unit,
+private fun MealFeedDoneContent(
     modifier: Modifier = Modifier,
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
     val spacing = DesignSystemThemeImpl.designSystemSpacing
+    Column(
+        modifier = modifier.padding(horizontal = spacing.space24),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        NyummyMascot(
+            pose = NyummyMascotPose.Eating,
+            contentDescription = stringResource(R.string.meal_record_done_mascot_content_description),
+            modifier = Modifier.size(DoneMascotSize),
+        )
+        Spacer(Modifier.height(spacing.space16))
+        DandiText(
+            text = stringResource(R.string.meal_record_done_title),
+            color = colors.contentDefaultLevel0,
+            textAlign = TextAlign.Center,
+            style = DesignSystemThemeImpl.typeScale.titleStrongXL,
+        )
+        Spacer(Modifier.height(spacing.space8))
+        DandiText(
+            text = stringResource(R.string.meal_record_done_body),
+            color = colors.contentDefaultLevel1,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            style = DesignSystemThemeImpl.typeScale.textRegularM,
+        )
+    }
+}
+
+/**
+ * 세리머니 중의 하단 영역. 배달 대기 동안 도트와 힌트 텍스트가 맥박치고,
+ * 준비가 끝나면(먹이기 가능) 조용히 사라진다. 맨 아래에는 nyummy 워드마크를 둔다.
+ */
+@Composable
+private fun FeedingBottomBar(
+    showNext: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val colors = DesignSystemThemeImpl.designSystemColor
     val haptic = LocalHapticFeedback.current
     LaunchedEffect(showNext) {
         if (showNext) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+    Box(modifier = modifier) {
         AnimatedVisibility(
             visible = !showNext,
             enter = fadeIn(),
             exit = fadeOut(tween(FeedingHintFadeOutMillis)),
+            modifier = Modifier.align(Alignment.Center),
         ) {
             val pulse = rememberInfiniteTransition(label = "FeedingHintPulse")
             val hintAlpha by pulse.animateFloat(
@@ -372,44 +493,59 @@ private fun FeedingBottomBar(
                 ),
                 label = "hintAlpha",
             )
-            DandiText(
-                text = stringResource(R.string.meal_record_feeding_in_progress),
+            Column(
                 modifier = Modifier.graphicsLayer { alpha = hintAlpha },
-                color = colors.contentDefaultLevel1,
-                style = DesignSystemThemeImpl.typeScale.textRegularM,
-            )
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(FeedingDotGap)) {
+                    repeat(FeedingDotCount) {
+                        Box(
+                            modifier = Modifier
+                                .size(FeedingDotSize)
+                                .background(colors.dataCalendarRecorded, CircleShape),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space12))
+                DandiText(
+                    text = stringResource(R.string.meal_record_feeding_in_progress),
+                    color = colors.contentDefaultLevel0,
+                    style = DesignSystemThemeImpl.typeScale.titleStrongL,
+                )
+            }
         }
-        AnimatedVisibility(
-            visible = showNext,
-            enter = scaleIn(
-                initialScale = NextButtonStartScale,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessMediumLow,
-                ),
-            ) + fadeIn(),
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = DesignSystemThemeImpl.designSystemSpacing.space8),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            NyummyButton(
-                label = stringResource(R.string.meal_record_next),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = spacing.space24),
-                style = NyummyButtonStyle.Primary,
-                size = NyummyButtonSize.Large,
-                onClick = onNextClick,
+            Icon(
+                painter = painterResource(R.drawable.ic_meal_paw),
+                contentDescription = null,
+                modifier = Modifier.size(WordmarkPawSize),
+                tint = colors.contentBrandWordmark,
+            )
+            DandiText(
+                text = stringResource(R.string.meal_record_wordmark),
+                color = colors.contentBrandWordmark,
+                style = DesignSystemThemeImpl.typeScale.labelStrongS,
             )
         }
     }
 }
 
 private val BottomBarHeight = 120.dp
-private val ShutterButtonSize = 76.dp
-private val ShutterRingWidth = 3.dp
-private val ShutterIconSize = 28.dp
+private val CeremonyHeadlineTopGap = 48.dp
+private val CaptureIconSize = 24.dp
+private val DoneMascotSize = 180.dp
 private const val FeedingHintFadeOutMillis = 150
 private const val FeedingHintPulseMillis = 1100
-private const val FeedingHintMinAlpha = 0.45f
-private const val NextButtonStartScale = 0.5f
+private const val FeedingHintMinAlpha = 0.55f
+private const val FeedingDotCount = 3
+private val FeedingDotSize = 8.dp
+private val FeedingDotGap = 10.dp
+private val WordmarkPawSize = 16.dp
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
@@ -443,6 +579,21 @@ private fun MealRecordScreenFeedingPhase() {
         MealRecordScreen(
             uiState = MealRecordUIState(
                 phase = MealCameraPhase.Feeding(photoPath = "/cache/meal_capture_preview.jpg"),
+                cameraPermission = MealCameraPermission.Granted,
+                isSubmitSucceeded = true,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun MealRecordScreenDonePhase() {
+    DesignSystemTheme {
+        MealRecordScreen(
+            uiState = MealRecordUIState(
+                phase = MealCameraPhase.Done,
                 cameraPermission = MealCameraPermission.Granted,
                 isSubmitSucceeded = true,
             ),

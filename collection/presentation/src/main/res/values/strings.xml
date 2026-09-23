@@ -1,0 +1,7 @@
+<resources>
+    <string name="collection_title">Collection</string>
+    <string name="collection_coming_title">The collection is on its way</string>
+    <string name="collection_coming_body">You\'ll soon see the records\nyou gathered with Nyami here</string>
+    <string name="collection_badge_coming_soon">Coming soon</string>
+    <string name="collection_mascot_content_description">Nyami</string>
+</resources>

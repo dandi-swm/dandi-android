@@ -12,6 +12,9 @@ sealed interface HistoryIntent : MviIntent {
     /** 캘린더 헤더의 다음 달 버튼을 눌렀습니다. */
     data object ClickNextMonth : HistoryIntent
 
+    /** 월 헤더의 `오늘` 칩을 눌러 오늘 날짜로 이동했다. */
+    data object ClickToday : HistoryIntent
+
     /** 캘린더에서 날짜 하나를 선택했습니다. */
     data class SelectDate(val date: HistoryDateVO) : HistoryIntent
 
@@ -20,6 +23,12 @@ sealed interface HistoryIntent : MviIntent {
 
     /** 식사 목록에서 기록 하나를 눌렀습니다. */
     data class ClickMeal(val mealId: String) : HistoryIntent
+
+    /** 분석 실패 카드의 `다시 분석하기` 를 눌렀습니다. */
+    data class ClickRetryAnalysis(val mealId: String) : HistoryIntent
+
+    /** 분석 실패 카드의 `기록 삭제` 를 눌렀습니다. */
+    data class ClickDeleteFailedMeal(val mealId: String) : HistoryIntent
 
     /** 식사 상세 오버레이의 닫기(또는 바깥 영역)를 눌렀습니다. */
     data object DismissMealDetail : HistoryIntent

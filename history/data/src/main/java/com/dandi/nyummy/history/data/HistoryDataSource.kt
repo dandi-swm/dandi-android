@@ -20,6 +20,9 @@ class HistoryDataSource(
     suspend fun updateMealName(mealId: Long, name: String): MealDTO =
         checkResponse(apiService.updateMealName(mealId, name))
 
+    suspend fun reanalyzeMeal(mealId: Long): MealDTO =
+        checkResponse(apiService.reanalyzeMeal(mealId))
+
     suspend fun deleteMeal(mealId: Long) =
         checkResponse(apiService.deleteMeal(mealId))
 }

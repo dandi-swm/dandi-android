@@ -64,7 +64,6 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.exifinterface)
-    implementation(libs.coil.compose)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

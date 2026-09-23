@@ -106,7 +106,8 @@ internal fun HistoryMealDetailOverlay(
                 HistoryMealDetailMode.ConfirmingDelete -> NyummyDestructiveDialog(
                     title = stringResource(R.string.history_delete_dialog_title),
                     body = stringResource(R.string.history_delete_dialog_body),
-                    targetLabel = "${detail.meal.name} · ${detail.meal.recordedAt}",
+                    // 분석 실패 기록은 이름이 비어 있어 대체 문구로 무엇을 지우는지 알려준다.
+                    targetLabel = "${mealTitleOf(detail.meal)} · ${detail.meal.recordedAt}",
                     helper = stringResource(R.string.history_delete_dialog_helper),
                     cancelLabel = stringResource(R.string.history_delete_dialog_cancel),
                     confirmLabel = stringResource(R.string.history_delete_dialog_confirm),
@@ -117,6 +118,11 @@ internal fun HistoryMealDetailOverlay(
         }
     }
 }
+
+/** 카드·다이얼로그에 보여줄 식사 이름입니다. 분석 전/실패라 이름이 없으면 대체 문구를 씁니다. */
+@Composable
+private fun mealTitleOf(meal: MealHistoryVO): String =
+    meal.name.ifBlank { stringResource(R.string.history_analysis_unknown_meal) }
 
 @Composable
 private fun HistoryMealDetailCard(

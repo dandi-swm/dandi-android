@@ -251,7 +251,7 @@ private fun softClampAxis(value: Float, min: Float, max: Float): Float = when {
     else -> value
 }
 
-internal val FeedItemCardSize = 180.dp
+internal val FeedItemCardSize = 132.dp
 private val BobAmplitude = 5.dp
 
 /** 이 거리 안으로 들어오면 근접 축소가 시작된다. */

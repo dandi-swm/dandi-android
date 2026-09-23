@@ -6,6 +6,7 @@ import com.dandi.nyummy.history.data.dto.MonthlyMealsDTO
 import retrofit2.Response
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -40,11 +41,18 @@ interface HistoryApiService {
         @Query("name") name: String,
     ): Response<MealDTO>
 
+    /** 식사 재분석 요청 */
+    @POST("$MEALS_PATH/{mealId}/$ANALYSIS_PATH")
+    suspend fun reanalyzeMeal(@Path("mealId") mealId: Long): Response<MealDTO>
+
     /** 식사 삭제 */
     @DELETE("$MEALS_PATH/{mealId}")
     suspend fun deleteMeal(@Path("mealId") mealId: Long): Response<Unit>
 
     companion object {
         const val MEALS_PATH = "/api/v1/meals"
+
+        // TODO 재분석 엔드포인트 스펙 확정 전 잠정 경로. 확정되면 이 상수만 수정한다.
+        const val ANALYSIS_PATH = "analysis"
     }
 }

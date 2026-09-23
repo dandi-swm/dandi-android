@@ -2,6 +2,8 @@ package com.dandi.nyummy.history.data.dto
 
 import com.dandi.nyummy.history.data.util.toDisplayTime
 import com.dandi.nyummy.history.data.util.toHistoryDateVO
+import com.dandi.nyummy.history.data.util.toKstEpochMillisOrNull
+import com.dandi.nyummy.history.data.util.toMealAnalysisStatus
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
@@ -22,9 +24,11 @@ data class DailyMealsDTO(
     val dailyNutrition: DailyNutritionDTO? = null,
 ) {
     fun toVO(): DailyMealHistoryVO {
-        // mealAt 오름차순으로 정렬한 뒤 하루 안의 순서(orderIndex)를 1부터 부여한다.
+        // mealAt 을 KST epoch 으로 환산해 시간순 정렬한 뒤 하루 안의 순서(orderIndex)를 1부터 부여한다.
+        // 문자열 사전순으로 정렬하면 서버가 `Z` 와 `+09:00` 을 섞어 내려줄 때 순서가 어긋난다.
+        // 파싱하지 못한 값은 맨 뒤로 보낸다.
         val orderedMeals = meals.orEmpty()
-            .sortedBy { it.mealAt.orEmpty() }
+            .sortedBy { it.mealAt.toKstEpochMillisOrNull() ?: Long.MAX_VALUE }
             .mapIndexed { index, meal -> meal.toVO(orderIndex = index + 1) }
         return DailyMealHistoryVO(
             date = date.toHistoryDateVO(),
@@ -39,7 +43,7 @@ data class DailyMealsDTO(
  *
  * @property mealId 식사 기록 식별자
  * @property name 음식 이름
- * @property mealAt 식사 시각 (ISO date-time)
+ * @property mealAt 식사 시각 (ISO date-time). 오프셋 유무와 무관하게 data 레이어가 KST 로 환산한다.
  * @property calory 열량(kcal)
  * @property carbs 탄수화물(g)
  * @property protein 단백질(g)
@@ -69,6 +73,7 @@ data class DailyMealDTO(
         proteinGram = protein ?: 0,
         fatGram = fat ?: 0,
         orderIndex = orderIndex,
+        status = status.toMealAnalysisStatus(name = name, calorieKcal = calory),
     )
 }
 
