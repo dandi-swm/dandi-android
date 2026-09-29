@@ -173,6 +173,32 @@ class HistoryViewModelTest {
     }
 
     @Test
+    fun `같은 상세를 다시 열면 이전 요청의 응답은 반영되지 않는다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+        val firstGate = CompletableDeferred<MealHistoryVO>()
+        val secondGate = CompletableDeferred<MealHistoryVO>()
+        var requestCount = 0
+        repository.mealOverride = {
+            if (requestCount++ == 0) firstGate.await() else secondGate.await()
+        }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ClickMeal("1"))
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.DismissMealDetail)
+        viewModel.onIntent(HistoryIntent.ClickMeal("1"))
+        advanceUntilIdle()
+
+        secondGate.complete(MealHistoryVO(id = "1", photoUrl = "https://new.photo"))
+        advanceUntilIdle()
+        firstGate.complete(MealHistoryVO(id = "1", photoUrl = "https://old.photo"))
+        advanceUntilIdle()
+
+        assertEquals("https://new.photo", viewModel.uiState.value.mealDetail?.meal?.photoUrl)
+    }
+
+    @Test
     fun `상세 응답의 냐미 한마디는 목록 정보를 유지한 채 상세에 합쳐진다`() = runTest(testDispatcher) {
         repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
         repository.mealOverride = { mealId ->

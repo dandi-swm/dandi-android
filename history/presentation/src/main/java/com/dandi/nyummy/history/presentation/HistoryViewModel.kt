@@ -48,6 +48,8 @@ class HistoryViewModel @Inject constructor(
      */
     private var refreshJob: Job? = null
 
+    private var mealDetailJob: Job? = null
+
     init {
         val today = currentState.selectedDate
         loadMonth(year = today.year, month = today.month, selectedDate = today)
@@ -78,8 +80,7 @@ class HistoryViewModel @Inject constructor(
 
             is HistoryIntent.ClickDeleteFailedMeal -> requestDeleteFailedMeal(intent.mealId)
 
-            HistoryIntent.DismissMealDetail ->
-                dispatch(HistoryReducerEvent.MealDetailDismissed)
+            HistoryIntent.DismissMealDetail -> dismissMealDetail()
 
             HistoryIntent.ClickEditMealName ->
                 dispatch(HistoryReducerEvent.MealNameEditStarted)
@@ -289,9 +290,10 @@ class HistoryViewModel @Inject constructor(
         val meal = currentState.selectedDayMeals.firstOrNull { it.id == mealId } ?: return
         // 실패/분석 중 기록은 보여줄 이름·영양 정보가 없어 카드 안의 액션만 제공한다.
         if (!meal.isAnalysisCompleted) return
+        mealDetailJob?.cancel()
         dispatch(HistoryReducerEvent.MealDetailOpened(meal))
         val id = mealId.toLongOrNull() ?: return
-        viewModelScope.launch {
+        mealDetailJob = viewModelScope.launch {
             getMealDetail(id).onSuccess { detail ->
                 dispatch(
                     HistoryReducerEvent.MealDetailLoaded(
@@ -303,6 +305,12 @@ class HistoryViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private fun dismissMealDetail() {
+        mealDetailJob?.cancel()
+        mealDetailJob = null
+        dispatch(HistoryReducerEvent.MealDetailDismissed)
     }
 
     /**
