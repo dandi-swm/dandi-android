@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,24 +47,33 @@ internal fun HistoryMealNutritionSection(
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
     Column(modifier = modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            HistoryBarChartIcon(modifier = Modifier.size(TitleIconSize))
-            Spacer(Modifier.width(TitleIconGap))
-            DandiText(
-                text = stringResource(R.string.history_nutrition_section_title),
-                modifier = Modifier.weight(1f),
-                color = colors.contentDefaultLevel0,
-                style = DesignSystemThemeImpl.typeScale.textStrongL,
-            )
-            Legend(
-                color = colors.dataProgressDailyTotal,
-                label = stringResource(R.string.history_nutrition_legend_daily),
-            )
-            Spacer(Modifier.width(LegendGap))
-            Legend(
-                color = colors.dataProgressMealContribution,
-                label = stringResource(R.string.history_nutrition_legend_meal),
-            )
+        // 큰 글꼴 배율에서 제목과 범례가 한 줄에 안 들어가면 범례를 다음 줄로 내려 말줄임을 피한다.
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.spacedBy(WrapRowGap),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                HistoryBarChartIcon(modifier = Modifier.size(TitleIconSize))
+                Spacer(Modifier.width(TitleIconGap))
+                DandiText(
+                    text = stringResource(R.string.history_nutrition_section_title),
+                    color = colors.contentDefaultLevel0,
+                    style = DesignSystemThemeImpl.typeScale.textStrongL,
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Legend(
+                    color = colors.dataProgressDailyTotal,
+                    label = stringResource(R.string.history_nutrition_legend_daily),
+                )
+                Spacer(Modifier.width(LegendGap))
+                Legend(
+                    color = colors.dataProgressMealContribution,
+                    label = stringResource(R.string.history_nutrition_legend_meal),
+                )
+            }
         }
         Spacer(Modifier.height(TitleBottomGap))
         Column(verticalArrangement = Arrangement.spacedBy(NutrientRowGap)) {
@@ -152,24 +162,31 @@ private fun NutrientRow(
         }
         Spacer(Modifier.width(NutrientIconGap))
         Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.Bottom) {
+            // 큰 글꼴 배율에서 이름과 값이 한 줄에 안 들어가면 값을 다음 줄로 내려 이름이 잘리지 않게 한다.
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(WrapRowGap),
+                itemVerticalAlignment = Alignment.Bottom,
+            ) {
                 DandiText(
                     text = label,
-                    modifier = Modifier.weight(1f),
                     color = colors.contentDefaultLevel0,
                     style = DesignSystemThemeImpl.typeScale.textStrongM,
                 )
-                DandiText(
-                    text = "이 식사 +${mealGram}g",
-                    color = colors.contentSuccess,
-                    style = DesignSystemThemeImpl.typeScale.labelStrongS,
-                )
-                Spacer(Modifier.width(NutrientValueGap))
-                DandiText(
-                    text = "하루 ${progress.dailyGram} / ${progress.goalGram}g",
-                    color = colors.contentNutritionLabel,
-                    style = DesignSystemThemeImpl.typeScale.textRegularS,
-                )
+                Row(verticalAlignment = Alignment.Bottom) {
+                    DandiText(
+                        text = "이 식사 +${mealGram}g",
+                        color = colors.contentSuccess,
+                        style = DesignSystemThemeImpl.typeScale.labelStrongS,
+                    )
+                    Spacer(Modifier.width(NutrientValueGap))
+                    DandiText(
+                        text = "하루 ${progress.dailyGram} / ${progress.goalGram}g",
+                        color = colors.contentNutritionLabel,
+                        style = DesignSystemThemeImpl.typeScale.textRegularS,
+                    )
+                }
             }
             Spacer(Modifier.height(NutrientTrackGap))
             NyummyDualLinearProgress(
@@ -187,6 +204,7 @@ private const val FatEmoji = "💧"
 private const val BarChartBarCount = 3
 private const val BarChartBarWidthFraction = 0.24f
 private val BarChartHeights = listOf(0.55f, 1f, 0.75f)
+private val WrapRowGap = 4.dp
 private val TitleIconSize = 18.dp
 private val TitleIconGap = 8.dp
 private val LegendDotSize = 8.dp

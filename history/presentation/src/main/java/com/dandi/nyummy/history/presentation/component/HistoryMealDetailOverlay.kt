@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -35,7 +36,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -105,7 +105,7 @@ internal fun HistoryMealDetailOverlay(
             HistoryMealDetailMode.Viewing -> Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(vertical = OverlayVerticalInset),
+                    .padding(horizontal = OverlayHorizontalInset, vertical = OverlayVerticalInset),
                 contentAlignment = Alignment.Center,
             ) {
                 HistoryMealDetailCard(
@@ -194,7 +194,9 @@ private fun HistoryMealDetailCard(
     val scrollState = rememberScrollState()
     Surface(
         modifier = modifier
-            .width(DetailCardWidth)
+            // 좁은 화면(320dp)에서는 가로 여백을 남기고 줄어들고, 넓은 화면에서는 기본 폭에서 멈춘다.
+            .widthIn(max = DetailCardWidth)
+            .fillMaxWidth()
             .designSystemDropShadow(
                 shape = shape,
                 shadow = DesignSystemThemeImpl.designSystemElevation.dialogStandard,
@@ -445,30 +447,10 @@ private fun ClockIcon(
     }
 }
 
-/** 세 가닥이 퍼져 나가는 반짝임 장식. 말풍선 모서리와 열량 숫자 옆에 붙습니다. */
-@Composable
-private fun SparkleDecoration(
-    color: Color,
-    modifier: Modifier = Modifier,
-) {
-    Canvas(modifier = modifier) {
-        val stroke = size.minDimension * SparkleStrokeFraction
-        val origin = Offset(0f, size.height)
-        SparkleRays.forEach { (dx, dy) ->
-            drawLine(
-                color = color,
-                start = Offset(origin.x + size.width * dx.first, origin.y - size.height * dy.first),
-                end = Offset(origin.x + size.width * dx.second, origin.y - size.height * dy.second),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round,
-            )
-        }
-    }
-}
-
 /**
- * 냐미가 이 식사에 남긴 한 줄 피드백. 수채화 냐미 옆에 왼쪽 꼬리 말풍선으로 붙입니다.
- * 상세 응답이 아직 없거나 서버가 코멘트를 주지 않으면 기본 인사말을 보여줘 레이아웃이 튀지 않게 합니다.
+ * 냐미가 이 식사에 남긴 피드백 카드. 카드 왼쪽 윗변에 냐미가 앞발을 걸치고 매달린 모습으로 얹히고, 안에는 코멘트만 둡니다.
+ * 코멘트는 줄 수 제한 없이 전부 보여주고(카드가 세로로 늘어남), 상세 응답이 아직 없거나 서버가 코멘트를
+ * 주지 않으면 기본 인사말을 보여줘 레이아웃이 튀지 않게 합니다.
  */
 @Composable
 private fun DetailCatComment(
@@ -476,66 +458,43 @@ private fun DetailCatComment(
     modifier: Modifier = Modifier,
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
-    val bubbleShape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius24)
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        NyummyMascot(
-            pose = NyummyMascotPose.Welcome,
-            contentDescription = stringResource(R.string.history_detail_mascot_description),
-            modifier = Modifier.size(DetailMascotSize),
-        )
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically,
+    Box(modifier = modifier.fillMaxWidth()) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                // 카드 위로 튀어나온 냐미 머리만큼 카드를 아래로 내린다.
+                .padding(top = DetailMascotOverhang),
+            shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius24),
+            color = colors.bgCoachBubble,
+            contentColor = colors.contentDefaultLevel0,
+            border = BorderStroke(DetailCommentCardBorderWidth, colors.borderCoachBubble),
         ) {
-            // 꼬리: 말풍선과 같은 색으로 냐미 쪽(왼쪽)을 가리키는 삼각형.
-            Canvas(modifier = Modifier.size(DetailBubbleTailWidth, DetailBubbleTailHeight)) {
-                val path = Path().apply {
-                    moveTo(size.width, 0f)
-                    lineTo(size.width, size.height)
-                    lineTo(0f, size.height / 2f)
-                    close()
-                }
-                drawPath(path = path, color = colors.bgCoachBubble)
-            }
-            Box(modifier = Modifier.weight(1f)) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = bubbleShape,
-                    color = colors.bgCoachBubble,
-                    contentColor = colors.contentDefaultLevel0,
-                ) {
-                    Column(
-                        modifier = Modifier.padding(
-                            horizontal = DetailBubbleHorizontalPadding,
-                            vertical = DetailBubbleVerticalPadding,
-                        ),
-                    ) {
-                        DandiText(
-                            text = stringResource(R.string.history_detail_cat_comment_title),
-                            color = colors.contentAccentSage,
-                            style = DesignSystemThemeImpl.typeScale.labelStrongS,
-                        )
-                        Spacer(Modifier.height(DetailBubbleTitleGap))
-                        DandiText(
-                            text = comment.ifBlank { stringResource(R.string.history_detail_cat_comment_empty) },
-                            color = colors.contentDefaultLevel0,
-                            maxLines = DetailBubbleMaxLines,
-                            style = DesignSystemThemeImpl.typeScale.voiceRegularM,
-                        )
-                    }
-                }
-                SparkleDecoration(
-                    color = colors.contentAccentSage,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = DetailBubbleSparkleInset, end = DetailBubbleSparkleInset)
-                        .size(DetailSparkleSize),
+            Column(
+                modifier = Modifier.padding(
+                    start = DetailCommentCardHorizontalPadding,
+                    top = DetailCommentCardTopPadding,
+                    end = DetailCommentCardHorizontalPadding,
+                    bottom = DetailCommentCardBottomPadding,
+                ),
+            ) {
+                DandiText(
+                    text = comment.ifBlank { stringResource(R.string.history_detail_cat_comment_empty) },
+                    color = colors.contentDefaultLevel0,
+                    // DandiText 기본값은 1줄 말줄임이라, 코멘트는 길이와 상관없이 전부 펼친다.
+                    maxLines = Int.MAX_VALUE,
+                    style = DesignSystemThemeImpl.typeScale.voiceRegularM,
                 )
             }
         }
+        // Surface 뒤에 선언해 카드 위에 그려진다. 앞발이 카드 윗변에 걸치도록 머리 부분만 카드 밖으로 내보낸다.
+        NyummyMascot(
+            pose = NyummyMascotPose.Hanging,
+            contentDescription = stringResource(R.string.history_detail_mascot_description),
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = DetailMascotStartInset)
+                .size(width = DetailMascotWidth, height = DetailMascotHeight),
+        )
     }
 }
 
@@ -575,13 +534,6 @@ private fun DetailCalorieSummary(
                         modifier = Modifier.padding(bottom = DetailCalorieUnitLift),
                         color = colors.contentDefaultLevel0,
                         style = DesignSystemThemeImpl.typeScale.textStrongL,
-                    )
-                    Spacer(Modifier.width(DetailCalorieUnitGap))
-                    SparkleDecoration(
-                        color = colors.contentWarning,
-                        modifier = Modifier
-                            .padding(bottom = DetailCalorieSparkleLift)
-                            .size(DetailSparkleSize),
                     )
                 }
             }
@@ -625,16 +577,9 @@ private const val CalorieEmoji = "🔥"
 private const val ClockStrokeFraction = 0.12f
 private const val ClockHourHandFraction = 0.27f
 private const val ClockMinuteHandFraction = 0.22f
-private const val SparkleStrokeFraction = 0.14f
-
-/** 반짝임 세 가닥: (x 시작→끝, y 시작→끝) 비율. 좌하단 원점에서 위·오른쪽으로 퍼진다. */
-private val SparkleRays = listOf(
-    (0.15f to 0.15f) to (0.55f to 0.95f),
-    (0.35f to 0.75f) to (0.35f to 0.75f),
-    (0.55f to 0.95f) to (0.15f to 0.15f),
-)
 
 private val OverlayVerticalInset = 24.dp
+private val OverlayHorizontalInset = 16.dp
 private val DetailCardWidth = 342.dp
 private val DetailCardInset = 16.dp
 private val DetailSectionGap = 14.dp
@@ -656,20 +601,20 @@ private val DetailTimeChipHorizontalPadding = 14.dp
 private val DetailTimeChipVerticalPadding = 8.dp
 private val DetailTimeChipIconSize = 14.dp
 private val DetailTimeChipIconGap = 6.dp
-private val DetailMascotSize = 104.dp
-private val DetailBubbleTailWidth = 10.dp
-private val DetailBubbleTailHeight = 18.dp
-private val DetailBubbleHorizontalPadding = 16.dp
-private val DetailBubbleVerticalPadding = 14.dp
-private val DetailBubbleTitleGap = 6.dp
-private val DetailBubbleSparkleInset = 8.dp
-private const val DetailBubbleMaxLines = 4
-private val DetailSparkleSize = 14.dp
+// 매달린 냐미 일러스트는 3:2 비율. 앞발이 걸친 턱선이 이미지 높이의 약 89% 지점에 있다.
+private val DetailMascotWidth = 96.dp
+private val DetailMascotHeight = 64.dp
+// 이미지 속 턱선(높이의 약 89%)이 카드 윗변에 오도록 그 위쪽만 카드 밖으로 내보낸다. 앞발 끝 6dp 정도가 카드에 걸친다.
+private val DetailMascotOverhang = 58.dp
+private val DetailMascotStartInset = 20.dp
+private val DetailCommentCardBorderWidth = 1.dp
+private val DetailCommentCardHorizontalPadding = 20.dp
+private val DetailCommentCardTopPadding = 20.dp
+private val DetailCommentCardBottomPadding = 20.dp
 private val DetailCalorieEmojiGap = 6.dp
 private val DetailCalorieLabelGap = 4.dp
 private val DetailCalorieUnitGap = 4.dp
 private val DetailCalorieUnitLift = 3.dp
-private val DetailCalorieSparkleLift = 14.dp
 private val DetailGoalChipInset = 12.dp
 private val DetailGoalChipVerticalInset = 10.dp
 private val DetailGoalChipIconSize = 18.dp

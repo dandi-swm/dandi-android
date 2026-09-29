@@ -32,7 +32,6 @@
     <string name="history_detail_delete">기록 삭제</string>
     <string name="history_detail_calorie_label">이 식사 열량</string>
     <string name="history_detail_mascot_description">냐미</string>
-    <string name="history_detail_cat_comment_title">냐미의 한마디</string>
     <string name="history_detail_cat_comment_empty">맛있게 먹었어? 다음 끼니도 냐미랑 같이 기록하자!</string>
 
     <string name="history_nutrition_section_title">영양 섭취 현황</string>
