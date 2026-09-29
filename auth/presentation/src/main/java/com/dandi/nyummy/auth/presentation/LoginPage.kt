@@ -48,6 +48,7 @@ import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
  *
  * 소셜 로그인(카카오·네이버·구글)은 MVP 에서 UI 만 제공하며 동작하지 않는다.
  * 이메일 원형 버튼만 이메일 로그인 화면으로 이동한다.
+ * debug 빌드에서 local.properties 에 테스트 계정을 넣으면 하단에 테스트 계정 로그인 버튼이 추가된다.
  */
 @Composable
 fun LoginPage(
@@ -113,11 +114,7 @@ private fun LoginPageContent(
             Spacer(modifier = Modifier.height(spacing.space24))
             KakaoLoginButton(
                 enabled = enabled,
-                onClick = {
-                    // TODO: 임시로 클릭시 테스트 계정으로 로그인
-                    onIntent(LoginIntent.ClickTestLogin)
-                    //onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO))
-                },
+                onClick = { onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO)) },
             )
             Spacer(modifier = Modifier.height(spacing.space16))
             LoginOrDivider(modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -130,6 +127,14 @@ private fun LoginPageContent(
             Spacer(modifier = Modifier.height(spacing.space16))
             LoginTermsNotice(modifier = Modifier.align(Alignment.CenterHorizontally))
             Spacer(modifier = Modifier.height(spacing.space16))
+            if (uiState.isTestLoginAvailable) {
+                LoginTestAccountButton(
+                    enabled = enabled,
+                    onClick = { onIntent(LoginIntent.ClickTestLogin) },
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                )
+                Spacer(modifier = Modifier.height(spacing.space16))
+            }
         }
     }
 }
@@ -291,6 +296,26 @@ private fun LoginTermsNotice(
         color = colors.contentDefaultLevel2,
         textAlign = TextAlign.Center,
         maxLines = 3,
+        style = DesignSystemThemeImpl.typeScale.textRegularS,
+    )
+}
+
+/** 개발용 테스트 계정 로그인. debug 빌드에 테스트 계정이 주입됐을 때만 노출된다. */
+@Composable
+private fun LoginTestAccountButton(
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val spacing = DesignSystemThemeImpl.designSystemSpacing
+    DandiText(
+        text = stringResource(R.string.auth_login_test_account),
+        modifier = modifier
+            .clip(DesignSystemThemeImpl.designSystemShape.buttonDefault)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(horizontal = spacing.space12, vertical = spacing.space8),
+        color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel2,
+        textDecoration = TextDecoration.Underline,
         style = DesignSystemThemeImpl.typeScale.textRegularS,
     )
 }
