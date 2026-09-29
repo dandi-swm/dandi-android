@@ -48,3 +48,5 @@ Thumbs.db
 
 # Claude Code hook marker (build-unverified flag)
 .claude/.kt-dirty
+/.claude/skills/create-pr/SKILL.md
+/.claude/skills/create-pr/scripts/upload-pr-assets.sh
