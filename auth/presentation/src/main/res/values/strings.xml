@@ -14,6 +14,7 @@
     <string name="auth_login_terms_privacy">Privacy Policy</string>
     <string name="auth_login_terms_suffix">.</string>
     <string name="auth_login_terms_line2">Please review them before you start.</string>
+    <string name="auth_login_test_account">Sign in with test account (debug)</string>
     <string name="auth_email_login_title">Email sign-in</string>
     <string name="auth_email_login_headline">Continue with email</string>
     <string name="auth_email_login_subtitle">Enter the email and password you signed up with.</string>

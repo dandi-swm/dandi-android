@@ -43,10 +43,13 @@ data class RefreshTokenRequestDTO(
 
 /**
  * 이메일 인증 코드 발송 요청 바디입니다.
+ *
+ * @property purpose 발송 목적 (`SIGNUP` \| `RESET_PASSWORD`)
  */
 @Serializable
 data class EmailVerificationRequestDTO(
     val email: String,
+    val purpose: String,
 )
 
 /**

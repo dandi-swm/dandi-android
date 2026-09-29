@@ -2,6 +2,7 @@ package com.dandi.nyummy.auth.domain
 
 import com.dandi.nyummy.auth.entity.AuthTokenVO
 import com.dandi.nyummy.auth.entity.EmailChallengeVO
+import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import com.dandi.nyummy.auth.entity.EmailVerifiedVO
 import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.auth.entity.SocialLoginType
@@ -33,7 +34,7 @@ interface AuthRepository {
     )
 
     /** 이메일 인증 코드 발송. 코드 확인에 쓸 챌린지 토큰을 반환한다. */
-    suspend fun requestEmailVerification(email: String): EmailChallengeVO
+    suspend fun requestEmailVerification(email: String, purpose: EmailVerificationPurpose): EmailChallengeVO
 
     /** 이메일 인증 코드 확인. 회원가입에 쓸 인증 완료 토큰을 반환한다. */
     suspend fun confirmEmailVerification(authCode: String, emailChallengeToken: String): EmailVerifiedVO

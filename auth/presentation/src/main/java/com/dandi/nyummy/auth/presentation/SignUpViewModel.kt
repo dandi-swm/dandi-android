@@ -5,6 +5,7 @@ import com.dandi.nyummy.auth.domain.CodeVerificationFailedException
 import com.dandi.nyummy.auth.domain.EmailVerificationUseCase
 import com.dandi.nyummy.auth.domain.SignUpUseCase
 import com.dandi.nyummy.auth.domain.SignUpValidator
+import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -111,7 +112,7 @@ class SignUpViewModel @Inject constructor(
 
         dispatch(SignUpReducerEvent.LoadingStarted)
         viewModelScope.launch {
-            emailVerificationUseCase.sendCode(currentState.email)
+            emailVerificationUseCase.sendCode(currentState.email, EmailVerificationPurpose.SIGNUP)
                 .onSuccess { challengeToken ->
                     dispatch(SignUpReducerEvent.MovedToCode(challengeToken))
                     startResendTimer()
@@ -154,7 +155,7 @@ class SignUpViewModel @Inject constructor(
     private fun executeResend() {
         dispatch(SignUpReducerEvent.LoadingStarted)
         viewModelScope.launch {
-            emailVerificationUseCase.sendCode(currentState.email)
+            emailVerificationUseCase.sendCode(currentState.email, EmailVerificationPurpose.SIGNUP)
                 .onSuccess { challengeToken ->
                     dispatch(SignUpReducerEvent.ChallengeTokenRefreshed(challengeToken))
                     startResendTimer()

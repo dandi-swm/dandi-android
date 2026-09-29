@@ -1,5 +1,6 @@
 package com.dandi.nyummy.auth.data
 
+import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.domain.error.HttpResponseException
@@ -109,7 +110,10 @@ class AuthRepositoryImplTest {
             MockResponse().setResponseCode(200).setBody("""{"emailVerifiedToken":"verified-token"}""")
         )
 
-        val challenge = repository.requestEmailVerification(email = "test@dandi.app")
+        val challenge = repository.requestEmailVerification(
+            email = "test@dandi.app",
+            purpose = EmailVerificationPurpose.SIGNUP,
+        )
         val verified = repository.confirmEmailVerification(
             authCode = "123456",
             emailChallengeToken = challenge.emailChallengeToken,

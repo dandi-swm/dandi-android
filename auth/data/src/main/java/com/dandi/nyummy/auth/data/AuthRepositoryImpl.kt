@@ -7,6 +7,7 @@ import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
 import com.dandi.nyummy.auth.domain.AuthRepository
 import com.dandi.nyummy.auth.entity.AuthTokenVO
 import com.dandi.nyummy.auth.entity.EmailChallengeVO
+import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import com.dandi.nyummy.auth.entity.EmailVerifiedVO
 import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.auth.entity.SocialLoginType
@@ -52,8 +53,13 @@ class AuthRepositoryImpl(
             .also { saveToken(it) }
     }
 
-    override suspend fun requestEmailVerification(email: String): EmailChallengeVO =
-        dataSource.requestEmailVerification(EmailVerificationRequestDTO(email = email)).toVO()
+    override suspend fun requestEmailVerification(
+        email: String,
+        purpose: EmailVerificationPurpose,
+    ): EmailChallengeVO =
+        dataSource.requestEmailVerification(
+            EmailVerificationRequestDTO(email = email, purpose = purpose.name),
+        ).toVO()
 
     override suspend fun confirmEmailVerification(
         authCode: String,
