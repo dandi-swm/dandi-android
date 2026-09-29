@@ -173,6 +173,29 @@ class HistoryViewModelTest {
     }
 
     @Test
+    fun `상세 응답의 냐미 한마디는 목록 정보를 유지한 채 상세에 합쳐진다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+        repository.mealOverride = { mealId ->
+            MealHistoryVO(
+                id = mealId.toString(),
+                catComment = "채소가 듬뿍이라 냐미도 기분 좋아!",
+                foodIconId = "12",
+            )
+        }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ClickMeal("1"))
+        advanceUntilIdle()
+
+        val detail = viewModel.uiState.value.mealDetail
+        assertEquals("1", detail?.meal?.id)
+        assertEquals("채소가 듬뿍이라 냐미도 기분 좋아!", detail?.meal?.catComment)
+        assertEquals("12", detail?.meal?.foodIconId)
+        assertEquals("김치찌개 A", detail?.meal?.name) // 상세 응답이 비어 있어도 목록의 이름은 유지된다
+    }
+
+    @Test
     fun `이름 수정 응답이 늦게 와도 대상 식사만 갱신하고 열려 있는 다른 상세는 건드리지 않는다`() =
         runTest(testDispatcher) {
             repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }

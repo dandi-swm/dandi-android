@@ -16,6 +16,7 @@ import kotlinx.serialization.Serializable
  * @property fatGram 이 식사의 지방(g)
  * @property orderIndex 하루 안에서의 순서, 1부터 시작 ("첫 끼" 라벨용)
  * @property status AI 영양 분석 상태. 서버 값이 없으면 data 레이어에서 이름/열량으로 보정합니다.
+ * @property catComment 이 식사에 대한 냐미의 한 줄 피드백. 단건 상세 조회에서만 내려오며 없으면 빈 값입니다.
  */
 @Serializable
 data class MealHistoryVO(
@@ -30,6 +31,7 @@ data class MealHistoryVO(
     val fatGram: Int = 0,
     val orderIndex: Int = 0,
     val status: MealAnalysisStatus = MealAnalysisStatus.COMPLETED,
+    val catComment: String = "",
 ) {
 
     /** 분석이 끝나 이름/영양 정보를 믿을 수 있는 기록인지 여부. */

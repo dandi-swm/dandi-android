@@ -1,25 +1,25 @@
 package com.dandi.nyummy.history.presentation.component
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.component.DandiText
@@ -35,8 +35,8 @@ import com.dandi.nyummy.history.presentation.model.progressOf
 /**
  * 식사 상세의 `영양 섭취 현황` 섹션입니다.
  *
- * 하루 누적/이 식사 범례, 영양소 3종 이중 진행바([NyummyDualLinearProgress]),
- * 냐미 코치 말풍선과 캐릭터로 구성됩니다. 식사 상세 전용 조합이라 화면 로컬에 둡니다.
+ * 막대그래프 아이콘 + 제목 + 범례 한 줄 아래에 영양소 3종(이모지 아이콘 · 이름 · 이 식사 기여량 · 하루 누적)과
+ * 이중 진행바([NyummyDualLinearProgress])를 쌓습니다. 카드 껍데기는 호출부가 감쌉니다.
  */
 @Composable
 internal fun HistoryMealNutritionSection(
@@ -45,185 +45,161 @@ internal fun HistoryMealNutritionSection(
     modifier: Modifier = Modifier,
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
-    Box(modifier.size(SectionWidth, SectionHeight)) {
-        DandiText(
-            text = stringResource(R.string.history_nutrition_section_title),
-            modifier = Modifier.size(TitleWidth, TitleHeight),
-            color = colors.contentDefaultLevel0,
-            style = DesignSystemThemeImpl.typeScale.textStrongM,
-            overflow = TextOverflow.Clip,
-        )
-        LegendDot(
-            color = colors.dataProgressDailyTotal,
-            modifier = Modifier.offset(x = DailyLegendDotOffsetX, y = LegendDotOffsetY),
-        )
-        DandiText(
-            text = stringResource(R.string.history_nutrition_legend_daily),
-            modifier = Modifier.offset(x = DailyLegendTextOffsetX, y = LegendTextOffsetY),
-            color = colors.contentNutritionLabel,
-            style = DesignSystemThemeImpl.typeScale.labelStrongS,
-        )
-        LegendDot(
-            color = colors.dataProgressMealContribution,
-            modifier = Modifier.offset(x = MealLegendDotOffsetX, y = LegendDotOffsetY),
-        )
-        DandiText(
-            text = stringResource(R.string.history_nutrition_legend_meal),
-            modifier = Modifier.offset(x = MealLegendTextOffsetX, y = LegendTextOffsetY),
-            color = colors.contentNutritionLabel,
-            style = DesignSystemThemeImpl.typeScale.labelStrongS,
-        )
-        NutrientRow(
-            label = stringResource(R.string.history_macro_carbohydrate),
-            progress = nutrition.carbohydrate,
-            mealGram = meal.carbohydrateGram,
-            modifier = Modifier.offset(y = FirstNutrientOffsetY),
-        )
-        NutrientRow(
-            label = stringResource(R.string.history_macro_protein),
-            progress = nutrition.protein,
-            mealGram = meal.proteinGram,
-            modifier = Modifier.offset(y = SecondNutrientOffsetY),
-        )
-        NutrientRow(
-            label = stringResource(R.string.history_macro_fat),
-            progress = nutrition.fat,
-            mealGram = meal.fatGram,
-            modifier = Modifier.offset(y = ThirdNutrientOffsetY),
-        )
-        Box(
-            modifier = Modifier
-                .offset(x = CoachTailOffsetX, y = CoachTailOffsetY)
-                .size(CoachTailSize)
-                .rotate(CoachTailRotation)
-                .background(colors.bgCoachBubble)
-                .border(CoachBorderWidth, colors.borderCoachBubble),
-        )
-        Surface(
-            modifier = Modifier
-                .offset(x = CoachBubbleOffsetX, y = CoachBubbleOffsetY)
-                .size(CoachBubbleWidth, CoachBubbleHeight),
-            shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius16),
-            color = colors.bgCoachBubble,
-            contentColor = colors.contentDefaultLevel0,
-            border = BorderStroke(CoachBorderWidth, colors.borderCoachBubble),
-        ) {
-            Box(Modifier.fillMaxSize()) {
-                DandiText(
-                    text = stringResource(R.string.history_coach_title),
-                    modifier = Modifier.offset(x = CoachTextInsetX, y = CoachTitleOffsetY),
-                    color = colors.contentNutritionLabel,
-                    style = DesignSystemThemeImpl.typeScale.labelStrongS,
-                )
-                DandiText(
-                    text = stringResource(R.string.history_coach_copy),
-                    modifier = Modifier
-                        .offset(x = CoachTextInsetX, y = CoachCopyOffsetY)
-                        .width(CoachCopyWidth),
-                    color = colors.contentDefaultLevel0,
-                    style = DesignSystemThemeImpl.typeScale.voiceRegularM,
-                    maxLines = 2,
-                    overflow = TextOverflow.Clip,
-                )
-            }
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            HistoryBarChartIcon(modifier = Modifier.size(TitleIconSize))
+            Spacer(Modifier.width(TitleIconGap))
+            DandiText(
+                text = stringResource(R.string.history_nutrition_section_title),
+                modifier = Modifier.weight(1f),
+                color = colors.contentDefaultLevel0,
+                style = DesignSystemThemeImpl.typeScale.textStrongL,
+            )
+            Legend(
+                color = colors.dataProgressDailyTotal,
+                label = stringResource(R.string.history_nutrition_legend_daily),
+            )
+            Spacer(Modifier.width(LegendGap))
+            Legend(
+                color = colors.dataProgressMealContribution,
+                label = stringResource(R.string.history_nutrition_legend_meal),
+            )
         }
-        Box(
-            modifier = Modifier
-                .offset(x = CoachCharacterOffsetX, y = CoachCharacterOffsetY)
-                .size(CoachCharacterWidth, CoachCharacterHeight),
-            contentAlignment = Alignment.Center,
-        ) {
-            Image(
-                painter = painterResource(R.drawable.history_nutrition_coach),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
+        Spacer(Modifier.height(TitleBottomGap))
+        Column(verticalArrangement = Arrangement.spacedBy(NutrientRowGap)) {
+            NutrientRow(
+                emoji = CarbohydrateEmoji,
+                label = stringResource(R.string.history_macro_carbohydrate),
+                progress = nutrition.carbohydrate,
+                mealGram = meal.carbohydrateGram,
+            )
+            NutrientRow(
+                emoji = ProteinEmoji,
+                label = stringResource(R.string.history_macro_protein),
+                progress = nutrition.protein,
+                mealGram = meal.proteinGram,
+            )
+            NutrientRow(
+                emoji = FatEmoji,
+                label = stringResource(R.string.history_macro_fat),
+                progress = nutrition.fat,
+                mealGram = meal.fatGram,
+            )
+        }
+    }
+}
+
+/** 세이지 톤 막대그래프 아이콘. 열량 요약 칩과 영양 섹션 제목이 함께 씁니다. */
+@Composable
+internal fun HistoryBarChartIcon(
+    modifier: Modifier = Modifier,
+) {
+    val color = DesignSystemThemeImpl.designSystemColor.contentSuccess
+    Canvas(modifier = modifier) {
+        val barWidth = size.width * BarChartBarWidthFraction
+        val gap = (size.width - barWidth * BarChartBarCount) / (BarChartBarCount - 1)
+        val radius = CornerRadius(barWidth / 2f)
+        BarChartHeights.forEachIndexed { index, fraction ->
+            val barHeight = size.height * fraction
+            drawRoundRect(
+                color = color,
+                topLeft = Offset(x = index * (barWidth + gap), y = size.height - barHeight),
+                size = Size(barWidth, barHeight),
+                cornerRadius = radius,
             )
         }
     }
 }
 
 @Composable
-private fun LegendDot(
+private fun Legend(
     color: Color,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier
-            .size(LegendDotSize)
-            .background(color, DesignSystemThemeImpl.designSystemShape.pill),
-    )
-}
-
-@Composable
-private fun NutrientRow(
     label: String,
-    progress: NutrientProgressVO,
-    mealGram: Int,
-    modifier: Modifier = Modifier,
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    Box(modifier.size(SectionWidth, NutrientRowHeight)) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(LegendDotSize)
+                .background(color, DesignSystemThemeImpl.designSystemShape.pill),
+        )
+        Spacer(Modifier.width(LegendDotGap))
         DandiText(
             text = label,
-            modifier = Modifier.size(SectionWidth, NutrientLabelHeight),
-            color = colors.contentNutritionLabel,
-            style = DesignSystemThemeImpl.typeScale.labelStrongS,
-        )
-        DandiText(
-            text = "하루 ${progress.dailyGram} / ${progress.goalGram}g",
-            modifier = Modifier
-                .offset(y = NutrientDailyLabelOffsetY)
-                .size(SectionWidth, NutrientLabelHeight),
-            color = colors.contentNutritionLabel,
-            style = DesignSystemThemeImpl.typeScale.textRegularS,
-        )
-        NyummyDualLinearProgress(
-            primaryProgress = progressOf(progress.dailyGram, progress.goalGram),
-            secondaryProgress = progressOf(mealGram, progress.goalGram),
-            modifier = Modifier
-                .offset(y = NutrientTrackOffsetY)
-                .fillMaxWidth(),
+            color = DesignSystemThemeImpl.designSystemColor.contentNutritionLabel,
+            style = DesignSystemThemeImpl.typeScale.labelRegularXS,
         )
     }
 }
 
-private val SectionWidth = 302.dp
-private val SectionHeight = 326.dp
-private val TitleWidth = 158.dp
-private val TitleHeight = 22.dp
-private val DailyLegendDotOffsetX = 168.dp
-private val MealLegendDotOffsetX = 240.dp
-private val LegendDotOffsetY = 9.dp
-private val LegendDotSize = 6.dp
-private val DailyLegendTextOffsetX = 178.dp
-private val MealLegendTextOffsetX = 250.dp
-private val LegendTextOffsetY = 3.dp
-private val FirstNutrientOffsetY = 36.dp
-private val SecondNutrientOffsetY = 104.dp
-private val ThirdNutrientOffsetY = 172.dp
-private val NutrientRowHeight = 50.dp
-private val NutrientLabelHeight = 18.dp
-private val NutrientDailyLabelOffsetY = 19.dp
-private val NutrientTrackOffsetY = 42.dp
-private val CoachTailOffsetX = 55.dp
-private val CoachTailOffsetY = 271.dp
-private val CoachTailSize = 14.dp
-private const val CoachTailRotation = 45f
-private val CoachBubbleOffsetX = 58.dp
-private val CoachBubbleOffsetY = 244.dp
-private val CoachBubbleWidth = 244.dp
-private val CoachBubbleHeight = 78.dp
-private val CoachBorderWidth = 1.dp
-private val CoachTextInsetX = 18.dp
-private val CoachTitleOffsetY = 11.dp
-private val CoachCopyOffsetY = 31.dp
-private val CoachCopyWidth = 208.dp
-private val CoachCharacterOffsetX = 0.dp
-private val CoachCharacterOffsetY = 258.dp
-private val CoachCharacterWidth = 62.dp
-private val CoachCharacterHeight = 66.dp
+/** 이모지 아이콘 · 영양소 이름 · 이 식사 기여량 · 하루 누적/목표를 한 줄에 두고, 아래에 이중 진행바를 그립니다. */
+@Composable
+private fun NutrientRow(
+    emoji: String,
+    label: String,
+    progress: NutrientProgressVO,
+    mealGram: Int,
+) {
+    val colors = DesignSystemThemeImpl.designSystemColor
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier.size(NutrientIconSlot),
+            contentAlignment = Alignment.Center,
+        ) {
+            DandiText(
+                text = emoji,
+                style = DesignSystemThemeImpl.typeScale.textStrongXL,
+            )
+        }
+        Spacer(Modifier.width(NutrientIconGap))
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                DandiText(
+                    text = label,
+                    modifier = Modifier.weight(1f),
+                    color = colors.contentDefaultLevel0,
+                    style = DesignSystemThemeImpl.typeScale.textStrongM,
+                )
+                DandiText(
+                    text = "이 식사 +${mealGram}g",
+                    color = colors.contentSuccess,
+                    style = DesignSystemThemeImpl.typeScale.labelStrongS,
+                )
+                Spacer(Modifier.width(NutrientValueGap))
+                DandiText(
+                    text = "하루 ${progress.dailyGram} / ${progress.goalGram}g",
+                    color = colors.contentNutritionLabel,
+                    style = DesignSystemThemeImpl.typeScale.textRegularS,
+                )
+            }
+            Spacer(Modifier.height(NutrientTrackGap))
+            NyummyDualLinearProgress(
+                primaryProgress = progressOf(progress.dailyGram, progress.goalGram),
+                secondaryProgress = progressOf(mealGram, progress.goalGram),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
 
-@Preview(showBackground = true)
+private const val CarbohydrateEmoji = "🌾"
+private const val ProteinEmoji = "🥩"
+private const val FatEmoji = "💧"
+private const val BarChartBarCount = 3
+private const val BarChartBarWidthFraction = 0.24f
+private val BarChartHeights = listOf(0.55f, 1f, 0.75f)
+private val TitleIconSize = 18.dp
+private val TitleIconGap = 8.dp
+private val LegendDotSize = 8.dp
+private val LegendDotGap = 6.dp
+private val LegendGap = 12.dp
+private val TitleBottomGap = 16.dp
+private val NutrientRowGap = 16.dp
+private val NutrientIconSlot = 32.dp
+private val NutrientIconGap = 10.dp
+private val NutrientValueGap = 10.dp
+private val NutrientTrackGap = 8.dp
+
+@Preview(showBackground = true, widthDp = 342)
 @Composable
 private fun HistoryMealNutritionSectionPreview() {
     DesignSystemTheme {
@@ -246,6 +222,7 @@ private fun HistoryMealNutritionSectionPreview() {
                 fatGram = 21,
                 orderIndex = 1,
             ),
+            modifier = Modifier.padding(20.dp),
         )
     }
 }

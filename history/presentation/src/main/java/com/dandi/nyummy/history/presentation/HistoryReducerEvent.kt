@@ -22,10 +22,12 @@ sealed interface HistoryReducerEvent : ReducerEvent {
     /** 식사 수정/삭제 요청이 시작되었습니다(완료 전 중복 조작 차단). */
     data object MealActionStarted : HistoryReducerEvent
 
-    /** 식사의 사진 URL 이 로드되었습니다. 현재 열린 상세가 [mealId]와 같을 때만 반영합니다. */
-    data class MealDetailPhotoLoaded(
+    /** 식사 단건 상세(사진 URL·아이콘·냐미 한마디)가 로드되었습니다. 현재 열린 상세가 [mealId]와 같을 때만 반영합니다. */
+    data class MealDetailLoaded(
         val mealId: String,
         val photoUrl: String,
+        val foodIconId: String,
+        val catComment: String,
     ) : HistoryReducerEvent
 
     /** 표시할 달과 선택 날짜의 데이터가 준비되었습니다. */
