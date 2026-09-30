@@ -23,6 +23,9 @@ enum class NyummyMascotPose(@DrawableRes internal val drawableRes: Int) {
     Welcome(R.drawable.nyummy_character_welcome),
     Eating(R.drawable.nyummy_character_eating),
     Sleeping(R.drawable.nyummy_character_sleeping),
+
+    /** 카드 윗변에 앞발을 걸치고 매달린 포즈. 카드 위로 반쯤 튀어나오게 배치할 때 쓴다. */
+    Hanging(R.drawable.nyummy_character_hanging),
 }
 
 /**

@@ -48,6 +48,8 @@ class HistoryViewModel @Inject constructor(
      */
     private var refreshJob: Job? = null
 
+    private var mealDetailJob: Job? = null
+
     init {
         val today = currentState.selectedDate
         loadMonth(year = today.year, month = today.month, selectedDate = today)
@@ -78,8 +80,7 @@ class HistoryViewModel @Inject constructor(
 
             is HistoryIntent.ClickDeleteFailedMeal -> requestDeleteFailedMeal(intent.mealId)
 
-            HistoryIntent.DismissMealDetail ->
-                dispatch(HistoryReducerEvent.MealDetailDismissed)
+            HistoryIntent.DismissMealDetail -> dismissMealDetail()
 
             HistoryIntent.ClickEditMealName ->
                 dispatch(HistoryReducerEvent.MealNameEditStarted)
@@ -117,10 +118,17 @@ class HistoryViewModel @Inject constructor(
                 it.copy(isActionInFlight = true)
             }
 
-            is HistoryReducerEvent.MealDetailPhotoLoaded -> state.withMealDetail { detail ->
+            is HistoryReducerEvent.MealDetailLoaded -> state.withMealDetail { detail ->
                 // 늦게 도착한 다른 식사의 응답이 현재 열린 상세를 덮어쓰지 않게 한다.
                 if (detail.meal.id == event.mealId) {
-                    detail.copy(meal = detail.meal.copy(photoUrl = event.photoUrl))
+                    detail.copy(
+                        meal = detail.meal.copy(
+                            // 목록에서 가져온 값이 있으면 빈 응답으로 지우지 않는다.
+                            photoUrl = event.photoUrl.ifBlank { detail.meal.photoUrl },
+                            foodIconId = event.foodIconId.ifBlank { detail.meal.foodIconId },
+                            catComment = event.catComment,
+                        ),
+                    )
                 } else {
                     detail
                 }
@@ -277,25 +285,32 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
-    /** 상세 오버레이를 즉시 열고, 사진 URL 이 포함된 단건 상세를 이어서 받아 갱신한다. */
+    /** 상세 오버레이를 즉시 열고, 사진 URL·냐미 한마디가 포함된 단건 상세를 이어서 받아 갱신한다. */
     private fun openMealDetail(mealId: String) {
         val meal = currentState.selectedDayMeals.firstOrNull { it.id == mealId } ?: return
         // 실패/분석 중 기록은 보여줄 이름·영양 정보가 없어 카드 안의 액션만 제공한다.
         if (!meal.isAnalysisCompleted) return
+        mealDetailJob?.cancel()
         dispatch(HistoryReducerEvent.MealDetailOpened(meal))
         val id = mealId.toLongOrNull() ?: return
-        viewModelScope.launch {
+        mealDetailJob = viewModelScope.launch {
             getMealDetail(id).onSuccess { detail ->
-                if (detail.photoUrl.isNotBlank()) {
-                    dispatch(
-                        HistoryReducerEvent.MealDetailPhotoLoaded(
-                            mealId = mealId,
-                            photoUrl = detail.photoUrl,
-                        ),
-                    )
-                }
+                dispatch(
+                    HistoryReducerEvent.MealDetailLoaded(
+                        mealId = mealId,
+                        photoUrl = detail.photoUrl,
+                        foodIconId = detail.foodIconId,
+                        catComment = detail.catComment,
+                    ),
+                )
             }
         }
+    }
+
+    private fun dismissMealDetail() {
+        mealDetailJob?.cancel()
+        mealDetailJob = null
+        dispatch(HistoryReducerEvent.MealDetailDismissed)
     }
 
     /**

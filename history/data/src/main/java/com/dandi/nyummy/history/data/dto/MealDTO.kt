@@ -14,6 +14,8 @@ import kotlinx.serialization.Serializable
  * @property status 영양 분석 상태 (WAITING / ANALYZING / COMPLETED / FAILED / UNKNOWN)
  * @property nutrition 이 식사의 영양 정보
  * @property imageUrl 촬영 사진 URL
+ * @property catComment 이 식사에 대한 냐미의 한 줄 피드백
+ * @property iconId 음식 픽셀 아이콘 식별자
  */
 @Serializable
 data class MealDTO(
@@ -23,13 +25,15 @@ data class MealDTO(
     val status: String? = null,
     val nutrition: NutritionDTO? = null,
     val imageUrl: String? = null,
+    val catComment: String? = null,
+    val iconId: Long? = null,
 ) {
     // 단건 조회에는 하루 내 순서 정보가 없으므로 orderIndex 는 0.
     fun toVO(): MealHistoryVO = MealHistoryVO(
         id = mealId?.toString() ?: "",
         name = name ?: "",
         photoUrl = imageUrl ?: "",
-        foodIconId = "",
+        foodIconId = iconId?.toString() ?: "",
         recordedAt = mealAt.toDisplayTime(),
         calorieKcal = nutrition?.calory ?: 0,
         carbohydrateGram = nutrition?.carbs ?: 0,
@@ -37,5 +41,6 @@ data class MealDTO(
         fatGram = nutrition?.fat ?: 0,
         orderIndex = 0,
         status = status.toMealAnalysisStatus(name = name, calorieKcal = nutrition?.calory),
+        catComment = catComment?.trim() ?: "",
     )
 }
