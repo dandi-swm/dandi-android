@@ -23,7 +23,7 @@ import javax.inject.Inject
  *     "mood": "ANGRY",                                  // HAPPY | SAD | CRYING | ANGRY
  *     "title": "냐미가 화났어요!!",                        // 생략 시 무드별 기본 문구
  *     "body": "지금 바로 식사를 기록해 주세요 🔥",           // 생략 시 무드별 기본 문구
- *     "deeplink": "https://www.dandi.com/meal/record"    // 생략 시 식사 기록 화면
+ *     "deeplink": "https://link.nyummy.co.kr/meal/record"    // 생략 시 식사 기록 화면
  *   }
  * }
  * ```

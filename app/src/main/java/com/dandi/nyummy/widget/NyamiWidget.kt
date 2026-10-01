@@ -68,7 +68,7 @@ class NyamiWidget : GlanceAppWidget() {
     }
 
     private companion object {
-        const val MEAL_RECORD_DEEP_LINK = "https://www.dandi.com/meal/record"
+        const val MEAL_RECORD_DEEP_LINK = "https://link.nyummy.co.kr/meal/record"
     }
 }
 
