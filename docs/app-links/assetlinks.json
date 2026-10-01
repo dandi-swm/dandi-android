@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.dandi.nyummy",
+      "sha256_cert_fingerprints": [
+        "EF:54:B8:5E:35:18:13:E7:20:16:77:CC:DD:2E:52:96:27:91:63:69:52:16:53:CE:A3:3C:6F:89:3F:44:7C:43"
+      ]
+    }
+  }
+]

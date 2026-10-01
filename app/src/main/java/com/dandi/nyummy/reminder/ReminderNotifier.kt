@@ -28,7 +28,7 @@ object ReminderNotifier {
 
     const val CHANNEL_ID = "nyami_reminder"
     private const val NOTIFICATION_ID = 1001
-    private const val DEFAULT_DEEP_LINK = "https://www.dandi.com/meal/record"
+    private const val DEFAULT_DEEP_LINK = "https://link.nyummy.co.kr/meal/record"
 
     /** 알림 채널 등록. 앱 시작 시 1회 호출 (이미 있으면 no-op). */
     fun ensureChannel(context: Context) {
