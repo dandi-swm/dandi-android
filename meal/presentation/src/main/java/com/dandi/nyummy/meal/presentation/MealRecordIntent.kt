@@ -20,6 +20,9 @@ sealed interface MealRecordIntent : MviIntent {
     /** 촬영에 실패했습니다. */
     data object CaptureFailed : MealRecordIntent
 
+    /** 갤러리 선택기가 닫혔습니다. [photoUri] 는 고른 사진의 content URI, 선택을 취소했으면 null 입니다. */
+    data class GalleryPhotoPicked(val photoUri: String?) : MealRecordIntent
+
     /** 촬영본 확인 중 `다시 찍기` 버튼을 눌러 재촬영으로 돌아갑니다. */
     data object ClickRetake : MealRecordIntent
 
