@@ -58,6 +58,11 @@ class SignUpUseCase @Inject constructor(
     } catch (e: HttpResponseException) {
         handleSignUpError(e)
         Result.failure(e)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        showError(e.toUserMessage())
+        Result.failure(e)
     }
 
     /**
@@ -121,12 +126,11 @@ class SignUpUseCase @Inject constructor(
 
     private fun handleSignUpError(e: HttpResponseException) {
         val errorType = e.handlingErrorOnUseCase<AuthErrorType>()
-        if (errorType != null) {
-            messageHelper.showOneButtonDialog(descText = errorType.errorMsg)
-            return
-        }
-        if (e.isCommonErrorHandling()) {
-            executeCommonErrorHanding(e)
+        when {
+            errorType != null -> messageHelper.showOneButtonDialog(descText = errorType.errorMsg)
+            e.rawCode == HTTP_CONFLICT -> showError(ALREADY_REGISTERED_EMAIL_MESSAGE)
+            e.isCommonErrorHandling() -> executeCommonErrorHanding(e)
+            else -> showError(SIGN_UP_FAILED_MESSAGE)
         }
     }
 
@@ -170,7 +174,9 @@ class SignUpUseCase @Inject constructor(
         const val SOCIAL_SESSION_MISSING_MESSAGE = "가입 정보가 만료됐어요. 다시 로그인해주세요."
         const val SOCIAL_SIGN_UP_EXPIRED_MESSAGE = "가입 유효 시간이 지났어요. 다시 로그인해주세요."
         const val ALREADY_REGISTERED_ACCOUNT_MESSAGE = "이미 가입된 계정이에요. 다시 로그인해주세요."
+        const val ALREADY_REGISTERED_EMAIL_MESSAGE = "이미 가입된 이메일이에요. 로그인해주세요."
         const val INVALID_PROFILE_MESSAGE = "입력한 정보를 확인한 뒤 다시 시도해주세요."
+        const val SIGN_UP_FAILED_MESSAGE = "회원가입에 실패했어요. 다시 시도해주세요."
         const val NETWORK_ERROR_MESSAGE = "네트워크 연결을 확인한 뒤 다시 시도해주세요."
         const val TEMPORARY_ERROR_MESSAGE = "일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요."
         const val CONFIRM_BUTTON_TEXT = "확인"

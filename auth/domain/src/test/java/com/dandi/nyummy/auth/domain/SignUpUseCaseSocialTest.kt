@@ -124,6 +124,20 @@ class SignUpUseCaseSocialTest {
         assertEquals("social-verified", session.pendingToken)
     }
 
+    @Test
+    fun `이메일 가입 중복(409)은 도메인 코드가 없어도 안내한다`() = runBlocking {
+        repository.signUpError = httpException(409)
+
+        useCase.signUp(
+            emailVerifiedToken = "email-verified",
+            password = "pw1234",
+            confirmPassword = "pw1234",
+            nickname = "단디",
+        )
+
+        assertEquals("이미 가입된 이메일이에요. 로그인해주세요.", messageHelper.dialogs.single().descText)
+    }
+
     private suspend fun signUpWithSocial() = useCase.signUpWithSocial(
         nickname = "단디",
         gender = Gender.FEMALE,
