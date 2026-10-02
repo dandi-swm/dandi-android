@@ -6,6 +6,8 @@ import com.dandi.nyummy.auth.data.dto.EmailVerificationConfirmRequestDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerifiedDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerificationRequestDTO
 import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
+import com.dandi.nyummy.auth.data.dto.OAuthLoginDTO
+import com.dandi.nyummy.auth.data.dto.OAuthLoginRequestDTO
 import com.dandi.nyummy.auth.data.dto.RefreshTokenRequestDTO
 import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
 import retrofit2.Response
@@ -19,6 +21,10 @@ interface AuthApiService {
     /** 로그인 */
     @POST("${AUTH_PATH}/login")
     suspend fun login(@Body loginRequest: LoginRequestDTO): Response<AuthTokenDTO>
+
+    /** 소셜 로그인 */
+    @POST("${AUTH_PATH}/oauth/login")
+    suspend fun oauthLogin(@Body request: OAuthLoginRequestDTO): Response<OAuthLoginDTO>
 
     /** 회원가입 */
     @POST("${AUTH_PATH}/signup")

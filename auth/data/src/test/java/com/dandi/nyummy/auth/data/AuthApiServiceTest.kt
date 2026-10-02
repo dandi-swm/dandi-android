@@ -3,6 +3,7 @@ package com.dandi.nyummy.auth.data
 import com.dandi.nyummy.auth.data.dto.EmailVerificationConfirmRequestDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerificationRequestDTO
 import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
+import com.dandi.nyummy.auth.data.dto.OAuthLoginRequestDTO
 import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -131,6 +132,66 @@ class AuthApiServiceTest {
         assertFalse(rawBody.contains("birth"))
         assertFalse(rawBody.contains("height"))
         assertFalse(rawBody.contains("weight"))
+    }
+
+    @Test
+    fun `소셜 회원가입 요청은 비밀번호 없이 검증 완료 토큰과 닉네임만 보낸다`() = runBlocking {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """{"accessToken":"access-123","refreshToken":"refresh-456"}"""
+            )
+        )
+
+        apiService.signUp(SignUpRequestDTO(verifiedToken = "social-verified", nickname = "단디"))
+
+        val rawBody = server.takeRequest().body.readUtf8()
+        assertFalse(rawBody.contains("password"))
+        assertFalse(rawBody.contains("confirmPassword"))
+        val sentBody = json.decodeFromString<SignUpRequestDTO>(rawBody)
+        assertEquals("social-verified", sentBody.verifiedToken)
+        assertEquals("단디", sentBody.nickname)
+    }
+
+    @Test
+    fun `소셜 로그인 요청이 제공자·ID 토큰·nonce 를 담아 전송되고 기존 회원 토큰 응답을 파싱한다`() = runBlocking {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """{"redirectUrl":"/home","accessToken":"access-123","refreshToken":"refresh-456"}"""
+            )
+        )
+
+        val response = apiService.oauthLogin(
+            OAuthLoginRequestDTO(provider = "KAKAO", token = "id-token", nonce = "nonce-1")
+        )
+
+        assertTrue(response.isSuccessful)
+        assertEquals("access-123", response.body()?.accessToken)
+        assertEquals("refresh-456", response.body()?.refreshToken)
+
+        val recorded = server.takeRequest()
+        assertEquals("POST", recorded.method)
+        assertEquals("/api/v1/auth/oauth/login", recorded.path)
+        val sentBody = json.decodeFromString<OAuthLoginRequestDTO>(recorded.body.readUtf8())
+        assertEquals("KAKAO", sentBody.provider)
+        assertEquals("id-token", sentBody.token)
+        assertEquals("nonce-1", sentBody.nonce)
+    }
+
+    @Test
+    fun `소셜 로그인 신규 회원 응답은 검증 완료 토큰만 담긴다`() = runBlocking {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """{"redirectUrl":"/signup","verifiedToken":"social-verified"}"""
+            )
+        )
+
+        val vo = apiService.oauthLogin(
+            OAuthLoginRequestDTO(provider = "KAKAO", token = "id-token", nonce = "nonce-1")
+        ).body()!!.toVO()
+
+        assertTrue(vo.isSignUpRequired)
+        assertFalse(vo.isLoggedIn)
+        assertEquals("social-verified", vo.verifiedToken)
     }
 
     @Test

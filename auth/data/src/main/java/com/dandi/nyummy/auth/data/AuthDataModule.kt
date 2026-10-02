@@ -1,6 +1,7 @@
 package com.dandi.nyummy.auth.data
 
 import com.dandi.nyummy.auth.domain.AuthRepository
+import com.dandi.nyummy.auth.domain.SocialSignUpSession
 import com.dandi.nyummy.common.data.di.NoAuthApi
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.data.token.TokenRefresher
@@ -33,6 +34,11 @@ object AuthDataModule {
         dataSource: AuthDataSource,
         tokenProvider: TokenProvider,
     ): AuthRepository = AuthRepositoryImpl(dataSource, tokenProvider)
+
+    /** 소셜 로그인 신규 회원의 가입 대기 토큰 — 로그인 화면과 소셜 가입 화면이 같은 인스턴스를 공유해야 한다. */
+    @Provides
+    @Singleton
+    fun provideSocialSignUpSession(): SocialSignUpSession = SocialSignUpSession()
 
     /** common/data 의 TokenAuthenticator 가 쓰는 재발급 계약 — 구현·바인딩은 auth 소유 (TokenRefresher 참고). */
     @Provides

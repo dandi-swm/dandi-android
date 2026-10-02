@@ -6,6 +6,8 @@ import com.dandi.nyummy.auth.data.dto.EmailVerificationConfirmRequestDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerifiedDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerificationRequestDTO
 import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
+import com.dandi.nyummy.auth.data.dto.OAuthLoginDTO
+import com.dandi.nyummy.auth.data.dto.OAuthLoginRequestDTO
 import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
 import com.dandi.nyummy.common.data.BaseRemoteDataSource
 import javax.inject.Inject
@@ -16,6 +18,9 @@ class AuthDataSource(
 
     suspend fun login(request: LoginRequestDTO): AuthTokenDTO =
         checkResponse(apiService.login(request))
+
+    suspend fun oauthLogin(request: OAuthLoginRequestDTO): OAuthLoginDTO =
+        checkResponse(apiService.oauthLogin(request))
 
     suspend fun signUp(request: SignUpRequestDTO): AuthTokenDTO =
         checkResponse(apiService.signUp(request))
