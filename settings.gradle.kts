@@ -19,6 +19,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // 카카오 SDK 는 카카오 자체 저장소에만 배포된다. 다른 그룹은 이 저장소에서 찾지 않는다.
+        exclusiveContent {
+            forRepository { maven("https://devrepo.kakao.com/nexus/content/groups/public/") }
+            filter { includeGroup("com.kakao.sdk") }
+        }
     }
 }
 
