@@ -18,7 +18,7 @@ sealed interface LoginReducerEvent : ReducerEvent {
     /**
      * SDK 에서 자격 증명을 받아 서버 검증을 시작한다.
      */
-    data object SocialLoginVerifying : LoginReducerEvent
+    data class SocialLoginVerifying(val socialType: SocialLoginType) : LoginReducerEvent
 
     /**
      * 로그인 요청이 끝났다 (성공 시 네비게이션은 UseCase 가 수행).

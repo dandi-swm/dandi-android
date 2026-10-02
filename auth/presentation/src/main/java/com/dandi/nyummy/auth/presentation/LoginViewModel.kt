@@ -42,11 +42,13 @@ class LoginViewModel @Inject constructor(
                 state.copy(isLoading = true, socialLoginToLaunch = event.socialType)
             is LoginReducerEvent.SocialLoginLaunched ->
                 state.copy(socialLoginToLaunch = null, awaitingSocialLogin = event.socialType)
-            is LoginReducerEvent.SocialLoginVerifying -> state.copy(awaitingSocialLogin = null)
+            is LoginReducerEvent.SocialLoginVerifying ->
+                state.copy(awaitingSocialLogin = null, verifyingSocialLogin = event.socialType)
             is LoginReducerEvent.LoginFinished -> state.copy(
                 isLoading = false,
                 socialLoginToLaunch = null,
                 awaitingSocialLogin = null,
+                verifyingSocialLogin = null,
             )
             is LoginReducerEvent.EmailLoginClicked -> state.copy(isLoading = false)
             is LoginReducerEvent.TestLoginClicked -> state.copy(isLoading = true)
@@ -77,7 +79,7 @@ class LoginViewModel @Inject constructor(
         if (currentState.awaitingSocialLogin != socialType) return
         when (result) {
             is SocialLoginResult.Success -> {
-                dispatch(LoginReducerEvent.SocialLoginVerifying)
+                dispatch(LoginReducerEvent.SocialLoginVerifying(socialType))
                 viewModelScope.launch {
                     socialLoginUseCase.login(result.credential)
                     dispatch(LoginReducerEvent.LoginFinished)
