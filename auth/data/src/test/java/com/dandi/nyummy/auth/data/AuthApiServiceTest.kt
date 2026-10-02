@@ -81,7 +81,7 @@ class AuthApiServiceTest {
 
         val response = apiService.signUp(
             SignUpRequestDTO(
-                emailVerifiedToken = "verified-token",
+                verifiedToken = "verified-token",
                 password = "pw1234",
                 confirmPassword = "pw1234",
                 nickname = "단디",
@@ -101,7 +101,8 @@ class AuthApiServiceTest {
         val rawBody = recorded.body.readUtf8()
         assertFalse(rawBody.contains("\"email\""))
         val sentBody = json.decodeFromString<SignUpRequestDTO>(rawBody)
-        assertEquals("verified-token", sentBody.emailVerifiedToken)
+        assertTrue(rawBody.contains("\"verifiedToken\":\"verified-token\""))
+        assertEquals("verified-token", sentBody.verifiedToken)
         assertEquals("pw1234", sentBody.confirmPassword)
         assertEquals("단디", sentBody.nickname)
         assertEquals("2000-01-15", sentBody.birth)
@@ -118,7 +119,7 @@ class AuthApiServiceTest {
 
         apiService.signUp(
             SignUpRequestDTO(
-                emailVerifiedToken = "verified-token",
+                verifiedToken = "verified-token",
                 password = "pw1234",
                 confirmPassword = "pw1234",
                 nickname = "단디",
@@ -159,7 +160,7 @@ class AuthApiServiceTest {
     fun `이메일 인증 코드 확인 요청에 인증 코드와 챌린지 토큰이 포함되고 인증 완료 토큰 응답을 파싱한다`() = runBlocking {
         server.enqueue(
             MockResponse().setResponseCode(200).setBody(
-                """{"emailVerifiedToken":"verified-token"}"""
+                """{"verifiedToken":"verified-token"}"""
             )
         )
 
@@ -168,7 +169,7 @@ class AuthApiServiceTest {
         )
 
         assertTrue(response.isSuccessful)
-        assertEquals("verified-token", response.body()?.emailVerifiedToken)
+        assertEquals("verified-token", response.body()?.verifiedToken)
 
         val recorded = server.takeRequest()
         assertEquals("POST", recorded.method)
