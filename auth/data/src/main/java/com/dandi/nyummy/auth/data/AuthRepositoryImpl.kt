@@ -3,6 +3,7 @@ package com.dandi.nyummy.auth.data
 import com.dandi.nyummy.auth.data.dto.EmailVerificationConfirmRequestDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerificationRequestDTO
 import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
+import com.dandi.nyummy.auth.data.dto.OAuthLoginRequestDTO
 import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
 import com.dandi.nyummy.auth.domain.AuthRepository
 import com.dandi.nyummy.auth.entity.AuthTokenVO
@@ -10,16 +11,25 @@ import com.dandi.nyummy.auth.entity.EmailChallengeVO
 import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import com.dandi.nyummy.auth.entity.EmailVerifiedVO
 import com.dandi.nyummy.auth.entity.Gender
-import com.dandi.nyummy.auth.entity.SocialLoginType
+import com.dandi.nyummy.auth.entity.SocialCredentialVO
+import com.dandi.nyummy.auth.entity.SocialLoginVO
 import com.dandi.nyummy.common.data.token.TokenProvider
 
 class AuthRepositoryImpl(
     private val dataSource: AuthDataSource,
     private val tokenProvider: TokenProvider,
 ) : AuthRepository {
-    override suspend fun socialLogin(socialLoginType: SocialLoginType): AuthTokenVO {
-        TODO("Not yet implemented")
-    }
+    override suspend fun socialLogin(credential: SocialCredentialVO): SocialLoginVO =
+        dataSource.oauthLogin(
+            OAuthLoginRequestDTO(
+                provider = credential.type.name,
+                token = credential.token,
+                nonce = credential.nonce.ifBlank { null },
+            ),
+        )
+            .toVO()
+            // 신규 회원은 토큰 없이 verifiedToken 만 오므로 저장되지 않는다(saveToken 이 빈 토큰을 건너뜀).
+            .also { saveToken(it.token) }
 
     override suspend fun login(email: String, password: String) {
         dataSource.login(LoginRequestDTO(email = email, password = password))

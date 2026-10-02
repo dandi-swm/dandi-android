@@ -12,6 +12,20 @@ data class LoginRequestDTO(
 )
 
 /**
+ * 소셜 로그인 요청 바디입니다.
+ *
+ * @property provider 소셜 제공자 (`KAKAO` 등)
+ * @property token 제공자 SDK 로 받은 토큰 (OIDC 제공자는 ID 토큰, 그 외는 access token)
+ * @property nonce SDK 로그인 때 넘긴 nonce. OIDC 제공자(카카오)는 필수, 그 외는 생략
+ */
+@Serializable
+data class OAuthLoginRequestDTO(
+    val provider: String,
+    val token: String,
+    val nonce: String? = null,
+)
+
+/**
  * 회원가입 요청 바디입니다.
  *
  * @property verifiedToken 이메일 인증 확인 또는 소셜 로그인 응답의 검증 완료 토큰

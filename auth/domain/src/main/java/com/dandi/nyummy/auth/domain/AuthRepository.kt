@@ -1,15 +1,19 @@
 package com.dandi.nyummy.auth.domain
 
-import com.dandi.nyummy.auth.entity.AuthTokenVO
 import com.dandi.nyummy.auth.entity.EmailChallengeVO
 import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import com.dandi.nyummy.auth.entity.EmailVerifiedVO
 import com.dandi.nyummy.auth.entity.Gender
-import com.dandi.nyummy.auth.entity.SocialLoginType
+import com.dandi.nyummy.auth.entity.SocialCredentialVO
+import com.dandi.nyummy.auth.entity.SocialLoginVO
 
 interface AuthRepository {
 
-    suspend fun socialLogin(socialLoginType: SocialLoginType): AuthTokenVO
+    /**
+     * 소셜 제공자 토큰을 서버에서 검증한다. 기존 회원이면 발급 토큰을 저장한다.
+     * 신규 회원이면 토큰 없이 회원가입에 쓸 [SocialLoginVO.verifiedToken] 만 돌려준다.
+     */
+    suspend fun socialLogin(credential: SocialCredentialVO): SocialLoginVO
 
     /** 이메일 로그인  */
     suspend fun login(email: String, password: String)
