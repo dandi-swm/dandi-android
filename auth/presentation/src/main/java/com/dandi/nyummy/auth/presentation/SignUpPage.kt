@@ -27,9 +27,16 @@ import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 /**
  * 회원가입 퍼널 화면. 계정 정보 → 이메일 인증 코드 → 프로필 입력의 3단계를
  * 한 라우트 안에서 진행한다 (비밀번호 등 민감 값이 라우트 인자로 남지 않도록).
+ *
+ * [isSocialSignUp] 이면 소셜 로그인 신규 회원의 가입(`/signup/social`)으로, 프로필 입력만 보인다.
  */
 @Composable
-fun SignUpPage(viewModel: SignUpViewModel = hiltViewModel<SignUpViewModel>()) {
+fun SignUpPage(
+    isSocialSignUp: Boolean = false,
+    viewModel: SignUpViewModel = hiltViewModel<SignUpViewModel, SignUpViewModel.Factory>(
+        creationCallback = { factory -> factory.create(isSocialSignUp) },
+    ),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     SignUpContent(uiState = uiState, onIntent = viewModel::onIntent)
 }
@@ -39,7 +46,8 @@ private fun SignUpContent(
     uiState: SignUpUIState,
     onIntent: (SignUpIntent) -> Unit,
 ) {
-    BackHandler(enabled = uiState.step != SignUpStep.ACCOUNT) {
+    // 소셜 가입은 이전 단계가 없으므로 시스템 백이 라우트를 그대로 닫게 둔다.
+    BackHandler(enabled = uiState.step != SignUpStep.ACCOUNT && !uiState.isSocialSignUp) {
         onIntent(SignUpIntent.ClickBackStep)
     }
     Column(

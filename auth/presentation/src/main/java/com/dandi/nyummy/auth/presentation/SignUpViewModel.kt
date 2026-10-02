@@ -8,21 +8,46 @@ import com.dandi.nyummy.auth.domain.SignUpValidator
 import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class SignUpViewModel @Inject constructor(
+/**
+ * 회원가입 퍼널. [isSocialSignUp] 이면 소셜 로그인 신규 회원의 가입으로, 프로필 단계만 진행하고
+ * 가입 토큰은 SignUpUseCase 가 보관 중인 소셜 가입 세션에서 꺼내 쓴다.
+ */
+@HiltViewModel(assistedFactory = SignUpViewModel.Factory::class)
+class SignUpViewModel @AssistedInject constructor(
+    @Assisted isSocialSignUp: Boolean,
     private val emailVerificationUseCase: EmailVerificationUseCase,
     private val signUpUseCase: SignUpUseCase,
     private val messageHelper: MessageHelper,
-) : MviViewModel<SignUpIntent, SignUpUIState, SignUpReducerEvent>(SignUpUIState.empty) {
+) : MviViewModel<SignUpIntent, SignUpUIState, SignUpReducerEvent>(SignUpUIState.initial(isSocialSignUp)) {
+
+    @AssistedFactory
+    interface Factory {
+        fun create(isSocialSignUp: Boolean): SignUpViewModel
+    }
 
     private var resendTimerJob: Job? = null
+
+    init {
+        // 프로세스 종료 후 복원됐거나 외부 링크로 들어오면 가입에 쓸 토큰이 없다 — 다시 로그인하도록 돌려보낸다.
+        if (isSocialSignUp && !signUpUseCase.hasPendingSocialSignUp()) {
+            signUpUseCase.leaveSocialSignUpWithoutSession()
+        }
+    }
+
+    override fun onCleared() {
+        // 가입을 마치지 않고 화면을 떠나면(뒤로가기 등) 남은 가입 토큰을 버린다. 회전으로는 호출되지 않는다.
+        if (currentState.isSocialSignUp) signUpUseCase.abandonSocialSignUp()
+        super.onCleared()
+    }
 
     override fun onIntent(intent: SignUpIntent) {
         when (intent) {
@@ -86,17 +111,24 @@ class SignUpViewModel @Inject constructor(
                 state.copy(nicknameError = event.nicknameError)
             SignUpReducerEvent.LoadingStarted -> state.copy(isLoading = true)
             SignUpReducerEvent.LoadingFinished -> state.copy(isLoading = false)
-            SignUpReducerEvent.SteppedBack -> when (state.step) {
-                SignUpStep.ACCOUNT -> state
-                SignUpStep.CODE -> state.copy(step = SignUpStep.ACCOUNT, emailChallengeToken = "")
-                SignUpStep.PROFILE -> state.copy(
-                    step = SignUpStep.CODE,
-                    emailVerifiedToken = "",
-                    code = "",
-                    codeError = null,
-                )
+            SignUpReducerEvent.SteppedBack -> when {
+                // 소셜 가입은 이전 단계가 없다 — 뒤로가기는 라우트 자체를 닫는다.
+                state.isSocialSignUp -> state
+                else -> state.stepBack()
             }
         }
+
+    /** 이메일 가입의 한 단계 뒤로가기. ACCOUNT 에서는 그대로 두고 라우트가 닫힌다. */
+    private fun SignUpUIState.stepBack(): SignUpUIState = when (step) {
+        SignUpStep.ACCOUNT -> this
+        SignUpStep.CODE -> copy(step = SignUpStep.ACCOUNT, emailChallengeToken = "")
+        SignUpStep.PROFILE -> copy(
+            step = SignUpStep.CODE,
+            emailVerifiedToken = "",
+            code = "",
+            codeError = null,
+        )
+    }
 
     private fun sendCode() {
         val emailError = SignUpValidator.validateEmail(currentState.email)
@@ -196,22 +228,34 @@ class SignUpViewModel @Inject constructor(
 
         dispatch(SignUpReducerEvent.LoadingStarted)
         viewModelScope.launch {
-            signUpUseCase.signUp(
-                emailVerifiedToken = currentState.emailVerifiedToken,
-                password = currentState.password,
-                confirmPassword = currentState.passwordConfirm,
-                nickname = currentState.nickname.trim(),
-                gender = currentState.gender,
-                birth = String.format(
-                    Locale.US,
-                    "%04d-%02d-%02d",
-                    currentState.birthYear,
-                    currentState.birthMonth,
-                    currentState.birthDay,
-                ),
-                height = currentState.height,
-                weight = currentState.weight,
+            val state = currentState
+            val birth = String.format(
+                Locale.US,
+                "%04d-%02d-%02d",
+                state.birthYear,
+                state.birthMonth,
+                state.birthDay,
             )
+            if (state.isSocialSignUp) {
+                signUpUseCase.signUpWithSocial(
+                    nickname = state.nickname.trim(),
+                    gender = state.gender,
+                    birth = birth,
+                    height = state.height,
+                    weight = state.weight,
+                )
+            } else {
+                signUpUseCase.signUp(
+                    emailVerifiedToken = state.emailVerifiedToken,
+                    password = state.password,
+                    confirmPassword = state.passwordConfirm,
+                    nickname = state.nickname.trim(),
+                    gender = state.gender,
+                    birth = birth,
+                    height = state.height,
+                    weight = state.weight,
+                )
+            }
             dispatch(SignUpReducerEvent.LoadingFinished)
         }
     }
