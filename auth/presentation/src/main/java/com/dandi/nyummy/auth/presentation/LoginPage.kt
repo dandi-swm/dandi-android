@@ -1,5 +1,6 @@
 package com.dandi.nyummy.auth.presentation
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.auth.entity.SocialLoginType
+import com.dandi.nyummy.auth.presentation.social.SocialLoginResult
+import com.dandi.nyummy.auth.presentation.social.launchSocialLogin
 import com.dandi.nyummy.common.presentation.component.DandiText
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
@@ -46,8 +50,8 @@ import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 /**
  * 로그인 랜딩 화면
  *
- * 소셜 로그인(카카오·네이버·구글)은 MVP 에서 UI 만 제공하며 동작하지 않는다.
- * 이메일 원형 버튼만 이메일 로그인 화면으로 이동한다.
+ * 카카오 로그인은 SDK 로그인(카카오톡/카카오계정) 후 서버 검증까지 동작한다. 네이버·구글은 아직
+ * 연동되지 않아 "준비 중" 안내만 띄운다. 이메일 원형 버튼은 이메일 로그인 화면으로 이동한다.
  * debug 빌드에서 local.properties 에 테스트 계정을 넣으면 하단에 테스트 계정 로그인 버튼이 추가된다.
  */
 @Composable
@@ -55,6 +59,23 @@ fun LoginPage(
     viewModel: LoginViewModel = hiltViewModel<LoginViewModel>(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // 소셜 SDK 는 Activity 가 필요해 화면이 실행한다. 실행을 먼저 알려 요청 상태를 비워 두므로
+    // 로그인 창이 떠 있는 동안 화면이 재생성돼도 다시 실행되지 않는다.
+    val activity = LocalActivity.current
+    val onIntent = viewModel::onIntent
+    LaunchedEffect(uiState.socialLoginToLaunch) {
+        val socialType = uiState.socialLoginToLaunch ?: return@LaunchedEffect
+        onIntent(LoginIntent.SocialLoginLaunched(socialType))
+        val onResult: (SocialLoginResult) -> Unit = { result ->
+            onIntent(LoginIntent.SocialLoginResultReceived(socialType, result))
+        }
+        if (activity == null) {
+            onResult(SocialLoginResult.Failed)
+        } else {
+            launchSocialLogin(socialType, activity, onResult)
+        }
+    }
 
     LoginPageContent(
         uiState = uiState,
@@ -342,3 +363,4 @@ private fun LoginPagePreview() {
         )
     }
 }
+
