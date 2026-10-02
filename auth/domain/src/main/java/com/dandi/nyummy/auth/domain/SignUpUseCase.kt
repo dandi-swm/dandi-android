@@ -41,7 +41,7 @@ class SignUpUseCase @Inject constructor(
         weight: Int? = null,
     ): Result<Unit> = try {
         repository.signUp(
-            emailVerifiedToken = emailVerifiedToken,
+            verifiedToken = emailVerifiedToken,
             password = password,
             confirmPassword = confirmPassword,
             nickname = nickname,

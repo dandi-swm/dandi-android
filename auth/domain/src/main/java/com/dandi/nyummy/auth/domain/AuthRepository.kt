@@ -17,15 +17,17 @@ interface AuthRepository {
     /**
      * 회원가입. 성공 시 발급 토큰을 저장한다.
      *
-     * @param emailVerifiedToken 이메일 인증 완료 토큰
+     * @param verifiedToken 이메일 인증 확인 또는 소셜 로그인 응답의 검증 완료 토큰
+     * @param password 이메일 가입 전용. 소셜 가입은 null
+     * @param confirmPassword 이메일 가입 전용. 소셜 가입은 null
      * @param birth 생년월일 (`yyyy-MM-dd` 형식, 선택)
      * @param height 키 (cm, 선택)
      * @param weight 몸무게 (kg, 선택)
      */
     suspend fun signUp(
-        emailVerifiedToken: String,
-        password: String,
-        confirmPassword: String,
+        verifiedToken: String,
+        password: String?,
+        confirmPassword: String?,
         nickname: String,
         gender: Gender?,
         birth: String?,

@@ -60,7 +60,7 @@ class AuthRepositoryImplTest {
         )
 
         repository.signUp(
-            emailVerifiedToken = "verified-token",
+            verifiedToken = "verified-token",
             password = "pw1234",
             confirmPassword = "pw1234",
             nickname = "단디",
@@ -85,7 +85,7 @@ class AuthRepositoryImplTest {
         assertThrows(HttpResponseException::class.java) {
             runBlocking {
                 repository.signUp(
-                    emailVerifiedToken = "verified-token",
+                    verifiedToken = "verified-token",
                     password = "pw1234",
                     confirmPassword = "pw1234",
                     nickname = "단디",
@@ -107,7 +107,7 @@ class AuthRepositoryImplTest {
             MockResponse().setResponseCode(200).setBody("""{"emailChallengeToken":"challenge-token"}""")
         )
         server.enqueue(
-            MockResponse().setResponseCode(200).setBody("""{"emailVerifiedToken":"verified-token"}""")
+            MockResponse().setResponseCode(200).setBody("""{"verifiedToken":"verified-token"}""")
         )
 
         val challenge = repository.requestEmailVerification(

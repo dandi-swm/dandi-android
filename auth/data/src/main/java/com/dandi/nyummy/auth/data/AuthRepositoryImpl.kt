@@ -28,9 +28,9 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun signUp(
-        emailVerifiedToken: String,
-        password: String,
-        confirmPassword: String,
+        verifiedToken: String,
+        password: String?,
+        confirmPassword: String?,
         nickname: String,
         gender: Gender?,
         birth: String?,
@@ -39,7 +39,7 @@ class AuthRepositoryImpl(
     ) {
         dataSource.signUp(
             SignUpRequestDTO(
-                emailVerifiedToken = emailVerifiedToken,
+                verifiedToken = verifiedToken,
                 password = password,
                 confirmPassword = confirmPassword,
                 nickname = nickname,

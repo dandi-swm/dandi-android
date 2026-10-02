@@ -42,13 +42,13 @@ data class EmailChallengeDTO(
 /**
  * 이메일 인증 코드 확인 응답입니다.
  *
- * @property emailVerifiedToken 회원가입 요청에 사용하는 인증 완료 토큰
+ * @property verifiedToken 회원가입 요청에 사용하는 인증 완료 토큰
  */
 @Serializable
 data class EmailVerifiedDTO(
-    val emailVerifiedToken: String? = null,
+    val verifiedToken: String? = null,
 ) {
     fun toVO(): EmailVerifiedVO = EmailVerifiedVO(
-        emailVerifiedToken = emailVerifiedToken.orEmpty(),
+        emailVerifiedToken = verifiedToken.orEmpty(),
     )
 }

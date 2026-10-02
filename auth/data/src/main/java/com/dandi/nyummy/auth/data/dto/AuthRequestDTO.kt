@@ -14,8 +14,9 @@ data class LoginRequestDTO(
 /**
  * 회원가입 요청 바디입니다.
  *
- * @property emailVerifiedToken 이메일 인증 완료 토큰
- * @property confirmPassword 비밀번호 확인 값
+ * @property verifiedToken 이메일 인증 확인 또는 소셜 로그인 응답의 검증 완료 토큰
+ * @property password 비밀번호 (이메일 가입 전용, 소셜 가입은 생략)
+ * @property confirmPassword 비밀번호 확인 값 (이메일 가입 전용, 소셜 가입은 생략)
  * @property gender 성별 문자열 (선택)
  * @property birth 생년월일 (`yyyy-MM-dd` 형식, 선택)
  * @property height 키 (cm, 선택)
@@ -23,10 +24,10 @@ data class LoginRequestDTO(
  */
 @Serializable
 data class SignUpRequestDTO(
-    val emailVerifiedToken: String,
-    val password: String,
-    val confirmPassword: String,
+    val verifiedToken: String,
     val nickname: String,
+    val password: String? = null,
+    val confirmPassword: String? = null,
     val gender: String? = null,
     val birth: String? = null,
     val height: Int? = null,
