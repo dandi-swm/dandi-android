@@ -1,6 +1,13 @@
 package com.dandi.nyummy.auth.presentation
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,7 +26,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,6 +52,9 @@ import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.auth.presentation.social.SocialLoginResult
 import com.dandi.nyummy.auth.presentation.social.launchSocialLogin
 import com.dandi.nyummy.common.presentation.component.DandiText
+import com.dandi.nyummy.common.presentation.component.NyummyLoading
+import com.dandi.nyummy.common.presentation.component.NyummyLoadingSize
+import com.dandi.nyummy.common.presentation.component.NyummyModalScrim
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
@@ -157,8 +169,85 @@ private fun LoginPageContent(
                 Spacer(modifier = Modifier.height(spacing.space16))
             }
         }
+        SocialLoginVerifyingOverlay(socialType = uiState.verifyingSocialLogin)
     }
 }
+
+/**
+ * 소셜 로그인 창이 닫힌 뒤 서버 검증이 끝날 때까지 덮는 로딩.
+ *
+ * 로그인 창에서 돌아오자마자 홈으로 넘어가면 무슨 일이 일어났는지 알기 어려워, 검증 중임을 보여주고
+ * 그동안 다른 버튼·뒤로가기 입력을 막는다. 검증이 끝나면 다음 화면으로 넘어가며 함께 사라진다.
+ */
+@Composable
+private fun SocialLoginVerifyingOverlay(socialType: SocialLoginType?) {
+    BackHandler(enabled = socialType != null) {}
+    Box(modifier = Modifier.fillMaxSize()) {
+        AnimatedVisibility(
+            visible = socialType != null,
+            enter = fadeIn(tween(VerifyingFadeMillis)),
+            exit = fadeOut(tween(VerifyingFadeMillis)),
+            label = "SocialLoginVerifyingScrim",
+        ) {
+            NyummyModalScrim()
+        }
+        // 사라지는 동안에도 직전 제공자 문구가 유지되도록 상태별 내용을 AnimatedContent 로 전환한다.
+        AnimatedContent(
+            targetState = socialType,
+            modifier = Modifier.fillMaxSize(),
+            transitionSpec = {
+                fadeIn(tween(VerifyingFadeMillis)) togetherWith fadeOut(tween(VerifyingFadeMillis))
+            },
+            contentAlignment = Alignment.Center,
+            label = "SocialLoginVerifyingCard",
+        ) { type ->
+            if (type != null) SocialLoginVerifyingCard(socialType = type)
+        }
+    }
+}
+
+@Composable
+private fun SocialLoginVerifyingCard(socialType: SocialLoginType) {
+    val colors = DesignSystemThemeImpl.designSystemColor
+    val spacing = DesignSystemThemeImpl.designSystemSpacing
+    val message = stringResource(
+        R.string.auth_login_social_verifying,
+        stringResource(socialType.providerNameRes),
+    )
+    Surface(
+        shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius24),
+        color = colors.bgDefaultLevel1,
+        contentColor = colors.contentDefaultLevel0,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = spacing.space32, vertical = spacing.space24),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            NyummyLoading(size = NyummyLoadingSize.Large, contentDescription = message)
+            Spacer(modifier = Modifier.height(spacing.space16))
+            DandiText(
+                text = message,
+                color = colors.contentDefaultLevel0,
+                textAlign = TextAlign.Center,
+                style = DesignSystemThemeImpl.typeScale.textStrongL,
+            )
+            Spacer(modifier = Modifier.height(spacing.space4))
+            DandiText(
+                text = stringResource(R.string.auth_login_social_verifying_hint),
+                color = colors.contentDefaultLevel1,
+                textAlign = TextAlign.Center,
+                style = DesignSystemThemeImpl.typeScale.textRegularM,
+            )
+        }
+    }
+}
+
+private val SocialLoginType.providerNameRes: Int
+    get() = when (this) {
+        SocialLoginType.KAKAO -> R.string.auth_social_provider_kakao
+        SocialLoginType.GOOGLE -> R.string.auth_social_provider_google
+        SocialLoginType.NAVER -> R.string.auth_social_provider_naver
+    }
 
 /** 새싹이 돋은 `냐미` 로고 이미지. */
 @Composable
@@ -352,6 +441,7 @@ private val LoginDividerLineHeight = 1.dp
 private val LoginSocialCircleSize = 56.dp
 private val LoginEmailIconSize = 24.dp
 private val LoginEmailCircleBorderWidth = 1.dp
+private const val VerifyingFadeMillis = 200
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
@@ -364,3 +454,13 @@ private fun LoginPagePreview() {
     }
 }
 
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun LoginPageSocialVerifyingPreview() {
+    DesignSystemTheme {
+        LoginPageContent(
+            uiState = LoginUIState(isLoading = true, verifyingSocialLogin = SocialLoginType.KAKAO),
+            onIntent = {},
+        )
+    }
+}

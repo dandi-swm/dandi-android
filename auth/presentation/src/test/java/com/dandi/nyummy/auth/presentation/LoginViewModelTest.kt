@@ -110,7 +110,9 @@ class LoginViewModelTest {
         viewModel.onIntent(
             LoginIntent.SocialLoginResultReceived(SocialLoginType.KAKAO, SocialLoginResult.Success(credential)),
         )
+        // 로그인 창이 닫힌 뒤 서버 응답 전까지 검증 중 로딩이 보여야 한다.
         assertTrue(viewModel.uiState.value.isLoading)
+        assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.verifyingSocialLogin)
         advanceUntilIdle()
 
         assertEquals(listOf(credential), repository.socialLoginCalls)
@@ -171,6 +173,7 @@ class LoginViewModelTest {
         assertFalse(state.isLoading)
         assertNull(state.socialLoginToLaunch)
         assertNull(state.awaitingSocialLogin)
+        assertNull(state.verifyingSocialLogin)
     }
 
     private fun createViewModel(): LoginViewModel = LoginViewModel(
