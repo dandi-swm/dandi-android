@@ -5,6 +5,7 @@ import android.util.Log
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
+import com.dandi.nyummy.auth.presentation.social.initializeSocialLoginSdks
 import com.dandi.nyummy.common.presentation.image.NyummyImageLoaderFactory
 import com.dandi.nyummy.reminder.FcmTokenStore
 import com.dandi.nyummy.reminder.ReminderNotifier
@@ -20,6 +21,9 @@ class DandiApplication : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
+
+        // 카카오 등 소셜 로그인 SDK. 앱 키 없이 빌드되면 건너뛴다.
+        initializeSocialLoginSdks(this)
 
         // 냐미 리마인드 알림 채널을 미리 등록한다 (FCM 백그라운드 자동 표시 대비).
         ReminderNotifier.ensureChannel(this)
