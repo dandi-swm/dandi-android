@@ -58,6 +58,8 @@ dependencies {
     implementation(project(":common:presentation"))
 
     implementation(libs.androidx.lifecycle.runtime.compose)
+    // 갤러리 사진 선택기의 rememberLauncherForActivityResult 용
+    implementation(libs.androidx.activity.compose)
 
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)

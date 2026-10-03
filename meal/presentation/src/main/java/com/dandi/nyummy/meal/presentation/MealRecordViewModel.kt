@@ -5,6 +5,7 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
+import com.dandi.nyummy.meal.domain.ImportGalleryMealPhotoUseCase
 import com.dandi.nyummy.meal.domain.SubmitMealUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -14,6 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MealRecordViewModel @Inject constructor(
     private val submitMeal: SubmitMealUseCase,
+    private val importGalleryMealPhoto: ImportGalleryMealPhotoUseCase,
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
 ) : MviViewModel<MealRecordIntent, MealRecordUIState, MealRecordReducerEvent>(MealRecordUIState.empty) {
@@ -32,6 +34,7 @@ class MealRecordViewModel @Inject constructor(
             MealRecordIntent.ClickShutter -> {
                 val state = uiState.value
                 val canCapture = !state.isCapturing &&
+                    !state.isImportingGalleryPhoto &&
                     state.phase is MealCameraPhase.Preview &&
                     state.cameraPermission == MealCameraPermission.Granted
                 if (canCapture) dispatch(MealRecordReducerEvent.CaptureStarted)
@@ -47,6 +50,8 @@ class MealRecordViewModel @Inject constructor(
                     messageRes = R.string.meal_record_capture_failed,
                 )
             }
+
+            is MealRecordIntent.GalleryPhotoPicked -> importGalleryPhoto(intent.photoUri)
 
             MealRecordIntent.ClickRetake -> {
                 // 세리머니(업로드) 중에는 업로드 대상 파일을 지우면 안 되므로 재촬영을 막는다.
@@ -98,6 +103,15 @@ class MealRecordViewModel @Inject constructor(
 
             MealRecordReducerEvent.CaptureEnded -> state.copy(isCapturing = false)
 
+            MealRecordReducerEvent.GalleryImportStarted -> state.copy(isImportingGalleryPhoto = true)
+
+            is MealRecordReducerEvent.GalleryImportSucceeded -> state.copy(
+                phase = MealCameraPhase.Captured(event.photoPath),
+                isImportingGalleryPhoto = false,
+            )
+
+            MealRecordReducerEvent.GalleryImportFailed -> state.copy(isImportingGalleryPhoto = false)
+
             MealRecordReducerEvent.ReturnedToPreview -> state.copy(
                 phase = MealCameraPhase.Preview,
                 isCapturing = false,
@@ -126,6 +140,26 @@ class MealRecordViewModel @Inject constructor(
 
             MealRecordReducerEvent.FinishStarted -> state.copy(isFinishing = true)
         }
+
+    /**
+     * 갤러리에서 고른 사진을 검증해 확인 단계로 가져온다.
+     * 선택을 취소했거나, 선택기가 열린 사이 촬영이 진행됐거나, 이미 다른 사진을 가져오는 중이면 무시한다.
+     */
+    private fun importGalleryPhoto(photoUri: String?) {
+        if (photoUri == null) return
+        val state = currentState
+        val canImport = state.phase is MealCameraPhase.Preview &&
+            !state.isCapturing &&
+            !state.isImportingGalleryPhoto
+        if (!canImport) return
+        dispatch(MealRecordReducerEvent.GalleryImportStarted)
+        viewModelScope.launch {
+            importGalleryMealPhoto(photoUri)
+                // 실패 스낵바는 UseCase 가 이미 띄우므로 여기서는 상태 복귀만 한다.
+                .onSuccess { dispatch(MealRecordReducerEvent.GalleryImportSucceeded(it)) }
+                .onFailure { dispatch(MealRecordReducerEvent.GalleryImportFailed) }
+        }
+    }
 
     /** 촬영본을 업로드해 식사를 생성한다. 성공 알림은 세리머니 화면이 담당한다. */
     private fun submitCapturedMeal() {

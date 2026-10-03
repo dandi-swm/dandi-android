@@ -1,6 +1,9 @@
 package com.dandi.nyummy.meal.presentation
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -31,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,8 +73,9 @@ import java.io.File
 /**
  * 식사 기록(카메라) 화면입니다.
  *
- * 실시간 프리뷰에서 촬영하면 같은 자리에서 촬영본을 확인하고 취소(재촬영)·먹이기를
- * 선택합니다. 이 컴포저블은 상태 수집, 카메라 권한 요청, [MealRecordIntent] 전달만 담당합니다.
+ * 실시간 프리뷰에서 촬영하거나 갤러리에서 사진을 고르면 같은 자리에서 촬영본을 확인하고
+ * 취소(재촬영)·먹이기를 선택합니다. 이 컴포저블은 상태 수집, 카메라 권한 요청,
+ * 갤러리 선택기 실행, [MealRecordIntent] 전달만 담당합니다.
  */
 @Composable
 fun MealRecordPage(
@@ -90,9 +95,26 @@ fun MealRecordPage(
         }
     }
 
+    // 연타로 선택기가 겹쳐 뜨지 않도록 열려 있는 동안을 기억한다(선택기 뒤에서 재생성돼도 유지).
+    var isGalleryPickerOpen by rememberSaveable { mutableStateOf(false) }
+    val galleryPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        isGalleryPickerOpen = false
+        viewModel.onIntent(MealRecordIntent.GalleryPhotoPicked(uri?.toString()))
+    }
+
     MealRecordScreen(
         uiState = uiState,
         onIntent = viewModel::onIntent,
+        onGalleryClick = {
+            if (!isGalleryPickerOpen) {
+                isGalleryPickerOpen = true
+                galleryPicker.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                )
+            }
+        },
         modifier = modifier,
     )
 }
@@ -101,6 +123,7 @@ fun MealRecordPage(
 private fun MealRecordScreen(
     uiState: MealRecordUIState,
     onIntent: (MealRecordIntent) -> Unit,
+    onGalleryClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
@@ -247,7 +270,11 @@ private fun MealRecordScreen(
             when (uiState.phase) {
                 MealCameraPhase.Preview -> PreviewActionBar(
                     captureEnabled = !uiState.isCapturing &&
+                        !uiState.isImportingGalleryPhoto &&
                         uiState.cameraPermission == MealCameraPermission.Granted,
+                    // 갤러리 첨부는 카메라 권한과 무관하므로 권한이 거부된 상태에서도 열어 둔다.
+                    galleryEnabled = !uiState.isCapturing && !uiState.isImportingGalleryPhoto,
+                    onGalleryClick = onGalleryClick,
                     onCancelClick = { onIntent(MealRecordIntent.ClickClose) },
                     onCaptureClick = { onIntent(MealRecordIntent.ClickShutter) },
                     modifier = Modifier.fillMaxWidth(),
@@ -358,10 +385,12 @@ private fun PermissionDeniedContent(
     }
 }
 
-/** 프리뷰 단계 하단 바: 취소 · `담기`(촬영) 버튼. */
+/** 프리뷰 단계 하단 바: 갤러리 첨부 · 취소 · `담기`(촬영) 버튼. */
 @Composable
 private fun PreviewActionBar(
     captureEnabled: Boolean,
+    galleryEnabled: Boolean,
+    onGalleryClick: () -> Unit,
     onCancelClick: () -> Unit,
     onCaptureClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -373,6 +402,17 @@ private fun PreviewActionBar(
         horizontalArrangement = Arrangement.spacedBy(spacing.space12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        NyummyIconButton(
+            contentDescription = stringResource(R.string.meal_record_gallery_content_description),
+            style = NyummyIconButtonStyle.Filled,
+            enabled = galleryEnabled,
+            onClick = onGalleryClick,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_meal_gallery),
+                contentDescription = null,
+            )
+        }
         NyummyButton(
             label = stringResource(R.string.meal_record_cancel),
             style = NyummyButtonStyle.Secondary,
@@ -554,6 +594,7 @@ private fun MealRecordScreenPreviewPhase() {
         MealRecordScreen(
             uiState = MealRecordUIState(cameraPermission = MealCameraPermission.Granted),
             onIntent = {},
+            onGalleryClick = {},
         )
     }
 }
@@ -568,6 +609,7 @@ private fun MealRecordScreenCapturedPhase() {
                 cameraPermission = MealCameraPermission.Granted,
             ),
             onIntent = {},
+            onGalleryClick = {},
         )
     }
 }
@@ -583,6 +625,7 @@ private fun MealRecordScreenFeedingPhase() {
                 isSubmitSucceeded = true,
             ),
             onIntent = {},
+            onGalleryClick = {},
         )
     }
 }
@@ -598,6 +641,7 @@ private fun MealRecordScreenDonePhase() {
                 isSubmitSucceeded = true,
             ),
             onIntent = {},
+            onGalleryClick = {},
         )
     }
 }
@@ -609,6 +653,7 @@ private fun MealRecordScreenPermissionDenied() {
         MealRecordScreen(
             uiState = MealRecordUIState(cameraPermission = MealCameraPermission.Denied),
             onIntent = {},
+            onGalleryClick = {},
         )
     }
 }

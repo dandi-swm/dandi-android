@@ -4,6 +4,7 @@
     <string name="meal_record_subtitle">음식을 촬영하면 바로 분석이 시작돼요 🌱</string>
     <string name="meal_record_cancel">취소</string>
     <string name="meal_record_capture">담기</string>
+    <string name="meal_record_gallery_content_description">갤러리에서 사진 선택</string>
     <string name="meal_record_retake">다시 찍기</string>
     <string name="meal_record_submit">냐미에게 주기</string>
     <string name="meal_record_permission_denied_title">카메라 권한이 필요해요</string>
