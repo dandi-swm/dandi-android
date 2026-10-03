@@ -8,7 +8,7 @@ import com.dandi.nyummy.common.entity.time.KstTime
 private val EXIF_DATE_TIME_REGEX = Regex("""(\d{4})[:-](\d{2})[:-](\d{2}) (\d{2}:\d{2}:\d{2})""")
 
 /** EXIF 오프셋 포맷(`+09:00`). */
-private val EXIF_OFFSET_REGEX = Regex("""[+-]\d{2}:\d{2}""")
+private val EXIF_OFFSET_REGEX = Regex("""[+-](?:[01]\d|2[0-3]):[0-5]\d""")
 
 /**
  * 촬영 시각으로 볼 태그와 그 오프셋 태그. 앞에 있을수록 우선한다.
