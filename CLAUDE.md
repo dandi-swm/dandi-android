@@ -6,6 +6,7 @@
 
 - 등록 라우트 9개: `""`(인트로 루트) `/login` `/login/email` `/signup` `/home` `/meal/record` `/history` `/collection` `/shop` — `AppRouteRegistry.kt` 기준.
 - 바텀 네비 4탭(홈·기록·컬렉션·상점) + 중앙 카메라 버튼(식사 기록 진입) — `NyummyNavigation.kt`/`RootComposable.kt`.
+- App Links: `https://link.nyummy.co.kr/<라우트 path>` (autoVerify, S3+CloudFront 서빙, 검증 완료). `assetlinks.json`·폴백 페이지·지문 추가/검증 절차는 `docs/app-links/`.
 - ApiService 2개: `AuthApiService`(login/signup/email-verification/confirm/refresh 5개), `HistoryApiService`(monthly/daily/상세/이름수정/삭제 5개).
 - 빈 스캐폴드: `main:entity` `main:data` `home:data` `meal:data` + `collection`/`shop`의 entity·data.
 - 홈은 100% 목업(`HomeMockData`), 컬렉션·상점은 "준비 중" 플레이스홀더 화면. 식사 기록은 촬영(또는 갤러리 첨부 — EXIF 촬영일이 오늘(KST)인 사진만, ImportGalleryMealPhotoUseCase)→확인→제출(SubmitMealUseCase)→픽셀 세리머니→완료 화면까지 연동됨.
