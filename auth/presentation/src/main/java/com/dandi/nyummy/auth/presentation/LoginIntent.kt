@@ -17,6 +17,9 @@ sealed interface LoginIntent : MviIntent {
         val result: SocialLoginResult,
     ) : LoginIntent
 
+    // 소셜 로그인 로딩 중 뒤로가기를 눌렀다.
+    data object SocialLoginBackPressed : LoginIntent
+
     // 이메일 로그인 버튼을 클릭했다.
     data object ClickEmailLogin : LoginIntent
 

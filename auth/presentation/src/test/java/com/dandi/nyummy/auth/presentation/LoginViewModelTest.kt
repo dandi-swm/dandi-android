@@ -121,6 +121,55 @@ class LoginViewModelTest {
     }
 
     @Test
+    fun `로그인 창을 띄운 뒤 서버 검증이 끝날 때까지 내내 로딩 대상이다`() = runTest(testDispatcher) {
+        repository.socialLoginResult = SocialLoginVO(verifiedToken = "social-verified")
+        val viewModel = createViewModel()
+
+        viewModel.onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO))
+        assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.socialLoginInProgress)
+        viewModel.onIntent(LoginIntent.SocialLoginLaunched(SocialLoginType.KAKAO))
+        // 로그인 창에서 돌아와 카카오 토큰을 받는 동안에도 로딩이 보여야 한다.
+        assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.socialLoginInProgress)
+        viewModel.onIntent(
+            LoginIntent.SocialLoginResultReceived(SocialLoginType.KAKAO, SocialLoginResult.Success(credential)),
+        )
+        assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.socialLoginInProgress)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.socialLoginInProgress)
+    }
+
+    @Test
+    fun `카카오 응답을 기다리는 중 뒤로가기면 기다림을 그만두고 늦게 온 결과는 무시한다`() = runTest(testDispatcher) {
+        val viewModel = launchedKakao()
+
+        viewModel.onIntent(LoginIntent.SocialLoginBackPressed)
+        assertIdle(viewModel)
+
+        viewModel.onIntent(
+            LoginIntent.SocialLoginResultReceived(SocialLoginType.KAKAO, SocialLoginResult.Success(credential)),
+        )
+        advanceUntilIdle()
+        assertTrue(repository.socialLoginCalls.isEmpty())
+    }
+
+    @Test
+    fun `서버 검증 중 뒤로가기는 무시하고 검증을 마친다`() = runTest(testDispatcher) {
+        repository.socialLoginResult = SocialLoginVO(verifiedToken = "social-verified")
+        val viewModel = launchedKakao()
+        viewModel.onIntent(
+            LoginIntent.SocialLoginResultReceived(SocialLoginType.KAKAO, SocialLoginResult.Success(credential)),
+        )
+
+        viewModel.onIntent(LoginIntent.SocialLoginBackPressed)
+        assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.verifyingSocialLogin)
+        advanceUntilIdle()
+
+        assertEquals(listOf(credential), repository.socialLoginCalls)
+        assertEquals(listOf<Page>(SocialSignUpPage), navigationHelper.pages)
+    }
+
+    @Test
     fun `기다리지 않던 결과는 무시한다`() = runTest(testDispatcher) {
         val viewModel = createViewModel()
 

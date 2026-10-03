@@ -47,7 +47,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.currentStateAsState
 import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.auth.presentation.social.SocialLoginResult
 import com.dandi.nyummy.auth.presentation.social.launchSocialLogin
@@ -169,45 +172,64 @@ private fun LoginPageContent(
                 Spacer(modifier = Modifier.height(spacing.space16))
             }
         }
-        SocialLoginVerifyingOverlay(socialType = uiState.verifyingSocialLogin)
+        SocialLoginLoadingOverlay(
+            socialType = uiState.socialLoginInProgress,
+            isVerifying = uiState.verifyingSocialLogin != null,
+            onBackPressed = { onIntent(LoginIntent.SocialLoginBackPressed) },
+        )
     }
 }
 
 /**
- * 소셜 로그인 창이 닫힌 뒤 서버 검증이 끝날 때까지 덮는 로딩.
+ * 소셜 로그인 창에서 돌아온 뒤 홈·가입 화면으로 넘어갈 때까지 덮는 로딩.
  *
- * 로그인 창에서 돌아오자마자 홈으로 넘어가면 무슨 일이 일어났는지 알기 어려워, 검증 중임을 보여주고
- * 그동안 다른 버튼·뒤로가기 입력을 막는다. 검증이 끝나면 다음 화면으로 넘어가며 함께 사라진다.
+ * 창이 닫힌 뒤에도 카카오 토큰 발급(약 1초)과 서버 검증이 이어지는데, 그동안 로그인 화면만 보이다가
+ * 갑자기 홈으로 넘어가면 무슨 일이 일어났는지 알기 어렵다. 그 구간을 로딩으로 덮고 다른 입력을 막는다.
+ *
+ * 카카오 창이 떠 있는 동안에는 이 화면이 가려져 있으므로, 화면이 다시 보인 뒤에만 띄운다. 그리고
+ * [LoadingShowDelayMillis] 만큼 기다렸다 나타나게 해, 창을 닫아 취소한 경우 로딩이 번쩍이지 않게 한다.
+ * 결과 대기 중 뒤로가기는 기다림을 그만두고, 서버 검증 중에는 막힌다(ViewModel 이 판단).
  */
 @Composable
-private fun SocialLoginVerifyingOverlay(socialType: SocialLoginType?) {
-    BackHandler(enabled = socialType != null) {}
+private fun SocialLoginLoadingOverlay(
+    socialType: SocialLoginType?,
+    isVerifying: Boolean,
+    onBackPressed: () -> Unit,
+) {
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    val isScreenResumed = lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
+    val shownType = socialType?.takeIf { isScreenResumed || isVerifying }
+
+    BackHandler(enabled = socialType != null, onBack = onBackPressed)
     Box(modifier = Modifier.fillMaxSize()) {
         AnimatedVisibility(
-            visible = socialType != null,
-            enter = fadeIn(tween(VerifyingFadeMillis)),
-            exit = fadeOut(tween(VerifyingFadeMillis)),
-            label = "SocialLoginVerifyingScrim",
+            visible = shownType != null,
+            enter = fadeIn(tween(LoadingFadeMillis, delayMillis = LoadingShowDelayMillis)),
+            exit = fadeOut(tween(LoadingFadeMillis)),
+            label = "SocialLoginLoadingScrim",
         ) {
             NyummyModalScrim()
         }
         // 사라지는 동안에도 직전 제공자 문구가 유지되도록 상태별 내용을 AnimatedContent 로 전환한다.
+        // 크기를 고정하면 Surface 가 최소 크기를 물려받아 화면 전체로 늘어나므로, 내용 크기만큼만 두고 가운데 정렬한다.
         AnimatedContent(
-            targetState = socialType,
-            modifier = Modifier.fillMaxSize(),
+            targetState = shownType,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(horizontal = DesignSystemThemeImpl.designSystemLayout.mobileGutter),
             transitionSpec = {
-                fadeIn(tween(VerifyingFadeMillis)) togetherWith fadeOut(tween(VerifyingFadeMillis))
+                fadeIn(tween(LoadingFadeMillis, delayMillis = LoadingShowDelayMillis)) togetherWith
+                    fadeOut(tween(LoadingFadeMillis))
             },
-            contentAlignment = Alignment.Center,
-            label = "SocialLoginVerifyingCard",
+            label = "SocialLoginLoadingCard",
         ) { type ->
-            if (type != null) SocialLoginVerifyingCard(socialType = type)
+            if (type != null) SocialLoginLoadingCard(socialType = type)
         }
     }
 }
 
 @Composable
-private fun SocialLoginVerifyingCard(socialType: SocialLoginType) {
+private fun SocialLoginLoadingCard(socialType: SocialLoginType) {
     val colors = DesignSystemThemeImpl.designSystemColor
     val spacing = DesignSystemThemeImpl.designSystemSpacing
     val message = stringResource(
@@ -441,7 +463,8 @@ private val LoginDividerLineHeight = 1.dp
 private val LoginSocialCircleSize = 56.dp
 private val LoginEmailIconSize = 24.dp
 private val LoginEmailCircleBorderWidth = 1.dp
-private const val VerifyingFadeMillis = 200
+private const val LoadingFadeMillis = 200
+private const val LoadingShowDelayMillis = 150
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
