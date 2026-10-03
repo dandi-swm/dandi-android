@@ -33,7 +33,7 @@
 
 presentation과 data는 서로 직접 의존하지 않습니다. entity와 domain은 Android에 의존하지 않는 Kotlin/JVM 모듈입니다.
 
-## 등록 라우트 (7개)
+## 등록 라우트
 
 [AppRouteRegistry.kt](main/presentation/src/main/java/com/dandi/nyummy/main/presentation/navigation/AppRouteRegistry.kt) 기준입니다.
 
@@ -43,6 +43,7 @@ presentation과 data는 서로 직접 의존하지 않습니다. entity와 domai
 | `/login` | 로그인 수단 선택 | - |
 | `/login/email` | 이메일 로그인 | - |
 | `/signup` | 회원가입 3단계 퍼널 | - |
+| `/signup/social` | 소셜 로그인 신규 회원 프로필 입력 | - |
 | `/home` | 홈 (마이룸) | O |
 | `/meal/record` | 식사 기록 (카메라) | - |
 | `/history` | 히스토리 (월간 캘린더) | O |
@@ -65,7 +66,7 @@ presentation과 data는 서로 직접 의존하지 않습니다. entity와 domai
 
 ### 미구현
 
-- 소셜 로그인: 카카오 버튼이 테스트 계정 하드코딩(`LoginViewModel.kt`)으로 이메일 로그인을 호출합니다. 제거 예정.
+- 소셜 로그인: 카카오만 동작합니다. 네이버·구글은 `SocialLoginClient` 구현체가 없어 "준비 중" 안내만 띄웁니다.
 - 비밀번호 찾기.
 - 알려진 버그: 캘린더 `foodIconIds`가 서버 `List<Long>` ↔ 앱 문자열 키 불일치로 항상 salad 폴백. 캘린더 마커를 "기록 여부만"으로 단일화하는 결정에 따라 계약 자체가 폐기 예정입니다.
 
@@ -118,6 +119,18 @@ API_KEY=
 API_BASE_URL=
 ~~~
 
+[auth/presentation/build.gradle.kts](auth/presentation/build.gradle.kts)는 카카오 로그인 네이티브 앱 키를 BuildConfig와 매니페스트(리다이렉트 스킴 `kakao{키}://oauth`)로 주입합니다. 없으면 환경변수 `KAKAO_NATIVE_APP_KEY`를 쓰고, 둘 다 없으면 SDK 초기화를 건너뛰어 카카오 버튼은 "준비 중" 안내만 띄웁니다.
+
+~~~properties
+KAKAO_NATIVE_APP_KEY=
+~~~
+
+카카오 디벨로퍼스 콘솔에는 Android 플랫폼(패키지 `com.dandi.nyummy`)과 빌드에 쓰는 서명 키의 키 해시를 등록하고, 카카오 로그인과 OpenID Connect를 활성화해야 합니다(ID 토큰을 서버가 검증). 디버그 키 해시는 PC마다 다르므로 각자 등록합니다.
+
+~~~bash
+keytool -exportcert -alias androiddebugkey -keystore ~/.android/debug.keystore -storepass android | openssl sha1 -binary | openssl base64
+~~~
+
 API_BASE_URL에는 개발용 EC2 서버 주소를 넣습니다(현재 dev 서버는 cleartext HTTP). 저장소에는 실제 키·주소를 기록하지 않습니다. 값이 없으면 빌드 가능한 placeholder(`https://example.com/`)가 사용되므로, 네트워크 기능 검증 전에는 환경별 값을 주입해야 합니다.
 
 ## 빌드와 테스트
@@ -130,7 +143,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ./gradlew test
 ~~~
 
-단위 테스트는 auth(검증기·Repository·ApiService), history(ViewModel·캘린더 그리드·UseCase), intro(UseCase), main(라우트 매칭)에 있고, 디자인 시스템 계약 테스트(DesignSystemContractTest)는 androidTest에 있습니다.
+단위 테스트는 auth(검증기·Repository·ApiService·소셜 로그인/가입 UseCase·로그인 ViewModel), history(ViewModel·캘린더 그리드·UseCase), intro(UseCase), main(라우트 매칭)에 있고, 디자인 시스템 계약 테스트(DesignSystemContractTest)는 androidTest에 있습니다.
 
 Kotlin/Gradle 코드를 수정한 작업은 최소 :app:assembleDebug 성공 후 종료합니다. PR 전에는 다음 검증도 권장합니다.
 

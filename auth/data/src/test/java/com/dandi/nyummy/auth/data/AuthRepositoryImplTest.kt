@@ -2,6 +2,8 @@ package com.dandi.nyummy.auth.data
 
 import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import com.dandi.nyummy.auth.entity.Gender
+import com.dandi.nyummy.auth.entity.SocialCredentialVO
+import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import kotlinx.coroutines.runBlocking
@@ -11,8 +13,10 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import retrofit2.Retrofit
@@ -60,7 +64,7 @@ class AuthRepositoryImplTest {
         )
 
         repository.signUp(
-            emailVerifiedToken = "verified-token",
+            verifiedToken = "verified-token",
             password = "pw1234",
             confirmPassword = "pw1234",
             nickname = "단디",
@@ -85,7 +89,7 @@ class AuthRepositoryImplTest {
         assertThrows(HttpResponseException::class.java) {
             runBlocking {
                 repository.signUp(
-                    emailVerifiedToken = "verified-token",
+                    verifiedToken = "verified-token",
                     password = "pw1234",
                     confirmPassword = "pw1234",
                     nickname = "단디",
@@ -107,7 +111,7 @@ class AuthRepositoryImplTest {
             MockResponse().setResponseCode(200).setBody("""{"emailChallengeToken":"challenge-token"}""")
         )
         server.enqueue(
-            MockResponse().setResponseCode(200).setBody("""{"emailVerifiedToken":"verified-token"}""")
+            MockResponse().setResponseCode(200).setBody("""{"verifiedToken":"verified-token"}""")
         )
 
         val challenge = repository.requestEmailVerification(
@@ -124,6 +128,85 @@ class AuthRepositoryImplTest {
         assertNull(tokenProvider.accessToken)
         assertNull(tokenProvider.refreshToken)
     }
+
+    @Test
+    fun `소셜 로그인 기존 회원이면 발급 토큰을 저장한다`() = runBlocking {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """{"redirectUrl":"/home","accessToken":"access-123","refreshToken":"refresh-456"}"""
+            )
+        )
+
+        val result = repository.socialLogin(kakaoCredential)
+
+        assertTrue(result.isLoggedIn)
+        assertEquals("access-123", tokenProvider.accessToken)
+        assertEquals("refresh-456", tokenProvider.refreshToken)
+        val sentBody = server.takeRequest().body.readUtf8()
+        assertTrue(sentBody.contains("\"provider\":\"KAKAO\""))
+        assertTrue(sentBody.contains("\"nonce\":\"nonce-1\""))
+    }
+
+    @Test
+    fun `소셜 로그인 신규 회원이면 토큰을 저장하지 않고 검증 완료 토큰을 돌려준다`() = runBlocking {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody("""{"verifiedToken":"social-verified"}""")
+        )
+
+        val result = repository.socialLogin(kakaoCredential)
+
+        assertTrue(result.isSignUpRequired)
+        assertEquals("social-verified", result.verifiedToken)
+        assertNull(tokenProvider.accessToken)
+        assertNull(tokenProvider.refreshToken)
+    }
+
+    @Test
+    fun `소셜 로그인 토큰 검증 실패면 예외를 던지고 토큰을 저장하지 않는다`() {
+        server.enqueue(
+            MockResponse().setResponseCode(401).setBody(
+                """{"code":"api.auth.invalidSocialToken","message":"유효하지 않은 소셜 로그인 토큰입니다."}"""
+            )
+        )
+
+        val error = assertThrows(HttpResponseException::class.java) {
+            runBlocking { repository.socialLogin(kakaoCredential) }
+        }
+
+        assertEquals(401, error.rawCode)
+        assertNull(tokenProvider.accessToken)
+    }
+
+    @Test
+    fun `소셜 회원가입은 비밀번호 없이 요청하고 발급 토큰을 저장한다`() = runBlocking {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """{"accessToken":"access-123","refreshToken":"refresh-456"}"""
+            )
+        )
+
+        repository.signUp(
+            verifiedToken = "social-verified",
+            password = null,
+            confirmPassword = null,
+            nickname = "단디",
+            gender = Gender.FEMALE,
+            birth = "2000-01-15",
+            height = 160,
+            weight = 50,
+        )
+
+        val sentBody = server.takeRequest().body.readUtf8()
+        assertFalse(sentBody.contains("password"))
+        assertTrue(sentBody.contains("\"verifiedToken\":\"social-verified\""))
+        assertEquals("access-123", tokenProvider.accessToken)
+    }
+
+    private val kakaoCredential = SocialCredentialVO(
+        type = SocialLoginType.KAKAO,
+        token = "id-token",
+        nonce = "nonce-1",
+    )
 
     private class FakeTokenProvider : TokenProvider {
         override var accessToken: String? = null

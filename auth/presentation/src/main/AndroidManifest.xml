@@ -1,4 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <application>
+        <!--
+          카카오계정(웹) 로그인 후 브라우저가 kakao{네이티브 앱 키}://oauth 로 돌아오는 리다이렉트를 받는다.
+          SDK 가 액티비티만 선언하므로 스킴 intent-filter 는 앱이 직접 등록해야 한다.
+          키는 build.gradle.kts 의 manifestPlaceholders 로 local.properties 에서 주입된다.
+        -->
+        <activity
+            android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="kakao${KAKAO_NATIVE_APP_KEY}" />
+                <data android:host="oauth" />
+            </intent-filter>
+        </activity>
+    </application>
+
 </manifest>
