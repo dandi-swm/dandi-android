@@ -28,6 +28,7 @@ class LoginViewModel @Inject constructor(
             is LoginIntent.SocialLoginLaunched -> onSocialLoginLaunched(intent.socialType)
             is LoginIntent.SocialLoginResultReceived ->
                 onSocialLoginResult(intent.socialType, intent.result)
+            LoginIntent.SocialLoginBackPressed -> abandonSocialLogin()
             LoginIntent.ClickEmailLogin -> emailLogin()
             LoginIntent.ClickTestLogin -> testLogin()
         }
@@ -98,6 +99,16 @@ class LoginViewModel @Inject constructor(
                 dispatch(LoginReducerEvent.LoginFinished)
             }
         }
+    }
+
+    /**
+     * 카카오 쪽 응답을 기다리는 중이면 기다림을 그만두고 다시 누를 수 있게 한다(늦게 온 결과는 무시된다).
+     * 서버 검증이 시작된 뒤에는 로그인 상태가 곧 바뀌므로 막는다.
+     */
+    private fun abandonSocialLogin() {
+        if (currentState.verifyingSocialLogin != null) return
+        if (currentState.socialLoginInProgress == null) return
+        dispatch(LoginReducerEvent.LoginFinished)
     }
 
     /**
