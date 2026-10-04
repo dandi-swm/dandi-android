@@ -1,5 +1,6 @@
 package com.dandi.nyummy.auth.domain
 
+import com.dandi.nyummy.auth.entity.AuthTokenVO
 import com.dandi.nyummy.auth.entity.EmailChallengeVO
 import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import com.dandi.nyummy.auth.entity.EmailVerifiedVO
@@ -15,8 +16,8 @@ interface AuthRepository {
      */
     suspend fun socialLogin(credential: SocialCredentialVO): SocialLoginVO
 
-    /** 이메일 로그인  */
-    suspend fun login(email: String, password: String)
+    /** 이메일 로그인. 발급 토큰을 저장하고, 이동 대상([AuthTokenVO.redirectUrl])을 담은 토큰을 돌려준다. */
+    suspend fun login(email: String, password: String): AuthTokenVO
 
     /**
      * 회원가입. 성공 시 발급 토큰을 저장한다.

@@ -1,5 +1,6 @@
 package com.dandi.nyummy.auth.domain
 
+import com.dandi.nyummy.auth.entity.AuthTokenVO
 import com.dandi.nyummy.auth.entity.EmailChallengeVO
 import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import com.dandi.nyummy.auth.entity.EmailVerifiedVO
@@ -35,6 +36,8 @@ internal fun httpException(code: Int, errorCode: String? = null): HttpResponseEx
     )
 
 internal class FakeAuthRepository(
+    var loginResult: AuthTokenVO = AuthTokenVO.empty,
+    var loginError: Exception? = null,
     var socialLoginResult: SocialLoginVO = SocialLoginVO.empty,
     var socialLoginError: Exception? = null,
     var signUpError: Exception? = null,
@@ -56,7 +59,10 @@ internal class FakeAuthRepository(
         return socialLoginResult
     }
 
-    override suspend fun login(email: String, password: String) = Unit
+    override suspend fun login(email: String, password: String): AuthTokenVO {
+        loginError?.let { throw it }
+        return loginResult
+    }
 
     override suspend fun signUp(
         verifiedToken: String,

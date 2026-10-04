@@ -31,11 +31,10 @@ class AuthRepositoryImpl(
             // 신규 회원은 토큰 없이 verifiedToken 만 오므로 저장되지 않는다(saveToken 이 빈 토큰을 건너뜀).
             .also { saveToken(it.token) }
 
-    override suspend fun login(email: String, password: String) {
+    override suspend fun login(email: String, password: String): AuthTokenVO =
         dataSource.login(LoginRequestDTO(email = email, password = password))
             .toVO()
             .also { saveToken(it) }
-    }
 
     override suspend fun signUp(
         verifiedToken: String,

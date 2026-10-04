@@ -6,6 +6,7 @@ import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.auth.entity.SocialLoginVO
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -44,6 +45,17 @@ class SocialLoginUseCaseTest {
         assertTrue(navigationHelper.pages.isEmpty())
         assertNull(session.pendingToken)
         assertTrue(messageHelper.dialogs.isEmpty())
+    }
+
+    @Test
+    fun `기존 회원이라도 redirectUrl 이 온보딩이면 온보딩을 루트로 이동한다`() = runBlocking {
+        repository.socialLoginResult = SocialLoginVO(
+            token = AuthTokenVO("access", "refresh", redirectUrl = "/onboarding"),
+        )
+
+        useCase.login(credential)
+
+        assertEquals(listOf<Any>(OnboardingPage), navigationHelper.rootPages)
     }
 
     @Test

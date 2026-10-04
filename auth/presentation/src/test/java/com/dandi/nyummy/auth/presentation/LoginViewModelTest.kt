@@ -5,6 +5,7 @@ import com.dandi.nyummy.auth.domain.LoginUseCase
 import com.dandi.nyummy.auth.domain.SocialLoginUseCase
 import com.dandi.nyummy.auth.domain.SocialSignUpPage
 import com.dandi.nyummy.auth.domain.SocialSignUpSession
+import com.dandi.nyummy.auth.entity.AuthTokenVO
 import com.dandi.nyummy.auth.entity.EmailChallengeVO
 import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import com.dandi.nyummy.auth.entity.EmailVerifiedVO
@@ -283,7 +284,7 @@ class LoginViewModelTest {
             return socialLoginResult
         }
 
-        override suspend fun login(email: String, password: String) = Unit
+        override suspend fun login(email: String, password: String) = AuthTokenVO.empty
         override suspend fun signUp(
             verifiedToken: String,
             password: String?,

@@ -7,7 +7,6 @@ import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
-import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
 
@@ -21,13 +20,13 @@ class LoginUseCase @Inject constructor(
 
 
     /**
-     * 이메일 로그인. 성공 시 홈으로 이동한다.
+     * 이메일 로그인. 성공 시 응답의 redirectUrl 이 가리키는 화면(온보딩 미완료면 온보딩, 그 외 홈)으로 이동한다.
      *
      * 발급 토큰 저장은 data 레이어에서 담당한다.
      */
     suspend fun login(email: String, password: String): Result<Unit> = try {
-        repository.login(email = email, password = password)
-        navigationHelper.navigateToAsRoot(HomePage)
+        val token = repository.login(email = email, password = password)
+        navigationHelper.navigateToAsRoot(PostLoginDestination.from(token.redirectUrl))
         Result.success(Unit)
     } catch (e: HttpResponseException) {
         handleLoginError(e)

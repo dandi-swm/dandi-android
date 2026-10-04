@@ -1,7 +1,7 @@
 package com.dandi.nyummy.auth.domain
 
 import com.dandi.nyummy.auth.entity.Gender
-import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -26,7 +26,7 @@ class SignUpUseCaseSocialTest {
     )
 
     @Test
-    fun `소셜 가입은 세션 토큰으로 비밀번호 없이 요청하고 성공 시 세션을 비우고 홈으로 간다`() = runBlocking {
+    fun `소셜 가입은 세션 토큰으로 비밀번호 없이 요청하고 성공 시 세션을 비우고 온보딩으로 간다`() = runBlocking {
         session.start("social-verified")
 
         val result = signUpWithSocial()
@@ -38,7 +38,7 @@ class SignUpUseCaseSocialTest {
         assertNull(call.confirmPassword)
         assertEquals("단디", call.nickname)
         assertNull(session.pendingToken)
-        assertEquals(listOf<Any>(HomePage), navigationHelper.rootPages)
+        assertEquals(listOf<Any>(OnboardingPage), navigationHelper.rootPages)
     }
 
     @Test
