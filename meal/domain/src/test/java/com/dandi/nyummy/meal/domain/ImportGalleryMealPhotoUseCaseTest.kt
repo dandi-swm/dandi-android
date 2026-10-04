@@ -52,7 +52,7 @@ class ImportGalleryMealPhotoUseCaseTest {
         assertTrue(repository.importedUris.isEmpty())
         val snackBar = messageHelper.snackBars.single()
         assertEquals(IconType.ERROR, snackBar.iconType)
-        assertEquals("오늘 찍은 사진만 업로드 가능해요", snackBar.messageText)
+        assertEquals(StringResource.MEAL_GALLERY_NOT_TAKEN_TODAY.name, snackBar.messageText)
     }
 
     @Test
@@ -63,7 +63,10 @@ class ImportGalleryMealPhotoUseCaseTest {
 
         assertTrue(result.isFailure)
         assertTrue(repository.importedUris.isEmpty())
-        assertEquals("오늘 찍은 사진만 업로드 가능해요", messageHelper.snackBars.single().messageText)
+        assertEquals(
+            StringResource.MEAL_GALLERY_NOT_TAKEN_TODAY.name,
+            messageHelper.snackBars.single().messageText,
+        )
     }
 
     @Test
@@ -75,22 +78,41 @@ class ImportGalleryMealPhotoUseCaseTest {
         assertTrue(result.isFailure)
         assertTrue(repository.importedUris.isEmpty())
         assertEquals(
-            "촬영 날짜를 확인할 수 없어요. 오늘 찍은 사진만 업로드 가능해요",
+            StringResource.MEAL_GALLERY_UNKNOWN_TAKEN_DATE.name,
             messageHelper.snackBars.single().messageText,
         )
     }
 
     @Test
-    fun `사진을 가져오다 실패하면 저장소가 알려 준 안내를 그대로 띄운다`() = runBlocking {
+    fun `사진을 불러오지 못하면 다시 선택 안내를 띄운다`() = runBlocking {
         val repository = FakeMealRecordRepository(
             takenAt = KstDateTime(2026, 9, 30, 12, 0, 0),
-            importFailure = MealPhotoInvalidException("사진을 불러오지 못했어요. 다시 선택해주세요"),
+            importFailure = MealGalleryPhotoLoadException(),
         )
 
         val result = useCase(repository)(PHOTO_URI, nowMillis)
 
         assertTrue(result.isFailure)
-        assertEquals("사진을 불러오지 못했어요. 다시 선택해주세요", messageHelper.snackBars.single().messageText)
+        assertEquals(
+            StringResource.MEAL_GALLERY_LOAD_FAILED.name,
+            messageHelper.snackBars.single().messageText,
+        )
+    }
+
+    @Test
+    fun `예상치 못한 오류로 실패하면 다시 시도 안내를 띄운다`() = runBlocking {
+        val repository = FakeMealRecordRepository(
+            takenAt = KstDateTime(2026, 9, 30, 12, 0, 0),
+            importFailure = IllegalArgumentException(),
+        )
+
+        val result = useCase(repository)(PHOTO_URI, nowMillis)
+
+        assertTrue(result.isFailure)
+        assertEquals(
+            StringResource.MEAL_GALLERY_IMPORT_FAILED.name,
+            messageHelper.snackBars.single().messageText,
+        )
     }
 
     private fun useCase(repository: MealRecordRepository) = ImportGalleryMealPhotoUseCase(
@@ -103,7 +125,7 @@ class ImportGalleryMealPhotoUseCaseTest {
 
     private class FakeMealRecordRepository(
         private val takenAt: KstDateTime?,
-        private val importFailure: MealPhotoInvalidException? = null,
+        private val importFailure: Exception? = null,
     ) : MealRecordRepository {
         val importedUris = mutableListOf<String>()
 
@@ -132,7 +154,7 @@ class ImportGalleryMealPhotoUseCaseTest {
     }
 
     private class FakeResourceHelper : ResourceHelper {
-        override fun getString(resource: StringResource): String = ""
+        override fun getString(resource: StringResource): String = resource.name
     }
 
     private class RecordingMessageHelper : MessageHelper {

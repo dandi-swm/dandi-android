@@ -4,6 +4,7 @@ import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.time.KstTime
 import com.dandi.nyummy.tti.TTIHelper
@@ -29,24 +30,27 @@ class ImportGalleryMealPhotoUseCase @Inject constructor(
         nowMillis: Long = System.currentTimeMillis(),
     ): Result<String> = try {
         val takenAt = repository.readGalleryPhotoTakenAt(photoUri)
-            ?: throw MealPhotoInvalidException(UNKNOWN_TAKEN_DATE_MESSAGE)
-        if (takenAt.isoDate != KstTime.now(nowMillis).isoDate) {
-            throw MealPhotoInvalidException(NOT_TAKEN_TODAY_MESSAGE)
+        when {
+            takenAt == null -> reject(StringResource.MEAL_GALLERY_UNKNOWN_TAKEN_DATE)
+            takenAt.isoDate != KstTime.now(nowMillis).isoDate ->
+                reject(StringResource.MEAL_GALLERY_NOT_TAKEN_TODAY)
+            else -> Result.success(repository.importGalleryPhoto(photoUri))
         }
-        Result.success(repository.importGalleryPhoto(photoUri))
-    } catch (e: MealPhotoInvalidException) {
-        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = e.message)
-        Result.failure(e)
+    } catch (e: MealGalleryPhotoLoadException) {
+        reject(StringResource.MEAL_GALLERY_LOAD_FAILED, e)
     } catch (e: java.util.concurrent.CancellationException) {
         throw e
     } catch (e: Exception) {
-        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = IMPORT_ERROR_MESSAGE)
-        Result.failure(e)
+        reject(StringResource.MEAL_GALLERY_IMPORT_FAILED, e)
     }
 
-    private companion object {
-        const val NOT_TAKEN_TODAY_MESSAGE = "오늘 찍은 사진만 업로드 가능해요"
-        const val UNKNOWN_TAKEN_DATE_MESSAGE = "촬영 날짜를 확인할 수 없어요. 오늘 찍은 사진만 업로드 가능해요"
-        const val IMPORT_ERROR_MESSAGE = "사진을 불러오지 못했어요. 다시 시도해주세요"
+    /** 현재 로케일의 안내 문구를 스낵바로 띄우고 실패로 돌려준다. */
+    private fun reject(resource: StringResource, cause: Exception? = null): Result<String> {
+        val message = resourceHelper.getString(resource)
+        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = message)
+        return Result.failure(cause ?: MealPhotoInvalidException(message))
     }
 }
+
+/** 갤러리에서 고른 사진을 열거나 앱 캐시로 복사·변환하지 못함. 안내 문구는 UseCase 가 정한다. */
+class MealGalleryPhotoLoadException(cause: Throwable? = null) : IllegalStateException(cause)

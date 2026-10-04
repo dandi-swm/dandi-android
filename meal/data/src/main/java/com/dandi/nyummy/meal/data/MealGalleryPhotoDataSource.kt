@@ -6,7 +6,7 @@ import androidx.exifinterface.media.ExifInterface
 import com.dandi.nyummy.common.entity.time.KstDateTime
 import com.dandi.nyummy.meal.data.util.ensureJpegMealPhotoFile
 import com.dandi.nyummy.meal.data.util.takenAtKstOrNull
-import com.dandi.nyummy.meal.domain.MealPhotoInvalidException
+import com.dandi.nyummy.meal.domain.MealGalleryPhotoLoadException
 import java.io.File
 import java.io.InputStream
 
@@ -37,16 +37,11 @@ class MealGalleryPhotoDataSource(
             file.absolutePath
         }.getOrElse { cause ->
             file.delete()
-            throw cause as? MealPhotoInvalidException
-                ?: MealPhotoInvalidException(PHOTO_LOAD_FAILED_MESSAGE)
+            throw cause as? MealGalleryPhotoLoadException ?: MealGalleryPhotoLoadException(cause)
         }
     }
 
     private fun openPhoto(photoUri: String): InputStream =
         runCatching { context.contentResolver.openInputStream(Uri.parse(photoUri)) }.getOrNull()
-            ?: throw MealPhotoInvalidException(PHOTO_LOAD_FAILED_MESSAGE)
-
-    private companion object {
-        const val PHOTO_LOAD_FAILED_MESSAGE = "사진을 불러오지 못했어요. 다시 선택해주세요"
-    }
+            ?: throw MealGalleryPhotoLoadException()
 }
