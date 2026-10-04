@@ -1,5 +1,13 @@
 package com.dandi.nyummy.auth.presentation
 
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,8 +26,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,9 +47,17 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.currentStateAsState
 import com.dandi.nyummy.auth.entity.SocialLoginType
+import com.dandi.nyummy.auth.presentation.social.SocialLoginResult
+import com.dandi.nyummy.auth.presentation.social.launchSocialLogin
 import com.dandi.nyummy.common.presentation.component.DandiText
+import com.dandi.nyummy.common.presentation.component.NyummyLoading
+import com.dandi.nyummy.common.presentation.component.NyummyLoadingSize
+import com.dandi.nyummy.common.presentation.component.NyummyModalScrim
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
@@ -46,8 +65,8 @@ import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 /**
  * 로그인 랜딩 화면
  *
- * 소셜 로그인(카카오·네이버·구글)은 MVP 에서 UI 만 제공하며 동작하지 않는다.
- * 이메일 원형 버튼만 이메일 로그인 화면으로 이동한다.
+ * 카카오 로그인은 SDK 로그인(카카오톡/카카오계정) 후 서버 검증까지 동작한다. 네이버·구글은 아직
+ * 연동되지 않아 "준비 중" 안내만 띄운다. 이메일 원형 버튼은 이메일 로그인 화면으로 이동한다.
  * debug 빌드에서 local.properties 에 테스트 계정을 넣으면 하단에 테스트 계정 로그인 버튼이 추가된다.
  */
 @Composable
@@ -55,6 +74,23 @@ fun LoginPage(
     viewModel: LoginViewModel = hiltViewModel<LoginViewModel>(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // 소셜 SDK 는 Activity 가 필요해 화면이 실행한다. 실행을 먼저 알려 요청 상태를 비워 두므로
+    // 로그인 창이 떠 있는 동안 화면이 재생성돼도 다시 실행되지 않는다.
+    val activity = LocalActivity.current
+    val onIntent = viewModel::onIntent
+    LaunchedEffect(uiState.socialLoginToLaunch) {
+        val attempt = uiState.socialLoginToLaunch ?: return@LaunchedEffect
+        onIntent(LoginIntent.SocialLoginLaunched(attempt))
+        val onResult: (SocialLoginResult) -> Unit = { result ->
+            onIntent(LoginIntent.SocialLoginResultReceived(attempt, result))
+        }
+        if (activity == null) {
+            onResult(SocialLoginResult.Failed)
+        } else {
+            launchSocialLogin(attempt.socialType, activity, onResult)
+        }
+    }
 
     LoginPageContent(
         uiState = uiState,
@@ -136,8 +172,104 @@ private fun LoginPageContent(
                 Spacer(modifier = Modifier.height(spacing.space16))
             }
         }
+        SocialLoginLoadingOverlay(
+            socialType = uiState.socialLoginInProgress,
+            isVerifying = uiState.verifyingSocialLogin != null,
+            onBackPressed = { onIntent(LoginIntent.SocialLoginBackPressed) },
+        )
     }
 }
+
+/**
+ * 소셜 로그인 창에서 돌아온 뒤 홈·가입 화면으로 넘어갈 때까지 덮는 로딩.
+ *
+ * 창이 닫힌 뒤에도 카카오 토큰 발급(약 1초)과 서버 검증이 이어지는데, 그동안 로그인 화면만 보이다가
+ * 갑자기 홈으로 넘어가면 무슨 일이 일어났는지 알기 어렵다. 그 구간을 로딩으로 덮고 다른 입력을 막는다.
+ *
+ * 카카오 창이 떠 있는 동안에는 이 화면이 가려져 있으므로, 화면이 다시 보인 뒤에만 띄운다. 그리고
+ * [LoadingShowDelayMillis] 만큼 기다렸다 나타나게 해, 창을 닫아 취소한 경우 로딩이 번쩍이지 않게 한다.
+ * 결과 대기 중 뒤로가기는 기다림을 그만두고, 서버 검증 중에는 막힌다(ViewModel 이 판단).
+ */
+@Composable
+private fun SocialLoginLoadingOverlay(
+    socialType: SocialLoginType?,
+    isVerifying: Boolean,
+    onBackPressed: () -> Unit,
+) {
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    val isScreenResumed = lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
+    val shownType = socialType?.takeIf { isScreenResumed || isVerifying }
+
+    BackHandler(enabled = socialType != null, onBack = onBackPressed)
+    Box(modifier = Modifier.fillMaxSize()) {
+        AnimatedVisibility(
+            visible = shownType != null,
+            enter = fadeIn(tween(LoadingFadeMillis, delayMillis = LoadingShowDelayMillis)),
+            exit = fadeOut(tween(LoadingFadeMillis)),
+            label = "SocialLoginLoadingScrim",
+        ) {
+            NyummyModalScrim()
+        }
+        // 사라지는 동안에도 직전 제공자 문구가 유지되도록 상태별 내용을 AnimatedContent 로 전환한다.
+        // 크기를 고정하면 Surface 가 최소 크기를 물려받아 화면 전체로 늘어나므로, 내용 크기만큼만 두고 가운데 정렬한다.
+        AnimatedContent(
+            targetState = shownType,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(horizontal = DesignSystemThemeImpl.designSystemLayout.mobileGutter),
+            transitionSpec = {
+                fadeIn(tween(LoadingFadeMillis, delayMillis = LoadingShowDelayMillis)) togetherWith
+                    fadeOut(tween(LoadingFadeMillis))
+            },
+            label = "SocialLoginLoadingCard",
+        ) { type ->
+            if (type != null) SocialLoginLoadingCard(socialType = type)
+        }
+    }
+}
+
+@Composable
+private fun SocialLoginLoadingCard(socialType: SocialLoginType) {
+    val colors = DesignSystemThemeImpl.designSystemColor
+    val spacing = DesignSystemThemeImpl.designSystemSpacing
+    val message = stringResource(
+        R.string.auth_login_social_verifying,
+        stringResource(socialType.providerNameRes),
+    )
+    Surface(
+        shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius24),
+        color = colors.bgDefaultLevel1,
+        contentColor = colors.contentDefaultLevel0,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = spacing.space32, vertical = spacing.space24),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            NyummyLoading(size = NyummyLoadingSize.Large, contentDescription = message)
+            Spacer(modifier = Modifier.height(spacing.space16))
+            DandiText(
+                text = message,
+                color = colors.contentDefaultLevel0,
+                textAlign = TextAlign.Center,
+                style = DesignSystemThemeImpl.typeScale.textStrongL,
+            )
+            Spacer(modifier = Modifier.height(spacing.space4))
+            DandiText(
+                text = stringResource(R.string.auth_login_social_verifying_hint),
+                color = colors.contentDefaultLevel1,
+                textAlign = TextAlign.Center,
+                style = DesignSystemThemeImpl.typeScale.textRegularM,
+            )
+        }
+    }
+}
+
+private val SocialLoginType.providerNameRes: Int
+    get() = when (this) {
+        SocialLoginType.KAKAO -> R.string.auth_social_provider_kakao
+        SocialLoginType.GOOGLE -> R.string.auth_social_provider_google
+        SocialLoginType.NAVER -> R.string.auth_social_provider_naver
+    }
 
 /** 새싹이 돋은 `냐미` 로고 이미지. */
 @Composable
@@ -331,6 +463,8 @@ private val LoginDividerLineHeight = 1.dp
 private val LoginSocialCircleSize = 56.dp
 private val LoginEmailIconSize = 24.dp
 private val LoginEmailCircleBorderWidth = 1.dp
+private const val LoadingFadeMillis = 200
+private const val LoadingShowDelayMillis = 150
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
@@ -338,6 +472,20 @@ private fun LoginPagePreview() {
     DesignSystemTheme {
         LoginPageContent(
             uiState = LoginUIState.empty,
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun LoginPageSocialVerifyingPreview() {
+    DesignSystemTheme {
+        LoginPageContent(
+            uiState = LoginUIState(
+                isLoading = true,
+                verifyingSocialLogin = SocialLoginAttempt(id = 1, socialType = SocialLoginType.KAKAO),
+            ),
             onIntent = {},
         )
     }

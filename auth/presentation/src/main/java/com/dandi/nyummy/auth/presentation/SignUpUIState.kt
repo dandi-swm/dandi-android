@@ -6,10 +6,15 @@ import com.dandi.nyummy.common.presentation.mvi.UiState
 
 /**
  * 회원가입 퍼널 단계. 한 라우트(`/signup`) 안에서 순차 진행된다.
+ * 소셜 가입(`/signup/social`)은 이메일·비밀번호가 필요 없어 [PROFILE] 단계만 쓴다.
  */
 enum class SignUpStep { ACCOUNT, CODE, PROFILE }
 
+/**
+ * @property isSocialSignUp 소셜 로그인 신규 회원의 가입인지. 프로필 단계만 진행하고 단계 뒤로가기가 없다.
+ */
 data class SignUpUIState(
+    val isSocialSignUp: Boolean = false,
     val step: SignUpStep = SignUpStep.ACCOUNT,
     val email: String = "",
     val password: String = "",
@@ -41,6 +46,11 @@ data class SignUpUIState(
 
     companion object {
         val empty = SignUpUIState()
+
+        /** 진입 경로에 맞는 첫 상태. 소셜 가입은 첫 프레임부터 프로필 단계로 그린다. */
+        fun initial(isSocialSignUp: Boolean): SignUpUIState =
+            if (isSocialSignUp) SignUpUIState(isSocialSignUp = true, step = SignUpStep.PROFILE) else empty
+
         const val CODE_LENGTH = 6
         const val DEFAULT_BIRTH_YEAR = 2000
         const val DEFAULT_BIRTH_MONTH = 3

@@ -3,6 +3,7 @@ package com.dandi.nyummy.main.presentation.navigation
 import com.dandi.nyummy.auth.domain.EmailLoginPage
 import com.dandi.nyummy.auth.domain.LoginPage
 import com.dandi.nyummy.auth.domain.SignUpPage
+import com.dandi.nyummy.auth.domain.SocialSignUpPage
 import com.dandi.nyummy.auth.presentation.EmailLoginPage
 import com.dandi.nyummy.auth.presentation.LoginPage
 import com.dandi.nyummy.auth.presentation.SignUpPage
@@ -57,6 +58,19 @@ val appRoutes: List<AppRoute> = listOf(
             )
         },
         render = { SignUpPage() },
+    ),
+    AppRoute(
+        // 소셜 로그인 신규 회원의 프로필 입력. 가입 토큰은 메모리 세션으로만 전달되므로
+        // 외부 링크로 직접 열면 안내 후 로그인 화면으로 돌아간다.
+        path = SocialSignUpPage.PATH,
+        isBottomTab = false,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(LoginPage.PATH),
+                GenericNavKey(SocialSignUpPage.PATH, args),
+            )
+        },
+        render = { SignUpPage(isSocialSignUp = true) },
     ),
     AppRoute(
         path = HomePage.PATH,

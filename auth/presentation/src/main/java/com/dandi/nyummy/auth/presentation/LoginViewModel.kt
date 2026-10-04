@@ -3,7 +3,9 @@ package com.dandi.nyummy.auth.presentation
 import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.auth.domain.EmailLoginPage
 import com.dandi.nyummy.auth.domain.LoginUseCase
+import com.dandi.nyummy.auth.domain.SocialLoginUseCase
 import com.dandi.nyummy.auth.entity.SocialLoginType
+import com.dandi.nyummy.auth.presentation.social.SocialLoginResult
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,7 +15,8 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     val navigationHelper: NavigationHelper,
-    val loginUseCase: LoginUseCase
+    val loginUseCase: LoginUseCase,
+    private val socialLoginUseCase: SocialLoginUseCase,
 ) :
     MviViewModel<LoginIntent, LoginUIState, LoginReducerEvent>(
         LoginUIState(isTestLoginAvailable = isTestLoginAvailable)
@@ -21,7 +24,11 @@ class LoginViewModel @Inject constructor(
     override fun onIntent(intent: LoginIntent) {
 
         when (intent) {
-            is LoginIntent.ClickSocialLogin -> socialLogin(intent.socialType)
+            is LoginIntent.ClickSocialLogin -> requestSocialLogin(intent.socialType)
+            is LoginIntent.SocialLoginLaunched -> onSocialLoginLaunched(intent.attempt)
+            is LoginIntent.SocialLoginResultReceived ->
+                onSocialLoginResult(intent.attempt, intent.result)
+            LoginIntent.SocialLoginBackPressed -> abandonSocialLogin()
             LoginIntent.ClickEmailLogin -> emailLogin()
             LoginIntent.ClickTestLogin -> testLogin()
         }
@@ -32,8 +39,24 @@ class LoginViewModel @Inject constructor(
         event: LoginReducerEvent
     ): LoginUIState {
         return when (event) {
-            is LoginReducerEvent.SocialLoginStarted -> state.copy(isLoading = true)
-            is LoginReducerEvent.LoginFinished -> state.copy(isLoading = false)
+            is LoginReducerEvent.SocialLoginStarted -> {
+                val attemptId = state.lastSocialLoginAttemptId + 1
+                state.copy(
+                    isLoading = true,
+                    socialLoginToLaunch = SocialLoginAttempt(attemptId, event.socialType),
+                    lastSocialLoginAttemptId = attemptId,
+                )
+            }
+            is LoginReducerEvent.SocialLoginLaunched ->
+                state.copy(socialLoginToLaunch = null, awaitingSocialLogin = event.attempt)
+            is LoginReducerEvent.SocialLoginVerifying ->
+                state.copy(awaitingSocialLogin = null, verifyingSocialLogin = event.attempt)
+            is LoginReducerEvent.LoginFinished -> state.copy(
+                isLoading = false,
+                socialLoginToLaunch = null,
+                awaitingSocialLogin = null,
+                verifyingSocialLogin = null,
+            )
             is LoginReducerEvent.EmailLoginClicked -> state.copy(isLoading = false)
             is LoginReducerEvent.TestLoginClicked -> state.copy(isLoading = true)
         }
@@ -43,9 +66,55 @@ class LoginViewModel @Inject constructor(
         dispatch(LoginReducerEvent.EmailLoginClicked)
         navigationHelper.navigateTo(EmailLoginPage)
     }
-    private fun socialLogin(socialType: SocialLoginType) {
+
+    /** 화면에 SDK 실행을 요청한다. 다른 로그인이 진행 중이면(연타 포함) 무시한다. */
+    private fun requestSocialLogin(socialType: SocialLoginType) {
+        if (currentState.isLoading) return
         dispatch(LoginReducerEvent.SocialLoginStarted(socialType))
-        // TODO: 소셜 로그인 UseCase 호출 후 성공 시 홈 이동, 실패 다이얼로그 모두 UseCase 가 처리한다.
+    }
+
+    private fun onSocialLoginLaunched(attempt: SocialLoginAttempt) {
+        if (currentState.socialLoginToLaunch != attempt) return
+        dispatch(LoginReducerEvent.SocialLoginLaunched(attempt))
+    }
+
+    /**
+     * SDK 결과를 처리한다. 기다리던 시도(제공자·시도 ID 모두 일치)의 결과만 받는다.
+     * 자격 증명을 얻으면 서버 검증으로 넘기고, 성공 시 이동·실패 안내는 UseCase 가 처리한다.
+     */
+    private fun onSocialLoginResult(attempt: SocialLoginAttempt, result: SocialLoginResult) {
+        if (currentState.awaitingSocialLogin != attempt) return
+        val socialType = attempt.socialType
+        when (result) {
+            is SocialLoginResult.Success -> {
+                dispatch(LoginReducerEvent.SocialLoginVerifying(attempt))
+                viewModelScope.launch {
+                    socialLoginUseCase.login(result.credential)
+                    dispatch(LoginReducerEvent.LoginFinished)
+                }
+            }
+
+            SocialLoginResult.Cancelled -> dispatch(LoginReducerEvent.LoginFinished)
+
+            SocialLoginResult.Failed -> {
+                socialLoginUseCase.onProviderFailed(socialType)
+                dispatch(LoginReducerEvent.LoginFinished)
+            }
+
+            SocialLoginResult.Unavailable -> {
+                socialLoginUseCase.onProviderUnavailable(socialType)
+                dispatch(LoginReducerEvent.LoginFinished)
+            }
+        }
+    }
+
+    /**
+     * 카카오 쪽 응답을 기다리는 중이면 기다림을 그만두고 다시 누를 수 있게 한다(늦게 온 결과는 무시된다).
+     * 서버 검증이 시작된 뒤에는 로그인 상태가 곧 바뀌므로 막는다.
+     */
+    private fun abandonSocialLogin() {
+        if (currentState.verifyingSocialLogin != null) return
+        if (currentState.socialLoginInProgress == null) return
         dispatch(LoginReducerEvent.LoginFinished)
     }
 
