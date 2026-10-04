@@ -68,14 +68,14 @@ class LoginViewModelTest {
         val viewModel = createViewModel()
 
         viewModel.onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO))
-        viewModel.onIntent(LoginIntent.SocialLoginLaunched(SocialLoginType.KAKAO))
+        viewModel.launchRequested()
         viewModel.onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO))
 
         val state = viewModel.uiState.value
         assertTrue(state.isLoading)
         // 재탭이 실행 요청을 다시 만들지 않아야 SDK 가 두 번 뜨지 않는다.
         assertNull(state.socialLoginToLaunch)
-        assertEquals(SocialLoginType.KAKAO, state.awaitingSocialLogin)
+        assertEquals(SocialLoginType.KAKAO, state.awaitingSocialLogin?.socialType)
     }
 
     @Test
@@ -83,19 +83,19 @@ class LoginViewModelTest {
         val viewModel = createViewModel()
 
         viewModel.onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO))
-        assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.socialLoginToLaunch)
+        assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.socialLoginToLaunch?.socialType)
 
-        viewModel.onIntent(LoginIntent.SocialLoginLaunched(SocialLoginType.KAKAO))
+        viewModel.launchRequested()
 
         assertNull(viewModel.uiState.value.socialLoginToLaunch)
-        assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.awaitingSocialLogin)
+        assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.awaitingSocialLogin?.socialType)
     }
 
     @Test
     fun `취소 결과면 서버 검증 없이 조용히 로딩이 풀린다`() {
         val viewModel = launchedKakao()
 
-        viewModel.onIntent(LoginIntent.SocialLoginResultReceived(SocialLoginType.KAKAO, SocialLoginResult.Cancelled))
+        viewModel.onIntent(LoginIntent.SocialLoginResultReceived(viewModel.awaiting(), SocialLoginResult.Cancelled))
 
         assertIdle(viewModel)
         assertTrue(repository.socialLoginCalls.isEmpty())
@@ -108,11 +108,11 @@ class LoginViewModelTest {
         val viewModel = launchedKakao()
 
         viewModel.onIntent(
-            LoginIntent.SocialLoginResultReceived(SocialLoginType.KAKAO, SocialLoginResult.Success(credential)),
+            LoginIntent.SocialLoginResultReceived(viewModel.awaiting(), SocialLoginResult.Success(credential)),
         )
         // 로그인 창이 닫힌 뒤 서버 응답 전까지 검증 중 로딩이 보여야 한다.
         assertTrue(viewModel.uiState.value.isLoading)
-        assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.verifyingSocialLogin)
+        assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.verifyingSocialLogin?.socialType)
         advanceUntilIdle()
 
         assertEquals(listOf(credential), repository.socialLoginCalls)
@@ -127,11 +127,11 @@ class LoginViewModelTest {
 
         viewModel.onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO))
         assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.socialLoginInProgress)
-        viewModel.onIntent(LoginIntent.SocialLoginLaunched(SocialLoginType.KAKAO))
+        viewModel.launchRequested()
         // 로그인 창에서 돌아와 카카오 토큰을 받는 동안에도 로딩이 보여야 한다.
         assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.socialLoginInProgress)
         viewModel.onIntent(
-            LoginIntent.SocialLoginResultReceived(SocialLoginType.KAKAO, SocialLoginResult.Success(credential)),
+            LoginIntent.SocialLoginResultReceived(viewModel.awaiting(), SocialLoginResult.Success(credential)),
         )
         assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.socialLoginInProgress)
         advanceUntilIdle()
@@ -142,12 +142,13 @@ class LoginViewModelTest {
     @Test
     fun `카카오 응답을 기다리는 중 뒤로가기면 기다림을 그만두고 늦게 온 결과는 무시한다`() = runTest(testDispatcher) {
         val viewModel = launchedKakao()
+        val attempt = viewModel.awaiting()
 
         viewModel.onIntent(LoginIntent.SocialLoginBackPressed)
         assertIdle(viewModel)
 
         viewModel.onIntent(
-            LoginIntent.SocialLoginResultReceived(SocialLoginType.KAKAO, SocialLoginResult.Success(credential)),
+            LoginIntent.SocialLoginResultReceived(attempt, SocialLoginResult.Success(credential)),
         )
         advanceUntilIdle()
         assertTrue(repository.socialLoginCalls.isEmpty())
@@ -158,11 +159,11 @@ class LoginViewModelTest {
         repository.socialLoginResult = SocialLoginVO(verifiedToken = "social-verified")
         val viewModel = launchedKakao()
         viewModel.onIntent(
-            LoginIntent.SocialLoginResultReceived(SocialLoginType.KAKAO, SocialLoginResult.Success(credential)),
+            LoginIntent.SocialLoginResultReceived(viewModel.awaiting(), SocialLoginResult.Success(credential)),
         )
 
         viewModel.onIntent(LoginIntent.SocialLoginBackPressed)
-        assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.verifyingSocialLogin)
+        assertEquals(SocialLoginType.KAKAO, viewModel.uiState.value.verifyingSocialLogin?.socialType)
         advanceUntilIdle()
 
         assertEquals(listOf(credential), repository.socialLoginCalls)
@@ -175,14 +176,15 @@ class LoginViewModelTest {
 
         // 실행 요청 전에 도착한 결과
         viewModel.onIntent(
-            LoginIntent.SocialLoginResultReceived(SocialLoginType.KAKAO, SocialLoginResult.Success(credential)),
+            LoginIntent.SocialLoginResultReceived(viewModel.awaiting(), SocialLoginResult.Success(credential)),
         )
         // 이미 처리된 시도의 늦은 결과
         viewModel.onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO))
-        viewModel.onIntent(LoginIntent.SocialLoginLaunched(SocialLoginType.KAKAO))
-        viewModel.onIntent(LoginIntent.SocialLoginResultReceived(SocialLoginType.KAKAO, SocialLoginResult.Cancelled))
+        viewModel.launchRequested()
+        val attempt = viewModel.awaiting()
+        viewModel.onIntent(LoginIntent.SocialLoginResultReceived(attempt, SocialLoginResult.Cancelled))
         viewModel.onIntent(
-            LoginIntent.SocialLoginResultReceived(SocialLoginType.KAKAO, SocialLoginResult.Success(credential)),
+            LoginIntent.SocialLoginResultReceived(attempt, SocialLoginResult.Success(credential)),
         )
         advanceUntilIdle()
 
@@ -191,10 +193,29 @@ class LoginViewModelTest {
     }
 
     @Test
+    fun `취소 후 같은 제공자로 다시 시도하면 지난 시도의 늦은 결과는 무시한다`() = runTest(testDispatcher) {
+        val viewModel = launchedKakao()
+        val firstAttempt = viewModel.awaiting()
+        viewModel.onIntent(LoginIntent.SocialLoginBackPressed)
+
+        viewModel.onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO))
+        viewModel.launchRequested()
+        val secondAttempt = viewModel.awaiting()
+        viewModel.onIntent(
+            LoginIntent.SocialLoginResultReceived(firstAttempt, SocialLoginResult.Success(credential)),
+        )
+        advanceUntilIdle()
+
+        assertTrue(firstAttempt != secondAttempt)
+        assertTrue(repository.socialLoginCalls.isEmpty())
+        assertEquals(secondAttempt, viewModel.uiState.value.awaitingSocialLogin)
+    }
+
+    @Test
     fun `SDK 실패면 실패를 안내하고 로딩이 풀린다`() {
         val viewModel = launchedKakao()
 
-        viewModel.onIntent(LoginIntent.SocialLoginResultReceived(SocialLoginType.KAKAO, SocialLoginResult.Failed))
+        viewModel.onIntent(LoginIntent.SocialLoginResultReceived(viewModel.awaiting(), SocialLoginResult.Failed))
 
         assertIdle(viewModel)
         assertEquals("카카오 로그인에 실패했어요. 다시 시도해주세요.", messageHelper.dialogs.single())
@@ -205,8 +226,8 @@ class LoginViewModelTest {
         val viewModel = createViewModel()
 
         viewModel.onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.GOOGLE))
-        viewModel.onIntent(LoginIntent.SocialLoginLaunched(SocialLoginType.GOOGLE))
-        viewModel.onIntent(LoginIntent.SocialLoginResultReceived(SocialLoginType.GOOGLE, SocialLoginResult.Unavailable))
+        viewModel.launchRequested()
+        viewModel.onIntent(LoginIntent.SocialLoginResultReceived(viewModel.awaiting(), SocialLoginResult.Unavailable))
 
         assertIdle(viewModel)
         assertEquals(listOf(IconType.WARNING to "구글 로그인은 준비 중이에요."), messageHelper.snackBars)
@@ -214,8 +235,17 @@ class LoginViewModelTest {
 
     private fun launchedKakao(): LoginViewModel = createViewModel().apply {
         onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO))
-        onIntent(LoginIntent.SocialLoginLaunched(SocialLoginType.KAKAO))
+        launchRequested()
     }
+
+    /** 화면이 하듯 실행 요청된 시도를 그대로 실행했다고 알린다. */
+    private fun LoginViewModel.launchRequested() {
+        onIntent(LoginIntent.SocialLoginLaunched(checkNotNull(uiState.value.socialLoginToLaunch)))
+    }
+
+    /** 지금 결과를 기다리는 시도. 없으면(실행 요청 전 등) 발급된 적 없는 시도를 돌려준다. */
+    private fun LoginViewModel.awaiting(): SocialLoginAttempt =
+        uiState.value.awaitingSocialLogin ?: SocialLoginAttempt(id = -1, socialType = SocialLoginType.KAKAO)
 
     private fun assertIdle(viewModel: LoginViewModel) {
         val state = viewModel.uiState.value

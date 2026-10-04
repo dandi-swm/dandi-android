@@ -9,11 +9,11 @@ sealed interface LoginIntent : MviIntent {
     data class ClickSocialLogin(val socialType: SocialLoginType) : LoginIntent
 
     // 화면이 소셜 제공자 SDK 로그인을 띄웠다.
-    data class SocialLoginLaunched(val socialType: SocialLoginType) : LoginIntent
+    data class SocialLoginLaunched(val attempt: SocialLoginAttempt) : LoginIntent
 
     // 소셜 제공자 SDK 로그인 결과가 도착했다.
     data class SocialLoginResultReceived(
-        val socialType: SocialLoginType,
+        val attempt: SocialLoginAttempt,
         val result: SocialLoginResult,
     ) : LoginIntent
 

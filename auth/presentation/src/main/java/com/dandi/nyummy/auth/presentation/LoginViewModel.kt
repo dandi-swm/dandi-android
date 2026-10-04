@@ -25,9 +25,9 @@ class LoginViewModel @Inject constructor(
 
         when (intent) {
             is LoginIntent.ClickSocialLogin -> requestSocialLogin(intent.socialType)
-            is LoginIntent.SocialLoginLaunched -> onSocialLoginLaunched(intent.socialType)
+            is LoginIntent.SocialLoginLaunched -> onSocialLoginLaunched(intent.attempt)
             is LoginIntent.SocialLoginResultReceived ->
-                onSocialLoginResult(intent.socialType, intent.result)
+                onSocialLoginResult(intent.attempt, intent.result)
             LoginIntent.SocialLoginBackPressed -> abandonSocialLogin()
             LoginIntent.ClickEmailLogin -> emailLogin()
             LoginIntent.ClickTestLogin -> testLogin()
@@ -39,12 +39,18 @@ class LoginViewModel @Inject constructor(
         event: LoginReducerEvent
     ): LoginUIState {
         return when (event) {
-            is LoginReducerEvent.SocialLoginStarted ->
-                state.copy(isLoading = true, socialLoginToLaunch = event.socialType)
+            is LoginReducerEvent.SocialLoginStarted -> {
+                val attemptId = state.lastSocialLoginAttemptId + 1
+                state.copy(
+                    isLoading = true,
+                    socialLoginToLaunch = SocialLoginAttempt(attemptId, event.socialType),
+                    lastSocialLoginAttemptId = attemptId,
+                )
+            }
             is LoginReducerEvent.SocialLoginLaunched ->
-                state.copy(socialLoginToLaunch = null, awaitingSocialLogin = event.socialType)
+                state.copy(socialLoginToLaunch = null, awaitingSocialLogin = event.attempt)
             is LoginReducerEvent.SocialLoginVerifying ->
-                state.copy(awaitingSocialLogin = null, verifyingSocialLogin = event.socialType)
+                state.copy(awaitingSocialLogin = null, verifyingSocialLogin = event.attempt)
             is LoginReducerEvent.LoginFinished -> state.copy(
                 isLoading = false,
                 socialLoginToLaunch = null,
@@ -67,20 +73,21 @@ class LoginViewModel @Inject constructor(
         dispatch(LoginReducerEvent.SocialLoginStarted(socialType))
     }
 
-    private fun onSocialLoginLaunched(socialType: SocialLoginType) {
-        if (currentState.socialLoginToLaunch != socialType) return
-        dispatch(LoginReducerEvent.SocialLoginLaunched(socialType))
+    private fun onSocialLoginLaunched(attempt: SocialLoginAttempt) {
+        if (currentState.socialLoginToLaunch != attempt) return
+        dispatch(LoginReducerEvent.SocialLoginLaunched(attempt))
     }
 
     /**
-     * SDK 결과를 처리한다. 기다리던 시도의 결과만 받는다.
+     * SDK 결과를 처리한다. 기다리던 시도(제공자·시도 ID 모두 일치)의 결과만 받는다.
      * 자격 증명을 얻으면 서버 검증으로 넘기고, 성공 시 이동·실패 안내는 UseCase 가 처리한다.
      */
-    private fun onSocialLoginResult(socialType: SocialLoginType, result: SocialLoginResult) {
-        if (currentState.awaitingSocialLogin != socialType) return
+    private fun onSocialLoginResult(attempt: SocialLoginAttempt, result: SocialLoginResult) {
+        if (currentState.awaitingSocialLogin != attempt) return
+        val socialType = attempt.socialType
         when (result) {
             is SocialLoginResult.Success -> {
-                dispatch(LoginReducerEvent.SocialLoginVerifying(socialType))
+                dispatch(LoginReducerEvent.SocialLoginVerifying(attempt))
                 viewModelScope.launch {
                     socialLoginUseCase.login(result.credential)
                     dispatch(LoginReducerEvent.LoginFinished)

@@ -80,15 +80,15 @@ fun LoginPage(
     val activity = LocalActivity.current
     val onIntent = viewModel::onIntent
     LaunchedEffect(uiState.socialLoginToLaunch) {
-        val socialType = uiState.socialLoginToLaunch ?: return@LaunchedEffect
-        onIntent(LoginIntent.SocialLoginLaunched(socialType))
+        val attempt = uiState.socialLoginToLaunch ?: return@LaunchedEffect
+        onIntent(LoginIntent.SocialLoginLaunched(attempt))
         val onResult: (SocialLoginResult) -> Unit = { result ->
-            onIntent(LoginIntent.SocialLoginResultReceived(socialType, result))
+            onIntent(LoginIntent.SocialLoginResultReceived(attempt, result))
         }
         if (activity == null) {
             onResult(SocialLoginResult.Failed)
         } else {
-            launchSocialLogin(socialType, activity, onResult)
+            launchSocialLogin(attempt.socialType, activity, onResult)
         }
     }
 
@@ -482,7 +482,10 @@ private fun LoginPagePreview() {
 private fun LoginPageSocialVerifyingPreview() {
     DesignSystemTheme {
         LoginPageContent(
-            uiState = LoginUIState(isLoading = true, verifyingSocialLogin = SocialLoginType.KAKAO),
+            uiState = LoginUIState(
+                isLoading = true,
+                verifyingSocialLogin = SocialLoginAttempt(id = 1, socialType = SocialLoginType.KAKAO),
+            ),
             onIntent = {},
         )
     }
