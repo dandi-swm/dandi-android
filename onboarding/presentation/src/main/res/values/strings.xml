@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_character_description">A kitten met on the street</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_tap_to_continue">Tap to continue</string>
+    <string name="onboarding_speaker_user">Me</string>
+    <string name="onboarding_speaker_unknown_cat">\?\?\?</string>
+
+    <!-- 1. The alley on the way home -->
+    <string name="onboarding_line_alley_1">Another day of grabbing whatever food was around.</string>
+    <string name="onboarding_line_alley_2">I was trudging home through an alley lit by a single street lamp.</string>
+
+    <!-- 2. A stray in a box -->
+    <string name="onboarding_line_meet_1">…Mew.</string>
+    <string name="onboarding_line_meet_2">In a cardboard box in the corner, a little kitten is staring right at me.</string>
+    <string name="onboarding_line_meet_3">What should I do?</string>
+    <string name="onboarding_choice_hand">Crouch down and hold out a hand</string>
+    <string name="onboarding_choice_snack">Take a snack out of my bag</string>
+    <string name="onboarding_line_hand_1">…Hi there. Don\'t be scared.</string>
+    <string name="onboarding_line_hand_2">The kitten carefully climbs out of the box and sniffs my fingertips.</string>
+    <string name="onboarding_line_snack_1">Hungry? Want some of this?</string>
+    <string name="onboarding_line_snack_2">The kitten munches the snack, then looks up at me intently.</string>
+
+    <!-- 3. Chosen -->
+    <string name="onboarding_line_chosen_1">Then it pressed its head firmly against my hand.</string>
+    <string name="onboarding_line_chosen_2">…I think I\'ve just been chosen.</string>
+
+    <!-- 4. Service introduction -->
+    <string name="onboarding_line_talk_1">Hey, are you eating properly, meow?</string>
+    <string name="onboarding_line_talk_2">…Huh? Did that cat just talk?</string>
+    <string name="onboarding_line_talk_3">From now on, show me photos of what you eat. I\'ll eat with you.</string>
+    <string name="onboarding_line_talk_4">If you eat well, I grow up big and strong, meow. If you skip meals… I\'ll get all wobbly too.</string>
+    <string name="onboarding_line_talk_5">So starting today, let\'s eat together!</string>
+    <string name="onboarding_line_talk_6">A cat that eats with me, huh. …Okay, let\'s do it.</string>
+
+    <!-- 5. Naming -->
+    <string name="onboarding_line_name_1">But… I don\'t have a name yet.</string>
+    <string name="onboarding_line_name_2">Will you give me one?</string>
+    <string name="onboarding_name_label">Cat name</string>
+    <string name="onboarding_name_placeholder">e.g. Nyami</string>
+    <string name="onboarding_name_helper">Up to %1$d characters</string>
+    <string name="onboarding_name_error_empty">Please give it a name</string>
+    <string name="onboarding_name_error_too_long">Names can be up to %1$d characters</string>
+    <string name="onboarding_name_submit">This name it is</string>
+
+    <!-- 6. Named -->
+    <string name="onboarding_line_named_1">\"%1$s\"…!</string>
+    <string name="onboarding_line_named_2">I love it! From today, I\'m %1$s.</string>
+    <string name="onboarding_line_named_3">Let\'s take good care of each other!</string>
+    <string name="onboarding_start">Start together</string>
+</resources>

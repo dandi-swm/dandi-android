@@ -115,6 +115,11 @@ dependencies {
     implementation(project(":intro:data"))
     implementation(project(":intro:entity"))
 
+    implementation(project(":onboarding:presentation"))
+    implementation(project(":onboarding:domain"))
+    implementation(project(":onboarding:data"))
+    implementation(project(":onboarding:entity"))
+
     // FCM 리마인드 알림 + 냐미 홈 위젯 (임시 구현)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
