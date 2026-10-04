@@ -4,6 +4,7 @@
     <string name="meal_record_subtitle">Snap your food and analysis starts right away 🌱</string>
     <string name="meal_record_cancel">Cancel</string>
     <string name="meal_record_capture">Capture</string>
+    <string name="meal_record_gallery_content_description">Choose from gallery</string>
     <string name="meal_record_retake">Retake</string>
     <string name="meal_record_submit">Give to Nyami</string>
     <string name="meal_record_permission_denied_title">Camera permission needed</string>

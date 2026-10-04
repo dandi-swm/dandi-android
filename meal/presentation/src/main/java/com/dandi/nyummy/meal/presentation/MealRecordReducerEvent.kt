@@ -17,6 +17,15 @@ sealed interface MealRecordReducerEvent : ReducerEvent {
     /** 촬영이 실패해 촬영 중 플래그만 해제합니다. */
     data object CaptureEnded : MealRecordReducerEvent
 
+    /** 갤러리에서 고른 사진의 검증·복사가 시작됐습니다. */
+    data object GalleryImportStarted : MealRecordReducerEvent
+
+    /** 갤러리 사진을 가져와 확인 단계로 전환합니다. */
+    data class GalleryImportSucceeded(val photoPath: String) : MealRecordReducerEvent
+
+    /** 갤러리 사진을 가져오지 못해(오늘 찍은 사진이 아님 등) 가져오는 중 플래그만 해제합니다. */
+    data object GalleryImportFailed : MealRecordReducerEvent
+
     /** 촬영본을 버리고 프리뷰 단계로 돌아갑니다. */
     data object ReturnedToPreview : MealRecordReducerEvent
 

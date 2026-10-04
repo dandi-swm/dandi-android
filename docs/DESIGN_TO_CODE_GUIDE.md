@@ -119,7 +119,7 @@ API는 GET /v1/products 이고 응답 예시는 아래 JSON이야: {...}
 
 ```bash
 ./gradlew :app:installDebug
-adb shell 'am start -W -a android.intent.action.VIEW -d "https://www.dandi.com/productList" com.dandi.nyummy'
+adb shell 'am start -W -a android.intent.action.VIEW -d "https://link.nyummy.co.kr/productList" com.dandi.nyummy'
 ```
 
 스크린샷 비교까지 시키려면:

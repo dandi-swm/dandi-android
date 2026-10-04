@@ -81,6 +81,23 @@ internal fun prepareMealPhotoFile(photoPath: String, maxBytes: Long = MAX_MEAL_P
     Log.d(TAG, "compressed to ${file.length()} bytes: ${file.name}")
 }
 
+/**
+ * 갤러리에서 복사해 온 파일을 업로드 파이프라인이 기대하는 JPEG 로 맞춘다.
+ *
+ * 이미 JPEG 면 그대로 두고, HEIC·PNG 등은 같은 경로에 JPEG 로 다시 인코딩한다
+ * (회전은 픽셀에 반영, 촬영 시각 등 EXIF 는 보존). 디코드할 수 없으면
+ * [MealPhotoInvalidException] 을 던진다.
+ */
+internal fun ensureJpegMealPhotoFile(file: File, maxBytes: Long = MAX_MEAL_PHOTO_SIZE_BYTES) {
+    if (file.isJpeg()) return
+    compressIntoLimit(file, maxBytes)
+    Log.d(TAG, "re-encoded to JPEG (${file.length()} bytes): ${file.name}")
+}
+
+/** 파일 시그니처(SOI 마커 `FF D8`)로 JPEG 여부를 판별한다. */
+private fun File.isJpeg(): Boolean =
+    inputStream().use { it.read() == 0xFF && it.read() == 0xD8 }
+
 private const val EXIF_DATE_TIME_PATTERN = "yyyy:MM:dd HH:mm:ss"
 
 private val EXIF_DATE_TIME_TAGS = listOf(
@@ -101,12 +118,17 @@ private val EXIF_OFFSET_TIME_TAGS = listOf(
  * 카메라 파이프라인이 촬영 시각은 대체로 기록하지만 타임존 오프셋(OFFSET_TIME_*)은
  * 누락하는 기기가 많다. 촬영은 방금 이 기기에서 일어났으므로, 파일 저장 시각과
  * 기기 타임존으로 빈 태그만 보충한다(이미 있는 값은 건드리지 않는다).
+ *
+ * 갤러리 사진은 캐시로 복사한 시각이 파일 시각이 되므로, 시각 태그가 일부만 비어 있으면
+ * 파일 시각보다 이미 기록된 촬영 시각을 우선해 채운다.
  */
 private fun ensureExifTimeMetadata(file: File) {
     runCatching {
         val exif = ExifInterface(file)
         val captureMillis = file.lastModified().takeIf { it > 0 } ?: System.currentTimeMillis()
-        val dateTime = formatExifDateTime(captureMillis)
+        val dateTime = EXIF_DATE_TIME_TAGS
+            .firstNotNullOfOrNull { tag -> exif.getAttribute(tag)?.takeIf { it.isNotBlank() } }
+            ?: formatExifDateTime(captureMillis)
         val utcOffset = formatUtcOffset(TimeZone.getDefault().getOffset(captureMillis))
 
         var changed = false

@@ -2,7 +2,7 @@
 
 ## 왜
 
-- **앱 내 이동과 딥링크가 같은 path를 공유**한다 — `/search` 는 탭 이동에서도, `https://www.dandi.com/search` 딥링크에서도 동일하게 동작. 화면 추가 시 딥링크가 공짜로 따라온다.
+- **앱 내 이동과 딥링크가 같은 path를 공유**한다 — `/search` 는 탭 이동에서도, `https://link.nyummy.co.kr/search` 딥링크에서도 동일하게 동작. 화면 추가 시 딥링크가 공짜로 따라온다.
 - domain 레이어는 `NavigationHelper` 인터페이스만 알고 Navigation3를 모른다 — UseCase가 화면 이동을 트리거해도 플랫폼 의존이 생기지 않는다.
 
 > `Search`/`Favorite`/`Intro`/`FullScreenMedia`와 `/search`/`favorite` 등의 path는 레거시 설명용 예시입니다. 현재 앱의 등록 라우트가 아니며, 실제 경로는 `AppRouteRegistry.kt`를 기준으로 확인합니다.
@@ -75,7 +75,7 @@ AppRoute(
 
 ## 딥링크 (App Links)
 
-- 매니페스트: `https://www.dandi.com` autoVerify intent-filter ([AndroidManifest.xml](../../app/src/main/AndroidManifest.xml))
+- 매니페스트: `https://link.nyummy.co.kr` autoVerify intent-filter ([AndroidManifest.xml](../../app/src/main/AndroidManifest.xml))
 - [NavRouteUriParser.kt](../../main/presentation/src/main/java/com/dandi/nyummy/main/presentation/deeplink/NavRouteUriParser.kt) `Uri.resolveRoute()`: URI를 등록 라우트로 해석한다.
   1. **정적 path exact 매칭** (`/search`, `/fullScreenMedia`는 레거시 예시) — 항상 우선.
   2. **동적 템플릿 매칭** ([RoutePattern.kt](../../main/domain/src/main/java/com/dandi/nyummy/main/domain/deeplink/RoutePattern.kt)) — `{param}` 구간을 가진 다중 세그먼트 path(`/articleList/articlePage/{articleId}`)를 매칭하고 path 구간 값(articleId)을 args로 추출. path 파라미터는 query 와 충돌 시 우선.
@@ -95,7 +95,7 @@ AppRoute(
 | 웜 스타트 (leaf) | bring-to-front | `[Search, Favorite, ArticlePage(123)]` (기존 스택 보존) |
 | 웜 스타트 (탭 path) | 탭 루트 시맨틱 | in-app 탭 전환과 동일 (탭이 루트에서 밀려나지 않음) |
 
-- 테스트: `adb shell 'am start -W -a android.intent.action.VIEW -d "https://www.dandi.com/<path>" com.dandi.nyummy'` (`<path>`는 `AppRouteRegistry.kt`에 실제 등록된 라우트로 대체. `search`/`favorite`/`fullScreenMedia`와 `articleList/...`는 레거시·가상 예시라 그대로는 해석되지 않음)
+- 테스트: `adb shell 'am start -W -a android.intent.action.VIEW -d "https://link.nyummy.co.kr/<path>" com.dandi.nyummy'` (`<path>`는 `AppRouteRegistry.kt`에 실제 등록된 라우트로 대체. `search`/`favorite`/`fullScreenMedia`와 `articleList/...`는 레거시·가상 예시라 그대로는 해석되지 않음)
 
 ## Fragment 혼합 호스팅 (fullScreenMedia 골든 예제)
 

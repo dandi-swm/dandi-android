@@ -13,7 +13,16 @@ import java.io.File
 
 class MealRecordRepositoryImpl(
     private val dataSource: MealRecordDataSource,
+    private val galleryPhotoDataSource: MealGalleryPhotoDataSource,
 ) : MealRecordRepository {
+
+    override suspend fun readGalleryPhotoTakenAt(photoUri: String) = withContext(Dispatchers.IO) {
+        galleryPhotoDataSource.readTakenAt(photoUri)
+    }
+
+    override suspend fun importGalleryPhoto(photoUri: String) = withContext(Dispatchers.IO) {
+        galleryPhotoDataSource.copyToCache(photoUri)
+    }
 
     override suspend fun prepareUploadImage(photoPath: String) = withContext(Dispatchers.IO) {
         prepareMealPhotoFile(photoPath)

@@ -2,4 +2,8 @@
     <string name="app_name">Nyummy</string>
     <string name="nav_back_button">Back to previous</string>
     <string name="nav_camera_button">Record a meal</string>
+    <string name="meal_gallery_not_taken_today">Only photos taken today can be uploaded</string>
+    <string name="meal_gallery_unknown_taken_date">We couldn\'t find when this photo was taken. Only photos taken today can be uploaded</string>
+    <string name="meal_gallery_load_failed">We couldn\'t load the photo. Please choose it again</string>
+    <string name="meal_gallery_import_failed">We couldn\'t load the photo. Please try again</string>
 </resources>
