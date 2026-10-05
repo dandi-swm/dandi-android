@@ -32,6 +32,13 @@ android {
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", kakaoNativeAppKey.asJavaStringLiteral())
         manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoNativeAppKey
 
+        // 구글 로그인용 OAuth 웹 애플리케이션 클라이언트 ID(ID 토큰의 aud). 주입 방식은 카카오 키와 같다.
+        //   GOOGLE_WEB_CLIENT_ID=....apps.googleusercontent.com
+        // 비어 있으면 구글 버튼은 "준비 중" 안내만 띄운다.
+        val googleWebClientId = localProps.getProperty("GOOGLE_WEB_CLIENT_ID")?.trim()?.takeIf { it.isNotEmpty() }
+            ?: System.getenv("GOOGLE_WEB_CLIENT_ID")?.trim().orEmpty()
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", googleWebClientId.asJavaStringLiteral())
+
         // 테스트 계정 로그인 버튼용 자격 증명. 기본값(release 포함)은 빈 값이라 버튼이 노출되지 않는다.
         buildConfigField("String", "TEST_LOGIN_EMAIL", "\"\"")
         buildConfigField("String", "TEST_LOGIN_PASSWORD", "\"\"")
@@ -97,6 +104,9 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.kakao.user)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
