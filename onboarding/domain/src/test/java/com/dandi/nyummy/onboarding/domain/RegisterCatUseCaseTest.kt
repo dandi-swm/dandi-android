@@ -27,6 +27,7 @@ class RegisterCatUseCaseTest {
 
         assertEquals(CatVO(id = 1L, name = "냐미"), result.getOrNull())
         assertEquals(listOf("냐미"), repository.registeredNames)
+        assertEquals(1, repository.onboardingCompleteCount)
         assertTrue(navigationHelper.rootPages.isEmpty())
         assertTrue(messageHelper.dialogs.isEmpty())
     }
@@ -39,6 +40,7 @@ class RegisterCatUseCaseTest {
 
         assertTrue(result.isFailure)
         assertEquals(listOf<Any>(HomePage), navigationHelper.rootPages)
+        assertEquals(1, repository.onboardingCompleteCount)
         assertTrue(messageHelper.dialogs.isEmpty())
     }
 
@@ -49,6 +51,7 @@ class RegisterCatUseCaseTest {
         val result = useCase("냐미")
 
         assertTrue(result.isFailure)
+        assertEquals(0, repository.onboardingCompleteCount)
         assertTrue(navigationHelper.rootPages.isEmpty())
         assertEquals(listOf(OnboardingErrorType.CAT_NAME_INVALID.errorMsg), messageHelper.dialogs)
     }
@@ -61,6 +64,7 @@ class RegisterCatUseCaseTest {
 
         assertEquals(1, messageHelper.dialogs.size)
         assertTrue(navigationHelper.rootPages.isEmpty())
+        assertEquals(0, repository.onboardingCompleteCount)
     }
 
     @Test
@@ -70,6 +74,7 @@ class RegisterCatUseCaseTest {
         val result = useCase("냐미")
 
         assertTrue(result.isFailure)
+        assertEquals(0, repository.onboardingCompleteCount)
         assertEquals(1, messageHelper.dialogs.size)
     }
 }

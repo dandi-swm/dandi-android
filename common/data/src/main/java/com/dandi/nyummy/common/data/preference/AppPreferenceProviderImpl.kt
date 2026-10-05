@@ -22,7 +22,15 @@ class AppPreferenceProviderImpl(
         write(KEY_PERMISSION_NOTICE_SHOWN, true)
     }
 
+    override suspend fun isOnboardingIncomplete(): Boolean =
+        read(KEY_ONBOARDING_INCOMPLETE) ?: false
+
+    override suspend fun setOnboardingIncomplete(incomplete: Boolean) {
+        write(KEY_ONBOARDING_INCOMPLETE, incomplete)
+    }
+
     companion object {
         private val KEY_PERMISSION_NOTICE_SHOWN = booleanPreferencesKey("permission_notice_shown")
+        private val KEY_ONBOARDING_INCOMPLETE = booleanPreferencesKey("onboarding_incomplete")
     }
 }

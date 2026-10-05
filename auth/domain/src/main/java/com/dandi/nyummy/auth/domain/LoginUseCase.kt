@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
 
@@ -26,7 +27,9 @@ class LoginUseCase @Inject constructor(
      */
     suspend fun login(email: String, password: String): Result<Unit> = try {
         val token = repository.login(email = email, password = password)
-        navigationHelper.navigateToAsRoot(PostLoginDestination.from(token.redirectUrl))
+        val destination = PostLoginDestination.from(token.redirectUrl)
+        repository.setOnboardingIncomplete(destination == OnboardingPage)
+        navigationHelper.navigateToAsRoot(destination)
         Result.success(Unit)
     } catch (e: HttpResponseException) {
         handleLoginError(e)

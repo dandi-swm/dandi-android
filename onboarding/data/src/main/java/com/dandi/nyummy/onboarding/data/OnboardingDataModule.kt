@@ -1,5 +1,6 @@
 package com.dandi.nyummy.onboarding.data
 
+import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.onboarding.domain.OnboardingRepository
 import dagger.Module
 import dagger.Provides
@@ -26,6 +27,8 @@ object OnboardingDataModule {
 
     @Provides
     @Singleton
-    fun provideOnboardingRepository(dataSource: OnboardingDataSource): OnboardingRepository =
-        OnboardingRepositoryImpl(dataSource)
+    fun provideOnboardingRepository(
+        dataSource: OnboardingDataSource,
+        appPreferenceProvider: AppPreferenceProvider,
+    ): OnboardingRepository = OnboardingRepositoryImpl(dataSource, appPreferenceProvider)
 }

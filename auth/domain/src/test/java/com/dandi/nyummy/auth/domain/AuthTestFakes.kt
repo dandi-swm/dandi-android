@@ -52,6 +52,12 @@ internal class FakeAuthRepository(
 
     val socialLoginCalls = mutableListOf<SocialCredentialVO>()
     val signUpCalls = mutableListOf<SignUpCall>()
+    var onboardingIncomplete = false
+        private set
+
+    override suspend fun setOnboardingIncomplete(incomplete: Boolean) {
+        onboardingIncomplete = incomplete
+    }
 
     override suspend fun socialLogin(credential: SocialCredentialVO): SocialLoginVO {
         socialLoginCalls += credential

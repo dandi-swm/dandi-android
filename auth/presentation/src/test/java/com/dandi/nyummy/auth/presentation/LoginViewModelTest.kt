@@ -279,6 +279,8 @@ class LoginViewModelTest {
         var socialLoginResult: SocialLoginVO = SocialLoginVO.empty
         val socialLoginCalls = mutableListOf<SocialCredentialVO>()
 
+        override suspend fun setOnboardingIncomplete(incomplete: Boolean) = Unit
+
         override suspend fun socialLogin(credential: SocialCredentialVO): SocialLoginVO {
             socialLoginCalls += credential
             return socialLoginResult

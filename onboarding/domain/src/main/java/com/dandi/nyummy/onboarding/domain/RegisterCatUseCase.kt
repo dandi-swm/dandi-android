@@ -27,7 +27,9 @@ class RegisterCatUseCase @Inject constructor(
      * 실패는 안내 후 [Result.failure] 로 돌려준다.
      */
     suspend operator fun invoke(name: String): Result<CatVO> = try {
-        Result.success(repository.registerCat(name.trim()))
+        val cat = repository.registerCat(name.trim())
+        repository.markOnboardingComplete()
+        Result.success(cat)
     } catch (e: HttpResponseException) {
         handleError(e)
         Result.failure(e)
@@ -38,9 +40,10 @@ class RegisterCatUseCase @Inject constructor(
         Result.failure(e)
     }
 
-    private fun handleError(e: HttpResponseException) {
+    private suspend fun handleError(e: HttpResponseException) {
         when (e.handlingErrorOnUseCase<OnboardingErrorType>()) {
             OnboardingErrorType.CAT_ALREADY_EXISTS -> {
+                repository.markOnboardingComplete()
                 navigationHelper.navigateToAsRoot(HomePage)
                 return
             }

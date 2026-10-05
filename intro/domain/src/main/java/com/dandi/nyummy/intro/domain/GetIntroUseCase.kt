@@ -9,6 +9,7 @@ import com.dandi.nyummy.common.domain.helper.PermissionHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.intro.entity.VersionCheckVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIPage
@@ -38,7 +39,7 @@ class GetIntroUseCase @Inject constructor(
      * 3. 최소 요구 버전을 조회해 현재 앱 versionCode 와 비교한다.
      *    미만이면 닫을 수 없는 강제 업데이트 다이얼로그를 띄우고 홈/로그인 이동을 중단한다.
      * 4. 이동 직전 [onBeforeNavigate] 로 UI 마무리(스플래시 진행바 100% 채움)를 기다린 뒤,
-     *    저장된 리프레시 토큰이 있으면 홈, 없으면 로그인을 루트로 이동한다.
+     *    저장된 리프레시 토큰과 온보딩 상태에 따라 홈/온보딩/로그인을 루트로 이동한다.
      *    실패할 수 있는 작업은 모두 이 훅 이전에 끝나 있어야 한다.
      *
      * 실패는 여기(domain)에서 종결한다 — 닫을 수 없는 재시도 다이얼로그를 띄우고,
@@ -74,12 +75,13 @@ class GetIntroUseCase @Inject constructor(
         }
 
         val hasRefreshToken = repository.hasRefreshToken()
-        onBeforeNavigate()
-        if (hasRefreshToken) {
-            navigationHelper.navigateToAsRoot(HomePage)
-        } else {
-            navigationHelper.navigateToAsRoot(LoginPage)
+        val destination = when {
+            !hasRefreshToken -> LoginPage
+            repository.isOnboardingIncomplete() -> OnboardingPage
+            else -> HomePage
         }
+        onBeforeNavigate()
+        navigationHelper.navigateToAsRoot(destination)
         Result.success(version)
     } catch (e: Throwable) {
         showIntroErrorDialog(onRetry)

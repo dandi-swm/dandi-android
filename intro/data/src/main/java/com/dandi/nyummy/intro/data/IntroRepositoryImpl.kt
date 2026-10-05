@@ -20,6 +20,10 @@ class IntroRepositoryImpl(
         !tokenProvider.refreshToken.isNullOrBlank()
     }
 
+    override suspend fun isOnboardingIncomplete(): Boolean = withContext(ioDispatcher) {
+        appPreferenceProvider.isOnboardingIncomplete()
+    }
+
     override suspend fun hasShownPermissionNotice(): Boolean = withContext(ioDispatcher) {
         appPreferenceProvider.hasShownPermissionNotice()
     }

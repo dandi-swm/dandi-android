@@ -53,6 +53,7 @@ class SignUpUseCase @Inject constructor(
             height = height,
             weight = weight,
         )
+        repository.setOnboardingIncomplete(incomplete = true)
         navigationHelper.navigateToAsRoot(OnboardingPage)
         Result.success(Unit)
     } catch (e: HttpResponseException) {
@@ -92,6 +93,7 @@ class SignUpUseCase @Inject constructor(
                 height = height,
                 weight = weight,
             )
+            repository.setOnboardingIncomplete(incomplete = true)
             socialSignUpSession.clear()
             navigationHelper.navigateToAsRoot(OnboardingPage)
             Result.success(Unit)

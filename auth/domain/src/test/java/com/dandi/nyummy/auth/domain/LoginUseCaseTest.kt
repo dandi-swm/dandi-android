@@ -29,6 +29,7 @@ class LoginUseCaseTest {
 
         assertTrue(result.isSuccess)
         assertEquals(listOf<Any>(OnboardingPage), navigationHelper.rootPages)
+        assertTrue(repository.onboardingIncomplete)
     }
 
     @Test
@@ -38,6 +39,7 @@ class LoginUseCaseTest {
         useCase.login("test@dandi.app", "pw1234")
 
         assertEquals(listOf<Any>(HomePage), navigationHelper.rootPages)
+        assertFalse(repository.onboardingIncomplete)
     }
 
     @Test

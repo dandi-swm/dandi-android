@@ -9,6 +9,7 @@ import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -42,6 +43,7 @@ class SocialLoginUseCaseTest {
         assertTrue(result.isSuccess)
         assertEquals(listOf(credential), repository.socialLoginCalls)
         assertEquals(listOf<Any>(HomePage), navigationHelper.rootPages)
+        assertFalse(repository.onboardingIncomplete)
         assertTrue(navigationHelper.pages.isEmpty())
         assertNull(session.pendingToken)
         assertTrue(messageHelper.dialogs.isEmpty())
@@ -56,6 +58,7 @@ class SocialLoginUseCaseTest {
         useCase.login(credential)
 
         assertEquals(listOf<Any>(OnboardingPage), navigationHelper.rootPages)
+        assertTrue(repository.onboardingIncomplete)
     }
 
     @Test

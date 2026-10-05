@@ -13,12 +13,18 @@ import com.dandi.nyummy.auth.entity.EmailVerifiedVO
 import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.auth.entity.SocialCredentialVO
 import com.dandi.nyummy.auth.entity.SocialLoginVO
+import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.common.data.token.TokenProvider
 
 class AuthRepositoryImpl(
     private val dataSource: AuthDataSource,
     private val tokenProvider: TokenProvider,
+    private val appPreferenceProvider: AppPreferenceProvider,
 ) : AuthRepository {
+    override suspend fun setOnboardingIncomplete(incomplete: Boolean) {
+        appPreferenceProvider.setOnboardingIncomplete(incomplete)
+    }
+
     override suspend fun socialLogin(credential: SocialCredentialVO): SocialLoginVO =
         dataSource.oauthLogin(
             OAuthLoginRequestDTO(

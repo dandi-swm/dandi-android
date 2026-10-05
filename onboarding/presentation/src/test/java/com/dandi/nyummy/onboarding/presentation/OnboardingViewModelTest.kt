@@ -233,6 +233,8 @@ class OnboardingViewModelTest {
             registeredNames += name
             return CatVO(id = 1L, name = name)
         }
+
+        override suspend fun markOnboardingComplete() = Unit
     }
 
     private class RecordingNavigationHelper : NavigationHelper {

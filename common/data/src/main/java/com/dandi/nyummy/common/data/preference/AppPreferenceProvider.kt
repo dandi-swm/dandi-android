@@ -12,4 +12,10 @@ interface AppPreferenceProvider {
 
     /** 권한 안내 노출 완료를 기록한다. */
     suspend fun markPermissionNoticeShown()
+
+    /** 온보딩 미완료 여부. */
+    suspend fun isOnboardingIncomplete(): Boolean
+
+    /** 온보딩 진행 상태를 기록한다. */
+    suspend fun setOnboardingIncomplete(incomplete: Boolean)
 }

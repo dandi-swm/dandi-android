@@ -33,11 +33,17 @@ internal class FakeOnboardingRepository(
     var error: Exception? = null,
 ) : OnboardingRepository {
     val registeredNames = mutableListOf<String>()
+    var onboardingCompleteCount = 0
+        private set
 
     override suspend fun registerCat(name: String): CatVO {
         registeredNames += name
         error?.let { throw it }
         return CatVO(id = 1L, name = name)
+    }
+
+    override suspend fun markOnboardingComplete() {
+        onboardingCompleteCount++
     }
 }
 

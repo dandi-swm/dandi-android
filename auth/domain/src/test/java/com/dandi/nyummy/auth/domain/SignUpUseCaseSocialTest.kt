@@ -39,6 +39,7 @@ class SignUpUseCaseSocialTest {
         assertEquals("단디", call.nickname)
         assertNull(session.pendingToken)
         assertEquals(listOf<Any>(OnboardingPage), navigationHelper.rootPages)
+        assertTrue(repository.onboardingIncomplete)
     }
 
     @Test
@@ -120,6 +121,7 @@ class SignUpUseCaseSocialTest {
         val call = repository.signUpCalls.single()
         assertEquals("email-verified", call.verifiedToken)
         assertEquals("pw1234", call.password)
+        assertTrue(repository.onboardingIncomplete)
         // 이메일 가입은 소셜 세션을 건드리지 않는다.
         assertEquals("social-verified", session.pendingToken)
     }

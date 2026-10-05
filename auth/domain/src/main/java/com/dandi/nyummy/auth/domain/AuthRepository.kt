@@ -10,6 +10,9 @@ import com.dandi.nyummy.auth.entity.SocialLoginVO
 
 interface AuthRepository {
 
+    /** 앱 재시작 시 온보딩 이동 여부를 복원할 수 있도록 진행 상태를 저장한다. */
+    suspend fun setOnboardingIncomplete(incomplete: Boolean)
+
     /**
      * 소셜 제공자 토큰을 서버에서 검증한다. 기존 회원이면 발급 토큰을 저장한다.
      * 신규 회원이면 토큰 없이 회원가입에 쓸 [SocialLoginVO.verifiedToken] 만 돌려준다.

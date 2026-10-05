@@ -5,6 +5,7 @@ import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.auth.entity.SocialCredentialVO
 import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.common.data.token.TokenProvider
+import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -29,6 +30,7 @@ class AuthRepositoryImplTest {
 
     private lateinit var server: MockWebServer
     private lateinit var tokenProvider: FakeTokenProvider
+    private lateinit var appPreferenceProvider: FakeAppPreferenceProvider
     private lateinit var repository: AuthRepositoryImpl
 
     private val json = Json {
@@ -47,7 +49,8 @@ class AuthRepositoryImplTest {
             .build()
             .create(AuthApiService::class.java)
         tokenProvider = FakeTokenProvider()
-        repository = AuthRepositoryImpl(AuthDataSource(apiService), tokenProvider)
+        appPreferenceProvider = FakeAppPreferenceProvider()
+        repository = AuthRepositoryImpl(AuthDataSource(apiService), tokenProvider, appPreferenceProvider)
     }
 
     @After
@@ -76,6 +79,13 @@ class AuthRepositoryImplTest {
 
         assertEquals("access-123", tokenProvider.accessToken)
         assertEquals("refresh-456", tokenProvider.refreshToken)
+    }
+
+    @Test
+    fun `온보딩 진행 상태를 환경설정에 저장한다`() = runBlocking {
+        repository.setOnboardingIncomplete(incomplete = true)
+
+        assertTrue(appPreferenceProvider.onboardingIncomplete)
     }
 
     @Test
@@ -222,6 +232,17 @@ class AuthRepositoryImplTest {
         override suspend fun clear() {
             accessToken = null
             refreshToken = null
+        }
+    }
+
+    private class FakeAppPreferenceProvider : AppPreferenceProvider {
+        var onboardingIncomplete = false
+
+        override suspend fun hasShownPermissionNotice(): Boolean = false
+        override suspend fun markPermissionNoticeShown() = Unit
+        override suspend fun isOnboardingIncomplete(): Boolean = onboardingIncomplete
+        override suspend fun setOnboardingIncomplete(incomplete: Boolean) {
+            onboardingIncomplete = incomplete
         }
     }
 }

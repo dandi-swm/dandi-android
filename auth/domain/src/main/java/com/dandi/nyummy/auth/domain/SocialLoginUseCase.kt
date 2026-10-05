@@ -8,6 +8,7 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.tti.TTIHelper
 import java.io.IOException
 import java.util.concurrent.CancellationException
@@ -39,7 +40,13 @@ class SocialLoginUseCase @Inject constructor(
         return try {
             val result = repository.socialLogin(credential)
             when {
-                result.isLoggedIn -> navigationHelper.navigateToAsRoot(PostLoginDestination.from(result.token.redirectUrl))
+                result.isLoggedIn -> {
+                    val destination = PostLoginDestination.from(result.token.redirectUrl)
+                    repository.setOnboardingIncomplete(
+                        destination == OnboardingPage,
+                    )
+                    navigationHelper.navigateToAsRoot(destination)
+                }
                 result.isSignUpRequired -> {
                     socialSignUpSession.start(result.verifiedToken)
                     navigationHelper.navigateTo(SocialSignUpPage)

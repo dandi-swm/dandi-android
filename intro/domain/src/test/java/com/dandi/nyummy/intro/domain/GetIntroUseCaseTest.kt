@@ -14,6 +14,7 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.intro.entity.VersionCheckVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
@@ -48,6 +49,21 @@ class GetIntroUseCaseTest {
     }
 
     @Test
+    fun `리프레시 토큰이 있고 온보딩 미완료면 온보딩을 루트로 복원한다`() = runBlocking {
+        val version = versionCheck(minimumVersionCode = 3)
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = true, onboardingIncomplete = true),
+            remoteConfigHelper = FakeRemoteConfigHelper(version),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        val result = useCase()
+
+        assertEquals(listOf<Page>(OnboardingPage), navigationHelper.rootPages)
+        assertEquals(Result.success(version), result)
+    }
+
+    @Test
     fun `버전 통과 후 리프레시 토큰이 없으면 로그인을 루트로 이동한다`() = runBlocking {
         val version = versionCheck(minimumVersionCode = 3)
         val useCase = buildUseCase(
@@ -60,6 +76,19 @@ class GetIntroUseCaseTest {
 
         assertEquals(listOf<Page>(LoginPage), navigationHelper.rootPages)
         assertEquals(Result.success(version), result)
+    }
+
+    @Test
+    fun `리프레시 토큰이 없으면 온보딩 플래그와 관계없이 로그인으로 이동한다`() = runBlocking {
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = false, onboardingIncomplete = true),
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        useCase()
+
+        assertEquals(listOf<Page>(LoginPage), navigationHelper.rootPages)
     }
 
     @Test
@@ -250,11 +279,13 @@ class GetIntroUseCaseTest {
     private class FakeIntroRepository(
         private val hasRefreshToken: Boolean,
         private var permissionNoticeShown: Boolean = true,
+        private val onboardingIncomplete: Boolean = false,
     ) : IntroRepository {
         var markPermissionNoticeShownCount = 0
             private set
 
         override suspend fun hasRefreshToken(): Boolean = hasRefreshToken
+        override suspend fun isOnboardingIncomplete(): Boolean = onboardingIncomplete
         override suspend fun hasShownPermissionNotice(): Boolean = permissionNoticeShown
         override suspend fun markPermissionNoticeShown() {
             permissionNoticeShown = true
