@@ -13,7 +13,6 @@ import com.kakao.sdk.common.model.AuthErrorCause
 import com.kakao.sdk.common.model.ClientError
 import com.kakao.sdk.common.model.ClientErrorCause
 import com.kakao.sdk.user.UserApiClient
-import java.security.SecureRandom
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -23,12 +22,9 @@ import java.util.concurrent.atomic.AtomicBoolean
  * 서버는 ID 토큰과, 그 토큰에 박힌 nonce 를 대조해 재전송 공격을 막으므로 시도마다 새 nonce 를 만든다.
  * ID 토큰은 카카오 디벨로퍼스 콘솔에서 OpenID Connect 를 켜야 발급된다.
  */
-internal object KakaoLoginClient : SocialLoginClient {
+internal object KakaoLoginClient : SocialLoginClient() {
 
     private const val TAG = "KakaoLogin"
-    private const val NONCE_BYTES = 16
-
-    private val secureRandom = SecureRandom()
 
     override val type: SocialLoginType = SocialLoginType.KAKAO
 
@@ -102,9 +98,4 @@ internal object KakaoLoginClient : SocialLoginClient {
     private fun Throwable.isCancellation(): Boolean =
         (this is ClientError && reason == ClientErrorCause.Cancelled) ||
             (this is AuthError && reason == AuthErrorCause.AccessDenied)
-
-    private fun newNonce(): String {
-        val bytes = ByteArray(NONCE_BYTES).also(secureRandom::nextBytes)
-        return bytes.joinToString(separator = "") { "%02x".format(it) }
-    }
 }
