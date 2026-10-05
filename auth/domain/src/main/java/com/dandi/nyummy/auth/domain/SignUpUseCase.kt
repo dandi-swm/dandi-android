@@ -8,7 +8,7 @@ import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
-import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.tti.TTIHelper
 import java.io.IOException
 import java.util.concurrent.CancellationException
@@ -24,7 +24,7 @@ class SignUpUseCase @Inject constructor(
 ) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
 
     /**
-     * 이메일 회원가입. 성공 시 로그인 상태가 되어 홈으로 이동한다.
+     * 이메일 회원가입. 성공 시 로그인 상태가 되어 고양이 이름을 짓는 온보딩으로 이동한다.
      *
      * 발급 토큰 저장은 data 레이어에서 담당한다.
      *
@@ -53,7 +53,8 @@ class SignUpUseCase @Inject constructor(
             height = height,
             weight = weight,
         )
-        navigationHelper.navigateToAsRoot(HomePage)
+        repository.setOnboardingIncomplete(incomplete = true)
+        navigationHelper.navigateToAsRoot(OnboardingPage)
         Result.success(Unit)
     } catch (e: HttpResponseException) {
         handleSignUpError(e)
@@ -67,7 +68,7 @@ class SignUpUseCase @Inject constructor(
 
     /**
      * 소셜 로그인 신규 회원의 회원가입. [SocialSignUpSession] 에 보관된 검증 완료 토큰을 쓰며,
-     * 비밀번호는 보내지 않는다. 성공 시 홈으로 이동한다.
+     * 비밀번호는 보내지 않는다. 성공 시 온보딩으로 이동한다.
      */
     suspend fun signUpWithSocial(
         nickname: String,
@@ -92,8 +93,9 @@ class SignUpUseCase @Inject constructor(
                 height = height,
                 weight = weight,
             )
+            repository.setOnboardingIncomplete(incomplete = true)
             socialSignUpSession.clear()
-            navigationHelper.navigateToAsRoot(HomePage)
+            navigationHelper.navigateToAsRoot(OnboardingPage)
             Result.success(Unit)
         } catch (e: HttpResponseException) {
             handleSocialSignUpError(e)

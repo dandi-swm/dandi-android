@@ -78,3 +78,8 @@ include(":intro:presentation")
 include(":intro:domain")
 include(":intro:data")
 include(":intro:entity")
+
+include(":onboarding:presentation")
+include(":onboarding:domain")
+include(":onboarding:data")
+include(":onboarding:entity")

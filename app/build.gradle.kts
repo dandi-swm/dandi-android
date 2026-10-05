@@ -17,8 +17,8 @@ android {
         applicationId = "com.dandi.nyummy"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -114,6 +114,11 @@ dependencies {
     implementation(project(":intro:domain"))
     implementation(project(":intro:data"))
     implementation(project(":intro:entity"))
+
+    implementation(project(":onboarding:presentation"))
+    implementation(project(":onboarding:domain"))
+    implementation(project(":onboarding:data"))
+    implementation(project(":onboarding:entity"))
 
     // FCM 리마인드 알림 + 냐미 홈 위젯 (임시 구현)
     implementation(platform(libs.firebase.bom))

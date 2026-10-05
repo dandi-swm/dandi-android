@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_character_description">길에서 만난 고양이</string>
+    <string name="onboarding_skip">건너뛰기</string>
+    <string name="onboarding_tap_to_continue">탭해서 계속</string>
+    <string name="onboarding_speaker_user">나</string>
+    <string name="onboarding_speaker_unknown_cat">\?\?\?</string>
+
+    <!-- 1. 퇴근길 골목 -->
+    <string name="onboarding_line_alley_1">오늘도 끼니를 대충 때운 하루였다.</string>
+    <string name="onboarding_line_alley_2">터덜터덜, 가로등 하나 켜진 골목을 지나 집으로 가던 길.</string>
+
+    <!-- 2. 상자 속 길냥이 -->
+    <string name="onboarding_line_meet_1">…냐아.</string>
+    <string name="onboarding_line_meet_2">골목 구석 종이 상자 안에서, 작은 고양이가 이쪽을 빤히 보고 있다.</string>
+    <string name="onboarding_line_meet_3">어떻게 할까?</string>
+    <string name="onboarding_choice_hand">쪼그려 앉아 손을 내민다</string>
+    <string name="onboarding_choice_snack">가방 속 간식을 꺼낸다</string>
+    <string name="onboarding_line_hand_1">…안녕? 무서워하지 마.</string>
+    <string name="onboarding_line_hand_2">고양이가 조심조심 상자에서 나와, 손끝 냄새를 킁킁 맡는다.</string>
+    <string name="onboarding_line_snack_1">배고프지? 이거 먹을래?</string>
+    <string name="onboarding_line_snack_2">고양이가 간식을 오물오물 먹더니, 이쪽을 빤히 올려다본다.</string>
+
+    <!-- 3. 간택 -->
+    <string name="onboarding_line_chosen_1">그러더니 내 손에 머리를 꾹, 비볐다.</string>
+    <string name="onboarding_line_chosen_2">…아무래도 간택당한 것 같다.</string>
+
+    <!-- 4. 서비스 소개 -->
+    <string name="onboarding_line_talk_1">너, 밥은 제대로 먹고 다니냐옹?</string>
+    <string name="onboarding_line_talk_2">…응? 방금 고양이가 말한 거야?</string>
+    <string name="onboarding_line_talk_3">앞으로 네가 먹는 걸 사진으로 보여줘. 내가 같이 먹어줄게.</string>
+    <string name="onboarding_line_talk_4">네가 잘 챙겨 먹으면 나도 무럭무럭 큰다냥. 대충 먹으면… 나도 비실비실해질 거야.</string>
+    <string name="onboarding_line_talk_5">그러니까 오늘부터 우리 같이 먹자!</string>
+    <string name="onboarding_line_talk_6">같이 밥 먹는 고양이라니. …좋아, 해보자.</string>
+
+    <!-- 5. 이름 짓기 -->
+    <string name="onboarding_line_name_1">그런데… 나 아직 이름이 없어.</string>
+    <string name="onboarding_line_name_2">네가 지어줄래?</string>
+    <string name="onboarding_name_label">고양이 이름</string>
+    <string name="onboarding_name_placeholder">예: 냐미</string>
+    <string name="onboarding_name_helper">%1$d자까지 지을 수 있어요</string>
+    <string name="onboarding_name_error_empty">이름을 지어주세요</string>
+    <string name="onboarding_name_error_too_long">이름은 %1$d자까지 지을 수 있어요</string>
+    <string name="onboarding_name_submit">이 이름으로 할래</string>
+
+    <!-- 6. 이름을 받은 고양이 -->
+    <string name="onboarding_line_named_1">「%1$s」…!</string>
+    <string name="onboarding_line_named_2">마음에 들어! 오늘부터 난 %1$s야.</string>
+    <string name="onboarding_line_named_3">앞으로 잘 부탁해, 집사!</string>
+    <string name="onboarding_start">함께 시작하기</string>
+</resources>

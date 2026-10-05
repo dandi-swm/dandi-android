@@ -67,6 +67,8 @@ dependencies {
     implementation(project(":auth:presentation"))
     implementation(project(":intro:domain"))
     implementation(project(":intro:presentation"))
+    implementation(project(":onboarding:domain"))
+    implementation(project(":onboarding:presentation"))
     implementation(project(":collection:domain"))
     implementation(project(":collection:presentation"))
     implementation(project(":shop:domain"))

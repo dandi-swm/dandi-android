@@ -19,6 +19,8 @@ import com.dandi.nyummy.intro.presentation.IntroPage
 import com.dandi.nyummy.main.domain.deeplink.RoutePattern
 import com.dandi.nyummy.meal.domain.MealRecordPage
 import com.dandi.nyummy.meal.presentation.MealRecordPage
+import com.dandi.nyummy.onboarding.domain.OnboardingPage
+import com.dandi.nyummy.onboarding.presentation.OnboardingPage
 import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.shop.presentation.ShopPage
 
@@ -31,6 +33,11 @@ val appRoutes: List<AppRoute> = listOf(
         path = IntroPage.PATH,
         isBottomTab = false,
         render = { IntroPage() },
+    ),
+    AppRoute(
+        path = OnboardingPage.PATH,
+        isBottomTab = false,
+        render = { OnboardingPage() },
     ),
     AppRoute(
         path = LoginPage.PATH, isBottomTab = false, render = {
