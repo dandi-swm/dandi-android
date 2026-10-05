@@ -16,7 +16,7 @@ data class LoginRequestDTO(
  *
  * @property provider 소셜 제공자 (`KAKAO` 등)
  * @property token 제공자 SDK 로 받은 토큰 (OIDC 제공자는 ID 토큰, 그 외는 access token)
- * @property nonce SDK 로그인 때 넘긴 nonce. OIDC 제공자(카카오)는 필수, 그 외는 생략
+ * @property nonce SDK 로그인 때 넘긴 nonce. OIDC 제공자(카카오·구글)는 필수, 그 외는 생략
  */
 @Serializable
 data class OAuthLoginRequestDTO(

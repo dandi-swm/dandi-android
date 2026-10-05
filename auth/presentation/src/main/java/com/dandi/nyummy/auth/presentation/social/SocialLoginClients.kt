@@ -8,11 +8,12 @@ import com.kakao.sdk.common.KakaoSdk
 
 /**
  * 제공자별 로그인 클라이언트. 아직 연동하지 않은 제공자는 null 이다.
- * 구글·네이버를 붙일 때 [SocialLoginClient] 구현체를 만들어 여기에 등록한다.
+ * 네이버를 붙일 때 [SocialLoginClient] 구현체를 만들어 여기에 등록한다.
  */
 fun socialLoginClientOf(type: SocialLoginType): SocialLoginClient? = when (type) {
     SocialLoginType.KAKAO -> KakaoLoginClient
-    SocialLoginType.GOOGLE, SocialLoginType.NAVER -> null
+    SocialLoginType.GOOGLE -> GoogleLoginClient
+    SocialLoginType.NAVER -> null
 }
 
 /**
