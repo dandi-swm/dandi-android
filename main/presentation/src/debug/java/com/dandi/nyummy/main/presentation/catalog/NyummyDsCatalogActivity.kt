@@ -19,11 +19,13 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +36,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadge
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadgeTone
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomCta
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomNav
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBubbleTail
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
@@ -46,6 +49,9 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircula
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCoachCard
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCodeInput
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCoinPill
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyConfirmSheet
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialog
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialogType
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDivider
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
@@ -61,8 +67,11 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySection
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionHeader
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionHeaderWithMeta
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySegmentedControl
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySheetTitle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeleton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeletonShape
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackbar
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackbarHost
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStepIndicator
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStreakPill
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySwitch
@@ -82,6 +91,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyWheelPi
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.launch
 
 /**
  * 새 디자인 시스템(NyummyTheme) 컴포넌트를 Figma `03 Components`와 나란히 비교하는 디버그 카탈로그.
@@ -125,6 +135,7 @@ private val CatalogEntries = listOf(
     CatalogEntry("Bottom Nav") { BottomNavSection() },
     CatalogEntry("Pose") { PoseSection() },
     CatalogEntry("Voice") { VoiceSection() },
+    CatalogEntry("Overlays") { OverlaySection() },
 )
 
 private const val ExtraSection = "section"
@@ -428,4 +439,99 @@ private fun VoiceSection() {
     NyummyCoachCard(text = "채소 가득한 비빔밥이네! 오늘 첫 끼 최고였어. 다음 끼니도 같이 먹자. 내일은 단백질도 조금 더 챙겨 보자")
     NyummyCoachCard(text = "오늘 첫 끼 최고였어")
     NyummyVoiceToast(text = "기록 완료! 냐미가 맛있게 먹었어")
+}
+
+private enum class CatalogOverlay { Confirm, Alert, Destructive, Input, Sheet, KeepGoing, DeleteSheet }
+
+@Composable
+private fun OverlaySection() {
+    var open by remember { mutableStateOf<CatalogOverlay?>(null) }
+    val close = { open = null }
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
+    ) {
+        CatalogOverlay.entries.forEach { overlay ->
+            NyummyButton(
+                text = overlay.name,
+                onClick = { open = overlay },
+                style = NyummyButtonStyle.Secondary,
+                size = NyummyButtonSize.S,
+            )
+        }
+    }
+    NyummySnackbar(message = "식사 기록을 삭제했어요", actionLabel = "실행 취소")
+    val hostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    NyummyButton(
+        text = "스낵바 띄우기",
+        onClick = { scope.launch { hostState.showSnackbar("식사 기록을 삭제했어요", actionLabel = "실행 취소") } },
+        style = NyummyButtonStyle.Secondary,
+        size = NyummyButtonSize.M,
+    )
+    NyummySnackbarHost(hostState = hostState)
+
+    when (open) {
+        CatalogOverlay.Confirm -> NyummyDialog(
+            title = "기록을 그만둘까요?",
+            body = "지금 나가면 찍은 사진이 사라져요.",
+            confirmText = "나가기",
+            onConfirm = close,
+            onDismissRequest = close,
+        )
+        CatalogOverlay.Alert -> NyummyDialog(
+            title = "전송하지 못했어요",
+            body = "네트워크를 확인하고 다시 시도해 주세요.",
+            confirmText = "다시 시도",
+            onConfirm = close,
+            onDismissRequest = close,
+            type = NyummyDialogType.Alert,
+        )
+        CatalogOverlay.Destructive -> NyummyDialog(
+            title = "기록을 삭제할까요?",
+            body = "삭제한 기록은 되돌릴 수 없어요.",
+            confirmText = "삭제하기",
+            onConfirm = close,
+            onDismissRequest = close,
+            type = NyummyDialogType.Destructive,
+        )
+        CatalogOverlay.Input -> {
+            var name by remember { mutableStateOf("비빔밥") }
+            NyummyDialog(
+                title = "음식 이름 수정",
+                confirmText = "저장",
+                onConfirm = close,
+                onDismissRequest = close,
+                confirmEnabled = name.isNotBlank(),
+            ) {
+                NyummyTextField(value = name, onValueChange = { name = it }, label = "음식 이름")
+            }
+        }
+        CatalogOverlay.Sheet -> NyummyBottomSheet(onDismissRequest = close) {
+            NyummySheetTitle("오늘 식사 요약")
+            NyummyCard(title = "오늘 1개 기록했어요", body = "칼로리와 탄단지는 참고로만 보여 줄게요.", modifier = Modifier.fillMaxWidth())
+            NyummyButton(text = "밥 주기", onClick = close, modifier = Modifier.fillMaxWidth())
+        }
+        CatalogOverlay.KeepGoing -> NyummyConfirmSheet(
+            title = "기록을 그만둘까요?",
+            body = "냐미가 밥을 기다리고 있어요",
+            primaryText = "계속 기록하기",
+            onPrimary = close,
+            secondaryText = "그만두기",
+            onSecondary = close,
+            onDismissRequest = close,
+        )
+        CatalogOverlay.DeleteSheet -> NyummyConfirmSheet(
+            title = "계정을 삭제할까요?",
+            body = "냐미와 쌓은 기록이 모두 사라져요",
+            primaryText = "삭제하기",
+            onPrimary = close,
+            secondaryText = "닫기",
+            onSecondary = close,
+            onDismissRequest = close,
+            pose = NyummyPose.Shy,
+            destructive = true,
+        )
+        null -> Unit
+    }
 }

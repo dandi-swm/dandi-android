@@ -105,4 +105,25 @@ internal object NyummyComponentDimens {
 
     /** Voice Toast 안쪽 여백. */
     val VoiceToastPadding = 6.dp
+
+    /** 카드, 대화창, 버튼, 스낵바의 최대 너비(태블릿에서는 가운데 정렬). */
+    val ContentMaxWidth = 480.dp
+
+    /** Dialog 최대 너비와 화면 좌우 여백. */
+    val DialogMaxWidth = 320.dp
+    val DialogScreenMargin = 32.dp
+
+    /** Bottom Sheet 손잡이. */
+    val SheetHandleWidth = 40.dp
+    val SheetHandleHeight = 4.dp
+
+    /** Confirm Sheet 냐미 크기와 바닥 타원. */
+    val ConfirmSheetPoseSize = 128.dp
+    val ConfirmSheetGroundWidth = 80.dp
+    val ConfirmSheetGroundHeight = 10.dp
+
+    /** Snackbar 높이와 행동 버튼 칸. */
+    val SnackbarHeight = 56.dp
+    val SnackbarActionMinWidth = 60.dp
+    val SnackbarActionHeight = 40.dp
 }
