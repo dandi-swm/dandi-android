@@ -70,4 +70,23 @@ internal object NyummyComponentDimens {
 
     /** Skeleton 한 줄 높이. */
     val SkeletonLineHeight = 14.dp
+
+    /** Top Bar 높이. */
+    val TopBarHeight = 56.dp
+
+    /** Bottom Nav 탭 칸, 선택 상자, 아이콘, 위아래 여백. */
+    val BottomNavTabWidth = 70.dp
+    val BottomNavTabHeight = 58.dp
+    val BottomNavSelectedWidth = 60.dp
+    val BottomNavSelectedHeight = 56.dp
+    val BottomNavIconSize = 28.dp
+    val BottomNavTopPadding = 6.dp
+
+    /** Tab Item 아래 여백과 밑줄 두께. */
+    val TabItemBottomPadding = 10.dp
+    val TabIndicatorHeight = 2.dp
+
+    /** Step Indicator 막대 두께와 간격. */
+    val StepBarHeight = 6.dp
+    val StepBarGap = 6.dp
 }
