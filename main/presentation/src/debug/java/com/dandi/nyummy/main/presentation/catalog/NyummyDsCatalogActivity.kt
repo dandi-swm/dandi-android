@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -31,6 +33,7 @@ import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadge
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadgeTone
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomCta
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomNav
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
@@ -47,6 +50,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconBut
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyLinearProgress
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRowTrailing
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMainTabs
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPasswordVisibilityToggle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRadio
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionCaption
@@ -55,14 +59,17 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySection
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySegmentedControl
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeleton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeletonShape
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStepIndicator
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStreakPill
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySwitch
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTabs
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextArea
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonTone
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextField
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyWheelColumn
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyWheelPicker
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyWheelPickerFrame
@@ -74,6 +81,7 @@ import kotlinx.collections.immutable.toImmutableList
  * 새 디자인 시스템(NyummyTheme) 컴포넌트를 Figma `03 Components`와 나란히 비교하는 디버그 카탈로그.
  *
  * 실행: adb shell am start -n com.dandi.nyummy/com.dandi.nyummy.main.presentation.catalog.NyummyDsCatalogActivity
+ * 특정 섹션부터 보기: 위 명령에 `--es section "Bottom Nav"`를 붙인다.
  */
 class NyummyDsCatalogActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,36 +89,50 @@ class NyummyDsCatalogActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             NyummyTheme {
-                NyummyDsCatalog()
+                NyummyDsCatalog(initialSection = intent.getStringExtra(ExtraSection))
             }
         }
     }
 }
 
+private class CatalogEntry(val title: String, val content: @Composable ColumnScope.() -> Unit)
+
+/** 섹션 순서. 새 컴포넌트 PR마다 여기에 섹션을 더한다. */
+private val CatalogEntries = listOf(
+    CatalogEntry("Button") { ButtonSection() },
+    CatalogEntry("Text Button") { TextButtonSection() },
+    CatalogEntry("Icon Button") { IconButtonSection() },
+    CatalogEntry("Chip") { ChipSection() },
+    CatalogEntry("Bottom CTA") { BottomCtaSection() },
+    CatalogEntry("Text Field") { TextFieldSection() },
+    CatalogEntry("Text Area") { TextAreaSection() },
+    CatalogEntry("Code Input") { CodeInputSection() },
+    CatalogEntry("Segmented Control") { SegmentedSection() },
+    CatalogEntry("Wheel Picker") { WheelPickerSection() },
+    CatalogEntry("Checkbox, Radio, Switch") { SelectionSection() },
+    CatalogEntry("Card") { CardSection() },
+    CatalogEntry("List Row") { ListRowSection() },
+    CatalogEntry("Badge, HUD Pill") { BadgeHudSection() },
+    CatalogEntry("Progress") { ProgressSection() },
+    CatalogEntry("Section Header, Divider, Skeleton") { StructureSection() },
+    CatalogEntry("Top Bar, Tabs, Step Indicator") { NavigationSection() },
+    CatalogEntry("Bottom Nav") { BottomNavSection() },
+)
+
+private const val ExtraSection = "section"
+
 @Composable
-private fun NyummyDsCatalog() {
+private fun NyummyDsCatalog(initialSection: String?) {
+    val initialIndex = CatalogEntries.indexOfFirst { it.title == initialSection }.coerceAtLeast(0)
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
     LazyColumn(
+        state = listState,
         modifier = Modifier
             .fillMaxSize()
             .background(NyummyTheme.colors.bg.canvas)
             .statusBarsPadding(),
     ) {
-        item { CatalogSection("Button") { ButtonSection() } }
-        item { CatalogSection("Text Button") { TextButtonSection() } }
-        item { CatalogSection("Icon Button") { IconButtonSection() } }
-        item { CatalogSection("Chip") { ChipSection() } }
-        item { CatalogSection("Bottom CTA") { BottomCtaSection() } }
-        item { CatalogSection("Text Field") { TextFieldSection() } }
-        item { CatalogSection("Text Area") { TextAreaSection() } }
-        item { CatalogSection("Code Input") { CodeInputSection() } }
-        item { CatalogSection("Segmented Control") { SegmentedSection() } }
-        item { CatalogSection("Wheel Picker") { WheelPickerSection() } }
-        item { CatalogSection("Checkbox, Radio, Switch") { SelectionSection() } }
-        item { CatalogSection("Card") { CardSection() } }
-        item { CatalogSection("List Row") { ListRowSection() } }
-        item { CatalogSection("Badge, HUD Pill") { BadgeHudSection() } }
-        item { CatalogSection("Progress") { ProgressSection() } }
-        item { CatalogSection("Section Header, Divider, Skeleton") { StructureSection() } }
+        items(CatalogEntries, key = { it.title }) { entry -> CatalogSection(entry.title, entry.content) }
     }
 }
 
@@ -365,4 +387,21 @@ private fun StructureSection() {
             NyummySkeleton(NyummySkeletonShape.Block, Modifier.fillMaxWidth().height(NyummyTheme.size.bottomNav))
         }
     }
+}
+
+@Composable
+private fun NavigationSection() {
+    NyummyTopBar(title = "히스토리", onBackClick = {})
+    NyummyTopBar(title = "설정", onBackClick = {}, trailing = { NyummyTextButton(text = "문의하기", onClick = {}) })
+    var tab by remember { mutableIntStateOf(0) }
+    NyummyTabs(tabs = persistentListOf("전체", "모자", "옷", "소품"), selectedIndex = tab, onSelect = { tab = it })
+    var step by remember { mutableIntStateOf(1) }
+    NyummyStepIndicator(currentStep = step, totalSteps = 3)
+    NyummyTextButton(text = "다음 단계", onClick = { step = step % 3 + 1 })
+}
+
+@Composable
+private fun BottomNavSection() {
+    var selected by remember { mutableIntStateOf(0) }
+    NyummyBottomNav(items = NyummyMainTabs, selectedIndex = selected, onSelect = { selected = it })
 }
