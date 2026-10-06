@@ -35,6 +35,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -60,6 +61,7 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  * - 배경은 화면 폭에 맞추고 아래에 붙인다. 남는 위쪽은 배경 상단과 같은 흰색이다.
  * - 냐미는 스테이지 바닥선(배경 높이의 73.5%)에 발을 맞추고 크기는 min(폭 × 0.64, 300)이다.
  *   제목과 겹치면 최소 170까지 줄인다.
+ * - 화면 높이가 [CompactHeight]보다 낮으면 제목 블록을 작게 쓴다(로고 120×70, 제목 26, 위 여백 24).
  * - 스티커는 냐미 중심 기준 상대 좌표로 두고, 제목이나 진행 카드와 겹치거나 화면 밖이면 숨긴다.
  */
 @Composable
@@ -88,7 +90,9 @@ fun IntroSplashContent(
     val topInset = WindowInsets.statusBars.getTop(density)
     val bottomInset = WindowInsets.navigationBars.getBottom(density)
     val gutterDp = theme.spacing.gutter
-    val titleTopGap = theme.spacing.s32
+    val windowHeight = with(density) { LocalWindowInfo.current.containerSize.height.toDp() }
+    val compact = windowHeight < CompactHeight
+    val titleTopGap = if (compact) theme.spacing.s24 else theme.spacing.s32
     val cardBottomGap = theme.spacing.s24
     val heroTitleGap = theme.spacing.s8
     val background = painterResource(R.drawable.intro_bg_kitchen)
@@ -105,7 +109,7 @@ fun IntroSplashContent(
                 contentScale = ContentScale.FillBounds,
                 modifier = Modifier.layoutId(SplashSlot.Background),
             )
-            SplashTitleBlock(modifier = Modifier.layoutId(SplashSlot.Title))
+            SplashTitleBlock(compact = compact, modifier = Modifier.layoutId(SplashSlot.Title))
             Image(
                 painter = painterResource(R.drawable.intro_hero_basket),
                 contentDescription = null,
@@ -217,27 +221,28 @@ private enum class SplashSticker(
 private val SplashStickers = SplashSticker.entries
 
 @Composable
-private fun SplashTitleBlock(modifier: Modifier = Modifier) {
+private fun SplashTitleBlock(compact: Boolean, modifier: Modifier = Modifier) {
     val theme = NyummyTheme
+    val headline = if (compact) theme.typography.displayM else theme.typography.displayL
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(theme.spacing.s12),
+        verticalArrangement = Arrangement.spacedBy(if (compact) theme.spacing.s8 else theme.spacing.s12),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Image(
             painter = painterResource(CommonR.drawable.nyummy_brand_logo),
             contentDescription = stringResource(R.string.intro_splash_logo_description),
-            modifier = Modifier.size(LogoWidth, LogoHeight),
+            modifier = if (compact) Modifier.size(CompactLogoWidth, CompactLogoHeight) else Modifier.size(LogoWidth, LogoHeight),
         )
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             NyummyText(
                 text = stringResource(R.string.intro_splash_headline_line1),
-                style = theme.typography.displayL,
+                style = headline,
                 textAlign = TextAlign.Center,
             )
             NyummyText(
                 text = stringResource(R.string.intro_splash_headline_line2),
-                style = theme.typography.displayL,
+                style = headline,
                 color = theme.colors.content.brand,
                 textAlign = TextAlign.Center,
             )
@@ -363,6 +368,11 @@ private val HeroReferenceSize = 250.dp
 
 private val LogoWidth = 154.dp
 private val LogoHeight = 90.dp
+private val CompactLogoWidth = 120.dp
+private val CompactLogoHeight = 70.dp
+
+/** 이보다 낮은 화면(360×640 등)은 제목 블록을 작게 써서 냐미가 제목에 가리지 않게 한다. */
+private val CompactHeight = 720.dp
 private val SubtitleIconGap = 6.dp
 private val StickerSize = 56.dp
 private val StickerFoodSize = 36.dp

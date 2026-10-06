@@ -12,6 +12,7 @@ import androidx.metrics.performance.JankStats
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.LocalTTIHelper
+import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.common.presentation.jank.JankReporter
@@ -76,8 +77,11 @@ class MainActivity : ComponentActivity() {
                 LocalMessageHelper provides messageHelper,
                 LocalJankReporter provides jankReporter,
                 LocalTTIHelper provides ttiHelper,
-                ) {
-                RootComposable(startStack = startStack)
+            ) {
+                // 새 디자인 시스템 값(색, 글자, 간격 등)은 여기서 한 번만 공급하고, 화면은 NyummyTheme.colors처럼 읽기만 한다.
+                NyummyTheme {
+                    RootComposable(startStack = startStack)
+                }
             }
         }
     }
