@@ -1,34 +1,22 @@
 package com.dandi.nyummy.auth.presentation
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dandi.nyummy.common.presentation.component.DandiText
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStepIndicator
+import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
- * 회원가입 퍼널 화면. 계정 정보 → 이메일 인증 코드 → 프로필 입력의 3단계를
- * 한 라우트 안에서 진행한다 (비밀번호 등 민감 값이 라우트 인자로 남지 않도록).
+ * 회원가입 퍼널 화면. 계정 정보 → 이메일 인증 코드 → 프로필 입력의
+ * 3단계를 한 라우트 안에서 진행한다(비밀번호 등 민감 값이 라우트 인자로 남지 않도록).
  *
- * [isSocialSignUp] 이면 소셜 로그인 신규 회원의 가입(`/signup/social`)으로, 프로필 입력만 보인다.
+ * [isSocialSignUp]이면 소셜 로그인 신규 회원의 가입(`/signup/social`)으로, 단계 표시 없이 프로필 입력만 보인다.
  */
 @Composable
 fun SignUpPage(
@@ -42,49 +30,41 @@ fun SignUpPage(
 }
 
 @Composable
-private fun SignUpContent(
+internal fun SignUpContent(
     uiState: SignUpUIState,
     onIntent: (SignUpIntent) -> Unit,
 ) {
-    // 소셜 가입은 이전 단계가 없으므로 시스템 백이 라우트를 그대로 닫게 둔다.
+    // 소셜 가입은 이전 단계가 없으므로 시스템 뒤로 가기가 라우트를 그대로 닫게 둔다.
     BackHandler(enabled = uiState.step != SignUpStep.ACCOUNT && !uiState.isSocialSignUp) {
         onIntent(SignUpIntent.ClickBackStep)
     }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DesignSystemThemeImpl.designSystemColor.bgDefaultLevel0)
-            .verticalScroll(rememberScrollState())
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .imePadding()
-            .padding(horizontal = DesignSystemThemeImpl.designSystemLayout.mobileGutter),
+    AuthFormScaffold(
+        onBackClick = { onIntent(SignUpIntent.ClickBack) },
+        bottomDivider = uiState.step == SignUpStep.PROFILE,
+        bottom = {
+            when (uiState.step) {
+                SignUpStep.ACCOUNT -> SignUpAccountBottom(uiState = uiState, onIntent = onIntent)
+                SignUpStep.CODE -> SignUpCodeBottom(uiState = uiState, onIntent = onIntent)
+                SignUpStep.PROFILE -> SignUpProfileBottom(uiState = uiState, onIntent = onIntent)
+            }
+        },
     ) {
-        Spacer(Modifier.height(SignUpWordmarkTopPadding))
-        DandiText(
-            text = stringResource(R.string.auth_login_wordmark),
-            color = DesignSystemThemeImpl.designSystemColor.contentBrandWordmark,
-            style = DesignSystemThemeImpl.typeScale.textStrongM,
-        )
-        Spacer(Modifier.height(SignUpWordmarkTitleSpacing))
+        if (!uiState.isSocialSignUp) {
+            NyummyStepIndicator(currentStep = uiState.step.ordinal + 1, totalSteps = SignUpStep.entries.size)
+            Spacer(Modifier.height(NyummyTheme.spacing.s24))
+        }
         when (uiState.step) {
             SignUpStep.ACCOUNT -> SignUpAccountStep(uiState = uiState, onIntent = onIntent)
             SignUpStep.CODE -> SignUpCodeStep(uiState = uiState, onIntent = onIntent)
             SignUpStep.PROFILE -> SignUpProfileStep(uiState = uiState, onIntent = onIntent)
         }
-        Spacer(Modifier.height(SignUpBottomPadding))
     }
 }
-
-internal val SignUpWordmarkTopPadding = 16.dp
-internal val SignUpWordmarkTitleSpacing = 40.dp
-internal val SignUpTitleSubtitleSpacing = 30.dp
-private val SignUpBottomPadding = 24.dp
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun SignUpAccountContentPreview() {
-    DesignSystemTheme {
+    NyummyTheme {
         SignUpContent(uiState = SignUpUIState.empty, onIntent = {})
     }
 }
@@ -92,12 +72,12 @@ private fun SignUpAccountContentPreview() {
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun SignUpCodeContentPreview() {
-    DesignSystemTheme {
+    NyummyTheme {
         SignUpContent(
             uiState = SignUpUIState.empty.copy(
                 step = SignUpStep.CODE,
-                email = "jinu@example.com",
-                code = "427",
+                email = "nyummy@cat.com",
+                code = "482",
                 resendRemainingSeconds = 272,
             ),
             onIntent = {},
@@ -108,12 +88,9 @@ private fun SignUpCodeContentPreview() {
 @Preview(showBackground = true, widthDp = 390, heightDp = 1100)
 @Composable
 private fun SignUpProfileContentPreview() {
-    DesignSystemTheme {
+    NyummyTheme {
         SignUpContent(
-            uiState = SignUpUIState.empty.copy(
-                step = SignUpStep.PROFILE,
-                nickname = "진우 집사",
-            ),
+            uiState = SignUpUIState.empty.copy(step = SignUpStep.PROFILE),
             onIntent = {},
         )
     }

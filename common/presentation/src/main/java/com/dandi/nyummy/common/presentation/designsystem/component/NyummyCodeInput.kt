@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,7 +31,7 @@ import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyum
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
- * 자리별 인증 코드 입력. 셀은 48×56, 2px 테두리, 숫자는 number/m.
+ * 자리별 인증 코드 입력. 셀은 48×56, 2px 테두리, 숫자는 number/m. 셀은 받은 폭에 맞춰 양끝까지 펼친다.
  *
  * 실제 입력은 투명한 [BasicTextField] 하나가 받고 셀은 장식으로만 그린다.
  * 숫자만 받고 [length]를 넘는 입력은 잘라낸다.
@@ -65,7 +67,13 @@ fun NyummyCodeInput(
         decorationBox = { innerTextField ->
             Box {
                 Box(modifier = Modifier.matchParentSize().alpha(0f)) { innerTextField() }
-                Row(horizontalArrangement = Arrangement.spacedBy(theme.spacing.s8)) {
+                // 받은 폭에 맞춰 셀을 양끝까지 펼치되, 셀 사이는 최소 8을 띄운다.
+                Row(
+                    modifier = Modifier
+                        .widthIn(min = NyummyComponentDimens.CodeCellWidth * length + theme.spacing.s8 * (length - 1))
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
                     repeat(length) { index ->
                         CodeCell(
                             digit = value.getOrNull(index),

@@ -23,4 +23,7 @@ sealed interface SignUpIntent : MviIntent {
     data object ClickSubmit : SignUpIntent
 
     data object ClickBackStep : SignUpIntent
+
+    /** 상단 바 뒤로 가기. 이전 단계가 있으면 단계를 되돌리고, 없으면 화면을 닫는다. */
+    data object ClickBack : SignUpIntent
 }

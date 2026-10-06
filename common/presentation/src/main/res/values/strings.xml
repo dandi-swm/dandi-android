@@ -7,4 +7,6 @@
     <string name="meal_gallery_load_failed">We couldn\'t load the photo. Please choose it again</string>
     <string name="meal_gallery_import_failed">We couldn\'t load the photo. Please try again</string>
     <string name="nyummy_scrim_dismiss_label">Close</string>
+    <string name="nyummy_password_show_description">Show password</string>
+    <string name="nyummy_password_hide_description">Hide password</string>
 </resources>

@@ -1,9 +1,7 @@
 <resources>
-    <string name="auth_login_wordmark" translatable="false">nyummy</string>
-    <string name="auth_login_headline_line1">Nyami is</string>
-    <string name="auth_login_headline_line2">waiting for you</string>
+    <string name="auth_login_wordmark">Nyummy</string>
     <string name="auth_login_subtitle">Log today\'s meal together with Nyami.</string>
-    <string name="auth_login_kakao">Start with Kakao</string>
+    <string name="auth_login_kakao">Login with Kakao</string>
     <string name="auth_login_or">Or start another way</string>
     <string name="auth_login_naver_description">Sign in with Naver</string>
     <string name="auth_login_google_description">Sign in with Google</string>
@@ -13,14 +11,12 @@
     <string name="auth_login_terms_and">" and "</string>
     <string name="auth_login_terms_privacy">Privacy Policy</string>
     <string name="auth_login_terms_suffix">.</string>
-    <string name="auth_login_terms_line2">Please review them before you start.</string>
     <string name="auth_login_social_verifying">Signing in with %1$s…</string>
     <string name="auth_login_social_verifying_hint">This only takes a moment</string>
     <string name="auth_social_provider_kakao">Kakao</string>
     <string name="auth_social_provider_google">Google</string>
     <string name="auth_social_provider_naver">Naver</string>
     <string name="auth_login_test_account">Sign in with test account (debug)</string>
-    <string name="auth_email_login_title">Email sign-in</string>
     <string name="auth_email_login_headline">Continue with email</string>
     <string name="auth_email_login_subtitle">Enter the email and password you signed up with.</string>
     <string name="auth_forgot_password">Forgot your password?</string>
@@ -35,12 +31,12 @@
 
     <string name="auth_signup_terms">By continuing, you agree to the Terms of Service and Privacy Policy.</string>
     <string name="auth_signup_title">Create your account</string>
-    <string name="auth_signup_subtitle">Keep your first logs and rewards safe.</string>
+    <string name="auth_signup_subtitle">Keep your first logs safe.</string>
     <string name="auth_signup_password_placeholder">At least 8 characters</string>
     <string name="auth_signup_password_helper">Include letters and numbers.</string>
     <string name="auth_signup_password_confirm_label">Confirm password</string>
     <string name="auth_signup_password_confirm_placeholder">Re-enter your password</string>
-    <string name="auth_signup_cta">Sign up with email</string>
+    <string name="auth_signup_cta">Get verification code</string>
     <string name="auth_signup_error_password_policy">Use at least 8 characters with letters and numbers.</string>
     <string name="auth_signup_error_password_mismatch">Passwords do not match.</string>
     <string name="auth_signup_code_title">Enter the verification code</string>
@@ -51,7 +47,7 @@
     <string name="auth_signup_code_resend_countdown">Resend (%1$s)</string>
     <string name="auth_signup_code_cta">Verify</string>
     <string name="auth_signup_code_input_description">Verification code input</string>
-    <string name="auth_signup_profile_title">Tell us a little\nabout yourself.</string>
+    <string name="auth_signup_profile_title">Tell us a little\nabout yourself</string>
     <string name="auth_signup_profile_subtitle">Used only to calculate your recommendations.</string>
     <string name="auth_signup_nickname_label">Keeper name</string>
     <string name="auth_signup_nickname_placeholder">Enter your keeper name</string>
@@ -68,4 +64,12 @@
     <string name="auth_signup_profile_cta">Start Nyummy</string>
     <string name="auth_signup_error_nickname_empty_title">Please check the required info.</string>
     <string name="auth_signup_error_nickname_empty_desc">Keeper name can\'t be empty.</string>
+    <string name="auth_login_headline">We\'ve been waiting for you!</string>
+    <string name="auth_login_button_loading">Logging in…</string>
+    <string name="auth_signup_unit_year">y</string>
+    <string name="auth_signup_unit_month">m</string>
+    <string name="auth_signup_unit_day">d</string>
+    <string name="auth_signup_birth_year_description">Birth year</string>
+    <string name="auth_signup_birth_month_description">Birth month</string>
+    <string name="auth_signup_birth_day_description">Birth day</string>
 </resources>

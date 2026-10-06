@@ -7,6 +7,7 @@ import com.dandi.nyummy.auth.domain.SignUpUseCase
 import com.dandi.nyummy.auth.domain.SignUpValidator
 import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import com.dandi.nyummy.common.domain.helper.MessageHelper
+import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -27,6 +28,7 @@ class SignUpViewModel @AssistedInject constructor(
     private val emailVerificationUseCase: EmailVerificationUseCase,
     private val signUpUseCase: SignUpUseCase,
     private val messageHelper: MessageHelper,
+    private val navigationHelper: NavigationHelper,
 ) : MviViewModel<SignUpIntent, SignUpUIState, SignUpReducerEvent>(SignUpUIState.initial(isSocialSignUp)) {
 
     @AssistedFactory
@@ -68,6 +70,16 @@ class SignUpViewModel @AssistedInject constructor(
             is SignUpIntent.SelectWeight -> dispatch(SignUpReducerEvent.WeightChanged(intent.value))
             SignUpIntent.ClickSubmit -> submit()
             SignUpIntent.ClickBackStep -> dispatch(SignUpReducerEvent.SteppedBack)
+            SignUpIntent.ClickBack -> goBack()
+        }
+    }
+
+    /** 소셜 가입이거나 첫 단계면 화면을 닫고, 아니면 한 단계 되돌린다. */
+    private fun goBack() {
+        if (currentState.isSocialSignUp || currentState.step == SignUpStep.ACCOUNT) {
+            navigationHelper.navigateToBack()
+        } else {
+            dispatch(SignUpReducerEvent.SteppedBack)
         }
     }
 

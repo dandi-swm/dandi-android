@@ -1,116 +1,103 @@
 package com.dandi.nyummy.auth.presentation
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.auth.domain.SignUpFieldError
-import com.dandi.nyummy.common.presentation.component.DandiText
-import com.dandi.nyummy.common.presentation.component.NyummyButton
-import com.dandi.nyummy.common.presentation.component.NyummyButtonSize
-import com.dandi.nyummy.common.presentation.component.NyummyButtonStyle
-import com.dandi.nyummy.common.presentation.component.NyummyTextField
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPasswordVisibilityToggle
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextField
+import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
-/**
- * 회원가입 1단계 — 이메일·비밀번호 입력 (Figma `LIVE / AUTH · Email Signup`).
- */
+/** 회원가입 1단계. 이메일, 비밀번호, 비밀번호 확인. */
 @Composable
-internal fun SignUpAccountStep(
+internal fun ColumnScope.SignUpAccountStep(
     uiState: SignUpUIState,
     onIntent: (SignUpIntent) -> Unit,
 ) {
-    Column {
-        DandiText(
-            text = stringResource(R.string.auth_signup_title),
-            color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel0,
-            style = DesignSystemThemeImpl.typeScale.displayRegularXL,
-        )
-        Spacer(Modifier.height(SignUpTitleSubtitleSpacing))
-        DandiText(
-            text = stringResource(R.string.auth_signup_subtitle),
-            color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel1,
-            maxLines = 2,
-            style = DesignSystemThemeImpl.typeScale.textRegularL,
-        )
-        Spacer(Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space24))
-        NyummyTextField(
-            value = uiState.email,
-            onValueChange = { onIntent(SignUpIntent.InputEmail(it)) },
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = stringResource(R.string.auth_email_placeholder),
-            label = stringResource(R.string.auth_email_label),
-            helperText = uiState.emailError?.let { stringResource(it.messageRes()) },
-            isError = uiState.emailError != null,
-            enabled = !uiState.isLoading,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next,
-            ),
-        )
-        Spacer(Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space24))
-        NyummyTextField(
-            value = uiState.password,
-            onValueChange = { onIntent(SignUpIntent.InputPassword(it)) },
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = stringResource(R.string.auth_signup_password_placeholder),
-            label = stringResource(R.string.auth_password_label),
-            helperText = stringResource(
-                uiState.passwordError?.messageRes() ?: R.string.auth_signup_password_helper,
-            ),
-            isError = uiState.passwordError != null,
-            enabled = !uiState.isLoading,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Next,
-            ),
-            visualTransformation = PasswordVisualTransformation(),
-        )
-        Spacer(Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space24))
-        NyummyTextField(
-            value = uiState.passwordConfirm,
-            onValueChange = { onIntent(SignUpIntent.InputPasswordConfirm(it)) },
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = stringResource(R.string.auth_signup_password_confirm_placeholder),
-            label = stringResource(R.string.auth_signup_password_confirm_label),
-            helperText = uiState.passwordConfirmError?.let { stringResource(it.messageRes()) },
-            isError = uiState.passwordConfirmError != null,
-            enabled = !uiState.isLoading,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done,
-            ),
-            visualTransformation = PasswordVisualTransformation(),
-        )
-        Spacer(Modifier.height(SignUpAccountCtaSpacing))
-        NyummyButton(
-            label = stringResource(R.string.auth_signup_cta),
-            modifier = Modifier.fillMaxWidth(),
-            style = NyummyButtonStyle.Primary,
-            size = NyummyButtonSize.Large,
-            enabled = uiState.isSendCodeEnabled,
-            loading = uiState.isLoading,
-            onClick = { onIntent(SignUpIntent.ClickSendCode) },
-        )
-        Spacer(Modifier.height(SignUpAccountTermsSpacing))
-        DandiText(
-            text = stringResource(R.string.auth_signup_terms),
-            modifier = Modifier.fillMaxWidth(),
-            color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel1,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            style = DesignSystemThemeImpl.typeScale.textRegularS,
-        )
-    }
+    val theme = NyummyTheme
+    val enabled = !uiState.isLoading
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
+    var confirmVisible by rememberSaveable { mutableStateOf(false) }
+
+    AuthFormHeader(
+        title = stringResource(R.string.auth_signup_title),
+        subtitle = stringResource(R.string.auth_signup_subtitle),
+    )
+    NyummyTextField(
+        value = uiState.email,
+        onValueChange = { onIntent(SignUpIntent.InputEmail(it)) },
+        label = stringResource(R.string.auth_email_label),
+        placeholder = stringResource(R.string.auth_email_placeholder),
+        errorMessage = uiState.emailError?.let { stringResource(it.messageRes()) },
+        enabled = enabled,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Spacer(Modifier.height(theme.spacing.s16))
+    NyummyTextField(
+        value = uiState.password,
+        onValueChange = { onIntent(SignUpIntent.InputPassword(it)) },
+        label = stringResource(R.string.auth_password_label),
+        placeholder = stringResource(R.string.auth_signup_password_placeholder),
+        helperText = stringResource(R.string.auth_signup_password_helper),
+        errorMessage = uiState.passwordError?.let { stringResource(it.messageRes()) },
+        enabled = enabled,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        trailing = { NyummyPasswordVisibilityToggle(visible = passwordVisible, onToggle = { passwordVisible = !passwordVisible }) },
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Spacer(Modifier.height(theme.spacing.s16))
+    NyummyTextField(
+        value = uiState.passwordConfirm,
+        onValueChange = { onIntent(SignUpIntent.InputPasswordConfirm(it)) },
+        label = stringResource(R.string.auth_signup_password_confirm_label),
+        placeholder = stringResource(R.string.auth_signup_password_confirm_placeholder),
+        errorMessage = uiState.passwordConfirmError?.let { stringResource(it.messageRes()) },
+        enabled = enabled,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+        visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        trailing = { NyummyPasswordVisibilityToggle(visible = confirmVisible, onToggle = { confirmVisible = !confirmVisible }) },
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+/** 1단계 하단 고정 영역. "인증 코드 받기" + 약관 동의 고지. */
+@Composable
+internal fun SignUpAccountBottom(
+    uiState: SignUpUIState,
+    onIntent: (SignUpIntent) -> Unit,
+) {
+    val theme = NyummyTheme
+    NyummyButton(
+        text = stringResource(R.string.auth_signup_cta),
+        onClick = { onIntent(SignUpIntent.ClickSendCode) },
+        enabled = uiState.isSendCodeEnabled,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    NyummyText(
+        text = stringResource(R.string.auth_signup_terms),
+        style = theme.typography.bodyS,
+        color = theme.colors.content.tertiary,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 internal fun SignUpFieldError.messageRes(): Int = when (this) {
@@ -119,6 +106,3 @@ internal fun SignUpFieldError.messageRes(): Int = when (this) {
     SignUpFieldError.PASSWORD_CONFIRM_MISMATCH -> R.string.auth_signup_error_password_mismatch
     SignUpFieldError.NICKNAME_EMPTY -> R.string.auth_signup_error_nickname_empty_desc
 }
-
-private val SignUpAccountCtaSpacing = 30.dp
-private val SignUpAccountTermsSpacing = 12.dp

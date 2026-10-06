@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.error
@@ -158,7 +159,8 @@ internal fun fieldBorderColor(enabled: Boolean, isError: Boolean, focused: Boole
 
 /**
  * 비밀번호 입력칸의 보기/숨기기 아이콘. [NyummyTextField]의 trailing에 넣는다.
- * 레이아웃은 Figma처럼 24dp이고, 터치 영역은 Compose 최소 터치 영역(48dp)으로 넓어진다.
+ * 아이콘은 지금 상태를 나타낸다. 가려져 있으면 eye-off, 보이고 있으면 eye.
+ * 레이아웃은 아이콘 크기(24dp) 그대로이고, 터치 영역은 Compose 최소 터치 영역(48dp)으로 넓어진다.
  */
 @Composable
 fun NyummyPasswordVisibilityToggle(
@@ -167,8 +169,10 @@ fun NyummyPasswordVisibilityToggle(
     modifier: Modifier = Modifier,
 ) {
     Icon(
-        painter = painterResource(if (visible) R.drawable.nyummy_ic_eye_off else R.drawable.nyummy_ic_eye),
-        contentDescription = if (visible) "비밀번호 숨기기" else "비밀번호 보기",
+        painter = painterResource(if (visible) R.drawable.nyummy_ic_eye else R.drawable.nyummy_ic_eye_off),
+        contentDescription = stringResource(
+            if (visible) R.string.nyummy_password_hide_description else R.string.nyummy_password_show_description,
+        ),
         tint = NyummyTheme.colors.content.tertiary,
         modifier = modifier
             .size(NyummyTheme.size.iconL)
