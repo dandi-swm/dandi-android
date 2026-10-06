@@ -81,6 +81,7 @@ class NyummyBorderColors internal constructor(
     /** 카드, 입력 기본 보더. */
     val default: Color,
     val strong: Color,
+    /** 입력 포커스 테두리. 흰 바탕과 움푹한 바탕 모두에서 3:1 이상(WCAG 비텍스트 대비). */
     val focus: Color,
     val selected: Color,
     val danger: Color,
@@ -157,7 +158,7 @@ internal val DefaultNyummyColors = NyummyColors(
         subtle = NyummyPalette.Gray100,
         default = NyummyPalette.Gray200,
         strong = NyummyPalette.Gray400,
-        focus = NyummyPalette.Evergreen500,
+        focus = NyummyPalette.Evergreen600,
         selected = NyummyPalette.Evergreen600,
         danger = NyummyPalette.Berry500,
     ),
