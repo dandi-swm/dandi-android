@@ -9,6 +9,12 @@
             android:theme="@style/Theme.Dandi" />
 
         <activity
+            android:name="com.dandi.nyummy.main.presentation.catalog.NyummyDsCatalogActivity"
+            android:exported="true"
+            android:label="Nyummy DS Catalog"
+            android:theme="@style/Theme.Dandi" />
+
+        <activity
             android:name="com.dandi.nyummy.debug.SpriteDebugActivity"
             android:exported="true"
             android:label="Nyami Sprite Debug"
