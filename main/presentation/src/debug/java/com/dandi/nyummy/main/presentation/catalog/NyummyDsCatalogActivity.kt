@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
@@ -26,18 +28,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.dandi.nyummy.common.presentation.R
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadge
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadgeTone
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomCta
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCard
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCheckbox
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyChip
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgress
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgressSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCodeInput
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCoinPill
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDivider
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyLinearProgress
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRow
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRowTrailing
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPasswordVisibilityToggle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRadio
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionCaption
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionHeader
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionHeaderWithMeta
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySegmentedControl
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeleton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeletonShape
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStreakPill
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySwitch
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextArea
@@ -88,6 +106,11 @@ private fun NyummyDsCatalog() {
         item { CatalogSection("Segmented Control") { SegmentedSection() } }
         item { CatalogSection("Wheel Picker") { WheelPickerSection() } }
         item { CatalogSection("Checkbox, Radio, Switch") { SelectionSection() } }
+        item { CatalogSection("Card") { CardSection() } }
+        item { CatalogSection("List Row") { ListRowSection() } }
+        item { CatalogSection("Badge, HUD Pill") { BadgeHudSection() } }
+        item { CatalogSection("Progress") { ProgressSection() } }
+        item { CatalogSection("Section Header, Divider, Skeleton") { StructureSection() } }
     }
 }
 
@@ -254,5 +277,92 @@ private fun SelectionSection() {
         NyummySwitch(checked = !checked, onCheckedChange = { checked = !it })
         NyummySwitch(checked = false, onCheckedChange = {}, enabled = false)
         NyummySwitch(checked = true, onCheckedChange = {}, enabled = false)
+    }
+}
+
+@Composable
+private fun CardSection() {
+    NyummyCard(title = "오늘 1개 기록했어요", body = "칼로리와 탄단지는 참고로만 보여 줄게요.", modifier = Modifier.fillMaxWidth())
+    NyummyCard(title = "오늘 1개 기록했어요", body = "칼로리와 탄단지는 참고로만 보여 줄게요.", onClick = {}, modifier = Modifier.fillMaxWidth())
+}
+
+@Composable
+private fun ListRowSection() {
+    var alarm by remember { mutableStateOf(true) }
+    var agree by remember { mutableStateOf(true) }
+    var choice by remember { mutableIntStateOf(0) }
+    Column {
+        NyummyListRow(title = "알림", subtitle = "끼니 시간에 알려 드려요", leadingIcon = R.drawable.nyummy_ic_bell, onClick = {})
+        NyummyListRow(
+            title = "알림",
+            subtitle = "끼니 시간에 알려 드려요",
+            leadingIcon = R.drawable.nyummy_ic_bell,
+            trailing = NyummyListRowTrailing.Switch(alarm) { alarm = it },
+        )
+        NyummyListRow(
+            title = "알림",
+            subtitle = "끼니 시간에 알려 드려요",
+            leadingIcon = R.drawable.nyummy_ic_bell,
+            trailing = NyummyListRowTrailing.Value("v1.2.0"),
+            onClick = {},
+        )
+        NyummyListRow(
+            title = "알림",
+            subtitle = "끼니 시간에 알려 드려요",
+            leadingIcon = R.drawable.nyummy_ic_bell,
+            trailing = NyummyListRowTrailing.Checkbox(agree) { agree = it },
+        )
+        NyummyListRow(title = "알림", subtitle = "끼니 시간에 알려 드려요", leadingIcon = R.drawable.nyummy_ic_bell, trailing = NyummyListRowTrailing.None)
+        NyummyListRow(
+            title = "알림",
+            subtitle = "끼니 시간에 알려 드려요",
+            leadingIcon = R.drawable.nyummy_ic_bell,
+            trailing = NyummyListRowTrailing.Radio(choice == 0) { choice = 0 },
+        )
+        NyummyDivider()
+        NyummyListRow(title = "다른 선택지", trailing = NyummyListRowTrailing.Radio(choice == 1) { choice = 1 })
+    }
+}
+
+@Composable
+private fun BadgeHudSection() {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
+        NyummyBadgeTone.entries.forEach { NyummyBadge(text = "대기", tone = it) }
+    }
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
+    ) {
+        NyummyCoinPill(coins = "1,240")
+        NyummyStreakPill(days = 7)
+        NyummyCoinPill(coins = "1,240", onAddClick = {})
+    }
+}
+
+@Composable
+private fun ProgressSection() {
+    listOf(0f, 0.1f, 0.45f, 1f).forEach { NyummyLinearProgress(progress = it, modifier = Modifier.fillMaxWidth()) }
+    Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16)) {
+        NyummyCircularProgressSize.entries.forEach { NyummyCircularProgress(size = it) }
+    }
+}
+
+@Composable
+private fun StructureSection() {
+    Column {
+        NyummySectionHeader(title = "오늘의 식사", actionText = "전체보기")
+        NyummySectionCaption(title = "오늘의 식사", actionText = "전체보기")
+        NyummySectionHeaderWithMeta(title = "오늘의 식사", meta = "6시간 남음")
+    }
+    NyummyDivider()
+    Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16)) {
+        NyummySkeleton(NyummySkeletonShape.Circle, Modifier.size(NyummyTheme.size.characterXs))
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
+        ) {
+            NyummySkeleton(NyummySkeletonShape.Line, Modifier.fillMaxWidth(0.6f))
+            NyummySkeleton(NyummySkeletonShape.Block, Modifier.fillMaxWidth().height(NyummyTheme.size.bottomNav))
+        }
     }
 }

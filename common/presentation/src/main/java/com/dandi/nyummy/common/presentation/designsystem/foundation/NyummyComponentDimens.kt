@@ -52,4 +52,22 @@ internal object NyummyComponentDimens {
     val SwitchHeight = 32.dp
     val SwitchThumbSize = 26.dp
     val SwitchThumbInset = 3.dp
+
+    /** List Row 최소 높이와 앞 아이콘 칸. */
+    val ListRowMinHeight = 56.dp
+    val ListRowLeadingSize = 40.dp
+
+    /** HUD Pill 높이와 아이콘, 숫자 사이 간격. */
+    val HudPillHeight = 40.dp
+    val HudPillGap = 6.dp
+    val HudPillEndPadding = 14.dp
+
+    /** Badge 세로 여백. */
+    val BadgeVerticalPadding = 2.dp
+
+    /** Linear Progress 두께. */
+    val LinearProgressHeight = 10.dp
+
+    /** Skeleton 한 줄 높이. */
+    val SkeletonLineHeight = 14.dp
 }
