@@ -34,6 +34,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadge
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadgeTone
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomCta
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomNav
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBubbleTail
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
@@ -42,6 +43,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCheckbo
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyChip
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgress
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgressSize
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCoachCard
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCodeInput
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCoinPill
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDivider
@@ -52,6 +54,8 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRowTrailing
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMainTabs
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPasswordVisibilityToggle
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPose
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPoseImage
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRadio
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionCaption
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionHeader
@@ -70,6 +74,8 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextBut
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonTone
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextField
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceBubble
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceToast
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyWheelColumn
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyWheelPicker
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyWheelPickerFrame
@@ -117,6 +123,8 @@ private val CatalogEntries = listOf(
     CatalogEntry("Section Header, Divider, Skeleton") { StructureSection() },
     CatalogEntry("Top Bar, Tabs, Step Indicator") { NavigationSection() },
     CatalogEntry("Bottom Nav") { BottomNavSection() },
+    CatalogEntry("Pose") { PoseSection() },
+    CatalogEntry("Voice") { VoiceSection() },
 )
 
 private const val ExtraSection = "section"
@@ -404,4 +412,20 @@ private fun NavigationSection() {
 private fun BottomNavSection() {
     var selected by remember { mutableIntStateOf(0) }
     NyummyBottomNav(items = NyummyMainTabs, selectedIndex = selected, onSelect = { selected = it })
+}
+
+@Composable
+private fun PoseSection() {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
+        NyummyPose.entries.forEach { NyummyPoseImage(pose = it, size = NyummyTheme.size.characterS) }
+    }
+    NyummyPoseImage(pose = NyummyPose.Sleep, size = NyummyTheme.size.characterHero)
+}
+
+@Composable
+private fun VoiceSection() {
+    NyummyBubbleTail.entries.forEach { NyummyVoiceBubble(text = "집사~ 오늘 첫 끼는 뭐야?", tail = it) }
+    NyummyCoachCard(text = "채소 가득한 비빔밥이네! 오늘 첫 끼 최고였어. 다음 끼니도 같이 먹자. 내일은 단백질도 조금 더 챙겨 보자")
+    NyummyCoachCard(text = "오늘 첫 끼 최고였어")
+    NyummyVoiceToast(text = "기록 완료! 냐미가 맛있게 먹었어")
 }

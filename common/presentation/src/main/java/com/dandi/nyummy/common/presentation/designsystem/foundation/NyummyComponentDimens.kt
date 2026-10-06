@@ -88,4 +88,21 @@ internal object NyummyComponentDimens {
     /** Step Indicator 막대 두께와 간격. */
     val StepBarHeight = 6.dp
     val StepBarGap = 6.dp
+
+    /** Voice Bubble 꼬리 크기(밑변 20 × 높이 12)와 몸통 모서리에서 꼬리까지 거리. */
+    val BubbleTailBase = 20.dp
+    val BubbleTailHeight = 12.dp
+    val BubbleTailOffset = 24.dp
+    val BubbleTailOffsetVertical = 14.dp
+
+    /** Coach Card 말풍선 모서리, 안쪽 여백, 매달린 냐미 크기. */
+    val CoachCardRadius = 20.dp
+    val CoachCardTopPadding = 26.dp
+    val CoachCardBottomPadding = 10.dp
+    val CoachCardHorizontalPadding = 18.dp
+    val CoachHangWidth = 96.dp
+    val CoachHangHeight = 66.dp
+
+    /** Voice Toast 안쪽 여백. */
+    val VoiceToastPadding = 6.dp
 }
