@@ -13,6 +13,6 @@
     <string name="nyummy_snackbar_dismiss_description">Dismiss notification</string>
     <string name="nyummy_dialog_dismiss">Close</string>
     <string name="nyummy_streak_unit">days</string>
-    <string name="nyummy_coin_description">%1$d coins</string>
+    <string name="nyummy_coin_description">%1$s coins</string>
     <string name="nyummy_streak_description">%1$d-day streak</string>
 </resources>
