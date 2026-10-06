@@ -130,4 +130,11 @@ internal object NyummyComponentDimens {
     /** State Surface 로딩 막대. */
     val StateLoadingBarWidth = 200.dp
     val StateLoadingBarHeight = 8.dp
+
+    /** 화면 안 안내 카드(NyummyInlineNotice)의 세로 여백과 아이콘과 글 사이 간격. */
+    val InlineNoticeVerticalPadding = 14.dp
+    val InlineNoticeIconGap = 10.dp
+
+    /** 처리 중 아이콘(NyummySpinner) 크기. */
+    val SpinnerSize = 36.dp
 }

@@ -9,4 +9,10 @@
     <string name="nyummy_scrim_dismiss_label">Close</string>
     <string name="nyummy_password_show_description">Show password</string>
     <string name="nyummy_password_hide_description">Hide password</string>
+    <string name="nyummy_back_description">Back</string>
+    <string name="nyummy_snackbar_dismiss_description">Dismiss notification</string>
+    <string name="nyummy_dialog_dismiss">Close</string>
+    <string name="nyummy_streak_unit">days</string>
+    <string name="nyummy_coin_description">%1$d coins</string>
+    <string name="nyummy_streak_description">%1$d-day streak</string>
 </resources>

@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
@@ -91,7 +92,7 @@ fun NyummySnackbar(
         if (onDismiss != null) {
             Icon(
                 painter = painterResource(R.drawable.nyummy_ic_x),
-                contentDescription = "알림 닫기",
+                contentDescription = stringResource(R.string.nyummy_snackbar_dismiss_description),
                 tint = NyummyTheme.colors.content.tertiary,
                 modifier = Modifier
                     .size(NyummyTheme.size.iconM)

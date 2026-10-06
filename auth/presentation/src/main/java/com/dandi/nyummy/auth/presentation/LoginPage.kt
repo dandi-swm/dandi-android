@@ -4,11 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -16,22 +11,25 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,12 +38,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -53,6 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -62,6 +61,8 @@ import androidx.lifecycle.compose.currentStateAsState
 import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.auth.presentation.social.SocialLoginResult
 import com.dandi.nyummy.auth.presentation.social.launchSocialLogin
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyScrim
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpinner
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonSize
@@ -70,6 +71,7 @@ import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClicka
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import com.dandi.nyummy.common.presentation.R as CommonR
+import kotlin.math.roundToInt
 
 /**
  * 로그인 랜딩 화면.
@@ -128,25 +130,33 @@ internal fun LoginPageContent(
                 .alpha(PatternAlpha),
             contentScale = ContentScale.Crop,
         )
-        Column(
+        // 높이가 넉넉하면 카드는 바닥에, 제목은 남는 공간의 가운데보다 살짝 위에 둔다.
+        // 가로 화면이나 분할 화면처럼 높이가 모자라면 전체가 스크롤되어 카드까지 닿을 수 있다.
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(horizontal = NyummyTheme.spacing.gutter),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .navigationBarsPadding(),
         ) {
-            // 제목 블록은 상단과 카드 사이 빈 공간의 가운데보다 살짝 위에 둔다.
-            Spacer(Modifier.weight(TitleTopWeight))
-            LoginTitleBlock()
-            Spacer(Modifier.weight(TitleBottomWeight))
-            LoginCard(
-                uiState = uiState,
-                enabled = enabled,
-                onIntent = onIntent,
-                modifier = Modifier.widthIn(max = CardMaxWidth),
-            )
-            Spacer(Modifier.height(NyummyTheme.spacing.s24))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .heightIn(min = maxHeight)
+                    .padding(horizontal = NyummyTheme.spacing.gutter),
+                verticalArrangement = LoginContentArrangement,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                LoginTitleBlock(modifier = Modifier.padding(vertical = NyummyTheme.spacing.s24))
+                LoginCard(
+                    uiState = uiState,
+                    enabled = enabled,
+                    onIntent = onIntent,
+                    modifier = Modifier
+                        .widthIn(max = CardMaxWidth)
+                        .padding(bottom = NyummyTheme.spacing.s24),
+                )
+            }
         }
         SocialLoginLoadingOverlay(
             socialType = uiState.socialLoginInProgress,
@@ -157,8 +167,9 @@ internal fun LoginPageContent(
 }
 
 @Composable
-private fun LoginTitleBlock() {
+private fun LoginTitleBlock(modifier: Modifier = Modifier) {
     Column(
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(TitleBlockGap),
     ) {
@@ -397,12 +408,7 @@ private fun SocialLoginLoadingOverlay(
             exit = fadeOut(tween(LoadingFadeMillis)),
             label = "SocialLoginLoadingScrim",
         ) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(NyummyTheme.colors.bg.scrim)
-                    .pointerInput(Unit) { detectTapGestures { } },
-            )
+            NyummyScrim()
         }
         // 사라지는 동안에도 직전 제공자 문구가 유지되도록 상태별 내용을 AnimatedContent로 전환한다.
         AnimatedContent(
@@ -428,27 +434,17 @@ private fun SocialLoginLoadingCard(socialType: SocialLoginType) {
         R.string.auth_login_social_verifying,
         stringResource(socialType.providerNameRes),
     )
-    val rotation by rememberInfiniteTransition(label = "SocialLoginSpinner").animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(SpinnerRotationMillis, easing = LinearEasing), RepeatMode.Restart),
-        label = "SocialLoginSpinnerRotation",
-    )
     Column(
         modifier = Modifier
             .nyummyShadow(shape, NyummyTheme.elevation.float)
             .background(NyummyTheme.colors.bg.surface, shape)
-            .padding(horizontal = NyummyTheme.spacing.s32, vertical = NyummyTheme.spacing.s24),
+            .padding(horizontal = NyummyTheme.spacing.s32, vertical = NyummyTheme.spacing.s24)
+            // 카드가 뜨면 화면 읽기 사용자에게도 진행 중임을 알린다.
+            .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(
-            painter = painterResource(CommonR.drawable.nyummy_ic_loader_circle),
-            contentDescription = message,
-            tint = NyummyTheme.colors.content.brand,
-            modifier = Modifier
-                .size(SpinnerSize)
-                .graphicsLayer { rotationZ = rotation },
-        )
+        // 바로 아래 문구가 같은 내용을 말하므로 아이콘 설명은 두지 않는다.
+        NyummySpinner(contentDescription = null)
         Spacer(Modifier.height(SpinnerTextGap))
         NyummyText(text = message, style = NyummyTheme.typography.titleS, textAlign = TextAlign.Center)
         Spacer(Modifier.height(LoadingTextGap))
@@ -458,6 +454,23 @@ private fun SocialLoginLoadingCard(socialType: SocialLoginType) {
             color = NyummyTheme.colors.content.secondary,
             textAlign = TextAlign.Center,
         )
+    }
+}
+
+/**
+ * 제목 블록과 로그인 카드 배치. 카드는 바닥에 붙이고, 남는 높이는 제목 위와 아래에 1 : 1.3으로 나눈다.
+ * 남는 높이가 없으면(작은 창) 두 블록을 위에서부터 이어 붙이고 바깥 스크롤에 맡긴다.
+ */
+private object LoginContentArrangement : Arrangement.Vertical {
+    override fun Density.arrange(totalSize: Int, sizes: IntArray, outPositions: IntArray) {
+        val free = (totalSize - sizes.sum()).coerceAtLeast(0)
+        val above = (free * TitleTopWeight / (TitleTopWeight + TitleBottomWeight)).roundToInt()
+        var y = above
+        sizes.forEachIndexed { index, size ->
+            outPositions[index] = y
+            y += size
+            if (index == 0) y += free - above
+        }
     }
 }
 
@@ -473,7 +486,6 @@ private const val TitleTopWeight = 1f
 private const val TitleBottomWeight = 1.3f
 private const val LoadingFadeMillis = 200
 private const val LoadingShowDelayMillis = 150
-private const val SpinnerRotationMillis = 900
 private val CardMaxWidth = 480.dp
 private val LogoWidth = 150.dp
 private val LogoHeight = 88.dp
@@ -483,7 +495,6 @@ private val KakaoSymbolStartPadding = 18.dp
 private val KakaoSymbolSize = 20.dp
 private val DividerLineWidth = 56.dp
 private val SocialCircleSize = 56.dp
-private val SpinnerSize = 36.dp
 private val SpinnerTextGap = 16.dp
 private val LoadingTextGap = 6.dp
 

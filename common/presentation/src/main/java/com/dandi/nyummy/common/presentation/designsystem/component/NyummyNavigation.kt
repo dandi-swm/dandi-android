@@ -32,6 +32,7 @@ import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -68,7 +69,7 @@ fun NyummyTopBar(
                 if (onBackClick != null) {
                     NyummyIconButton(
                         icon = R.drawable.nyummy_ic_chevron_left,
-                        contentDescription = "뒤로 가기",
+                        contentDescription = stringResource(R.string.nyummy_back_description),
                         onClick = onBackClick,
                     )
                 }

@@ -9,4 +9,10 @@
     <string name="nyummy_scrim_dismiss_label">닫기</string>
     <string name="nyummy_password_show_description">비밀번호 보기</string>
     <string name="nyummy_password_hide_description">비밀번호 숨기기</string>
+    <string name="nyummy_back_description">뒤로 가기</string>
+    <string name="nyummy_snackbar_dismiss_description">알림 닫기</string>
+    <string name="nyummy_dialog_dismiss">닫기</string>
+    <string name="nyummy_streak_unit">일째</string>
+    <string name="nyummy_coin_description">코인 %1$d</string>
+    <string name="nyummy_streak_description">연속 기록 %1$d일째</string>
 </resources>

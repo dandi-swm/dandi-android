@@ -3,6 +3,7 @@ package com.dandi.nyummy.auth.presentation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
@@ -148,6 +149,10 @@ internal fun EmailLoginContent(
 /**
  * 인증 화면 공통 틀. 상단 바(뒤로 가기) + 스크롤되는 본문 + 화면 아래에 고정되는 버튼 영역.
  * 키보드가 열리면 버튼 영역이 키보드 위로 올라가고, 본문은 남은 높이에서 스크롤된다.
+ *
+ * 가로 화면이나 분할 화면처럼 창 높이(키보드 제외)가 [CompactFormHeight]보다 낮으면 버튼 영역을 고정하지 않고
+ * 본문 바로 아래에 붙여 함께 스크롤한다. 키보드 높이는 판단에 넣지 않는다. 키보드가 열릴 때 배치가 바뀌면
+ * 입력칸이 다시 만들어져 포커스와 키보드가 닫히기 때문이다.
  */
 @Composable
 internal fun AuthFormScaffold(
@@ -162,40 +167,80 @@ internal fun AuthFormScaffold(
             .fillMaxSize()
             .background(NyummyTheme.colors.bg.canvas)
             .statusBarsPadding()
-            .navigationBarsPadding()
-            .imePadding(),
+            .navigationBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         NyummyTopBar(title = "", onBackClick = onBackClick)
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .widthIn(max = FormMaxWidth)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = NyummyTheme.spacing.gutter)
-                .padding(top = NyummyTheme.spacing.s16, bottom = NyummyTheme.spacing.s24),
-            content = content,
-        )
-        if (bottomDivider) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(NyummyTheme.borderWidth.hairline)
-                    .background(NyummyTheme.colors.border.subtle),
-            )
+        BoxWithConstraints(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            if (maxHeight < CompactFormHeight) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .imePadding()
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    AuthFormBody(content = content)
+                    AuthFormBottom(content = bottom)
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .imePadding(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    AuthFormBody(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState()),
+                        content = content,
+                    )
+                    if (bottomDivider) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(NyummyTheme.borderWidth.hairline)
+                                .background(NyummyTheme.colors.border.subtle),
+                        )
+                    }
+                    AuthFormBottom(content = bottom)
+                }
+            }
         }
-        Column(
-            modifier = Modifier
-                .widthIn(max = FormMaxWidth)
-                .fillMaxWidth()
-                .padding(horizontal = NyummyTheme.spacing.gutter)
-                .padding(top = NyummyTheme.spacing.s12, bottom = NyummyTheme.spacing.s24),
-            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            content = bottom,
-        )
     }
+}
+
+@Composable
+private fun AuthFormBody(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .widthIn(max = FormMaxWidth)
+            .fillMaxWidth()
+            .padding(horizontal = NyummyTheme.spacing.gutter)
+            .padding(top = NyummyTheme.spacing.s16, bottom = NyummyTheme.spacing.s24),
+        content = content,
+    )
+}
+
+@Composable
+private fun AuthFormBottom(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier = Modifier
+            .widthIn(max = FormMaxWidth)
+            .fillMaxWidth()
+            .padding(horizontal = NyummyTheme.spacing.gutter)
+            .padding(top = NyummyTheme.spacing.s12, bottom = NyummyTheme.spacing.s24),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        content = content,
+    )
 }
 
 /** 인증 화면 제목(display/m) + 부제(body/m). 아래 28을 띄운다. */
@@ -213,6 +258,9 @@ private fun EmailLoginFieldError.messageRes(): Int = when (this) {
 
 private val FormMaxWidth = 480.dp
 private val HeaderBottomGap = 28.dp
+
+/** 이보다 낮은 창(가로 화면, 분할 화면)에서는 버튼 영역도 본문과 함께 스크롤한다. */
+private val CompactFormHeight = 420.dp
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable

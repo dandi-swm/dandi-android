@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -38,9 +39,10 @@ fun NyummyCoinPill(
     modifier: Modifier = Modifier,
     onAddClick: (() -> Unit)? = null,
 ) {
+    val description = stringResource(R.string.nyummy_coin_description, coins)
     HudPillSurface(
         modifier = modifier
-            .semantics(mergeDescendants = true) { contentDescription = "코인 $coins" }
+            .semantics(mergeDescendants = true) { contentDescription = description }
             .then(
                 if (onAddClick != null) {
                     Modifier.nyummyPressable(
@@ -81,8 +83,9 @@ fun NyummyStreakPill(
     days: Int,
     modifier: Modifier = Modifier,
 ) {
+    val description = stringResource(R.string.nyummy_streak_description, days)
     HudPillSurface(
-        modifier = modifier.semantics(mergeDescendants = true) { contentDescription = "연속 기록 ${days}일째" },
+        modifier = modifier.semantics(mergeDescendants = true) { contentDescription = description },
         endPadding = NyummyComponentDimens.HudPillEndPadding,
     ) {
         HudAsset(R.drawable.nyummy_asset_streak)
@@ -93,7 +96,7 @@ fun NyummyStreakPill(
             maxLines = 1,
         )
         NyummyText(
-            text = "일째",
+            text = stringResource(R.string.nyummy_streak_unit),
             style = NyummyTheme.typography.labelM,
             color = NyummyTheme.colors.content.secondary,
             maxLines = 1,

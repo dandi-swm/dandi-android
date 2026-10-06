@@ -23,12 +23,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
@@ -62,7 +64,7 @@ fun NyummyDialog(
     modifier: Modifier = Modifier,
     type: NyummyDialogType = NyummyDialogType.Confirm,
     body: String? = null,
-    dismissText: String = "닫기",
+    dismissText: String = stringResource(R.string.nyummy_dialog_dismiss),
     onDismissClick: () -> Unit = onDismissRequest,
     confirmEnabled: Boolean = true,
     dismissible: Boolean = true,
@@ -94,7 +96,7 @@ internal fun NyummyDialogCard(
     modifier: Modifier = Modifier,
     type: NyummyDialogType = NyummyDialogType.Confirm,
     body: String? = null,
-    dismissText: String = "닫기",
+    dismissText: String = stringResource(R.string.nyummy_dialog_dismiss),
     confirmEnabled: Boolean = true,
     content: (@Composable ColumnScope.() -> Unit)? = null,
 ) {

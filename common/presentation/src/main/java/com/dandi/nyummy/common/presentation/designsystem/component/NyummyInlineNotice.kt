@@ -17,8 +17,8 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.R
+import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 enum class NyummyInlineNoticeTone {
@@ -50,8 +50,8 @@ fun NyummyInlineNotice(
                 shape = RoundedCornerShape(NyummyTheme.radius.m),
             )
             .semantics(mergeDescendants = true) { if (danger) liveRegion = LiveRegionMode.Polite }
-            .padding(horizontal = NyummyTheme.spacing.s16, vertical = NoticeVerticalPadding),
-        horizontalArrangement = Arrangement.spacedBy(NoticeIconGap),
+            .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyComponentDimens.InlineNoticeVerticalPadding),
+        horizontalArrangement = Arrangement.spacedBy(NyummyComponentDimens.InlineNoticeIconGap),
         verticalAlignment = Alignment.Top,
     ) {
         Icon(
@@ -66,9 +66,6 @@ fun NyummyInlineNotice(
         }
     }
 }
-
-private val NoticeVerticalPadding = 14.dp
-private val NoticeIconGap = 10.dp
 
 @Preview(showBackground = true, widthDp = 390)
 @Composable
