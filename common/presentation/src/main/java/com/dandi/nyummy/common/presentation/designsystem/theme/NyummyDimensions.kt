@@ -5,7 +5,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Figma `Nyummy / 3 Dimension` 컬렉션.
+ * 공통 치수 토큰(간격, 모서리, 테두리, 크기).
  *
  * 눈금 밖 값은 쓰지 않는다. 한 곳에서만 쓰는 값이어도 아래 눈금 중 하나로 맞춘다.
  */

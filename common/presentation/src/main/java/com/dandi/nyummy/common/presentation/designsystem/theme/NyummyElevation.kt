@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.designsystem.token.NyummyPalette
 
-/** Figma 그림자 효과 1개. blur, offset, color를 그대로 옮긴다. */
+/** 그림자 하나. 디자인의 blur, 세로 offset, 색을 그대로 쓴다. */
 @Immutable
 class NyummyShadow internal constructor(
     val color: Color,
@@ -21,7 +21,7 @@ class NyummyShadow internal constructor(
 )
 
 /**
- * Figma effect style `elevation/soft`, `elevation/float`.
+ * 그림자 토큰 soft(일러스트 위 카드)와 float(시트, 떠 있는 요소).
  *
  * 버튼과 카드는 그림자를 쓰지 않는다. 떠 있는 요소(하단 내비, 시트, 스낵바)와
  * 일러스트 위 카드에만 쓴다.
@@ -39,7 +39,7 @@ internal val DefaultNyummyElevation = NyummyElevation(
     float = NyummyShadow(color = NyummyPalette.Gray900.copy(alpha = 0x24 / 255f), blur = 24.dp, offsetY = 8.dp),
 )
 
-/** Figma drop shadow를 blur 값 그대로 그린다. `Modifier.shadow`의 elevation 근사를 쓰지 않는다. */
+/** 디자인의 그림자를 blur 값 그대로 그린다. `Modifier.shadow`의 elevation 근사를 쓰지 않는다. */
 @Stable
 fun Modifier.nyummyShadow(shape: Shape, shadow: NyummyShadow): Modifier = dropShadow(
     shape = shape,

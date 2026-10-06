@@ -44,7 +44,7 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
- * 앱 시작 시 1회 노출하는 접근권한 안내 바텀시트(Figma `Intro · 02 Permission Sheet`).
+ * 앱 시작 시 1회 노출하는 접근권한 안내 바텀시트.
  *
  * [visible] 전환에 맞춰 딤은 페이드, 시트는 아래에서 슬라이드로 등장하고 퇴장한다.
  * 정보통신망법상 접근권한 고지를 겸하므로 딤이나 뒤로 가기로 닫을 수 없고

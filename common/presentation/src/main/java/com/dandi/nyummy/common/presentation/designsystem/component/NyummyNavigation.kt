@@ -310,7 +310,7 @@ fun NyummyStepIndicator(
     }
 }
 
-/** 냐미 하단 내비 5탭. 순서와 라벨은 Figma `Bottom Nav`와 같다. */
+/** 냐미 하단 내비 5탭(홈, 기록, 퀘스트, 업적, 상점 순서). */
 val NyummyMainTabs: ImmutableList<NyummyBottomNavItem> = persistentListOf(
     NyummyBottomNavItem(label = "홈", icon = R.drawable.nyummy_nav_home),
     NyummyBottomNavItem(label = "기록", icon = R.drawable.nyummy_nav_record),

@@ -56,7 +56,7 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  * 진행바는 실제 진행률이 없는 장식이다. 권한 안내([isPermissionNoticeVisible])가 떠 있는 동안은
  * 0에 멈춰 있다가 닫히면 90%까지 차오르고, 시작 게이트가 끝나면([isComplete]) 100%까지 빠르게 채운다.
  *
- * 해상도 대응(Figma `10 · Intro · Responsive check`, MASTER §6.6 규칙 A):
+ * 해상도 대응(360×640부터 태블릿까지 배경이 잘리지 않게):
  * - 배경은 화면 폭에 맞추고 아래에 붙인다. 남는 위쪽은 배경 상단과 같은 흰색이다.
  * - 냐미는 스테이지 바닥선(배경 높이의 73.5%)에 발을 맞추고 크기는 min(폭 × 0.64, 300)이다.
  *   제목과 겹치면 최소 170까지 줄인다.
@@ -199,7 +199,7 @@ fun IntroSplashContent(
 
 private enum class SplashSlot { Background, Title, Hero, Card }
 
-/** 냐미(250dp 기준) 중심에서 스티커 중심까지의 거리. Figma `Intro · 01 Splash` 좌표에서 옮겼다. */
+/** 냐미(250dp일 때) 중심에서 스티커 중심까지의 거리. 냐미 크기가 바뀌면 같은 비율로 늘고 준다. */
 private enum class SplashSticker(
     @DrawableRes val iconRes: Int,
     val offsetX: Dp,
@@ -352,13 +352,13 @@ private const val SplashCompleteDurationMillis = 250
 /** 키친 배경에서 스테이지(선반) 바닥선의 높이 비율. */
 private const val StageFloorRatio = 0.735f
 
-/** 히어로 이미지에서 냐미 발이 닿는 높이 비율(Figma 250 박스에서 바닥선까지 242). */
+/** 히어로 이미지에서 냐미 발끝이 있는 높이 비율. 이 높이를 스테이지 바닥선에 맞춘다. */
 private const val HeroFootRatio = 0.968f
 private const val HeroWidthRatio = 0.64f
 private val HeroMaxSize = 300.dp
 private val HeroMinSize = 170.dp
 
-/** 스티커 좌표의 기준이 된 Figma 냐미 크기. */
+/** 스티커 거리(SplashSticker)를 잰 기준 냐미 크기. */
 private val HeroReferenceSize = 250.dp
 
 private val LogoWidth = 154.dp
