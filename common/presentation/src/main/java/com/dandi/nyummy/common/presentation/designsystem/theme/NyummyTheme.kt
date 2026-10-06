@@ -15,6 +15,9 @@ object NyummyTheme {
     val colors: NyummyColors
         @Composable @ReadOnlyComposable get() = LocalNyummyColors.current
 
+    val typography: NyummyTypography
+        @Composable @ReadOnlyComposable get() = LocalNyummyTypography.current
+
     val spacing: NyummySpacing
         @Composable @ReadOnlyComposable get() = LocalNyummySpacing.current
 
@@ -35,6 +38,7 @@ object NyummyTheme {
 fun NyummyTheme(content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalNyummyColors provides DefaultNyummyColors,
+        LocalNyummyTypography provides DefaultNyummyTypography,
         LocalNyummySpacing provides DefaultNyummySpacing,
         LocalNyummyRadius provides DefaultNyummyRadius,
         LocalNyummyBorderWidth provides DefaultNyummyBorderWidth,
@@ -45,6 +49,7 @@ fun NyummyTheme(content: @Composable () -> Unit) {
 }
 
 internal val LocalNyummyColors = staticCompositionLocalOf { DefaultNyummyColors }
+internal val LocalNyummyTypography = staticCompositionLocalOf { DefaultNyummyTypography }
 internal val LocalNyummySpacing = staticCompositionLocalOf { DefaultNyummySpacing }
 internal val LocalNyummyRadius = staticCompositionLocalOf { DefaultNyummyRadius }
 internal val LocalNyummyBorderWidth = staticCompositionLocalOf { DefaultNyummyBorderWidth }
