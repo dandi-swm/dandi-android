@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,23 +17,40 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomCta
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCheckbox
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyChip
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCodeInput
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPasswordVisibilityToggle
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRadio
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySegmentedControl
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySwitch
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextArea
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonTone
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextField
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyWheelColumn
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyWheelPicker
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyWheelPickerFrame
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * 새 디자인 시스템(NyummyTheme) 컴포넌트를 Figma `03 Components`와 나란히 비교하는 디버그 카탈로그.
@@ -64,6 +82,12 @@ private fun NyummyDsCatalog() {
         item { CatalogSection("Icon Button") { IconButtonSection() } }
         item { CatalogSection("Chip") { ChipSection() } }
         item { CatalogSection("Bottom CTA") { BottomCtaSection() } }
+        item { CatalogSection("Text Field") { TextFieldSection() } }
+        item { CatalogSection("Text Area") { TextAreaSection() } }
+        item { CatalogSection("Code Input") { CodeInputSection() } }
+        item { CatalogSection("Segmented Control") { SegmentedSection() } }
+        item { CatalogSection("Wheel Picker") { WheelPickerSection() } }
+        item { CatalogSection("Checkbox, Radio, Switch") { SelectionSection() } }
     }
 }
 
@@ -135,4 +159,100 @@ private fun ChipSection() {
 private fun BottomCtaSection() {
     NyummyBottomCta(primaryText = "확인", onPrimaryClick = {})
     NyummyBottomCta(primaryText = "확인", onPrimaryClick = {}, secondaryText = "닫기")
+}
+
+@Composable
+private fun TextFieldSection() {
+    var email by remember { mutableStateOf("") }
+    NyummyTextField(value = email, onValueChange = { email = it }, label = "이메일", placeholder = "example@nyummy.com", helperText = "도움말")
+    NyummyTextField(value = "nyummy@", onValueChange = {}, label = "이메일", errorMessage = "이메일 형식을 확인해 주세요")
+    var password by remember { mutableStateOf("password") }
+    var visible by remember { mutableStateOf(false) }
+    NyummyTextField(
+        value = password,
+        onValueChange = { password = it },
+        label = "비밀번호",
+        leadingIcon = R.drawable.nyummy_ic_user_round,
+        visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+        trailing = { NyummyPasswordVisibilityToggle(visible = visible, onToggle = { visible = !visible }) },
+    )
+    NyummyTextField(value = "", onValueChange = {}, label = "이메일", placeholder = "example@nyummy.com", helperText = "도움말", enabled = false)
+}
+
+@Composable
+private fun TextAreaSection() {
+    var text by remember { mutableStateOf("") }
+    NyummyTextArea(value = text, onValueChange = { text = it }, label = "문의 내용", placeholder = "어떤 점이 궁금하거나 불편했는지 알려 주세요")
+    NyummyTextArea(value = "", onValueChange = {}, label = "문의 내용", placeholder = "어떤 점이 궁금하거나 불편했는지 알려 주세요", errorMessage = "내용을 입력해 주세요")
+}
+
+@Composable
+private fun CodeInputSection() {
+    var code by remember { mutableStateOf("427") }
+    NyummyCodeInput(value = code, onValueChange = { code = it })
+    NyummyCodeInput(value = "427915", onValueChange = {}, isError = true)
+}
+
+@Composable
+private fun SegmentedSection() {
+    var selected by remember { mutableIntStateOf(0) }
+    NyummySegmentedControl(
+        options = persistentListOf("남성", "여성"),
+        selectedIndex = selected,
+        onSelect = { selected = it },
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun WheelPickerSection() {
+    val heights = remember { (140..200).map(Int::toString).toImmutableList() }
+    var height by remember { mutableIntStateOf(32) }
+    Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12)) {
+        NyummyWheelPicker(
+            items = heights,
+            selectedIndex = height,
+            onSelectedIndexChange = { height = it },
+            unit = "cm",
+            modifier = Modifier.weight(1f),
+        )
+        val hours = remember { (0..23).map { "%02d".format(it) }.toImmutableList() }
+        val minutes = remember { (0..50 step 10).map { "%02d".format(it) }.toImmutableList() }
+        NyummyWheelPickerFrame(modifier = Modifier.weight(1f)) {
+            NyummyWheelColumn(items = hours, selectedIndex = 8, onSelectedIndexChange = {}, modifier = Modifier.weight(1f))
+            NyummyWheelColumn(items = minutes, selectedIndex = 3, onSelectedIndexChange = {}, modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun SelectionSection() {
+    var checked by remember { mutableStateOf(true) }
+    var radio by remember { mutableIntStateOf(0) }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        NyummyCheckbox(checked = checked, onCheckedChange = { checked = it })
+        NyummyCheckbox(checked = !checked, onCheckedChange = { checked = !it })
+        NyummyCheckbox(checked = false, onCheckedChange = {}, enabled = false)
+        NyummyCheckbox(checked = true, onCheckedChange = {}, enabled = false)
+    }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        NyummyRadio(selected = radio == 0, onClick = { radio = 0 })
+        NyummyRadio(selected = radio == 1, onClick = { radio = 1 })
+        NyummyRadio(selected = false, onClick = {}, enabled = false)
+    }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        NyummySwitch(checked = checked, onCheckedChange = { checked = it })
+        NyummySwitch(checked = !checked, onCheckedChange = { checked = !it })
+        NyummySwitch(checked = false, onCheckedChange = {}, enabled = false)
+        NyummySwitch(checked = true, onCheckedChange = {}, enabled = false)
+    }
 }

@@ -14,4 +14,42 @@ internal object NyummyComponentDimens {
 
     /** Button S, Chip 좌우 여백. */
     val CompactControlHorizontalPadding = 14.dp
+
+    /** Text Field, Text Area의 라벨과 입력칸 사이. */
+    val FieldLabelGap = 6.dp
+
+    /** Text Field 입력칸 높이. */
+    val TextFieldHeight = 52.dp
+
+    /** Text Field 아이콘과 글자 사이. */
+    val TextFieldIconGap = 10.dp
+
+    /** Text Area 입력칸 높이(고정, 내용이 많으면 안에서 스크롤). */
+    val TextAreaHeight = 180.dp
+
+    /** Text Area 위쪽 안쪽 여백. */
+    val TextAreaTopPadding = 14.dp
+
+    /** 인증 코드 셀 크기. */
+    val CodeCellWidth = 48.dp
+    val CodeCellHeight = 56.dp
+
+    /** Wheel Picker 전체 높이와 행 높이(50 × 3). */
+    val WheelPickerHeight = 150.dp
+    val WheelPickerRowHeight = 50.dp
+
+    /** Wheel Picker 선택 밴드 높이와 좌우 들여쓰기. */
+    val WheelPickerBandHeight = 46.dp
+    val WheelPickerBandInset = 6.dp
+
+    /** Checkbox, Radio 크기와 Checkbox 안 체크 아이콘, Radio 안 점. */
+    val SelectionControlSize = 24.dp
+    val CheckboxCheckSize = 16.dp
+    val RadioDotSize = 12.dp
+
+    /** Switch 트랙과 썸. */
+    val SwitchWidth = 52.dp
+    val SwitchHeight = 32.dp
+    val SwitchThumbSize = 26.dp
+    val SwitchThumbInset = 3.dp
 }
