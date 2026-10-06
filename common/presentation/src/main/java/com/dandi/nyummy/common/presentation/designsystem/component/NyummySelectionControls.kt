@@ -16,7 +16,6 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,7 +55,6 @@ fun NyummyCheckbox(
     }
     val toggle = if (onCheckedChange != null) {
         Modifier
-            .minimumInteractiveComponentSize()
             .toggleable(
                 value = checked,
                 interactionSource = rememberNyummyInteractionSource(),
@@ -104,7 +102,6 @@ fun NyummyRadio(
     }
     val select = if (onClick != null) {
         Modifier
-            .minimumInteractiveComponentSize()
             .selectable(
                 selected = selected,
                 interactionSource = rememberNyummyInteractionSource(),
@@ -164,7 +161,6 @@ fun NyummySwitch(
     )
     val toggle = if (onCheckedChange != null) {
         Modifier
-            .minimumInteractiveComponentSize()
             .toggleable(
                 value = checked,
                 interactionSource = rememberNyummyInteractionSource(),
