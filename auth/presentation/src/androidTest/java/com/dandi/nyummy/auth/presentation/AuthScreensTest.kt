@@ -1,6 +1,9 @@
 package com.dandi.nyummy.auth.presentation
 
 import android.content.Context
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
@@ -11,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.dandi.nyummy.auth.domain.EmailLoginFieldError
@@ -205,6 +209,44 @@ class AuthScreensTest {
 
         composeRule.onNodeWithText(text(R.string.auth_signup_profile_title)).assertIsDisplayed()
         composeRule.onNodeWithText("3 / 3").assertDoesNotExist()
+    }
+
+    @Test
+    fun 낮은_창에서도_로그인_카드까지_스크롤해_누를_수_있다() {
+        val intents = mutableListOf<LoginIntent>()
+        composeRule.setContent {
+            NyummyTheme {
+                Box(Modifier.size(width = 640.dp, height = 320.dp)) {
+                    LoginPageContent(uiState = LoginUIState.empty, onIntent = { intents += it })
+                }
+            }
+        }
+
+        composeRule.onNodeWithContentDescription(text(R.string.auth_login_email_description))
+            .performScrollTo()
+            .assertIsDisplayed()
+            .performClick()
+
+        assertEquals(listOf<LoginIntent>(LoginIntent.ClickEmailLogin), intents)
+    }
+
+    @Test
+    fun 낮은_창에서는_폼_버튼도_함께_스크롤된다() {
+        val intents = mutableListOf<EmailLoginIntent>()
+        composeRule.setContent {
+            NyummyTheme {
+                Box(Modifier.size(width = 640.dp, height = 320.dp)) {
+                    EmailLoginContent(uiState = EmailLoginUIState.empty, onIntent = { intents += it })
+                }
+            }
+        }
+
+        composeRule.onNodeWithText(text(R.string.auth_signup_button))
+            .performScrollTo()
+            .assertIsDisplayed()
+            .performClick()
+
+        assertEquals(listOf<EmailLoginIntent>(EmailLoginIntent.ClickSignUp), intents)
     }
 
     private companion object {
