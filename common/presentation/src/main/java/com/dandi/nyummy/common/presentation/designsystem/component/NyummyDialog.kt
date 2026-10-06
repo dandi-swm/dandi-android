@@ -1,7 +1,7 @@
 package com.dandi.nyummy.common.presentation.designsystem.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
@@ -24,7 +25,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
-import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyummyInteractionSource
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 enum class NyummyDialogType {
@@ -156,22 +156,15 @@ internal fun NyummyDialogWindow(
             modifier = Modifier
                 .fillMaxSize()
                 .background(NyummyTheme.colors.bg.scrim)
-                .clickable(
-                    interactionSource = rememberNyummyInteractionSource(),
-                    indication = null,
-                    onClick = onDismissRequest,
-                )
+                // 바깥 탭으로 닫는다. clickable은 다이얼로그 전체 semantics를 병합하므로 포인터 입력만 받는다.
+                // 접근성 사용자는 뒤로 가기로 닫는다.
+                .pointerInput(onDismissRequest) { detectTapGestures { onDismissRequest() } }
                 .padding(horizontal = NyummyComponentDimens.DialogScreenMargin),
             contentAlignment = Alignment.Center,
         ) {
-            // 카드 안쪽을 눌러도 바깥 클릭으로 닫히지 않게 클릭을 소비한다.
-            Box(
-                modifier = Modifier.clickable(
-                    interactionSource = rememberNyummyInteractionSource(),
-                    indication = null,
-                    onClick = {},
-                ),
-            ) {
+            // 카드 안쪽을 눌러도 바깥 클릭으로 닫히지 않게 탭을 소비한다.
+            // clickable을 쓰면 카드 semantics가 버튼으로 병합되어 paneTitle과 충돌하므로 포인터 입력만 받는다.
+            Box(modifier = Modifier.pointerInput(Unit) { detectTapGestures { } }) {
                 content()
             }
         }
