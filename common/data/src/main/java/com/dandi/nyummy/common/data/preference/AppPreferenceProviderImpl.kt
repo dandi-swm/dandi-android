@@ -33,9 +33,11 @@ class AppPreferenceProviderImpl(
     }
 
     override suspend fun getMealTimes(): MealTimesVO? {
-        val breakfast = readMealTime(KEY_BREAKFAST_MINUTE, KEY_BREAKFAST_SKIPPED) ?: return null
-        val lunch = readMealTime(KEY_LUNCH_MINUTE, KEY_LUNCH_SKIPPED) ?: return null
-        val dinner = readMealTime(KEY_DINNER_MINUTE, KEY_DINNER_SKIPPED) ?: return null
+        // 세 끼를 한 스냅샷에서 읽어, 저장 도중에 읽어도 한 번도 저장된 적 없는 조합이 나오지 않게 한다.
+        val prefs = readSnapshot()
+        val breakfast = prefs.mealTime(KEY_BREAKFAST_MINUTE, KEY_BREAKFAST_SKIPPED) ?: return null
+        val lunch = prefs.mealTime(KEY_LUNCH_MINUTE, KEY_LUNCH_SKIPPED) ?: return null
+        val dinner = prefs.mealTime(KEY_DINNER_MINUTE, KEY_DINNER_SKIPPED) ?: return null
         return MealTimesVO(breakfast = breakfast, lunch = lunch, dinner = dinner)
     }
 
@@ -51,12 +53,12 @@ class AppPreferenceProviderImpl(
         }
     }
 
-    private suspend fun readMealTime(
+    private fun Preferences.mealTime(
         minuteKey: Preferences.Key<Int>,
         skippedKey: Preferences.Key<Boolean>,
     ): MealTimeVO? {
-        val minuteOfDay = read(minuteKey) ?: return null
-        return MealTimeVO.ofMinuteOfDay(minuteOfDay, isSkipped = read(skippedKey) ?: false)
+        val minuteOfDay = this[minuteKey] ?: return null
+        return MealTimeVO.ofMinuteOfDay(minuteOfDay, isSkipped = this[skippedKey] ?: false)
     }
 
     companion object {

@@ -1,11 +1,6 @@
 package com.dandi.nyummy.onboarding.presentation
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
@@ -37,17 +32,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingCatNameSlot
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingChoiceList
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingDialogueBox
@@ -85,17 +80,11 @@ internal fun OnboardingScreen(
     BackHandler(enabled = uiState.isSubmitting || uiState.isFinishing) {}
 
     // 식사 알림을 받을 끼니가 있으면 마치기 전에 알림 권한을 묻는다. 허용 여부와 관계없이 이어서 마친다.
-    val context = LocalContext.current
-    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        onIntent(OnboardingIntent.ConfirmMealTimes)
-    }
+    // 이미 허용됐거나 요청이 필요 없는 기기(Android 12 이하)면 공통 요청기가 팝업 없이 바로 결과를 준다.
+    val notificationPermission = rememberPermissionRequester { onIntent(OnboardingIntent.ConfirmMealTimes) }
     val onMealTimesDone = {
-        val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            uiState.mealTimes.hasAnyMeal &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
-        if (needsPermission) {
-            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        if (uiState.mealTimes.hasAnyMeal) {
+            notificationPermission.request(listOf(AppPermission.NOTIFICATION))
         } else {
             onIntent(OnboardingIntent.ConfirmMealTimes)
         }

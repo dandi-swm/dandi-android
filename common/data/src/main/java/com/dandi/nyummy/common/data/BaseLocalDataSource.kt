@@ -38,6 +38,10 @@ abstract class BaseLocalDataSource(
     protected suspend fun <T> read(key: Preferences.Key<T>): T? =
         safeData.first()[key]
 
+    /** 여러 키를 같은 시점의 값으로 읽어야 할 때 쓴다. 한 번 읽은 스냅샷에서 꺼내므로 저장 도중의 값이 섞이지 않는다. */
+    protected suspend fun readSnapshot(): Preferences =
+        safeData.first()
+
     /** [key] 에 [value] 를 저장한다. */
     protected suspend fun <T> write(key: Preferences.Key<T>, value: T) {
         dataStore.edit { prefs -> prefs[key] = value }
