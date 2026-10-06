@@ -72,6 +72,8 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeleto
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeletonShape
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackbar
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackbarHost
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateAction
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateSurface
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStepIndicator
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStreakPill
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySwitch
@@ -136,6 +138,7 @@ private val CatalogEntries = listOf(
     CatalogEntry("Pose") { PoseSection() },
     CatalogEntry("Voice") { VoiceSection() },
     CatalogEntry("Overlays") { OverlaySection() },
+    CatalogEntry("State Surface") { StateSurfaceSection() },
 )
 
 private const val ExtraSection = "section"
@@ -534,4 +537,20 @@ private fun OverlaySection() {
         )
         null -> Unit
     }
+}
+
+@Composable
+private fun StateSurfaceSection() {
+    NyummyStateSurface.Empty(voice = "이날은 쉬어 갔어", message = "기록이 없는 날이에요")
+    NyummyStateSurface.Error(
+        voice = "앗, 전송이 안 됐어",
+        message = "네트워크를 확인하고 다시 시도해 주세요",
+        retry = NyummyStateAction("다시 시도") {},
+    )
+    NyummyStateSurface.Permission(
+        voice = "카메라를 빌려줄래?",
+        message = "사진을 찍어야 냐미가 밥을 먹을 수 있어요",
+        openSettings = NyummyStateAction("설정으로 이동") {},
+    )
+    NyummyStateSurface.Loading(voice = "냐미가 맛보는 중…", message = "보통 10초 안에 끝나요")
 }

@@ -127,4 +127,8 @@ internal object NyummyComponentDimens {
     val SnackbarHeight = 56.dp
     val SnackbarActionMinWidth = 60.dp
     val SnackbarActionHeight = 40.dp
+
+    /** State Surface 로딩 막대. */
+    val StateLoadingBarWidth = 200.dp
+    val StateLoadingBarHeight = 8.dp
 }
