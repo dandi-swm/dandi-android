@@ -4,13 +4,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -97,20 +102,27 @@ internal fun NyummyDialogCard(
             .semantics { paneTitle = title }
             .padding(start = theme.spacing.s20, end = theme.spacing.s20, top = theme.spacing.s24, bottom = theme.spacing.s20),
     ) {
-        NyummyText(text = title, style = theme.typography.titleL)
-        if (body != null) {
-            NyummyText(
-                text = body,
-                style = theme.typography.bodyL,
-                color = theme.colors.content.secondary,
-                modifier = Modifier.padding(top = theme.spacing.s8),
-            )
-        }
-        if (content != null) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(top = theme.spacing.s8),
-                content = content,
-            )
+        // 긴 본문이나 큰 글꼴에서도 버튼 행이 밀려나지 않게, 제목과 본문과 슬롯만 스크롤한다.
+        Column(
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState()),
+        ) {
+            NyummyText(text = title, style = theme.typography.titleL)
+            if (body != null) {
+                NyummyText(
+                    text = body,
+                    style = theme.typography.bodyL,
+                    color = theme.colors.content.secondary,
+                    modifier = Modifier.padding(top = theme.spacing.s8),
+                )
+            }
+            if (content != null) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(top = theme.spacing.s8),
+                    content = content,
+                )
+            }
         }
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = theme.spacing.s20),
@@ -159,7 +171,9 @@ internal fun NyummyDialogWindow(
                 // 바깥 탭으로 닫는다. clickable은 다이얼로그 전체 semantics를 병합하므로 포인터 입력만 받는다.
                 // 접근성 사용자는 뒤로 가기로 닫는다.
                 .pointerInput(onDismissRequest) { detectTapGestures { onDismissRequest() } }
-                .padding(horizontal = NyummyComponentDimens.DialogScreenMargin),
+                // 딤은 전체 화면에 깔고, 카드는 시스템 바와 키보드를 뺀 영역 안에 둔다.
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .padding(horizontal = NyummyComponentDimens.DialogScreenMargin, vertical = NyummyTheme.spacing.s24),
             contentAlignment = Alignment.Center,
         ) {
             // 카드 안쪽을 눌러도 바깥 클릭으로 닫히지 않게 탭을 소비한다.

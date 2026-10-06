@@ -1,6 +1,8 @@
 package com.dandi.nyummy.common.presentation.designsystem.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -150,35 +152,43 @@ internal fun NyummyConfirmSheetContent(
     val dimens = NyummyComponentDimens
     val ground = theme.colors.bg.surfaceSunken
     NyummySheetContent(spacing = Arrangement.Top, bottomPadding = theme.spacing.s32) {
-        Box(
+        // 가로 화면이나 분할 화면처럼 높이가 작아도 버튼이 밀려나지 않게, 냐미와 문구만 스크롤한다.
+        Column(
             modifier = Modifier
-                .padding(top = theme.spacing.s16)
-                .align(Alignment.CenterHorizontally)
-                .size(dimens.ConfirmSheetPoseSize),
-            contentAlignment = Alignment.BottomCenter,
+                .fillMaxWidth()
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState()),
         ) {
-            // 원 배경 없이 바닥 타원만 깐다.
             Box(
-                Modifier
-                    .padding(bottom = theme.spacing.s2)
-                    .size(dimens.ConfirmSheetGroundWidth, dimens.ConfirmSheetGroundHeight)
-                    .drawBehind { drawOval(ground) },
+                modifier = Modifier
+                    .padding(top = theme.spacing.s16)
+                    .align(Alignment.CenterHorizontally)
+                    .size(dimens.ConfirmSheetPoseSize),
+                contentAlignment = Alignment.BottomCenter,
+            ) {
+                // 원 배경 없이 바닥 타원만 깐다.
+                Box(
+                    Modifier
+                        .padding(bottom = theme.spacing.s2)
+                        .size(dimens.ConfirmSheetGroundWidth, dimens.ConfirmSheetGroundHeight)
+                        .drawBehind { drawOval(ground) },
+                )
+                NyummyPoseImage(pose = pose, size = dimens.ConfirmSheetPoseSize)
+            }
+            NyummyText(
+                text = title,
+                style = theme.typography.titleL,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(top = theme.spacing.s16),
             )
-            NyummyPoseImage(pose = pose, size = dimens.ConfirmSheetPoseSize)
+            NyummyText(
+                text = body,
+                style = theme.typography.bodyL,
+                color = theme.colors.content.secondary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(top = theme.spacing.s8),
+            )
         }
-        NyummyText(
-            text = title,
-            style = theme.typography.titleL,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(top = theme.spacing.s16),
-        )
-        NyummyText(
-            text = body,
-            style = theme.typography.bodyL,
-            color = theme.colors.content.secondary,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(top = theme.spacing.s8),
-        )
         Column(
             modifier = Modifier.fillMaxWidth().padding(top = theme.spacing.s24),
             verticalArrangement = Arrangement.spacedBy(theme.spacing.s4),
