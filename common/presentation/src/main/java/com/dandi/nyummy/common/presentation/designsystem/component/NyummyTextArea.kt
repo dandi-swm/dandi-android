@@ -15,6 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
@@ -62,7 +65,12 @@ fun NyummyTextArea(
         BasicTextField(
             value = value,
             onValueChange = { onValueChange(it.take(maxLength)) },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics {
+                    contentDescription = label
+                    if (errorMessage != null && enabled) error(errorMessage)
+                },
             enabled = enabled,
             textStyle = theme.typography.bodyM.copy(color = theme.colors.content.primary),
             cursorBrush = SolidColor(theme.colors.border.focus),

@@ -27,6 +27,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -53,36 +56,55 @@ fun NyummyTopBar(
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val theme = NyummyTheme
-    Box(
+    val minSide = theme.size.touchTarget
+    // 제목은 화면 가운데에 두되, 양옆 슬롯 중 넓은 쪽 너비만큼 양쪽을 비워 겹치지 않게 한다.
+    Layout(
         modifier = modifier
             .fillMaxWidth()
             .height(NyummyComponentDimens.TopBarHeight)
             .background(theme.colors.bg.canvas)
             .padding(horizontal = theme.spacing.s4),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (onBackClick != null) {
-            NyummyIconButton(
-                icon = R.drawable.nyummy_ic_chevron_left,
-                contentDescription = "뒤로 가기",
-                onClick = onBackClick,
-                modifier = Modifier.align(Alignment.CenterStart),
+        content = {
+            Box(Modifier.layoutId(TopBarStart)) {
+                if (onBackClick != null) {
+                    NyummyIconButton(
+                        icon = R.drawable.nyummy_ic_chevron_left,
+                        contentDescription = "뒤로 가기",
+                        onClick = onBackClick,
+                    )
+                }
+            }
+            Box(Modifier.layoutId(TopBarEnd)) { trailing?.invoke() }
+            NyummyText(
+                text = title,
+                style = theme.typography.titleM,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                modifier = Modifier
+                    .layoutId(TopBarTitle)
+                    .semantics { heading() },
             )
-        }
-        NyummyText(
-            text = title,
-            style = theme.typography.titleM,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            modifier = Modifier
-                .padding(horizontal = theme.size.touchTarget)
-                .semantics { heading() },
-        )
-        if (trailing != null) {
-            Box(modifier = Modifier.align(Alignment.CenterEnd)) { trailing() }
+        },
+    ) { measurables, constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val start = measurables.first { it.layoutId == TopBarStart }.measure(loose)
+        val end = measurables.first { it.layoutId == TopBarEnd }.measure(loose)
+        val side = maxOf(start.width, end.width, minSide.roundToPx())
+        val titleWidth = (constraints.maxWidth - side * 2).coerceAtLeast(0)
+        val titlePlaceable = measurables.first { it.layoutId == TopBarTitle }
+            .measure(loose.copy(maxWidth = titleWidth))
+        val height = constraints.maxHeight
+        layout(constraints.maxWidth, height) {
+            start.placeRelative(0, (height - start.height) / 2)
+            end.placeRelative(constraints.maxWidth - end.width, (height - end.height) / 2)
+            titlePlaceable.placeRelative((constraints.maxWidth - titlePlaceable.width) / 2, (height - titlePlaceable.height) / 2)
         }
     }
 }
+
+private const val TopBarStart = "start"
+private const val TopBarEnd = "end"
+private const val TopBarTitle = "title"
 
 /** 하단 내비 탭 하나. [icon]은 채색 일러스트(nyummy_nav_*), [label]은 접근성 설명도 겸한다. */
 @Immutable
@@ -122,14 +144,15 @@ fun NyummyBottomNav(
                     bottom = theme.spacing.s12,
                 )
                 .selectableGroup(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // 탭은 균등 너비로 나눠 360dp 이하 화면에서도 서로 겹치지 않게 한다(넓은 화면에서는 최대 70dp).
             items.forEachIndexed { index, item ->
                 BottomNavTab(
                     item = item,
                     selected = index == selectedIndex,
                     onClick = { onSelect(index) },
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
@@ -142,12 +165,13 @@ private fun BottomNavTab(
     item: NyummyBottomNavItem,
     selected: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val theme = NyummyTheme
     val dimens = NyummyComponentDimens
     Box(
-        modifier = Modifier
-            .size(dimens.BottomNavTabWidth, dimens.BottomNavTabHeight)
+        modifier = modifier
+            .height(dimens.BottomNavTabHeight)
             .selectable(
                 selected = selected,
                 interactionSource = rememberNyummyInteractionSource(),
@@ -159,7 +183,9 @@ private fun BottomNavTab(
     ) {
         Column(
             modifier = Modifier
-                .size(dimens.BottomNavSelectedWidth, dimens.BottomNavSelectedHeight)
+                .widthIn(max = dimens.BottomNavSelectedWidth)
+                .fillMaxWidth()
+                .height(dimens.BottomNavSelectedHeight)
                 .background(
                     color = if (selected) theme.colors.bg.selected else Color.Transparent,
                     shape = RoundedCornerShape(theme.radius.m),

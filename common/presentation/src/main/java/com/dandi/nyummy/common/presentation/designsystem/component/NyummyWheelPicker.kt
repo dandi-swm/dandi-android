@@ -21,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -119,10 +120,13 @@ fun NyummyWheelColumn(
         }
     }
 
+    // 코루틴이 처음 값을 붙잡지 않도록 최신 선택값과 콜백을 참조한다.
+    val latestSelectedIndex by rememberUpdatedState(selectedIndex)
+    val latestOnChange by rememberUpdatedState(onSelectedIndexChange)
     LaunchedEffect(listState) {
         snapshotFlow { listState.isScrollInProgress }
             .filter { scrolling -> !scrolling }
-            .collect { if (centeredIndex != selectedIndex) onSelectedIndexChange(centeredIndex) }
+            .collect { if (centeredIndex != latestSelectedIndex) latestOnChange(centeredIndex) }
     }
     LaunchedEffect(selectedIndex, items.size) {
         if (!listState.isScrollInProgress && centeredIndex != selectedIndex) {

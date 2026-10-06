@@ -36,6 +36,7 @@ fun NyummySegmentedControl(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val theme = NyummyTheme
     val containerShape = RoundedCornerShape(theme.radius.s)
@@ -59,6 +60,7 @@ fun NyummySegmentedControl(
                         selected = selected,
                         interactionSource = rememberNyummyInteractionSource(),
                         indication = null,
+                        enabled = enabled,
                         role = Role.RadioButton,
                         onClick = { onSelect(index) },
                     )
@@ -66,7 +68,11 @@ fun NyummySegmentedControl(
                         if (selected) {
                             Modifier
                                 .background(theme.colors.bg.surface, optionShape)
-                                .border(theme.borderWidth.bold, theme.colors.border.selected, optionShape)
+                                .border(
+                                    theme.borderWidth.bold,
+                                    if (enabled) theme.colors.border.selected else theme.colors.border.default,
+                                    optionShape,
+                                )
                         } else {
                             Modifier
                         },
@@ -76,7 +82,11 @@ fun NyummySegmentedControl(
                 NyummyText(
                     text = option,
                     style = theme.typography.labelM,
-                    color = if (selected) theme.colors.content.brand else theme.colors.content.secondary,
+                    color = when {
+                        !enabled -> theme.colors.content.disabled
+                        selected -> theme.colors.content.brand
+                        else -> theme.colors.content.secondary
+                    },
                     maxLines = 1,
                 )
             }

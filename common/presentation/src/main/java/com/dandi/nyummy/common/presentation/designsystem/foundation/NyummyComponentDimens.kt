@@ -74,8 +74,7 @@ internal object NyummyComponentDimens {
     /** Top Bar 높이. */
     val TopBarHeight = 56.dp
 
-    /** Bottom Nav 탭 칸, 선택 상자, 아이콘, 위아래 여백. */
-    val BottomNavTabWidth = 70.dp
+    /** Bottom Nav 탭 높이, 선택 상자, 아이콘, 위 여백. 탭 너비는 균등 분할. */
     val BottomNavTabHeight = 58.dp
     val BottomNavSelectedWidth = 60.dp
     val BottomNavSelectedHeight = 56.dp

@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,6 +42,7 @@ fun NyummyCodeInput(
     modifier: Modifier = Modifier,
     length: Int = DefaultCodeLength,
     isError: Boolean = false,
+    errorMessage: String? = null,
     enabled: Boolean = true,
     contentDescription: String = DefaultContentDescription,
 ) {
@@ -51,7 +53,10 @@ fun NyummyCodeInput(
     BasicTextField(
         value = value,
         onValueChange = { input -> onValueChange(input.filter(Char::isDigit).take(length)) },
-        modifier = modifier.semantics { this.contentDescription = contentDescription },
+        modifier = modifier.semantics {
+            this.contentDescription = contentDescription
+            if (isError) error(errorMessage ?: DefaultErrorDescription)
+        },
         enabled = enabled,
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
@@ -66,6 +71,7 @@ fun NyummyCodeInput(
                             digit = value.getOrNull(index),
                             active = enabled && focused && index == value.length.coerceAtMost(length - 1),
                             isError = isError,
+                            enabled = enabled,
                         )
                     }
                 }
@@ -75,10 +81,11 @@ fun NyummyCodeInput(
 }
 
 @Composable
-private fun CodeCell(digit: Char?, active: Boolean, isError: Boolean) {
+private fun CodeCell(digit: Char?, active: Boolean, isError: Boolean, enabled: Boolean) {
     val theme = NyummyTheme
     val shape = RoundedCornerShape(theme.radius.s)
     val borderColor = when {
+        !enabled -> theme.colors.border.subtle
         isError -> theme.colors.border.danger
         active -> theme.colors.border.focus
         digit != null -> theme.colors.border.strong
@@ -87,18 +94,23 @@ private fun CodeCell(digit: Char?, active: Boolean, isError: Boolean) {
     Box(
         modifier = Modifier
             .size(DpSize(NyummyComponentDimens.CodeCellWidth, NyummyComponentDimens.CodeCellHeight))
-            .background(theme.colors.bg.surface, shape)
+            .background(if (enabled) theme.colors.bg.surface else theme.colors.bg.surfaceSunken, shape)
             .border(theme.borderWidth.bold, borderColor, shape),
         contentAlignment = Alignment.Center,
     ) {
         if (digit != null) {
-            NyummyText(text = digit.toString(), style = theme.typography.numberM)
+            NyummyText(
+                text = digit.toString(),
+                style = theme.typography.numberM,
+                color = if (enabled) theme.colors.content.primary else theme.colors.content.disabled,
+            )
         }
     }
 }
 
 private const val DefaultCodeLength = 6
 private const val DefaultContentDescription = "인증 코드 입력"
+private const val DefaultErrorDescription = "인증 코드를 다시 확인해 주세요"
 
 @Preview(showBackground = true, widthDp = 390)
 @Composable
