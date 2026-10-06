@@ -70,6 +70,8 @@ dependencies {
     // PermissionRequester 의 rememberLauncherForActivityResult 용
     implementation(libs.androidx.activity.compose)
 
+    testImplementation(libs.junit)
+
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.junit)
