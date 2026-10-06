@@ -48,15 +48,14 @@ fun NyummyIconButton(
     enabled: Boolean = true,
     tint: Color = NyummyTheme.colors.content.primary,
 ) {
-    val theme = NyummyTheme
     val interactionSource = rememberNyummyInteractionSource()
     val pressed by interactionSource.collectIsPressedAsState()
     val filled = style == NyummyIconButtonStyle.Filled
 
     val container = when {
-        filled && pressed -> theme.colors.bg.actionSecondaryPressed
-        filled -> theme.colors.bg.actionSecondary
-        pressed -> theme.colors.bg.selected
+        filled && pressed -> NyummyTheme.colors.bg.actionSecondaryPressed
+        filled -> NyummyTheme.colors.bg.actionSecondary
+        pressed -> NyummyTheme.colors.bg.selected
         else -> Color.Transparent
     }
 
@@ -69,21 +68,25 @@ fun NyummyIconButton(
                 onClick = onClick,
                 pressedScale = NyummyPressScale.Circle,
             )
-            .size(theme.size.touchTarget)
+            .size(NyummyTheme.size.touchTarget)
             .then(
-                if (filled && !pressed) Modifier.nyummyShadow(CircleShape, theme.elevation.soft) else Modifier,
+                if (filled && !pressed) Modifier.nyummyShadow(CircleShape, NyummyTheme.elevation.soft) else Modifier,
             )
             .background(container, CircleShape)
             .then(
-                if (filled) Modifier.border(theme.borderWidth.bold, theme.colors.border.default, CircleShape) else Modifier,
+                if (filled) {
+                    Modifier.border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, CircleShape)
+                } else {
+                    Modifier
+                },
             ),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             painter = painterResource(icon),
             contentDescription = contentDescription,
-            tint = if (enabled) tint else theme.colors.content.disabled,
-            modifier = Modifier.size(theme.size.iconL),
+            tint = if (enabled) tint else NyummyTheme.colors.content.disabled,
+            modifier = Modifier.size(NyummyTheme.size.iconL),
         )
     }
 }

@@ -65,14 +65,13 @@ fun NyummySectionHeader(
     actionText: String? = null,
     onActionClick: () -> Unit = {},
 ) {
-    val theme = NyummyTheme
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = theme.spacing.s8, bottom = theme.spacing.s4),
+            .padding(top = NyummyTheme.spacing.s8, bottom = NyummyTheme.spacing.s4),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NyummyText(text = title, style = theme.typography.titleS, modifier = Modifier.weight(1f), maxLines = 1)
+        NyummyText(text = title, style = NyummyTheme.typography.titleS, modifier = Modifier.weight(1f), maxLines = 1)
         if (actionText != null) {
             SectionHeaderAction(actionText, onActionClick)
         }
@@ -87,17 +86,16 @@ fun NyummySectionCaption(
     actionText: String? = null,
     onActionClick: () -> Unit = {},
 ) {
-    val theme = NyummyTheme
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = theme.spacing.s20, bottom = theme.spacing.s4),
+            .padding(top = NyummyTheme.spacing.s20, bottom = NyummyTheme.spacing.s4),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NyummyText(
             text = title,
-            style = theme.typography.labelS,
-            color = theme.colors.content.tertiary,
+            style = NyummyTheme.typography.labelS,
+            color = NyummyTheme.colors.content.tertiary,
             modifier = Modifier.weight(1f),
             maxLines = 1,
         )
@@ -115,25 +113,29 @@ fun NyummySectionHeaderWithMeta(
     modifier: Modifier = Modifier,
     @DrawableRes metaIcon: Int = R.drawable.nyummy_ic_clock,
 ) {
-    val theme = NyummyTheme
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = theme.spacing.s8, bottom = theme.spacing.s4),
+            .padding(top = NyummyTheme.spacing.s8, bottom = NyummyTheme.spacing.s4),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NyummyText(text = title, style = theme.typography.titleS, modifier = Modifier.weight(1f), maxLines = 1)
+        NyummyText(text = title, style = NyummyTheme.typography.titleS, modifier = Modifier.weight(1f), maxLines = 1)
         Row(
-            horizontalArrangement = Arrangement.spacedBy(theme.spacing.s4),
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 painter = painterResource(metaIcon),
                 contentDescription = null,
-                tint = theme.colors.content.tertiary,
-                modifier = Modifier.size(theme.size.iconXs),
+                tint = NyummyTheme.colors.content.tertiary,
+                modifier = Modifier.size(NyummyTheme.size.iconXs),
             )
-            NyummyText(text = meta, style = theme.typography.labelS, color = theme.colors.content.tertiary, maxLines = 1)
+            NyummyText(
+                text = meta,
+                style = NyummyTheme.typography.labelS,
+                color = NyummyTheme.colors.content.tertiary,
+                maxLines = 1,
+            )
         }
     }
 }
@@ -160,7 +162,6 @@ fun NyummySkeleton(
     shape: NyummySkeletonShape,
     modifier: Modifier = Modifier,
 ) {
-    val theme = NyummyTheme
     val alpha by rememberInfiniteTransition(label = "skeleton").animateFloat(
         initialValue = 1f,
         targetValue = SkeletonMinAlpha,
@@ -168,8 +169,8 @@ fun NyummySkeleton(
         label = "skeletonAlpha",
     )
     val drawShape: Shape = when (shape) {
-        NyummySkeletonShape.Line -> RoundedCornerShape(theme.radius.full)
-        NyummySkeletonShape.Block -> RoundedCornerShape(theme.radius.m)
+        NyummySkeletonShape.Line -> RoundedCornerShape(NyummyTheme.radius.full)
+        NyummySkeletonShape.Block -> RoundedCornerShape(NyummyTheme.radius.m)
         NyummySkeletonShape.Circle -> CircleShape
     }
     val sized = if (shape == NyummySkeletonShape.Line) Modifier.height(NyummyComponentDimens.SkeletonLineHeight) else Modifier
@@ -177,7 +178,7 @@ fun NyummySkeleton(
         modifier
             .then(sized)
             .graphicsLayer { this.alpha = alpha }
-            .background(theme.colors.bg.surfaceSunken, drawShape),
+            .background(NyummyTheme.colors.bg.surfaceSunken, drawShape),
     )
 }
 

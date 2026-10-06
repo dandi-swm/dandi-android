@@ -45,16 +45,15 @@ fun NyummyBottomSheet(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val theme = NyummyTheme
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        shape = RoundedCornerShape(topStart = theme.radius.l, topEnd = theme.radius.l),
-        containerColor = theme.colors.bg.surface,
-        contentColor = theme.colors.content.primary,
+        shape = RoundedCornerShape(topStart = NyummyTheme.radius.l, topEnd = NyummyTheme.radius.l),
+        containerColor = NyummyTheme.colors.bg.surface,
+        contentColor = NyummyTheme.colors.content.primary,
         tonalElevation = 0.dp,
-        scrimColor = theme.colors.bg.scrim,
+        scrimColor = NyummyTheme.colors.bg.scrim,
         dragHandle = null,
     ) {
         NyummySheetContent(content = content)
@@ -69,19 +68,23 @@ internal fun NyummySheetContent(
     bottomPadding: Dp = NyummyTheme.spacing.s24,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val theme = NyummyTheme
     Column(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(start = theme.spacing.gutter, end = theme.spacing.gutter, top = theme.spacing.s12, bottom = bottomPadding),
+            .padding(
+                start = NyummyTheme.spacing.gutter,
+                end = NyummyTheme.spacing.gutter,
+                top = NyummyTheme.spacing.s12,
+                bottom = bottomPadding,
+            ),
         verticalArrangement = spacing,
     ) {
         Box(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .size(NyummyComponentDimens.SheetHandleWidth, NyummyComponentDimens.SheetHandleHeight)
-                .background(theme.colors.border.default, RoundedCornerShape(theme.radius.full)),
+                .background(NyummyTheme.colors.border.default, RoundedCornerShape(NyummyTheme.radius.full)),
         )
         content()
     }
@@ -112,16 +115,15 @@ fun NyummyConfirmSheet(
     pose: NyummyPose = NyummyPose.Worry,
     destructive: Boolean = false,
 ) {
-    val theme = NyummyTheme
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        shape = RoundedCornerShape(topStart = theme.radius.l, topEnd = theme.radius.l),
-        containerColor = theme.colors.bg.surface,
-        contentColor = theme.colors.content.primary,
+        shape = RoundedCornerShape(topStart = NyummyTheme.radius.l, topEnd = NyummyTheme.radius.l),
+        containerColor = NyummyTheme.colors.bg.surface,
+        contentColor = NyummyTheme.colors.content.primary,
         tonalElevation = 0.dp,
-        scrimColor = theme.colors.bg.scrim,
+        scrimColor = NyummyTheme.colors.bg.scrim,
         dragHandle = null,
     ) {
         NyummyConfirmSheetContent(
@@ -148,10 +150,9 @@ internal fun NyummyConfirmSheetContent(
     pose: NyummyPose,
     destructive: Boolean,
 ) {
-    val theme = NyummyTheme
     val dimens = NyummyComponentDimens
-    val ground = theme.colors.bg.surfaceSunken
-    NyummySheetContent(spacing = Arrangement.Top, bottomPadding = theme.spacing.s32) {
+    val ground = NyummyTheme.colors.bg.surfaceSunken
+    NyummySheetContent(spacing = Arrangement.Top, bottomPadding = NyummyTheme.spacing.s32) {
         // 가로 화면이나 분할 화면처럼 높이가 작아도 버튼이 밀려나지 않게, 냐미와 문구만 스크롤한다.
         Column(
             modifier = Modifier
@@ -161,7 +162,7 @@ internal fun NyummyConfirmSheetContent(
         ) {
             Box(
                 modifier = Modifier
-                    .padding(top = theme.spacing.s16)
+                    .padding(top = NyummyTheme.spacing.s16)
                     .align(Alignment.CenterHorizontally)
                     .size(dimens.ConfirmSheetPoseSize),
                 contentAlignment = Alignment.BottomCenter,
@@ -169,7 +170,7 @@ internal fun NyummyConfirmSheetContent(
                 // 원 배경 없이 바닥 타원만 깐다.
                 Box(
                     Modifier
-                        .padding(bottom = theme.spacing.s2)
+                        .padding(bottom = NyummyTheme.spacing.s2)
                         .size(dimens.ConfirmSheetGroundWidth, dimens.ConfirmSheetGroundHeight)
                         .drawBehind { drawOval(ground) },
                 )
@@ -177,21 +178,21 @@ internal fun NyummyConfirmSheetContent(
             }
             NyummyText(
                 text = title,
-                style = theme.typography.titleL,
+                style = NyummyTheme.typography.titleL,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(top = theme.spacing.s16),
+                modifier = Modifier.fillMaxWidth().padding(top = NyummyTheme.spacing.s16),
             )
             NyummyText(
                 text = body,
-                style = theme.typography.bodyL,
-                color = theme.colors.content.secondary,
+                style = NyummyTheme.typography.bodyL,
+                color = NyummyTheme.colors.content.secondary,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(top = theme.spacing.s8),
+                modifier = Modifier.fillMaxWidth().padding(top = NyummyTheme.spacing.s8),
             )
         }
         Column(
-            modifier = Modifier.fillMaxWidth().padding(top = theme.spacing.s24),
-            verticalArrangement = Arrangement.spacedBy(theme.spacing.s4),
+            modifier = Modifier.fillMaxWidth().padding(top = NyummyTheme.spacing.s24),
+            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
         ) {
             NyummyButton(
                 text = primaryText,
@@ -214,22 +215,26 @@ internal fun NyummyConfirmSheetContent(
  */
 @Composable
 private fun ConfirmSheetSecondaryAction(text: String, onClick: () -> Unit, destructive: Boolean) {
-    val theme = NyummyTheme
     val interactionSource = rememberNyummyInteractionSource()
     val pressed by interactionSource.collectIsPressedAsState()
-    val shape = RoundedCornerShape(theme.radius.m)
+    val shape = RoundedCornerShape(NyummyTheme.radius.m)
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .nyummyPressable(interactionSource = interactionSource, enabled = true, role = Role.Button, onClick = onClick)
-            .height(theme.size.buttonL)
-            .background(if (pressed) theme.colors.bg.actionSecondary else Color.Transparent, shape),
+            .nyummyPressable(
+                interactionSource = interactionSource,
+                enabled = true,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .height(NyummyTheme.size.buttonL)
+            .background(if (pressed) NyummyTheme.colors.bg.actionSecondary else Color.Transparent, shape),
         contentAlignment = Alignment.Center,
     ) {
         NyummyText(
             text = text,
-            style = theme.typography.labelL,
-            color = if (destructive) theme.colors.content.secondary else theme.colors.content.danger,
+            style = NyummyTheme.typography.labelL,
+            color = if (destructive) NyummyTheme.colors.content.secondary else NyummyTheme.colors.content.danger,
             maxLines = 1,
         )
     }

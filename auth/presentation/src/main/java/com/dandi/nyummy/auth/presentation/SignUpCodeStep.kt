@@ -30,7 +30,6 @@ internal fun ColumnScope.SignUpCodeStep(
     uiState: SignUpUIState,
     onIntent: (SignUpIntent) -> Unit,
 ) {
-    val theme = NyummyTheme
     AuthFormHeader(
         title = stringResource(R.string.auth_signup_code_title),
         subtitle = stringResource(R.string.auth_signup_code_subtitle, uiState.email),
@@ -46,14 +45,14 @@ internal fun ColumnScope.SignUpCodeStep(
         modifier = Modifier.fillMaxWidth(),
     )
     uiState.codeError?.let { codeError ->
-        Spacer(Modifier.height(theme.spacing.s8))
-        NyummyText(text = codeError, style = theme.typography.bodyS, color = theme.colors.content.danger)
+        Spacer(Modifier.height(NyummyTheme.spacing.s8))
+        NyummyText(text = codeError, style = NyummyTheme.typography.bodyS, color = NyummyTheme.colors.content.danger)
     }
-    Spacer(Modifier.height(theme.spacing.s8))
+    Spacer(Modifier.height(NyummyTheme.spacing.s8))
     NyummyText(
         text = stringResource(R.string.auth_signup_code_spam_hint),
-        style = theme.typography.bodyS,
-        color = theme.colors.content.tertiary,
+        style = NyummyTheme.typography.bodyS,
+        color = NyummyTheme.colors.content.tertiary,
     )
 }
 
@@ -66,16 +65,15 @@ internal fun SignUpCodeBottom(
     uiState: SignUpUIState,
     onIntent: (SignUpIntent) -> Unit,
 ) {
-    val theme = NyummyTheme
     val canResend = uiState.resendRemainingSeconds <= 0 && !uiState.isLoading
     Row(
-        horizontalArrangement = Arrangement.spacedBy(theme.spacing.s8),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NyummyText(
             text = stringResource(R.string.auth_signup_code_resend_question),
-            style = theme.typography.bodyM,
-            color = theme.colors.content.tertiary,
+            style = NyummyTheme.typography.bodyM,
+            color = NyummyTheme.colors.content.tertiary,
         )
         if (uiState.resendRemainingSeconds > 0) {
             NyummyText(
@@ -83,8 +81,8 @@ internal fun SignUpCodeBottom(
                     R.string.auth_signup_code_resend_countdown,
                     uiState.resendRemainingSeconds.toCountdownText(),
                 ),
-                style = theme.typography.labelM,
-                color = theme.colors.content.disabled,
+                style = NyummyTheme.typography.labelM,
+                color = NyummyTheme.colors.content.disabled,
             )
         } else {
             val label = stringResource(R.string.auth_signup_code_resend)
@@ -92,8 +90,8 @@ internal fun SignUpCodeBottom(
                 text = buildAnnotatedString {
                     withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) { append(label) }
                 },
-                style = theme.typography.labelM,
-                color = if (canResend) theme.colors.content.brand else theme.colors.content.disabled,
+                style = NyummyTheme.typography.labelM,
+                color = if (canResend) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.disabled,
                 modifier = Modifier.nyummyClickable(
                     onClick = { onIntent(SignUpIntent.ClickResendCode) },
                     enabled = canResend,

@@ -34,7 +34,6 @@ internal fun ColumnScope.SignUpProfileStep(
     uiState: SignUpUIState,
     onIntent: (SignUpIntent) -> Unit,
 ) {
-    val theme = NyummyTheme
     val enabled = !uiState.isLoading
     AuthFormHeader(
         title = stringResource(R.string.auth_signup_profile_title),
@@ -66,7 +65,7 @@ internal fun ColumnScope.SignUpProfileStep(
     FieldLabel(stringResource(R.string.auth_signup_birth_label))
     BirthWheelPickers(uiState = uiState, onIntent = onIntent)
     SectionGap()
-    Row(horizontalArrangement = Arrangement.spacedBy(theme.spacing.s12)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12)) {
         Column(modifier = Modifier.weight(1f)) {
             FieldLabel(stringResource(R.string.auth_signup_height_label))
             NyummyWheelPicker(
@@ -125,13 +124,12 @@ private fun BirthWheelPickers(
     uiState: SignUpUIState,
     onIntent: (SignUpIntent) -> Unit,
 ) {
-    val theme = NyummyTheme
     val years = remember { BIRTH_YEAR_RANGE.map(Int::toString).toImmutableList() }
     val months = remember { MONTH_RANGE.map(::toTwoDigits).toImmutableList() }
     val days = remember(uiState.birthYear, uiState.birthMonth) {
         (1..lengthOfMonth(uiState.birthYear, uiState.birthMonth)).map(::toTwoDigits).toImmutableList()
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(theme.spacing.s8)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
         NyummyWheelPicker(
             items = years,
             selectedIndex = uiState.birthYear - BIRTH_YEAR_RANGE.first,

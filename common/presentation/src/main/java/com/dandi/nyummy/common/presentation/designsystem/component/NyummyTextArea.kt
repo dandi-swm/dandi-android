@@ -43,25 +43,24 @@ fun NyummyTextArea(
     enabled: Boolean = true,
     maxLength: Int = DefaultMaxLength,
 ) {
-    val theme = NyummyTheme
     val interactionSource = rememberNyummyInteractionSource()
     val focused by interactionSource.collectIsFocusedAsState()
     val isError = errorMessage != null
-    val shape = RoundedCornerShape(theme.radius.s)
+    val shape = RoundedCornerShape(NyummyTheme.radius.s)
     val emphasized = enabled && (isError || focused)
-    val borderWidth = if (emphasized) theme.borderWidth.bold else theme.borderWidth.hairline
+    val borderWidth = if (emphasized) NyummyTheme.borderWidth.bold else NyummyTheme.borderWidth.hairline
     val borderColor = when {
-        !enabled -> theme.colors.border.default
-        isError -> theme.colors.border.danger
-        focused -> theme.colors.border.focus
-        else -> theme.colors.border.default
+        !enabled -> NyummyTheme.colors.border.default
+        isError -> NyummyTheme.colors.border.danger
+        focused -> NyummyTheme.colors.border.focus
+        else -> NyummyTheme.colors.border.default
     }
 
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(NyummyComponentDimens.FieldLabelGap),
     ) {
-        NyummyText(text = label, style = theme.typography.labelM, color = theme.colors.content.secondary)
+        NyummyText(text = label, style = NyummyTheme.typography.labelM, color = NyummyTheme.colors.content.secondary)
         BasicTextField(
             value = value,
             onValueChange = { onValueChange(it.take(maxLength)) },
@@ -72,34 +71,41 @@ fun NyummyTextArea(
                     if (errorMessage != null && enabled) error(errorMessage)
                 },
             enabled = enabled,
-            textStyle = theme.typography.bodyM.copy(color = theme.colors.content.primary),
-            cursorBrush = SolidColor(theme.colors.border.focus),
+            textStyle = NyummyTheme.typography.bodyM.copy(color = NyummyTheme.colors.content.primary),
+            cursorBrush = SolidColor(NyummyTheme.colors.border.focus),
             interactionSource = interactionSource,
             decorationBox = { innerTextField ->
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(NyummyComponentDimens.TextAreaHeight)
-                        .background(if (enabled) theme.colors.bg.surface else theme.colors.bg.actionDisabled, shape)
+                        .background(
+                            if (enabled) NyummyTheme.colors.bg.surface else NyummyTheme.colors.bg.actionDisabled,
+                            shape,
+                        )
                         .border(borderWidth, borderColor, shape)
                         .padding(
-                            start = theme.spacing.s16,
-                            end = theme.spacing.s16,
+                            start = NyummyTheme.spacing.s16,
+                            end = NyummyTheme.spacing.s16,
                             top = NyummyComponentDimens.TextAreaTopPadding,
-                            bottom = theme.spacing.s12,
+                            bottom = NyummyTheme.spacing.s12,
                         ),
-                    verticalArrangement = Arrangement.spacedBy(theme.spacing.s8),
+                    verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
                 ) {
                     Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                         if (value.isEmpty() && placeholder != null) {
-                            NyummyText(text = placeholder, style = theme.typography.bodyM, color = theme.colors.content.tertiary)
+                            NyummyText(
+                                text = placeholder,
+                                style = NyummyTheme.typography.bodyM,
+                                color = NyummyTheme.colors.content.tertiary,
+                            )
                         }
                         innerTextField()
                     }
                     NyummyText(
                         text = "${value.length.formatted()}/${maxLength.formatted()}",
-                        style = theme.typography.labelS,
-                        color = theme.colors.content.tertiary,
+                        style = NyummyTheme.typography.labelS,
+                        color = NyummyTheme.colors.content.tertiary,
                         textAlign = TextAlign.End,
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -107,7 +113,11 @@ fun NyummyTextArea(
             },
         )
         if (errorMessage != null && enabled) {
-            NyummyText(text = errorMessage, style = theme.typography.bodyS, color = theme.colors.content.danger)
+            NyummyText(
+                text = errorMessage,
+                style = NyummyTheme.typography.bodyS,
+                color = NyummyTheme.colors.content.danger,
+            )
         }
     }
 }

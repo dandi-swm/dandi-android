@@ -32,8 +32,7 @@ fun NyummyCard(
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val theme = NyummyTheme
-    val shape = RoundedCornerShape(theme.radius.m)
+    val shape = RoundedCornerShape(NyummyTheme.radius.m)
     val interactionSource = rememberNyummyInteractionSource()
     val pressed by interactionSource.collectIsPressedAsState()
     val pressable = onClick != null
@@ -53,15 +52,15 @@ fun NyummyCard(
                 },
             )
             .clip(shape)
-            .background(theme.colors.bg.surface)
-            .background(if (pressed) theme.colors.bg.pressedOverlay else Color.Transparent)
+            .background(NyummyTheme.colors.bg.surface)
+            .background(if (pressed) NyummyTheme.colors.bg.pressedOverlay else Color.Transparent)
             .border(
-                width = if (pressable) theme.borderWidth.hairline else theme.borderWidth.bold,
-                color = if (pressable) theme.colors.border.subtle else theme.colors.border.default,
+                width = if (pressable) NyummyTheme.borderWidth.hairline else NyummyTheme.borderWidth.bold,
+                color = if (pressable) NyummyTheme.colors.border.subtle else NyummyTheme.colors.border.default,
                 shape = shape,
             )
-            .padding(theme.spacing.s20),
-        verticalArrangement = Arrangement.spacedBy(theme.spacing.s4),
+            .padding(NyummyTheme.spacing.s20),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
         content = content,
     )
 }

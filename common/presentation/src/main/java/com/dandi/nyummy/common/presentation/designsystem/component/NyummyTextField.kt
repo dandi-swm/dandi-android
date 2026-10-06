@@ -68,18 +68,17 @@ fun NyummyTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     interactionSource: MutableInteractionSource = rememberNyummyInteractionSource(),
 ) {
-    val theme = NyummyTheme
     val focused by interactionSource.collectIsFocusedAsState()
     val isError = errorMessage != null
-    val shape = RoundedCornerShape(theme.radius.s)
+    val shape = RoundedCornerShape(NyummyTheme.radius.s)
     val borderColor = fieldBorderColor(enabled = enabled, isError = isError, focused = focused)
-    val textColor = if (enabled) theme.colors.content.primary else theme.colors.content.disabled
+    val textColor = if (enabled) NyummyTheme.colors.content.primary else NyummyTheme.colors.content.disabled
 
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(NyummyComponentDimens.FieldLabelGap),
     ) {
-        NyummyText(text = label, style = theme.typography.labelM, color = theme.colors.content.secondary)
+        NyummyText(text = label, style = NyummyTheme.typography.labelM, color = NyummyTheme.colors.content.secondary)
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -91,8 +90,8 @@ fun NyummyTextField(
                 },
             enabled = enabled,
             singleLine = true,
-            textStyle = theme.typography.bodyL.copy(color = textColor),
-            cursorBrush = SolidColor(theme.colors.border.focus),
+            textStyle = NyummyTheme.typography.bodyL.copy(color = textColor),
+            cursorBrush = SolidColor(NyummyTheme.colors.border.focus),
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
             visualTransformation = visualTransformation,
@@ -102,9 +101,12 @@ fun NyummyTextField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(NyummyComponentDimens.TextFieldHeight)
-                        .background(if (enabled) theme.colors.bg.surface else theme.colors.bg.surfaceSunken, shape)
-                        .border(theme.borderWidth.bold, borderColor, shape)
-                        .padding(horizontal = theme.spacing.s16),
+                        .background(
+                            if (enabled) NyummyTheme.colors.bg.surface else NyummyTheme.colors.bg.surfaceSunken,
+                            shape,
+                        )
+                        .border(NyummyTheme.borderWidth.bold, borderColor, shape)
+                        .padding(horizontal = NyummyTheme.spacing.s16),
                     horizontalArrangement = Arrangement.spacedBy(NyummyComponentDimens.TextFieldIconGap),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -112,16 +114,24 @@ fun NyummyTextField(
                         Icon(
                             painter = painterResource(leadingIcon),
                             contentDescription = null,
-                            tint = if (enabled) theme.colors.content.tertiary else theme.colors.content.disabled,
-                            modifier = Modifier.size(theme.size.iconM),
+                            tint = if (enabled) {
+                                NyummyTheme.colors.content.tertiary
+                            } else {
+                                NyummyTheme.colors.content.disabled
+                            },
+                            modifier = Modifier.size(NyummyTheme.size.iconM),
                         )
                     }
                     Box(modifier = Modifier.weight(1f)) {
                         if (value.isEmpty() && placeholder != null) {
                             NyummyText(
                                 text = placeholder,
-                                style = theme.typography.bodyL,
-                                color = if (enabled) theme.colors.content.tertiary else theme.colors.content.disabled,
+                                style = NyummyTheme.typography.bodyL,
+                                color = if (enabled) {
+                                    NyummyTheme.colors.content.tertiary
+                                } else {
+                                    NyummyTheme.colors.content.disabled
+                                },
                                 maxLines = 1,
                             )
                         }
@@ -135,11 +145,11 @@ fun NyummyTextField(
         if (supporting != null) {
             NyummyText(
                 text = supporting,
-                style = theme.typography.bodyS,
+                style = NyummyTheme.typography.bodyS,
                 color = when {
-                    !enabled -> theme.colors.content.disabled
-                    isError -> theme.colors.content.danger
-                    else -> theme.colors.content.tertiary
+                    !enabled -> NyummyTheme.colors.content.disabled
+                    isError -> NyummyTheme.colors.content.danger
+                    else -> NyummyTheme.colors.content.tertiary
                 },
             )
         }

@@ -113,28 +113,27 @@ private class ButtonSizeSpec(
 
 @Composable
 private fun buttonSizeSpec(size: NyummyButtonSize): ButtonSizeSpec {
-    val theme = NyummyTheme
     return when (size) {
         NyummyButtonSize.L -> ButtonSizeSpec(
-            height = theme.size.buttonL,
-            radius = theme.radius.m,
-            horizontalPadding = theme.spacing.s24,
-            iconSize = theme.size.iconL,
-            textStyle = theme.typography.labelL,
+            height = NyummyTheme.size.buttonL,
+            radius = NyummyTheme.radius.m,
+            horizontalPadding = NyummyTheme.spacing.s24,
+            iconSize = NyummyTheme.size.iconL,
+            textStyle = NyummyTheme.typography.labelL,
         )
         NyummyButtonSize.M -> ButtonSizeSpec(
-            height = theme.size.buttonM,
-            radius = theme.radius.s,
-            horizontalPadding = theme.spacing.s24,
-            iconSize = theme.size.iconM,
-            textStyle = theme.typography.labelM,
+            height = NyummyTheme.size.buttonM,
+            radius = NyummyTheme.radius.s,
+            horizontalPadding = NyummyTheme.spacing.s24,
+            iconSize = NyummyTheme.size.iconM,
+            textStyle = NyummyTheme.typography.labelM,
         )
         NyummyButtonSize.S -> ButtonSizeSpec(
             height = NyummyComponentDimens.CompactControlHeight,
-            radius = theme.radius.xs,
+            radius = NyummyTheme.radius.xs,
             horizontalPadding = NyummyComponentDimens.CompactControlHorizontalPadding,
-            iconSize = theme.size.iconS,
-            textStyle = theme.typography.labelM,
+            iconSize = NyummyTheme.size.iconS,
+            textStyle = NyummyTheme.typography.labelM,
         )
     }
 }

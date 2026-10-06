@@ -21,9 +21,8 @@ fun NyummyBadge(
     modifier: Modifier = Modifier,
     tone: NyummyBadgeTone = NyummyBadgeTone.Neutral,
 ) {
-    val theme = NyummyTheme
-    val bg = theme.colors.bg
-    val content = theme.colors.content
+    val bg = NyummyTheme.colors.bg
+    val content = NyummyTheme.colors.content
     val (container, color) = when (tone) {
         NyummyBadgeTone.Neutral -> bg.surfaceSunken to content.secondary
         NyummyBadgeTone.Success -> bg.successSubtle to content.success
@@ -33,10 +32,10 @@ fun NyummyBadge(
     }
     Box(
         modifier = modifier
-            .background(container, RoundedCornerShape(theme.radius.xs))
-            .padding(horizontal = theme.spacing.s8, vertical = NyummyComponentDimens.BadgeVerticalPadding),
+            .background(container, RoundedCornerShape(NyummyTheme.radius.xs))
+            .padding(horizontal = NyummyTheme.spacing.s8, vertical = NyummyComponentDimens.BadgeVerticalPadding),
     ) {
-        NyummyText(text = text, style = theme.typography.labelS, color = color, maxLines = 1)
+        NyummyText(text = text, style = NyummyTheme.typography.labelS, color = color, maxLines = 1)
     }
 }
 

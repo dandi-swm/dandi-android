@@ -112,13 +112,12 @@ internal fun LoginPageContent(
     uiState: LoginUIState,
     onIntent: (LoginIntent) -> Unit,
 ) {
-    val theme = NyummyTheme
     val enabled = !uiState.isLoading
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(theme.colors.bg.canvas),
+            .background(NyummyTheme.colors.bg.canvas),
     ) {
         // 반복 패턴이라 어떤 화면 비율로 잘려도 어색하지 않다. 50%로 옅게 깐다.
         Image(
@@ -134,7 +133,7 @@ internal fun LoginPageContent(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .padding(horizontal = theme.spacing.gutter),
+                .padding(horizontal = NyummyTheme.spacing.gutter),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // 제목 블록은 상단과 카드 사이 빈 공간의 가운데보다 살짝 위에 둔다.
@@ -147,7 +146,7 @@ internal fun LoginPageContent(
                 onIntent = onIntent,
                 modifier = Modifier.widthIn(max = CardMaxWidth),
             )
-            Spacer(Modifier.height(theme.spacing.s24))
+            Spacer(Modifier.height(NyummyTheme.spacing.s24))
         }
         SocialLoginLoadingOverlay(
             socialType = uiState.socialLoginInProgress,
@@ -159,7 +158,6 @@ internal fun LoginPageContent(
 
 @Composable
 private fun LoginTitleBlock() {
-    val theme = NyummyTheme
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(TitleBlockGap),
@@ -171,14 +169,14 @@ private fun LoginTitleBlock() {
         )
         NyummyText(
             text = stringResource(R.string.auth_login_headline),
-            style = theme.typography.displayL,
-            color = theme.colors.content.brand,
+            style = NyummyTheme.typography.displayL,
+            color = NyummyTheme.colors.content.brand,
             textAlign = TextAlign.Center,
         )
         NyummyText(
             text = stringResource(R.string.auth_login_subtitle),
-            style = theme.typography.bodyM,
-            color = theme.colors.content.secondary,
+            style = NyummyTheme.typography.bodyM,
+            color = NyummyTheme.colors.content.secondary,
             textAlign = TextAlign.Center,
         )
     }
@@ -192,15 +190,14 @@ private fun LoginCard(
     onIntent: (LoginIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val theme = NyummyTheme
-    val shape = RoundedCornerShape(theme.radius.l)
+    val shape = RoundedCornerShape(NyummyTheme.radius.l)
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .nyummyShadow(shape, theme.elevation.float)
-            .background(theme.colors.bg.surface, shape)
-            .padding(theme.spacing.s20),
-        verticalArrangement = Arrangement.spacedBy(theme.spacing.s16),
+            .nyummyShadow(shape, NyummyTheme.elevation.float)
+            .background(NyummyTheme.colors.bg.surface, shape)
+            .padding(NyummyTheme.spacing.s20),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         KakaoLoginButton(
@@ -231,14 +228,13 @@ private fun KakaoLoginButton(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
-    val theme = NyummyTheme
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .nyummyClickable(onClick = onClick, enabled = enabled)
             .height(KakaoButtonHeight)
-            .clip(RoundedCornerShape(theme.radius.s))
-            .background(theme.colors.external.kakaoYellow),
+            .clip(RoundedCornerShape(NyummyTheme.radius.s))
+            .background(NyummyTheme.colors.external.kakaoYellow),
         contentAlignment = Alignment.Center,
     ) {
         Image(
@@ -251,24 +247,23 @@ private fun KakaoLoginButton(
         )
         NyummyText(
             text = stringResource(R.string.auth_login_kakao),
-            style = theme.typography.labelM,
-            color = theme.colors.external.kakaoLabel,
+            style = NyummyTheme.typography.labelM,
+            color = NyummyTheme.colors.external.kakaoLabel,
         )
     }
 }
 
 @Composable
 private fun LoginOrDivider() {
-    val theme = NyummyTheme
     Row(
-        horizontalArrangement = Arrangement.spacedBy(theme.spacing.s12),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         DividerLine()
         NyummyText(
             text = stringResource(R.string.auth_login_or),
-            style = theme.typography.bodyS,
-            color = theme.colors.content.tertiary,
+            style = NyummyTheme.typography.bodyS,
+            color = NyummyTheme.colors.content.tertiary,
         )
         DividerLine()
     }
@@ -289,35 +284,42 @@ private fun LoginSocialCircles(
     enabled: Boolean,
     onIntent: (LoginIntent) -> Unit,
 ) {
-    val theme = NyummyTheme
-    Row(horizontalArrangement = Arrangement.spacedBy(theme.spacing.s24)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s24)) {
         SocialCircle(
             description = stringResource(R.string.auth_login_naver_description),
             enabled = enabled,
             onClick = { onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.NAVER)) },
         ) {
-            Image(painterResource(R.drawable.auth_icon_naver_circle), contentDescription = null, modifier = Modifier.fillMaxSize())
+            Image(
+                painterResource(R.drawable.auth_icon_naver_circle),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
         SocialCircle(
             description = stringResource(R.string.auth_login_google_description),
             enabled = enabled,
             onClick = { onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.GOOGLE)) },
         ) {
-            Image(painterResource(R.drawable.auth_google_button), contentDescription = null, modifier = Modifier.fillMaxSize())
+            Image(
+                painterResource(R.drawable.auth_google_button),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
         SocialCircle(
             description = stringResource(R.string.auth_login_email_description),
             enabled = enabled,
             onClick = { onIntent(LoginIntent.ClickEmailLogin) },
             modifier = Modifier
-                .background(theme.colors.bg.surface, CircleShape)
-                .border(theme.borderWidth.bold, theme.colors.border.default, CircleShape),
+                .background(NyummyTheme.colors.bg.surface, CircleShape)
+                .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, CircleShape),
         ) {
             Icon(
                 painter = painterResource(CommonR.drawable.nyummy_ic_mail),
                 contentDescription = null,
-                tint = theme.colors.content.brand,
-                modifier = Modifier.size(theme.size.iconL),
+                tint = NyummyTheme.colors.content.brand,
+                modifier = Modifier.size(NyummyTheme.size.iconL),
             )
         }
     }
@@ -350,8 +352,7 @@ private fun SocialCircle(
  */
 @Composable
 private fun LoginTermsNotice() {
-    val theme = NyummyTheme
-    val link = SpanStyle(textDecoration = TextDecoration.Underline, color = theme.colors.content.secondary)
+    val link = SpanStyle(textDecoration = TextDecoration.Underline, color = NyummyTheme.colors.content.secondary)
     val notice = buildAnnotatedString {
         append(stringResource(R.string.auth_login_terms_prefix))
         withStyle(link) { append(stringResource(R.string.auth_login_terms_service)) }
@@ -361,8 +362,8 @@ private fun LoginTermsNotice() {
     }
     NyummyText(
         text = notice,
-        style = theme.typography.bodyS,
-        color = theme.colors.content.tertiary,
+        style = NyummyTheme.typography.bodyS,
+        color = NyummyTheme.colors.content.tertiary,
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth(),
     )
@@ -422,8 +423,7 @@ private fun SocialLoginLoadingOverlay(
 
 @Composable
 private fun SocialLoginLoadingCard(socialType: SocialLoginType) {
-    val theme = NyummyTheme
-    val shape = RoundedCornerShape(theme.radius.l)
+    val shape = RoundedCornerShape(NyummyTheme.radius.l)
     val message = stringResource(
         R.string.auth_login_social_verifying,
         stringResource(socialType.providerNameRes),
@@ -436,26 +436,26 @@ private fun SocialLoginLoadingCard(socialType: SocialLoginType) {
     )
     Column(
         modifier = Modifier
-            .nyummyShadow(shape, theme.elevation.float)
-            .background(theme.colors.bg.surface, shape)
-            .padding(horizontal = theme.spacing.s32, vertical = theme.spacing.s24),
+            .nyummyShadow(shape, NyummyTheme.elevation.float)
+            .background(NyummyTheme.colors.bg.surface, shape)
+            .padding(horizontal = NyummyTheme.spacing.s32, vertical = NyummyTheme.spacing.s24),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(
             painter = painterResource(CommonR.drawable.nyummy_ic_loader_circle),
             contentDescription = message,
-            tint = theme.colors.content.brand,
+            tint = NyummyTheme.colors.content.brand,
             modifier = Modifier
                 .size(SpinnerSize)
                 .graphicsLayer { rotationZ = rotation },
         )
         Spacer(Modifier.height(SpinnerTextGap))
-        NyummyText(text = message, style = theme.typography.titleS, textAlign = TextAlign.Center)
+        NyummyText(text = message, style = NyummyTheme.typography.titleS, textAlign = TextAlign.Center)
         Spacer(Modifier.height(LoadingTextGap))
         NyummyText(
             text = stringResource(R.string.auth_login_social_verifying_hint),
-            style = theme.typography.bodyM,
-            color = theme.colors.content.secondary,
+            style = NyummyTheme.typography.bodyM,
+            color = NyummyTheme.colors.content.secondary,
             textAlign = TextAlign.Center,
         )
     }

@@ -57,9 +57,8 @@ fun NyummyVoiceBubble(
     modifier: Modifier = Modifier,
     tail: NyummyBubbleTail = NyummyBubbleTail.Bottom,
 ) {
-    val theme = NyummyTheme
     val dimens = NyummyComponentDimens
-    val cornerRadius = theme.radius.m
+    val cornerRadius = NyummyTheme.radius.m
     val shape = remember(tail, cornerRadius) {
         BubbleShape(
             tail = tail,
@@ -76,12 +75,12 @@ fun NyummyVoiceBubble(
     )
     Box(
         modifier = modifier
-            .background(theme.colors.bg.voiceBubble, shape)
-            .border(theme.borderWidth.bold, theme.colors.border.default, shape)
+            .background(NyummyTheme.colors.bg.voiceBubble, shape)
+            .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, shape)
             .then(tailPadding)
-            .padding(horizontal = theme.spacing.s16, vertical = theme.spacing.s12),
+            .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s12),
     ) {
-        NyummyText(text = text, style = theme.typography.voiceM, maxLines = 3, overflow = TextOverflow.Ellipsis)
+        NyummyText(text = text, style = NyummyTheme.typography.voiceM, maxLines = 3, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -141,7 +140,6 @@ fun NyummyCoachCard(
     text: String,
     modifier: Modifier = Modifier,
 ) {
-    val theme = NyummyTheme
     val dimens = NyummyComponentDimens
     var expanded by remember { mutableStateOf(false) }
     var overflows by remember(text) { mutableStateOf(false) }
@@ -152,7 +150,7 @@ fun NyummyCoachCard(
             modifier = Modifier
                 .padding(top = dimens.CoachHangHeight - dimens.CoachCardTopPadding)
                 .fillMaxWidth()
-                .background(theme.colors.bg.selected, RoundedCornerShape(dimens.CoachCardRadius))
+                .background(NyummyTheme.colors.bg.selected, RoundedCornerShape(dimens.CoachCardRadius))
                 .then(
                     if (expandable) {
                         Modifier.clickable(
@@ -173,11 +171,11 @@ fun NyummyCoachCard(
                     top = dimens.CoachCardTopPadding,
                     bottom = dimens.CoachCardBottomPadding,
                 ),
-            verticalArrangement = Arrangement.spacedBy(theme.spacing.s4),
+            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
         ) {
             NyummyText(
                 text = text,
-                style = theme.typography.voiceM,
+                style = NyummyTheme.typography.voiceM,
                 maxLines = if (expanded) Int.MAX_VALUE else CollapsedMaxLines,
                 overflow = TextOverflow.Ellipsis,
                 onTextLayout = { result -> if (!expanded) overflows = result.hasVisualOverflow },
@@ -201,18 +199,21 @@ fun NyummyCoachCard(
 /** 더보기/접기 표시. 말풍선 전체가 터치 영역이라 이 글자는 따로 누르지 않는다. */
 @Composable
 private fun CoachToggleLabel(expanded: Boolean) {
-    val theme = NyummyTheme
     Row(
-        modifier = Modifier.padding(horizontal = theme.spacing.s4, vertical = theme.spacing.s8),
-        horizontalArrangement = Arrangement.spacedBy(theme.spacing.s4),
+        modifier = Modifier.padding(horizontal = NyummyTheme.spacing.s4, vertical = NyummyTheme.spacing.s8),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NyummyText(text = if (expanded) "접기" else "더보기", style = theme.typography.labelS, color = theme.colors.content.brand)
+        NyummyText(
+            text = if (expanded) "접기" else "더보기",
+            style = NyummyTheme.typography.labelS,
+            color = NyummyTheme.colors.content.brand,
+        )
         Icon(
             painter = painterResource(if (expanded) R.drawable.nyummy_ic_chevron_up else R.drawable.nyummy_ic_chevron_down),
             contentDescription = null,
-            tint = theme.colors.content.brand,
-            modifier = Modifier.size(theme.size.iconXs),
+            tint = NyummyTheme.colors.content.brand,
+            modifier = Modifier.size(NyummyTheme.size.iconXs),
         )
     }
 }
@@ -229,24 +230,23 @@ fun NyummyVoiceToast(
     modifier: Modifier = Modifier,
     pose: NyummyPose = NyummyPose.Hello,
 ) {
-    val theme = NyummyTheme
-    val shape = RoundedCornerShape(theme.radius.full)
+    val shape = RoundedCornerShape(NyummyTheme.radius.full)
     Row(
         modifier = modifier
-            .nyummyShadow(shape, theme.elevation.float)
-            .background(theme.colors.bg.surface, shape)
-            .border(theme.borderWidth.bold, theme.colors.border.default, shape)
+            .nyummyShadow(shape, NyummyTheme.elevation.float)
+            .background(NyummyTheme.colors.bg.surface, shape)
+            .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, shape)
             .padding(
-                start = NyummyComponentDimens.VoiceToastPadding + theme.borderWidth.bold,
-                top = NyummyComponentDimens.VoiceToastPadding + theme.borderWidth.bold,
-                bottom = NyummyComponentDimens.VoiceToastPadding + theme.borderWidth.bold,
-                end = theme.spacing.s20,
+                start = NyummyComponentDimens.VoiceToastPadding + NyummyTheme.borderWidth.bold,
+                top = NyummyComponentDimens.VoiceToastPadding + NyummyTheme.borderWidth.bold,
+                bottom = NyummyComponentDimens.VoiceToastPadding + NyummyTheme.borderWidth.bold,
+                end = NyummyTheme.spacing.s20,
             ),
-        horizontalArrangement = Arrangement.spacedBy(theme.spacing.s8),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NyummyPoseImage(pose = pose, size = theme.size.characterXs)
-        NyummyText(text = text, style = theme.typography.voiceS, maxLines = 2)
+        NyummyPoseImage(pose = pose, size = NyummyTheme.size.characterXs)
+        NyummyText(text = text, style = NyummyTheme.typography.voiceS, maxLines = 2)
     }
 }
 

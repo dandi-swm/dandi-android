@@ -48,7 +48,6 @@ fun NyummyCodeInput(
     enabled: Boolean = true,
     contentDescription: String = DefaultContentDescription,
 ) {
-    val theme = NyummyTheme
     val interactionSource = rememberNyummyInteractionSource()
     val focused by interactionSource.collectIsFocusedAsState()
 
@@ -62,15 +61,16 @@ fun NyummyCodeInput(
         enabled = enabled,
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-        cursorBrush = SolidColor(theme.colors.border.focus),
+        cursorBrush = SolidColor(NyummyTheme.colors.border.focus),
         interactionSource = interactionSource,
         decorationBox = { innerTextField ->
             Box {
                 Box(modifier = Modifier.matchParentSize().alpha(0f)) { innerTextField() }
                 // 받은 폭에 맞춰 셀을 양끝까지 펼치되, 셀 사이는 최소 8을 띄운다.
+                val minRowWidth = NyummyComponentDimens.CodeCellWidth * length + NyummyTheme.spacing.s8 * (length - 1)
                 Row(
                     modifier = Modifier
-                        .widthIn(min = NyummyComponentDimens.CodeCellWidth * length + theme.spacing.s8 * (length - 1))
+                        .widthIn(min = minRowWidth)
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
@@ -90,27 +90,26 @@ fun NyummyCodeInput(
 
 @Composable
 private fun CodeCell(digit: Char?, active: Boolean, isError: Boolean, enabled: Boolean) {
-    val theme = NyummyTheme
-    val shape = RoundedCornerShape(theme.radius.s)
+    val shape = RoundedCornerShape(NyummyTheme.radius.s)
     val borderColor = when {
-        !enabled -> theme.colors.border.subtle
-        isError -> theme.colors.border.danger
-        active -> theme.colors.border.focus
-        digit != null -> theme.colors.border.strong
-        else -> theme.colors.border.default
+        !enabled -> NyummyTheme.colors.border.subtle
+        isError -> NyummyTheme.colors.border.danger
+        active -> NyummyTheme.colors.border.focus
+        digit != null -> NyummyTheme.colors.border.strong
+        else -> NyummyTheme.colors.border.default
     }
     Box(
         modifier = Modifier
             .size(DpSize(NyummyComponentDimens.CodeCellWidth, NyummyComponentDimens.CodeCellHeight))
-            .background(if (enabled) theme.colors.bg.surface else theme.colors.bg.surfaceSunken, shape)
-            .border(theme.borderWidth.bold, borderColor, shape),
+            .background(if (enabled) NyummyTheme.colors.bg.surface else NyummyTheme.colors.bg.surfaceSunken, shape)
+            .border(NyummyTheme.borderWidth.bold, borderColor, shape),
         contentAlignment = Alignment.Center,
     ) {
         if (digit != null) {
             NyummyText(
                 text = digit.toString(),
-                style = theme.typography.numberM,
-                color = if (enabled) theme.colors.content.primary else theme.colors.content.disabled,
+                style = NyummyTheme.typography.numberM,
+                color = if (enabled) NyummyTheme.colors.content.primary else NyummyTheme.colors.content.disabled,
             )
         }
     }

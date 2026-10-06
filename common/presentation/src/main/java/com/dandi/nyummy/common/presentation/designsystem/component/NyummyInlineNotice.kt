@@ -40,18 +40,17 @@ fun NyummyInlineNotice(
     modifier: Modifier = Modifier,
     tone: NyummyInlineNoticeTone = NyummyInlineNoticeTone.Info,
 ) {
-    val theme = NyummyTheme
     val danger = tone == NyummyInlineNoticeTone.Danger
-    val accent = if (danger) theme.colors.content.danger else theme.colors.content.info
+    val accent = if (danger) NyummyTheme.colors.content.danger else NyummyTheme.colors.content.info
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                color = if (danger) theme.colors.bg.dangerSubtle else theme.colors.bg.infoSubtle,
-                shape = RoundedCornerShape(theme.radius.m),
+                color = if (danger) NyummyTheme.colors.bg.dangerSubtle else NyummyTheme.colors.bg.infoSubtle,
+                shape = RoundedCornerShape(NyummyTheme.radius.m),
             )
             .semantics(mergeDescendants = true) { if (danger) liveRegion = LiveRegionMode.Polite }
-            .padding(horizontal = theme.spacing.s16, vertical = NoticeVerticalPadding),
+            .padding(horizontal = NyummyTheme.spacing.s16, vertical = NoticeVerticalPadding),
         horizontalArrangement = Arrangement.spacedBy(NoticeIconGap),
         verticalAlignment = Alignment.Top,
     ) {
@@ -59,11 +58,11 @@ fun NyummyInlineNotice(
             painter = painterResource(if (danger) R.drawable.nyummy_ic_circle_alert else R.drawable.nyummy_ic_info),
             contentDescription = null,
             tint = accent,
-            modifier = Modifier.size(theme.size.iconM),
+            modifier = Modifier.size(NyummyTheme.size.iconM),
         )
-        Column(verticalArrangement = Arrangement.spacedBy(theme.spacing.s2)) {
-            NyummyText(text = title, style = theme.typography.labelM, color = accent)
-            NyummyText(text = body, style = theme.typography.bodyS, color = theme.colors.content.secondary)
+        Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2)) {
+            NyummyText(text = title, style = NyummyTheme.typography.labelM, color = accent)
+            NyummyText(text = body, style = NyummyTheme.typography.bodyS, color = NyummyTheme.colors.content.secondary)
         }
     }
 }

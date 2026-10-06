@@ -42,14 +42,13 @@ fun NyummyLinearProgress(
     progress: Float,
     modifier: Modifier = Modifier,
 ) {
-    val theme = NyummyTheme
     val value = progress.coerceIn(0f, 1f)
-    val shape = RoundedCornerShape(theme.radius.full)
+    val shape = RoundedCornerShape(NyummyTheme.radius.full)
     Box(
         modifier = modifier
             .height(NyummyComponentDimens.LinearProgressHeight)
             .clip(shape)
-            .background(theme.colors.data.progressTrack)
+            .background(NyummyTheme.colors.data.progressTrack)
             .semantics { progressBarRangeInfo = ProgressBarRangeInfo(value, 0f..1f) },
     ) {
         if (value > 0f) {
@@ -57,7 +56,7 @@ fun NyummyLinearProgress(
                 Modifier
                     .fillMaxWidth(value)
                     .fillMaxHeight()
-                    .background(theme.colors.data.progressFill, shape),
+                    .background(NyummyTheme.colors.data.progressFill, shape),
             )
         }
     }
@@ -75,9 +74,8 @@ fun NyummyCircularProgress(
     modifier: Modifier = Modifier,
     size: NyummyCircularProgressSize = NyummyCircularProgressSize.M,
 ) {
-    val theme = NyummyTheme
-    val track = theme.colors.data.progressTrack
-    val indicator = theme.colors.data.progressFill
+    val track = NyummyTheme.colors.data.progressTrack
+    val indicator = NyummyTheme.colors.data.progressFill
     val rotation by rememberInfiniteTransition(label = "circularProgress").animateFloat(
         initialValue = 0f,
         targetValue = 360f,
@@ -94,7 +92,15 @@ fun NyummyCircularProgress(
         val inset = stroke / 2
         val arcSize = Size(this.size.width - stroke, this.size.height - stroke)
         drawArc(track, 0f, 360f, false, Offset(inset, inset), arcSize, style = Stroke(stroke))
-        drawArc(indicator, -90f, 90f, false, Offset(inset, inset), arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
+        drawArc(
+            indicator,
+            -90f,
+            90f,
+            false,
+            Offset(inset, inset),
+            arcSize,
+            style = Stroke(stroke, cap = StrokeCap.Round),
+        )
     }
 }
 

@@ -38,7 +38,6 @@ fun NyummyCoinPill(
     modifier: Modifier = Modifier,
     onAddClick: (() -> Unit)? = null,
 ) {
-    val theme = NyummyTheme
     HudPillSurface(
         modifier = modifier
             .semantics(mergeDescendants = true) { contentDescription = "코인 $coins" }
@@ -54,22 +53,22 @@ fun NyummyCoinPill(
                     Modifier
                 },
             ),
-        endPadding = if (onAddClick != null) theme.spacing.s8 else NyummyComponentDimens.HudPillEndPadding,
+        endPadding = if (onAddClick != null) NyummyTheme.spacing.s8 else NyummyComponentDimens.HudPillEndPadding,
     ) {
         HudAsset(R.drawable.nyummy_asset_coin)
-        NyummyText(text = coins, style = theme.typography.numberM, maxLines = 1)
+        NyummyText(text = coins, style = NyummyTheme.typography.numberM, maxLines = 1)
         if (onAddClick != null) {
             Box(
                 modifier = Modifier
-                    .size(theme.size.iconL)
-                    .background(theme.colors.bg.selected, CircleShape),
+                    .size(NyummyTheme.size.iconL)
+                    .background(NyummyTheme.colors.bg.selected, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.nyummy_ic_plus),
                     contentDescription = null,
-                    tint = theme.colors.content.brand,
-                    modifier = Modifier.size(theme.size.iconXs),
+                    tint = NyummyTheme.colors.content.brand,
+                    modifier = Modifier.size(NyummyTheme.size.iconXs),
                 )
             }
         }
@@ -82,14 +81,23 @@ fun NyummyStreakPill(
     days: Int,
     modifier: Modifier = Modifier,
 ) {
-    val theme = NyummyTheme
     HudPillSurface(
         modifier = modifier.semantics(mergeDescendants = true) { contentDescription = "연속 기록 ${days}일째" },
         endPadding = NyummyComponentDimens.HudPillEndPadding,
     ) {
         HudAsset(R.drawable.nyummy_asset_streak)
-        NyummyText(text = days.toString(), style = theme.typography.numberM, color = theme.colors.content.brand, maxLines = 1)
-        NyummyText(text = "일째", style = theme.typography.labelM, color = theme.colors.content.secondary, maxLines = 1)
+        NyummyText(
+            text = days.toString(),
+            style = NyummyTheme.typography.numberM,
+            color = NyummyTheme.colors.content.brand,
+            maxLines = 1,
+        )
+        NyummyText(
+            text = "일째",
+            style = NyummyTheme.typography.labelM,
+            color = NyummyTheme.colors.content.secondary,
+            maxLines = 1,
+        )
     }
 }
 
@@ -99,14 +107,13 @@ private fun HudPillSurface(
     endPadding: Dp,
     content: @Composable () -> Unit,
 ) {
-    val theme = NyummyTheme
-    val shape = RoundedCornerShape(theme.radius.full)
+    val shape = RoundedCornerShape(NyummyTheme.radius.full)
     Row(
         modifier = modifier
             .height(NyummyComponentDimens.HudPillHeight)
-            .background(theme.colors.bg.surface, shape)
-            .border(theme.borderWidth.bold, theme.colors.border.default, shape)
-            .padding(start = theme.spacing.s8, end = endPadding),
+            .background(NyummyTheme.colors.bg.surface, shape)
+            .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, shape)
+            .padding(start = NyummyTheme.spacing.s8, end = endPadding),
         horizontalArrangement = Arrangement.spacedBy(NyummyComponentDimens.HudPillGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {

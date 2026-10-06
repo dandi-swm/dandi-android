@@ -69,7 +69,6 @@ internal fun EmailLoginContent(
     uiState: EmailLoginUIState,
     onIntent: (EmailLoginIntent) -> Unit,
 ) {
-    val theme = NyummyTheme
     val enabled = !uiState.isLoading
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
@@ -93,8 +92,8 @@ internal fun EmailLoginContent(
             )
             NyummyText(
                 text = stringResource(R.string.auth_email_login_footer),
-                style = theme.typography.bodyS,
-                color = theme.colors.content.tertiary,
+                style = NyummyTheme.typography.bodyS,
+                color = NyummyTheme.colors.content.tertiary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -114,7 +113,7 @@ internal fun EmailLoginContent(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(theme.spacing.s16))
+        Spacer(Modifier.height(NyummyTheme.spacing.s16))
         NyummyTextField(
             value = uiState.password,
             onValueChange = { onIntent(EmailLoginIntent.InputPassword(it)) },
@@ -132,7 +131,7 @@ internal fun EmailLoginContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = theme.spacing.s4),
+                .padding(top = NyummyTheme.spacing.s4),
             contentAlignment = Alignment.CenterEnd,
         ) {
             NyummyButton(
@@ -158,11 +157,10 @@ internal fun AuthFormScaffold(
     bottom: @Composable ColumnScope.() -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val theme = NyummyTheme
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(theme.colors.bg.canvas)
+            .background(NyummyTheme.colors.bg.canvas)
             .statusBarsPadding()
             .navigationBarsPadding()
             .imePadding(),
@@ -175,25 +173,25 @@ internal fun AuthFormScaffold(
                 .widthIn(max = FormMaxWidth)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = theme.spacing.gutter)
-                .padding(top = theme.spacing.s16, bottom = theme.spacing.s24),
+                .padding(horizontal = NyummyTheme.spacing.gutter)
+                .padding(top = NyummyTheme.spacing.s16, bottom = NyummyTheme.spacing.s24),
             content = content,
         )
         if (bottomDivider) {
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .height(theme.borderWidth.hairline)
-                    .background(theme.colors.border.subtle),
+                    .height(NyummyTheme.borderWidth.hairline)
+                    .background(NyummyTheme.colors.border.subtle),
             )
         }
         Column(
             modifier = Modifier
                 .widthIn(max = FormMaxWidth)
                 .fillMaxWidth()
-                .padding(horizontal = theme.spacing.gutter)
-                .padding(top = theme.spacing.s12, bottom = theme.spacing.s24),
-            verticalArrangement = Arrangement.spacedBy(theme.spacing.s12),
+                .padding(horizontal = NyummyTheme.spacing.gutter)
+                .padding(top = NyummyTheme.spacing.s12, bottom = NyummyTheme.spacing.s24),
+            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
             horizontalAlignment = Alignment.CenterHorizontally,
             content = bottom,
         )
@@ -203,10 +201,9 @@ internal fun AuthFormScaffold(
 /** 인증 화면 제목(display/m) + 부제(body/m). 아래 28을 띄운다. */
 @Composable
 internal fun AuthFormHeader(title: String, subtitle: String) {
-    val theme = NyummyTheme
-    NyummyText(text = title, style = theme.typography.displayM)
-    Spacer(Modifier.height(theme.spacing.s8))
-    NyummyText(text = subtitle, style = theme.typography.bodyM, color = theme.colors.content.secondary)
+    NyummyText(text = title, style = NyummyTheme.typography.displayM)
+    Spacer(Modifier.height(NyummyTheme.spacing.s8))
+    NyummyText(text = subtitle, style = NyummyTheme.typography.bodyM, color = NyummyTheme.colors.content.secondary)
     Spacer(Modifier.height(HeaderBottomGap))
 }
 
@@ -230,7 +227,11 @@ private fun EmailLoginContentPreview() {
 private fun EmailLoginErrorPreview() {
     NyummyTheme {
         EmailLoginContent(
-            uiState = EmailLoginUIState(email = "nyummy@cat", password = "password", emailError = EmailLoginFieldError.EMAIL_FORMAT),
+            uiState = EmailLoginUIState(
+                email = "nyummy@cat",
+                password = "password",
+                emailError = EmailLoginFieldError.EMAIL_FORMAT,
+            ),
             onIntent = {},
         )
     }

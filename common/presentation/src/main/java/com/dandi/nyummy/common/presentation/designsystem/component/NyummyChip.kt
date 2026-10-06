@@ -35,11 +35,10 @@ fun NyummyChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val theme = NyummyTheme
-    val shape = RoundedCornerShape(theme.radius.full)
-    val container = if (selected) theme.colors.bg.selected else theme.colors.bg.surface
-    val border = if (selected) theme.colors.border.selected else theme.colors.border.default
-    val content = if (selected) theme.colors.content.brand else theme.colors.content.secondary
+    val shape = RoundedCornerShape(NyummyTheme.radius.full)
+    val container = if (selected) NyummyTheme.colors.bg.selected else NyummyTheme.colors.bg.surface
+    val border = if (selected) NyummyTheme.colors.border.selected else NyummyTheme.colors.border.default
+    val content = if (selected) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.secondary
 
     Box(
         modifier = modifier
@@ -52,11 +51,11 @@ fun NyummyChip(
             )
             .height(NyummyComponentDimens.CompactControlHeight)
             .background(container, shape)
-            .border(theme.borderWidth.bold, border, shape)
+            .border(NyummyTheme.borderWidth.bold, border, shape)
             .padding(horizontal = NyummyComponentDimens.CompactControlHorizontalPadding),
         contentAlignment = Alignment.Center,
     ) {
-        NyummyText(text = text, style = theme.typography.labelM, color = content, maxLines = 1)
+        NyummyText(text = text, style = NyummyTheme.typography.labelM, color = content, maxLines = 1)
     }
 }
 

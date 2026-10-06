@@ -90,28 +90,32 @@ fun PermissionNoticeBottomSheet(
 private fun PermissionNoticeSheetSurface(
     onConfirm: () -> Unit,
 ) {
-    val theme = NyummyTheme
-    val title = stringResource(R.string.intro_permission_title)
-    val shape = RoundedCornerShape(topStart = theme.radius.l, topEnd = theme.radius.l)
+val title = stringResource(R.string.intro_permission_title)
+    val shape = RoundedCornerShape(topStart = NyummyTheme.radius.l, topEnd = NyummyTheme.radius.l)
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(PermissionNoticeSheetTag)
             .semantics { paneTitle = title }
-            .nyummyShadow(shape, theme.elevation.float)
-            .background(theme.colors.bg.surface, shape)
+            .nyummyShadow(shape, NyummyTheme.elevation.float)
+            .background(NyummyTheme.colors.bg.surface, shape)
             .verticalScroll(rememberScrollState())
             // 시트는 내용만큼만 감싸고, 확인 버튼이 마지막 요소로 시트 바닥(제스처 바 인셋 위)에 붙는다.
             .navigationBarsPadding()
-            .padding(start = theme.spacing.s20, end = theme.spacing.s20, top = SheetTopPadding, bottom = theme.spacing.s40),
+            .padding(
+                start = NyummyTheme.spacing.s20,
+                end = NyummyTheme.spacing.s20,
+                top = SheetTopPadding,
+                bottom = NyummyTheme.spacing.s40,
+            ),
     ) {
         NyummyText(
             text = title,
-            style = theme.typography.titleL,
+            style = NyummyTheme.typography.titleL,
             modifier = Modifier.semantics { heading() },
         )
-        Spacer(Modifier.height(theme.spacing.s20))
-        Column(verticalArrangement = Arrangement.spacedBy(theme.spacing.s12)) {
+        Spacer(Modifier.height(NyummyTheme.spacing.s20))
+        Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12)) {
             PermissionRow(
                 iconRes = CommonR.drawable.nyummy_ic_camera,
                 name = stringResource(R.string.intro_permission_camera),
@@ -123,13 +127,13 @@ private fun PermissionNoticeSheetSurface(
                 description = stringResource(R.string.intro_permission_notification_desc),
             )
         }
-        Spacer(Modifier.height(theme.spacing.s16))
+        Spacer(Modifier.height(NyummyTheme.spacing.s16))
         NyummyText(
             text = stringResource(R.string.intro_permission_notice),
-            style = theme.typography.bodyS,
-            color = theme.colors.content.tertiary,
+            style = NyummyTheme.typography.bodyS,
+            color = NyummyTheme.colors.content.tertiary,
         )
-        Spacer(Modifier.height(theme.spacing.s24))
+        Spacer(Modifier.height(NyummyTheme.spacing.s24))
         NyummyButton(
             text = stringResource(R.string.intro_permission_confirm),
             onClick = onConfirm,
@@ -145,36 +149,35 @@ private fun PermissionRow(
     name: String,
     description: String,
 ) {
-    val theme = NyummyTheme
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(theme.spacing.s12),
+Row(
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
                 .size(RowIconBackdropSize)
-                .background(theme.colors.bg.selected, CircleShape),
+                .background(NyummyTheme.colors.bg.selected, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 painter = painterResource(iconRes),
                 contentDescription = null,
-                modifier = Modifier.size(theme.size.iconM),
-                tint = theme.colors.content.brand,
+                modifier = Modifier.size(NyummyTheme.size.iconM),
+                tint = NyummyTheme.colors.content.brand,
             )
         }
-        Column(verticalArrangement = Arrangement.spacedBy(theme.spacing.s2)) {
+        Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2)) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(NameBadgeGap),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                NyummyText(text = name, style = theme.typography.titleS)
+                NyummyText(text = name, style = NyummyTheme.typography.titleS)
                 NyummyBadge(text = stringResource(R.string.intro_permission_optional))
             }
             NyummyText(
                 text = description,
-                style = theme.typography.bodyS,
-                color = theme.colors.content.tertiary,
+                style = NyummyTheme.typography.bodyS,
+                color = NyummyTheme.colors.content.tertiary,
             )
         }
     }

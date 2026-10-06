@@ -84,23 +84,22 @@ fun IntroSplashContent(
         label = "IntroSplashProgress",
     )
 
-    val theme = NyummyTheme
-    val density = LocalDensity.current
+val density = LocalDensity.current
     val topInset = WindowInsets.statusBars.getTop(density)
     val bottomInset = WindowInsets.navigationBars.getBottom(density)
-    val gutterDp = theme.spacing.gutter
+    val gutterDp = NyummyTheme.spacing.gutter
     val windowHeight = with(density) { LocalWindowInfo.current.containerSize.height.toDp() }
     val compact = windowHeight < CompactHeight
-    val titleTopGap = if (compact) theme.spacing.s24 else theme.spacing.s32
-    val cardBottomGap = theme.spacing.s24
-    val heroTitleGap = theme.spacing.s8
+    val titleTopGap = if (compact) NyummyTheme.spacing.s24 else NyummyTheme.spacing.s32
+    val cardBottomGap = NyummyTheme.spacing.s24
+    val heroTitleGap = NyummyTheme.spacing.s8
     val background = painterResource(R.drawable.intro_bg_kitchen)
     val backgroundRatio = background.intrinsicSize.height / background.intrinsicSize.width
 
     Layout(
         modifier = modifier
             .fillMaxSize()
-            .background(theme.colors.bg.canvas),
+            .background(NyummyTheme.colors.bg.canvas),
         content = {
             Image(
                 painter = background,
@@ -222,17 +221,20 @@ private val SplashStickers = SplashSticker.entries
 
 @Composable
 private fun SplashTitleBlock(compact: Boolean, modifier: Modifier = Modifier) {
-    val theme = NyummyTheme
-    val headline = if (compact) theme.typography.displayM else theme.typography.displayL
+val headline = if (compact) NyummyTheme.typography.displayM else NyummyTheme.typography.displayL
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(if (compact) theme.spacing.s8 else theme.spacing.s12),
+        verticalArrangement = Arrangement.spacedBy(if (compact) NyummyTheme.spacing.s8 else NyummyTheme.spacing.s12),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Image(
             painter = painterResource(CommonR.drawable.nyummy_brand_logo),
             contentDescription = stringResource(R.string.intro_splash_logo_description),
-            modifier = if (compact) Modifier.size(CompactLogoWidth, CompactLogoHeight) else Modifier.size(LogoWidth, LogoHeight),
+            modifier = if (compact) {
+                Modifier.size(CompactLogoWidth, CompactLogoHeight)
+            } else {
+                Modifier.size(LogoWidth, LogoHeight)
+            },
         )
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             NyummyText(
@@ -243,7 +245,7 @@ private fun SplashTitleBlock(compact: Boolean, modifier: Modifier = Modifier) {
             NyummyText(
                 text = stringResource(R.string.intro_splash_headline_line2),
                 style = headline,
-                color = theme.colors.content.brand,
+                color = NyummyTheme.colors.content.brand,
                 textAlign = TextAlign.Center,
             )
         }
@@ -254,13 +256,13 @@ private fun SplashTitleBlock(compact: Boolean, modifier: Modifier = Modifier) {
             Icon(
                 painter = painterResource(CommonR.drawable.nyummy_ic_heart),
                 contentDescription = null,
-                tint = theme.colors.content.brand,
-                modifier = Modifier.size(theme.size.iconS),
+                tint = NyummyTheme.colors.content.brand,
+                modifier = Modifier.size(NyummyTheme.size.iconS),
             )
             NyummyText(
                 text = stringResource(R.string.intro_splash_bubble),
-                style = theme.typography.bodyM,
-                color = theme.colors.content.secondary,
+                style = NyummyTheme.typography.bodyM,
+                color = NyummyTheme.colors.content.secondary,
             )
         }
     }
@@ -273,13 +275,12 @@ private fun FoodSticker(
     rotation: Float,
     modifier: Modifier = Modifier,
 ) {
-    val theme = NyummyTheme
-    Box(
+Box(
         modifier = modifier
             .rotate(rotation)
             .size(StickerSize)
-            .nyummyShadow(CircleShape, theme.elevation.soft)
-            .background(theme.colors.bg.surface, CircleShape),
+            .nyummyShadow(CircleShape, NyummyTheme.elevation.soft)
+            .background(NyummyTheme.colors.bg.surface, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Image(
@@ -296,13 +297,12 @@ private fun SplashProgressCard(
     isComplete: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val theme = NyummyTheme
-    val shape = RoundedCornerShape(theme.radius.l)
+val shape = RoundedCornerShape(NyummyTheme.radius.l)
     Column(
         modifier = modifier
-            .nyummyShadow(shape, theme.elevation.soft)
-            .background(theme.colors.bg.surface, shape)
-            .padding(horizontal = theme.spacing.s20, vertical = theme.spacing.s16),
+            .nyummyShadow(shape, NyummyTheme.elevation.soft)
+            .background(NyummyTheme.colors.bg.surface, shape)
+            .padding(horizontal = NyummyTheme.spacing.s20, vertical = NyummyTheme.spacing.s16),
         verticalArrangement = Arrangement.spacedBy(CardContentGap),
     ) {
         Row(
@@ -314,33 +314,33 @@ private fun SplashProgressCard(
                 text = stringResource(
                     if (isComplete) R.string.intro_splash_progress_complete else R.string.intro_splash_progress_label,
                 ),
-                style = theme.typography.titleS,
+                style = NyummyTheme.typography.titleS,
                 modifier = Modifier.weight(1f, fill = false),
             )
             // 큰 글꼴에서도 퍼센트는 한 줄로 두고, 줄바꿈은 왼쪽 문구가 맡는다.
             NyummyText(
                 text = stringResource(R.string.intro_splash_progress_percent, (progress * 100).toInt()),
-                style = theme.typography.numberM,
-                color = theme.colors.content.brand,
+                style = NyummyTheme.typography.numberM,
+                color = NyummyTheme.colors.content.brand,
                 maxLines = 1,
-                modifier = Modifier.padding(start = theme.spacing.s8),
+                modifier = Modifier.padding(start = NyummyTheme.spacing.s8),
             )
         }
         NyummyLinearProgress(progress = progress, modifier = Modifier.fillMaxWidth())
         Row(
-            horizontalArrangement = Arrangement.spacedBy(theme.spacing.s4),
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 painter = painterResource(CommonR.drawable.nyummy_ic_lightbulb),
                 contentDescription = null,
-                tint = theme.colors.content.warning,
-                modifier = Modifier.size(theme.size.iconXs),
+                tint = NyummyTheme.colors.content.warning,
+                modifier = Modifier.size(NyummyTheme.size.iconXs),
             )
             NyummyText(
                 text = stringResource(R.string.intro_splash_tip),
-                style = theme.typography.bodyS,
-                color = theme.colors.content.tertiary,
+                style = NyummyTheme.typography.bodyS,
+                color = NyummyTheme.colors.content.tertiary,
             )
         }
     }

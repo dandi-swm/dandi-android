@@ -30,7 +30,6 @@ internal fun ColumnScope.SignUpAccountStep(
     uiState: SignUpUIState,
     onIntent: (SignUpIntent) -> Unit,
 ) {
-    val theme = NyummyTheme
     val enabled = !uiState.isLoading
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
     var confirmVisible by rememberSaveable { mutableStateOf(false) }
@@ -49,7 +48,7 @@ internal fun ColumnScope.SignUpAccountStep(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
         modifier = Modifier.fillMaxWidth(),
     )
-    Spacer(Modifier.height(theme.spacing.s16))
+    Spacer(Modifier.height(NyummyTheme.spacing.s16))
     NyummyTextField(
         value = uiState.password,
         onValueChange = { onIntent(SignUpIntent.InputPassword(it)) },
@@ -63,7 +62,7 @@ internal fun ColumnScope.SignUpAccountStep(
         trailing = { NyummyPasswordVisibilityToggle(visible = passwordVisible, onToggle = { passwordVisible = !passwordVisible }) },
         modifier = Modifier.fillMaxWidth(),
     )
-    Spacer(Modifier.height(theme.spacing.s16))
+    Spacer(Modifier.height(NyummyTheme.spacing.s16))
     NyummyTextField(
         value = uiState.passwordConfirm,
         onValueChange = { onIntent(SignUpIntent.InputPasswordConfirm(it)) },
@@ -84,7 +83,6 @@ internal fun SignUpAccountBottom(
     uiState: SignUpUIState,
     onIntent: (SignUpIntent) -> Unit,
 ) {
-    val theme = NyummyTheme
     NyummyButton(
         text = stringResource(R.string.auth_signup_cta),
         onClick = { onIntent(SignUpIntent.ClickSendCode) },
@@ -93,8 +91,8 @@ internal fun SignUpAccountBottom(
     )
     NyummyText(
         text = stringResource(R.string.auth_signup_terms),
-        style = theme.typography.bodyS,
-        color = theme.colors.content.tertiary,
+        style = NyummyTheme.typography.bodyS,
+        color = NyummyTheme.colors.content.tertiary,
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth(),
     )

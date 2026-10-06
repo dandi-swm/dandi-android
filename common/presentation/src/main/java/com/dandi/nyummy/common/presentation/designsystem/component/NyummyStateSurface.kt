@@ -116,21 +116,20 @@ private fun StateSurfaceLayout(
     modifier: Modifier,
     bottom: @Composable () -> Unit,
 ) {
-    val theme = NyummyTheme
     Column(
         modifier = modifier
             .widthIn(max = NyummyComponentDimens.ContentMaxWidth)
             .fillMaxWidth()
-            .padding(theme.spacing.s24),
-        verticalArrangement = Arrangement.spacedBy(theme.spacing.s12),
+            .padding(NyummyTheme.spacing.s24),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         NyummyVoiceBubble(text = voice, tail = NyummyBubbleTail.Bottom)
-        NyummyPoseImage(pose = pose, size = if (poseLarge) theme.size.characterL else theme.size.characterM)
+        NyummyPoseImage(pose = pose, size = if (poseLarge) NyummyTheme.size.characterL else NyummyTheme.size.characterM)
         NyummyText(
             text = message,
-            style = theme.typography.bodyM,
-            color = theme.colors.content.secondary,
+            style = NyummyTheme.typography.bodyM,
+            color = NyummyTheme.colors.content.secondary,
             textAlign = TextAlign.Center,
         )
         bottom()
@@ -140,9 +139,8 @@ private fun StateSurfaceLayout(
 /** 트랙 위에서 짧은 막대가 좌우로 오가는 대기 표시. */
 @Composable
 private fun IndeterminateBar() {
-    val theme = NyummyTheme
     val dimens = NyummyComponentDimens
-    val shape = RoundedCornerShape(theme.radius.full)
+    val shape = RoundedCornerShape(NyummyTheme.radius.full)
     val position by rememberInfiniteTransition(label = "stateLoading").animateFloat(
         initialValue = 0f,
         targetValue = 1f,
@@ -153,7 +151,7 @@ private fun IndeterminateBar() {
         modifier = Modifier
             .size(dimens.StateLoadingBarWidth, dimens.StateLoadingBarHeight)
             .clip(shape)
-            .background(theme.colors.data.progressTrack)
+            .background(NyummyTheme.colors.data.progressTrack)
             .semantics { progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate },
     ) {
         Box(
@@ -163,7 +161,7 @@ private fun IndeterminateBar() {
                 .graphicsLayer {
                     translationX = (dimens.StateLoadingBarWidth.toPx() * (1 - LoadingSegmentFraction)) * position
                 }
-                .background(theme.colors.data.progressFill, shape),
+                .background(NyummyTheme.colors.data.progressFill, shape),
         )
     }
 }

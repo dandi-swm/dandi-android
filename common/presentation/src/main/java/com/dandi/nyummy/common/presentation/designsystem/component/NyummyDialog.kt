@@ -98,14 +98,18 @@ internal fun NyummyDialogCard(
     confirmEnabled: Boolean = true,
     content: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
-    val theme = NyummyTheme
     Column(
         modifier = modifier
             .widthIn(max = NyummyComponentDimens.DialogMaxWidth)
             .fillMaxWidth()
-            .background(theme.colors.bg.surface, RoundedCornerShape(theme.radius.l))
+            .background(NyummyTheme.colors.bg.surface, RoundedCornerShape(NyummyTheme.radius.l))
             .semantics { paneTitle = title }
-            .padding(start = theme.spacing.s20, end = theme.spacing.s20, top = theme.spacing.s24, bottom = theme.spacing.s20),
+            .padding(
+                start = NyummyTheme.spacing.s20,
+                end = NyummyTheme.spacing.s20,
+                top = NyummyTheme.spacing.s24,
+                bottom = NyummyTheme.spacing.s20,
+            ),
     ) {
         // 긴 본문이나 큰 글꼴에서도 버튼 행이 밀려나지 않게, 제목과 본문과 슬롯만 스크롤한다.
         Column(
@@ -113,25 +117,25 @@ internal fun NyummyDialogCard(
                 .weight(1f, fill = false)
                 .verticalScroll(rememberScrollState()),
         ) {
-            NyummyText(text = title, style = theme.typography.titleL)
+            NyummyText(text = title, style = NyummyTheme.typography.titleL)
             if (body != null) {
                 NyummyText(
                     text = body,
-                    style = theme.typography.bodyL,
-                    color = theme.colors.content.secondary,
-                    modifier = Modifier.padding(top = theme.spacing.s8),
+                    style = NyummyTheme.typography.bodyL,
+                    color = NyummyTheme.colors.content.secondary,
+                    modifier = Modifier.padding(top = NyummyTheme.spacing.s8),
                 )
             }
             if (content != null) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(top = theme.spacing.s8),
+                    modifier = Modifier.fillMaxWidth().padding(top = NyummyTheme.spacing.s8),
                     content = content,
                 )
             }
         }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = theme.spacing.s20),
-            horizontalArrangement = Arrangement.spacedBy(theme.spacing.s8),
+            modifier = Modifier.fillMaxWidth().padding(top = NyummyTheme.spacing.s20),
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
         ) {
             if (type != NyummyDialogType.Alert) {
                 NyummyButton(
