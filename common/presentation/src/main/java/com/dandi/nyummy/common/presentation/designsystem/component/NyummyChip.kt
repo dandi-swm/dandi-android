@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,7 +43,6 @@ fun NyummyChip(
 
     Box(
         modifier = modifier
-            .minimumInteractiveComponentSize()
             .semantics { this.selected = selected }
             .nyummyPressable(
                 interactionSource = rememberNyummyInteractionSource(),
