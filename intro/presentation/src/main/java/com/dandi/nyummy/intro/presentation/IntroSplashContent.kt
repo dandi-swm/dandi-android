@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -60,7 +59,7 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  * 해상도 대응(360×640부터 태블릿까지 배경이 잘리지 않게):
  * - 배경은 화면 폭에 맞추고 아래에 붙인다. 남는 위쪽은 배경 상단과 같은 흰색이다.
  * - 냐미는 스테이지 바닥선(배경 높이의 73.5%)에 발을 맞추고 크기는 min(폭 × 0.64, 300)이다.
- *   제목과 겹치면 최소 170까지 줄인다.
+ *   제목 아래 공간이 모자라면 줄이고, 120보다 작아지면(큰 글꼴 등) 숨긴다.
  * - 화면 높이가 [CompactHeight]보다 낮으면 제목 블록을 작게 쓴다(로고 120×70, 제목 26, 위 여백 24).
  * - 스티커는 냐미 중심 기준 상대 좌표로 두고, 제목이나 진행 카드와 겹치거나 화면 밖이면 숨긴다.
  */
@@ -158,12 +157,13 @@ fun IntroSplashContent(
             bottom = (cardTop + card.height).toFloat(),
         )
 
-        // 냐미 크기: 기본 min(폭 × 0.64, 300). 제목과 겹치면 줄이되 170보다 작게는 줄이지 않는다.
+        // 냐미 크기: 기본 min(폭 × 0.64, 300). 실제로 잰 제목 아래 공간에 맞춰 줄인다.
+        // 큰 글꼴처럼 제목이 길어져 [HeroHideBelow]보다 작아지면 겹치지 않도록 냐미와 스티커를 숨긴다.
         val titleGap = heroTitleGap.toPx()
-        var heroSize = min(width * HeroWidthRatio, HeroMaxSize.toPx())
         val availableForHero = (floorY - (titleRect.bottom + titleGap)) / HeroFootRatio
-        if (heroSize > availableForHero) heroSize = maxOf(availableForHero, HeroMinSize.toPx())
-        val heroPx = heroSize.roundToInt()
+        val heroSize = min(min(width * HeroWidthRatio, HeroMaxSize.toPx()), availableForHero)
+        val showHero = heroSize >= HeroHideBelow.toPx()
+        val heroPx = heroSize.coerceAtLeast(0f).roundToInt()
         val heroTop = (floorY - heroSize * HeroFootRatio).roundToInt()
         val heroLeft = (width - heroPx) / 2
         val hero = measurables.first { it.layoutId == SplashSlot.Hero }.measure(Constraints.fixed(heroPx, heroPx))
@@ -184,14 +184,14 @@ fun IntroSplashContent(
                 right = centerX + placeable.width / 2f,
                 bottom = centerY + placeable.height / 2f,
             )
-            val visible = rect.left >= 0 && rect.right <= width &&
+            val visible = showHero && rect.left >= 0 && rect.right <= width &&
                 !rect.overlaps(titleRect) && !rect.overlaps(cardRect)
             Triple(placeable, rect, visible)
         }
 
         layout(width, height) {
             background.place(0, backgroundTop)
-            hero.place(heroLeft, heroTop)
+            if (showHero) hero.place(heroLeft, heroTop)
             stickers.forEach { (placeable, rect, visible) ->
                 if (visible) placeable.place(rect.left.roundToInt(), rect.top.roundToInt())
             }
@@ -315,19 +315,18 @@ private fun SplashProgressCard(
                     if (isComplete) R.string.intro_splash_progress_complete else R.string.intro_splash_progress_label,
                 ),
                 style = theme.typography.titleS,
+                modifier = Modifier.weight(1f, fill = false),
             )
+            // 큰 글꼴에서도 퍼센트는 한 줄로 두고, 줄바꿈은 왼쪽 문구가 맡는다.
             NyummyText(
                 text = stringResource(R.string.intro_splash_progress_percent, (progress * 100).toInt()),
                 style = theme.typography.numberM,
                 color = theme.colors.content.brand,
+                maxLines = 1,
+                modifier = Modifier.padding(start = theme.spacing.s8),
             )
         }
-        NyummyLinearProgress(
-            progress = progress,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(ProgressHeight),
-        )
+        NyummyLinearProgress(progress = progress, modifier = Modifier.fillMaxWidth())
         Row(
             horizontalArrangement = Arrangement.spacedBy(theme.spacing.s4),
             verticalAlignment = Alignment.CenterVertically,
@@ -361,7 +360,7 @@ private const val StageFloorRatio = 0.735f
 private const val HeroFootRatio = 0.968f
 private const val HeroWidthRatio = 0.64f
 private val HeroMaxSize = 300.dp
-private val HeroMinSize = 170.dp
+private val HeroHideBelow = 120.dp
 
 /** 스티커 거리(SplashSticker)를 잰 기준 냐미 크기. */
 private val HeroReferenceSize = 250.dp
@@ -377,7 +376,6 @@ private val SubtitleIconGap = 6.dp
 private val StickerSize = 56.dp
 private val StickerFoodSize = 36.dp
 private val CardContentGap = 10.dp
-private val ProgressHeight = 12.dp
 /** 카드 최대 너비. 태블릿에서도 카드가 가운데에 적당한 폭으로 놓인다. */
 private val CardMaxWidth = 480.dp
 

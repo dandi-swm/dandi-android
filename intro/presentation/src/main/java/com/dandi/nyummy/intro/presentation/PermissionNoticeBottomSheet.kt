@@ -9,7 +9,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,13 +20,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -38,6 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadge
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyScrim
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
@@ -64,18 +66,17 @@ fun PermissionNoticeBottomSheet(
             exit = fadeOut(tween(SheetAnimationMillis)),
             label = "PermissionNoticeScrim",
         ) {
-            // 탭을 소비만 해서 바깥을 눌러도 닫히지 않게 한다(고지 목적).
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(NyummyTheme.colors.bg.scrim)
-                    .pointerInput(Unit) { detectTapGestures { } },
-            )
+            // 고지 목적이라 바깥을 눌러도 닫히지 않게 입력만 막는다.
+            NyummyScrim()
         }
 
         AnimatedVisibility(
             visible = visible,
-            modifier = Modifier.align(Alignment.BottomCenter),
+            // 시트는 상태 바 아래까지만 차오르고, 큰 글꼴 등으로 넘치면 시트 안에서 스크롤한다.
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .statusBarsPadding()
+                .padding(top = NyummyTheme.spacing.s24),
             enter = slideInVertically(tween(SheetAnimationMillis)) { fullHeight -> fullHeight },
             exit = slideOutVertically(tween(SheetAnimationMillis)) { fullHeight -> fullHeight },
             label = "PermissionNoticeSheet",
@@ -99,6 +100,7 @@ private fun PermissionNoticeSheetSurface(
             .semantics { paneTitle = title }
             .nyummyShadow(shape, theme.elevation.float)
             .background(theme.colors.bg.surface, shape)
+            .verticalScroll(rememberScrollState())
             // 시트는 내용만큼만 감싸고, 확인 버튼이 마지막 요소로 시트 바닥(제스처 바 인셋 위)에 붙는다.
             .navigationBarsPadding()
             .padding(start = theme.spacing.s20, end = theme.spacing.s20, top = SheetTopPadding, bottom = theme.spacing.s40),
