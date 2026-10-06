@@ -2,15 +2,14 @@ package com.dandi.nyummy.main.presentation.navigation
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,17 +19,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.window.DialogProperties
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
+import com.dandi.nyummy.collection.domain.CollectionPage
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.Page
-import com.dandi.nyummy.common.presentation.component.DandiText
 import com.dandi.nyummy.common.presentation.component.NyummyBottomNavigation
 import com.dandi.nyummy.common.presentation.component.NyummyNavigationDestination
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialog
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialogType
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackbarHost
 import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
-import com.dandi.nyummy.collection.domain.CollectionPage
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.history.domain.HistoryPage
@@ -76,105 +76,40 @@ fun RootComposable(
             onShowTwoButtonDialog = onShowTwoButtonDialog,
         )
 
+        // 서버와 UseCase가 띄우는 공통 다이얼로그. 제목이 없으면 본문을 제목 자리에 둔다.
         oneButtonDialogEffect?.let { dialog ->
-            AlertDialog(
-                onDismissRequest = {
-                    if (!dialog.cantIgnore) oneButtonDialogEffect = null
+            val close = { oneButtonDialogEffect = null }
+            NyummyDialog(
+                title = dialog.titleText ?: dialog.descText,
+                body = dialog.titleText?.let { dialog.descText },
+                confirmText = dialog.buttonText,
+                onConfirm = {
+                    dialog.onClickButton?.invoke()
+                    close()
                 },
-                title = dialog.titleText?.let { titleText ->
-                    {
-                        DandiText(
-                            text = titleText,
-                            style = DesignSystemThemeImpl.typeScale.titleStrongL,
-                            color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel1,
-                            maxLines = Int.MAX_VALUE,
-                        )
-                    }
-                },
-                text = {
-                    DandiText(
-                        text = dialog.descText,
-                        style = DesignSystemThemeImpl.typeScale.textRegularL,
-                        color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel2,
-                        maxLines = Int.MAX_VALUE,
-                    )
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            dialog.onClickButton?.invoke()
-                            oneButtonDialogEffect = null
-                        }
-                    ) {
-                        DandiText(
-                            text = dialog.buttonText,
-                            style = DesignSystemThemeImpl.typeScale.textStrongL,
-                            color = DesignSystemThemeImpl.designSystemColor.contentAccent,
-                        )
-                    }
-                },
-                properties = DialogProperties(
-                    dismissOnBackPress = !dialog.cantIgnore,
-                    dismissOnClickOutside = !dialog.cantIgnore,
-                ),
+                onDismissRequest = close,
+                type = NyummyDialogType.Alert,
+                dismissible = !dialog.cantIgnore,
             )
         }
 
         twoButtonDialogEffect?.let { dialog ->
-            AlertDialog(
-                onDismissRequest = {
-                    if (!dialog.cantIgnore) twoButtonDialogEffect = null
+            val close = { twoButtonDialogEffect = null }
+            NyummyDialog(
+                title = dialog.titleText ?: dialog.descText,
+                body = dialog.titleText?.let { dialog.descText },
+                confirmText = dialog.rightButtonText,
+                onConfirm = {
+                    dialog.onClickRightButton?.invoke()
+                    close()
                 },
-                title = dialog.titleText?.let { titleText ->
-                    {
-                        DandiText(
-                            text = titleText,
-                            style = DesignSystemThemeImpl.typeScale.titleStrongL,
-                            color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel1,
-                            maxLines = Int.MAX_VALUE,
-                        )
-                    }
+                dismissText = dialog.leftButtonText,
+                onDismissClick = {
+                    dialog.onClickLeftButton?.invoke()
+                    close()
                 },
-                text = {
-                    DandiText(
-                        text = dialog.descText,
-                        style = DesignSystemThemeImpl.typeScale.textRegularL,
-                        color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel2,
-                        maxLines = Int.MAX_VALUE,
-                    )
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            dialog.onClickRightButton?.invoke()
-                            twoButtonDialogEffect = null
-                        }
-                    ) {
-                        DandiText(
-                            text = dialog.rightButtonText,
-                            style = DesignSystemThemeImpl.typeScale.textStrongL,
-                            color = DesignSystemThemeImpl.designSystemColor.contentAccent,
-                        )
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = {
-                            dialog.onClickLeftButton?.invoke()
-                            twoButtonDialogEffect = null
-                        }
-                    ) {
-                        DandiText(
-                            text = dialog.leftButtonText,
-                            style = DesignSystemThemeImpl.typeScale.textStrongL,
-                            color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel2,
-                        )
-                    }
-                },
-                properties = DialogProperties(
-                    dismissOnBackPress = !dialog.cantIgnore,
-                    dismissOnClickOutside = !dialog.cantIgnore,
-                ),
+                onDismissRequest = close,
+                dismissible = !dialog.cantIgnore,
             )
         }
 
@@ -183,7 +118,13 @@ fun RootComposable(
             // 탭 화면들이 칠하는 배경(bgSurfaceIvory)과 동일하게 맞춰, 플로팅 바텀 네비 주변이
             // 사각형 띠처럼 달라 보이지 않게 한다.
             containerColor = DesignSystemThemeImpl.designSystemColor.bgSurfaceIvory,
-            snackbarHost = { SnackbarHost(snackBarHostState) },
+            snackbarHost = { NyummySnackbarHost(snackBarHostState) },
+            // 전체 화면 라우트는 시스템 바 뒤까지 그리고 인셋을 스스로 처리한다. 나머지는 Scaffold가 민다.
+            contentWindowInsets = if (currentRoute?.drawsBehindSystemBars == true) {
+                WindowInsets(0, 0, 0, 0)
+            } else {
+                ScaffoldDefaults.contentWindowInsets
+            },
             bottomBar = {
                 if (currentRoute?.isBottomTab == true && currentTab != null) {
                     Box(

@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.error
@@ -67,18 +68,17 @@ fun NyummyTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     interactionSource: MutableInteractionSource = rememberNyummyInteractionSource(),
 ) {
-    val theme = NyummyTheme
     val focused by interactionSource.collectIsFocusedAsState()
     val isError = errorMessage != null
-    val shape = RoundedCornerShape(theme.radius.s)
+    val shape = RoundedCornerShape(NyummyTheme.radius.s)
     val borderColor = fieldBorderColor(enabled = enabled, isError = isError, focused = focused)
-    val textColor = if (enabled) theme.colors.content.primary else theme.colors.content.disabled
+    val textColor = if (enabled) NyummyTheme.colors.content.primary else NyummyTheme.colors.content.disabled
 
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(NyummyComponentDimens.FieldLabelGap),
     ) {
-        NyummyText(text = label, style = theme.typography.labelM, color = theme.colors.content.secondary)
+        NyummyText(text = label, style = NyummyTheme.typography.labelM, color = NyummyTheme.colors.content.secondary)
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -90,8 +90,8 @@ fun NyummyTextField(
                 },
             enabled = enabled,
             singleLine = true,
-            textStyle = theme.typography.bodyL.copy(color = textColor),
-            cursorBrush = SolidColor(theme.colors.border.focus),
+            textStyle = NyummyTheme.typography.bodyL.copy(color = textColor),
+            cursorBrush = SolidColor(NyummyTheme.colors.border.focus),
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
             visualTransformation = visualTransformation,
@@ -101,9 +101,12 @@ fun NyummyTextField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(NyummyComponentDimens.TextFieldHeight)
-                        .background(if (enabled) theme.colors.bg.surface else theme.colors.bg.surfaceSunken, shape)
-                        .border(theme.borderWidth.bold, borderColor, shape)
-                        .padding(horizontal = theme.spacing.s16),
+                        .background(
+                            if (enabled) NyummyTheme.colors.bg.surface else NyummyTheme.colors.bg.surfaceSunken,
+                            shape,
+                        )
+                        .border(NyummyTheme.borderWidth.bold, borderColor, shape)
+                        .padding(horizontal = NyummyTheme.spacing.s16),
                     horizontalArrangement = Arrangement.spacedBy(NyummyComponentDimens.TextFieldIconGap),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -111,16 +114,24 @@ fun NyummyTextField(
                         Icon(
                             painter = painterResource(leadingIcon),
                             contentDescription = null,
-                            tint = if (enabled) theme.colors.content.tertiary else theme.colors.content.disabled,
-                            modifier = Modifier.size(theme.size.iconM),
+                            tint = if (enabled) {
+                                NyummyTheme.colors.content.tertiary
+                            } else {
+                                NyummyTheme.colors.content.disabled
+                            },
+                            modifier = Modifier.size(NyummyTheme.size.iconM),
                         )
                     }
                     Box(modifier = Modifier.weight(1f)) {
                         if (value.isEmpty() && placeholder != null) {
                             NyummyText(
                                 text = placeholder,
-                                style = theme.typography.bodyL,
-                                color = if (enabled) theme.colors.content.tertiary else theme.colors.content.disabled,
+                                style = NyummyTheme.typography.bodyL,
+                                color = if (enabled) {
+                                    NyummyTheme.colors.content.tertiary
+                                } else {
+                                    NyummyTheme.colors.content.disabled
+                                },
                                 maxLines = 1,
                             )
                         }
@@ -134,11 +145,11 @@ fun NyummyTextField(
         if (supporting != null) {
             NyummyText(
                 text = supporting,
-                style = theme.typography.bodyS,
+                style = NyummyTheme.typography.bodyS,
                 color = when {
-                    !enabled -> theme.colors.content.disabled
-                    isError -> theme.colors.content.danger
-                    else -> theme.colors.content.tertiary
+                    !enabled -> NyummyTheme.colors.content.disabled
+                    isError -> NyummyTheme.colors.content.danger
+                    else -> NyummyTheme.colors.content.tertiary
                 },
             )
         }
@@ -158,7 +169,8 @@ internal fun fieldBorderColor(enabled: Boolean, isError: Boolean, focused: Boole
 
 /**
  * 비밀번호 입력칸의 보기/숨기기 아이콘. [NyummyTextField]의 trailing에 넣는다.
- * 레이아웃은 Figma처럼 24dp이고, 터치 영역은 Compose 최소 터치 영역(48dp)으로 넓어진다.
+ * 아이콘은 지금 상태를 나타낸다. 가려져 있으면 eye-off, 보이고 있으면 eye.
+ * 레이아웃은 아이콘 크기(24dp) 그대로이고, 터치 영역은 Compose 최소 터치 영역(48dp)으로 넓어진다.
  */
 @Composable
 fun NyummyPasswordVisibilityToggle(
@@ -167,8 +179,10 @@ fun NyummyPasswordVisibilityToggle(
     modifier: Modifier = Modifier,
 ) {
     Icon(
-        painter = painterResource(if (visible) R.drawable.nyummy_ic_eye_off else R.drawable.nyummy_ic_eye),
-        contentDescription = if (visible) "비밀번호 숨기기" else "비밀번호 보기",
+        painter = painterResource(if (visible) R.drawable.nyummy_ic_eye else R.drawable.nyummy_ic_eye_off),
+        contentDescription = stringResource(
+            if (visible) R.string.nyummy_password_hide_description else R.string.nyummy_password_show_description,
+        ),
         tint = NyummyTheme.colors.content.tertiary,
         modifier = modifier
             .size(NyummyTheme.size.iconL)

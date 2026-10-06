@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
@@ -46,22 +47,26 @@ fun NyummySnackbar(
     onAction: () -> Unit = {},
     onDismiss: (() -> Unit)? = null,
 ) {
-    val theme = NyummyTheme
     val dimens = NyummyComponentDimens
-    val shape = RoundedCornerShape(theme.radius.m)
+    val shape = RoundedCornerShape(NyummyTheme.radius.m)
     Row(
         modifier = modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = dimens.SnackbarHeight)
-            .nyummyShadow(shape, theme.elevation.float)
-            .background(theme.colors.bg.surface, shape)
-            .border(theme.borderWidth.bold, theme.colors.border.default, shape)
+            .nyummyShadow(shape, NyummyTheme.elevation.float)
+            .background(NyummyTheme.colors.bg.surface, shape)
+            .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, shape)
             .semantics { liveRegion = LiveRegionMode.Polite }
-            .padding(start = theme.spacing.s20, end = theme.spacing.s12, top = theme.spacing.s8, bottom = theme.spacing.s8),
-        horizontalArrangement = Arrangement.spacedBy(theme.spacing.s12),
+            .padding(
+                start = NyummyTheme.spacing.s20,
+                end = NyummyTheme.spacing.s12,
+                top = NyummyTheme.spacing.s8,
+                bottom = NyummyTheme.spacing.s8,
+            ),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NyummyText(text = message, style = theme.typography.bodyM, modifier = Modifier.weight(1f))
+        NyummyText(text = message, style = NyummyTheme.typography.bodyM, modifier = Modifier.weight(1f))
         if (actionLabel != null) {
             Box(
                 modifier = Modifier
@@ -73,19 +78,24 @@ fun NyummySnackbar(
                     )
                     .defaultMinSize(minWidth = dimens.SnackbarActionMinWidth)
                     .height(dimens.SnackbarActionHeight)
-                    .padding(horizontal = theme.spacing.s12),
+                    .padding(horizontal = NyummyTheme.spacing.s12),
                 contentAlignment = Alignment.Center,
             ) {
-                NyummyText(text = actionLabel, style = theme.typography.labelM, color = theme.colors.content.brand, maxLines = 1)
+                NyummyText(
+                    text = actionLabel,
+                    style = NyummyTheme.typography.labelM,
+                    color = NyummyTheme.colors.content.brand,
+                    maxLines = 1,
+                )
             }
         }
         if (onDismiss != null) {
             Icon(
                 painter = painterResource(R.drawable.nyummy_ic_x),
-                contentDescription = "알림 닫기",
-                tint = theme.colors.content.tertiary,
+                contentDescription = stringResource(R.string.nyummy_snackbar_dismiss_description),
+                tint = NyummyTheme.colors.content.tertiary,
                 modifier = Modifier
-                    .size(theme.size.iconM)
+                    .size(NyummyTheme.size.iconM)
                     .clickable(
                         interactionSource = rememberNyummyInteractionSource(),
                         indication = null,

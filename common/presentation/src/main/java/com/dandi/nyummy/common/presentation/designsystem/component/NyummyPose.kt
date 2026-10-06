@@ -15,7 +15,7 @@ import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
- * 냐미 포즈(매끄러운 일러스트). Figma `Nyummy / Pose`와 같은 그림이다.
+ * 냐미 포즈(매끄러운 일러스트).
  * 포즈별 쓰임은 정해져 있다: 빈 상태 Sleep, 오류 Worry, 권한 Ask, 분석 대기 Taste.
  * 다이얼로그에는 캐릭터를 쓰지 않는다.
  */

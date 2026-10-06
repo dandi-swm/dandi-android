@@ -5,9 +5,9 @@ import androidx.compose.ui.graphics.Color
 import com.dandi.nyummy.common.presentation.designsystem.token.NyummyPalette
 
 /**
- * Figma `Nyummy / 2 Semantic` 컬렉션을 역할 그룹별로 나눈 색 계약.
+ * 화면과 컴포넌트가 쓰는 역할 색. bg, content, border, data, external 그룹으로 나눈다.
  *
- * Figma 이름 `bg/action/primary`는 `NyummyTheme.colors.bg.actionPrimary`처럼
+ * 디자인 토큰 이름 `bg/action/primary`는 `NyummyTheme.colors.bg.actionPrimary`처럼
  * 첫 마디가 그룹, 나머지가 camelCase 속성이 된다.
  */
 @Immutable

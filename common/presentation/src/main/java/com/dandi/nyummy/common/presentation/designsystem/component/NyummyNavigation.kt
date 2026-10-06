@@ -32,6 +32,7 @@ import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -55,21 +56,20 @@ fun NyummyTopBar(
     onBackClick: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
-    val theme = NyummyTheme
-    val minSide = theme.size.touchTarget
+    val minSide = NyummyTheme.size.touchTarget
     // 제목은 화면 가운데에 두되, 양옆 슬롯 중 넓은 쪽 너비만큼 양쪽을 비워 겹치지 않게 한다.
     Layout(
         modifier = modifier
             .fillMaxWidth()
             .height(NyummyComponentDimens.TopBarHeight)
-            .background(theme.colors.bg.canvas)
-            .padding(horizontal = theme.spacing.s4),
+            .background(NyummyTheme.colors.bg.canvas)
+            .padding(horizontal = NyummyTheme.spacing.s4),
         content = {
             Box(Modifier.layoutId(TopBarStart)) {
                 if (onBackClick != null) {
                     NyummyIconButton(
                         icon = R.drawable.nyummy_ic_chevron_left,
-                        contentDescription = "뒤로 가기",
+                        contentDescription = stringResource(R.string.nyummy_back_description),
                         onClick = onBackClick,
                     )
                 }
@@ -77,7 +77,7 @@ fun NyummyTopBar(
             Box(Modifier.layoutId(TopBarEnd)) { trailing?.invoke() }
             NyummyText(
                 text = title,
-                style = theme.typography.titleM,
+                style = NyummyTheme.typography.titleM,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 modifier = Modifier
@@ -97,7 +97,10 @@ fun NyummyTopBar(
         layout(constraints.maxWidth, height) {
             start.placeRelative(0, (height - start.height) / 2)
             end.placeRelative(constraints.maxWidth - end.width, (height - end.height) / 2)
-            titlePlaceable.placeRelative((constraints.maxWidth - titlePlaceable.width) / 2, (height - titlePlaceable.height) / 2)
+            titlePlaceable.placeRelative(
+                (constraints.maxWidth - titlePlaceable.width) / 2,
+                (height - titlePlaceable.height) / 2,
+            )
         }
     }
 }
@@ -125,23 +128,22 @@ fun NyummyBottomNav(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val theme = NyummyTheme
     val dimens = NyummyComponentDimens
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(theme.colors.bg.surface),
+            .background(NyummyTheme.colors.bg.surface),
     ) {
         NyummyDivider()
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(theme.size.bottomNav - theme.borderWidth.hairline)
+                .height(NyummyTheme.size.bottomNav - NyummyTheme.borderWidth.hairline)
                 .padding(
-                    start = theme.spacing.s8,
-                    end = theme.spacing.s8,
-                    top = dimens.BottomNavTopPadding - theme.borderWidth.hairline,
-                    bottom = theme.spacing.s12,
+                    start = NyummyTheme.spacing.s8,
+                    end = NyummyTheme.spacing.s8,
+                    top = dimens.BottomNavTopPadding - NyummyTheme.borderWidth.hairline,
+                    bottom = NyummyTheme.spacing.s12,
                 )
                 .selectableGroup(),
             verticalAlignment = Alignment.CenterVertically,
@@ -167,7 +169,6 @@ private fun BottomNavTab(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val theme = NyummyTheme
     val dimens = NyummyComponentDimens
     Box(
         modifier = modifier
@@ -187,10 +188,10 @@ private fun BottomNavTab(
                 .fillMaxWidth()
                 .height(dimens.BottomNavSelectedHeight)
                 .background(
-                    color = if (selected) theme.colors.bg.selected else Color.Transparent,
-                    shape = RoundedCornerShape(theme.radius.m),
+                    color = if (selected) NyummyTheme.colors.bg.selected else Color.Transparent,
+                    shape = RoundedCornerShape(NyummyTheme.radius.m),
                 ),
-            verticalArrangement = Arrangement.spacedBy(theme.spacing.s2, Alignment.CenterVertically),
+            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Image(
@@ -200,8 +201,8 @@ private fun BottomNavTab(
             )
             NyummyText(
                 text = item.label,
-                style = if (selected) theme.typography.labelSStrong else theme.typography.labelS,
-                color = if (selected) theme.colors.content.brand else theme.colors.content.tertiary,
+                style = if (selected) NyummyTheme.typography.labelSStrong else NyummyTheme.typography.labelS,
+                color = if (selected) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.tertiary,
                 maxLines = 1,
             )
         }
@@ -219,14 +220,13 @@ fun NyummyTabs(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val theme = NyummyTheme
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
                 .selectableGroup(),
-            horizontalArrangement = Arrangement.spacedBy(theme.spacing.s16),
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16),
         ) {
             tabs.forEachIndexed { index, label ->
                 TabItem(label = label, selected = index == selectedIndex, onClick = { onSelect(index) })
@@ -238,7 +238,6 @@ fun NyummyTabs(
 
 @Composable
 private fun TabItem(label: String, selected: Boolean, onClick: () -> Unit) {
-    val theme = NyummyTheme
     val dimens = NyummyComponentDimens
     Column(
         modifier = Modifier
@@ -251,18 +250,18 @@ private fun TabItem(label: String, selected: Boolean, onClick: () -> Unit) {
                 onClick = onClick,
             )
             .padding(
-                start = theme.spacing.s4,
-                end = theme.spacing.s4,
-                top = theme.spacing.s12,
+                start = NyummyTheme.spacing.s4,
+                end = NyummyTheme.spacing.s4,
+                top = NyummyTheme.spacing.s12,
                 bottom = dimens.TabItemBottomPadding,
             ),
-        verticalArrangement = Arrangement.spacedBy(theme.spacing.s8),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         NyummyText(
             text = label,
-            style = theme.typography.labelL,
-            color = if (selected) theme.colors.content.primary else theme.colors.content.tertiary,
+            style = NyummyTheme.typography.labelL,
+            color = if (selected) NyummyTheme.colors.content.primary else NyummyTheme.colors.content.tertiary,
             maxLines = 1,
         )
         Box(
@@ -270,8 +269,8 @@ private fun TabItem(label: String, selected: Boolean, onClick: () -> Unit) {
                 .fillMaxWidth()
                 .height(dimens.TabIndicatorHeight)
                 .background(
-                    color = if (selected) theme.colors.content.primary else Color.Transparent,
-                    shape = RoundedCornerShape(theme.radius.full),
+                    color = if (selected) NyummyTheme.colors.content.primary else Color.Transparent,
+                    shape = RoundedCornerShape(NyummyTheme.radius.full),
                 ),
         )
     }
@@ -284,13 +283,16 @@ fun NyummyStepIndicator(
     totalSteps: Int,
     modifier: Modifier = Modifier,
 ) {
-    val theme = NyummyTheme
     val dimens = NyummyComponentDimens
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(theme.spacing.s8),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
     ) {
-        NyummyText(text = "$currentStep / $totalSteps", style = theme.typography.labelS, color = theme.colors.content.brand)
+        NyummyText(
+            text = "$currentStep / $totalSteps",
+            style = NyummyTheme.typography.labelS,
+            color = NyummyTheme.colors.content.brand,
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(dimens.StepBarGap),
@@ -301,8 +303,12 @@ fun NyummyStepIndicator(
                         .weight(1f)
                         .height(dimens.StepBarHeight)
                         .background(
-                            color = if (index < currentStep) theme.colors.data.progressFill else theme.colors.data.progressTrack,
-                            shape = RoundedCornerShape(theme.radius.full),
+                            color = if (index < currentStep) {
+                                NyummyTheme.colors.data.progressFill
+                            } else {
+                                NyummyTheme.colors.data.progressTrack
+                            },
+                            shape = RoundedCornerShape(NyummyTheme.radius.full),
                         ),
                 )
             }
@@ -310,7 +316,7 @@ fun NyummyStepIndicator(
     }
 }
 
-/** 냐미 하단 내비 5탭. 순서와 라벨은 Figma `Bottom Nav`와 같다. */
+/** 냐미 하단 내비 5탭(홈, 기록, 퀘스트, 업적, 상점 순서). */
 val NyummyMainTabs: ImmutableList<NyummyBottomNavItem> = persistentListOf(
     NyummyBottomNavItem(label = "홈", icon = R.drawable.nyummy_nav_home),
     NyummyBottomNavItem(label = "기록", icon = R.drawable.nyummy_nav_record),
@@ -337,7 +343,11 @@ private fun NyummyNavigationPreview() {
                 onSelect = { tab = it },
                 modifier = Modifier.padding(horizontal = NyummyTheme.spacing.gutter),
             )
-            NyummyStepIndicator(currentStep = 2, totalSteps = 3, modifier = Modifier.padding(horizontal = NyummyTheme.spacing.gutter))
+            NyummyStepIndicator(
+                currentStep = 2,
+                totalSteps = 3,
+                modifier = Modifier.padding(horizontal = NyummyTheme.spacing.gutter),
+            )
             NyummyBottomNav(items = NyummyMainTabs, selectedIndex = tab, onSelect = { tab = it })
         }
     }

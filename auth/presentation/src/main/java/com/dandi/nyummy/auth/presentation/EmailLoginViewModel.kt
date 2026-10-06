@@ -23,6 +23,7 @@ class EmailLoginViewModel @Inject constructor(
             EmailLoginIntent.ClickLogin -> login()
             EmailLoginIntent.ClickForgotPassword -> forgotPassword()
             EmailLoginIntent.ClickSignUp -> signUp()
+            EmailLoginIntent.ClickBack -> navigationHelper.navigateToBack()
         }
     }
 

@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,7 +31,7 @@ import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyum
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
- * 자리별 인증 코드 입력. 셀은 48×56, 2px 테두리, 숫자는 number/m.
+ * 자리별 인증 코드 입력. 셀은 48×56, 2px 테두리, 숫자는 number/m. 셀은 받은 폭에 맞춰 양끝까지 펼친다.
  *
  * 실제 입력은 투명한 [BasicTextField] 하나가 받고 셀은 장식으로만 그린다.
  * 숫자만 받고 [length]를 넘는 입력은 잘라낸다.
@@ -46,7 +48,6 @@ fun NyummyCodeInput(
     enabled: Boolean = true,
     contentDescription: String = DefaultContentDescription,
 ) {
-    val theme = NyummyTheme
     val interactionSource = rememberNyummyInteractionSource()
     val focused by interactionSource.collectIsFocusedAsState()
 
@@ -60,12 +61,19 @@ fun NyummyCodeInput(
         enabled = enabled,
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-        cursorBrush = SolidColor(theme.colors.border.focus),
+        cursorBrush = SolidColor(NyummyTheme.colors.border.focus),
         interactionSource = interactionSource,
         decorationBox = { innerTextField ->
             Box {
                 Box(modifier = Modifier.matchParentSize().alpha(0f)) { innerTextField() }
-                Row(horizontalArrangement = Arrangement.spacedBy(theme.spacing.s8)) {
+                // 받은 폭에 맞춰 셀을 양끝까지 펼치되, 셀 사이는 최소 8을 띄운다.
+                val minRowWidth = NyummyComponentDimens.CodeCellWidth * length + NyummyTheme.spacing.s8 * (length - 1)
+                Row(
+                    modifier = Modifier
+                        .widthIn(min = minRowWidth)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
                     repeat(length) { index ->
                         CodeCell(
                             digit = value.getOrNull(index),
@@ -82,27 +90,26 @@ fun NyummyCodeInput(
 
 @Composable
 private fun CodeCell(digit: Char?, active: Boolean, isError: Boolean, enabled: Boolean) {
-    val theme = NyummyTheme
-    val shape = RoundedCornerShape(theme.radius.s)
+    val shape = RoundedCornerShape(NyummyTheme.radius.s)
     val borderColor = when {
-        !enabled -> theme.colors.border.subtle
-        isError -> theme.colors.border.danger
-        active -> theme.colors.border.focus
-        digit != null -> theme.colors.border.strong
-        else -> theme.colors.border.default
+        !enabled -> NyummyTheme.colors.border.subtle
+        isError -> NyummyTheme.colors.border.danger
+        active -> NyummyTheme.colors.border.focus
+        digit != null -> NyummyTheme.colors.border.strong
+        else -> NyummyTheme.colors.border.default
     }
     Box(
         modifier = Modifier
             .size(DpSize(NyummyComponentDimens.CodeCellWidth, NyummyComponentDimens.CodeCellHeight))
-            .background(if (enabled) theme.colors.bg.surface else theme.colors.bg.surfaceSunken, shape)
-            .border(theme.borderWidth.bold, borderColor, shape),
+            .background(if (enabled) NyummyTheme.colors.bg.surface else NyummyTheme.colors.bg.surfaceSunken, shape)
+            .border(NyummyTheme.borderWidth.bold, borderColor, shape),
         contentAlignment = Alignment.Center,
     ) {
         if (digit != null) {
             NyummyText(
                 text = digit.toString(),
-                style = theme.typography.numberM,
-                color = if (enabled) theme.colors.content.primary else theme.colors.content.disabled,
+                style = NyummyTheme.typography.numberM,
+                color = if (enabled) NyummyTheme.colors.content.primary else NyummyTheme.colors.content.disabled,
             )
         }
     }

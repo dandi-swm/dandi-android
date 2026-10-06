@@ -11,40 +11,47 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -54,20 +61,24 @@ import androidx.lifecycle.compose.currentStateAsState
 import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.auth.presentation.social.SocialLoginResult
 import com.dandi.nyummy.auth.presentation.social.launchSocialLogin
-import com.dandi.nyummy.common.presentation.component.DandiText
-import com.dandi.nyummy.common.presentation.component.NyummyLoading
-import com.dandi.nyummy.common.presentation.component.NyummyLoadingSize
-import com.dandi.nyummy.common.presentation.component.NyummyModalScrim
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyScrim
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpinner
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonSize
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonTone
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
+import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import com.dandi.nyummy.common.presentation.R as CommonR
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
+import kotlin.math.roundToInt
 
 /**
- * 로그인 랜딩 화면
+ * 로그인 랜딩 화면.
  *
- * 카카오 로그인은 SDK 로그인(카카오톡/카카오계정) 후 서버 검증까지 동작한다. 네이버·구글은 아직
- * 연동되지 않아 "준비 중" 안내만 띄운다. 이메일 원형 버튼은 이메일 로그인 화면으로 이동한다.
- * debug 빌드에서 local.properties 에 테스트 계정을 넣으면 하단에 테스트 계정 로그인 버튼이 추가된다.
+ * 민트 낙서 패턴 배경 위에 로고와 헤드라인을 두고, 아래 카드에 카카오 로그인과 다른 방법(네이버, 구글, 이메일)을 둔다.
+ * 카카오와 구글은 SDK 로그인 후 서버 검증까지 동작하고, 네이버는 "준비 중" 안내만 띄운다.
+ * debug 빌드에서 local.properties에 테스트 계정을 넣으면 카드 아래쪽에 테스트 계정 로그인이 추가된다.
  */
 @Composable
 fun LoginPage(
@@ -75,7 +86,7 @@ fun LoginPage(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // 소셜 SDK 는 Activity 가 필요해 화면이 실행한다. 실행을 먼저 알려 요청 상태를 비워 두므로
+    // 소셜 SDK는 Activity가 필요해 화면이 실행한다. 실행을 먼저 알려 요청 상태를 비워 두므로
     // 로그인 창이 떠 있는 동안 화면이 재생성돼도 다시 실행되지 않는다.
     val activity = LocalActivity.current
     val onIntent = viewModel::onIntent
@@ -99,77 +110,52 @@ fun LoginPage(
 }
 
 @Composable
-private fun LoginPageContent(
+internal fun LoginPageContent(
     uiState: LoginUIState,
     onIntent: (LoginIntent) -> Unit,
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    val spacing = DesignSystemThemeImpl.designSystemSpacing
     val enabled = !uiState.isLoading
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bgDefaultLevel0),
+            .background(NyummyTheme.colors.bg.canvas),
     ) {
-        // 은은한 패턴 배경이라 별도 스크림 없이도 전 영역에서 텍스트 가독성이 유지된다.
+        // 반복 패턴이라 어떤 화면 비율로 잘려도 어색하지 않다. 50%로 옅게 깐다.
         Image(
-            painter = painterResource(CommonR.drawable.nyummy_pattern_bg),
+            painter = painterResource(R.drawable.auth_bg_pattern),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(PatternAlpha),
             contentScale = ContentScale.Crop,
-            alignment = Alignment.TopCenter,
         )
-        Column(
+        // 높이가 넉넉하면 카드는 바닥에, 제목은 남는 공간의 가운데보다 살짝 위에 둔다.
+        // 가로 화면이나 분할 화면처럼 높이가 모자라면 전체가 스크롤되어 카드까지 닿을 수 있다.
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(horizontal = DesignSystemThemeImpl.designSystemLayout.mobileGutter),
+                .navigationBarsPadding(),
         ) {
-            Spacer(modifier = Modifier.weight(LogoTopWeight))
-            LoginWordmark(modifier = Modifier.align(Alignment.CenterHorizontally))
-            Spacer(modifier = Modifier.weight(LogoHeadlineWeight))
-            DandiText(
-                text = stringResource(R.string.auth_login_headline_line1),
-                color = colors.contentDefaultLevel0,
-                style = DesignSystemThemeImpl.typeScale.displayRegularXXL,
-            )
-            DandiText(
-                text = stringResource(R.string.auth_login_headline_line2),
-                color = colors.contentDefaultLevel0,
-                style = DesignSystemThemeImpl.typeScale.displayRegularXXL,
-            )
-            Spacer(modifier = Modifier.height(spacing.space12))
-            DandiText(
-                text = stringResource(R.string.auth_login_subtitle),
-                color = colors.contentDefaultLevel1,
-                maxLines = 2,
-                style = DesignSystemThemeImpl.typeScale.textRegularL,
-            )
-            Spacer(modifier = Modifier.height(spacing.space24))
-            KakaoLoginButton(
-                enabled = enabled,
-                onClick = { onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO)) },
-            )
-            Spacer(modifier = Modifier.height(spacing.space16))
-            LoginOrDivider(modifier = Modifier.align(Alignment.CenterHorizontally))
-            Spacer(modifier = Modifier.height(spacing.space16))
-            LoginSocialCircles(
-                enabled = enabled,
-                onIntent = onIntent,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-            Spacer(modifier = Modifier.height(spacing.space16))
-            LoginTermsNotice(modifier = Modifier.align(Alignment.CenterHorizontally))
-            Spacer(modifier = Modifier.height(spacing.space16))
-            if (uiState.isTestLoginAvailable) {
-                LoginTestAccountButton(
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .heightIn(min = maxHeight)
+                    .padding(horizontal = NyummyTheme.spacing.gutter),
+                verticalArrangement = LoginContentArrangement,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                LoginTitleBlock(modifier = Modifier.padding(vertical = NyummyTheme.spacing.s24))
+                LoginCard(
+                    uiState = uiState,
                     enabled = enabled,
-                    onClick = { onIntent(LoginIntent.ClickTestLogin) },
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    onIntent = onIntent,
+                    modifier = Modifier
+                        .widthIn(max = CardMaxWidth)
+                        .padding(bottom = NyummyTheme.spacing.s24),
                 )
-                Spacer(modifier = Modifier.height(spacing.space16))
             }
         }
         SocialLoginLoadingOverlay(
@@ -180,15 +166,229 @@ private fun LoginPageContent(
     }
 }
 
+@Composable
+private fun LoginTitleBlock(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(TitleBlockGap),
+    ) {
+        Image(
+            painter = painterResource(CommonR.drawable.nyummy_brand_logo),
+            contentDescription = stringResource(R.string.auth_login_wordmark),
+            modifier = Modifier.size(LogoWidth, LogoHeight),
+        )
+        NyummyText(
+            text = stringResource(R.string.auth_login_headline),
+            style = NyummyTheme.typography.displayL,
+            color = NyummyTheme.colors.content.brand,
+            textAlign = TextAlign.Center,
+        )
+        NyummyText(
+            text = stringResource(R.string.auth_login_subtitle),
+            style = NyummyTheme.typography.bodyM,
+            color = NyummyTheme.colors.content.secondary,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+/** 카카오 로그인 + "다른 방법으로 시작하기" + 원형 버튼 3개 + 약관 고지를 담은 하단 카드. */
+@Composable
+private fun LoginCard(
+    uiState: LoginUIState,
+    enabled: Boolean,
+    onIntent: (LoginIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val shape = RoundedCornerShape(NyummyTheme.radius.l)
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .nyummyShadow(shape, NyummyTheme.elevation.float)
+            .background(NyummyTheme.colors.bg.surface, shape)
+            .padding(NyummyTheme.spacing.s20),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        KakaoLoginButton(
+            enabled = enabled,
+            onClick = { onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO)) },
+        )
+        LoginOrDivider()
+        LoginSocialCircles(enabled = enabled, onIntent = onIntent)
+        LoginTermsNotice()
+        if (uiState.isTestLoginAvailable) {
+            NyummyTextButton(
+                text = stringResource(R.string.auth_login_test_account),
+                onClick = { onIntent(LoginIntent.ClickTestLogin) },
+                tone = NyummyTextButtonTone.Neutral,
+                size = NyummyTextButtonSize.S,
+                enabled = enabled,
+            )
+        }
+    }
+}
+
 /**
- * 소셜 로그인 창에서 돌아온 뒤 홈·가입 화면으로 넘어갈 때까지 덮는 로딩.
+ * 카카오 공식 로그인 버튼. 카카오 노랑, radius 12, 높이 52.
+ * 심볼은 왼쪽에 고정하고 라벨은 가운데에 둔다. 재채색이나 변형은 하지 않는다.
+ */
+@Composable
+private fun KakaoLoginButton(
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .nyummyClickable(onClick = onClick, enabled = enabled)
+            .height(KakaoButtonHeight)
+            .clip(RoundedCornerShape(NyummyTheme.radius.s))
+            .background(NyummyTheme.colors.external.kakaoYellow),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painter = painterResource(R.drawable.auth_ic_kakao_symbol),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = KakaoSymbolStartPadding)
+                .size(KakaoSymbolSize),
+        )
+        NyummyText(
+            text = stringResource(R.string.auth_login_kakao),
+            style = NyummyTheme.typography.labelM,
+            color = NyummyTheme.colors.external.kakaoLabel,
+        )
+    }
+}
+
+@Composable
+private fun LoginOrDivider() {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        DividerLine()
+        NyummyText(
+            text = stringResource(R.string.auth_login_or),
+            style = NyummyTheme.typography.bodyS,
+            color = NyummyTheme.colors.content.tertiary,
+        )
+        DividerLine()
+    }
+}
+
+@Composable
+private fun DividerLine() {
+    Box(
+        Modifier
+            .size(DividerLineWidth, NyummyTheme.borderWidth.hairline)
+            .background(NyummyTheme.colors.border.default),
+    )
+}
+
+/** 네이버와 구글은 공식 원형 에셋(재채색 금지), 이메일은 냐미 스타일 원형 버튼. */
+@Composable
+private fun LoginSocialCircles(
+    enabled: Boolean,
+    onIntent: (LoginIntent) -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s24)) {
+        SocialCircle(
+            description = stringResource(R.string.auth_login_naver_description),
+            enabled = enabled,
+            onClick = { onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.NAVER)) },
+        ) {
+            Image(
+                painterResource(R.drawable.auth_icon_naver_circle),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        SocialCircle(
+            description = stringResource(R.string.auth_login_google_description),
+            enabled = enabled,
+            onClick = { onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.GOOGLE)) },
+        ) {
+            Image(
+                painterResource(R.drawable.auth_google_button),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        SocialCircle(
+            description = stringResource(R.string.auth_login_email_description),
+            enabled = enabled,
+            onClick = { onIntent(LoginIntent.ClickEmailLogin) },
+            modifier = Modifier
+                .background(NyummyTheme.colors.bg.surface, CircleShape)
+                .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, CircleShape),
+        ) {
+            Icon(
+                painter = painterResource(CommonR.drawable.nyummy_ic_mail),
+                contentDescription = null,
+                tint = NyummyTheme.colors.content.brand,
+                modifier = Modifier.size(NyummyTheme.size.iconL),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SocialCircle(
+    description: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .semantics { contentDescription = description }
+            .nyummyClickable(onClick = onClick, enabled = enabled)
+            .size(SocialCircleSize)
+            .clip(CircleShape)
+            .then(modifier),
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
+    }
+}
+
+/**
+ * "계속하면 [이용약관] 및 [개인정보처리방침]에 동의하게 됩니다." 고지.
+ * 한 문장으로 조합해 자동 줄바꿈되므로 긴 로케일에서도 잘리지 않고, 링크 부분만 밑줄과 진한 글자로 둔다.
+ */
+@Composable
+private fun LoginTermsNotice() {
+    val link = SpanStyle(textDecoration = TextDecoration.Underline, color = NyummyTheme.colors.content.secondary)
+    val notice = buildAnnotatedString {
+        append(stringResource(R.string.auth_login_terms_prefix))
+        withStyle(link) { append(stringResource(R.string.auth_login_terms_service)) }
+        append(stringResource(R.string.auth_login_terms_and))
+        withStyle(link) { append(stringResource(R.string.auth_login_terms_privacy)) }
+        append(stringResource(R.string.auth_login_terms_suffix))
+    }
+    NyummyText(
+        text = notice,
+        style = NyummyTheme.typography.bodyS,
+        color = NyummyTheme.colors.content.tertiary,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+/**
+ * 소셜 로그인 창에서 돌아온 뒤 홈이나 가입 화면으로 넘어갈 때까지 덮는 로딩.
  *
  * 창이 닫힌 뒤에도 카카오 토큰 발급(약 1초)과 서버 검증이 이어지는데, 그동안 로그인 화면만 보이다가
  * 갑자기 홈으로 넘어가면 무슨 일이 일어났는지 알기 어렵다. 그 구간을 로딩으로 덮고 다른 입력을 막는다.
  *
  * 카카오 창이 떠 있는 동안에는 이 화면이 가려져 있으므로, 화면이 다시 보인 뒤에만 띄운다. 그리고
- * [LoadingShowDelayMillis] 만큼 기다렸다 나타나게 해, 창을 닫아 취소한 경우 로딩이 번쩍이지 않게 한다.
- * 결과 대기 중 뒤로가기는 기다림을 그만두고, 서버 검증 중에는 막힌다(ViewModel 이 판단).
+ * [LoadingShowDelayMillis]만큼 기다렸다 나타나게 해, 창을 닫아 취소한 경우 로딩이 번쩍이지 않게 한다.
+ * 결과 대기 중 뒤로 가기는 기다림을 그만두고, 서버 검증 중에는 막힌다(ViewModel이 판단).
  */
 @Composable
 private fun SocialLoginLoadingOverlay(
@@ -208,15 +408,14 @@ private fun SocialLoginLoadingOverlay(
             exit = fadeOut(tween(LoadingFadeMillis)),
             label = "SocialLoginLoadingScrim",
         ) {
-            NyummyModalScrim()
+            NyummyScrim()
         }
-        // 사라지는 동안에도 직전 제공자 문구가 유지되도록 상태별 내용을 AnimatedContent 로 전환한다.
-        // 크기를 고정하면 Surface 가 최소 크기를 물려받아 화면 전체로 늘어나므로, 내용 크기만큼만 두고 가운데 정렬한다.
+        // 사라지는 동안에도 직전 제공자 문구가 유지되도록 상태별 내용을 AnimatedContent로 전환한다.
         AnimatedContent(
             targetState = shownType,
             modifier = Modifier
                 .align(Alignment.Center)
-                .padding(horizontal = DesignSystemThemeImpl.designSystemLayout.mobileGutter),
+                .padding(horizontal = NyummyTheme.spacing.gutter),
             transitionSpec = {
                 fadeIn(tween(LoadingFadeMillis, delayMillis = LoadingShowDelayMillis)) togetherWith
                     fadeOut(tween(LoadingFadeMillis))
@@ -230,36 +429,47 @@ private fun SocialLoginLoadingOverlay(
 
 @Composable
 private fun SocialLoginLoadingCard(socialType: SocialLoginType) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    val spacing = DesignSystemThemeImpl.designSystemSpacing
+    val shape = RoundedCornerShape(NyummyTheme.radius.l)
     val message = stringResource(
         R.string.auth_login_social_verifying,
         stringResource(socialType.providerNameRes),
     )
-    Surface(
-        shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius24),
-        color = colors.bgDefaultLevel1,
-        contentColor = colors.contentDefaultLevel0,
+    Column(
+        modifier = Modifier
+            .nyummyShadow(shape, NyummyTheme.elevation.float)
+            .background(NyummyTheme.colors.bg.surface, shape)
+            .padding(horizontal = NyummyTheme.spacing.s32, vertical = NyummyTheme.spacing.s24)
+            // 카드가 뜨면 화면 읽기 사용자에게도 진행 중임을 알린다.
+            .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = spacing.space32, vertical = spacing.space24),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            NyummyLoading(size = NyummyLoadingSize.Large, contentDescription = message)
-            Spacer(modifier = Modifier.height(spacing.space16))
-            DandiText(
-                text = message,
-                color = colors.contentDefaultLevel0,
-                textAlign = TextAlign.Center,
-                style = DesignSystemThemeImpl.typeScale.textStrongL,
-            )
-            Spacer(modifier = Modifier.height(spacing.space4))
-            DandiText(
-                text = stringResource(R.string.auth_login_social_verifying_hint),
-                color = colors.contentDefaultLevel1,
-                textAlign = TextAlign.Center,
-                style = DesignSystemThemeImpl.typeScale.textRegularM,
-            )
+        // 바로 아래 문구가 같은 내용을 말하므로 아이콘 설명은 두지 않는다.
+        NyummySpinner(contentDescription = null)
+        Spacer(Modifier.height(SpinnerTextGap))
+        NyummyText(text = message, style = NyummyTheme.typography.titleS, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(LoadingTextGap))
+        NyummyText(
+            text = stringResource(R.string.auth_login_social_verifying_hint),
+            style = NyummyTheme.typography.bodyM,
+            color = NyummyTheme.colors.content.secondary,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+/**
+ * 제목 블록과 로그인 카드 배치. 카드는 바닥에 붙이고, 남는 높이는 제목 위와 아래에 1 : 1.3으로 나눈다.
+ * 남는 높이가 없으면(작은 창) 두 블록을 위에서부터 이어 붙이고 바깥 스크롤에 맡긴다.
+ */
+private object LoginContentArrangement : Arrangement.Vertical {
+    override fun Density.arrange(totalSize: Int, sizes: IntArray, outPositions: IntArray) {
+        val free = (totalSize - sizes.sum()).coerceAtLeast(0)
+        val above = (free * TitleTopWeight / (TitleTopWeight + TitleBottomWeight)).roundToInt()
+        var y = above
+        sizes.forEachIndexed { index, size ->
+            outPositions[index] = y
+            y += size
+            if (index == 0) y += free - above
         }
     }
 }
@@ -271,216 +481,35 @@ private val SocialLoginType.providerNameRes: Int
         SocialLoginType.NAVER -> R.string.auth_social_provider_naver
     }
 
-/** 새싹이 돋은 `냐미` 로고 이미지. */
-@Composable
-private fun LoginWordmark(
-    modifier: Modifier = Modifier,
-) {
-    Image(
-        painter = painterResource(R.drawable.auth_logo),
-        contentDescription = stringResource(R.string.auth_login_wordmark),
-        modifier = modifier.width(LogoWidth),
-        contentScale = ContentScale.Fit,
-    )
-}
-
-/** 카카오 심볼 + 라벨을 중앙 정렬한 카카오 브랜드 버튼. */
-@Composable
-private fun KakaoLoginButton(
-    enabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(KakaoButtonHeight)
-            .clip(DesignSystemThemeImpl.designSystemShape.buttonDefault)
-            .background(colors.bgBrandKakao)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.auth_icon_kakao_bubble),
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = KakaoBubbleStartPadding)
-                .size(KakaoBubbleIconSize),
-            tint = colors.contentBrandKakao,
-        )
-        DandiText(
-            text = stringResource(R.string.auth_login_kakao),
-            color = colors.contentBrandKakao,
-            style = DesignSystemThemeImpl.typeScale.textStrongL,
-        )
-    }
-}
-
-@Composable
-private fun LoginOrDivider(
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(DesignSystemThemeImpl.designSystemSpacing.space12),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .width(LoginDividerLineWidth)
-                .height(LoginDividerLineHeight)
-                .background(DesignSystemThemeImpl.designSystemColor.borderDefaultLevel0),
-        )
-        DandiText(
-            text = stringResource(R.string.auth_login_or),
-            color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel2,
-            style = DesignSystemThemeImpl.typeScale.textRegularS,
-        )
-        Box(
-            modifier = Modifier
-                .width(LoginDividerLineWidth)
-                .height(LoginDividerLineHeight)
-                .background(DesignSystemThemeImpl.designSystemColor.borderDefaultLevel0),
-        )
-    }
-}
-
-@Composable
-private fun LoginSocialCircles(
-    enabled: Boolean,
-    onIntent: (LoginIntent) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(DesignSystemThemeImpl.designSystemSpacing.space24),
-    ) {
-        // 네이버 브랜드 가이드 원형 버튼 — 틴트 금지
-        Image(
-            painter = painterResource(R.drawable.auth_icon_naver_circle),
-            contentDescription = stringResource(R.string.auth_login_naver_description),
-            modifier = Modifier
-                .size(LoginSocialCircleSize)
-                .clip(CircleShape)
-                .clickable(enabled = enabled, role = Role.Button) {
-                    onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.NAVER))
-                },
-        )
-        Image(
-            painter = painterResource(R.drawable.auth_google_icon_button),
-            contentDescription = stringResource(R.string.auth_login_google_description),
-            modifier = Modifier
-                .size(LoginSocialCircleSize)
-                .clip(CircleShape)
-                .clickable(enabled = enabled, role = Role.Button) {
-                    onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.GOOGLE))
-                },
-        )
-        Box(
-            modifier = Modifier
-                .size(LoginSocialCircleSize)
-                .clip(CircleShape)
-                .background(DesignSystemThemeImpl.designSystemColor.bgDefaultLevel1)
-                .border(
-                    width = LoginEmailCircleBorderWidth,
-                    color = DesignSystemThemeImpl.designSystemColor.borderDefaultLevel0,
-                    shape = CircleShape,
-                )
-                .clickable(enabled = enabled, role = Role.Button) {
-                    onIntent(LoginIntent.ClickEmailLogin)
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.auth_icon_email),
-                contentDescription = stringResource(R.string.auth_login_email_description),
-                modifier = Modifier.size(LoginEmailIconSize),
-                tint = DesignSystemThemeImpl.designSystemColor.contentIconEmail,
-            )
-        }
-    }
-}
-
-/**
- * "계속하면 [이용약관] 및 [개인정보처리방침]에 동의하게 됩니다." 고지.
- * 한 문장으로 조합해 자동 줄바꿈되므로 긴 로케일에서도 잘리지 않고, 링크 부분만 밑줄 처리한다.
- */
-@Composable
-private fun LoginTermsNotice(
-    modifier: Modifier = Modifier,
-) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    val underline = SpanStyle(textDecoration = TextDecoration.Underline)
-    val notice = buildAnnotatedString {
-        append(stringResource(R.string.auth_login_terms_prefix))
-        withStyle(underline) { append(stringResource(R.string.auth_login_terms_service)) }
-        append(stringResource(R.string.auth_login_terms_and))
-        withStyle(underline) { append(stringResource(R.string.auth_login_terms_privacy)) }
-        append(stringResource(R.string.auth_login_terms_suffix))
-        append(" ")
-        append(stringResource(R.string.auth_login_terms_line2))
-    }
-    DandiText(
-        text = notice,
-        modifier = modifier,
-        color = colors.contentDefaultLevel2,
-        textAlign = TextAlign.Center,
-        maxLines = 3,
-        style = DesignSystemThemeImpl.typeScale.textRegularS,
-    )
-}
-
-/** 개발용 테스트 계정 로그인. debug 빌드에 테스트 계정이 주입됐을 때만 노출된다. */
-@Composable
-private fun LoginTestAccountButton(
-    enabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val spacing = DesignSystemThemeImpl.designSystemSpacing
-    DandiText(
-        text = stringResource(R.string.auth_login_test_account),
-        modifier = modifier
-            .clip(DesignSystemThemeImpl.designSystemShape.buttonDefault)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(horizontal = spacing.space12, vertical = spacing.space8),
-        color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel2,
-        textDecoration = TextDecoration.Underline,
-        style = DesignSystemThemeImpl.typeScale.textRegularS,
-    )
-}
-
-private const val LogoTopWeight = 0.9f
-private const val LogoHeadlineWeight = 1f
-private val LogoWidth = 150.dp
-private val KakaoButtonHeight = 56.dp
-private val KakaoBubbleStartPadding = 20.dp
-private val KakaoBubbleIconSize = 20.dp
-private val LoginDividerLineWidth = 72.dp
-private val LoginDividerLineHeight = 1.dp
-private val LoginSocialCircleSize = 56.dp
-private val LoginEmailIconSize = 24.dp
-private val LoginEmailCircleBorderWidth = 1.dp
+private const val PatternAlpha = 0.5f
+private const val TitleTopWeight = 1f
+private const val TitleBottomWeight = 1.3f
 private const val LoadingFadeMillis = 200
 private const val LoadingShowDelayMillis = 150
+private val CardMaxWidth = 480.dp
+private val LogoWidth = 150.dp
+private val LogoHeight = 88.dp
+private val TitleBlockGap = 14.dp
+private val KakaoButtonHeight = 52.dp
+private val KakaoSymbolStartPadding = 18.dp
+private val KakaoSymbolSize = 20.dp
+private val DividerLineWidth = 56.dp
+private val SocialCircleSize = 56.dp
+private val SpinnerTextGap = 16.dp
+private val LoadingTextGap = 6.dp
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun LoginPagePreview() {
-    DesignSystemTheme {
-        LoginPageContent(
-            uiState = LoginUIState.empty,
-            onIntent = {},
-        )
+    NyummyTheme {
+        LoginPageContent(uiState = LoginUIState.empty, onIntent = {})
     }
 }
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun LoginPageSocialVerifyingPreview() {
-    DesignSystemTheme {
+    NyummyTheme {
         LoginPageContent(
             uiState = LoginUIState(
                 isLoading = true,

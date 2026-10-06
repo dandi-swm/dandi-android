@@ -6,4 +6,13 @@
     <string name="meal_gallery_unknown_taken_date">촬영 날짜를 확인할 수 없어요. 오늘 찍은 사진만 업로드 가능해요</string>
     <string name="meal_gallery_load_failed">사진을 불러오지 못했어요. 다시 선택해주세요</string>
     <string name="meal_gallery_import_failed">사진을 불러오지 못했어요. 다시 시도해주세요</string>
+    <string name="nyummy_scrim_dismiss_label">닫기</string>
+    <string name="nyummy_password_show_description">비밀번호 보기</string>
+    <string name="nyummy_password_hide_description">비밀번호 숨기기</string>
+    <string name="nyummy_back_description">뒤로 가기</string>
+    <string name="nyummy_snackbar_dismiss_description">알림 닫기</string>
+    <string name="nyummy_dialog_dismiss">닫기</string>
+    <string name="nyummy_streak_unit">일째</string>
+    <string name="nyummy_coin_description">코인 %1$s</string>
+    <string name="nyummy_streak_description">연속 기록 %1$d일째</string>
 </resources>

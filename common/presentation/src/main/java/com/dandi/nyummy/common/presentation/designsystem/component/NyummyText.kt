@@ -15,7 +15,7 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
  * 냐미 디자인 시스템 텍스트. [style]은 `NyummyTheme.typography.*` 20개 스타일 중 하나만 넘긴다.
- * 크기나 굵기를 copy로 바꾸면 Figma 스타일과 어긋나므로 바꾸지 않는다.
+ * 크기나 굵기를 copy로 바꾸면 디자인의 텍스트 스타일과 어긋나므로 바꾸지 않는다.
  */
 @Composable
 fun NyummyText(

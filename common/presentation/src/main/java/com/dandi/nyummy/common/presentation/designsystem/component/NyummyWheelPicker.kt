@@ -68,14 +68,13 @@ fun NyummyWheelPickerFrame(
     modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit,
 ) {
-    val theme = NyummyTheme
-    val shape = RoundedCornerShape(theme.radius.l)
+    val shape = RoundedCornerShape(NyummyTheme.radius.l)
     Box(
         modifier = modifier
             .height(NyummyComponentDimens.WheelPickerHeight)
             .clip(shape)
-            .background(theme.colors.bg.surface)
-            .border(theme.borderWidth.bold, theme.colors.border.default, shape),
+            .background(NyummyTheme.colors.bg.surface)
+            .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, shape),
         contentAlignment = Alignment.Center,
     ) {
         Box(
@@ -83,7 +82,7 @@ fun NyummyWheelPickerFrame(
                 .fillMaxWidth()
                 .padding(horizontal = NyummyComponentDimens.WheelPickerBandInset)
                 .height(NyummyComponentDimens.WheelPickerBandHeight)
-                .background(theme.colors.bg.selected, RoundedCornerShape(theme.radius.s)),
+                .background(NyummyTheme.colors.bg.selected, RoundedCornerShape(NyummyTheme.radius.s)),
         )
         Row(modifier = Modifier.fillMaxSize(), content = content)
     }
@@ -102,7 +101,6 @@ fun NyummyWheelColumn(
     unit: String? = null,
     contentDescription: String? = null,
 ) {
-    val theme = NyummyTheme
     val rowHeight = NyummyComponentDimens.WheelPickerRowHeight
     val lastIndex = items.lastIndex.coerceAtLeast(0)
     // 위아래 빈 행을 실제 아이템으로 넣어 "첫 보이는 아이템 인덱스 == 가운데 데이터 인덱스"를 유지한다.
@@ -153,19 +151,23 @@ fun NyummyWheelColumn(
                 modifier = Modifier.fillParentMaxWidth().height(rowHeight),
                 contentAlignment = Alignment.Center,
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(theme.spacing.s4)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4)) {
                     NyummyText(
                         text = item,
-                        style = if (centered) theme.typography.numberM else theme.typography.numberS,
-                        color = if (centered) theme.colors.content.primary else theme.colors.content.tertiary,
+                        style = if (centered) NyummyTheme.typography.numberM else NyummyTheme.typography.numberS,
+                        color = if (centered) {
+                            NyummyTheme.colors.content.primary
+                        } else {
+                            NyummyTheme.colors.content.tertiary
+                        },
                         maxLines = 1,
                         modifier = Modifier.alignByBaseline(),
                     )
                     if (centered && unit != null) {
                         NyummyText(
                             text = unit,
-                            style = theme.typography.labelM,
-                            color = theme.colors.content.secondary,
+                            style = NyummyTheme.typography.labelM,
+                            color = NyummyTheme.colors.content.secondary,
                             maxLines = 1,
                             modifier = Modifier.alignByBaseline(),
                         )

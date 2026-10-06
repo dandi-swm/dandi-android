@@ -96,7 +96,7 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 
 /**
- * 새 디자인 시스템(NyummyTheme) 컴포넌트를 Figma `03 Components`와 나란히 비교하는 디버그 카탈로그.
+ * 새 디자인 시스템(NyummyTheme) 컴포넌트를 디자인 시안과 나란히 비교하는 디버그 카탈로그.
  *
  * 실행: adb shell am start -n com.dandi.nyummy/com.dandi.nyummy.main.presentation.catalog.NyummyDsCatalogActivity
  * 특정 섹션부터 보기: 위 명령에 `--es section "Bottom Nav"`를 붙인다.

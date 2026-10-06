@@ -64,7 +64,6 @@ fun NyummyListRow(
     trailing: NyummyListRowTrailing = NyummyListRowTrailing.Chevron,
     onClick: (() -> Unit)? = null,
 ) {
-    val theme = NyummyTheme
     val interactionSource = rememberNyummyInteractionSource()
     val interaction = when (trailing) {
         is NyummyListRowTrailing.Switch -> Modifier.toggleable(
@@ -105,32 +104,37 @@ fun NyummyListRow(
             .fillMaxWidth()
             .defaultMinSize(minHeight = NyummyComponentDimens.ListRowMinHeight)
             .then(interaction)
-            .padding(vertical = theme.spacing.s12),
-        horizontalArrangement = Arrangement.spacedBy(theme.spacing.s12),
+            .padding(vertical = NyummyTheme.spacing.s12),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (leadingIcon != null) {
             Box(
                 modifier = Modifier
                     .size(NyummyComponentDimens.ListRowLeadingSize)
-                    .background(theme.colors.bg.surfaceSunken, RoundedCornerShape(theme.radius.s)),
+                    .background(NyummyTheme.colors.bg.surfaceSunken, RoundedCornerShape(NyummyTheme.radius.s)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(leadingIcon),
                     contentDescription = null,
-                    tint = theme.colors.content.secondary,
-                    modifier = Modifier.size(theme.size.iconM),
+                    tint = NyummyTheme.colors.content.secondary,
+                    modifier = Modifier.size(NyummyTheme.size.iconM),
                 )
             }
         }
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(theme.spacing.s2),
+            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2),
         ) {
-            NyummyText(text = title, style = theme.typography.titleS, maxLines = 1)
+            NyummyText(text = title, style = NyummyTheme.typography.titleS, maxLines = 1)
             if (subtitle != null) {
-                NyummyText(text = subtitle, style = theme.typography.bodyS, color = theme.colors.content.tertiary, maxLines = 1)
+                NyummyText(
+                    text = subtitle,
+                    style = NyummyTheme.typography.bodyS,
+                    color = NyummyTheme.colors.content.tertiary,
+                    maxLines = 1,
+                )
             }
         }
         ListRowTrailing(trailing)
@@ -139,25 +143,29 @@ fun NyummyListRow(
 
 @Composable
 private fun ListRowTrailing(trailing: NyummyListRowTrailing) {
-    val theme = NyummyTheme
     when (trailing) {
         NyummyListRowTrailing.None -> Unit
         NyummyListRowTrailing.Chevron -> Icon(
             painter = painterResource(R.drawable.nyummy_ic_chevron_right),
             contentDescription = null,
-            tint = theme.colors.content.tertiary,
-            modifier = Modifier.size(theme.size.iconL),
+            tint = NyummyTheme.colors.content.tertiary,
+            modifier = Modifier.size(NyummyTheme.size.iconL),
         )
         is NyummyListRowTrailing.Value -> Row(
-            horizontalArrangement = Arrangement.spacedBy(theme.spacing.s2),
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            NyummyText(text = trailing.text, style = theme.typography.bodyM, color = theme.colors.content.tertiary, maxLines = 1)
+            NyummyText(
+                text = trailing.text,
+                style = NyummyTheme.typography.bodyM,
+                color = NyummyTheme.colors.content.tertiary,
+                maxLines = 1,
+            )
             Icon(
                 painter = painterResource(R.drawable.nyummy_ic_chevron_right),
                 contentDescription = null,
-                tint = theme.colors.content.tertiary,
-                modifier = Modifier.size(theme.size.iconM),
+                tint = NyummyTheme.colors.content.tertiary,
+                modifier = Modifier.size(NyummyTheme.size.iconM),
             )
         }
         is NyummyListRowTrailing.Switch -> NyummySwitch(checked = trailing.checked, onCheckedChange = null)

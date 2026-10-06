@@ -12,6 +12,11 @@ data class AppRoute(
     val path: String,
     val isBottomTab: Boolean = false,
     /**
+     * true면 Scaffold가 시스템 바 인셋만큼 화면을 밀지 않는다. 배경을 상태 표시줄 뒤까지 그리는
+     * 전체 화면(인트로, 로그인 등)에 쓰고, 이때 화면이 직접 인셋을 처리한다.
+     */
+    val drawsBehindSystemBars: Boolean = false,
+    /**
      * deep-link 진입 시 구성할 시작 백스택. 일반 페이지는 자기 자신만 푸시된다.
      */
     val syntheticStack: (args: Map<String, String>) -> List<GenericNavKey> = { args ->

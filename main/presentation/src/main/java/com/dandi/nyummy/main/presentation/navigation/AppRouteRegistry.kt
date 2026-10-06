@@ -32,6 +32,7 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = IntroPage.PATH,
         isBottomTab = false,
+        drawsBehindSystemBars = true,
         render = { IntroPage() },
     ),
     AppRoute(
@@ -40,12 +41,15 @@ val appRoutes: List<AppRoute> = listOf(
         render = { OnboardingPage() },
     ),
     AppRoute(
-        path = LoginPage.PATH, isBottomTab = false, render = {
-            LoginPage()
-        }),
+        path = LoginPage.PATH,
+        isBottomTab = false,
+        drawsBehindSystemBars = true,
+        render = { LoginPage() },
+    ),
     AppRoute(
         path = EmailLoginPage.PATH,
         isBottomTab = false,
+        drawsBehindSystemBars = true,
         syntheticStack = { args ->
             listOf(
                 GenericNavKey(LoginPage.PATH),
@@ -57,6 +61,7 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = SignUpPage.PATH,
         isBottomTab = false,
+        drawsBehindSystemBars = true,
         syntheticStack = { args ->
             listOf(
                 GenericNavKey(LoginPage.PATH),
@@ -71,6 +76,7 @@ val appRoutes: List<AppRoute> = listOf(
         // 외부 링크로 직접 열면 안내 후 로그인 화면으로 돌아간다.
         path = SocialSignUpPage.PATH,
         isBottomTab = false,
+        drawsBehindSystemBars = true,
         syntheticStack = { args ->
             listOf(
                 GenericNavKey(LoginPage.PATH),

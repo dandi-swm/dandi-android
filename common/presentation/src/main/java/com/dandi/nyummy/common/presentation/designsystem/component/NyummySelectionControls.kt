@@ -46,12 +46,15 @@ fun NyummyCheckbox(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    val theme = NyummyTheme
     val (container, border, check) = when {
-        checked && enabled -> Triple(theme.colors.bg.actionPrimary, Color.Transparent, theme.colors.content.onAction)
-        checked -> Triple(theme.colors.bg.actionDisabled, Color.Transparent, theme.colors.content.disabled)
-        enabled -> Triple(Color.Transparent, theme.colors.border.strong, theme.colors.border.strong)
-        else -> Triple(Color.Transparent, theme.colors.border.subtle, theme.colors.border.subtle)
+        checked && enabled -> Triple(
+            NyummyTheme.colors.bg.actionPrimary,
+            Color.Transparent,
+            NyummyTheme.colors.content.onAction,
+        )
+        checked -> Triple(NyummyTheme.colors.bg.actionDisabled, Color.Transparent, NyummyTheme.colors.content.disabled)
+        enabled -> Triple(Color.Transparent, NyummyTheme.colors.border.strong, NyummyTheme.colors.border.strong)
+        else -> Triple(Color.Transparent, NyummyTheme.colors.border.subtle, NyummyTheme.colors.border.subtle)
     }
     val toggle = if (onCheckedChange != null) {
         Modifier
@@ -71,7 +74,7 @@ fun NyummyCheckbox(
             .then(toggle)
             .size(NyummyComponentDimens.SelectionControlSize)
             .background(container, CircleShape)
-            .border(theme.borderWidth.bold, border, CircleShape),
+            .border(NyummyTheme.borderWidth.bold, border, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -94,11 +97,10 @@ fun NyummyRadio(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    val theme = NyummyTheme
     val ring = when {
-        !enabled -> theme.colors.border.subtle
-        selected -> theme.colors.border.selected
-        else -> theme.colors.border.strong
+        !enabled -> NyummyTheme.colors.border.subtle
+        selected -> NyummyTheme.colors.border.selected
+        else -> NyummyTheme.colors.border.strong
     }
     val select = if (onClick != null) {
         Modifier
@@ -117,14 +119,14 @@ fun NyummyRadio(
         modifier = modifier
             .then(select)
             .size(NyummyComponentDimens.SelectionControlSize)
-            .border(theme.borderWidth.bold, ring, CircleShape),
+            .border(NyummyTheme.borderWidth.bold, ring, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         if (selected && enabled) {
             Box(
                 Modifier
                     .size(NyummyComponentDimens.RadioDotSize)
-                    .background(theme.colors.bg.actionPrimary, CircleShape),
+                    .background(NyummyTheme.colors.bg.actionPrimary, CircleShape),
             )
         }
     }
@@ -141,14 +143,13 @@ fun NyummySwitch(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    val theme = NyummyTheme
     val dimens = NyummyComponentDimens
     val trackColor by animateColorAsState(
         targetValue = when {
-            checked && enabled -> theme.colors.bg.actionPrimary
-            checked -> theme.colors.bg.selected
-            enabled -> theme.colors.border.strong
-            else -> theme.colors.bg.actionDisabled
+            checked && enabled -> NyummyTheme.colors.bg.actionPrimary
+            checked -> NyummyTheme.colors.bg.selected
+            enabled -> NyummyTheme.colors.border.strong
+            else -> NyummyTheme.colors.bg.actionDisabled
         },
         animationSpec = tween(NyummyPressScale.DurationMillis),
         label = "switchTrack",
@@ -176,7 +177,7 @@ fun NyummySwitch(
         modifier = modifier
             .then(toggle)
             .size(DpSize(dimens.SwitchWidth, dimens.SwitchHeight))
-            .background(trackColor, RoundedCornerShape(theme.radius.full))
+            .background(trackColor, RoundedCornerShape(NyummyTheme.radius.full))
             .padding(dimens.SwitchThumbInset),
         contentAlignment = Alignment.CenterStart,
     ) {
@@ -184,7 +185,7 @@ fun NyummySwitch(
             Modifier
                 .offset(x = thumbOffset)
                 .size(dimens.SwitchThumbSize)
-                .background(theme.colors.bg.surface, CircleShape),
+                .background(NyummyTheme.colors.bg.surface, CircleShape),
         )
     }
 }

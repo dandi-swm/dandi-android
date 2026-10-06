@@ -39,8 +39,7 @@ fun NyummyBottomCta(
     secondaryText: String? = null,
     onSecondaryClick: () -> Unit = {},
 ) {
-    val theme = NyummyTheme
-    val canvas = theme.colors.bg.canvas
+    val canvas = NyummyTheme.colors.bg.canvas
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -53,12 +52,12 @@ fun NyummyBottomCta(
             )
             .navigationBarsPadding()
             .padding(
-                start = theme.spacing.gutter,
-                end = theme.spacing.gutter,
-                top = theme.spacing.s12,
-                bottom = theme.spacing.s24,
+                start = NyummyTheme.spacing.gutter,
+                end = NyummyTheme.spacing.gutter,
+                top = NyummyTheme.spacing.s12,
+                bottom = NyummyTheme.spacing.s24,
             ),
-        horizontalArrangement = Arrangement.spacedBy(theme.spacing.s8),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
     ) {
         if (secondaryText != null) {
             NyummyButton(

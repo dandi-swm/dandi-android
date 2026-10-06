@@ -38,17 +38,16 @@ fun NyummySegmentedControl(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    val theme = NyummyTheme
-    val containerShape = RoundedCornerShape(theme.radius.s)
-    val optionShape = RoundedCornerShape(theme.radius.xs)
+    val containerShape = RoundedCornerShape(NyummyTheme.radius.s)
+    val optionShape = RoundedCornerShape(NyummyTheme.radius.xs)
 
     Row(
         modifier = modifier
-            .height(theme.size.touchTarget)
-            .background(theme.colors.bg.surfaceSunken, containerShape)
-            .padding(theme.spacing.s4)
+            .height(NyummyTheme.size.touchTarget)
+            .background(NyummyTheme.colors.bg.surfaceSunken, containerShape)
+            .padding(NyummyTheme.spacing.s4)
             .selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(theme.spacing.s4),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
     ) {
         options.forEachIndexed { index, option ->
             val selected = index == selectedIndex
@@ -67,10 +66,14 @@ fun NyummySegmentedControl(
                     .then(
                         if (selected) {
                             Modifier
-                                .background(theme.colors.bg.surface, optionShape)
+                                .background(NyummyTheme.colors.bg.surface, optionShape)
                                 .border(
-                                    theme.borderWidth.bold,
-                                    if (enabled) theme.colors.border.selected else theme.colors.border.default,
+                                    NyummyTheme.borderWidth.bold,
+                                    if (enabled) {
+                                        NyummyTheme.colors.border.selected
+                                    } else {
+                                        NyummyTheme.colors.border.default
+                                    },
                                     optionShape,
                                 )
                         } else {
@@ -81,11 +84,11 @@ fun NyummySegmentedControl(
             ) {
                 NyummyText(
                     text = option,
-                    style = theme.typography.labelM,
+                    style = NyummyTheme.typography.labelM,
                     color = when {
-                        !enabled -> theme.colors.content.disabled
-                        selected -> theme.colors.content.brand
-                        else -> theme.colors.content.secondary
+                        !enabled -> NyummyTheme.colors.content.disabled
+                        selected -> NyummyTheme.colors.content.brand
+                        else -> NyummyTheme.colors.content.secondary
                     },
                     maxLines = 1,
                 )

@@ -3,10 +3,10 @@ package com.dandi.nyummy.common.presentation.designsystem.token
 import androidx.compose.ui.graphics.Color
 
 /**
- * Figma `Nyummy / 1 Primitive` 컬렉션 원본 값.
+ * 디자인 시스템의 기본 색 팔레트(회색, 에버그린, 골드, 베리, 스카이 × 10단계와 외부 브랜드 색).
  *
  * 화면과 컴포넌트는 이 값을 직접 쓰지 않고 [com.dandi.nyummy.common.presentation.designsystem.theme.NyummyColors]
- * Semantic 역할만 참조한다. Figma 값이 바뀌면 이 파일만 갱신한다.
+ * 역할 색만 참조한다. 팔레트 값이 바뀌면 이 파일만 갱신한다.
  */
 internal object NyummyPalette {
     val Gray50 = Color(0xFFF9FBF9)

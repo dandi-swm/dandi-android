@@ -43,16 +43,15 @@ fun NyummyTextButton(
     @DrawableRes leadingIcon: Int? = null,
     @DrawableRes trailingIcon: Int? = null,
 ) {
-    val theme = NyummyTheme
     val color = when {
-        !enabled -> theme.colors.content.disabled
-        tone == NyummyTextButtonTone.Brand -> theme.colors.content.brand
-        tone == NyummyTextButtonTone.Neutral -> theme.colors.content.secondary
-        else -> theme.colors.content.danger
+        !enabled -> NyummyTheme.colors.content.disabled
+        tone == NyummyTextButtonTone.Brand -> NyummyTheme.colors.content.brand
+        tone == NyummyTextButtonTone.Neutral -> NyummyTheme.colors.content.secondary
+        else -> NyummyTheme.colors.content.danger
     }
-    val textStyle = if (size == NyummyTextButtonSize.M) theme.typography.labelM else theme.typography.labelS
-    val iconSize = if (size == NyummyTextButtonSize.M) theme.size.iconS else theme.size.iconXs
-    val verticalPadding = if (size == NyummyTextButtonSize.M) theme.spacing.s12 else theme.spacing.s8
+    val textStyle = if (size == NyummyTextButtonSize.M) NyummyTheme.typography.labelM else NyummyTheme.typography.labelS
+    val iconSize = if (size == NyummyTextButtonSize.M) NyummyTheme.size.iconS else NyummyTheme.size.iconXs
+    val verticalPadding = if (size == NyummyTextButtonSize.M) NyummyTheme.spacing.s12 else NyummyTheme.spacing.s8
 
     Row(
         modifier = modifier
@@ -62,16 +61,26 @@ fun NyummyTextButton(
                 role = Role.Button,
                 onClick = onClick,
             )
-            .padding(horizontal = theme.spacing.s4, vertical = verticalPadding),
-        horizontalArrangement = Arrangement.spacedBy(theme.spacing.s4),
+            .padding(horizontal = NyummyTheme.spacing.s4, vertical = verticalPadding),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (leadingIcon != null) {
-            Icon(painterResource(leadingIcon), contentDescription = null, tint = color, modifier = Modifier.size(iconSize))
+            Icon(
+                painterResource(leadingIcon),
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(iconSize),
+            )
         }
         NyummyText(text = text, style = textStyle, color = color, maxLines = 1)
         if (trailingIcon != null) {
-            Icon(painterResource(trailingIcon), contentDescription = null, tint = color, modifier = Modifier.size(iconSize))
+            Icon(
+                painterResource(trailingIcon),
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(iconSize),
+            )
         }
     }
 }

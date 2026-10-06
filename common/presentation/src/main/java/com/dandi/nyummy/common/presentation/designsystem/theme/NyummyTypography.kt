@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.sp
 import com.dandi.nyummy.common.presentation.R
 
 /**
- * Figma 텍스트 스타일 20개. 이름은 Figma `title/l` → `titleL`, `label/m-strong` → `labelMStrong`.
+ * 텍스트 스타일 20개. 디자인 토큰 이름 `title/l`은 `titleL`, `label/m-strong`은 `labelMStrong`이 된다.
  *
  * 역할별 서체
  * - UI(Asta Sans): 본문, 라벨, 버튼, 입력
@@ -58,7 +58,7 @@ internal object NyummyFontFamily {
 }
 
 /**
- * Figma 텍스트 박스와 같은 높이가 되도록 줄 높이를 자르지 않는다(Trim.None).
+ * 디자인의 텍스트 박스와 같은 높이가 되도록 줄 높이를 자르지 않는다(Trim.None).
  * 폰트 패딩도 빼서 줄 높이만으로 박스 크기가 정해지게 한다.
  */
 private fun nyummyTextStyle(
