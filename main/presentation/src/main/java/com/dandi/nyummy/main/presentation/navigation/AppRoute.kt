@@ -17,6 +17,11 @@ data class AppRoute(
      */
     val drawsBehindSystemBars: Boolean = false,
     /**
+     * true면 이 화면에 있는 동안 상태 바와 내비게이션 바 아이콘을 밝은 색으로 그린다.
+     * 어두운 배경을 시스템 바 뒤까지 그리는 화면(온보딩의 밤 골목 등)에 쓴다. 다른 화면으로 나가면 어두운 아이콘으로 돌아온다.
+     */
+    val usesLightSystemBarIcons: Boolean = false,
+    /**
      * deep-link 진입 시 구성할 시작 백스택. 일반 페이지는 자기 자신만 푸시된다.
      */
     val syntheticStack: (args: Map<String, String>) -> List<GenericNavKey> = { args ->

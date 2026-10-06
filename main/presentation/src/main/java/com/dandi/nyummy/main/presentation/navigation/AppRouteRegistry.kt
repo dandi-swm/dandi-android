@@ -39,6 +39,7 @@ val appRoutes: List<AppRoute> = listOf(
         path = OnboardingPage.PATH,
         isBottomTab = false,
         drawsBehindSystemBars = true,
+        usesLightSystemBarIcons = true,
         render = { OnboardingPage() },
     ),
     AppRoute(
