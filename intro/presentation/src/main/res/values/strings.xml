@@ -1,9 +1,18 @@
 <resources>
-    <string name="intro_splash_wordmark">NYUMMY</string>
+    <string name="intro_splash_logo_description">냐미</string>
     <string name="intro_splash_headline_line1">맛있는 기록을</string>
     <string name="intro_splash_headline_line2">모으는 중이야!</string>
     <string name="intro_splash_bubble">음식 아이콘을 수집하고 있어요</string>
     <string name="intro_splash_progress_label">아이콘을 모으는 중…</string>
+    <string name="intro_splash_progress_complete">준비 완료! 곧 시작할게요</string>
     <string name="intro_splash_progress_percent">%1$d%%</string>
     <string name="intro_splash_tip">매일 기록하면 냐미가 더 건강해져요</string>
+    <string name="intro_permission_title">냐미에서 다음 앱 권한을 사용해요</string>
+    <string name="intro_permission_camera">카메라</string>
+    <string name="intro_permission_camera_desc">식단 사진 촬영에 사용해요</string>
+    <string name="intro_permission_notification">알림</string>
+    <string name="intro_permission_notification_desc">식단 기록 리마인드 알림에 사용해요</string>
+    <string name="intro_permission_optional">선택</string>
+    <string name="intro_permission_notice">허용하지 않아도 서비스를 이용할 수 있으며, 필요한 시점에 다시 요청할 수 있어요.</string>
+    <string name="intro_permission_confirm">확인</string>
 </resources>

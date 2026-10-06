@@ -49,6 +49,9 @@ enum class NyummyDialogType {
  *
  * 버튼 라벨은 동사로 쓰고, 닫는 버튼은 "닫기"로 쓴다. 되돌릴 수 있는 행동은 다이얼로그 대신 되돌리기 스낵바를 쓴다.
  * [content]에는 이름 수정 같은 입력칸을 넣는다(본문 아래).
+ *
+ * [onDismissRequest]는 바깥 탭과 뒤로 가기에, [onDismissClick]은 보조 버튼에 쓰인다(기본은 같은 동작).
+ * 닫을 수 없는 다이얼로그(강제 업데이트 등)는 [dismissible]을 false로 둔다.
  */
 @Composable
 fun NyummyDialog(
@@ -60,15 +63,17 @@ fun NyummyDialog(
     type: NyummyDialogType = NyummyDialogType.Confirm,
     body: String? = null,
     dismissText: String = "닫기",
+    onDismissClick: () -> Unit = onDismissRequest,
     confirmEnabled: Boolean = true,
+    dismissible: Boolean = true,
     content: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
-    NyummyDialogWindow(onDismissRequest = onDismissRequest) {
+    NyummyDialogWindow(onDismissRequest = onDismissRequest, dismissible = dismissible) {
         NyummyDialogCard(
             title = title,
             confirmText = confirmText,
             onConfirm = onConfirm,
-            onDismiss = onDismissRequest,
+            onDismiss = onDismissClick,
             modifier = modifier,
             type = type,
             body = body,
@@ -156,11 +161,18 @@ internal fun NyummyDialogCard(
 @Composable
 internal fun NyummyDialogWindow(
     onDismissRequest: () -> Unit,
+    dismissible: Boolean = true,
     content: @Composable () -> Unit,
 ) {
+    val dismiss = if (dismissible) onDismissRequest else ({})
     Dialog(
-        onDismissRequest = onDismissRequest,
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+        onDismissRequest = dismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = dismissible,
+            dismissOnClickOutside = dismissible,
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
     ) {
         val window = (LocalView.current.parent as? DialogWindowProvider)?.window
         SideEffect { window?.setDimAmount(0f) }
@@ -170,7 +182,7 @@ internal fun NyummyDialogWindow(
                 .background(NyummyTheme.colors.bg.scrim)
                 // 바깥 탭으로 닫는다. clickable은 다이얼로그 전체 semantics를 병합하므로 포인터 입력만 받는다.
                 // 접근성 사용자는 뒤로 가기로 닫는다.
-                .pointerInput(onDismissRequest) { detectTapGestures { onDismissRequest() } }
+                .pointerInput(dismiss) { detectTapGestures { dismiss() } }
                 // 딤은 전체 화면에 깔고, 카드는 시스템 바와 키보드를 뺀 영역 안에 둔다.
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(horizontal = NyummyComponentDimens.DialogScreenMargin, vertical = NyummyTheme.spacing.s24),
