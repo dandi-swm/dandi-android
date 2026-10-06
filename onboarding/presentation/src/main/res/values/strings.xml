@@ -41,6 +41,7 @@
     <string name="onboarding_name_helper">Up to %1$d characters</string>
     <string name="onboarding_name_error_empty">Please give it a name</string>
     <string name="onboarding_name_error_too_long">Names can be up to %1$d characters</string>
+    <string name="onboarding_name_submitting">Registering…</string>
     <string name="onboarding_name_submit">This name it is</string>
 
     <!-- 6. Named -->

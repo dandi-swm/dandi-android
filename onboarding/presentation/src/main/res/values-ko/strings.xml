@@ -41,6 +41,7 @@
     <string name="onboarding_name_helper">%1$d자까지 지을 수 있어요</string>
     <string name="onboarding_name_error_empty">이름을 지어주세요</string>
     <string name="onboarding_name_error_too_long">이름은 %1$d자까지 지을 수 있어요</string>
+    <string name="onboarding_name_submitting">등록 중…</string>
     <string name="onboarding_name_submit">이 이름으로 할래</string>
 
     <!-- 6. 이름을 받은 고양이 -->
