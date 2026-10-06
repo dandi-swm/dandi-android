@@ -1,5 +1,7 @@
 package com.dandi.nyummy.common.data.preference
 
+import com.dandi.nyummy.common.entity.meal.MealTimesVO
+
 /**
  * 앱 전역 로컬 환경설정 저장소 계약.
  *
@@ -18,4 +20,10 @@ interface AppPreferenceProvider {
 
     /** 온보딩 진행 상태를 기록한다. */
     suspend fun setOnboardingIncomplete(incomplete: Boolean)
+
+    /** 평소 식사 시각. 아직 정한 적이 없으면 null이고, 기본값은 읽는 쪽이 정한다. */
+    suspend fun getMealTimes(): MealTimesVO?
+
+    /** 평소 식사 시각(아침, 점심, 저녁)을 한 번에 저장한다. */
+    suspend fun setMealTimes(mealTimes: MealTimesVO)
 }

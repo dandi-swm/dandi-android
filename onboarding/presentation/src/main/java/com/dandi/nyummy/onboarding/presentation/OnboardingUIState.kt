@@ -1,6 +1,8 @@
 package com.dandi.nyummy.onboarding.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.UiState
+import com.dandi.nyummy.common.entity.meal.Meal
+import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.onboarding.domain.CatNameError
 
 /**
@@ -12,6 +14,9 @@ import com.dandi.nyummy.onboarding.domain.CatNameError
  * @property isLineRevealed 현재 대사의 타이핑이 끝났는지
  * @property catNameInput 이름 입력창의 값
  * @property catName 등록이 끝난 고양이 이름. 등록 전에는 빈 문자열(이름표는 "???")
+ * @property mealTimes 평소 식사 시각. 기본값(오전 8:00, 오후 12:30, 오후 6:30)을 미리 채워 둔다.
+ * @property editingMeal 시간 시트를 열어 고치고 있는 끼니. 닫혀 있으면 null
+ * @property isFinishing 식사 시각을 저장하고 홈으로 넘어가는 중
  */
 data class OnboardingUIState(
     val sceneIndex: Int = 0,
@@ -22,6 +27,9 @@ data class OnboardingUIState(
     val catNameError: CatNameError? = null,
     val catName: String = "",
     val isSubmitting: Boolean = false,
+    val mealTimes: MealTimesVO = MealTimesVO.default,
+    val editingMeal: Meal? = null,
+    val isFinishing: Boolean = false,
 ) : UiState {
     companion object {
         val empty: OnboardingUIState = OnboardingUIState()

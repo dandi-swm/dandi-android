@@ -56,7 +56,8 @@ internal fun rememberNyummyInteractionSource(): MutableInteractionSource = remem
 
 /**
  * feature 화면에서 직접 그리는 누를 수 있는 요소(브랜드 버튼, 소셜 원형 버튼 등)에 냐미 눌림 피드백을 준다.
- * 물결 없이 눌리는 동안 [pressedScale]배로 줄어든다. 색 변화가 필요하면 DS 컴포넌트를 쓴다.
+ * 물결 없이 눌리는 동안 [pressedScale]배로 줄어든다.
+ * 눌린 동안 바탕색을 바꾸려면 [interactionSource]를 넘기고 `collectIsPressedAsState()`로 읽는다.
  */
 @Composable
 fun Modifier.nyummyClickable(
@@ -64,8 +65,9 @@ fun Modifier.nyummyClickable(
     enabled: Boolean = true,
     role: Role = Role.Button,
     pressedScale: Float = NyummyPressScale.Default,
+    interactionSource: MutableInteractionSource? = null,
 ): Modifier = nyummyPressable(
-    interactionSource = rememberNyummyInteractionSource(),
+    interactionSource = interactionSource ?: rememberNyummyInteractionSource(),
     enabled = enabled,
     role = role,
     onClick = onClick,

@@ -62,19 +62,29 @@ fun NyummyWheelPicker(
     }
 }
 
-/** 휠 피커 틀. 흰 바탕, 2px 테두리, radius l, 가운데 선택 밴드를 그린다. */
+/**
+ * 휠 피커 틀. 흰 바탕, 2px 테두리, radius l, 가운데 선택 밴드를 그린다.
+ * 시트 안처럼 이미 바탕이 있는 곳에서는 [framed]를 false로 두어 테두리 없이 밴드만 그린다.
+ */
 @Composable
 fun NyummyWheelPickerFrame(
     modifier: Modifier = Modifier,
+    framed: Boolean = true,
     content: @Composable RowScope.() -> Unit,
 ) {
     val shape = RoundedCornerShape(NyummyTheme.radius.l)
+    val frame = if (framed) {
+        Modifier
+            .clip(shape)
+            .background(NyummyTheme.colors.bg.surface)
+            .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, shape)
+    } else {
+        Modifier
+    }
     Box(
         modifier = modifier
             .height(NyummyComponentDimens.WheelPickerHeight)
-            .clip(shape)
-            .background(NyummyTheme.colors.bg.surface)
-            .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, shape),
+            .then(frame),
         contentAlignment = Alignment.Center,
     ) {
         Box(

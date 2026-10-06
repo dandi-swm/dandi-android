@@ -49,4 +49,24 @@
     <string name="onboarding_line_named_2">마음에 들어! 오늘부터 난 %1$s야.</string>
     <string name="onboarding_line_named_3">앞으로 잘 부탁해, 집사!</string>
     <string name="onboarding_start">함께 시작하기</string>
+
+    <!-- 7. 평소 식사 시각 -->
+    <string name="onboarding_line_meal_time_1">밥 먹을 시간이 되면 내가 알려 줄게. 너는 보통 언제 먹어?</string>
+    <string name="onboarding_meal_breakfast">아침</string>
+    <string name="onboarding_meal_lunch">점심</string>
+    <string name="onboarding_meal_dinner">저녁</string>
+    <string name="onboarding_meal_am">오전</string>
+    <string name="onboarding_meal_pm">오후</string>
+    <!-- %1$s: 오전/오후, %2$d: 시(1~12), %3$02d: 분 -->
+    <string name="onboarding_meal_time_format">%1$s %2$d:%3$02d</string>
+    <string name="onboarding_meal_skipped">안 먹어요</string>
+    <string name="onboarding_meal_done">이 시간에 알려 줘</string>
+    <string name="onboarding_meal_sheet_title">%1$s 시간</string>
+    <string name="onboarding_meal_sheet_skip">%1$s은 안 먹어요</string>
+    <string name="onboarding_meal_sheet_confirm">확인</string>
+    <string name="onboarding_meal_unit_hour">시</string>
+    <string name="onboarding_meal_unit_minute">분</string>
+    <string name="onboarding_meal_period_description">오전 또는 오후</string>
+    <string name="onboarding_meal_hour_description">시</string>
+    <string name="onboarding_meal_minute_description">분</string>
 </resources>

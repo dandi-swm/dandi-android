@@ -1,6 +1,11 @@
 package com.dandi.nyummy.onboarding.presentation
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
@@ -32,10 +37,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
@@ -44,6 +51,8 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingCatNameSlot
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingChoiceList
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingDialogueBox
+import com.dandi.nyummy.onboarding.presentation.component.OnboardingMealTimeSheet
+import com.dandi.nyummy.onboarding.presentation.component.OnboardingMealTimeSlot
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingStage
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingStartButton
 
@@ -72,8 +81,25 @@ internal fun OnboardingScreen(
         OnboardingSpeaker.NARRATOR -> ""
     }
 
-    // 온보딩은 루트 화면이다. 이름 등록 중에는 뒤로 가기로 앱이 닫히지 않게 막는다.
-    BackHandler(enabled = uiState.isSubmitting) {}
+    // 온보딩은 루트 화면이다. 이름 등록 중이나 마무리 중에는 뒤로 가기로 앱이 닫히지 않게 막는다.
+    BackHandler(enabled = uiState.isSubmitting || uiState.isFinishing) {}
+
+    // 식사 알림을 받을 끼니가 있으면 마치기 전에 알림 권한을 묻는다. 허용 여부와 관계없이 이어서 마친다.
+    val context = LocalContext.current
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        onIntent(OnboardingIntent.ConfirmMealTimes)
+    }
+    val onMealTimesDone = {
+        val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            uiState.mealTimes.hasAnyMeal &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        if (needsPermission) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            onIntent(OnboardingIntent.ConfirmMealTimes)
+        }
+    }
 
     BoxWithConstraints(
         modifier = Modifier
@@ -123,24 +149,36 @@ internal fun OnboardingScreen(
                 revealed = uiState.isLineRevealed,
                 showContinueHint = uiState.isContinueHintVisible,
                 onRevealed = { onIntent(OnboardingIntent.TypingFinished) },
-                slot = if (uiState.isActionVisible && action == OnboardingSceneAction.NameInput) {
-                    {
-                        OnboardingCatNameSlot(
-                            value = uiState.catNameInput,
-                            error = uiState.catNameError,
-                            isSubmitting = uiState.isSubmitting,
-                            onValueChange = { onIntent(OnboardingIntent.InputCatName(it)) },
-                            onSubmit = { onIntent(OnboardingIntent.SubmitCatName) },
-                        )
+                slot = when {
+                    !uiState.isActionVisible -> null
+                    action == OnboardingSceneAction.NameInput -> {
+                        {
+                            OnboardingCatNameSlot(
+                                value = uiState.catNameInput,
+                                error = uiState.catNameError,
+                                isSubmitting = uiState.isSubmitting,
+                                onValueChange = { onIntent(OnboardingIntent.InputCatName(it)) },
+                                onSubmit = { onIntent(OnboardingIntent.SubmitCatName) },
+                            )
+                        }
                     }
-                } else {
-                    null
+                    action == OnboardingSceneAction.MealTime -> {
+                        {
+                            OnboardingMealTimeSlot(
+                                mealTimes = uiState.mealTimes,
+                                enabled = !uiState.isFinishing,
+                                onClickMeal = { onIntent(OnboardingIntent.ClickMealTime(it)) },
+                                onDone = onMealTimesDone,
+                            )
+                        }
+                    }
+                    else -> null
                 },
             )
             // 대화창 아래 행동(선택지, 시작 버튼)은 그 장면의 행동을 그대로 들고 사라져야 한다.
             // 현재 action을 바로 읽으면 다음 장면의 버튼이 잠깐 비칠 수 있어 AnimatedContent의 상태로 그린다.
             AnimatedContent(
-                targetState = action.takeIf { uiState.isActionVisible && it != OnboardingSceneAction.NameInput },
+                targetState = action.takeIf { uiState.isActionVisible && !it.isInsideDialogue },
                 transitionSpec = {
                     (fadeIn(tween(PanelFadeInMillis)) + slideInVertically(tween(PanelFadeInMillis)) { it / 4 }) togetherWith
                         fadeOut(tween(PanelFadeOutMillis)) using SizeTransform(clip = false)
@@ -156,12 +194,25 @@ internal fun OnboardingScreen(
                     OnboardingSceneAction.Start -> OnboardingStartButton(
                         onClick = { onIntent(OnboardingIntent.ClickStart) },
                     )
-                    OnboardingSceneAction.NameInput, OnboardingSceneAction.None, null -> Unit
+                    OnboardingSceneAction.NameInput, OnboardingSceneAction.MealTime, OnboardingSceneAction.None, null -> Unit
                 }
             }
         }
     }
+
+    uiState.editingMeal?.let { meal ->
+        OnboardingMealTimeSheet(
+            meal = meal,
+            initial = uiState.mealTimes[meal],
+            onSelect = { onIntent(OnboardingIntent.SelectMealTime(meal, it)) },
+            onDismissRequest = { onIntent(OnboardingIntent.DismissMealTimeSheet) },
+        )
+    }
 }
+
+/** 대화창 안에 그리는 행동(이름 입력, 식사 시각)인지. 나머지는 대화창 아래에 둔다. */
+private val OnboardingSceneAction.isInsideDialogue: Boolean
+    get() = this == OnboardingSceneAction.NameInput || this == OnboardingSceneAction.MealTime
 
 @Composable
 private fun SkipButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -187,6 +238,21 @@ private fun OnboardingCatLinePreview() {
     NyummyTheme {
         OnboardingScreen(
             uiState = OnboardingUIState(sceneIndex = 1, lineIndex = 0, isLineRevealed = true),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun OnboardingMealTimePreview() {
+    NyummyTheme {
+        OnboardingScreen(
+            uiState = OnboardingUIState(
+                sceneIndex = OnboardingScript.scenes.lastIndex,
+                isLineRevealed = true,
+                catName = "냐미",
+            ),
             onIntent = {},
         )
     }

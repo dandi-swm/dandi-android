@@ -47,8 +47,11 @@ sealed interface OnboardingSceneAction {
     /** 고양이 이름을 입력받아 등록한다. 성공하면 다음 장면으로 넘어간다. */
     data object NameInput : OnboardingSceneAction
 
-    /** 홈으로 넘어가는 마지막 버튼. */
+    /** "함께 시작하기" 버튼. 누르면 다음 장면으로 넘어간다. */
     data object Start : OnboardingSceneAction
+
+    /** 평소 식사 시각(아침, 점심, 저녁)을 고르고 홈으로 넘어간다. */
+    data object MealTime : OnboardingSceneAction
 }
 
 data class OnboardingScene(
@@ -131,6 +134,13 @@ object OnboardingScript {
             ),
             action = OnboardingSceneAction.Start,
         ),
+        OnboardingScene(
+            character = OnboardingCharacter.TALK,
+            lines = persistentListOf(
+                OnboardingLine(OnboardingSpeaker.CAT, R.string.onboarding_line_meal_time_1),
+            ),
+            action = OnboardingSceneAction.MealTime,
+        ),
     )
 
     /** "건너뛰기"로 바로 가는 이름 짓기 장면. */
@@ -165,7 +175,7 @@ val OnboardingUIState.isActionVisible: Boolean
     get() = isLineRevealed && isLastLine && when (currentScene.action) {
         OnboardingSceneAction.None -> false
         is OnboardingSceneAction.Choice -> choiceIndex == null
-        OnboardingSceneAction.NameInput, OnboardingSceneAction.Start -> true
+        OnboardingSceneAction.NameInput, OnboardingSceneAction.Start, OnboardingSceneAction.MealTime -> true
     }
 
 /**
@@ -185,3 +195,7 @@ val OnboardingUIState.isUserOnStage: Boolean
 /** 이름 짓기 전·후 장면에서는 건너뛰기를 숨긴다. */
 val OnboardingUIState.isSkipVisible: Boolean
     get() = sceneIndex < OnboardingScript.namingSceneIndex
+
+/** 식사 시각을 고칠 수 있는 때. 대사가 다 나왔고 저장을 시작하기 전이다. */
+val OnboardingUIState.isMealTimeEditable: Boolean
+    get() = isActionVisible && currentScene.action == OnboardingSceneAction.MealTime && !isFinishing
