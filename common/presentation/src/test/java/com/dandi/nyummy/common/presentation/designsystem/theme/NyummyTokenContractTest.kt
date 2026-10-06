@@ -10,7 +10,7 @@ import org.junit.Test
 
 /**
  * Figma `Nyummy / 2 Semantic`, `3 Dimension`, effect style 값과 코드 토큰이 같은지 확인한다.
- * 기대값은 2026-10-06 Figma 변수 덤프에서 옮겼다. Figma를 바꾸면 이 표도 함께 바꾼다.
+ * 기대값은 2026-10-06 Figma 변수 덤프에서 옮겼다(border/focus는 #90 리뷰로 evergreen/600). Figma를 바꾸면 이 표도 함께 바꾼다.
  */
 class NyummyTokenContractTest {
 
@@ -58,7 +58,7 @@ class NyummyTokenContractTest {
             "border/subtle" to (colors.border.subtle to "#FFF3F5F3"),
             "border/default" to (colors.border.default to "#FFE6E8E7"),
             "border/strong" to (colors.border.strong to "#FFB6B8B6"),
-            "border/focus" to (colors.border.focus to "#FF6FA381"),
+            "border/focus" to (colors.border.focus to "#FF547A61"),
             "border/selected" to (colors.border.selected to "#FF547A61"),
             "border/danger" to (colors.border.danger to "#FFEB616D"),
             "data/progress-fill" to (colors.data.progressFill to "#FF547A61"),
@@ -127,6 +127,17 @@ class NyummyTokenContractTest {
         }
         val secondaryRatio = contrast(colors.content.primary, colors.bg.actionSecondary)
         assertTrue("primary / secondary 대비 $secondaryRatio", secondaryRatio >= 4.5)
+    }
+
+    @Test
+    fun `포커스 테두리는 흰 바탕과 움푹한 바탕에서 비텍스트 대비 3 대 1 이상이다`() {
+        listOf(
+            "bg/canvas" to colors.bg.canvas,
+            "bg/surface-sunken" to colors.bg.surfaceSunken,
+        ).forEach { (name, background) ->
+            val ratio = contrast(colors.border.focus, background)
+            assertTrue("border/focus / $name 대비 $ratio", ratio >= 3.0)
+        }
     }
 
     @Test
