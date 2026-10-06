@@ -22,22 +22,24 @@ class FinishOnboardingUseCaseTest {
     )
 
     @Test
-    fun `고른 식사 시각을 저장하고 홈을 루트로 이동한다`() = runBlocking {
+    fun `고른 식사 시각을 저장하고 온보딩 완료를 기록한 뒤 홈을 루트로 이동한다`() = runBlocking {
         val mealTimes = MealTimesVO(lunch = MealTimeVO(hour = 13, minute = 0))
 
         useCase(mealTimes)
 
         assertEquals(listOf(mealTimes), repository.savedMealTimes)
+        assertEquals(1, repository.onboardingCompleteCount)
         assertEquals(listOf(HomePage), navigationHelper.rootPages)
     }
 
     @Test
-    fun `저장에 실패해도 온보딩은 끝내고 홈으로 간다`() = runBlocking {
+    fun `저장에 실패해도 온보딩 완료를 기록하고 홈으로 간다`() = runBlocking {
         repository.saveMealTimesError = IOException("disk full")
 
         useCase(MealTimesVO.default)
 
         assertTrue(repository.savedMealTimes.isEmpty())
+        assertEquals(1, repository.onboardingCompleteCount)
         assertEquals(listOf(HomePage), navigationHelper.rootPages)
     }
 }

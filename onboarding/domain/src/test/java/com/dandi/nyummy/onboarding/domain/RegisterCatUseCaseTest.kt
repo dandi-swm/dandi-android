@@ -1,6 +1,5 @@
 package com.dandi.nyummy.onboarding.domain
 
-import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.onboarding.entity.CatVO
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -22,25 +21,26 @@ class RegisterCatUseCaseTest {
     )
 
     @Test
-    fun `앞뒤 공백을 뺀 이름으로 등록하고 화면 이동은 하지 않는다`() = runBlocking {
+    fun `앞뒤 공백을 뺀 이름으로 등록하고 화면 이동도 완료 기록도 하지 않는다`() = runBlocking {
         val result = useCase("  냐미 ")
 
         assertEquals(CatVO(id = 1L, name = "냐미"), result.getOrNull())
         assertEquals(listOf("냐미"), repository.registeredNames)
-        assertEquals(1, repository.onboardingCompleteCount)
+        // 완료 기록은 식사 시각까지 마친 뒤 FinishOnboardingUseCase가 한다.
+        assertEquals(0, repository.onboardingCompleteCount)
         assertTrue(navigationHelper.rootPages.isEmpty())
         assertTrue(messageHelper.dialogs.isEmpty())
     }
 
     @Test
-    fun `이미 고양이가 있으면 온보딩을 끝낸 것으로 보고 홈으로 보낸다`() = runBlocking {
+    fun `이미 고양이가 있으면 등록된 것으로 보고 입력한 이름으로 남은 장면을 이어간다`() = runBlocking {
         repository.error = httpException(409, OnboardingErrorType.CAT_ALREADY_EXISTS.type)
 
-        val result = useCase("냐미")
+        val result = useCase(" 냐미 ")
 
-        assertTrue(result.isFailure)
-        assertEquals(listOf<Any>(HomePage), navigationHelper.rootPages)
-        assertEquals(1, repository.onboardingCompleteCount)
+        assertEquals(CatVO(name = "냐미"), result.getOrNull())
+        assertTrue(navigationHelper.rootPages.isEmpty())
+        assertEquals(0, repository.onboardingCompleteCount)
         assertTrue(messageHelper.dialogs.isEmpty())
     }
 
