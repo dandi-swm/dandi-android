@@ -23,7 +23,13 @@ class OnboardingViewModel @Inject constructor(
             is OnboardingIntent.InputCatName -> dispatch(OnboardingReducerEvent.CatNameChanged(intent.value))
             OnboardingIntent.SubmitCatName -> submitCatName()
             OnboardingIntent.Skip -> if (currentState.isSkipVisible) dispatch(OnboardingReducerEvent.SkippedToNaming)
-            OnboardingIntent.ClickStart -> finishOnboardingUseCase()
+            OnboardingIntent.ClickStart -> start()
+            is OnboardingIntent.ClickMealTime -> if (currentState.isMealTimeEditable) {
+                dispatch(OnboardingReducerEvent.MealTimeEditStarted(intent.meal))
+            }
+            is OnboardingIntent.SelectMealTime -> dispatch(OnboardingReducerEvent.MealTimeChanged(intent.meal, intent.time))
+            OnboardingIntent.DismissMealTimeSheet -> dispatch(OnboardingReducerEvent.MealTimeEditDismissed)
+            OnboardingIntent.ConfirmMealTimes -> finish()
         }
     }
 
@@ -44,6 +50,13 @@ class OnboardingViewModel @Inject constructor(
             .toScene(state.sceneIndex + 1)
             .copy(catName = event.name, isSubmitting = false)
         OnboardingReducerEvent.SubmitFailed -> state.copy(isSubmitting = false)
+        is OnboardingReducerEvent.MealTimeEditStarted -> state.copy(editingMeal = event.meal)
+        is OnboardingReducerEvent.MealTimeChanged -> state.copy(
+            mealTimes = state.mealTimes.with(event.meal, event.time),
+            editingMeal = null,
+        )
+        OnboardingReducerEvent.MealTimeEditDismissed -> state.copy(editingMeal = null)
+        OnboardingReducerEvent.FinishStarted -> state.copy(isFinishing = true, editingMeal = null)
     }
 
     private fun OnboardingUIState.toScene(index: Int) = copy(
@@ -62,8 +75,24 @@ class OnboardingViewModel @Inject constructor(
             // 선택지·이름 입력·시작 버튼이 떠 있으면 탭으로 넘기지 않고 사용자의 행동을 기다린다.
             state.isActionVisible -> Unit
             state.currentScene.action == OnboardingSceneAction.Start -> Unit
+            state.currentScene.action == OnboardingSceneAction.MealTime -> Unit
             else -> dispatch(OnboardingReducerEvent.NextScene)
         }
+    }
+
+    /** "함께 시작하기"는 평소 식사 시각 장면으로 넘어간다. */
+    private fun start() {
+        val state = currentState
+        if (state.currentScene.action == OnboardingSceneAction.Start && state.isActionVisible) {
+            dispatch(OnboardingReducerEvent.NextScene)
+        }
+    }
+
+    private fun finish() {
+        val state = currentState
+        if (state.isFinishing || state.currentScene.action != OnboardingSceneAction.MealTime) return
+        dispatch(OnboardingReducerEvent.FinishStarted)
+        viewModelScope.launch { finishOnboardingUseCase(state.mealTimes) }
     }
 
     private fun selectChoice(index: Int) {

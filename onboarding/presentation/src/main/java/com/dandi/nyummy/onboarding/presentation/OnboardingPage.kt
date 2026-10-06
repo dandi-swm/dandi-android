@@ -8,31 +8,46 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dandi.nyummy.common.presentation.component.DandiText
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
-import com.dandi.nyummy.onboarding.presentation.component.OnboardingCatNamePanel
+import com.dandi.nyummy.common.domain.helper.AppPermission
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
+import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
+import com.dandi.nyummy.onboarding.presentation.component.OnboardingCatNameSlot
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingChoiceList
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingDialogueBox
+import com.dandi.nyummy.onboarding.presentation.component.OnboardingMealTimeSheet
+import com.dandi.nyummy.onboarding.presentation.component.OnboardingMealTimeSlot
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingStage
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingStartButton
 
@@ -43,7 +58,9 @@ fun OnboardingPage(viewModel: OnboardingViewModel = hiltViewModel()) {
 }
 
 /**
- * 냥줍 온보딩. 화면 어디를 탭해도 대사가 진행되고, 대사가 끝난 장면에서는 선택지·이름 입력·시작 버튼이 대사창 위에 뜬다.
+ * 냥줍 온보딩. 화면 어디를 탭해도 대사가 진행된다.
+ *
+ * 선택지와 시작 버튼은 대화창 아래에, 이름 입력은 대화창 안에 둔다. 아래 패널이 커지면 냐미가 그만큼 위로 올라간다.
  */
 @Composable
 internal fun OnboardingScreen(
@@ -59,20 +76,37 @@ internal fun OnboardingScreen(
         OnboardingSpeaker.NARRATOR -> ""
     }
 
-    // 온보딩은 루트 화면이다. 이름 등록 중에는 뒤로가기로 앱이 닫히지 않게 막는다.
-    BackHandler(enabled = uiState.isSubmitting) {}
+    // 온보딩은 루트 화면이다. 이름 등록 중이나 마무리 중에는 뒤로 가기로 앱이 닫히지 않게 막는다.
+    BackHandler(enabled = uiState.isSubmitting || uiState.isFinishing) {}
 
-    Box(
+    // 식사 알림을 받을 끼니가 있으면 마치기 전에 알림 권한을 묻는다. 허용 여부와 관계없이 이어서 마친다.
+    // 이미 허용됐거나 요청이 필요 없는 기기(Android 12 이하)면 공통 요청기가 팝업 없이 바로 결과를 준다.
+    val notificationPermission = rememberPermissionRequester { onIntent(OnboardingIntent.ConfirmMealTimes) }
+    val onMealTimesDone = {
+        if (uiState.mealTimes.hasAnyMeal) {
+            notificationPermission.request(listOf(AppPermission.NOTIFICATION))
+        } else {
+            onIntent(OnboardingIntent.ConfirmMealTimes)
+        }
+    }
+
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            ) { onIntent(OnboardingIntent.TapDialogue) },
+            .background(NyummyTheme.colors.bg.surfaceInverse)
+            .clickable(interactionSource = null, indication = null) { onIntent(OnboardingIntent.TapDialogue) },
     ) {
+        val density = LocalDensity.current
+        var panelHeightPx by remember { mutableIntStateOf(0) }
+        val bottomInset = with(density) {
+            WindowInsets.navigationBars.union(WindowInsets.ime).getBottom(this).toDp()
+        }
+        val panelTop = maxHeight - bottomInset - PanelBottomGap - with(density) { panelHeightPx.toDp() }
+
         OnboardingStage(
             character = uiState.currentScene.character,
             isUserOnStage = uiState.isUserOnStage,
+            panelTop = panelTop,
         )
 
         if (uiState.isSkipVisible) {
@@ -81,55 +115,21 @@ internal fun OnboardingScreen(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .statusBarsPadding()
-                    .padding(DesignSystemThemeImpl.designSystemSpacing.space16),
+                    .padding(top = NyummyTheme.spacing.s16, end = NyummyTheme.spacing.gutter),
             )
         }
 
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .widthIn(max = PanelMaxWidth)
                 .fillMaxWidth()
-                .navigationBarsPadding()
-                .imePadding()
-                .padding(
-                    horizontal = DesignSystemThemeImpl.designSystemLayout.mobileGutter,
-                    vertical = DesignSystemThemeImpl.designSystemSpacing.space16,
-                ),
+                .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+                .padding(horizontal = NyummyTheme.spacing.gutter)
+                .padding(bottom = PanelBottomGap)
+                .onSizeChanged { panelHeightPx = it.height },
+            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
         ) {
-            // 행동 패널은 "그 장면의" 행동을 그대로 들고 사라져야 한다. 현재 action 을 읽어 그리면 이름 등록 직후
-            // 이름 입력 패널이 사라지는 동안 다음 장면의 시작 버튼이 잠깐 비친다.
-            AnimatedContent(
-                targetState = action.takeIf { uiState.isActionVisible },
-                transitionSpec = {
-                    (fadeIn(tween(220)) + slideInVertically(tween(220)) { it / 4 }) togetherWith
-                        fadeOut(tween(120)) using SizeTransform(clip = false)
-                },
-                contentKey = { it?.let { shown -> shown::class } },
-                label = "onboardingAction",
-            ) { shownAction ->
-                val panelModifier = Modifier.padding(bottom = DesignSystemThemeImpl.designSystemSpacing.space12)
-                when (shownAction) {
-                    is OnboardingSceneAction.Choice -> OnboardingChoiceList(
-                        options = shownAction.options,
-                        onSelect = { onIntent(OnboardingIntent.SelectChoice(it)) },
-                        modifier = panelModifier,
-                    )
-                    OnboardingSceneAction.NameInput -> OnboardingCatNamePanel(
-                        value = uiState.catNameInput,
-                        error = uiState.catNameError,
-                        isSubmitting = uiState.isSubmitting,
-                        onValueChange = { onIntent(OnboardingIntent.InputCatName(it)) },
-                        onSubmit = { onIntent(OnboardingIntent.SubmitCatName) },
-                        modifier = panelModifier,
-                    )
-                    OnboardingSceneAction.Start -> OnboardingStartButton(
-                        onClick = { onIntent(OnboardingIntent.ClickStart) },
-                        modifier = panelModifier,
-                    )
-                    OnboardingSceneAction.None, null -> Unit
-                }
-            }
-
             OnboardingDialogueBox(
                 speaker = line.speaker,
                 speakerName = speakerName,
@@ -138,36 +138,126 @@ internal fun OnboardingScreen(
                 revealed = uiState.isLineRevealed,
                 showContinueHint = uiState.isContinueHintVisible,
                 onRevealed = { onIntent(OnboardingIntent.TypingFinished) },
+                slot = when {
+                    !uiState.isActionVisible -> null
+                    action == OnboardingSceneAction.NameInput -> {
+                        {
+                            OnboardingCatNameSlot(
+                                value = uiState.catNameInput,
+                                error = uiState.catNameError,
+                                isSubmitting = uiState.isSubmitting,
+                                onValueChange = { onIntent(OnboardingIntent.InputCatName(it)) },
+                                onSubmit = { onIntent(OnboardingIntent.SubmitCatName) },
+                            )
+                        }
+                    }
+                    action == OnboardingSceneAction.MealTime -> {
+                        {
+                            OnboardingMealTimeSlot(
+                                mealTimes = uiState.mealTimes,
+                                enabled = !uiState.isFinishing,
+                                onClickMeal = { onIntent(OnboardingIntent.ClickMealTime(it)) },
+                                onDone = onMealTimesDone,
+                            )
+                        }
+                    }
+                    else -> null
+                },
             )
+            // 대화창 아래 행동(선택지, 시작 버튼)은 그 장면의 행동을 그대로 들고 사라져야 한다.
+            // 현재 action을 바로 읽으면 다음 장면의 버튼이 잠깐 비칠 수 있어 AnimatedContent의 상태로 그린다.
+            AnimatedContent(
+                targetState = action.takeIf { uiState.isActionVisible && !it.isInsideDialogue },
+                transitionSpec = {
+                    (fadeIn(tween(PanelFadeInMillis)) + slideInVertically(tween(PanelFadeInMillis)) { it / 4 }) togetherWith
+                        fadeOut(tween(PanelFadeOutMillis)) using SizeTransform(clip = false)
+                },
+                contentKey = { it?.let { shown -> shown::class } },
+                label = "OnboardingAction",
+            ) { shownAction ->
+                when (shownAction) {
+                    is OnboardingSceneAction.Choice -> OnboardingChoiceList(
+                        options = shownAction.options,
+                        onSelect = { onIntent(OnboardingIntent.SelectChoice(it)) },
+                    )
+                    OnboardingSceneAction.Start -> OnboardingStartButton(
+                        onClick = { onIntent(OnboardingIntent.ClickStart) },
+                    )
+                    OnboardingSceneAction.NameInput, OnboardingSceneAction.MealTime, OnboardingSceneAction.None, null -> Unit
+                }
+            }
         }
     }
-}
 
-@Composable
-private fun SkipButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        onClick = onClick,
-        shape = DesignSystemThemeImpl.designSystemShape.pill,
-        color = DesignSystemThemeImpl.designSystemColor.bgScrimDefault,
-    ) {
-        DandiText(
-            text = stringResource(R.string.onboarding_skip),
-            modifier = Modifier.padding(
-                horizontal = DesignSystemThemeImpl.designSystemSpacing.space16,
-                vertical = DesignSystemThemeImpl.designSystemSpacing.space8,
-            ),
-            color = DesignSystemThemeImpl.designSystemColor.contentInverseDefault,
-            style = DesignSystemThemeImpl.typeScale.textStrongL,
+    uiState.editingMeal?.let { meal ->
+        OnboardingMealTimeSheet(
+            meal = meal,
+            initial = uiState.mealTimes[meal],
+            onSelect = { onIntent(OnboardingIntent.SelectMealTime(meal, it)) },
+            onDismissRequest = { onIntent(OnboardingIntent.DismissMealTimeSheet) },
         )
     }
 }
 
-@Preview(showBackground = true)
+/** 대화창 안에 그리는 행동(이름 입력, 식사 시각)인지. 나머지는 대화창 아래에 둔다. */
+private val OnboardingSceneAction.isInsideDialogue: Boolean
+    get() = this == OnboardingSceneAction.NameInput || this == OnboardingSceneAction.MealTime
+
 @Composable
-private fun OnboardingScreenPreview() {
-    OnboardingScreen(
-        uiState = OnboardingUIState(sceneIndex = 3, lineIndex = 0, isLineRevealed = true),
-        onIntent = {},
+private fun SkipButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    NyummyText(
+        text = stringResource(R.string.onboarding_skip),
+        style = NyummyTheme.typography.labelM,
+        color = NyummyTheme.colors.content.onInverse,
+        modifier = modifier
+            .nyummyClickable(onClick = onClick)
+            .background(NyummyTheme.colors.bg.scrim, RoundedCornerShape(NyummyTheme.radius.full))
+            .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s8),
     )
+}
+
+private val PanelBottomGap = 16.dp
+private val PanelMaxWidth = 480.dp
+private const val PanelFadeInMillis = 220
+private const val PanelFadeOutMillis = 120
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun OnboardingCatLinePreview() {
+    NyummyTheme {
+        OnboardingScreen(
+            uiState = OnboardingUIState(sceneIndex = 1, lineIndex = 0, isLineRevealed = true),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun OnboardingMealTimePreview() {
+    NyummyTheme {
+        OnboardingScreen(
+            uiState = OnboardingUIState(
+                sceneIndex = OnboardingScript.scenes.lastIndex,
+                isLineRevealed = true,
+                catName = "냐미",
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun OnboardingNameInputPreview() {
+    NyummyTheme {
+        OnboardingScreen(
+            uiState = OnboardingUIState(
+                sceneIndex = OnboardingScript.namingSceneIndex,
+                lineIndex = 1,
+                isLineRevealed = true,
+            ),
+            onIntent = {},
+        )
+    }
 }

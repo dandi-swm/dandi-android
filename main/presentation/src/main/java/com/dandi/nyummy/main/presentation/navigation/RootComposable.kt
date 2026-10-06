@@ -1,6 +1,7 @@
 package com.dandi.nyummy.main.presentation.navigation
 
 import android.widget.Toast
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +13,7 @@ import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +21,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.dandi.nyummy.collection.domain.CollectionPage
@@ -57,6 +61,7 @@ fun RootComposable(
         val navigationHelper = LocalNavigationHelper.current
         val currentKey = backStack.lastOrNull() as? GenericNavKey
         val currentRoute = currentKey?.let { appRouteByPath[it.path] }
+        SystemBarIconsEffect(lightIcons = currentRoute?.usesLightSystemBarIcons == true)
         val currentTab = bottomNavTabs.firstOrNull { tab ->
             tab.page.toRoute().path == currentKey?.path
         }
@@ -190,6 +195,23 @@ private fun MessageEffect(
                 is MessageEffect.ShowOneButtonDialog -> onShowOneButtonDialog(effect)
                 is MessageEffect.ShowTwoButtonDialog -> onShowTwoButtonDialog(effect)
             }
+        }
+    }
+}
+
+/**
+ * 현재 화면에 맞춰 시스템 바 아이콘 색을 바꾼다. 앱 바탕은 밝아 기본은 어두운 아이콘이고,
+ * 어두운 배경을 시스템 바 뒤까지 그리는 화면에서만 밝은 아이콘을 쓴다.
+ */
+@Composable
+private fun SystemBarIconsEffect(lightIcons: Boolean) {
+    val view = LocalView.current
+    if (view.isInEditMode) return
+    val window = LocalActivity.current?.window ?: return
+    SideEffect {
+        WindowCompat.getInsetsController(window, view).apply {
+            isAppearanceLightStatusBars = !lightIcons
+            isAppearanceLightNavigationBars = !lightIcons
         }
     }
 }

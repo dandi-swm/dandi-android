@@ -1,5 +1,6 @@
 package com.dandi.nyummy.onboarding.domain
 
+import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.onboarding.entity.CatVO
 
 interface OnboardingRepository {
@@ -9,4 +10,7 @@ interface OnboardingRepository {
 
     /** 고양이 등록을 마친 뒤 온보딩 완료 상태를 저장한다. */
     suspend fun markOnboardingComplete()
+
+    /** 온보딩에서 고른 평소 식사 시각을 저장한다. */
+    suspend fun saveMealTimes(mealTimes: MealTimesVO)
 }
