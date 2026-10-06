@@ -7,6 +7,7 @@ import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.common.domain.error.HttpResponseException
+import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -243,6 +244,13 @@ class AuthRepositoryImplTest {
         override suspend fun isOnboardingIncomplete(): Boolean = onboardingIncomplete
         override suspend fun setOnboardingIncomplete(incomplete: Boolean) {
             onboardingIncomplete = incomplete
+        }
+
+        var mealTimes: MealTimesVO? = null
+
+        override suspend fun getMealTimes(): MealTimesVO? = mealTimes
+        override suspend fun setMealTimes(mealTimes: MealTimesVO) {
+            this.mealTimes = mealTimes
         }
     }
 }

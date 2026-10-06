@@ -1,5 +1,6 @@
 package com.dandi.nyummy.onboarding.data
 
+import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.onboarding.data.dto.CatDTO
 import com.dandi.nyummy.onboarding.entity.CatVO
 import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
@@ -42,6 +43,20 @@ class OnboardingRepositoryImplTest {
     }
 
     @Test
+    fun `평소 식사 시각은 기기 저장소에 그대로 저장한다`() = runBlocking {
+        val preferences = FakeAppPreferenceProvider()
+        val repository = OnboardingRepositoryImpl(
+            OnboardingDataSource(MockOnboardingApiService(json, latencyMillis = 0L)),
+            preferences,
+        )
+        val mealTimes = MealTimesVO(breakfast = MealTimesVO.DefaultBreakfast.copy(isSkipped = true))
+
+        repository.saveMealTimes(mealTimes)
+
+        assertEquals(mealTimes, preferences.mealTimes)
+    }
+
+    @Test
     fun `응답 필드가 비어 있으면 VO 기본값으로 채운다`() {
         val dto = json.decodeFromString<CatDTO>("""{"catId":null}""")
 
@@ -56,6 +71,13 @@ class OnboardingRepositoryImplTest {
         override suspend fun isOnboardingIncomplete(): Boolean = onboardingIncomplete
         override suspend fun setOnboardingIncomplete(incomplete: Boolean) {
             onboardingIncomplete = incomplete
+        }
+
+        var mealTimes: MealTimesVO? = null
+
+        override suspend fun getMealTimes(): MealTimesVO? = mealTimes
+        override suspend fun setMealTimes(mealTimes: MealTimesVO) {
+            this.mealTimes = mealTimes
         }
     }
 }

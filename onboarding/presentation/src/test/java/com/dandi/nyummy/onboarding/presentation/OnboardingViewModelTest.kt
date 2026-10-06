@@ -9,6 +9,9 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
+import com.dandi.nyummy.common.entity.meal.Meal
+import com.dandi.nyummy.common.entity.meal.MealTimeVO
+import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.onboarding.domain.CatNameError
 import com.dandi.nyummy.onboarding.domain.FinishOnboardingUseCase
 import com.dandi.nyummy.onboarding.domain.OnboardingRepository
@@ -23,6 +26,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -57,6 +61,7 @@ class OnboardingViewModelTest {
                 ttiHelper = FakeTTIHelper,
             ),
             finishOnboardingUseCase = FinishOnboardingUseCase(
+                repository = repository,
                 resourceHelper = FakeResourceHelper,
                 messageHelper = SilentMessageHelper,
                 navigationHelper = navigationHelper,
@@ -209,19 +214,94 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `마지막 장면에서 시작하기를 누르면 홈을 루트로 이동한다`() = runTest(testDispatcher) {
+    fun `이름을 받은 뒤 시작하기를 누르면 평소 식사 시각 장면으로 넘어간다`() = runTest(testDispatcher) {
+        registerCatAndReachStart()
+
+        viewModel.onIntent(OnboardingIntent.ClickStart)
+
+        assertEquals(OnboardingSceneAction.MealTime, state.currentScene.action)
+        assertTrue(navigationHelper.rootPages.isEmpty())
+    }
+
+    @Test
+    fun `식사 시각 장면은 기본값을 채워 두고 대사가 끝나야 시간 시트를 연다`() = runTest(testDispatcher) {
+        reachMealTimeScene(revealLine = false)
+        assertEquals(MealTimesVO.default, state.mealTimes)
+
+        viewModel.onIntent(OnboardingIntent.ClickMealTime(Meal.LUNCH))
+        assertNull(state.editingMeal)
+
+        viewModel.onIntent(OnboardingIntent.TypingFinished)
+        viewModel.onIntent(OnboardingIntent.ClickMealTime(Meal.LUNCH))
+        assertEquals(Meal.LUNCH, state.editingMeal)
+    }
+
+    @Test
+    fun `시간 시트에서 고른 시각과 안 먹어요가 그 끼니에만 반영되고 시트가 닫힌다`() = runTest(testDispatcher) {
+        reachMealTimeScene()
+
+        viewModel.onIntent(OnboardingIntent.ClickMealTime(Meal.LUNCH))
+        viewModel.onIntent(OnboardingIntent.SelectMealTime(Meal.LUNCH, MealTimeVO(hour = 13, minute = 10)))
+        viewModel.onIntent(OnboardingIntent.ClickMealTime(Meal.BREAKFAST))
+        viewModel.onIntent(OnboardingIntent.SelectMealTime(Meal.BREAKFAST, MealTimesVO.DefaultBreakfast.copy(isSkipped = true)))
+
+        assertNull(state.editingMeal)
+        assertEquals(MealTimeVO(hour = 13, minute = 10), state.mealTimes.lunch)
+        assertTrue(state.mealTimes.breakfast.isSkipped)
+        assertEquals(MealTimesVO.DefaultDinner, state.mealTimes.dinner)
+    }
+
+    @Test
+    fun `시트를 닫으면 시각은 그대로다`() = runTest(testDispatcher) {
+        reachMealTimeScene()
+
+        viewModel.onIntent(OnboardingIntent.ClickMealTime(Meal.DINNER))
+        viewModel.onIntent(OnboardingIntent.DismissMealTimeSheet)
+
+        assertNull(state.editingMeal)
+        assertEquals(MealTimesVO.default, state.mealTimes)
+    }
+
+    @Test
+    fun `식사 시각을 확인하면 한 번만 저장하고 홈을 루트로 이동한다`() = runTest(testDispatcher) {
+        reachMealTimeScene()
+        viewModel.onIntent(OnboardingIntent.SelectMealTime(Meal.DINNER, MealTimeVO(hour = 19, minute = 0)))
+
+        viewModel.onIntent(OnboardingIntent.ConfirmMealTimes)
+        // 권한 응답 등으로 두 번 들어와도 저장과 이동은 한 번이다.
+        viewModel.onIntent(OnboardingIntent.ConfirmMealTimes)
+        advanceUntilIdle()
+
+        assertTrue(state.isFinishing)
+        assertEquals(listOf(MealTimesVO(dinner = MealTimeVO(hour = 19, minute = 0))), repository.savedMealTimes)
+        assertEquals(listOf("/home"), navigationHelper.rootPages.map { it.toRoute().path })
+    }
+
+    @Test
+    fun `식사 시각 장면 전에는 확인을 보내도 아무 일도 없다`() = runTest(testDispatcher) {
+        viewModel.onIntent(OnboardingIntent.ConfirmMealTimes)
+        advanceUntilIdle()
+
+        assertTrue(repository.savedMealTimes.isEmpty())
+        assertTrue(navigationHelper.rootPages.isEmpty())
+    }
+
+    /** 이름을 등록하고 축하 장면의 마지막 대사까지 넘겨 시작 버튼이 뜬 상태로 만든다. */
+    private fun TestScope.registerCatAndReachStart() {
         viewModel.onIntent(OnboardingIntent.Skip)
         viewModel.onIntent(OnboardingIntent.InputCatName("냐미"))
         viewModel.onIntent(OnboardingIntent.SubmitCatName)
         advanceUntilIdle()
-        repeat(state.currentLines.size) { revealAndAdvance() }
-        // 마지막 장면은 탭으로 넘어가지 않는다.
-        assertEquals(OnboardingScript.scenes.lastIndex, state.sceneIndex)
+        repeat(state.currentLines.size - 1) { revealAndAdvance() }
+        viewModel.onIntent(OnboardingIntent.TapDialogue)
+        assertEquals(OnboardingSceneAction.Start, state.currentScene.action)
         assertTrue(state.isActionVisible)
+    }
 
+    private fun TestScope.reachMealTimeScene(revealLine: Boolean = true) {
+        registerCatAndReachStart()
         viewModel.onIntent(OnboardingIntent.ClickStart)
-
-        assertEquals(listOf("/home"), navigationHelper.rootPages.map { it.toRoute().path })
+        if (revealLine) viewModel.onIntent(OnboardingIntent.TypingFinished)
     }
 
     private class FakeOnboardingRepository : OnboardingRepository {
@@ -235,6 +315,12 @@ class OnboardingViewModelTest {
         }
 
         override suspend fun markOnboardingComplete() = Unit
+
+        val savedMealTimes = mutableListOf<MealTimesVO>()
+
+        override suspend fun saveMealTimes(mealTimes: MealTimesVO) {
+            savedMealTimes += mealTimes
+        }
     }
 
     private class RecordingNavigationHelper : NavigationHelper {

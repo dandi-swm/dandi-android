@@ -11,6 +11,7 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
+import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.onboarding.entity.CatVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
@@ -44,6 +45,14 @@ internal class FakeOnboardingRepository(
 
     override suspend fun markOnboardingComplete() {
         onboardingCompleteCount++
+    }
+
+    val savedMealTimes = mutableListOf<MealTimesVO>()
+    var saveMealTimesError: Exception? = null
+
+    override suspend fun saveMealTimes(mealTimes: MealTimesVO) {
+        saveMealTimesError?.let { throw it }
+        savedMealTimes += mealTimes
     }
 }
 
