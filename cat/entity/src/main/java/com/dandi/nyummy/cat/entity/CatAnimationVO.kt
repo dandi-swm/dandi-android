@@ -10,6 +10,10 @@ data class CatAnimationSetVO(
     val weight: String = "",
     val animations: Map<CatState, CatAnimationVO> = emptyMap(),
 ) {
+    /** [state]의 애니메이션. 없으면 기본 인사 상태([CatState.FRIENDLY])로 대신하고, 그것도 없으면 null이다. */
+    fun animationFor(state: CatState): CatAnimationVO? =
+        animations[state] ?: animations[CatState.FRIENDLY]
+
     companion object {
         val empty = CatAnimationSetVO()
     }
