@@ -40,4 +40,7 @@ sealed interface HomeIntent : MviIntent {
 
     /** 오늘 식사 요약 시트의 식사 추가 버튼을 탭했다. */
     data object ClickAddMeal : HomeIntent
+
+    /** 홈이 화면에 보이게 됐다(첫 진입, 다른 화면에서 복귀). 요약을 다시 읽는다. */
+    data object ScreenResumed : HomeIntent
 }

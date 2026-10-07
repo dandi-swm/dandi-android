@@ -13,9 +13,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
@@ -23,7 +25,7 @@ import com.dandi.nyummy.home.presentation.component.HomeMyRoomCard
 import com.dandi.nyummy.home.presentation.component.HomeServiceHud
 import com.dandi.nyummy.home.presentation.component.HomeStreakBanner
 import com.dandi.nyummy.home.presentation.component.HomeTodaySummarySheet
-import com.dandi.nyummy.home.presentation.mock.HomeMockData
+import com.dandi.nyummy.home.entity.HomeSummaryVO
 
 /**
  * 홈(마이룸) 화면. Figma `LIVE / Home · My Room` 시안을 구현한다.
@@ -38,6 +40,11 @@ fun HomePage(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.onIntent(HomeIntent.ScreenResumed)
+        onPauseOrDispose { }
+    }
 
     HomeScreen(
         uiState = uiState,
@@ -97,7 +104,8 @@ private fun HomeContent(
         Spacer(modifier = Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space8))
         HomeServiceHud(
             coinBalance = summary.coinBalance,
-            hasUnreadNotice = summary.hasUnreadNotice,
+            // 공지 API가 아직 없어 읽지 않은 공지 점은 띄우지 않는다.
+            hasUnreadNotice = false,
             onWalletClick = { onIntent(HomeIntent.ClickWallet) },
             onMailClick = { onIntent(HomeIntent.ClickMail) },
             onNoticeClick = { onIntent(HomeIntent.ClickNotice) },
@@ -111,8 +119,12 @@ private fun HomeContent(
         )
         Spacer(modifier = Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space16))
         HomeMyRoomCard(
-            speechTitle = summary.speechTitle,
-            speechBody = summary.speechBody,
+            speechTitle = stringResource(
+                if (summary.todayRecordedCount > 0) R.string.home_speech_recorded_title else R.string.home_speech_waiting_title,
+            ),
+            speechBody = stringResource(
+                if (summary.todayRecordedCount > 0) R.string.home_speech_recorded_body else R.string.home_speech_waiting_body,
+            ),
             todayRecordedCount = summary.todayRecordedCount,
             todayCalorieKcal = summary.todayCalorieKcal,
             goalCalorieKcal = summary.goalCalorieKcal,
@@ -141,7 +153,7 @@ private val RoomCardMaxHeight = 560.dp
 private fun HomePagePreview() {
     DesignSystemTheme {
         HomeScreen(
-            uiState = HomeUIState(summary = HomeMockData.summary),
+            uiState = HomeUIState(summary = PreviewSummary),
             onIntent = {},
         )
     }
@@ -153,10 +165,19 @@ private fun HomePageTodaySummarySheetPreview() {
     DesignSystemTheme {
         HomeScreen(
             uiState = HomeUIState(
-                summary = HomeMockData.summary,
+                summary = PreviewSummary,
                 isTodaySummarySheetVisible = true,
             ),
             onIntent = {},
         )
     }
 }
+
+private val PreviewSummary = HomeSummaryVO(
+    coinBalance = 1240,
+    streakDays = 7,
+    recordsUntilNextReward = 1,
+    todayRecordedCount = 1,
+    todayCalorieKcal = 1350,
+    goalCalorieKcal = 1800,
+)

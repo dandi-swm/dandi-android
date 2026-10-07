@@ -26,4 +26,8 @@
     <string name="home_sheet_add_meal">식사 추가하기</string>
     <string name="home_sheet_meal_order">%1$d번째 기록</string>
     <string name="home_sheet_meal_calorie">%1$s kcal</string>
+    <string name="home_speech_waiting_title">첫 기록을 기다려요</string>
+    <string name="home_speech_waiting_body">첫 끼를 기록하면 같이 챙겨볼게!</string>
+    <string name="home_speech_recorded_title">오늘도 고마워</string>
+    <string name="home_speech_recorded_body">오늘도 챙겨줘서 고마워</string>
 </resources>
