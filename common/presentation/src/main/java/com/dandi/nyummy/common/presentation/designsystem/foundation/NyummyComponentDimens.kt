@@ -65,9 +65,6 @@ internal object NyummyComponentDimens {
     /** Badge 세로 여백. */
     val BadgeVerticalPadding = 2.dp
 
-    /** Linear Progress 두께. */
-    val LinearProgressHeight = 10.dp
-
     /** Skeleton 한 줄 높이. */
     val SkeletonLineHeight = 14.dp
 
@@ -137,4 +134,10 @@ internal object NyummyComponentDimens {
 
     /** 처리 중 아이콘(NyummySpinner) 크기. */
     val SpinnerSize = 36.dp
+
+    /** 영양소 일러스트 아이콘(NyummyNutrientStat) 크기. */
+    val NutrientIconSize = 32.dp
+
+    /** 식사 행(NyummyMealRow) 왼쪽 사진, 냐미 자리 크기. */
+    val MealRowLeadingSize = 48.dp
 }

@@ -33,20 +33,29 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
-/** 막대형 진행률. 두께 10, 양끝 둥근 막대. [progress]는 0~1로 잘린다. */
+/** 막대형 진행률 두께. */
+enum class NyummyLinearProgressSize(val height: Dp) {
+    /** 기본 10. 진행 상황이 화면의 주인공일 때. */
+    M(10.dp),
+
+    /** 얇은 6. kcal처럼 참고로만 보여 줄 때(홈 오늘 바 등). */
+    S(6.dp),
+}
+
+/** 막대형 진행률. 양끝 둥근 막대이고 두께는 [size](기본 10). [progress]는 0~1로 잘린다. */
 @Composable
 fun NyummyLinearProgress(
     progress: Float,
     modifier: Modifier = Modifier,
+    size: NyummyLinearProgressSize = NyummyLinearProgressSize.M,
 ) {
     val value = progress.coerceIn(0f, 1f)
     val shape = RoundedCornerShape(NyummyTheme.radius.full)
     Box(
         modifier = modifier
-            .height(NyummyComponentDimens.LinearProgressHeight)
+            .height(size.height)
             .clip(shape)
             .background(NyummyTheme.colors.data.progressTrack)
             .semantics { progressBarRangeInfo = ProgressBarRangeInfo(value, 0f..1f) },

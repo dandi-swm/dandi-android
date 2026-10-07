@@ -2,45 +2,48 @@ package com.dandi.nyummy.home.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.MviIntent
 
-/** 홈 화면에서 발생하는 사용자 입력. */
+/** 홈 화면에서 발생하는 사용자 의도. */
 sealed interface HomeIntent : MviIntent {
-
-    /** 지갑(보유 코인) 카드를 탭했다. */
-    data object ClickWallet : HomeIntent
-
-    /** 우편 버튼을 탭했다. */
-    data object ClickMail : HomeIntent
-
-    /** 공지 버튼을 탭했다. */
-    data object ClickNotice : HomeIntent
-
-    /** 설정 버튼을 탭했다. */
-    data object ClickSettings : HomeIntent
-
-    /** 스트릭(연속 기록) 배너를 탭했다. */
-    data object ClickStreak : HomeIntent
-
-    /** 마이룸 카드 하단의 오늘 요약 바를 탭했다. */
-    data object ClickTodaySummary : HomeIntent
-
-    /** 마이룸 카드의 플로팅 액션 메뉴 토글(더보기) 버튼을 탭했다. */
-    data object ToggleRoomActionMenu : HomeIntent
-
-    /** 마이룸 카드의 공유(사진 찍기) 플로팅 버튼을 탭했다. */
-    data object ClickShare : HomeIntent
-
-    /** 마이룸 카드의 꾸미기(편집 모드) 플로팅 버튼을 탭했다. */
-    data object ClickRoomEdit : HomeIntent
-
-    /** 마이룸 카드의 말풍선 다시 보기 플로팅 버튼을 탭했다. */
-    data object ClickSpeechReplay : HomeIntent
-
-    /** 오늘 식사 요약 바텀시트를 닫았다(스크림 탭). */
-    data object DismissTodaySummarySheet : HomeIntent
-
-    /** 오늘 식사 요약 시트의 식사 추가 버튼을 탭했다. */
-    data object ClickAddMeal : HomeIntent
 
     /** 홈이 화면에 보이게 됐다(첫 진입, 다른 화면에서 복귀). 요약을 다시 읽는다. */
     data object ScreenResumed : HomeIntent
+
+    /** 상단 지갑 카드(보유 코인). */
+    data object ClickWallet : HomeIntent
+
+    /** 우편함. */
+    data object ClickMail : HomeIntent
+
+    /** 공지. */
+    data object ClickNotice : HomeIntent
+
+    /** 설정. */
+    data object ClickSettings : HomeIntent
+
+    /** 연속 기록 배너. */
+    data object ClickStreak : HomeIntent
+
+    /** 오늘 바. 오늘 기록이 없으면 식사 기록으로, 있으면 오늘 식사 시트로 간다. */
+    data object ClickTodayBar : HomeIntent
+
+    /** 고양이방 메뉴 펼치기, 접기. */
+    data object ToggleRoomMenu : HomeIntent
+
+    /** 방 메뉴: 마이룸 꾸미기. */
+    data object ClickMyRoom : HomeIntent
+
+    /** 방 메뉴: 친구에게 공유. */
+    data object ClickShareFriend : HomeIntent
+
+    /** 방 메뉴: 냐미 상태. */
+    data object ClickNyamiStatus : HomeIntent
+
+    /** 오늘 식사 시트를 닫았다. */
+    data object DismissTodaySheet : HomeIntent
+
+    /** 오늘 식사 시트를 다시 읽는다(불러오기 실패 후). */
+    data object RetryTodayMeals : HomeIntent
+
+    /** 식사 추가하기(시트 안 버튼). */
+    data object ClickAddMeal : HomeIntent
 }
