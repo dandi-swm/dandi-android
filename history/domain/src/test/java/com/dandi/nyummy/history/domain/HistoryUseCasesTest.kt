@@ -25,6 +25,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
 
 class HistoryUseCasesTest {
 
@@ -99,6 +100,23 @@ class HistoryUseCasesTest {
         val result = useCase(2026, 8, 23)
 
         assertEquals(Result.success(daily), result)
+    }
+
+    @Test
+    fun `일일 조회 중 네트워크 오류면 안내 스낵바를 띄우고 실패를 돌려준다`() = runBlocking {
+        val useCase = GetDailyMealsUseCase(
+            repository = ThrowingHistoryRepository(IOException("offline")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(2026, 8, 23)
+
+        assertEquals("식사 기록을 불러오지 못했어요", messageHelper.snackBars.single().messageText)
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+        assertTrue(result.isFailure)
     }
 
     @Test
@@ -189,7 +207,7 @@ class HistoryUseCasesTest {
     }
 
     private class ThrowingHistoryRepository(
-        private val exception: HttpResponseException,
+        private val exception: Exception,
     ) : HistoryRepository {
         override suspend fun getMonthlyCalendar(year: Int, month: Int) = throw exception
         override suspend fun getDailyMeals(year: Int, month: Int, day: Int) = throw exception
