@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -44,6 +45,7 @@ import kotlin.math.roundToInt
  *
  * 픽셀이 고르게 보이도록 셀을 칸 폭에 가장 가까운 정수배로 키우고, 칸의 가운데 아래에 맞춰 그린다.
  * 이미지를 받는 동안에는 [placeholder]를, 한 장이라도 받지 못하면 [error]를 보여 준다.
+ * 다른 동작으로 바뀌어 새 시트를 받는 동안에는 직전에 그린 프레임을 그대로 두어 캐릭터가 깜빡이지 않는다.
  *
  * @param playId 값이 바뀌면 [clips]가 같아도 처음부터 다시 재생한다.
  */
@@ -60,10 +62,20 @@ fun NyummySpriteAnimation(
     placeholder: @Composable () -> Unit = {},
     error: @Composable () -> Unit = placeholder,
 ) {
+    val lastDrawn = remember { LastDrawnCell() }
     when (val sheets = rememberSpriteSheets(clips)) {
-        SpriteSheets.Loading -> Box(modifier) { placeholder() }
+        SpriteSheets.Loading -> {
+            val held = lastDrawn.image
+            if (held != null) {
+                Canvas(modifier = modifier.spriteSemantics(contentDescription)) {
+                    drawSpriteCell(held, lastDrawn.frame, lastDrawn.index)
+                }
+            } else {
+                Box(modifier) { placeholder() }
+            }
+        }
         SpriteSheets.Failed -> Box(modifier) { error() }
-        is SpriteSheets.Loaded -> NyummySpriteAnimation(
+        is SpriteSheets.Loaded -> SpriteAnimationCanvas(
             images = sheets.images,
             clips = clips,
             frame = frame,
@@ -73,6 +85,7 @@ fun NyummySpriteAnimation(
             playId = playId,
             loopTimes = loopTimes,
             contentDescription = contentDescription,
+            lastDrawn = lastDrawn,
         )
     }
 }
@@ -93,6 +106,33 @@ fun NyummySpriteAnimation(
     loopTimes: Int = DefaultLoopTimes,
     contentDescription: String? = null,
 ) {
+    SpriteAnimationCanvas(
+        images = images,
+        clips = clips,
+        frame = frame,
+        restMillis = restMillis,
+        onFinished = onFinished,
+        modifier = modifier,
+        playId = playId,
+        loopTimes = loopTimes,
+        contentDescription = contentDescription,
+        lastDrawn = null,
+    )
+}
+
+@Composable
+private fun SpriteAnimationCanvas(
+    images: ImmutableList<ImageBitmap>,
+    clips: ImmutableList<NyummySpriteClip>,
+    frame: NyummySpriteFrame,
+    restMillis: Long,
+    onFinished: () -> Unit,
+    modifier: Modifier,
+    playId: Int,
+    loopTimes: Int,
+    contentDescription: String?,
+    lastDrawn: LastDrawnCell?,
+) {
     var clipIndex by remember(clips, playId) { mutableIntStateOf(0) }
     var frameIndex by remember(clips, playId) { mutableIntStateOf(0) }
 
@@ -103,6 +143,7 @@ fun NyummySpriteAnimation(
             clipIndex = index
             for (f in 0 until clips[index].frames) {
                 frameIndex = f
+                lastDrawn?.update(images.getOrNull(index), frame, f)
                 delay(frameMillis)
             }
         }
@@ -124,31 +165,54 @@ fun NyummySpriteAnimation(
         onFinished()
     }
 
-    val semantics = if (contentDescription != null) {
-        Modifier.semantics { this.contentDescription = contentDescription }
-    } else {
-        Modifier
-    }
-    Canvas(modifier = modifier.then(semantics)) {
+    Canvas(modifier = modifier.spriteSemantics(contentDescription)) {
         val image = images.getOrNull(clipIndex) ?: return@Canvas
         val clip = clips.getOrNull(clipIndex) ?: return@Canvas
-        val f = frameIndex.coerceIn(0, (clip.frames - 1).coerceAtLeast(0))
-        val perRow = frame.framesPerRow.coerceAtLeast(1)
-        val scale = spritePixelScale(frame.width, size.width)
-        val dstWidth = frame.width * scale
-        val dstHeight = frame.height * scale
-        drawImage(
-            image = image,
-            srcOffset = IntOffset((f % perRow) * frame.width, (f / perRow) * frame.height),
-            srcSize = IntSize(frame.width, frame.height),
-            dstOffset = IntOffset(
-                x = ((size.width - dstWidth) / 2f).roundToInt(),
-                y = (size.height - dstHeight).roundToInt(),
-            ),
-            dstSize = IntSize(dstWidth, dstHeight),
-            filterQuality = FilterQuality.None,
-        )
+        val index = frameIndex.coerceIn(0, (clip.frames - 1).coerceAtLeast(0))
+        drawSpriteCell(image, frame, index)
     }
+}
+
+/**
+ * 마지막으로 보여 준 칸. 새 시트를 받는 동안 그대로 보여 주려고 재생하면서 기억해 둔다.
+ * 화면을 다시 그리게 할 필요가 없는 값이라 상태로 두지 않는다.
+ */
+private class LastDrawnCell {
+    var image: ImageBitmap? = null
+        private set
+    var frame: NyummySpriteFrame = NyummySpriteFrame(width = 1, height = 1, framesPerRow = 1, durationMs = 1)
+        private set
+    var index: Int = 0
+        private set
+
+    fun update(image: ImageBitmap?, frame: NyummySpriteFrame, index: Int) {
+        if (image == null) return
+        this.image = image
+        this.frame = frame
+        this.index = index
+    }
+}
+
+private fun Modifier.spriteSemantics(contentDescription: String?): Modifier =
+    if (contentDescription != null) semantics { this.contentDescription = contentDescription } else this
+
+/** 시트의 [index]번째 칸을 칸 폭에 가장 가까운 정수배로 키워 가운데 아래에 그린다. */
+private fun DrawScope.drawSpriteCell(image: ImageBitmap, frame: NyummySpriteFrame, index: Int) {
+    val perRow = frame.framesPerRow.coerceAtLeast(1)
+    val scale = spritePixelScale(frame.width, size.width)
+    val dstWidth = frame.width * scale
+    val dstHeight = frame.height * scale
+    drawImage(
+        image = image,
+        srcOffset = IntOffset((index % perRow) * frame.width, (index / perRow) * frame.height),
+        srcSize = IntSize(frame.width, frame.height),
+        dstOffset = IntOffset(
+            x = ((size.width - dstWidth) / 2f).roundToInt(),
+            y = (size.height - dstHeight).roundToInt(),
+        ),
+        dstSize = IntSize(dstWidth, dstHeight),
+        filterQuality = FilterQuality.None,
+    )
 }
 
 private sealed interface SpriteSheets {
