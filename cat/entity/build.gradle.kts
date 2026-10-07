@@ -12,4 +12,6 @@ kotlin {
 
 dependencies {
     api(project(":common:entity"))
+
+    testImplementation(libs.junit)
 }
