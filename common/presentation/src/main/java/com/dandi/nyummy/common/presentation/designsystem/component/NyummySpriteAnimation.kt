@@ -217,6 +217,19 @@ private fun DrawScope.drawSpriteCell(image: ImageBitmap, frame: NyummySpriteFram
     )
 }
 
+/**
+ * 곧 재생할 시트를 미리 받아 앱 공용 이미지 캐시에 넣어 둔다. 동작이 바뀔 때 시트를 받느라 기다리지 않게 한다.
+ * [urls]가 바뀔 때마다 한 번씩 요청한다.
+ */
+@Composable
+fun NyummySpritePrefetch(urls: ImmutableList<String>) {
+    val context = LocalContext.current
+    LaunchedEffect(urls) {
+        val loader = SingletonImageLoader.get(context)
+        urls.forEach { url -> loader.enqueue(ImageRequest.Builder(context).data(url).allowHardware(false).build()) }
+    }
+}
+
 private sealed interface SpriteSheets {
     data object Loading : SpriteSheets
     data object Failed : SpriteSheets

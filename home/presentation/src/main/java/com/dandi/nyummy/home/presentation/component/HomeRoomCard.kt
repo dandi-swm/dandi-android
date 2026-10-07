@@ -42,6 +42,7 @@ import com.dandi.nyummy.common.presentation.component.NyummySpriteView
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteAnimation
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteFrame
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpritePrefetch
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceBubble
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -168,6 +169,9 @@ private fun HomeNyami(
             durationMs = animation.frame.durationMs,
         )
     }
+    // 같은 상태의 다른 동작으로 넘어갈 때 시트를 받느라 멈칫하지 않게 상태의 모든 시트를 미리 받아 둔다.
+    val allUrls = remember(animation) { animation.groups.flatten().map { it.url }.distinct().toImmutableList() }
+    NyummySpritePrefetch(urls = allUrls)
     val description = stringResource(R.string.home_character_description)
     NyummySpriteAnimation(
         clips = clips,
