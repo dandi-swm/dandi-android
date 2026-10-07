@@ -8,6 +8,7 @@ import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.meal.domain.MealRecordPage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -53,8 +54,12 @@ class HomeViewModel @Inject constructor(
             is HomeReducerEvent.SummaryLoaded -> state.copy(summary = event.summary)
             is HomeReducerEvent.TodaySheetVisibilityChanged -> state.copy(isTodaySheetVisible = event.visible)
             HomeReducerEvent.TodayMealsLoadStarted -> state.copy(isTodayMealsLoading = true, isTodayMealsFailed = false)
-            is HomeReducerEvent.TodayMealsLoaded ->
-                state.copy(todayMeals = event.meals, isTodayMealsLoading = false, isTodayMealsFailed = false)
+            is HomeReducerEvent.TodayMealsLoaded -> state.copy(
+                todayNutrition = event.meals.nutrition,
+                todayMeals = event.meals.meals.toImmutableList(),
+                isTodayMealsLoading = false,
+                isTodayMealsFailed = false,
+            )
             HomeReducerEvent.TodayMealsLoadFailed -> state.copy(isTodayMealsLoading = false, isTodayMealsFailed = true)
             is HomeReducerEvent.RoomMenuExpansionChanged -> state.copy(isRoomMenuExpanded = event.expanded)
         }

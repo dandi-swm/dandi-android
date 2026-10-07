@@ -105,6 +105,7 @@ internal fun HomeScreen(
         if (uiState.isTodaySheetVisible) {
             HomeTodaySheet(
                 recordedCount = uiState.summary.todayRecordedCount,
+                nutrition = uiState.todayNutrition,
                 meals = uiState.todayMeals,
                 isLoading = uiState.isTodayMealsLoading,
                 isFailed = uiState.isTodayMealsFailed,

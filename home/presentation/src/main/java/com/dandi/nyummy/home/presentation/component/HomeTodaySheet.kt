@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,9 +34,11 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeleto
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
-import com.dandi.nyummy.history.entity.DailyMealHistoryVO
+import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.home.presentation.R
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
@@ -42,11 +46,15 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  *
  * 영양 압박을 주지 않도록 남은 kcal이나 목표 대비 %는 보여 주지 않고, 탄단지는 그램만 참고로 둔다.
  * 내용은 시트를 열 때마다 새로 읽고, 읽는 동안에는 자리만 잡아 두며, 실패하면 다시 시도할 수 있다.
+ * 식사가 많거나 화면이 낮으면 시트 본문 전체가 스크롤된다.
+ *
+ * @param nutrition 탄단지 합계. null이면 아직 읽지 못한 것이다.
  */
 @Composable
 internal fun HomeTodaySheet(
     recordedCount: Int,
-    meals: DailyMealHistoryVO?,
+    nutrition: DailyNutritionVO?,
+    meals: ImmutableList<MealHistoryVO>,
     isLoading: Boolean,
     isFailed: Boolean,
     onRetry: () -> Unit,
@@ -54,7 +62,7 @@ internal fun HomeTodaySheet(
     onDismiss: () -> Unit,
 ) {
     NyummyBottomSheet(onDismissRequest = onDismiss, modifier = Modifier.testTag(TodaySheetTag)) {
-        Column {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
             NyummySheetTitle(text = stringResource(R.string.home_sheet_title))
             Spacer(Modifier.height(NyummyTheme.spacing.s4))
             NyummyText(
@@ -63,9 +71,10 @@ internal fun HomeTodaySheet(
                 color = NyummyTheme.colors.content.secondary,
             )
             Spacer(Modifier.height(NyummyTheme.spacing.s16))
+            // 실패를 먼저 본다. 전에 읽어 둔 내용이 있어도 다시 읽기에 실패했으면 다시 시도를 보여 준다.
             when {
-                meals != null && !isLoading -> TodayMealsContent(meals)
                 isFailed -> TodayMealsFailed(onRetry = onRetry)
+                nutrition != null && !isLoading -> TodayMealsContent(nutrition, meals)
                 else -> TodayMealsLoading()
             }
             Spacer(Modifier.height(NyummyTheme.spacing.s20))
@@ -81,17 +90,17 @@ internal fun HomeTodaySheet(
 }
 
 @Composable
-private fun TodayMealsContent(meals: DailyMealHistoryVO) {
+private fun TodayMealsContent(nutrition: DailyNutritionVO, meals: ImmutableList<MealHistoryVO>) {
     Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
-        NyummyNutrientStat(NyummyNutrient.Carb, meals.nutrition.carbohydrate.dailyGram, Modifier.weight(1f))
-        NyummyNutrientStat(NyummyNutrient.Protein, meals.nutrition.protein.dailyGram, Modifier.weight(1f))
-        NyummyNutrientStat(NyummyNutrient.Fat, meals.nutrition.fat.dailyGram, Modifier.weight(1f))
+        NyummyNutrientStat(NyummyNutrient.Carb, nutrition.carbohydrate.dailyGram, Modifier.weight(1f))
+        NyummyNutrientStat(NyummyNutrient.Protein, nutrition.protein.dailyGram, Modifier.weight(1f))
+        NyummyNutrientStat(NyummyNutrient.Fat, nutrition.fat.dailyGram, Modifier.weight(1f))
     }
     Spacer(Modifier.height(SectionGap))
     NyummyText(text = stringResource(R.string.home_sheet_section_title), style = NyummyTheme.typography.titleS)
     Spacer(Modifier.height(NyummyTheme.spacing.s8))
     Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
-        meals.meals.forEach { meal -> TodayMealRow(meal) }
+        meals.forEach { meal -> TodayMealRow(meal) }
     }
 }
 
@@ -185,7 +194,8 @@ private fun TodayMealsContentPreview() {
     NyummyTheme {
         Column(Modifier.padding(NyummyTheme.spacing.gutter)) {
             TodayMealsContent(
-                DailyMealHistoryVO(meals = listOf(MealHistoryVO(id = "1", name = "닭가슴살 샐러드", recordedAt = "12:24"))),
+                nutrition = DailyNutritionVO.empty,
+                meals = persistentListOf(MealHistoryVO(id = "1", name = "닭가슴살 샐러드", recordedAt = "12:24")),
             )
         }
     }

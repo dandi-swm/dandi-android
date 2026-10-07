@@ -1,14 +1,18 @@
 package com.dandi.nyummy.home.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.UiState
-import com.dandi.nyummy.history.entity.DailyMealHistoryVO
+import com.dandi.nyummy.history.entity.DailyNutritionVO
+import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.home.entity.HomeSummaryVO
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /**
  * 홈 화면 상태.
  *
  * @property summary HUD와 오늘 바에 그릴 요약 정보
- * @property todayMeals 오늘 식사 시트의 탄단지 합계와 식사 목록. 아직 읽지 않았으면 null
+ * @property todayNutrition 오늘 식사 시트의 탄단지 합계. 아직 읽지 않았으면 null
+ * @property todayMeals 오늘 식사 시트의 식사 목록(시간순)
  * @property isTodayMealsLoading 오늘 식사를 읽는 중
  * @property isTodayMealsFailed 오늘 식사를 읽지 못했다(시트에서 다시 시도할 수 있다)
  * @property isTodaySheetVisible 오늘 식사 시트 표시 여부
@@ -16,7 +20,8 @@ import com.dandi.nyummy.home.entity.HomeSummaryVO
  */
 data class HomeUIState(
     val summary: HomeSummaryVO = HomeSummaryVO.empty,
-    val todayMeals: DailyMealHistoryVO? = null,
+    val todayNutrition: DailyNutritionVO? = null,
+    val todayMeals: ImmutableList<MealHistoryVO> = persistentListOf(),
     val isTodayMealsLoading: Boolean = false,
     val isTodayMealsFailed: Boolean = false,
     val isTodaySheetVisible: Boolean = false,
