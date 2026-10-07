@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadge
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadgeTone
@@ -72,6 +73,9 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeleto
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeletonShape
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackbar
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackbarHost
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteAnimation
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteFrame
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateAction
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateSurface
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStepIndicator
@@ -137,6 +141,7 @@ private val CatalogEntries = listOf(
     CatalogEntry("Bottom Nav") { BottomNavSection() },
     CatalogEntry("Pose") { PoseSection() },
     CatalogEntry("Voice") { VoiceSection() },
+    CatalogEntry("Sprite") { SpriteSection() },
     CatalogEntry("Overlays") { OverlaySection() },
     CatalogEntry("State Surface") { StateSurfaceSection() },
 )
@@ -443,6 +448,46 @@ private fun VoiceSection() {
     NyummyCoachCard(text = "오늘 첫 끼 최고였어")
     NyummyVoiceToast(text = "기록 완료! 냐미가 맛있게 먹었어")
 }
+
+/** 원격 스프라이트 재생. 보통 체형 냐미의 "기록 끝난 뒤 여유" 동작 3개를 차례로 돌린다. 두 크기 모두 셀의 정수배로 그려진다. */
+@Composable
+private fun SpriteSection() {
+    var group by remember { mutableIntStateOf(0) }
+    val clips = SampleSpriteGroups[group]
+    NyummyText(text = "동작 ${group + 1} / ${SampleSpriteGroups.size}", style = NyummyTheme.typography.bodyS)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16),
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        listOf(120.dp, 160.dp).forEach { size ->
+            NyummySpriteAnimation(
+                clips = clips,
+                frame = SampleSpriteFrame,
+                restMillis = 2_000L,
+                onFinished = { group = (group + 1) % SampleSpriteGroups.size },
+                modifier = Modifier.size(size),
+                placeholder = { NyummySkeleton(shape = NyummySkeletonShape.Block, modifier = Modifier.fillMaxSize()) },
+            )
+        }
+    }
+}
+
+private const val SampleSpriteBase = "https://cdn.nyummy.co.kr/cats/normal/v1/relaxed/"
+private val SampleSpriteFrame = NyummySpriteFrame(width = 136, height = 136, framesPerRow = 4, durationMs = 100)
+private val SampleSpriteGroups = listOf(
+    persistentListOf(
+        NyummySpriteClip(SampleSpriteBase + "stretch/nyami_relaxed_stretch_01_stretch_grid_136.png", frames = 9),
+        NyummySpriteClip(SampleSpriteBase + "stretch/nyami_relaxed_stretch_02_return_grid_136.png", frames = 8),
+    ),
+    persistentListOf(
+        NyummySpriteClip(SampleSpriteBase + "yawn/nyami_relaxed_yawn_01_yawn_grid_136.png", frames = 13),
+    ),
+    persistentListOf(
+        NyummySpriteClip(SampleSpriteBase + "lie_down/nyami_relaxed_lie_down_01_lie_grid_136.png", frames = 9),
+        NyummySpriteClip(SampleSpriteBase + "lie_down/nyami_relaxed_lie_down_02_sleep_grid_136.png", frames = 8, loop = true),
+        NyummySpriteClip(SampleSpriteBase + "lie_down/nyami_relaxed_lie_down_03_wake_grid_136.png", frames = 8),
+    ),
+)
 
 private enum class CatalogOverlay { Confirm, Alert, Destructive, Input, Sheet, KeepGoing, DeleteSheet }
 

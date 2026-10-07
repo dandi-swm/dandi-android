@@ -1,0 +1,189 @@
+package com.dandi.nyummy.common.presentation.designsystem.component
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import coil3.SingletonImageLoader
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.allowHardware
+import coil3.toBitmap
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.roundToInt
+
+/**
+ * 원격 스프라이트 시트 여러 장을 이어서 재생한다. 냐미 픽셀 애니메이션처럼 동작 하나가 시트 여러 장으로 나뉜 경우에 쓴다.
+ *
+ * 재생 순서:
+ * 1. 클립을 순서대로 재생한다. 중간의 되풀이 구간은 [loopTimes]번 재생한다.
+ * 2. 마지막 클립까지 끝나면 [restMillis] 동안 쉰다. 마지막 클립이 되풀이 구간이면 쉬는 동안 그 구간을 계속 되풀이하고,
+ *    아니면 마지막 프레임에 멈춰 있다.
+ * 3. 쉬고 나면 [onFinished]를 부른다. 다음 동작은 부른 쪽이 정한다.
+ *    재생을 시작할 때 받은 [onFinished]를 부르므로, 부른 쪽은 어떤 재생이 끝났는지 콜백에 담아 둘 수 있다.
+ *
+ * 픽셀이 고르게 보이도록 셀을 칸 폭에 가장 가까운 정수배로 키우고, 칸의 가운데 아래에 맞춰 그린다.
+ * 이미지를 받는 동안에는 [placeholder]를, 한 장이라도 받지 못하면 [error]를 보여 준다.
+ *
+ * @param playId 값이 바뀌면 [clips]가 같아도 처음부터 다시 재생한다.
+ */
+@Composable
+fun NyummySpriteAnimation(
+    clips: ImmutableList<NyummySpriteClip>,
+    frame: NyummySpriteFrame,
+    restMillis: Long,
+    onFinished: () -> Unit,
+    modifier: Modifier = Modifier,
+    playId: Int = 0,
+    loopTimes: Int = DefaultLoopTimes,
+    contentDescription: String? = null,
+    placeholder: @Composable () -> Unit = {},
+    error: @Composable () -> Unit = placeholder,
+) {
+    when (val sheets = rememberSpriteSheets(clips)) {
+        SpriteSheets.Loading -> Box(modifier) { placeholder() }
+        SpriteSheets.Failed -> Box(modifier) { error() }
+        is SpriteSheets.Loaded -> NyummySpriteAnimation(
+            images = sheets.images,
+            clips = clips,
+            frame = frame,
+            restMillis = restMillis,
+            onFinished = onFinished,
+            modifier = modifier,
+            playId = playId,
+            loopTimes = loopTimes,
+            contentDescription = contentDescription,
+        )
+    }
+}
+
+/**
+ * 이미 디코딩한 시트를 받는 [NyummySpriteAnimation]. [images]는 [clips]와 순서가 같아야 한다.
+ * 미리보기와 테스트에서 비트맵을 직접 넣을 때 쓴다.
+ */
+@Composable
+fun NyummySpriteAnimation(
+    images: ImmutableList<ImageBitmap>,
+    clips: ImmutableList<NyummySpriteClip>,
+    frame: NyummySpriteFrame,
+    restMillis: Long,
+    onFinished: () -> Unit,
+    modifier: Modifier = Modifier,
+    playId: Int = 0,
+    loopTimes: Int = DefaultLoopTimes,
+    contentDescription: String? = null,
+) {
+    var clipIndex by remember(clips, playId) { mutableIntStateOf(0) }
+    var frameIndex by remember(clips, playId) { mutableIntStateOf(0) }
+
+    LaunchedEffect(clips, playId) {
+        if (clips.isEmpty()) return@LaunchedEffect
+        val frameMillis = frame.durationMs.coerceAtLeast(1).toLong()
+        suspend fun playOnce(index: Int) {
+            clipIndex = index
+            for (f in 0 until clips[index].frames) {
+                frameIndex = f
+                delay(frameMillis)
+            }
+        }
+
+        spriteSteps(clips, loopTimes).forEach { step -> repeat(step.times) { playOnce(step.clipIndex) } }
+
+        val last = clips.lastIndex
+        if (clips[last].loop) {
+            // 쉬는 동안 마지막 되풀이 구간을 이어서 재생한다. 구간을 중간에 끊지 않고 한 바퀴씩 센다.
+            val cycleMillis = clips[last].frames * frameMillis
+            var rested = 0L
+            while (rested < restMillis) {
+                playOnce(last)
+                rested += cycleMillis
+            }
+        } else {
+            delay(restMillis)
+        }
+        onFinished()
+    }
+
+    val semantics = if (contentDescription != null) {
+        Modifier.semantics { this.contentDescription = contentDescription }
+    } else {
+        Modifier
+    }
+    Canvas(modifier = modifier.then(semantics)) {
+        val image = images.getOrNull(clipIndex) ?: return@Canvas
+        val clip = clips.getOrNull(clipIndex) ?: return@Canvas
+        val f = frameIndex.coerceIn(0, (clip.frames - 1).coerceAtLeast(0))
+        val perRow = frame.framesPerRow.coerceAtLeast(1)
+        val scale = spritePixelScale(frame.width, size.width)
+        val dstWidth = frame.width * scale
+        val dstHeight = frame.height * scale
+        drawImage(
+            image = image,
+            srcOffset = IntOffset((f % perRow) * frame.width, (f / perRow) * frame.height),
+            srcSize = IntSize(frame.width, frame.height),
+            dstOffset = IntOffset(
+                x = ((size.width - dstWidth) / 2f).roundToInt(),
+                y = (size.height - dstHeight).roundToInt(),
+            ),
+            dstSize = IntSize(dstWidth, dstHeight),
+            filterQuality = FilterQuality.None,
+        )
+    }
+}
+
+private sealed interface SpriteSheets {
+    data object Loading : SpriteSheets
+    data object Failed : SpriteSheets
+    class Loaded(val images: ImmutableList<ImageBitmap>) : SpriteSheets
+}
+
+/**
+ * [clips]의 시트를 모두 받아 [ImageBitmap]으로 돌려준다. 한 장이라도 받지 못하면 실패다.
+ * 앱 공용 이미지 로더의 메모리와 디스크 캐시를 그대로 쓴다. 캔버스에서 일부 영역을 잘라 그리므로 하드웨어 비트맵은 쓰지 않는다.
+ */
+@Composable
+private fun rememberSpriteSheets(clips: ImmutableList<NyummySpriteClip>): SpriteSheets {
+    val context = LocalContext.current
+    val sheets by produceState<SpriteSheets>(initialValue = SpriteSheets.Loading, clips) {
+        value = SpriteSheets.Loading
+        val loader = SingletonImageLoader.get(context)
+        value = try {
+            coroutineScope {
+                clips.map { clip ->
+                    async {
+                        val request = ImageRequest.Builder(context).data(clip.url).allowHardware(false).build()
+                        val result = loader.execute(request) as? SuccessResult ?: error("sprite load failed: ${clip.url}")
+                        result.image.toBitmap().asImageBitmap()
+                    }
+                }.awaitAll()
+            }.toImmutableList().let(SpriteSheets::Loaded)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            SpriteSheets.Failed
+        }
+    }
+    return sheets
+}
+
+private const val DefaultLoopTimes = 3
