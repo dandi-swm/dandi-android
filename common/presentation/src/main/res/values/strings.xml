@@ -15,4 +15,8 @@
     <string name="nyummy_streak_unit">days</string>
     <string name="nyummy_coin_description">%1$s coins</string>
     <string name="nyummy_streak_description">%1$d-day streak</string>
+    <string name="nyummy_nutrient_carb">Carbs</string>
+    <string name="nyummy_nutrient_protein">Protein</string>
+    <string name="nyummy_nutrient_fat">Fat</string>
+    <string name="nyummy_nutrient_grams">%1$dg</string>
 </resources>

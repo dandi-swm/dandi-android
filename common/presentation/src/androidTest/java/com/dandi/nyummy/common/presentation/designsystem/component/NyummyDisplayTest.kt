@@ -180,6 +180,76 @@ class NyummyDisplayTest {
     }
 
     @Test
+    fun 막대_진행률은_기본_10_얇은_크기_6_두께다() {
+        composeRule.setContent {
+            NyummyTheme {
+                androidx.compose.foundation.layout.Column {
+                    NyummyLinearProgress(progress = 0.5f, modifier = Modifier.width(200.dp).testTag("m"))
+                    NyummyLinearProgress(
+                        progress = 0.5f,
+                        size = NyummyLinearProgressSize.S,
+                        modifier = Modifier.width(200.dp).testTag("s"),
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag("m").assertHeightIsEqualTo(10.dp)
+        composeRule.onNodeWithTag("s").assertHeightIsEqualTo(6.dp)
+    }
+
+    @Test
+    fun 영양소_칸은_이름과_그램을_한_덩어리로_읽는다() {
+        composeRule.setContent {
+            NyummyTheme { NyummyNutrientStat(NyummyNutrient.Protein, grams = 42, modifier = Modifier.testTag("stat")) }
+        }
+
+        // 실행 로케일의 리소스에서 기대값을 읽는다(영문 기기에서는 Protein).
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        composeRule.onNodeWithTag("stat").assert(
+            SemanticsMatcher.expectValue(
+                SemanticsProperties.Text,
+                listOf(
+                    androidx.compose.ui.text.AnnotatedString(context.getString(R.string.nyummy_nutrient_protein)),
+                    androidx.compose.ui.text.AnnotatedString(context.getString(R.string.nyummy_nutrient_grams, 42)),
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun 식사_행은_이름_시각_배지를_보여주고_onClick이_있을_때만_누를_수_있다() {
+        var clicks = 0
+        composeRule.setContent {
+            NyummyTheme {
+                androidx.compose.foundation.layout.Column {
+                    NyummyMealRow(
+                        title = "닭가슴살 샐러드",
+                        subtitle = "오후 12:24",
+                        leading = { NyummyMealRowPlaceholder() },
+                        modifier = Modifier.testTag("static"),
+                    )
+                    NyummyMealRow(
+                        title = "분석 중이에요",
+                        subtitle = "오후 6:40",
+                        leading = { NyummyMealRowPlaceholder() },
+                        badge = "분석 중",
+                        badgeTone = NyummyBadgeTone.Info,
+                        onClick = { clicks++ },
+                        modifier = Modifier.testTag("clickable"),
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("오후 12:24", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("분석 중", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("static").assertHasNoClickAction()
+        composeRule.onNodeWithTag("clickable").assertHasClickAction().performClick()
+        assertEquals(1, clicks)
+    }
+
+    @Test
     fun 원형_로딩은_끝을_알_수_없는_진행으로_알린다() {
         composeRule.mainClock.autoAdvance = false
         composeRule.setContent {

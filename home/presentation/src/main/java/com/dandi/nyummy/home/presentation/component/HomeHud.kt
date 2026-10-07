@@ -1,43 +1,45 @@
 package com.dandi.nyummy.home.presentation.component
 
-import androidx.compose.foundation.BorderStroke
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.dandi.nyummy.common.presentation.component.DandiText
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
-import com.dandi.nyummy.common.presentation.ui.theme.designSystemDropShadow
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
+import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.home.presentation.R
-import java.util.Locale
+import java.text.NumberFormat
 import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
- * 홈 상단 HUD: 지갑(보유 코인) 카드와 우편·공지·설정 퀵 액션 버튼 줄.
+ * 홈 상단. 왼쪽 지갑 카드(보유 코인)가 남는 폭을 차지하고, 오른쪽에 우편, 공지, 설정 버튼이 붙는다.
  */
 @Composable
-internal fun HomeServiceHud(
+internal fun HomeHud(
     coinBalance: Int,
     hasUnreadNotice: Boolean,
     onWalletClick: () -> Unit,
@@ -48,228 +50,194 @@ internal fun HomeServiceHud(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
     ) {
         HomeWalletCard(
             coinBalance = coinBalance,
             onClick = onWalletClick,
             modifier = Modifier.weight(1f),
         )
-        Spacer(modifier = Modifier.width(DesignSystemThemeImpl.designSystemSpacing.space16))
-        Row(horizontalArrangement = Arrangement.spacedBy(DesignSystemThemeImpl.designSystemSpacing.space12)) {
-            HomeQuickAction(
-                iconRes = CommonR.drawable.nyummy_icon_mail,
-                label = stringResource(R.string.home_action_mail),
-                onClick = onMailClick,
-            )
-            HomeQuickAction(
-                iconRes = CommonR.drawable.nyummy_icon_bell,
-                label = stringResource(R.string.home_action_notice),
-                showAlertDot = hasUnreadNotice,
-                onClick = onNoticeClick,
-            )
-            HomeQuickAction(
-                iconRes = CommonR.drawable.nyummy_icon_settings,
-                label = stringResource(R.string.home_action_settings),
-                onClick = onSettingsClick,
-            )
-        }
+        HomeHudAction(
+            icon = CommonR.drawable.nyummy_ic_mail,
+            label = stringResource(R.string.home_action_mail),
+            onClick = onMailClick,
+        )
+        HomeHudAction(
+            icon = CommonR.drawable.nyummy_ic_bell,
+            label = stringResource(R.string.home_action_notice),
+            onClick = onNoticeClick,
+            showDot = hasUnreadNotice,
+        )
+        HomeHudAction(
+            icon = CommonR.drawable.nyummy_ic_settings,
+            label = stringResource(R.string.home_action_settings),
+            onClick = onSettingsClick,
+        )
     }
 }
 
+/**
+ * 지갑 카드. 코인 일러스트 32 + "보유 코인"(body/s) + 숫자(number/l) + 셰브론.
+ * 폭이 좁은 화면(360 등)에서는 숫자가 잘리지 않도록 셰브론을 뺀다.
+ */
 @Composable
 private fun HomeWalletCard(
     coinBalance: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    val shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius20)
-
-    Surface(
-        onClick = onClick,
+    val shape = RoundedCornerShape(NyummyTheme.radius.l)
+    val coins = NumberFormat.getIntegerInstance().format(coinBalance)
+    val description = stringResource(R.string.home_wallet_description, coins)
+    BoxWithConstraints(
         modifier = modifier
-            .designSystemDropShadow(
-                shape = shape,
-                shadow = DesignSystemThemeImpl.designSystemElevation.surfaceLow,
-            )
-            .height(WalletCardHeight),
-        shape = shape,
-        color = colors.bgDefaultLevel1,
-        contentColor = colors.contentDefaultLevel0,
+            .height(HudHeight)
+            .semantics(mergeDescendants = true) { contentDescription = description }
+            .nyummyClickable(onClick = onClick)
+            .background(NyummyTheme.colors.bg.surface, shape)
+            .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.border.subtle, shape),
     ) {
+        val showChevron = maxWidth >= WalletChevronMinWidth
         Row(
-            modifier = Modifier.padding(horizontal = WalletCardHorizontalPadding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = WalletStartPadding, end = NyummyTheme.spacing.s8),
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                painter = painterResource(CommonR.drawable.nyummy_icon_coin),
+            Image(
+                painter = painterResource(CommonR.drawable.nyummy_asset_coin),
                 contentDescription = null,
-                modifier = Modifier.size(WalletCoinIconSize),
-                tint = Color.Unspecified,
+                modifier = Modifier.size(CoinSize),
             )
-            Spacer(modifier = Modifier.width(DesignSystemThemeImpl.designSystemSpacing.space12))
             Column(modifier = Modifier.weight(1f)) {
-                DandiText(
+                NyummyText(
                     text = stringResource(R.string.home_wallet_label),
-                    color = colors.contentDefaultLevel2,
-                    style = DesignSystemThemeImpl.typeScale.textRegularS,
+                    style = NyummyTheme.typography.bodyS,
+                    color = NyummyTheme.colors.content.tertiary,
+                    maxLines = 1,
                 )
-                DandiText(
-                    text = String.format(Locale.getDefault(), "%,d", coinBalance),
-                    color = colors.contentDefaultLevel0,
-                    style = DesignSystemThemeImpl.typeScale.numberStrongL,
+                NyummyText(text = coins, style = NyummyTheme.typography.numberL, maxLines = 1)
+            }
+            if (showChevron) {
+                Icon(
+                    painter = painterResource(CommonR.drawable.nyummy_ic_chevron_right),
+                    contentDescription = null,
+                    tint = NyummyTheme.colors.content.tertiary,
+                    modifier = Modifier.size(NyummyTheme.size.iconM),
                 )
             }
-            Icon(
-                painter = painterResource(CommonR.drawable.nyummy_icon_chevron_right),
-                contentDescription = null,
-                modifier = Modifier.size(WalletChevronSize),
-                tint = colors.contentDefaultLevel1,
-            )
         }
     }
 }
 
+/** 상단 작은 버튼. 아이콘 24 + 라벨(label/s). 공지는 읽지 않은 글이 있으면 빨간 점을 단다. */
 @Composable
-private fun HomeQuickAction(
-    iconRes: Int,
+private fun HomeHudAction(
+    @DrawableRes icon: Int,
     label: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    showAlertDot: Boolean = false,
+    showDot: Boolean = false,
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    val shape: Shape = RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius16)
-
-    Box(modifier = modifier) {
-        Surface(
-            onClick = onClick,
-            modifier = Modifier
-                .designSystemDropShadow(
-                    shape = shape,
-                    shadow = DesignSystemThemeImpl.designSystemElevation.surfaceLow,
-                )
-                .size(width = QuickActionWidth, height = QuickActionHeight),
-            shape = shape,
-            color = colors.bgDefaultLevel1,
-            contentColor = colors.contentDefaultLevel1,
+    val shape = RoundedCornerShape(NyummyTheme.radius.m)
+    Box(
+        modifier = Modifier
+            .width(HudActionWidth)
+            .height(HudHeight)
+            .nyummyClickable(onClick = onClick)
+            .background(NyummyTheme.colors.bg.surface, shape)
+            .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.border.subtle, shape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2),
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Icon(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(QuickActionIconSize),
-                    tint = colors.contentIconLevel0,
-                )
-                Spacer(modifier = Modifier.height(QuickActionLabelGap))
-                DandiText(
-                    text = label,
-                    color = colors.contentDefaultLevel1,
-                    style = DesignSystemThemeImpl.typeScale.labelStrongS,
-                )
-            }
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = NyummyTheme.colors.content.primary,
+                modifier = Modifier.size(NyummyTheme.size.iconL),
+            )
+            NyummyText(
+                text = label,
+                style = NyummyTheme.typography.labelS,
+                color = NyummyTheme.colors.content.secondary,
+                maxLines = 1,
+            )
         }
-        if (showAlertDot) {
+        if (showDot) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = AlertDotInset, end = AlertDotInset)
-                    .size(AlertDotSize)
-                    .background(color = colors.bgBrandDefault, shape = CircleShape),
+                    .offset(x = -DotInset, y = DotInset)
+                    .size(DotSize)
+                    .background(NyummyTheme.colors.content.danger, CircleShape)
+                    .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.bg.surface, CircleShape),
             )
         }
     }
 }
 
-/**
- * 스트릭(연속 기록) 요약 배너.
- */
+/** 연속 기록 배너. 새싹 일러스트 + "N일째"(number/s) + "냐미에게 밥을 챙겼어요!"(label/m), 브랜드색. */
 @Composable
 internal fun HomeStreakBanner(
     streakDays: Int,
-    recordsUntilNextReward: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-
-    Surface(
-        onClick = onClick,
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(StreakBannerHeight),
-        shape = DesignSystemThemeImpl.designSystemShape.pill,
-        color = colors.bgSuccessSoft,
-        contentColor = colors.contentDefaultLevel0,
+            .height(StreakHeight)
+            .semantics(mergeDescendants = true) {}
+            .nyummyClickable(onClick = onClick)
+            .background(NyummyTheme.colors.bg.selected, RoundedCornerShape(NyummyTheme.radius.full))
+            .padding(start = StreakStartPadding, end = NyummyTheme.spacing.s16),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.padding(
-                start = StreakBannerStartPadding,
-                end = StreakBannerEndPadding,
-            ),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                painter = painterResource(CommonR.drawable.nyummy_icon_leaf),
-                contentDescription = null,
-                modifier = Modifier.size(StreakLeafIconSize),
-                tint = colors.contentIconSuccess,
-            )
-            Spacer(modifier = Modifier.width(DesignSystemThemeImpl.designSystemSpacing.space8))
-            DandiText(
-                text = stringResource(R.string.home_streak_days, streakDays),
-                color = colors.contentAccentSage,
-                style = DesignSystemThemeImpl.typeScale.textStrongM,
-            )
-            Spacer(modifier = Modifier.width(StreakMessageGap))
-            DandiText(
-                text = stringResource(R.string.home_streak_message),
-                modifier = Modifier.weight(1f),
-                color = colors.contentDefaultLevel0,
-                style = DesignSystemThemeImpl.typeScale.textStrongM,
-            )
-            DandiText(
-                text = stringResource(R.string.home_streak_next_reward, recordsUntilNextReward),
-                color = colors.contentAccentSage,
-                style = DesignSystemThemeImpl.typeScale.labelStrongS,
-            )
-            Icon(
-                painter = painterResource(CommonR.drawable.nyummy_icon_chevron_right),
-                contentDescription = null,
-                modifier = Modifier.size(StreakChevronSize),
-                tint = colors.contentAccentSage,
-            )
-        }
+        Image(
+            painter = painterResource(CommonR.drawable.nyummy_asset_streak),
+            contentDescription = null,
+            modifier = Modifier.size(NyummyTheme.size.iconL),
+        )
+        NyummyText(
+            text = stringResource(R.string.home_streak_days, streakDays),
+            style = NyummyTheme.typography.numberS,
+            color = NyummyTheme.colors.content.brand,
+            maxLines = 1,
+        )
+        NyummyText(
+            text = stringResource(R.string.home_streak_message),
+            style = NyummyTheme.typography.labelM,
+            color = NyummyTheme.colors.content.brand,
+            maxLines = 1,
+        )
     }
 }
 
-private val WalletCardHeight = 64.dp
-private val WalletCardHorizontalPadding = 12.dp
-private val WalletCoinIconSize = 44.dp
-private val WalletChevronSize = 20.dp
-private val QuickActionWidth = 48.dp
-private val QuickActionHeight = 62.dp
-private val QuickActionIconSize = 24.dp
-private val QuickActionLabelGap = 2.dp
-private val AlertDotInset = 5.dp
-private val AlertDotSize = 9.dp
-private val StreakBannerHeight = 38.dp
-private val StreakBannerStartPadding = 14.dp
-private val StreakBannerEndPadding = 12.dp
-private val StreakLeafIconSize = 20.dp
-private val StreakMessageGap = 4.dp
-private val StreakChevronSize = 14.dp
+private val HudHeight = 64.dp
+private val HudActionWidth = 52.dp
+private val WalletStartPadding = 10.dp
+
+/** 지갑 카드가 이 폭보다 좁으면 셰브론을 숨긴다(390 화면 170, 360 화면 140). */
+private val WalletChevronMinWidth = 160.dp
+private val CoinSize = 32.dp
+private val DotSize = 9.dp
+private val DotInset = 10.dp
+private val StreakHeight = 44.dp
+private val StreakStartPadding = 14.dp
 
 @Preview(showBackground = true, widthDp = 390)
 @Composable
-private fun HomeServiceHudPreview() {
-    DesignSystemTheme {
-        Column {
-            HomeServiceHud(
+private fun HomeHudPreview() {
+    NyummyTheme {
+        Column(
+            modifier = Modifier.padding(NyummyTheme.spacing.gutter),
+            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
+        ) {
+            HomeHud(
                 coinBalance = 1240,
                 hasUnreadNotice = true,
                 onWalletClick = {},
@@ -277,12 +245,7 @@ private fun HomeServiceHudPreview() {
                 onNoticeClick = {},
                 onSettingsClick = {},
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            HomeStreakBanner(
-                streakDays = 7,
-                recordsUntilNextReward = 1,
-                onClick = {},
-            )
+            HomeStreakBanner(streakDays = 7, onClick = {})
         }
     }
 }

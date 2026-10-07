@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -19,21 +19,18 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
-import com.dandi.nyummy.home.presentation.component.HomeMyRoomCard
-import com.dandi.nyummy.home.presentation.component.HomeServiceHud
-import com.dandi.nyummy.home.presentation.component.HomeStreakBanner
-import com.dandi.nyummy.home.presentation.component.HomeTodaySummarySheet
+import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.home.entity.HomeSummaryVO
+import com.dandi.nyummy.home.presentation.component.HomeHud
+import com.dandi.nyummy.home.presentation.component.HomeRoomCard
+import com.dandi.nyummy.home.presentation.component.HomeStreakBanner
+import com.dandi.nyummy.home.presentation.component.HomeTodayBar
+import com.dandi.nyummy.home.presentation.component.HomeTodaySheet
 
 /**
- * 홈(마이룸) 화면. Figma `LIVE / Home · My Room` 시안을 구현한다.
- *
- * 위에서부터 HUD(지갑·퀵 액션) → 스트릭 배너 → 마이룸 카드 순으로 쌓이며,
- * 식사 기록 진입은 앱 공통 Shell 의 하단 내비게이션 중앙 카메라 버튼이 담당한다.
- *
- * @param viewModel 홈 화면 상태를 관리하는 ViewModel.
+ * 홈. 위에서부터 지갑과 우편, 공지, 설정 → 연속 기록 배너 → 고양이방 카드(남는 높이 전부) 순서로 쌓는다.
+ * 식사 기록은 하단 내비 카메라나 오늘 바(오늘 기록이 없을 때)로 들어간다.
+ * 넓은 화면에서는 콘텐츠 폭을 480으로 묶어 가운데 둔다.
  */
 @Composable
 fun HomePage(
@@ -41,143 +38,107 @@ fun HomePage(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    // 식사를 기록하고 돌아오면 숫자가 바뀌어야 하므로 화면이 보일 때마다 다시 읽는다.
     LifecycleResumeEffect(Unit) {
         viewModel.onIntent(HomeIntent.ScreenResumed)
         onPauseOrDispose { }
     }
 
-    HomeScreen(
-        uiState = uiState,
-        onIntent = viewModel::onIntent,
-    )
+    HomeScreen(uiState = uiState, onIntent = viewModel::onIntent)
 }
 
 @Composable
-private fun HomeScreen(
+internal fun HomeScreen(
     uiState: HomeUIState,
     onIntent: (HomeIntent) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    val summary = uiState.summary
-
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .background(DesignSystemThemeImpl.designSystemColor.bgSurfaceIvory),
+            .background(NyummyTheme.colors.bg.canvas),
+        contentAlignment = Alignment.TopCenter,
     ) {
-        HomeContent(
-            uiState = uiState,
-            onIntent = onIntent,
-        )
-        if (uiState.isTodaySummarySheetVisible) {
-            HomeTodaySummarySheet(
-                todayRecordedCount = summary.todayRecordedCount,
-                todayCalorieKcal = summary.todayCalorieKcal,
-                goalCalorieKcal = summary.goalCalorieKcal,
-                calorieProgress = uiState.calorieProgress,
-                calorieProgressPercent = uiState.calorieProgressPercent,
-                remainingCalorieKcal = uiState.remainingCalorieKcal,
-                onDismiss = { onIntent(HomeIntent.DismissTodaySummarySheet) },
-                onAddMeal = {
-                    onIntent(HomeIntent.ClickAddMeal)
-//                    onIntent(HomeIntent.DismissTodaySummarySheet)
-                },
+        Column(
+            modifier = Modifier
+                .widthIn(max = ContentMaxWidth)
+                .fillMaxWidth()
+                .padding(horizontal = NyummyTheme.spacing.gutter),
+        ) {
+            Spacer(Modifier.height(NyummyTheme.spacing.s8))
+            HomeHud(
+                coinBalance = uiState.summary.coinBalance,
+                // 공지 API가 아직 없어 읽지 않은 공지 점은 띄우지 않는다.
+                hasUnreadNotice = false,
+                onWalletClick = { onIntent(HomeIntent.ClickWallet) },
+                onMailClick = { onIntent(HomeIntent.ClickMail) },
+                onNoticeClick = { onIntent(HomeIntent.ClickNotice) },
+                onSettingsClick = { onIntent(HomeIntent.ClickSettings) },
+            )
+            Spacer(Modifier.height(NyummyTheme.spacing.s12))
+            HomeStreakBanner(
+                streakDays = uiState.summary.streakDays,
+                onClick = { onIntent(HomeIntent.ClickStreak) },
+            )
+            Spacer(Modifier.height(NyummyTheme.spacing.s12))
+            HomeRoomCard(
+                hasRecordedToday = uiState.hasRecordedToday,
+                speech = stringResource(
+                    if (uiState.hasRecordedToday) R.string.home_speech_recorded else R.string.home_speech_waiting,
+                ),
+                isMenuExpanded = uiState.isRoomMenuExpanded,
+                onToggleMenu = { onIntent(HomeIntent.ToggleRoomMenu) },
+                onMyRoomClick = { onIntent(HomeIntent.ClickMyRoom) },
+                onShareFriendClick = { onIntent(HomeIntent.ClickShareFriend) },
+                onNyamiStatusClick = { onIntent(HomeIntent.ClickNyamiStatus) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                HomeTodayBar(
+                    recordedCount = uiState.summary.todayRecordedCount,
+                    calorieProgress = uiState.calorieProgress,
+                    onClick = { onIntent(HomeIntent.ClickTodayBar) },
+                )
+            }
+            Spacer(Modifier.height(NyummyTheme.spacing.s16))
+        }
+        if (uiState.isTodaySheetVisible) {
+            HomeTodaySheet(
+                recordedCount = uiState.summary.todayRecordedCount,
+                nutrition = uiState.todayNutrition,
+                meals = uiState.todayMeals,
+                isLoading = uiState.isTodayMealsLoading,
+                isFailed = uiState.isTodayMealsFailed,
+                onRetry = { onIntent(HomeIntent.RetryTodayMeals) },
+                onAddMeal = { onIntent(HomeIntent.ClickAddMeal) },
+                onDismiss = { onIntent(HomeIntent.DismissTodaySheet) },
             )
         }
     }
 }
 
-@Composable
-private fun HomeContent(
-    uiState: HomeUIState,
-    onIntent: (HomeIntent) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val summary = uiState.summary
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = DesignSystemThemeImpl.designSystemLayout.mobileGutter),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(modifier = Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space8))
-        HomeServiceHud(
-            coinBalance = summary.coinBalance,
-            // 공지 API가 아직 없어 읽지 않은 공지 점은 띄우지 않는다.
-            hasUnreadNotice = false,
-            onWalletClick = { onIntent(HomeIntent.ClickWallet) },
-            onMailClick = { onIntent(HomeIntent.ClickMail) },
-            onNoticeClick = { onIntent(HomeIntent.ClickNotice) },
-            onSettingsClick = { onIntent(HomeIntent.ClickSettings) },
-        )
-        Spacer(modifier = Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space16))
-        HomeStreakBanner(
-            streakDays = summary.streakDays,
-            recordsUntilNextReward = summary.recordsUntilNextReward,
-            onClick = { onIntent(HomeIntent.ClickStreak) },
-        )
-        Spacer(modifier = Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space16))
-        HomeMyRoomCard(
-            speechTitle = stringResource(
-                if (summary.todayRecordedCount > 0) R.string.home_speech_recorded_title else R.string.home_speech_waiting_title,
-            ),
-            speechBody = stringResource(
-                if (summary.todayRecordedCount > 0) R.string.home_speech_recorded_body else R.string.home_speech_waiting_body,
-            ),
-            todayRecordedCount = summary.todayRecordedCount,
-            todayCalorieKcal = summary.todayCalorieKcal,
-            goalCalorieKcal = summary.goalCalorieKcal,
-            calorieProgress = uiState.calorieProgress,
-            calorieProgressPercent = uiState.calorieProgressPercent,
-            onTodaySummaryClick = { onIntent(HomeIntent.ClickTodaySummary) },
-            isActionMenuExpanded = uiState.isRoomActionMenuExpanded,
-            onToggleActionMenu = { onIntent(HomeIntent.ToggleRoomActionMenu) },
-            onShareClick = { onIntent(HomeIntent.ClickShare) },
-            onRoomEditClick = { onIntent(HomeIntent.ClickRoomEdit) },
-            onSpeechReplayClick = { onIntent(HomeIntent.ClickSpeechReplay) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .heightIn(max = RoomCardMaxHeight),
-        )
-        Spacer(modifier = Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space16))
-    }
-}
-
-/** 밥 주기 버튼 제거로 방 카드가 길어질 때, 롱스크린에서 배경 크롭이 어색해지지 않도록 상한을 둔다. */
-private val RoomCardMaxHeight = 560.dp
-
-@Preview(showBackground = true, widthDp = 390, heightDp = 844)
-@Composable
-private fun HomePagePreview() {
-    DesignSystemTheme {
-        HomeScreen(
-            uiState = HomeUIState(summary = PreviewSummary),
-            onIntent = {},
-        )
-    }
-}
-
-@Preview(showBackground = true, widthDp = 390, heightDp = 844)
-@Composable
-private fun HomePageTodaySummarySheetPreview() {
-    DesignSystemTheme {
-        HomeScreen(
-            uiState = HomeUIState(
-                summary = PreviewSummary,
-                isTodaySummarySheetVisible = true,
-            ),
-            onIntent = {},
-        )
-    }
-}
+private val ContentMaxWidth = 480.dp
 
 private val PreviewSummary = HomeSummaryVO(
     coinBalance = 1240,
     streakDays = 7,
-    recordsUntilNextReward = 1,
     todayRecordedCount = 1,
     todayCalorieKcal = 1350,
     goalCalorieKcal = 1800,
 )
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 767)
+@Composable
+private fun HomeBeforeRecordPreview() {
+    NyummyTheme {
+        HomeScreen(uiState = HomeUIState(summary = PreviewSummary.copy(todayRecordedCount = 0)), onIntent = {})
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 767)
+@Composable
+private fun HomeAfterRecordPreview() {
+    NyummyTheme {
+        HomeScreen(uiState = HomeUIState(summary = PreviewSummary, isRoomMenuExpanded = true), onIntent = {})
+    }
+}
