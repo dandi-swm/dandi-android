@@ -36,7 +36,7 @@ fun AppNavHost(
             when (signal) {
                 is NavSignal.GoToDestPage -> handleNavRoute(signal.route, backStack)
                 is NavSignal.DeepLink -> handleDeepLink(signal.route, backStack)
-                NavSignal.Back -> backStack.removeLastOrNull()
+                NavSignal.Back -> backStack.popUnlessRoot()
                 is NavSignal.ResetToPage -> handleResetTo(signal.route, backStack)
                 NavSignal.BackToInitialPage -> navigateToInitialStack(backStack)
                 is NavSignal.GoToExternalLink -> openExternalLink(signal.url, context)
@@ -147,6 +147,14 @@ fun navigateToInitialStack(backStack: NavBackStack<NavKey>) {
     backStack.clear()
     backStack.add(GenericNavKey(LoginPage.PATH))
     Log.d(TAG, "backToInitial: reset stack to Login")
+}
+
+/**
+ * 맨 위 화면 하나를 닫는다. 남은 화면이 하나(루트)뿐이면 아무것도 하지 않는다.
+ * 홈처럼 루트로 들어간 화면에서 공통 오류(404) 다이얼로그가 "뒤로"를 보내도 백스택이 비지 않게 한다.
+ */
+internal fun MutableList<*>.popUnlessRoot() {
+    if (size > 1) removeAt(lastIndex)
 }
 
 /**

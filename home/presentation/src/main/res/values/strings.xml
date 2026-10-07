@@ -26,4 +26,8 @@
     <string name="home_sheet_add_meal">Add a meal</string>
     <string name="home_sheet_meal_order">Record %1$d</string>
     <string name="home_sheet_meal_calorie">%1$s kcal</string>
+    <string name="home_speech_waiting_title">Waiting for your first meal</string>
+    <string name="home_speech_waiting_body">Log your first meal and we\'ll check it together!</string>
+    <string name="home_speech_recorded_title">Thanks for today</string>
+    <string name="home_speech_recorded_body">Thanks for taking care of me today</string>
 </resources>

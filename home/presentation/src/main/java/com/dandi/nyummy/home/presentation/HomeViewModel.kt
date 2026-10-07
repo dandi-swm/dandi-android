@@ -2,21 +2,21 @@ package com.dandi.nyummy.home.presentation
 
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
-import com.dandi.nyummy.home.presentation.mock.HomeMockData
+import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.meal.domain.MealRecordPage
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    val navigationHelper: NavigationHelper
-) :
-    MviViewModel<HomeIntent, HomeUIState, HomeReducerEvent>(HomeUIState.empty) {
+    private val navigationHelper: NavigationHelper,
+    private val getHomeSummary: GetHomeSummaryUseCase,
+) : MviViewModel<HomeIntent, HomeUIState, HomeReducerEvent>(HomeUIState.empty) {
 
-    init {
-        // TODO: 홈 요약 API 연동 시 UseCase 호출로 교체한다.
-        dispatch(HomeReducerEvent.SummaryLoaded(HomeMockData.summary))
-    }
+    private var summaryJob: Job? = null
 
     override fun onIntent(intent: HomeIntent) {
         when (intent) {
@@ -44,6 +44,19 @@ class HomeViewModel @Inject constructor(
 
             HomeIntent.DismissTodaySummarySheet ->
                 dispatch(HomeReducerEvent.TodaySummarySheetVisibilityChanged(visible = false))
+
+            HomeIntent.ScreenResumed -> loadSummary()
+        }
+    }
+
+    /**
+     * 홈 요약을 다시 읽는다. 식사를 기록하고 돌아오면 숫자가 바뀌어야 하므로 화면이 보일 때마다 부른다.
+     * 이전 요청이 남아 있으면 취소하고, 실패하면 직전 값을 그대로 둔다(안내는 UseCase가 한다).
+     */
+    private fun loadSummary() {
+        summaryJob?.cancel()
+        summaryJob = viewModelScope.launch {
+            getHomeSummary().onSuccess { dispatch(HomeReducerEvent.SummaryLoaded(it)) }
         }
     }
 
