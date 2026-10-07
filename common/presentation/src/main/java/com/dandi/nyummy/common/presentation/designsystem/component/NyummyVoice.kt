@@ -50,12 +50,15 @@ enum class NyummyBubbleTail { Bottom, Left, Top, None }
  * 냐미 말풍선. Voice 서체(voice/m) 전용, 최대 3줄. 흰 바탕 + 2px default 테두리, 모서리 16.
  * 몸통과 꼬리를 하나의 외곽선으로 그려 이음새가 보이지 않는다.
  * 너비는 글 길이에 맞춰 늘어나고, 최대 너비는 [modifier]로 제한한다.
+ *
+ * @param typing true면 대사가 바뀔 때마다 미연시처럼 한 글자씩 찍는다. 말풍선 크기는 처음부터 문장 전체에 맞춘다.
  */
 @Composable
 fun NyummyVoiceBubble(
     text: String,
     modifier: Modifier = Modifier,
     tail: NyummyBubbleTail = NyummyBubbleTail.Bottom,
+    typing: Boolean = false,
 ) {
     val dimens = NyummyComponentDimens
     val cornerRadius = NyummyTheme.radius.m
@@ -80,7 +83,11 @@ fun NyummyVoiceBubble(
             .then(tailPadding)
             .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s12),
     ) {
-        NyummyText(text = text, style = NyummyTheme.typography.voiceM, maxLines = 3, overflow = TextOverflow.Ellipsis)
+        if (typing) {
+            NyummyTypewriterText(text = text, style = NyummyTheme.typography.voiceM, maxLines = 3, overflow = TextOverflow.Ellipsis)
+        } else {
+            NyummyText(text = text, style = NyummyTheme.typography.voiceM, maxLines = 3, overflow = TextOverflow.Ellipsis)
+        }
     }
 }
 

@@ -114,6 +114,7 @@ internal fun HomeRoomCard(
         }
         NyummyVoiceBubble(
             text = speech,
+            typing = true,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = NyummyTheme.spacing.gutter)
