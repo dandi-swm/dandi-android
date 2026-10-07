@@ -9,18 +9,20 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
-import com.dandi.nyummy.history.entity.DailyMealHistoryVO
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.entity.NutrientProgressVO
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.home.presentation.component.HomeHud
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Rule
@@ -44,6 +46,20 @@ class HomeScreenTest {
         todayRecordedCount = 3,
         todayCalorieKcal = 1350,
         goalCalorieKcal = 1800,
+    )
+
+    private val meals = persistentListOf(
+        MealHistoryVO(id = "1", name = "토스트와 우유", recordedAt = "08:10"),
+        MealHistoryVO(id = "2", name = "닭가슴살 샐러드", recordedAt = "12:24"),
+        MealHistoryVO(id = "3", recordedAt = "18:40", status = MealAnalysisStatus.ANALYZING),
+    )
+
+    private val nutrition = DailyNutritionVO(
+        currentCalorieKcal = 1350,
+        targetCalorieKcal = 1800,
+        carbohydrate = NutrientProgressVO(dailyGram = 185, goalGram = 250),
+        protein = NutrientProgressVO(dailyGram = 42, goalGram = 60),
+        fat = NutrientProgressVO(dailyGram = 31, goalGram = 50),
     )
 
     private fun setScreen(state: HomeUIState, onIntent: (HomeIntent) -> Unit = {}) {
@@ -113,21 +129,14 @@ class HomeScreenTest {
 
     @Test
     fun 오늘_식사_시트는_탄단지_그램과_식사_목록을_보여주고_남은_kcal은_보여주지_않는다() {
-        val meals = DailyMealHistoryVO(
-            meals = listOf(
-                MealHistoryVO(id = "1", name = "토스트와 우유", recordedAt = "08:10"),
-                MealHistoryVO(id = "2", name = "닭가슴살 샐러드", recordedAt = "12:24"),
-                MealHistoryVO(id = "3", recordedAt = "18:40", status = MealAnalysisStatus.ANALYZING),
-            ),
-            nutrition = DailyNutritionVO(
-                currentCalorieKcal = 1350,
-                targetCalorieKcal = 1800,
-                carbohydrate = NutrientProgressVO(dailyGram = 185, goalGram = 250),
-                protein = NutrientProgressVO(dailyGram = 42, goalGram = 60),
-                fat = NutrientProgressVO(dailyGram = 31, goalGram = 50),
+        setScreen(
+            HomeUIState(
+                summary = recordedSummary,
+                todayNutrition = nutrition,
+                todayMeals = meals,
+                isTodaySheetVisible = true,
             ),
         )
-        setScreen(HomeUIState(summary = recordedSummary, todayMeals = meals, isTodaySheetVisible = true))
 
         composeRule.onNodeWithText(text(R.string.home_sheet_title)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.home_sheet_recorded, 3)).assertIsDisplayed()
@@ -146,6 +155,40 @@ class HomeScreenTest {
         composeRule.onNodeWithText(text(R.string.home_meal_analyzing_badge), useUnmergedTree = true).assertIsDisplayed()
         // 영양 압박 금지: 남은 kcal 문구가 없어야 한다.
         composeRule.onNodeWithText("kcal", substring = true, useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun 전에_읽은_내용이_있어도_다시_읽기에_실패하면_다시_시도를_보여준다() {
+        setScreen(
+            HomeUIState(
+                summary = recordedSummary,
+                todayNutrition = nutrition,
+                todayMeals = meals,
+                isTodaySheetVisible = true,
+                isTodayMealsFailed = true,
+            ),
+        )
+
+        composeRule.onNodeWithText(text(R.string.home_sheet_retry)).assertIsDisplayed()
+        composeRule.onNodeWithText("닭가슴살 샐러드", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun 식사가_많아도_스크롤해서_식사_추가하기를_누를_수_있다() {
+        val intents = mutableListOf<HomeIntent>()
+        val many = (1..12).map { MealHistoryVO(id = "$it", name = "간식 $it", recordedAt = "15:00") }.toImmutableList()
+        setScreen(
+            HomeUIState(
+                summary = recordedSummary,
+                todayNutrition = nutrition,
+                todayMeals = many,
+                isTodaySheetVisible = true,
+            ),
+        ) { intents += it }
+
+        composeRule.onNodeWithText(text(R.string.home_sheet_add_meal)).performScrollTo().performClick()
+
+        assertEquals(listOf<HomeIntent>(HomeIntent.ClickAddMeal), intents)
     }
 
     @Test

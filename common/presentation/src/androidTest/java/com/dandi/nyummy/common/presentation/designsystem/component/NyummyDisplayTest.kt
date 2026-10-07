@@ -204,12 +204,14 @@ class NyummyDisplayTest {
             NyummyTheme { NyummyNutrientStat(NyummyNutrient.Protein, grams = 42, modifier = Modifier.testTag("stat")) }
         }
 
+        // 실행 로케일의 리소스에서 기대값을 읽는다(영문 기기에서는 Protein).
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
         composeRule.onNodeWithTag("stat").assert(
             SemanticsMatcher.expectValue(
                 SemanticsProperties.Text,
                 listOf(
-                    androidx.compose.ui.text.AnnotatedString("단백질"),
-                    androidx.compose.ui.text.AnnotatedString("42g"),
+                    androidx.compose.ui.text.AnnotatedString(context.getString(R.string.nyummy_nutrient_protein)),
+                    androidx.compose.ui.text.AnnotatedString(context.getString(R.string.nyummy_nutrient_grams, 42)),
                 ),
             ),
         )

@@ -13,6 +13,7 @@ import com.dandi.nyummy.common.entity.time.KstTime
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.history.domain.HistoryRepository
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
+import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
@@ -125,18 +126,22 @@ class HomeViewModelTest {
 
     @Test
     fun `오늘 기록이 있으면 시트를 열고 KST 오늘 식사를 읽는다`() = runTest(testDispatcher) {
-        val meals = DailyMealHistoryVO(meals = listOf(MealHistoryVO(id = "1", name = "닭가슴살 샐러드")))
-        historyRepository.next = { meals }
+        val meal = MealHistoryVO(id = "1", name = "닭가슴살 샐러드")
+        val nutrition = DailyNutritionVO(currentCalorieKcal = 420)
+        historyRepository.next = { DailyMealHistoryVO(meals = listOf(meal), nutrition = nutrition) }
         resumeWith(HomeSummaryVO(todayRecordedCount = 1))
 
+        // 요청 사이에 KST 자정이 지나도 실패하지 않도록 전후 날짜를 모두 허용한다.
+        val before = KstTime.now().let { Triple(it.year, it.month, it.day) }
         viewModel.onIntent(HomeIntent.ClickTodayBar)
         assertTrue(state.isTodaySheetVisible)
         assertTrue(state.isTodayMealsLoading)
         advanceUntilIdle()
+        val after = KstTime.now().let { Triple(it.year, it.month, it.day) }
 
-        val today = KstTime.now()
-        assertEquals(listOf(Triple(today.year, today.month, today.day)), historyRepository.dailyCalls)
-        assertEquals(meals, state.todayMeals)
+        assertTrue(historyRepository.dailyCalls.single() in setOf(before, after))
+        assertEquals(nutrition, state.todayNutrition)
+        assertEquals(listOf(meal), state.todayMeals)
         assertFalse(state.isTodayMealsLoading)
         assertTrue(navigationHelper.pages.isEmpty())
     }
@@ -149,15 +154,32 @@ class HomeViewModelTest {
         viewModel.onIntent(HomeIntent.ClickTodayBar)
         advanceUntilIdle()
         assertTrue(state.isTodayMealsFailed)
-        assertNull(state.todayMeals)
+        assertNull(state.todayNutrition)
 
         historyRepository.next = { DailyMealHistoryVO.empty }
         viewModel.onIntent(HomeIntent.RetryTodayMeals)
         advanceUntilIdle()
 
         assertFalse(state.isTodayMealsFailed)
-        assertEquals(DailyMealHistoryVO.empty, state.todayMeals)
+        assertEquals(DailyNutritionVO.empty, state.todayNutrition)
+        assertTrue(state.todayMeals.isEmpty())
         assertEquals(2, historyRepository.dailyCalls.size)
+    }
+
+    @Test
+    fun `한 번 읽은 뒤 다시 열 때 실패하면 실패 상태가 된다`() = runTest(testDispatcher) {
+        resumeWith(HomeSummaryVO(todayRecordedCount = 1))
+        viewModel.onIntent(HomeIntent.ClickTodayBar)
+        advanceUntilIdle()
+        viewModel.onIntent(HomeIntent.DismissTodaySheet)
+
+        historyRepository.next = { throw IOException("offline") }
+        viewModel.onIntent(HomeIntent.ClickTodayBar)
+        advanceUntilIdle()
+
+        // 화면은 실패를 먼저 보고 다시 시도를 띄운다(HomeScreenTest 참고).
+        assertTrue(state.isTodayMealsFailed)
+        assertFalse(state.isTodayMealsLoading)
     }
 
     @Test
