@@ -115,8 +115,8 @@ val appRoutes: List<AppRoute> = listOf(
         render = { HistoryPage() },
     ),
     AppRoute(
+        // 하단 탭에서 빠져 링크로만 열린다. 기능을 열 때 진입 위치를 다시 정한다.
         path = CollectionPage.PATH,
-        isBottomTab = true,
         render = { CollectionPage() },
     ),
     AppRoute(
