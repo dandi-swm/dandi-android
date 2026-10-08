@@ -89,6 +89,7 @@ internal fun HomeScreen(
                 useFallbackCat = uiState.isCatAnimationFailed,
                 onCatClick = { onIntent(HomeIntent.ClickCat) },
                 onCatMotionFinished = { playId -> onIntent(HomeIntent.CatMotionFinished(playId)) },
+                onCatShown = { onIntent(HomeIntent.CatShown) },
                 speech = uiState.catLine ?: fallbackSpeech,
                 isMenuExpanded = uiState.isRoomMenuExpanded,
                 onToggleMenu = { onIntent(HomeIntent.ToggleRoomMenu) },

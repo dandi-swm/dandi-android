@@ -94,6 +94,7 @@ class HomeViewModelTest {
                 ttiHelper = FakeTTIHelper,
             ),
             catMotionPicker = CatMotionPicker(Random(seed = 1)),
+            ttiHelper = FakeTTIHelper,
         )
     }
 

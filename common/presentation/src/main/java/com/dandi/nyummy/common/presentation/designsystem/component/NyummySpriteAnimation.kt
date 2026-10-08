@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
@@ -50,6 +51,7 @@ import kotlin.math.roundToInt
  * [clips], [frame], [restMillis], [loopTimes] 중 하나라도 바뀌면 처음부터 다시 재생한다.
  *
  * @param playId 값이 바뀌면 [clips]가 같아도 처음부터 다시 재생한다.
+ * @param onShown 시트를 받아 그리기 시작했거나 받지 못해 [error]를 보여 준 순간 불린다. 화면 표시 시점 계측(TTI)에 쓴다.
  */
 @Composable
 fun NyummySpriteAnimation(
@@ -63,9 +65,16 @@ fun NyummySpriteAnimation(
     contentDescription: String? = null,
     placeholder: @Composable () -> Unit = {},
     error: @Composable () -> Unit = placeholder,
+    onShown: () -> Unit = {},
 ) {
     val lastDrawn = remember { LastDrawnCell() }
-    when (val sheets = rememberSpriteSheets(clips)) {
+    val sheets = rememberSpriteSheets(clips)
+    // 시트를 받아 그렸거나, 받지 못해 [error]를 보여 준 순간을 알린다(화면에 무언가 보인 시점).
+    val currentOnShown by rememberUpdatedState(onShown)
+    LaunchedEffect(sheets is SpriteSheets.Loading) {
+        if (sheets !is SpriteSheets.Loading) currentOnShown()
+    }
+    when (sheets) {
         SpriteSheets.Loading -> {
             val held = lastDrawn.image
             if (held != null) {
