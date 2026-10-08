@@ -320,7 +320,7 @@ private fun DetailHeader(
                 )
                 Spacer(Modifier.width(DetailHeaderLeafGap))
                 DandiText(
-                    text = "${dayLabelOf(selectedDate)} · ${mealOrderLabelOf(meal.orderIndex, mealCount)}",
+                    text = "${dayLabelOf(selectedDate)} · ${mealOrderLabelOf(meal.orderIndex)}",
                     color = colors.contentAccentSage,
                     style = DesignSystemThemeImpl.typeScale.labelStrongS,
                 )

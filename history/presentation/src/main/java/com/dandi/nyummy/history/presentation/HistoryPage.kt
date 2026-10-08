@@ -32,12 +32,10 @@ import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.entity.NutrientProgressVO
 import com.dandi.nyummy.history.presentation.component.HistoryCalendar
-import com.dandi.nyummy.history.presentation.component.HistoryDailySection
+import com.dandi.nyummy.history.presentation.component.HistoryDaySection
 import com.dandi.nyummy.history.presentation.component.HistoryMealDetailOverlay
 import com.dandi.nyummy.history.presentation.model.HistoryMonth
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
-import com.dandi.nyummy.history.presentation.model.dayTitleOf
-import com.dandi.nyummy.history.presentation.model.mealCountLabelOf
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 
@@ -101,21 +99,25 @@ private fun HistoryScreen(
                     onClickToday = { onIntent(HistoryIntent.ClickToday) },
                     onSelectDate = { onIntent(HistoryIntent.SelectDate(it)) },
                 )
+                Spacer(Modifier.height(DaySectionTopGap))
+                HistoryDaySection(
+                    date = uiState.selectedDate,
+                    isToday = uiState.isTodaySelected,
+                    meals = uiState.selectedDayMeals,
+                    completedMealCount = uiState.completedMealCount,
+                    nutrition = uiState.dailyNutrition,
+                    isNutritionExpanded = uiState.isNutritionExpanded,
+                    isLoading = uiState.isLoading,
+                    isLoadFailed = uiState.isLoadFailed,
+                    reanalyzingMealIds = uiState.reanalyzingMealIds,
+                    onToggleNutrition = { onIntent(HistoryIntent.ToggleNutritionSummary) },
+                    onRetryLoad = { onIntent(HistoryIntent.RetryLoad) },
+                    onRecordMeal = { onIntent(HistoryIntent.ClickRecordMeal) },
+                    onClickMeal = { onIntent(HistoryIntent.ClickMeal(it)) },
+                    onRetryAnalysis = { onIntent(HistoryIntent.ClickRetryAnalysis(it)) },
+                    onDeleteFailedMeal = { onIntent(HistoryIntent.ClickDeleteFailedMeal(it)) },
+                )
             }
-            Spacer(Modifier.height(DailySectionTopGap))
-            HistoryDailySection(
-                dayTitle = dayTitleOf(uiState.selectedDate),
-                mealCountLabel = mealCountLabelOf(uiState.completedMealCount),
-                nutrition = uiState.dailyNutrition,
-                isNutritionExpanded = uiState.isNutritionExpanded,
-                isLoading = uiState.isLoading,
-                meals = uiState.selectedDayMeals,
-                reanalyzingMealIds = uiState.reanalyzingMealIds,
-                onToggleNutrition = { onIntent(HistoryIntent.ToggleNutritionSummary) },
-                onClickMeal = { onIntent(HistoryIntent.ClickMeal(it)) },
-                onRetryAnalysis = { onIntent(HistoryIntent.ClickRetryAnalysis(it)) },
-                onDeleteFailedMeal = { onIntent(HistoryIntent.ClickDeleteFailedMeal(it)) },
-            )
         }
         uiState.mealDetail?.let { detail ->
             HistoryMealDetailOverlay(
@@ -135,7 +137,7 @@ private val ContentMaxWidth = 480.dp
 
 // "오늘" 버튼 터치 영역(44)이 월 이름(30)보다 높아 위 간격을 그만큼 줄여 Figma 위치(24)에 맞춘다.
 private val CalendarTopGap = 17.dp
-private val DailySectionTopGap = 28.dp
+private val DaySectionTopGap = 28.dp
 
 private fun previewUiState(): HistoryUIState {
     val today = HistoryDateVO(2026, 7, 24)

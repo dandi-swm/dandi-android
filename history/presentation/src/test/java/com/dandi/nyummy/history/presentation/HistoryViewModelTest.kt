@@ -517,6 +517,7 @@ class HistoryViewModelTest {
                 repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
             ),
             mealAnalysisEventHelper = analysisEvents,
+            navigationHelper = navigationHelper,
         )
     }
 

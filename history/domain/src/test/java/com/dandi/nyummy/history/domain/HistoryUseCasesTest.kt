@@ -69,7 +69,7 @@ class HistoryUseCasesTest {
     }
 
     @Test
-    fun `월간 조회 중 비공통 에러면 에러 스낵바를 띄우고 실패를 돌려준다`() = runBlocking {
+    fun `월간 조회 중 비공통 에러면 아무것도 띄우지 않고 실패를 돌려준다`() = runBlocking {
         val useCase = GetMonthlyMealsUseCase(
             repository = ThrowingHistoryRepository(httpException(400)),
             resourceHelper = FakeResourceHelper(),
@@ -80,8 +80,8 @@ class HistoryUseCasesTest {
 
         val result = useCase(2026, 8)
 
-        val snackBar = messageHelper.snackBars.single()
-        assertEquals(IconType.ERROR, snackBar.iconType)
+        // 화면이 오류를 보여 주고 다시 불러오게 하므로 스낵바를 띄우지 않는다.
+        assertTrue(messageHelper.snackBars.isEmpty())
         assertTrue(messageHelper.oneButtonDialogs.isEmpty())
         assertTrue(result.isFailure)
     }
@@ -103,7 +103,7 @@ class HistoryUseCasesTest {
     }
 
     @Test
-    fun `일일 조회 중 네트워크 오류면 안내 스낵바를 띄우고 실패를 돌려준다`() = runBlocking {
+    fun `일일 조회 중 네트워크 오류면 아무것도 띄우지 않고 실패를 돌려준다`() = runBlocking {
         val useCase = GetDailyMealsUseCase(
             repository = ThrowingHistoryRepository(IOException("offline")),
             resourceHelper = FakeResourceHelper(),
@@ -114,7 +114,7 @@ class HistoryUseCasesTest {
 
         val result = useCase(2026, 8, 23)
 
-        assertEquals("식사 기록을 불러오지 못했어요", messageHelper.snackBars.single().messageText)
+        assertTrue(messageHelper.snackBars.isEmpty())
         assertTrue(messageHelper.oneButtonDialogs.isEmpty())
         assertTrue(result.isFailure)
     }

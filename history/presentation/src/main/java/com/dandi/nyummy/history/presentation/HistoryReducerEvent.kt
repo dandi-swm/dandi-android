@@ -14,7 +14,7 @@ sealed interface HistoryReducerEvent : ReducerEvent {
     /** 월/일 데이터 조회를 시작했습니다(로딩 표시). */
     data object LoadStarted : HistoryReducerEvent
 
-    /** 월/일 데이터 조회가 실패로 끝났습니다(로딩 종료). 에러 안내는 UseCase 의 스낵바가 담당합니다. */
+    /** 월/일 데이터 조회가 실패로 끝났습니다(로딩 종료). 화면 안에서 안내하고 다시 불러오게 합니다. */
     data object LoadFailed : HistoryReducerEvent
 
     /** 식사 수정/삭제 요청이 실패로 끝났습니다(진행 플래그 해제). 에러 안내는 UseCase 의 스낵바가 담당합니다. */
@@ -47,6 +47,9 @@ sealed interface HistoryReducerEvent : ReducerEvent {
         val selectedDate: HistoryDateVO,
         val dailyDetail: DailyMealHistoryVO,
     ) : HistoryReducerEvent
+
+    /** 같은 달 안에서 [date]를 골라 그날 기록을 받기 시작했습니다. 칸 표시는 바로 옮기고 기록 자리는 로딩으로 둡니다. */
+    data class DaySelectionStarted(val date: HistoryDateVO) : HistoryReducerEvent
 
     /** 표시 중인 달 안에서 선택 날짜가 바뀌었습니다. */
     data class DaySelected(

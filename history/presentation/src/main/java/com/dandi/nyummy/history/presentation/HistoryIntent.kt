@@ -13,6 +13,12 @@ sealed interface HistoryIntent : MviIntent {
     /** 월 헤더의 `오늘` 버튼을 눌러 오늘 날짜로 이동했다. */
     data object ClickToday : HistoryIntent
 
+    /** 불러오지 못한 기록을 다시 불러오기를 눌렀습니다. */
+    data object RetryLoad : HistoryIntent
+
+    /** 오늘 기록이 없을 때 `지금 기록하기`를 눌렀습니다. */
+    data object ClickRecordMeal : HistoryIntent
+
     /** 캘린더에서 날짜 하나를 선택했습니다. */
     data class SelectDate(val date: HistoryDateVO) : HistoryIntent
 

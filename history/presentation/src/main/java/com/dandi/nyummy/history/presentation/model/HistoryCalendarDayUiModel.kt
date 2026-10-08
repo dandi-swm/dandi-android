@@ -79,14 +79,9 @@ fun meridiemTimeOf(time: String): String {
     }
 }
 
-/**
- * 하루 안의 순서 라벨입니다. 디자인 시안의 표기(첫 끼 → n 번째 끼니 → 마지막 끼니)를 따릅니다.
- */
-fun mealOrderLabelOf(orderIndex: Int, mealCount: Int): String = when {
-    orderIndex <= 1 -> "첫 끼"
-    orderIndex >= mealCount -> "마지막 끼니"
-    else -> "${koreanOrdinalOf(orderIndex)} 번째 끼니"
-}
+/** 하루 안의 순서 라벨입니다. Figma 표기를 따라 첫 끼, 두 번째 끼니, 세 번째 끼니로 씁니다. */
+fun mealOrderLabelOf(orderIndex: Int): String =
+    if (orderIndex <= 1) "첫 끼" else "${koreanOrdinalOf(orderIndex)} 번째 끼니"
 
 private fun koreanOrdinalOf(index: Int): String = when (index) {
     2 -> "두"
@@ -103,9 +98,6 @@ fun percentOf(current: Int, goal: Int): Int =
 /** 진행 바에 쓰는 0f..1f 비율입니다. */
 fun progressOf(current: Int, goal: Int): Float =
     if (goal <= 0) 0f else current.toFloat() / goal
-
-/** "2끼 기록" 형태의 기록 횟수 라벨입니다. */
-fun mealCountLabelOf(count: Int): String = "${count}끼 기록"
 
 /** 천 단위 구분 기호가 들어간 숫자 라벨("2,129")입니다. */
 fun numberLabelOf(value: Int): String = String.format(Locale.KOREA, "%,d", value)

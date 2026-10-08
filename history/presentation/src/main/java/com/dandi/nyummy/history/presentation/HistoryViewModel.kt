@@ -3,6 +3,7 @@ package com.dandi.nyummy.history.presentation
 import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.common.domain.analysis.MealAnalysisEvent
 import com.dandi.nyummy.common.domain.helper.MealAnalysisEventHelper
+import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.history.domain.DeleteMealUseCase
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
@@ -19,6 +20,7 @@ import com.dandi.nyummy.history.presentation.model.isoDateOf
 import com.dandi.nyummy.history.presentation.util.isAfter
 import com.dandi.nyummy.history.presentation.util.lastDayOf
 import com.dandi.nyummy.history.presentation.util.todayDate
+import com.dandi.nyummy.meal.domain.MealRecordPage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
@@ -35,6 +37,7 @@ class HistoryViewModel @Inject constructor(
     private val deleteMeal: DeleteMealUseCase,
     private val reanalyzeMeal: ReanalyzeMealUseCase,
     private val mealAnalysisEventHelper: MealAnalysisEventHelper,
+    private val navigationHelper: NavigationHelper,
 ) : MviViewModel<HistoryIntent, HistoryUIState, HistoryReducerEvent>(
     HistoryUIState.initial(todayDate()),
 ) {
@@ -65,6 +68,11 @@ class HistoryViewModel @Inject constructor(
     override fun onIntent(intent: HistoryIntent) {
         when (intent) {
             is HistoryIntent.ChangeMonth -> changeMonth(intent.month)
+
+            HistoryIntent.RetryLoad ->
+                loadMonth(month = currentState.displayedHistoryMonth, selectedDate = currentState.selectedDate)
+
+            HistoryIntent.ClickRecordMeal -> navigationHelper.navigateTo(MealRecordPage)
 
             is HistoryIntent.SelectDate -> selectDate(intent.date)
 
@@ -105,9 +113,9 @@ class HistoryViewModel @Inject constructor(
 
     override fun reduce(state: HistoryUIState, event: HistoryReducerEvent): HistoryUIState =
         when (event) {
-            HistoryReducerEvent.LoadStarted -> state.copy(isLoading = true)
+            HistoryReducerEvent.LoadStarted -> state.copy(isLoading = true, isLoadFailed = false)
 
-            HistoryReducerEvent.LoadFailed -> state.copy(isLoading = false)
+            HistoryReducerEvent.LoadFailed -> state.copy(isLoading = false, isLoadFailed = true)
 
             HistoryReducerEvent.MealActionFailed -> state.withMealDetail {
                 // 에러 안내는 UseCase 의 스낵바가 담당한다. 다이얼로그는 열어 둔 채 재시도만 허용한다.
@@ -156,12 +164,24 @@ class HistoryViewModel @Inject constructor(
                 selectedDayMeals = event.dailyDetail.meals.withCompletedMealOrder(),
                 dailyNutrition = event.dailyDetail.nutrition,
                 isLoading = false,
+                isLoadFailed = false,
                 reanalyzingMealIds = persistentSetOf(),
                 mealDetail = null,
             ).withCalendarMonth(monthOf(event.calendar), event.calendar.toCalendarDays())
 
+            is HistoryReducerEvent.DaySelectionStarted -> state.copy(
+                selectedDate = event.date,
+                selectedDayMeals = persistentListOf(),
+                isLoading = true,
+                isLoadFailed = false,
+                reanalyzingMealIds = persistentSetOf(),
+                mealDetail = null,
+            )
+
             is HistoryReducerEvent.DaySelected -> state.copy(
                 selectedDate = event.date,
+                isLoading = false,
+                isLoadFailed = false,
                 selectedDayMeals = event.dailyDetail.meals.withCompletedMealOrder(),
                 dailyNutrition = event.dailyDetail.nutrition,
                 reanalyzingMealIds = persistentSetOf(),
@@ -273,8 +293,7 @@ class HistoryViewModel @Inject constructor(
         loadJob = viewModelScope.launch {
             dispatch(HistoryReducerEvent.LoadStarted)
             val today = todayDate()
-            // 월간 조회가 실패하면 일간 조회를 건너뛴다 — 두 UseCase 가 같은 오류
-            // 스낵바를 각각 발행해 중복 노출되는 것을 막는다.
+            // 월간 조회가 실패하면 일간 조회를 건너뛰고 화면에 오류를 보여 준다.
             val calendar = getMonthlyMeals(year, monthValue).getOrNull() ?: run {
                 dispatch(HistoryReducerEvent.LoadFailed)
                 return@launch
@@ -319,6 +338,7 @@ class HistoryViewModel @Inject constructor(
             return
         }
         loadJob?.cancel()
+        dispatch(HistoryReducerEvent.DaySelectionStarted(date))
         loadJob = viewModelScope.launch {
             getDailyMeals(date.year, date.month, date.day)
                 .onSuccess { dispatch(HistoryReducerEvent.DaySelected(date = date, dailyDetail = it)) }

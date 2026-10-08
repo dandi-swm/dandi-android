@@ -23,21 +23,31 @@
     <string name="history_calendar_day_today">오늘</string>
     <string name="history_calendar_day_recorded">기록 있음</string>
 
+    <string name="history_day_summary">%1$d번 기록했어요</string>
+
     <string name="history_nutrition_title">하루 영양</string>
+    <string name="history_nutrition_kcal">%1$s kcal</string>
     <string name="history_nutrition_collapse">접기</string>
-    <string name="history_nutrition_expand">자세히</string>
-    <string name="history_nutrition_loading">영양 정보를 불러오는 중</string>
+    <string name="history_nutrition_expand">펼치기</string>
 
-    <string name="history_empty_meals">아직 기록한 식사가 없어요</string>
+    <string name="history_empty_past_title">이날은 쉬어 갔어요</string>
+    <string name="history_empty_past_body">기록이 없는 날도 괜찮아요</string>
+    <string name="history_empty_today_title">아직 오늘 기록이 없어요</string>
+    <string name="history_empty_today_body">냐미가 밥을 기다리고 있어요</string>
+    <string name="history_empty_today_action">지금 기록하기</string>
 
-    <string name="history_analysis_failed_badge">분석 실패</string>
-    <string name="history_analysis_failed_title">이건 음식이 아닌 것 같아요</string>
-    <string name="history_analysis_failed_body">냐미가 사진에서 음식을 찾지 못했어요.\n다시 분석하거나 기록을 지울 수 있어요.</string>
+    <string name="history_load_failed_title">기록을 불러오지 못했어요</string>
+    <string name="history_load_failed_body">인터넷 연결을 확인하고 다시 시도해 주세요.</string>
+    <string name="history_load_retry">다시 불러오기</string>
+
+    <string name="history_meal_meta">%1$s %2$s</string>
+    <string name="history_analysis_failed_title">음식을 찾지 못했어요</string>
+    <string name="history_analysis_failed_body">다시 분석하거나 기록을 지울 수 있어요</string>
+    <string name="history_analysis_failed_description">분석 실패</string>
     <string name="history_analysis_retry">다시 분석하기</string>
     <string name="history_analysis_delete">기록 삭제</string>
-    <string name="history_analysis_pending_badge">분석 중</string>
-    <string name="history_analysis_pending_title">냐미가 열심히 분석 중이에요</string>
-    <string name="history_analysis_pending_body">다 되면 알림으로 알려줄게!</string>
+    <string name="history_analysis_pending_title">냐미가 맛보는 중이에요</string>
+    <string name="history_analysis_pending_body">다 되면 여기에 바로 보여 줄게요</string>
     <string name="history_analysis_unknown_meal">분석하지 못한 기록</string>
 
     <string name="history_macro_carbohydrate">탄수화물</string>

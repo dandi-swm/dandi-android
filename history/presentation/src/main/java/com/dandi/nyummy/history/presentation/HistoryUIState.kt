@@ -27,6 +27,7 @@ import kotlinx.collections.immutable.toImmutableSet
  *
  * @property displayedYear 지금 보고 있는 달의 연도. 달을 넘기면 데이터를 받기 전에 바로 바뀝니다.
  * @property calendarMonths 받아 둔 달의 캘린더 칸. 다시 넘겨 왔을 때 바로 보여 주고 뒤에서 새로 받습니다.
+ * @property isLoadFailed 고른 날의 기록을 불러오지 못했다. 화면 안에서 안내하고 다시 불러오게 합니다.
  */
 data class HistoryUIState(
     val displayedYear: Int = 0,
@@ -38,6 +39,7 @@ data class HistoryUIState(
     val dailyNutrition: DailyNutritionVO = DailyNutritionVO.empty,
     val isNutritionExpanded: Boolean = true,
     val isLoading: Boolean = false,
+    val isLoadFailed: Boolean = false,
     val reanalyzingMealIds: ImmutableSet<String> = persistentSetOf(),
     val mealDetail: HistoryMealDetailUiState? = null,
 ) : UiState {
@@ -66,6 +68,10 @@ data class HistoryUIState(
 
     val hasNoMeals: Boolean
         get() = !isLoading && selectedDayMeals.isEmpty()
+
+    /** 고른 날이 오늘인지. 기록이 없을 때 오늘이면 기록하러 가는 길을 보여 줍니다. */
+    val isTodaySelected: Boolean
+        get() = selectedDate == today
 
     /** 영양 합계에 실제로 반영되는(분석이 끝난) 식사 수. 실패/분석 중 기록은 세지 않습니다. */
     val completedMealCount: Int
