@@ -21,13 +21,17 @@ import com.dandi.nyummy.history.domain.HistoryRepository
 import com.dandi.nyummy.history.domain.ReanalyzeMealUseCase
 import com.dandi.nyummy.history.domain.UpdateMealNameUseCase
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
+import com.dandi.nyummy.history.entity.DailyNutritionVO
+import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.presentation.model.isoDateOf
+import com.dandi.nyummy.history.presentation.model.HistoryMonth
 import com.dandi.nyummy.history.presentation.util.previousMonthOf
 import com.dandi.nyummy.history.presentation.util.todayDate
+import com.dandi.nyummy.meal.domain.MealRecordPage
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -41,6 +45,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -50,6 +55,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HistoryViewModelTest {
@@ -57,6 +63,7 @@ class HistoryViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val repository = FakeHistoryRepository()
     private val analysisEvents = FakeMealAnalysisEventHelper()
+    private val navigationHelper = FakeNavigationHelper()
 
     @Before
     fun setUp() {
@@ -87,11 +94,11 @@ class HistoryViewModelTest {
         val (prevYear, prevMonth) = previousMonthOf(today.year, today.month)
         val viewModel = createViewModel()
 
-        viewModel.onIntent(HistoryIntent.ClickPreviousMonth)
+        viewModel.onIntent(HistoryIntent.ChangeMonth(HistoryMonth(prevYear, prevMonth)))
         advanceUntilIdle()
 
         assertTrue(repository.monthlyRequests.all { (year, _) -> year > 0 })
-        assertEquals(prevYear to prevMonth, repository.monthlyRequests.last())
+        assertTrue((prevYear to prevMonth) in repository.monthlyRequests)
         assertEquals(prevMonth, viewModel.uiState.value.displayedMonth)
     }
 
@@ -106,14 +113,14 @@ class HistoryViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.onIntent(HistoryIntent.ClickPreviousMonth)
+        viewModel.onIntent(HistoryIntent.ChangeMonth(HistoryMonth(prevYear, prevMonth)))
         advanceUntilIdle() // 이전 달 요청이 gate 에서 대기 중
-        viewModel.onIntent(HistoryIntent.ClickNextMonth)
+        viewModel.onIntent(HistoryIntent.ChangeMonth(HistoryMonth(today.year, today.month)))
         gate.complete(HistoryCalendarVO(prevYear, prevMonth)) // 취소된 요청의 늦은 응답
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertEquals(today.month % MONTHS_IN_YEAR + 1, state.displayedMonth)
+        assertEquals(today.month, state.displayedMonth)
         assertTrue(state.displayedMonth != prevMonth)
     }
 
@@ -306,8 +313,182 @@ class HistoryViewModelTest {
         advanceUntilIdle()
 
         assertTrue(!viewModel.uiState.value.isLoading)
-        // 월/일 UseCase 가 같은 오류 스낵바를 중복 발행하지 않도록 후속 조회를 중단한다.
+        // 월간 조회가 실패하면 일간 조회를 하지 않고 바로 오류를 보여 준다.
         assertEquals(0, repository.dailyRequests.size)
+        assertTrue(viewModel.uiState.value.isLoadFailed)
+    }
+
+    @Test
+    fun `불러오지 못한 뒤 다시 불러오기를 누르면 오류가 풀리고 기록을 보여 준다`() = runTest(testDispatcher) {
+        repository.monthlyOverride = { _, _ -> throw IOException("offline") }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.isLoadFailed)
+
+        repository.monthlyOverride = { year, month -> HistoryCalendarVO(year, month) }
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+        viewModel.onIntent(HistoryIntent.RetryLoad)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoadFailed)
+        assertFalse(state.isLoading)
+        assertEquals(2, state.selectedDayMeals.size)
+    }
+
+    @Test
+    fun `달을 넘기면 이전 날짜의 영양을 비워 실패해도 남지 않는다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ ->
+            DailyMealHistoryVO(nutrition = DailyNutritionVO(currentCalorieKcal = 1_200))
+        }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertEquals(1_200, viewModel.uiState.value.dailyNutrition.currentCalorieKcal)
+        repository.monthlyOverride = { _, _ -> throw IOException("offline") }
+
+        viewModel.onIntent(HistoryIntent.ChangeMonth(HistoryMonth.of(todayDate()).plusMonths(-1)))
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isLoadFailed)
+        assertEquals(DailyNutritionVO.empty, viewModel.uiState.value.dailyNutrition)
+    }
+
+    @Test
+    fun `이번 달보다 뒤로는 넘어가지 않는다`() = runTest(testDispatcher) {
+        val today = todayDate()
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        val next = HistoryMonth.of(today).plusMonths(1)
+
+        viewModel.onIntent(HistoryIntent.ChangeMonth(next))
+        advanceUntilIdle()
+
+        assertEquals(HistoryMonth.of(today), viewModel.uiState.value.displayedHistoryMonth)
+        assertFalse((next.year to next.month) in repository.monthlyRequests)
+    }
+
+    @Test
+    fun `달을 넘기면 데이터를 받기 전에 보고 있는 달부터 바뀐다`() = runTest(testDispatcher) {
+        val previous = HistoryMonth.of(todayDate()).plusMonths(-1)
+        val gate = CompletableDeferred<HistoryCalendarVO>()
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        repository.monthlyOverride = { year, month ->
+            if (year == previous.year && month == previous.month) gate.await() else HistoryCalendarVO(year, month)
+        }
+
+        viewModel.onIntent(HistoryIntent.ChangeMonth(previous))
+        runCurrent()
+
+        val state = viewModel.uiState.value
+        assertEquals(previous, state.displayedHistoryMonth)
+        assertTrue(state.isLoading)
+        assertTrue(previous.contains(state.selectedDate))
+        gate.complete(HistoryCalendarVO(previous.year, previous.month))
+    }
+
+    @Test
+    fun `달을 넘기면 고른 날은 같은 날짜로 두되 그 달 말일을 넘지 않는다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.SelectDate(HistoryDateVO(2025, 1, 31)))
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ChangeMonth(HistoryMonth(2025, 2)))
+        advanceUntilIdle()
+
+        assertEquals(HistoryDateVO(2025, 2, 28), viewModel.uiState.value.selectedDate)
+    }
+
+    @Test
+    fun `이번 달로 돌아오면 고른 날은 오늘을 넘지 않는다`() = runTest(testDispatcher) {
+        val today = todayDate()
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.SelectDate(HistoryDateVO(2025, 1, 31)))
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ChangeMonth(HistoryMonth.of(today)))
+        advanceUntilIdle()
+
+        assertEquals(HistoryDateVO(today.year, today.month, minOf(31, today.day)), viewModel.uiState.value.selectedDate)
+    }
+
+    @Test
+    fun `받은 달의 캘린더는 남겨 두고 지난달은 미리 한 번만 받는다`() = runTest(testDispatcher) {
+        val current = HistoryMonth.of(todayDate())
+        val previous = current.plusMonths(-1)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(current in state.calendarMonths)
+        assertTrue(previous in state.calendarMonths)
+
+        // 지난달로 넘겼다 돌아와도 이미 받은 지난달은 다시 미리 받지 않는다(보일 때 한 번 새로 받는 것만 센다).
+        viewModel.onIntent(HistoryIntent.ChangeMonth(previous))
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.ChangeMonth(current))
+        advanceUntilIdle()
+
+        assertEquals(2, repository.monthlyRequests.count { it == previous.year to previous.month })
+    }
+
+    @Test
+    fun `같은 달 날짜를 고르면 칸 표시가 바로 옮겨 가고 기록 자리는 로딩이 된다`() = runTest(testDispatcher) {
+        val previous = HistoryMonth.of(todayDate()).plusMonths(-1)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.ChangeMonth(previous))
+        advanceUntilIdle()
+        val target = HistoryDateVO(previous.year, previous.month, if (viewModel.uiState.value.selectedDate.day == 1) 2 else 1)
+        val gate = CompletableDeferred<DailyMealHistoryVO>()
+        repository.dailyOverride = { _, _, _ -> gate.await() }
+
+        viewModel.onIntent(HistoryIntent.SelectDate(target))
+        runCurrent()
+
+        assertEquals(target, viewModel.uiState.value.selectedDate)
+        assertTrue(viewModel.uiState.value.isLoading)
+
+        gate.complete(dailyWithTwoMeals())
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertEquals(2, viewModel.uiState.value.selectedDayMeals.size)
+    }
+
+    @Test
+    fun `지금 기록하기를 누르면 식사 기록 화면으로 간다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+
+        viewModel.onIntent(HistoryIntent.ClickRecordMeal)
+
+        assertEquals(listOf<Page>(MealRecordPage), navigationHelper.pages)
+    }
+
+    @Test
+    fun `식사를 지우고 그날 기록이 남지 않으면 캘린더 칸의 기록 표시도 지운다`() = runTest(testDispatcher) {
+        val today = todayDate()
+        repository.monthlyOverride = { year, month ->
+            HistoryCalendarVO(
+                year = year,
+                month = month,
+                days = listOf(HistoryCalendarDayVO(date = today, foodIconIds = listOf("7"), mealCount = 1)),
+            )
+        }
+        repository.dailyOverride = { _, _, _ -> DailyMealHistoryVO(meals = listOf(MealHistoryVO(id = "1", name = "김밥", orderIndex = 1))) }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.calendarDays.single { it.inCurrentMonth && it.date == today }.hasRecord)
+
+        viewModel.onIntent(HistoryIntent.ClickMeal("1"))
+        viewModel.onIntent(HistoryIntent.ClickDeleteMeal)
+        viewModel.onIntent(HistoryIntent.ConfirmDeleteMeal)
+        advanceUntilIdle()
+
+        val cell = viewModel.uiState.value.calendarDays.single { it.inCurrentMonth && it.date == today }
+        assertFalse(cell.hasRecord)
+        assertTrue(cell.foodIconIds.isEmpty())
     }
 
     @Test
@@ -494,7 +675,6 @@ class HistoryViewModelTest {
     private fun createViewModel(): HistoryViewModel {
         val resourceHelper = FakeResourceHelper()
         val messageHelper = FakeMessageHelper()
-        val navigationHelper = FakeNavigationHelper()
         val ttiHelper = FakeTTIHelper()
         return HistoryViewModel(
             getMonthlyMeals = GetMonthlyMealsUseCase(
@@ -516,6 +696,7 @@ class HistoryViewModelTest {
                 repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
             ),
             mealAnalysisEventHelper = analysisEvents,
+            navigationHelper = navigationHelper,
         )
     }
 
@@ -601,9 +782,12 @@ class HistoryViewModelTest {
     }
 
     private class FakeNavigationHelper : NavigationHelper {
+        val pages = mutableListOf<Page>()
         override val navigationFlow: Flow<NavSignal> = emptyFlow()
         override fun navigateByRoute(route: NavRoute) = Unit
-        override fun navigateTo(page: Page) = Unit
+        override fun navigateTo(page: Page) {
+            pages += page
+        }
         override fun navigateDeepLink(route: NavRoute) = Unit
         override fun navigateToBack() = Unit
         override fun navigateToAsRoot(page: Page) = Unit
@@ -658,9 +842,5 @@ class HistoryViewModelTest {
         override fun endTTITracking(page: TTIPage) = Unit
         override fun shotTTILogging(page: TTIPage) = Unit
         override fun addTTIMetaData(page: TTIPage, metadata: TTIMetaData, value: Any?) = Unit
-    }
-
-    companion object {
-        private const val MONTHS_IN_YEAR = 12
     }
 }

@@ -2,6 +2,7 @@ package com.dandi.nyummy.history.presentation.util
 
 import com.dandi.nyummy.common.entity.time.KstTime
 import com.dandi.nyummy.history.entity.HistoryDateVO
+import com.dandi.nyummy.history.presentation.model.HistoryMonth
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -26,10 +27,13 @@ class HistoryCalendarGridTest {
     }
 
     @Test
-    fun `그리드는 항상 42칸이다`() {
-        assertEquals(CALENDAR_CELL_COUNT, buildCalendarCells(2026, 7).size)
-        assertEquals(CALENDAR_CELL_COUNT, buildCalendarCells(2026, 2).size)
-        assertEquals(CALENDAR_CELL_COUNT, buildCalendarCells(2024, 12).size)
+    fun `그 달 날짜가 있는 주만 그린다`() {
+        // 2026년 2월: 일요일 시작, 28일 → 4주
+        assertEquals(4 * DAYS_IN_WEEK, buildCalendarCells(2026, 2).size)
+        // 2026년 10월: 목요일 시작, 31일이 토요일 → 5주(11월만 있는 주는 없다)
+        assertEquals(5 * DAYS_IN_WEEK, buildCalendarCells(2026, 10).size)
+        // 2026년 5월: 금요일 시작, 31일 → 6주
+        assertEquals(6 * DAYS_IN_WEEK, buildCalendarCells(2026, 5).size)
     }
 
     @Test
@@ -42,8 +46,8 @@ class HistoryCalendarGridTest {
         assertTrue(cells[3].inCurrentMonth)
         assertEquals(HistoryDateVO(2026, 7, 31), cells[33].date)
         assertTrue(cells[33].inCurrentMonth)
-        assertEquals(HistoryDateVO(2026, 8, 8), cells[41].date)
-        assertFalse(cells[41].inCurrentMonth)
+        assertEquals(HistoryDateVO(2026, 8, 1), cells.last().date)
+        assertFalse(cells.last().inCurrentMonth)
     }
 
     @Test
@@ -102,5 +106,34 @@ class HistoryCalendarGridTest {
         assertTrue(HistoryDateVO(2027, 1, 1).isAfter(HistoryDateVO(2026, 12, 31)))
         assertFalse(HistoryDateVO(2026, 7, 18).isAfter(HistoryDateVO(2026, 7, 18)))
         assertFalse(HistoryDateVO(2026, 7, 17).isAfter(HistoryDateVO(2026, 7, 18)))
+    }
+
+    @Test
+    fun `주 수는 1일의 요일과 그 달 길이로 정해진다`() {
+        assertEquals(4, weekCountOf(2026, 2))
+        assertEquals(5, weekCountOf(2026, 10))
+        assertEquals(6, weekCountOf(2026, 5))
+        assertEquals(6, weekCountOf(2026, 8))
+    }
+
+    @Test
+    fun `캘린더 마지막 장이 이번 달이고 앞 장은 지난달이다`() {
+        val current = HistoryMonth(2026, 1)
+        val last = HISTORY_MONTH_PAGE_COUNT - 1
+
+        assertEquals(current, historyMonthAt(last, current))
+        assertEquals(HistoryMonth(2025, 12), historyMonthAt(last - 1, current))
+        assertEquals(last, historyPageOf(current, current))
+        assertEquals(last - 13, historyPageOf(HistoryMonth(2024, 12), current))
+        // 첫 장은 정확히 120개월 전이다.
+        assertEquals(HistoryMonth(2016, 1), historyMonthAt(0, current))
+    }
+
+    @Test
+    fun `범위를 벗어난 달은 가장 가까운 장으로 맞춘다`() {
+        val current = HistoryMonth(2026, 10)
+
+        assertEquals(HISTORY_MONTH_PAGE_COUNT - 1, historyPageOf(HistoryMonth(2027, 3), current))
+        assertEquals(0, historyPageOf(HistoryMonth(1990, 1), current))
     }
 }

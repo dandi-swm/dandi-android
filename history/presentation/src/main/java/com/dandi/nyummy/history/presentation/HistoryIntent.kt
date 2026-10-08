@@ -2,18 +2,22 @@ package com.dandi.nyummy.history.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.MviIntent
 import com.dandi.nyummy.history.entity.HistoryDateVO
+import com.dandi.nyummy.history.presentation.model.HistoryMonth
 
 /** 히스토리 화면에서 발생하는 사용자 입력입니다. */
 sealed interface HistoryIntent : MviIntent {
 
-    /** 캘린더 헤더의 이전 달 버튼을 눌렀습니다. */
-    data object ClickPreviousMonth : HistoryIntent
+    /** 캘린더를 좌우로 넘겨 [month]에서 멈췄습니다. */
+    data class ChangeMonth(val month: HistoryMonth) : HistoryIntent
 
-    /** 캘린더 헤더의 다음 달 버튼을 눌렀습니다. */
-    data object ClickNextMonth : HistoryIntent
-
-    /** 월 헤더의 `오늘` 칩을 눌러 오늘 날짜로 이동했다. */
+    /** 월 헤더의 `오늘` 버튼을 눌러 오늘 날짜로 이동했다. */
     data object ClickToday : HistoryIntent
+
+    /** 불러오지 못한 기록을 다시 불러오기를 눌렀습니다. */
+    data object RetryLoad : HistoryIntent
+
+    /** 오늘 기록이 없을 때 `지금 기록하기`를 눌렀습니다. */
+    data object ClickRecordMeal : HistoryIntent
 
     /** 캘린더에서 날짜 하나를 선택했습니다. */
     data class SelectDate(val date: HistoryDateVO) : HistoryIntent

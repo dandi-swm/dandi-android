@@ -1,48 +1,77 @@
 package com.dandi.nyummy.history.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.UiState
-import com.dandi.nyummy.history.entity.DailyNutritionStatus
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.presentation.model.HistoryCalendarDayUiModel
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
-import com.dandi.nyummy.history.presentation.model.monthLabelOf
-import com.dandi.nyummy.history.presentation.model.toCalendarNutritionStatus
-import com.dandi.nyummy.history.presentation.util.isAfter
+import com.dandi.nyummy.history.presentation.model.HistoryMonth
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.collections.immutable.toImmutableSet
 
 /**
  * 히스토리 화면의 UI 상태입니다.
  *
- * 캘린더는 [calendarDays] 42칸을 그대로 그리며, 날짜 선택 시 [selectedDayMeals]와
- * [dailyNutrition]이 함께 바뀝니다. [mealDetail]이 null 이 아니면 식사 상세 오버레이가 열립니다.
+ * 캘린더는 달마다 한 장씩 좌우로 넘기며, 받아 둔 달의 칸은 [calendarMonths]에 남겨 둡니다.
+ * 날짜를 고르면 [selectedDayMeals]와 [dailyNutrition]이 함께 바뀝니다.
+ * [mealDetail]이 null 이 아니면 식사 상세 오버레이가 열립니다.
+ *
+ * @property displayedYear 지금 보고 있는 달의 연도. 달을 넘기면 데이터를 받기 전에 바로 바뀝니다.
+ * @property calendarMonths 받아 둔 달의 캘린더 칸. 다시 넘겨 왔을 때 바로 보여 주고 뒤에서 새로 받습니다.
+ * @property isLoadFailed 고른 날의 기록을 불러오지 못했다. 화면 안에서 안내하고 다시 불러오게 합니다.
  */
 data class HistoryUIState(
     val displayedYear: Int = 0,
     val displayedMonth: Int = 0,
     val today: HistoryDateVO = HistoryDateVO.empty,
     val selectedDate: HistoryDateVO = HistoryDateVO.empty,
-    val calendarDays: ImmutableList<HistoryCalendarDayUiModel> = persistentListOf(),
+    val calendarMonths: ImmutableMap<HistoryMonth, ImmutableList<HistoryCalendarDayUiModel>> = persistentMapOf(),
     val selectedDayMeals: ImmutableList<MealHistoryVO> = persistentListOf(),
     val dailyNutrition: DailyNutritionVO = DailyNutritionVO.empty,
     val isNutritionExpanded: Boolean = true,
     val isLoading: Boolean = false,
+    val isLoadFailed: Boolean = false,
     val reanalyzingMealIds: ImmutableSet<String> = persistentSetOf(),
     val mealDetail: HistoryMealDetailUiState? = null,
 ) : UiState {
 
-    val monthLabel: String
-        get() = monthLabelOf(displayedYear, displayedMonth)
+    /** 지금 보고 있는 달. */
+    val displayedHistoryMonth: HistoryMonth
+        get() = HistoryMonth(year = displayedYear, month = displayedMonth)
+
+    /** 오늘이 속한 달. 캘린더는 이 달까지만 넘어갑니다. */
+    val currentMonth: HistoryMonth
+        get() = HistoryMonth.of(today)
+
+    /** 지금 보고 있는 달의 캘린더 칸. */
+    val calendarDays: ImmutableList<HistoryCalendarDayUiModel>
+        get() = calendarDaysOf(displayedHistoryMonth)
+
+    /** [month]의 캘린더 칸. 아직 받지 않은 달은 기록 없이 날짜만 채웁니다. */
+    fun calendarDaysOf(month: HistoryMonth): ImmutableList<HistoryCalendarDayUiModel> =
+        calendarMonths[month] ?: buildCalendarDayUiModels(month.year, month.month, records = emptyMap())
+
+    /** [month]의 캘린더 칸을 [days]로 바꿔 넣습니다. */
+    fun withCalendarMonth(
+        month: HistoryMonth,
+        days: ImmutableList<HistoryCalendarDayUiModel>,
+    ): HistoryUIState = copy(calendarMonths = calendarMonths.toPersistentMap().put(month, days))
 
     val hasNoMeals: Boolean
         get() = !isLoading && selectedDayMeals.isEmpty()
+
+    /** 고른 날이 오늘인지. 기록이 없을 때 오늘이면 기록하러 가는 길을 보여 줍니다. */
+    val isTodaySelected: Boolean
+        get() = selectedDate == today
 
     /** 영양 합계에 실제로 반영되는(분석이 끝난) 식사 수. 실패/분석 중 기록은 세지 않습니다. */
     val completedMealCount: Int
@@ -108,13 +137,15 @@ data class HistoryUIState(
         if (selectedDayMeals.none { it.id == mealId }) return copy(mealDetail = closedDetail)
         val remaining = selectedDayMeals.filterNot { it.id == mealId }.withCompletedMealOrder()
         val totalCalorie = remaining.sumOf { it.calorieKcal }
-        val hasRecord = remaining.isNotEmpty() && !selectedDate.isAfter(today)
-        val cellStatus = DailyNutritionStatus.of(
-            totalCalorieKcal = totalCalorie,
-            targetCalorieKcal = dailyNutrition.targetCalorieKcal,
-            hasRecord = hasRecord,
-        ).toCalendarNutritionStatus()
         val cellIcons = remaining.take(2).map { it.foodIconId }.toImmutableList()
+        val selectedMonth = HistoryMonth.of(selectedDate)
+        val updatedDays = calendarDaysOf(selectedMonth).map { cell ->
+            if (cell.inCurrentMonth && cell.date == selectedDate) {
+                cell.copy(hasRecord = remaining.isNotEmpty(), foodIconIds = cellIcons)
+            } else {
+                cell
+            }
+        }.toImmutableList()
         return copy(
             selectedDayMeals = remaining,
             reanalyzingMealIds = (reanalyzingMealIds - mealId).toImmutableSet(),
@@ -127,33 +158,21 @@ data class HistoryUIState(
                 fat = dailyNutrition.fat.copy(dailyGram = remaining.sumOf { it.fatGram }),
             ),
             mealDetail = closedDetail,
-            calendarDays = calendarDays.map { cell ->
-                if (cell.inCurrentMonth && cell.date == selectedDate) {
-                    cell.copy(nutritionStatus = cellStatus, foodIconIds = cellIcons)
-                } else {
-                    cell
-                }
-            }.toImmutableList(),
-        )
+        ).withCalendarMonth(selectedMonth, updatedDays)
     }
 
     companion object {
         val empty = HistoryUIState()
 
         /**
-         * 데이터 로드 전에도 캘린더 그리드와 월 이동이 유효한 연/월로 동작하도록
-         * 오늘 날짜 기준으로 초기화한 상태를 만듭니다.
+         * 데이터 로드 전에도 캘린더와 월 이동이 유효한 연/월로 동작하도록
+         * 오늘 날짜 기준으로 초기화한 상태를 만듭니다. 캘린더 칸은 받기 전까지 날짜만 그립니다.
          */
         fun initial(today: HistoryDateVO): HistoryUIState = HistoryUIState(
             displayedYear = today.year,
             displayedMonth = today.month,
             today = today,
             selectedDate = today,
-            calendarDays = buildCalendarDayUiModels(
-                year = today.year,
-                month = today.month,
-                records = emptyMap(),
-            ),
             isLoading = true,
         )
     }

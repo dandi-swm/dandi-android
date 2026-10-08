@@ -22,10 +22,12 @@ data class MonthlyMealsDTO(
     fun toVO(): HistoryCalendarVO = HistoryCalendarVO(
         year = year ?: 0,
         month = month ?: 0,
-        // 엔티티 계약상 days 는 현재 월의 기록만 담는다. 인접 월 채움은 presentation 그리드가 담당한다.
+        // 엔티티 계약상 days 는 현재 월에서 기록이 있는 날만 담는다. 인접 월 채움은 presentation 그리드가 담당한다.
+        // 서버는 캘린더 범위의 모든 날짜를 주고, 식사가 있는 날에만 아이콘을 채운다(분석 중, 실패한 식사도 아이콘이 있다).
         days = days.orEmpty()
             .filter { it.isCurrentMonth == true }
-            .map { it.toVO() },
+            .map { it.toVO() }
+            .filter { it.foodIconIds.isNotEmpty() },
     )
 }
 

@@ -2,62 +2,48 @@ package com.dandi.nyummy.history.presentation.model
 
 import androidx.compose.runtime.Immutable
 import com.dandi.nyummy.common.entity.time.KstTime
-import com.dandi.nyummy.common.presentation.component.NyummyCalendarNutritionStatus
-import com.dandi.nyummy.common.presentation.component.NyummyCalendarWeekday
-import com.dandi.nyummy.history.entity.DailyNutritionStatus
 import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.presentation.util.buildCalendarCells
-import com.dandi.nyummy.history.presentation.util.columnOf
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import java.util.Locale
 
 /**
- * 캘린더 날짜 셀 하나를 그리는 데 필요한 표시 정보입니다.
+ * 캘린더 날짜 칸 하나를 그리는 데 필요한 표시 정보입니다.
  *
- * 인접 월 칸은 날짜만 보여주므로 상태 마커와 음식 아이콘을 갖지 않습니다.
+ * 다른 달 칸은 날짜만 보여 주므로 기록 표시와 음식 아이콘을 갖지 않습니다.
+ *
+ * @property hasRecord 그날 식사를 한 번이라도 기록했다(칸 아래 기록 점)
+ * @property foodIconIds 칸에 보여 줄 음식 아이콘, 최대 2개
  */
 @Immutable
 data class HistoryCalendarDayUiModel(
     val date: HistoryDateVO,
     val dayLabel: String,
     val inCurrentMonth: Boolean,
-    val weekday: NyummyCalendarWeekday,
-    val nutritionStatus: NyummyCalendarNutritionStatus,
+    val hasRecord: Boolean,
     val foodIconIds: ImmutableList<String>,
 )
 
-/** 표시 월의 42칸 그리드를 기록 데이터와 합쳐 셀 표시 모델로 변환합니다. */
+/** 표시 월의 캘린더 칸(그 달 날짜가 있는 주만)을 기록 데이터와 합쳐 칸 표시 모델로 바꿉니다. */
 fun buildCalendarDayUiModels(
     year: Int,
     month: Int,
     records: Map<HistoryDateVO, HistoryCalendarDayVO>,
 ): ImmutableList<HistoryCalendarDayUiModel> =
-    buildCalendarCells(year, month).mapIndexed { index, cell ->
+    buildCalendarCells(year, month).map { cell ->
         val record = if (cell.inCurrentMonth) records[cell.date] else null
+        val icons = record?.foodIconIds.orEmpty()
         HistoryCalendarDayUiModel(
             date = cell.date,
             dayLabel = cell.date.day.toString(),
             inCurrentMonth = cell.inCurrentMonth,
-            weekday = when (columnOf(index)) {
-                0 -> NyummyCalendarWeekday.Sunday
-                6 -> NyummyCalendarWeekday.Saturday
-                else -> NyummyCalendarWeekday.Weekday
-            },
-            nutritionStatus = record?.status?.toCalendarNutritionStatus()
-                ?: NyummyCalendarNutritionStatus.None,
-            foodIconIds = (record?.foodIconIds ?: emptyList()).toImmutableList(),
+            // 월간 데이터는 기록이 있는 날만 담는다. 기록 판정은 기록 행위 기준이다.
+            hasRecord = record != null,
+            foodIconIds = icons.toImmutableList(),
         )
     }.toImmutableList()
-
-/** 하루 영양 상태 VO 를 캘린더 셀 마커 상태로 매핑합니다. */
-fun DailyNutritionStatus.toCalendarNutritionStatus(): NyummyCalendarNutritionStatus = when (this) {
-    DailyNutritionStatus.IN_RANGE -> NyummyCalendarNutritionStatus.Positive
-    DailyNutritionStatus.OUT_OF_RANGE -> NyummyCalendarNutritionStatus.OutOfRange
-    DailyNutritionStatus.NOT_RECORDED -> NyummyCalendarNutritionStatus.NoRecord
-    DailyNutritionStatus.NONE -> NyummyCalendarNutritionStatus.None
-}
 
 /** "2026년 7월" 형태의 월 라벨입니다. */
 fun monthLabelOf(year: Int, month: Int): String = "${year}년 ${month}월"
@@ -94,32 +80,16 @@ fun meridiemTimeOf(time: String): String {
 }
 
 /**
- * 하루 안의 순서 라벨입니다. 디자인 시안의 표기(첫 끼 → n 번째 끼니 → 마지막 끼니)를 따릅니다.
+ * 하루 안의 순서 라벨입니다. Figma 표기를 따라 첫 끼, 두 번째 끼니, 세 번째 끼니로 쓰고,
+ * 우리말 서수가 없는 11번째부터는 숫자를 붙여 "11번째 끼니"로 씁니다.
  */
-fun mealOrderLabelOf(orderIndex: Int, mealCount: Int): String = when {
+fun mealOrderLabelOf(orderIndex: Int): String = when {
     orderIndex <= 1 -> "첫 끼"
-    orderIndex >= mealCount -> "마지막 끼니"
-    else -> "${koreanOrdinalOf(orderIndex)} 번째 끼니"
+    orderIndex <= KOREAN_ORDINALS.size + 1 -> "${KOREAN_ORDINALS[orderIndex - 2]} 번째 끼니"
+    else -> "${orderIndex}번째 끼니"
 }
 
-private fun koreanOrdinalOf(index: Int): String = when (index) {
-    2 -> "두"
-    3 -> "세"
-    4 -> "네"
-    5 -> "다섯"
-    else -> "$index"
-}
-
-/** 목표 대비 백분율 정수를 계산합니다. 목표가 0이면 0을 돌려줍니다. */
-fun percentOf(current: Int, goal: Int): Int =
-    if (goal <= 0) 0 else current * 100 / goal
-
-/** 진행 바에 쓰는 0f..1f 비율입니다. */
-fun progressOf(current: Int, goal: Int): Float =
-    if (goal <= 0) 0f else current.toFloat() / goal
-
-/** "2끼 기록" 형태의 기록 횟수 라벨입니다. */
-fun mealCountLabelOf(count: Int): String = "${count}끼 기록"
+private val KOREAN_ORDINALS = listOf("두", "세", "네", "다섯", "여섯", "일곱", "여덟", "아홉", "열")
 
 /** 천 단위 구분 기호가 들어간 숫자 라벨("2,129")입니다. */
 fun numberLabelOf(value: Int): String = String.format(Locale.KOREA, "%,d", value)
