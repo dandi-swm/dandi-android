@@ -24,7 +24,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.history.entity.DailyNutritionStatus
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
@@ -33,7 +32,7 @@ import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.entity.NutrientProgressVO
 import com.dandi.nyummy.history.presentation.component.HistoryCalendar
 import com.dandi.nyummy.history.presentation.component.HistoryDaySection
-import com.dandi.nyummy.history.presentation.component.HistoryMealDetailOverlay
+import com.dandi.nyummy.history.presentation.component.HistoryMealDetail
 import com.dandi.nyummy.history.presentation.model.HistoryMonth
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
 import kotlinx.collections.immutable.persistentListOf
@@ -120,13 +119,7 @@ private fun HistoryScreen(
             }
         }
         uiState.mealDetail?.let { detail ->
-            HistoryMealDetailOverlay(
-                detail = detail,
-                selectedDate = uiState.selectedDate,
-                mealCount = uiState.completedMealCount,
-                dailyNutrition = uiState.dailyNutrition,
-                onIntent = onIntent,
-            )
+            HistoryMealDetail(detail = detail, selectedDate = uiState.selectedDate, onIntent = onIntent)
         }
     }
 }
@@ -201,9 +194,7 @@ private fun previewUiState(): HistoryUIState {
 @Composable
 private fun HistoryScreenPreview() {
     NyummyTheme {
-        DesignSystemTheme {
-            HistoryScreen(uiState = previewUiState(), onIntent = {})
-        }
+        HistoryScreen(uiState = previewUiState(), onIntent = {})
     }
 }
 
@@ -211,15 +202,13 @@ private fun HistoryScreenPreview() {
 @Composable
 private fun HistoryScreenEmptyPreview() {
     NyummyTheme {
-        DesignSystemTheme {
-            HistoryScreen(
-                uiState = previewUiState().copy(
-                    selectedDayMeals = persistentListOf(),
-                    dailyNutrition = DailyNutritionVO(targetCalorieKcal = 2_000),
-                ),
-                onIntent = {},
-            )
-        }
+        HistoryScreen(
+            uiState = previewUiState().copy(
+                selectedDayMeals = persistentListOf(),
+                dailyNutrition = DailyNutritionVO(targetCalorieKcal = 2_000),
+            ),
+            onIntent = {},
+        )
     }
 }
 
@@ -227,29 +216,9 @@ private fun HistoryScreenEmptyPreview() {
 @Composable
 private fun HistoryScreenLoadingPreview() {
     NyummyTheme {
-        DesignSystemTheme {
-            HistoryScreen(
-                uiState = previewUiState().copy(isLoading = true),
-                onIntent = {},
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true, widthDp = 390, heightDp = 900)
-@Composable
-private fun HistoryScreenDetailPreview() {
-    NyummyTheme {
-        DesignSystemTheme {
-            val base = previewUiState()
-            HistoryScreen(
-                uiState = base.copy(
-                    mealDetail = HistoryMealDetailUiState(
-                        meal = base.selectedDayMeals.firstOrNull() ?: MealHistoryVO.empty,
-                    ),
-                ),
-                onIntent = {},
-            )
-        }
+        HistoryScreen(
+            uiState = previewUiState().copy(isLoading = true),
+            onIntent = {},
+        )
     }
 }

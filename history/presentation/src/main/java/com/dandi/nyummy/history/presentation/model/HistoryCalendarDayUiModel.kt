@@ -91,13 +91,5 @@ fun mealOrderLabelOf(orderIndex: Int): String = when {
 
 private val KOREAN_ORDINALS = listOf("두", "세", "네", "다섯", "여섯", "일곱", "여덟", "아홉", "열")
 
-/** 목표 대비 백분율 정수를 계산합니다. 목표가 0이면 0을 돌려줍니다. */
-fun percentOf(current: Int, goal: Int): Int =
-    if (goal <= 0) 0 else current * 100 / goal
-
-/** 진행 바에 쓰는 0f..1f 비율입니다. */
-fun progressOf(current: Int, goal: Int): Float =
-    if (goal <= 0) 0f else current.toFloat() / goal
-
 /** 천 단위 구분 기호가 들어간 숫자 라벨("2,129")입니다. */
 fun numberLabelOf(value: Int): String = String.format(Locale.KOREA, "%,d", value)
