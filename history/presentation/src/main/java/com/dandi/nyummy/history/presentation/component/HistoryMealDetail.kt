@@ -102,6 +102,7 @@ internal fun HistoryMealDetail(
             onConfirm = { onIntent(HistoryIntent.ConfirmDeleteMeal) },
             onDismissRequest = { onIntent(HistoryIntent.CancelDeleteMeal) },
             confirmEnabled = !detail.isActionInFlight,
+            dismissEnabled = !detail.isActionInFlight,
             dismissible = !detail.isActionInFlight,
         )
     }
@@ -247,6 +248,7 @@ private fun EditNameDialog(
         onConfirm = onConfirm,
         onDismissRequest = onCancel,
         confirmEnabled = !isBlank && !isSaving,
+        dismissEnabled = !isSaving,
         dismissible = !isSaving,
     ) {
         NyummyTextField(

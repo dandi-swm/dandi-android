@@ -54,6 +54,7 @@ enum class NyummyDialogType {
  *
  * [onDismissRequest]는 바깥 탭과 뒤로 가기에, [onDismissClick]은 보조 버튼에 쓰인다(기본은 같은 동작).
  * 닫을 수 없는 다이얼로그(강제 업데이트 등)는 [dismissible]을 false로 둔다.
+ * 요청을 보내는 중처럼 보조 버튼을 잠시 막아야 하면 [dismissEnabled]를 false로 둔다.
  */
 @Composable
 fun NyummyDialog(
@@ -67,6 +68,7 @@ fun NyummyDialog(
     dismissText: String = stringResource(R.string.nyummy_dialog_dismiss),
     onDismissClick: () -> Unit = onDismissRequest,
     confirmEnabled: Boolean = true,
+    dismissEnabled: Boolean = true,
     dismissible: Boolean = true,
     content: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
@@ -81,6 +83,7 @@ fun NyummyDialog(
             body = body,
             dismissText = dismissText,
             confirmEnabled = confirmEnabled,
+            dismissEnabled = dismissEnabled,
             content = content,
         )
     }
@@ -98,6 +101,7 @@ internal fun NyummyDialogCard(
     body: String? = null,
     dismissText: String = stringResource(R.string.nyummy_dialog_dismiss),
     confirmEnabled: Boolean = true,
+    dismissEnabled: Boolean = true,
     content: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     Column(
@@ -145,6 +149,7 @@ internal fun NyummyDialogCard(
                     onClick = onDismiss,
                     style = NyummyButtonStyle.Secondary,
                     size = NyummyButtonSize.M,
+                    enabled = dismissEnabled,
                     modifier = Modifier.weight(1f),
                 )
             }
