@@ -1,5 +1,9 @@
 package com.dandi.nyummy.home.presentation
 
+import com.dandi.nyummy.cat.domain.CatMotionPicker
+import com.dandi.nyummy.cat.domain.CatRepository
+import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
+import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -42,6 +46,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import kotlin.random.Random
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
@@ -49,6 +54,7 @@ class HomeViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val homeRepository = FakeHomeRepository()
     private val historyRepository = FakeHistoryRepository()
+    private val catRepository = FakeCatRepository()
     private val navigationHelper = RecordingNavigationHelper()
     private lateinit var viewModel: HomeViewModel
 
@@ -73,6 +79,14 @@ class HomeViewModelTest {
                 navigationHelper = navigationHelper,
                 ttiHelper = FakeTTIHelper,
             ),
+            getCatAnimations = GetCatAnimationsUseCase(
+                repository = catRepository,
+                resourceHelper = FakeResourceHelper,
+                messageHelper = SilentMessageHelper,
+                navigationHelper = navigationHelper,
+                ttiHelper = FakeTTIHelper,
+            ),
+            catMotionPicker = CatMotionPicker(Random(seed = 1)),
         )
     }
 
@@ -228,6 +242,17 @@ class HomeViewModelTest {
         assertEquals(0.75f, progress(1350, 1800), 0.0001f)
         assertEquals(1f, progress(2500, 1800), 0f)
         assertEquals(0f, progress(500, 0), 0f)
+    }
+
+    private class FakeCatRepository : CatRepository {
+        var next: () -> CatAnimationSetVO = { CatAnimationSetVO.empty }
+        var callCount = 0
+            private set
+
+        override suspend fun getAnimations(): CatAnimationSetVO {
+            callCount++
+            return next()
+        }
     }
 
     private class FakeHomeRepository : HomeRepository {
