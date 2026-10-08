@@ -6,6 +6,7 @@ import com.dandi.nyummy.common.domain.coroutine.IoDispatcher
 import com.dandi.nyummy.common.domain.coroutine.IoScope
 import com.dandi.nyummy.common.domain.coroutine.MainDispatcher
 import com.dandi.nyummy.common.domain.coroutine.MainScope
+import com.dandi.nyummy.common.domain.coroutine.TtiDispatcher
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -47,6 +48,14 @@ object CoroutineModule {
     @IoDispatcher
     fun provideIoDispatcher(): CoroutineDispatcher =
         Dispatchers.IO.limitedParallelism(MAX_IO_PARALLELISM)
+
+    /** 모든 TTIHelper 가 같은 한 줄을 써야 하므로 싱글턴이어야 한다. */
+    @Provides
+    @Singleton
+    @TtiDispatcher
+    fun provideTtiDispatcher(
+        @IoDispatcher dispatcher: CoroutineDispatcher,
+    ): CoroutineDispatcher = dispatcher.limitedParallelism(1)
 
     @Provides
     @Singleton

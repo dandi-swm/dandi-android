@@ -14,6 +14,7 @@ open class BaseUseCase(
     protected open val resourceHelper: ResourceHelper,
     protected open val messageHelper: MessageHelper,
     protected open val navigationHelper: NavigationHelper,
+    // 이 UseCase 를 주입받은 ViewModel 과 같은 측정 인스턴스(@ViewModelScoped)
     protected open val ttiHelper: TTIHelper,
 ) {
 

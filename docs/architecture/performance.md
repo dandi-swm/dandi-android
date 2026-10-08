@@ -5,35 +5,45 @@
 - 화면이 늘어날 때마다 "이 페이지 왜 느리지"를 측정 없이 추측하지 않도록, **페이지 단위 계측을 아키텍처에 내장**한다.
 - 새 feature를 만들 때 TTI/Jank 계측을 따라 붙이는 것이 컨벤션이다 (필수는 페이지 단위 Jank — AppNavHost가 자동 적용, TTI는 핵심 화면에 선택 적용).
 
-## 1. TTI (Time To Initial Display)
-
-> `FullScreenMedia`/`Search` 이름은 계측 구조를 설명하기 위한 레거시 예시이며, 현재 저장소의 feature 경로를 뜻하지 않습니다.
+## 1. TTI (Time To Interactive)
 
 순수 JVM 모듈 `:tti`. 인터페이스: [TTIHelper.kt](../../tti/src/main/java/com/dandi/nyummy/tti/TTIHelper.kt)
 
+`TTIHelper` 는 **`@ViewModelScoped`** 로 바인딩되어 ViewModel 인스턴스당 1개 생성되고, 같은 ViewModel 에 주입되는 UseCase 들과 동일 인스턴스를 공유한다([CommonPresentationModule.kt](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/CommonPresentationModule.kt)의 `CommonViewModelModule`). reporter / logger / `@TtiDispatcher` 는 Hilt 싱글톤이고, 프로세스 전역이어야 하는 페이지별 인스턴스 번호 카운터만 `TTIHelperImpl` 의 companion 에 둔다.
+
 ```kotlin
-interface TTIHelper {
-    fun startTTITracking(page: TTIPage)          // 페이지 진입 시
-    fun startTTITimeline(page, timelineCategory) // 구간 시작 (VIEW_CREATION / API_REQUEST / IMAGE_LOADED ...)
-    fun endTTITimeline(page, timelineCategory)   // 구간 끝
-    fun endTTITracking(page)                     // 최초 의미있는 렌더 완료
-    fun shotTTILogging(page)                     // 페이지 이탈 시 로깅 발사
-    fun addTTIMetaData(page, metadata, value)
+interface TTIHelper {                    // 한 번의 TTI 측정(화면 인스턴스 1개)에 대한 핸들
+    fun startTTITracking(page: TTIPage)   // ViewModel init 에서 1회 호출 (중복 호출은 로그만 남기고 무시)
+    fun startTTITimeline(category)        // 구간 시작 (VIEW_CREATION / API_REQUEST / IMAGE_LOADED ...)
+    fun endTTITimeline(category)          // 구간 끝
+    fun endTTITracking()                  // 사용자가 쓸 수 있는 상태가 된 순간
+    fun shotTTILogging()                  // 리포트 발사
+    fun addTTIMetaData(metadata, value)
 }
 ```
 
-적용 절차 (골든 예제: 레거시 `FullScreenMediaFragment.kt`):
+- `startTTITracking` 전에 들어온 호출은 무시된다. 트래킹을 시작하지 않는 ViewModel 아래의 UseCase 가 마크를 찍어도 안전하다.
+- **순서 보장**: 모든 마크는 `@TtiDispatcher`(= `@IoDispatcher.limitedParallelism(1)`, [CoroutineModule.kt](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/coroutine/CoroutineModule.kt)) 한 줄에서 호출한 순서대로 실행된다.
+- **멀티 인스턴스**: 같은 페이지가 여러 번 열려도 인스턴스별로 따로 측정된다. 로그 키는 `"{pageName}#{instanceNo}_{millis}"` 이고 `instance_no` 는 페이지별로 단조 증가한다(프로세스 재시작 시 1부터).
+- **리포트는 인스턴스당 정확히 1회**: `shotTTILogging` 과 20초(`TTI_TIMEOUT_MILLISECONDS`) 타임아웃 중 먼저 오는 쪽이다. 발사 후 늦게 온 마크와 shot 은 무시되고 인스턴스 scope 는 정리된다.
+- **이탈 안전망**: ViewModel 이 사라질 때(`ViewModelLifecycle.addOnClearedListener`) 아직 보내지 않은 측정을 `shotTTILogging()` 으로 보낸다. Compose 화면은 `onDestroyView` 같은 이탈 콜백이 없어서, 끝 표시까지 마친 측정이 보고되지 않는 일을 막는다.
+- **시계**: 구간 길이만 쓰므로 단조 시계(`System.nanoTime()`)로 잰다. 측정 중 기기 시각이 바뀌어도 값이 틀어지지 않는다.
 
-1. feature/domain에 `object {Feature}TTIPage : TTIPage` 정의 (레거시 `FullScreenMediaTTIPage.kt` 예시)
-2. 진입 시 `startTTITracking` + 구간별 `start/endTTITimeline` (뷰 생성 → 바인딩 → 이미지/API 로드)
-3. 핵심 콘텐츠 표시 시 `endTTITracking`, 이탈 시(`onDestroyView` 등) `shotTTILogging`
-4. API 구간(`API_REQUEST_READY_TIME` / `API_RESPONSE_TIME`) 마크는 **presentation(ViewModel)** 에서 기록한다 — 레거시 `FullScreenMediaViewModel.kt` 예시는 `ttiHelper`로 `start/endTTITimeline`을 호출한다. `BaseUseCase`도 `ttiHelper`를 주입받지만 현재 어떤 TTI 메서드도 호출하지 않는 미사용 pass-through다 (TTI 마크는 UseCase가 아니라 ViewModel/Fragment에서 찍는다).
+적용 절차:
 
-> 레거시 템플릿에서 TTI가 실제로 연결된 feature는 `fullScreenMedia` 하나였다 (유일한 `TTIPage` 구현체 = `FullScreenMediaTTIPage`). `search`는 `SearchUseCase`가 `ttiHelper`를 `BaseUseCase`로 넘기기만 할 뿐 TTI를 측정하지 않았다. (`SearchTTIPage`는 [TTIPage.kt](../../tti/src/main/java/com/dandi/nyummy/tti/TTIPage.kt) 주석의 *예시*일 뿐 실제 구현체가 아니다.)
+1. feature/domain에 `object {Feature}TTIPage : TTIPage` 를 정의한다. `timelines` 에는 **실제로 측정하는 구간만** 넣는다. 마지막 타임라인이 완성되어야 `endTTITracking()` 이 받아들여지므로, 찍지 않는 구간을 넣으면 매번 미완료로 리포트된다.
+2. ViewModel 생성자로 `val ttiHelper: TTIHelper` 를 주입받고, `init` 에서 다른 작업보다 먼저 `ttiHelper.startTTITracking({Feature}TTIPage)` 를 호출한다.
+3. View(Composable)는 `viewModel.ttiHelper` 로 구간을 찍고, 핵심 콘텐츠가 보일 때 `endTTITracking()` 을 호출한다. 이탈 시 shot 은 위 안전망이 맡으므로 필요할 때만 직접 부른다.
+4. `BaseUseCase` 도 같은 `ttiHelper` 를 받으므로 UseCase 안에서 API 구간(`API_REQUEST_READY_TIME` / `API_RESPONSE_TIME`)을 suspend 호출과 같은 코루틴 안에서 start/end 로 감싼다.
+5. UseCase 는 ViewModel 에서만 주입한다. `TTIHelper` 가 ViewModel 스코프라 Activity, Worker, Singleton 에서는 주입할 수 없다.
 
-Logcat 출력 예: `Shot TTI Logging: ... tti.tti_time=..., tti.view_creation_time=..., tti.image_loaded_time=...`
+현재 TTI가 연결된 화면은 인트로 하나다([IntroViewModel.kt](../../intro/presentation/src/main/java/com/dandi/nyummy/intro/presentation/IntroViewModel.kt), [GetIntroUseCase.kt](../../intro/domain/src/main/java/com/dandi/nyummy/intro/domain/GetIntroUseCase.kt)).
 
-기록 필드 ([TTIHelperImpl.kt](../../tti/src/main/java/com/dandi/nyummy/tti/TTIHelperImpl.kt) / [TTIEnums.kt](../../tti/src/main/java/com/dandi/nyummy/tti/TTIEnums.kt)): `page_name`, `api_request_ready_time`, `api_response_time`, `view_creation_time`, `view_binding_time`, `image_loaded_time`, `is_bounced`, `is_timeout`, `tti_log_version`. `endTTITracking` 가 20초(`TTI_TIMEOUT_MILLISECONDS`) 안에 도착하지 않으면 워치독이 `is_timeout`을 세우고 `stopView`로 "Timeout TTI Tracking"을 자동 발사한다.
+Logcat 출력 예(디버그 빌드, `[TTI]` 태그): `Shot TTI Logging : intro#1_... / {tti.page_name=intro, tti.instance_no=1, tti.is_bounced=false, tti.is_timeout=false, tti.tti_time=..., tti.api_response_time=..., ...}`
+
+기록 필드 ([TTIInfo.kt](../../tti/src/main/java/com/dandi/nyummy/tti/TTIInfo.kt) / [TTIEnums.kt](../../tti/src/main/java/com/dandi/nyummy/tti/TTIEnums.kt)): `page_name`, `instance_no`, `tti_time`, `api_request_ready_time`, `api_response_time`, `view_creation_time`, `view_binding_time`, `image_loaded_time`(단위 ns, 측정하지 않은 구간은 -1), `is_bounced`(측정 구간 중 빠진 것이 있음), `is_timeout`(20초 안에 끝나지 않아 타임아웃으로 보고됨), `tti_log_version`.
+
+외부 전송(`TTIReporter`, release 빌드의 `RemoteTTILogger`)은 관측 도구가 연결되기 전까지 no-op이다.
 
 ## 2. JankStats (프레임 품질)
 

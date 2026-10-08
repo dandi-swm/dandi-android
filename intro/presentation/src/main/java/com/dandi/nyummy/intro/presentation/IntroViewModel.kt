@@ -57,10 +57,9 @@ class IntroViewModel @Inject constructor(
                 onRetry = ::start,
             requestPermissions = ::awaitPermissionFlow,
                 onBeforeNavigate = ::completeSplash,
-                ttiPage = IntroTTIPage,
             )
-            ttiHelper.endTTITracking(IntroTTIPage)
-            ttiHelper.shotTTILogging(IntroTTIPage)
+            ttiHelper.endTTITracking()
+            ttiHelper.shotTTILogging()
         }
     }
 
