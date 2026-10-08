@@ -6,18 +6,31 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import com.dandi.nyummy.auth.presentation.social.initializeSocialLoginSdks
+import com.dandi.nyummy.common.presentation.image.ImageLoadReport
+import com.dandi.nyummy.common.presentation.image.NoOpImageLoadReport
 import com.dandi.nyummy.common.presentation.image.NyummyImageLoaderFactory
 import com.dandi.nyummy.reminder.FcmTokenStore
 import com.dandi.nyummy.reminder.ReminderNotifier
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
 
 @HiltAndroidApp
 class DandiApplication : Application(), SingletonImageLoader.Factory {
 
-    /** AsyncImage 등 Coil 싱글턴이 쓰는 전역 ImageLoader. 캐시 설정은 [NyummyImageLoaderFactory] 참고. */
+    @Inject
+    lateinit var imageLoadReport: ImageLoadReport
+
+    /**
+     * AsyncImage 등 Coil 싱글턴이 쓰는 전역 ImageLoader. 캐시 설정은 [NyummyImageLoaderFactory] 참고.
+     * 첫 이미지 요청 때 만들어지므로 그 전에 [imageLoadReport] 가 주입돼 있다(onCreate 에서 주입).
+     */
     override fun newImageLoader(context: PlatformContext): ImageLoader =
-        NyummyImageLoaderFactory.create(context)
+        NyummyImageLoaderFactory.create(
+            context,
+            // 주입 전에 이미지가 먼저 요청되는 예외 상황에서도 앱이 죽지 않게 계측을 끈다.
+            if (::imageLoadReport.isInitialized) imageLoadReport else NoOpImageLoadReport,
+        )
 
     override fun onCreate() {
         super.onCreate()
