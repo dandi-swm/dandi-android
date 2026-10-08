@@ -17,11 +17,15 @@ class MainTabsTest {
 
     @Test
     fun `탭 화면은 내비 아이콘 순서와 같다`() {
-        assertEquals(NyummyMainTabs.size, mainTabPages.size)
-        assertEquals(
-            listOf(HomePage.PATH, HistoryPage.PATH, QuestPage.PATH, AchievementPage.PATH, ShopPage.PATH),
-            mainTabPages.map { it.toRoute().path },
+        val expectedTabs = listOf(
+            "홈" to HomePage.PATH,
+            "기록" to HistoryPage.PATH,
+            "퀘스트" to QuestPage.PATH,
+            "업적" to AchievementPage.PATH,
+            "상점" to ShopPage.PATH,
         )
+        assertEquals(expectedTabs.map { it.first }, NyummyMainTabs.map { it.label })
+        assertEquals(expectedTabs.map { it.second }, mainTabPages.map { it.toRoute().path })
     }
 
     @Test
