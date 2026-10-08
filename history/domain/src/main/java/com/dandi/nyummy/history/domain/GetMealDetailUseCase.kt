@@ -2,10 +2,10 @@ package com.dandi.nyummy.history.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
@@ -22,7 +22,10 @@ class GetMealDetailUseCase @Inject constructor(
     suspend operator fun invoke(mealId: Long): Result<MealHistoryVO> = try {
         Result.success(repository.getMeal(mealId))
     } catch (e: HttpResponseException) {
-        if (e.isCommonErrorHandling()) executeCommonErrorHanding(e)
+        handleHttpError<HistoryErrorType>(
+            e,
+            onDomainError = { messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = it.errorMsg) },
+        )
         Result.failure(e)
     }
 }

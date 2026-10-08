@@ -2,7 +2,6 @@ package com.dandi.nyummy.history.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -28,7 +27,8 @@ class GetMonthlyMealsUseCase @Inject constructor(
     suspend operator fun invoke(year: Int, month: Int): Result<HistoryCalendarVO> = try {
         Result.success(repository.getMonthlyCalendar(year, month))
     } catch (e: HttpResponseException) {
-        if (e.isCommonErrorHandling()) executeCommonErrorHanding(e)
+        // 불러오기 실패는 화면 안에서 보여 주므로, 공통 오류만 안내한다.
+        handleHttpError<HistoryErrorType>(e, onDomainError = {})
         Result.failure(e)
     } catch (e: CancellationException) {
         throw e

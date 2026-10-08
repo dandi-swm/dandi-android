@@ -2,7 +2,6 @@ package com.dandi.nyummy.meal.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -35,17 +34,21 @@ class SubmitMealUseCase @Inject constructor(
         messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = e.message)
         Result.failure(e)
     } catch (e: HttpResponseException) {
-        if (e.isCommonErrorHandling()) {
-            executeCommonErrorHanding(e)
-        } else {
-            messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = SUBMIT_ERROR_MESSAGE)
-        }
+        handleHttpError<MealErrorType>(
+            e,
+            onDomainError = { showError(it.errorMsg) },
+            onUnknownError = { showError(SUBMIT_ERROR_MESSAGE) },
+        )
         Result.failure(e)
     } catch (e: java.util.concurrent.CancellationException) {
         throw e
     } catch (e: Exception) {
         messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = SUBMIT_ERROR_MESSAGE)
         Result.failure(e)
+    }
+
+    private fun showError(message: String) {
+        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = message)
     }
 
     private companion object {
