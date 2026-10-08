@@ -10,14 +10,16 @@ import com.dandi.nyummy.history.domain.GetMealDetailUseCase
 import com.dandi.nyummy.history.domain.GetMonthlyMealsUseCase
 import com.dandi.nyummy.history.domain.ReanalyzeMealUseCase
 import com.dandi.nyummy.history.domain.UpdateMealNameUseCase
+import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
+import com.dandi.nyummy.history.presentation.model.HistoryMonth
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
 import com.dandi.nyummy.history.presentation.model.isoDateOf
+import com.dandi.nyummy.history.presentation.util.isAfter
 import com.dandi.nyummy.history.presentation.util.lastDayOf
-import com.dandi.nyummy.history.presentation.util.nextMonthOf
-import com.dandi.nyummy.history.presentation.util.previousMonthOf
 import com.dandi.nyummy.history.presentation.util.todayDate
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -50,21 +52,18 @@ class HistoryViewModel @Inject constructor(
 
     private var mealDetailJob: Job? = null
 
+    /** 지난달 캘린더를 미리 받는 job. 사용자의 조회([loadJob])와 따로 두어 서로 취소하지 않는다. */
+    private var prefetchJob: Job? = null
+
     init {
         val today = currentState.selectedDate
-        loadMonth(year = today.year, month = today.month, selectedDate = today)
+        loadMonth(month = HistoryMonth.of(today), selectedDate = today)
         observeAnalysisEvents()
     }
 
     override fun onIntent(intent: HistoryIntent) {
         when (intent) {
-            HistoryIntent.ClickPreviousMonth -> moveMonth(
-                previousMonthOf(currentState.displayedYear, currentState.displayedMonth),
-            )
-
-            HistoryIntent.ClickNextMonth -> moveMonth(
-                nextMonthOf(currentState.displayedYear, currentState.displayedMonth),
-            )
+            is HistoryIntent.ChangeMonth -> changeMonth(intent.month)
 
             is HistoryIntent.SelectDate -> selectDate(intent.date)
 
@@ -134,22 +133,29 @@ class HistoryViewModel @Inject constructor(
                 }
             }
 
+            is HistoryReducerEvent.MonthChanged -> state.copy(
+                displayedYear = event.month.year,
+                displayedMonth = event.month.month,
+                selectedDate = event.selectedDate,
+                selectedDayMeals = persistentListOf(),
+                reanalyzingMealIds = persistentSetOf(),
+                mealDetail = null,
+            )
+
+            is HistoryReducerEvent.MonthCalendarLoaded ->
+                state.withCalendarMonth(monthOf(event.calendar), event.calendar.toCalendarDays())
+
             is HistoryReducerEvent.MonthLoaded -> state.copy(
                 displayedYear = event.calendar.year,
                 displayedMonth = event.calendar.month,
                 today = event.today,
                 selectedDate = event.selectedDate,
-                calendarDays = buildCalendarDayUiModels(
-                    year = event.calendar.year,
-                    month = event.calendar.month,
-                    records = event.calendar.days.associateBy { it.date },
-                ),
                 selectedDayMeals = event.dailyDetail.meals.withCompletedMealOrder(),
                 dailyNutrition = event.dailyDetail.nutrition,
                 isLoading = false,
                 reanalyzingMealIds = persistentSetOf(),
                 mealDetail = null,
-            )
+            ).withCalendarMonth(monthOf(event.calendar), event.calendar.toCalendarDays())
 
             is HistoryReducerEvent.DaySelected -> state.copy(
                 selectedDate = event.date,
@@ -239,15 +245,34 @@ class HistoryViewModel @Inject constructor(
             is HistoryReducerEvent.MealDeleted -> state.deleteDetailMeal(event.mealId)
         }
 
+    /**
+     * 캘린더를 넘겨 [target] 달에서 멈췄을 때 그 달을 보여 준다. 이번 달보다 뒤거나 이미 보고 있는 달이면 무시한다.
+     * 고른 날은 같은 날짜로 두되 그 달 말일을 넘지 않게 하고, 이번 달이면 오늘을 넘지 않게 한다.
+     */
+    private fun changeMonth(target: HistoryMonth) {
+        val state = currentState
+        if (target > state.currentMonth || target == state.displayedHistoryMonth) return
+        val lastSelectableDay = if (target == state.currentMonth) state.today.day else lastDayOf(target.year, target.month)
+        val day = state.selectedDate.day.coerceIn(1, lastSelectableDay)
+        showMonth(target, HistoryDateVO(year = target.year, month = target.month, day = day))
+    }
+
+    /** 보고 있는 달을 바로 바꾸고(캘린더가 되돌아가지 않게) 그 달 데이터를 받는다. */
+    private fun showMonth(month: HistoryMonth, selectedDate: HistoryDateVO) {
+        dispatch(HistoryReducerEvent.MonthChanged(month = month, selectedDate = selectedDate))
+        loadMonth(month = month, selectedDate = selectedDate)
+    }
+
     /** 월 캘린더와 선택 날짜의 일별 기록을 함께 조회한다. 진행 중인 조회는 취소한다. */
-    private fun loadMonth(year: Int, month: Int, selectedDate: HistoryDateVO) {
+    private fun loadMonth(month: HistoryMonth, selectedDate: HistoryDateVO) {
+        val (year, monthValue) = month
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             dispatch(HistoryReducerEvent.LoadStarted)
             val today = todayDate()
             // 월간 조회가 실패하면 일간 조회를 건너뛴다 — 두 UseCase 가 같은 오류
             // 스낵바를 각각 발행해 중복 노출되는 것을 막는다.
-            val calendar = getMonthlyMeals(year, month).getOrNull() ?: run {
+            val calendar = getMonthlyMeals(year, monthValue).getOrNull() ?: run {
                 dispatch(HistoryReducerEvent.LoadFailed)
                 return@launch
             }
@@ -267,14 +292,27 @@ class HistoryViewModel @Inject constructor(
                     dailyDetail = dailyDetail,
                 ),
             )
+            prefetchPreviousMonth(month)
+        }
+    }
+
+    /** 왼쪽으로 넘겼을 때 바로 보이도록 [month] 지난달 캘린더를 조용히 받아 둔다. 이미 받았거나 실패하면 그대로 둔다. */
+    private fun prefetchPreviousMonth(month: HistoryMonth) {
+        val previous = month.plusMonths(-1)
+        if (previous in currentState.calendarMonths) return
+        prefetchJob?.cancel()
+        prefetchJob = viewModelScope.launch {
+            getMonthlyMeals(previous.year, previous.month).onSuccess {
+                dispatch(HistoryReducerEvent.MonthCalendarLoaded(it))
+            }
         }
     }
 
     private fun selectDate(date: HistoryDateVO) {
-        if (date == currentState.selectedDate) return
+        if (date == currentState.selectedDate || date.isAfter(todayDate())) return
         // 인접 월 날짜를 선택하면 해당 월로 이동하면서 그 날짜를 선택한다.
-        if (date.year != currentState.displayedYear || date.month != currentState.displayedMonth) {
-            loadMonth(year = date.year, month = date.month, selectedDate = date)
+        if (!currentState.displayedHistoryMonth.contains(date)) {
+            showMonth(HistoryMonth.of(date), date)
             return
         }
         loadJob?.cancel()
@@ -402,11 +440,9 @@ class HistoryViewModel @Inject constructor(
                 .onFailure { dispatch(HistoryReducerEvent.MealActionFailed) }
         }
     }
-
-    /** 월 이동 시 선택 일(day)은 유지하되 대상 달의 말일을 넘지 않게 보정한다. */
-    private fun moveMonth(target: Pair<Int, Int>) {
-        val (year, month) = target
-        val day = currentState.selectedDate.day.coerceIn(1, lastDayOf(year, month))
-        loadMonth(year = year, month = month, selectedDate = HistoryDateVO(year, month, day))
-    }
 }
+
+private fun monthOf(calendar: HistoryCalendarVO) = HistoryMonth(year = calendar.year, month = calendar.month)
+
+private fun HistoryCalendarVO.toCalendarDays() =
+    buildCalendarDayUiModels(year = year, month = month, records = days.associateBy { it.date })

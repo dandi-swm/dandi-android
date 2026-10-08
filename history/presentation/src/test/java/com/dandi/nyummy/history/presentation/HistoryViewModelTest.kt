@@ -26,6 +26,7 @@ import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.presentation.model.isoDateOf
+import com.dandi.nyummy.history.presentation.model.HistoryMonth
 import com.dandi.nyummy.history.presentation.util.previousMonthOf
 import com.dandi.nyummy.history.presentation.util.todayDate
 import com.dandi.nyummy.tti.TTIHelper
@@ -87,11 +88,11 @@ class HistoryViewModelTest {
         val (prevYear, prevMonth) = previousMonthOf(today.year, today.month)
         val viewModel = createViewModel()
 
-        viewModel.onIntent(HistoryIntent.ClickPreviousMonth)
+        viewModel.onIntent(HistoryIntent.ChangeMonth(HistoryMonth(prevYear, prevMonth)))
         advanceUntilIdle()
 
         assertTrue(repository.monthlyRequests.all { (year, _) -> year > 0 })
-        assertEquals(prevYear to prevMonth, repository.monthlyRequests.last())
+        assertTrue((prevYear to prevMonth) in repository.monthlyRequests)
         assertEquals(prevMonth, viewModel.uiState.value.displayedMonth)
     }
 
@@ -106,14 +107,14 @@ class HistoryViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.onIntent(HistoryIntent.ClickPreviousMonth)
+        viewModel.onIntent(HistoryIntent.ChangeMonth(HistoryMonth(prevYear, prevMonth)))
         advanceUntilIdle() // 이전 달 요청이 gate 에서 대기 중
-        viewModel.onIntent(HistoryIntent.ClickNextMonth)
+        viewModel.onIntent(HistoryIntent.ChangeMonth(HistoryMonth(today.year, today.month)))
         gate.complete(HistoryCalendarVO(prevYear, prevMonth)) // 취소된 요청의 늦은 응답
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertEquals(today.month % MONTHS_IN_YEAR + 1, state.displayedMonth)
+        assertEquals(today.month, state.displayedMonth)
         assertTrue(state.displayedMonth != prevMonth)
     }
 
@@ -658,9 +659,5 @@ class HistoryViewModelTest {
         override fun endTTITracking(page: TTIPage) = Unit
         override fun shotTTILogging(page: TTIPage) = Unit
         override fun addTTIMetaData(page: TTIPage, metadata: TTIMetaData, value: Any?) = Unit
-    }
-
-    companion object {
-        private const val MONTHS_IN_YEAR = 12
     }
 }

@@ -3,8 +3,25 @@
     <string name="history_title">식사 기록</string>
     <string name="history_subtitle">차곡차곡 쌓이는 나의 식습관</string>
 
-    <string name="history_today_chip">오늘</string>
-    <string name="history_calendar_caption">한눈에 모아보는 한 달의 식사</string>
+    <string name="history_go_today">오늘로 이동</string>
+    <string-array name="history_weekdays">
+        <item>일</item>
+        <item>월</item>
+        <item>화</item>
+        <item>수</item>
+        <item>목</item>
+        <item>금</item>
+        <item>토</item>
+    </string-array>
+    <string name="history_calendar_recorded_this_month">이번 달 %1$d일 기록했어요</string>
+    <string name="history_calendar_no_record_this_month">이번 달은 아직 기록이 없어요</string>
+    <string name="history_calendar_recorded_month">%1$d월에 %2$d일 기록했어요</string>
+    <string name="history_calendar_no_record_month">%1$d월에는 기록이 없어요</string>
+    <string name="history_calendar_description">%1$s 달력, 좌우로 넘겨 다른 달을 볼 수 있어요</string>
+    <string name="history_calendar_previous_month">지난달 보기</string>
+    <string name="history_calendar_next_month">다음 달 보기</string>
+    <string name="history_calendar_day_today">오늘</string>
+    <string name="history_calendar_day_recorded">기록 있음</string>
 
     <string name="history_nutrition_title">하루 영양</string>
     <string name="history_nutrition_collapse">접기</string>

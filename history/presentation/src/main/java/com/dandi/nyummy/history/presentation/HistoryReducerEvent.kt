@@ -6,6 +6,7 @@ import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
+import com.dandi.nyummy.history.presentation.model.HistoryMonth
 
 /** 히스토리 화면 Reducer 에 입력되는 내부 이벤트입니다. */
 sealed interface HistoryReducerEvent : ReducerEvent {
@@ -29,6 +30,15 @@ sealed interface HistoryReducerEvent : ReducerEvent {
         val foodIconId: String,
         val catComment: String,
     ) : HistoryReducerEvent
+
+    /** 보고 있는 달이 [month]로 바뀌었습니다. 데이터는 아직 받는 중이고, 그 사이 고른 날은 [selectedDate]입니다. */
+    data class MonthChanged(
+        val month: HistoryMonth,
+        val selectedDate: HistoryDateVO,
+    ) : HistoryReducerEvent
+
+    /** 보고 있지 않은 달의 캘린더를 미리 받았습니다. 넘겨 왔을 때 바로 보여 줍니다. */
+    data class MonthCalendarLoaded(val calendar: HistoryCalendarVO) : HistoryReducerEvent
 
     /** 표시할 달과 선택 날짜의 데이터가 준비되었습니다. */
     data class MonthLoaded(

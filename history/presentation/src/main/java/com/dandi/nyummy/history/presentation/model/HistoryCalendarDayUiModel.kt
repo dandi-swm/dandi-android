@@ -2,62 +2,48 @@ package com.dandi.nyummy.history.presentation.model
 
 import androidx.compose.runtime.Immutable
 import com.dandi.nyummy.common.entity.time.KstTime
-import com.dandi.nyummy.common.presentation.component.NyummyCalendarNutritionStatus
-import com.dandi.nyummy.common.presentation.component.NyummyCalendarWeekday
-import com.dandi.nyummy.history.entity.DailyNutritionStatus
 import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.presentation.util.buildCalendarCells
-import com.dandi.nyummy.history.presentation.util.columnOf
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import java.util.Locale
 
 /**
- * 캘린더 날짜 셀 하나를 그리는 데 필요한 표시 정보입니다.
+ * 캘린더 날짜 칸 하나를 그리는 데 필요한 표시 정보입니다.
  *
- * 인접 월 칸은 날짜만 보여주므로 상태 마커와 음식 아이콘을 갖지 않습니다.
+ * 다른 달 칸은 날짜만 보여 주므로 기록 표시와 음식 아이콘을 갖지 않습니다.
+ *
+ * @property hasRecord 그날 식사를 한 번이라도 기록했다(칸 아래 기록 점)
+ * @property foodIconIds 칸에 보여 줄 음식 아이콘, 최대 2개
  */
 @Immutable
 data class HistoryCalendarDayUiModel(
     val date: HistoryDateVO,
     val dayLabel: String,
     val inCurrentMonth: Boolean,
-    val weekday: NyummyCalendarWeekday,
-    val nutritionStatus: NyummyCalendarNutritionStatus,
+    val hasRecord: Boolean,
     val foodIconIds: ImmutableList<String>,
 )
 
-/** 표시 월의 42칸 그리드를 기록 데이터와 합쳐 셀 표시 모델로 변환합니다. */
+/** 표시 월의 캘린더 칸(그 달 날짜가 있는 주만)을 기록 데이터와 합쳐 칸 표시 모델로 바꿉니다. */
 fun buildCalendarDayUiModels(
     year: Int,
     month: Int,
     records: Map<HistoryDateVO, HistoryCalendarDayVO>,
 ): ImmutableList<HistoryCalendarDayUiModel> =
-    buildCalendarCells(year, month).mapIndexed { index, cell ->
+    buildCalendarCells(year, month).map { cell ->
         val record = if (cell.inCurrentMonth) records[cell.date] else null
+        val icons = record?.foodIconIds.orEmpty()
         HistoryCalendarDayUiModel(
             date = cell.date,
             dayLabel = cell.date.day.toString(),
             inCurrentMonth = cell.inCurrentMonth,
-            weekday = when (columnOf(index)) {
-                0 -> NyummyCalendarWeekday.Sunday
-                6 -> NyummyCalendarWeekday.Saturday
-                else -> NyummyCalendarWeekday.Weekday
-            },
-            nutritionStatus = record?.status?.toCalendarNutritionStatus()
-                ?: NyummyCalendarNutritionStatus.None,
-            foodIconIds = (record?.foodIconIds ?: emptyList()).toImmutableList(),
+            // 월간 API는 식사가 있는 날에만 아이콘을 준다. 기록 판정은 기록 행위 기준이라 아이콘 유무로 본다.
+            hasRecord = icons.isNotEmpty(),
+            foodIconIds = icons.toImmutableList(),
         )
     }.toImmutableList()
-
-/** 하루 영양 상태 VO 를 캘린더 셀 마커 상태로 매핑합니다. */
-fun DailyNutritionStatus.toCalendarNutritionStatus(): NyummyCalendarNutritionStatus = when (this) {
-    DailyNutritionStatus.IN_RANGE -> NyummyCalendarNutritionStatus.Positive
-    DailyNutritionStatus.OUT_OF_RANGE -> NyummyCalendarNutritionStatus.OutOfRange
-    DailyNutritionStatus.NOT_RECORDED -> NyummyCalendarNutritionStatus.NoRecord
-    DailyNutritionStatus.NONE -> NyummyCalendarNutritionStatus.None
-}
 
 /** "2026년 7월" 형태의 월 라벨입니다. */
 fun monthLabelOf(year: Int, month: Int): String = "${year}년 ${month}월"
