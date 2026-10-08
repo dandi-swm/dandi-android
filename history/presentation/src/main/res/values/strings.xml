@@ -37,7 +37,7 @@
     <string name="history_empty_today_action">지금 기록하기</string>
 
     <string name="history_load_failed_title">기록을 불러오지 못했어요</string>
-    <string name="history_load_failed_body">인터넷 연결을 확인하고 다시 시도해 주세요.</string>
+    <string name="history_load_failed_body">잠시 후 다시 시도해 주세요.</string>
     <string name="history_load_retry">다시 불러오기</string>
 
     <string name="history_meal_meta">%1$s %2$s</string>

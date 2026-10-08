@@ -79,17 +79,17 @@ fun meridiemTimeOf(time: String): String {
     }
 }
 
-/** 하루 안의 순서 라벨입니다. Figma 표기를 따라 첫 끼, 두 번째 끼니, 세 번째 끼니로 씁니다. */
-fun mealOrderLabelOf(orderIndex: Int): String =
-    if (orderIndex <= 1) "첫 끼" else "${koreanOrdinalOf(orderIndex)} 번째 끼니"
-
-private fun koreanOrdinalOf(index: Int): String = when (index) {
-    2 -> "두"
-    3 -> "세"
-    4 -> "네"
-    5 -> "다섯"
-    else -> "$index"
+/**
+ * 하루 안의 순서 라벨입니다. Figma 표기를 따라 첫 끼, 두 번째 끼니, 세 번째 끼니로 쓰고,
+ * 우리말 서수가 없는 11번째부터는 숫자를 붙여 "11번째 끼니"로 씁니다.
+ */
+fun mealOrderLabelOf(orderIndex: Int): String = when {
+    orderIndex <= 1 -> "첫 끼"
+    orderIndex <= KOREAN_ORDINALS.size + 1 -> "${KOREAN_ORDINALS[orderIndex - 2]} 번째 끼니"
+    else -> "${orderIndex}번째 끼니"
 }
+
+private val KOREAN_ORDINALS = listOf("두", "세", "네", "다섯", "여섯", "일곱", "여덟", "아홉", "열")
 
 /** 목표 대비 백분율 정수를 계산합니다. 목표가 0이면 0을 돌려줍니다. */
 fun percentOf(current: Int, goal: Int): Int =

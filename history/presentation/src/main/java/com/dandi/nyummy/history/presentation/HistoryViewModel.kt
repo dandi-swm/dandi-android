@@ -172,6 +172,7 @@ class HistoryViewModel @Inject constructor(
             is HistoryReducerEvent.DaySelectionStarted -> state.copy(
                 selectedDate = event.date,
                 selectedDayMeals = persistentListOf(),
+                dailyNutrition = DailyNutritionVO.empty,
                 isLoading = true,
                 isLoadFailed = false,
                 reanalyzingMealIds = persistentSetOf(),
