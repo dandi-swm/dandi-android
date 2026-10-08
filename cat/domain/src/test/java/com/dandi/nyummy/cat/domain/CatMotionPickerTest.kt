@@ -56,9 +56,32 @@ class CatMotionPickerTest {
     }
 
     @Test
+    fun `같은 대사가 여러 번 들어 있어도 바로 전 대사는 피하고, 모두 같으면 그 대사를 고른다`() {
+        repeat(50) {
+            assertEquals("골골", picker.nextLine(listOf("냠냠", "냠냠", "골골"), previous = "냠냠"))
+        }
+        assertEquals("냠냠", picker.nextLine(listOf("냠냠", "냠냠"), previous = "냠냠"))
+    }
+
+    @Test
+    fun `쉬는 시간은 6초와 12초를 모두 포함한다`() {
+        val lowest = CatMotionPicker(EdgeRandom(pickLowest = true))
+        val highest = CatMotionPicker(EdgeRandom(pickLowest = false))
+
+        assertEquals(CatMotionPicker.MIN_REST_MILLIS, lowest.restMillis())
+        assertEquals(CatMotionPicker.MAX_REST_MILLIS, highest.restMillis())
+    }
+
+    @Test
     fun `쉬는 시간은 6초에서 12초 사이다`() {
         repeat(200) {
             assertTrue(picker.restMillis() in CatMotionPicker.MIN_REST_MILLIS..CatMotionPicker.MAX_REST_MILLIS)
         }
+    }
+
+    /** 범위의 가장 작은 값이나 가장 큰 값만 돌려주는 난수. */
+    private class EdgeRandom(private val pickLowest: Boolean) : Random() {
+        override fun nextBits(bitCount: Int): Int = 0
+        override fun nextLong(from: Long, until: Long): Long = if (pickLowest) from else until - 1
     }
 }

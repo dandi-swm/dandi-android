@@ -158,6 +158,35 @@ class NyummySpriteAnimationTest {
     }
 
     @Test
+    fun 쉬는_시간이_바뀌면_처음부터_다시_재생한다() {
+        var finished = 0
+        var restMillis by mutableStateOf(1_000L)
+        val clips = persistentListOf(clip(8))
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            NyummyTheme {
+                NyummySpriteAnimation(
+                    images = images(1),
+                    clips = clips,
+                    frame = frame,
+                    restMillis = restMillis,
+                    onFinished = { finished++ },
+                    modifier = Modifier.size(136.dp),
+                )
+            }
+        }
+
+        // 처음 값대로라면 1800ms에 끝난다. 1000ms에 바꾸면 그때부터 800 + 2000ms를 다시 센다.
+        composeRule.mainClock.advanceTimeBy(1_000L)
+        restMillis = 2_000L
+        composeRule.mainClock.advanceTimeBy(1_000L)
+        assertEquals(0, finished)
+
+        composeRule.mainClock.advanceTimeBy(2_000L)
+        assertEquals(1, finished)
+    }
+
+    @Test
     fun 다른_동작의_시트를_받는_동안_직전_프레임을_그대로_보여준다() {
         // 앱 캐시에 시트 한 장을 만들어 두고, 다음 동작은 끝나지 않는 주소로 둔다.
         val context = InstrumentationRegistry.getInstrumentation().targetContext
