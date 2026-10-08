@@ -8,6 +8,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
 
 class LoginUseCaseTest {
 
@@ -52,5 +53,24 @@ class LoginUseCaseTest {
         assertTrue(result.isFailure)
         assertTrue(navigationHelper.rootPages.isEmpty())
         assertEquals(AuthErrorType.INVALID_CREDENTIALS.errorMsg, messageHelper.dialogs.single().descText)
+    }
+
+    @Test
+    fun `모르는 code 의 400 이면 로그인 실패 문구로 안내한다`() = runBlocking {
+        repository.loginError = httpException(400, "api.common.invalidFormat")
+
+        useCase.login("test@dandi.app", "pw1234")
+
+        assertEquals("로그인하지 못했어요. 잠시 후 다시 시도해 주세요.", messageHelper.dialogs.single().descText)
+    }
+
+    @Test
+    fun `네트워크 오류면 연결 확인을 안내하고 실패를 돌려준다`() = runBlocking {
+        repository.loginError = IOException("offline")
+
+        val result = useCase.login("test@dandi.app", "pw1234")
+
+        assertTrue(result.isFailure)
+        assertEquals("네트워크 연결을 확인한 뒤 다시 시도해주세요.", messageHelper.dialogs.single().descText)
     }
 }
