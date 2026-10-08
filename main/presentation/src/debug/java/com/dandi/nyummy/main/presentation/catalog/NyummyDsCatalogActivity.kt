@@ -449,7 +449,10 @@ private fun VoiceSection() {
     NyummyVoiceToast(text = "기록 완료! 냐미가 맛있게 먹었어")
 }
 
-/** 원격 스프라이트 재생. 보통 체형 냐미의 "기록 끝난 뒤 여유" 동작 3개를 차례로 돌린다. 두 크기 모두 셀의 정수배로 그려진다. */
+/**
+ * 원격 스프라이트 재생. 보통 체형 냐미의 "기록 끝난 뒤 여유" 동작 3개를 차례로 돌린다. 두 크기 모두 셀의 정수배로 그려진다.
+ * 다음 동작으로 넘기는 것은 첫 번째 미리보기만 한다. 둘이 함께 넘기면 동작 하나를 건너뛸 수 있다.
+ */
 @Composable
 private fun SpriteSection() {
     var group by remember { mutableIntStateOf(0) }
@@ -459,12 +462,12 @@ private fun SpriteSection() {
         horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16),
         verticalAlignment = Alignment.Bottom,
     ) {
-        listOf(120.dp, 160.dp).forEach { size ->
+        listOf(SpriteLeadSize, 160.dp).forEach { size ->
             NyummySpriteAnimation(
                 clips = clips,
                 frame = SampleSpriteFrame,
                 restMillis = 2_000L,
-                onFinished = { group = (group + 1) % SampleSpriteGroups.size },
+                onFinished = { if (size == SpriteLeadSize) group = (group + 1) % SampleSpriteGroups.size },
                 modifier = Modifier.size(size),
                 placeholder = { NyummySkeleton(shape = NyummySkeletonShape.Block, modifier = Modifier.fillMaxSize()) },
             )
@@ -472,6 +475,7 @@ private fun SpriteSection() {
     }
 }
 
+private val SpriteLeadSize = 120.dp
 private const val SampleSpriteBase = "https://cdn.nyummy.co.kr/cats/normal/v1/relaxed/"
 private val SampleSpriteFrame = NyummySpriteFrame(width = 136, height = 136, framesPerRow = 4, durationMs = 100)
 private val SampleSpriteGroups = listOf(
