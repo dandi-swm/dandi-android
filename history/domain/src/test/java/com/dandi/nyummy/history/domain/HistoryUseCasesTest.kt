@@ -165,7 +165,7 @@ class HistoryUseCasesTest {
 
         val result = useCase(1L)
 
-        assertEquals("A temporary error occurred.", messageHelper.oneButtonDialogs.single().titleText)
+        assertEquals("잠시 문제가 생겼어요", messageHelper.oneButtonDialogs.single().titleText)
         assertTrue(result.isFailure)
     }
 
