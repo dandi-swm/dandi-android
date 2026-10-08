@@ -47,6 +47,8 @@ import kotlin.math.roundToInt
  * 이미지를 받는 동안에는 [placeholder]를, 한 장이라도 받지 못하면 [error]를 보여 준다.
  * 다른 동작으로 바뀌어 새 시트를 받는 동안에는 직전에 그린 프레임을 그대로 두어 캐릭터가 깜빡이지 않는다.
  *
+ * [clips], [frame], [restMillis], [loopTimes] 중 하나라도 바뀌면 처음부터 다시 재생한다.
+ *
  * @param playId 값이 바뀌면 [clips]가 같아도 처음부터 다시 재생한다.
  */
 @Composable
@@ -133,10 +135,10 @@ private fun SpriteAnimationCanvas(
     contentDescription: String?,
     lastDrawn: LastDrawnCell?,
 ) {
-    var clipIndex by remember(clips, playId) { mutableIntStateOf(0) }
-    var frameIndex by remember(clips, playId) { mutableIntStateOf(0) }
+    var clipIndex by remember(clips, frame, restMillis, loopTimes, playId) { mutableIntStateOf(0) }
+    var frameIndex by remember(clips, frame, restMillis, loopTimes, playId) { mutableIntStateOf(0) }
 
-    LaunchedEffect(clips, playId) {
+    LaunchedEffect(clips, frame, restMillis, loopTimes, playId) {
         if (clips.isEmpty()) return@LaunchedEffect
         val frameMillis = frame.durationMs.coerceAtLeast(1).toLong()
         suspend fun playOnce(index: Int) {
