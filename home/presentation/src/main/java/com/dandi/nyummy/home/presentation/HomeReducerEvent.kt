@@ -1,6 +1,5 @@
 package com.dandi.nyummy.home.presentation
 
-import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
@@ -25,15 +24,16 @@ sealed interface HomeReducerEvent : ReducerEvent {
     /** 고양이방 메뉴 펼침 여부가 바뀌었다. */
     data class RoomMenuExpansionChanged(val expanded: Boolean) : HomeReducerEvent
 
-    data class CatAnimationsLoaded(val animations: CatAnimationSetVO) : HomeReducerEvent
+    data object CatAnimationsLoaded : HomeReducerEvent
 
     data object CatAnimationsLoadFailed : HomeReducerEvent
 
-    /** 냐미 상태나 동작이 바뀌었다. */
+    /** 냐미 상태나 동작이 바뀌었다. [motion]은 애니메이션을 아직 받지 못했으면 null이다. */
     data class CatMotionChanged(
         val state: CatState,
         val group: Int,
-        val restMillis: Long,
+        val playId: Int,
         val line: String?,
+        val motion: HomeCatMotion?,
     ) : HomeReducerEvent
 }

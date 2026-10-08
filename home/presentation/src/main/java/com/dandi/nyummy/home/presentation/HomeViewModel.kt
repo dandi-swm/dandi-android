@@ -3,6 +3,7 @@ package com.dandi.nyummy.home.presentation
 import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.cat.domain.CatMotionPicker
 import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
+import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.entity.time.KstTime
@@ -31,6 +32,12 @@ class HomeViewModel @Inject constructor(
 
     /** 홈 요약을 한 번이라도 읽었는지. 첫 진입을 "방금 기록하고 돌아옴"으로 착각하지 않게 한다. */
     private var hasLoadedSummary = false
+
+    /**
+     * 받아 둔 냐미 상태별 애니메이션. 아직 받지 못했으면 null이다.
+     * 화면에는 지금 재생할 동작만 [HomeUIState.catMotion]으로 넘긴다.
+     */
+    private var catAnimations: CatAnimationSetVO? = null
 
     override fun onIntent(intent: HomeIntent) {
         when (intent) {
@@ -76,14 +83,14 @@ class HomeViewModel @Inject constructor(
             )
             HomeReducerEvent.TodayMealsLoadFailed -> state.copy(isTodayMealsLoading = false, isTodayMealsFailed = true)
             is HomeReducerEvent.RoomMenuExpansionChanged -> state.copy(isRoomMenuExpanded = event.expanded)
-            is HomeReducerEvent.CatAnimationsLoaded -> state.copy(catAnimations = event.animations, isCatAnimationFailed = false)
+            HomeReducerEvent.CatAnimationsLoaded -> state.copy(isCatAnimationFailed = false)
             HomeReducerEvent.CatAnimationsLoadFailed -> state.copy(isCatAnimationFailed = true)
             is HomeReducerEvent.CatMotionChanged -> state.copy(
                 catState = event.state,
                 catGroup = event.group,
-                catPlayId = state.catPlayId + 1,
-                catRestMillis = event.restMillis,
+                catPlayId = event.playId,
                 catLine = event.line,
+                catMotion = event.motion,
             )
         }
 
@@ -106,11 +113,12 @@ class HomeViewModel @Inject constructor(
 
     /** 냐미 애니메이션을 아직 받지 못했으면 받는다. 실패하면 기본 냐미를 두고, 다음에 화면이 보일 때 다시 받는다. */
     private fun loadCatAnimationsIfNeeded() {
-        if (currentState.catAnimations != null || catAnimationsJob?.isActive == true) return
+        if (catAnimations != null || catAnimationsJob?.isActive == true) return
         catAnimationsJob = viewModelScope.launch {
             getCatAnimations()
                 .onSuccess {
-                    dispatch(HomeReducerEvent.CatAnimationsLoaded(it))
+                    catAnimations = it
+                    dispatch(HomeReducerEvent.CatAnimationsLoaded)
                     currentState.catState?.let { state -> startCatMotion(state, newLine = true) }
                 }
                 .onFailure { dispatch(HomeReducerEvent.CatAnimationsLoadFailed) }
@@ -133,19 +141,22 @@ class HomeViewModel @Inject constructor(
      * 대사는 [newLine]일 때만 새로 고르고, 바로 전 대사를 피한다.
      */
     private fun startCatMotion(state: CatState, newLine: Boolean) {
-        val animation = currentState.catAnimations?.animationFor(state)
+        val animation = catAnimations?.animationFor(state)
         val previousGroup = currentState.catGroup.takeIf { currentState.catState == state }
         val line = if (newLine) {
             catMotionPicker.nextLine(animation?.lines.orEmpty(), currentState.catLine)
         } else {
             currentState.catLine
         }
+        val group = catMotionPicker.nextGroup(animation?.groups?.size ?: 0, previousGroup)
+        val playId = currentState.catPlayId + 1
         dispatch(
             HomeReducerEvent.CatMotionChanged(
                 state = state,
-                group = catMotionPicker.nextGroup(animation?.groups?.size ?: 0, previousGroup),
-                restMillis = catMotionPicker.restMillis(),
+                group = group,
+                playId = playId,
                 line = line,
+                motion = animation?.toHomeCatMotion(group, playId, catMotionPicker.restMillis()),
             ),
         )
     }

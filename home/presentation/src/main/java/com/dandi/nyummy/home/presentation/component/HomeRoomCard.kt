@@ -40,8 +40,6 @@ import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.component.NyummySpriteSheet
 import com.dandi.nyummy.common.presentation.component.NyummySpriteView
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteAnimation
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteFrame
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpritePrefetch
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceBubble
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
@@ -49,7 +47,6 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import com.dandi.nyummy.home.presentation.HomeCatMotion
 import com.dandi.nyummy.home.presentation.R
-import kotlinx.collections.immutable.toImmutableList
 import kotlin.math.max
 
 /**
@@ -155,27 +152,12 @@ private fun HomeNyami(
     fallback: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val animation = motion.animation
-    val clips = remember(animation, motion.group) {
-        animation.groups.getOrElse(motion.group) { animation.groups.first() }
-            .map { NyummySpriteClip(url = it.url, frames = it.frames, loop = it.loop) }
-            .toImmutableList()
-    }
-    val frame = remember(animation) {
-        NyummySpriteFrame(
-            width = animation.frame.width,
-            height = animation.frame.height,
-            framesPerRow = animation.frame.framesPerRow,
-            durationMs = animation.frame.durationMs,
-        )
-    }
     // 같은 상태의 다른 동작으로 넘어갈 때 시트를 받느라 멈칫하지 않게 상태의 모든 시트를 미리 받아 둔다.
-    val allUrls = remember(animation) { animation.groups.flatten().map { it.url }.distinct().toImmutableList() }
-    NyummySpritePrefetch(urls = allUrls)
+    NyummySpritePrefetch(urls = motion.sheetUrls)
     val description = stringResource(R.string.home_character_description)
     NyummySpriteAnimation(
-        clips = clips,
-        frame = frame,
+        clips = motion.clips,
+        frame = motion.frame,
         restMillis = motion.restMillis,
         onFinished = onMotionFinished,
         playId = motion.playId,
