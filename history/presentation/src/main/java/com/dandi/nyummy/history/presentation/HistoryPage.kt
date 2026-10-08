@@ -58,7 +58,7 @@ fun HistoryPage(
 }
 
 @Composable
-private fun HistoryScreen(
+internal fun HistoryScreen(
     uiState: HistoryUIState,
     onIntent: (HistoryIntent) -> Unit,
     modifier: Modifier = Modifier,
