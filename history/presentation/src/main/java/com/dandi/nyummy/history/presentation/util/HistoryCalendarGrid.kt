@@ -66,8 +66,8 @@ fun todayDate(nowMillis: Long = System.currentTimeMillis()): HistoryDateVO {
 fun HistoryDateVO.isAfter(other: HistoryDateVO): Boolean =
     (year * 10_000 + month * 100 + day) > (other.year * 10_000 + other.month * 100 + other.day)
 
-/** 캘린더를 넘겨 볼 수 있는 달 수. 마지막 장이 이번 달이고, 10년 전까지 거슬러 넘길 수 있다. */
-const val HISTORY_MONTH_PAGE_COUNT = 120
+/** 캘린더를 넘겨 볼 수 있는 달 수. 마지막 장인 이번 달에 지난 120개월(10년)을 더한다. */
+const val HISTORY_MONTH_PAGE_COUNT = 121
 
 /** 캘린더 [page]번째 장의 달. 마지막 장이 [currentMonth]입니다. */
 fun historyMonthAt(page: Int, currentMonth: HistoryMonth): HistoryMonth =

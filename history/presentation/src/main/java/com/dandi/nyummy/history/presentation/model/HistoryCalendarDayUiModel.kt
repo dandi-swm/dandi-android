@@ -39,8 +39,8 @@ fun buildCalendarDayUiModels(
             date = cell.date,
             dayLabel = cell.date.day.toString(),
             inCurrentMonth = cell.inCurrentMonth,
-            // 월간 API는 식사가 있는 날에만 아이콘을 준다. 기록 판정은 기록 행위 기준이라 아이콘 유무로 본다.
-            hasRecord = icons.isNotEmpty(),
+            // 월간 데이터는 기록이 있는 날만 담는다. 기록 판정은 기록 행위 기준이다.
+            hasRecord = record != null,
             foodIconIds = icons.toImmutableList(),
         )
     }.toImmutableList()

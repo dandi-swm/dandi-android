@@ -10,6 +10,7 @@ import com.dandi.nyummy.history.domain.GetMealDetailUseCase
 import com.dandi.nyummy.history.domain.GetMonthlyMealsUseCase
 import com.dandi.nyummy.history.domain.ReanalyzeMealUseCase
 import com.dandi.nyummy.history.domain.UpdateMealNameUseCase
+import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.presentation.model.HistoryMonth
@@ -138,6 +139,8 @@ class HistoryViewModel @Inject constructor(
                 displayedMonth = event.month.month,
                 selectedDate = event.selectedDate,
                 selectedDayMeals = persistentListOf(),
+                // 새 날짜의 기록을 받기 전이나 받지 못했을 때 이전 날짜의 영양이 남아 보이지 않게 비운다.
+                dailyNutrition = DailyNutritionVO.empty,
                 reanalyzingMealIds = persistentSetOf(),
                 mealDetail = null,
             )
