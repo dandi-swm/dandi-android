@@ -1,5 +1,7 @@
 package com.dandi.nyummy.main.presentation.navigation
 
+import com.dandi.nyummy.achievement.domain.AchievementPage
+import com.dandi.nyummy.achievement.presentation.AchievementPage
 import com.dandi.nyummy.auth.domain.EmailLoginPage
 import com.dandi.nyummy.auth.domain.LoginPage
 import com.dandi.nyummy.auth.domain.SignUpPage
@@ -21,6 +23,8 @@ import com.dandi.nyummy.meal.domain.MealRecordPage
 import com.dandi.nyummy.meal.presentation.MealRecordPage
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.onboarding.presentation.OnboardingPage
+import com.dandi.nyummy.quest.domain.QuestPage
+import com.dandi.nyummy.quest.presentation.QuestPage
 import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.shop.presentation.ShopPage
 
@@ -114,6 +118,16 @@ val appRoutes: List<AppRoute> = listOf(
         path = CollectionPage.PATH,
         isBottomTab = true,
         render = { CollectionPage() },
+    ),
+    AppRoute(
+        path = QuestPage.PATH,
+        isBottomTab = true,
+        render = { QuestPage() },
+    ),
+    AppRoute(
+        path = AchievementPage.PATH,
+        isBottomTab = true,
+        render = { AchievementPage() },
     ),
     AppRoute(
         path = ShopPage.PATH,

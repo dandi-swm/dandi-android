@@ -1,4 +1,4 @@
-package com.dandi.nyummy.shop.presentation
+package com.dandi.nyummy.quest.presentation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
@@ -7,26 +7,26 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyComingSoonPage
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
-/** 상점 화면. 기능 공개 전까지 준비 중 안내를 보여준다. */
+/** 퀘스트 화면. 기능 공개 전까지 준비 중 안내를 보여준다. */
 @Composable
-fun ShopPage(
-    viewModel: ShopViewModel = hiltViewModel(),
+fun QuestPage(
+    viewModel: QuestViewModel = hiltViewModel(),
 ) {
-    ShopScreen()
+    QuestScreen()
 }
 
 @Composable
-private fun ShopScreen() {
+private fun QuestScreen() {
     NyummyComingSoonPage(
-        title = stringResource(R.string.shop_title),
-        message = stringResource(R.string.shop_coming_title),
+        title = stringResource(R.string.quest_title),
+        message = stringResource(R.string.quest_coming_title),
     )
 }
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 767)
 @Composable
-private fun ShopScreenPreview() {
+private fun QuestScreenPreview() {
     NyummyTheme {
-        ShopScreen()
+        QuestScreen()
     }
 }

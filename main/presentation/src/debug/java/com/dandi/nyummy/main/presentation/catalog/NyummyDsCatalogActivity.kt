@@ -49,6 +49,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircula
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgressSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCoachCard
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCodeInput
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyComingSoonPage
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCoinPill
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyConfirmSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialog
@@ -144,6 +145,7 @@ private val CatalogEntries = listOf(
     CatalogEntry("Sprite") { SpriteSection() },
     CatalogEntry("Overlays") { OverlaySection() },
     CatalogEntry("State Surface") { StateSurfaceSection() },
+    CatalogEntry("Coming Soon") { ComingSoonSection() },
 )
 
 private const val ExtraSection = "section"
@@ -603,3 +605,14 @@ private fun StateSurfaceSection() {
     )
     NyummyStateSurface.Loading(voice = "냐미가 맛보는 중…", message = "보통 10초 안에 끝나요")
 }
+
+@Composable
+private fun ComingSoonSection() {
+    NyummyComingSoonPage(
+        title = "퀘스트",
+        message = "퀘스트를 준비하고 있어요",
+        modifier = Modifier.height(ComingSoonPreviewHeight),
+    )
+}
+
+private val ComingSoonPreviewHeight = 560.dp
