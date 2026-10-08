@@ -21,6 +21,7 @@ import com.dandi.nyummy.history.domain.HistoryRepository
 import com.dandi.nyummy.history.domain.ReanalyzeMealUseCase
 import com.dandi.nyummy.history.domain.UpdateMealNameUseCase
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
+import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
@@ -333,6 +334,23 @@ class HistoryViewModelTest {
         assertFalse(state.isLoadFailed)
         assertFalse(state.isLoading)
         assertEquals(2, state.selectedDayMeals.size)
+    }
+
+    @Test
+    fun `달을 넘기면 이전 날짜의 영양을 비워 실패해도 남지 않는다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ ->
+            DailyMealHistoryVO(nutrition = DailyNutritionVO(currentCalorieKcal = 1_200))
+        }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertEquals(1_200, viewModel.uiState.value.dailyNutrition.currentCalorieKcal)
+        repository.monthlyOverride = { _, _ -> throw IOException("offline") }
+
+        viewModel.onIntent(HistoryIntent.ChangeMonth(HistoryMonth.of(todayDate()).plusMonths(-1)))
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isLoadFailed)
+        assertEquals(DailyNutritionVO.empty, viewModel.uiState.value.dailyNutrition)
     }
 
     @Test

@@ -125,6 +125,8 @@ class HistoryCalendarGridTest {
         assertEquals(HistoryMonth(2025, 12), historyMonthAt(last - 1, current))
         assertEquals(last, historyPageOf(current, current))
         assertEquals(last - 13, historyPageOf(HistoryMonth(2024, 12), current))
+        // 첫 장은 정확히 120개월 전이다.
+        assertEquals(HistoryMonth(2016, 1), historyMonthAt(0, current))
     }
 
     @Test

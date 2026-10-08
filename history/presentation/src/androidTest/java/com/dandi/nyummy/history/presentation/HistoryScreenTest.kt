@@ -222,6 +222,23 @@ class HistoryScreenTest {
     }
 
     @Test
+    fun 삭제_요청을_보내는_중에는_닫기와_삭제를_누를_수_없다() {
+        val meal = MealHistoryVO(id = "1", name = "비빔밥", recordedAt = "08:10", orderIndex = 1)
+        setScreen(
+            state(meals = listOf(meal)).copy(
+                mealDetail = HistoryMealDetailUiState(
+                    meal = meal,
+                    mode = HistoryMealDetailMode.ConfirmingDelete,
+                    isActionInFlight = true,
+                ),
+            ),
+        )
+
+        composeRule.onNodeWithText(context.getString(com.dandi.nyummy.common.presentation.R.string.nyummy_dialog_dismiss)).assertIsNotEnabled()
+        composeRule.onNodeWithText(text(R.string.history_delete_dialog_confirm)).assertIsNotEnabled()
+    }
+
+    @Test
     fun 삭제_확인은_식사_이름을_묻고_확정을_보낸다() {
         val intents = mutableListOf<HistoryIntent>()
         val meal = MealHistoryVO(id = "1", name = "비빔밥", recordedAt = "08:10", orderIndex = 1)

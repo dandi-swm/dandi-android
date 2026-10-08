@@ -87,6 +87,24 @@ class HistoryUseCasesTest {
     }
 
     @Test
+    fun `월간 조회 중 네트워크 오류면 아무것도 띄우지 않고 실패를 돌려준다`() = runBlocking {
+        val useCase = GetMonthlyMealsUseCase(
+            repository = ThrowingHistoryRepository(IOException("offline")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(2026, 8)
+
+        assertTrue(messageHelper.snackBars.isEmpty())
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+        assertEquals(0, navigationHelper.initialCount)
+        assertTrue(result.isFailure)
+    }
+
+    @Test
     fun `일일 조회 성공 시 상세 VO 를 돌려준다`() = runBlocking {
         val daily = DailyMealHistoryVO.empty
         val useCase = GetDailyMealsUseCase(
