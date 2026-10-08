@@ -70,6 +70,10 @@ dependencies {
     // PermissionRequester 의 rememberLauncherForActivityResult 용
     implementation(libs.androidx.activity.compose)
 
+    // 화면별 버벅임 통계의 외부 전송(Firebase Performance 커스텀 트레이스)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.perf)
+
     testImplementation(libs.junit)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))

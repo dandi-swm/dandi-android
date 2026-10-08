@@ -4,7 +4,7 @@ package com.dandi.nyummy.common.presentation.jank
  * 한 번의 flush 단위로 구성된 jank 통계 스냅샷.
  *
  * Debug 빌드는 [DebugJankReport] 가 받아서 Log.d 로 찍고,
- * Release 빌드는 [RemoteJankReport] 가 받아서 외부 시스템(Firebase Performance / Sentry 등)으로 전송한다.
+ * Release 빌드는 [RemoteJankReport] 가 받아서 Firebase Performance 로 전송한다.
  */
 data class JankSnapshot(
     val page: String,
