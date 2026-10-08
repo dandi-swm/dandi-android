@@ -38,6 +38,9 @@ interface TTIHelper {                    // 한 번의 TTI 측정(화면 인스�
 5. UseCase 는 ViewModel 에서만 주입한다. `TTIHelper` 가 ViewModel 스코프라 Activity, Worker, Singleton 에서는 주입할 수 없다.
 
 현재 TTI가 연결된 화면은 인트로 하나다([IntroViewModel.kt](../../intro/presentation/src/main/java/com/dandi/nyummy/intro/presentation/IntroViewModel.kt), [GetIntroUseCase.kt](../../intro/domain/src/main/java/com/dandi/nyummy/intro/domain/GetIntroUseCase.kt)).
+- 인트로 TTI 는 앱 진입(VM init)부터 버전 확인이 끝나 다음 행동이 정해질 때까지다. `GetIntroUseCase` 가 버전 확인 직후 `endTTITracking()` 을 부르므로 강제 업데이트 다이얼로그, 진행바 채움 대기, 화면 이동은 들어가지 않는다.
+- 버전 확인이 실패하면 끝을 찍지 않는다. 재시도가 성공하면 그때 보고되고, 아니면 이탈 안전망이나 타임아웃으로 미완료 보고된다.
+- 첫 실행 권한 안내를 기다린 시간은 구간에서 뺄 수 없어 `user_wait_included=true` 로 표시한다.
 
 Logcat 출력 예(디버그 빌드, `[TTI]` 태그): `Shot TTI Logging : intro#1_... / {tti.page_name=intro, tti.instance_no=1, tti.is_bounced=false, tti.is_timeout=false, tti.tti_time=..., tti.api_response_time=..., ...}`
 

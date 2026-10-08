@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.intro.domain.GetIntroUseCase
+import com.dandi.nyummy.intro.domain.tti.IntroTTIPage
 import com.dandi.nyummy.tti.TTIHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CompletableDeferred
@@ -57,9 +58,10 @@ class IntroViewModel @Inject constructor(
                 onRetry = ::start,
             requestPermissions = ::awaitPermissionFlow,
                 onBeforeNavigate = ::completeSplash,
-            )
-            ttiHelper.endTTITracking()
-            ttiHelper.shotTTILogging()
+            ).onSuccess {
+                // 끝 표시는 UseCase가 버전 확인 직후에 한다. 실패하면 재시도 결과까지 기다리도록 보내지 않는다.
+                ttiHelper.shotTTILogging()
+            }
         }
     }
 

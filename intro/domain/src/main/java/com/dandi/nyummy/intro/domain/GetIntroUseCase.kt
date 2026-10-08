@@ -12,6 +12,7 @@ import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.intro.entity.VersionCheckVO
 import com.dandi.nyummy.tti.TTIHelper
+import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TimelineCategory
 import javax.inject.Inject
 
@@ -55,6 +56,8 @@ class GetIntroUseCase @Inject constructor(
     ): Result<VersionCheckVO> = try {
         val ungranted = ungrantedStartupPermissions()
         if (ungranted.isNotEmpty() && !repository.hasShownPermissionNotice()) {
+            // 권한 안내를 기다린 시간은 TTI 구간에서 뺄 수 없어 표시만 남긴다.
+            ttiHelper.addTTIMetaData(TTIMetaData.USER_WAIT_INCLUDED, true)
             requestPermissions(ungranted)
             repository.markPermissionNoticeShown()
         }
@@ -66,6 +69,8 @@ class GetIntroUseCase @Inject constructor(
         } finally {
             ttiHelper.endTTITimeline(TimelineCategory.API_RESPONSE_TIME)
         }
+        // 버전 확인이 끝나 다음 행동이 정해진 시점이 인트로의 TTI다. 실패하면 여기까지 오지 않아 미완료로 남는다.
+        ttiHelper.endTTITracking()
 
         if (isForceUpdateRequired(version)) {
             showForceUpdateDialog(version)

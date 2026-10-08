@@ -19,4 +19,7 @@ enum class TTIMetaData(val metadataName: String) {
     TTI_LOG_VERSION(
         "tti_log_version",
     ),
+
+    /** 측정 구간에 사용자 입력을 기다린 시간(권한 안내 등)이 들어갔는지. 분석 때 거르는 데 쓴다. */
+    USER_WAIT_INCLUDED("user_wait_included"),
 }
