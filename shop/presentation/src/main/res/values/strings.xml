@@ -1,7 +1,4 @@
 <resources>
     <string name="shop_title">Shop</string>
     <string name="shop_coming_title">The shop is on its way</string>
-    <string name="shop_coming_body">We\'re stocking up items\nto dress up Nyami</string>
-    <string name="shop_badge_coming_soon">Coming soon</string>
-    <string name="shop_mascot_content_description">Nyami</string>
 </resources>
