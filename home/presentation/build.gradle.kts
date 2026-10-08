@@ -56,6 +56,8 @@ composeCompiler {
 dependencies {
     implementation(project(":home:domain"))
     implementation(project(":home:entity"))
+    implementation(project(":cat:domain"))
+    implementation(project(":cat:entity"))
     implementation(project(":meal:domain"))
     implementation(project(":history:domain"))
     implementation(project(":history:entity"))

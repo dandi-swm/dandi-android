@@ -80,11 +80,16 @@ internal fun HomeScreen(
                 onClick = { onIntent(HomeIntent.ClickStreak) },
             )
             Spacer(Modifier.height(NyummyTheme.spacing.s12))
+            val fallbackSpeech = stringResource(
+                if (uiState.hasRecordedToday) R.string.home_speech_recorded else R.string.home_speech_waiting,
+            )
             HomeRoomCard(
                 hasRecordedToday = uiState.hasRecordedToday,
-                speech = stringResource(
-                    if (uiState.hasRecordedToday) R.string.home_speech_recorded else R.string.home_speech_waiting,
-                ),
+                catMotion = uiState.catMotion,
+                useFallbackCat = uiState.isCatAnimationFailed,
+                onCatClick = { onIntent(HomeIntent.ClickCat) },
+                onCatMotionFinished = { playId -> onIntent(HomeIntent.CatMotionFinished(playId)) },
+                speech = uiState.catLine ?: fallbackSpeech,
                 isMenuExpanded = uiState.isRoomMenuExpanded,
                 onToggleMenu = { onIntent(HomeIntent.ToggleRoomMenu) },
                 onMyRoomClick = { onIntent(HomeIntent.ClickMyRoom) },

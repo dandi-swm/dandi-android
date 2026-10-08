@@ -1,5 +1,6 @@
 package com.dandi.nyummy.home.presentation
 
+import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.presentation.mvi.UiState
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
@@ -17,6 +18,12 @@ import kotlinx.collections.immutable.persistentListOf
  * @property isTodayMealsFailed 오늘 식사를 읽지 못했다(시트에서 다시 시도할 수 있다)
  * @property isTodaySheetVisible 오늘 식사 시트 표시 여부
  * @property isRoomMenuExpanded 고양이방 메뉴 펼침 여부
+ * @property isCatAnimationFailed 냐미 애니메이션을 받지 못했다(고양이가 없거나 서버, 네트워크 실패). 기본 냐미로 대신한다.
+ * @property catState 지금 냐미 상태. 홈 요약을 읽기 전에는 null
+ * @property catGroup 지금 재생할 동작 묶음 번호
+ * @property catPlayId 동작을 새로 고를 때마다 바뀐다
+ * @property catLine 말풍선 대사. 애니메이션이 없으면 null이고, 화면은 기본 대사를 쓴다.
+ * @property catMotion 지금 재생할 냐미 동작. 애니메이션이나 상태가 아직 없으면 null이다.
  */
 data class HomeUIState(
     val summary: HomeSummaryVO = HomeSummaryVO.empty,
@@ -26,6 +33,12 @@ data class HomeUIState(
     val isTodayMealsFailed: Boolean = false,
     val isTodaySheetVisible: Boolean = false,
     val isRoomMenuExpanded: Boolean = false,
+    val isCatAnimationFailed: Boolean = false,
+    val catState: CatState? = null,
+    val catGroup: Int = 0,
+    val catPlayId: Int = 0,
+    val catLine: String? = null,
+    val catMotion: HomeCatMotion? = null,
 ) : UiState {
 
     /** 오늘 한 끼라도 기록했는지. 오늘 바와 냐미 대사가 이 값으로 갈린다. */

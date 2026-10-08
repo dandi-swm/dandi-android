@@ -85,6 +85,10 @@ dependencies {
     implementation(project(":home:data"))
     implementation(project(":home:entity"))
 
+    implementation(project(":cat:domain"))
+    implementation(project(":cat:data"))
+    implementation(project(":cat:entity"))
+
     implementation(project(":meal:presentation"))
     implementation(project(":meal:domain"))
     implementation(project(":meal:data"))

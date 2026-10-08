@@ -24,6 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,10 +39,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.component.NyummySpriteSheet
 import com.dandi.nyummy.common.presentation.component.NyummySpriteView
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteAnimation
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpritePrefetch
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceBubble
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
+import com.dandi.nyummy.home.presentation.HomeCatMotion
 import com.dandi.nyummy.home.presentation.R
 import kotlin.math.max
 
@@ -51,10 +56,17 @@ import kotlin.math.max
  *   카드가 세로로 길면 좌우가, 가로로 넓으면 위쪽이 잘린다.
  * - 냐미 크기와 위치는 배경이 커진 배율로 정해 화면 크기와 상관없이 늘 같은 러그 자리에 앉는다.
  * - 대사는 냐미 머리 위 말풍선, 오른쪽 위에는 방 메뉴, 아래에는 [bottom](오늘 바)을 둔다.
+ *
+ * @param catMotion 서버에서 받은 냐미 동작. 받는 중이면 null이다.
+ * @param useFallbackCat 냐미 애니메이션을 받지 못해 기본 냐미(앱에 든 스프라이트)로 대신한다.
  */
 @Composable
 internal fun HomeRoomCard(
     hasRecordedToday: Boolean,
+    catMotion: HomeCatMotion?,
+    useFallbackCat: Boolean,
+    onCatClick: () -> Unit,
+    onCatMotionFinished: (playId: Int) -> Unit,
     speech: String,
     isMenuExpanded: Boolean,
     onToggleMenu: () -> Unit,
@@ -81,15 +93,26 @@ internal fun HomeRoomCard(
             filterQuality = FilterQuality.None,
             modifier = Modifier.fillMaxSize(),
         )
-        HomeNyami(
-            hasRecordedToday = hasRecordedToday,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .offset(y = nyamiTop)
-                .size(nyamiSize),
-        )
+        val nyamiModifier = Modifier
+            .align(Alignment.TopCenter)
+            .offset(y = nyamiTop)
+            .size(nyamiSize)
+        when {
+            catMotion != null -> HomeNyami(
+                motion = catMotion,
+                onClick = onCatClick,
+                onMotionFinished = { onCatMotionFinished(catMotion.playId) },
+                // 바깥 냐미가 이미 설명을 전달하므로 안쪽 기본 냐미는 설명을 빼서 두 번 읽히지 않게 한다.
+                fallback = {
+                    HomeFallbackNyami(hasRecordedToday = hasRecordedToday, describe = false, modifier = Modifier.fillMaxSize())
+                },
+                modifier = nyamiModifier,
+            )
+            useFallbackCat -> HomeFallbackNyami(hasRecordedToday = hasRecordedToday, modifier = nyamiModifier)
+        }
         NyummyVoiceBubble(
             text = speech,
+            typing = true,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = NyummyTheme.spacing.gutter)
@@ -118,13 +141,42 @@ internal fun HomeRoomCard(
 }
 
 /**
- * 러그 위의 냐미. 고양이 애니메이션 API를 붙이기 전까지 로컬 스프라이트를 쓴다.
- * 오늘 기록 전이면 엎드려 조는 동작을 반복하고, 기록 후면 일어나 앉은 뒤 그 자세로 머문다.
+ * 러그 위의 냐미. 서버에서 받은 동작 묶음을 재생하고, 끝나면 [onMotionFinished]로 다음 동작을 요청한다.
+ * 누르면 [onClick]. 시트 이미지를 받지 못하면 [fallback]을 보여 준다.
  */
 @Composable
 private fun HomeNyami(
+    motion: HomeCatMotion,
+    onClick: () -> Unit,
+    onMotionFinished: () -> Unit,
+    fallback: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // 같은 상태의 다른 동작으로 넘어갈 때 시트를 받느라 멈칫하지 않게 상태의 모든 시트를 미리 받아 둔다.
+    NyummySpritePrefetch(urls = motion.sheetUrls)
+    val description = stringResource(R.string.home_character_description)
+    NyummySpriteAnimation(
+        clips = motion.clips,
+        frame = motion.frame,
+        restMillis = motion.restMillis,
+        onFinished = onMotionFinished,
+        playId = motion.playId,
+        error = fallback,
+        modifier = modifier
+            .nyummyClickable(onClick = onClick)
+            .semantics { contentDescription = description },
+    )
+}
+
+/**
+ * 냐미 애니메이션을 받지 못했을 때(아직 고양이가 없거나 서버, 네트워크 실패) 쓰는 기본 냐미. 앱에 든 스프라이트를 쓴다.
+ * 오늘 기록 전이면 엎드려 조는 동작을 반복하고, 기록 후면 일어나 앉은 뒤 그 자세로 머문다.
+ */
+@Composable
+private fun HomeFallbackNyami(
     hasRecordedToday: Boolean,
     modifier: Modifier = Modifier,
+    describe: Boolean = true,
 ) {
     var lyingDown by remember(hasRecordedToday) { mutableStateOf(!hasRecordedToday) }
     val sheet = when {
@@ -138,7 +190,7 @@ private fun HomeNyami(
             displayWidth = maxWidth,
             iterations = if (sheet == SleepLoopSheet) null else 1,
             onAnimationEnd = { if (sheet == DozeSheet) lyingDown = false },
-            contentDescription = stringResource(R.string.home_character_description),
+            contentDescription = if (describe) stringResource(R.string.home_character_description) else null,
         )
     }
 }
@@ -258,6 +310,10 @@ private fun HomeRoomCardPreview() {
     NyummyTheme {
         HomeRoomCard(
             hasRecordedToday = true,
+            catMotion = null,
+            useFallbackCat = true,
+            onCatClick = {},
+            onCatMotionFinished = {},
             speech = "냠냠! 오늘도 챙겨줘서 고마워",
             isMenuExpanded = true,
             onToggleMenu = {},

@@ -1,6 +1,10 @@
 package com.dandi.nyummy.home.presentation
 
 import androidx.lifecycle.viewModelScope
+import com.dandi.nyummy.cat.domain.CatMotionPicker
+import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
+import com.dandi.nyummy.cat.entity.CatAnimationSetVO
+import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.entity.time.KstTime
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
@@ -18,14 +22,29 @@ class HomeViewModel @Inject constructor(
     private val navigationHelper: NavigationHelper,
     private val getHomeSummary: GetHomeSummaryUseCase,
     private val getDailyMeals: GetDailyMealsUseCase,
+    private val getCatAnimations: GetCatAnimationsUseCase,
+    private val catMotionPicker: CatMotionPicker,
 ) : MviViewModel<HomeIntent, HomeUIState, HomeReducerEvent>(HomeUIState.empty) {
 
     private var summaryJob: Job? = null
     private var todayMealsJob: Job? = null
+    private var catAnimationsJob: Job? = null
+
+    /** 홈 요약을 한 번이라도 읽었는지. 첫 진입을 "방금 기록하고 돌아옴"으로 착각하지 않게 한다. */
+    private var hasLoadedSummary = false
+
+    /**
+     * 받아 둔 냐미 상태별 애니메이션. 아직 받지 못했으면 null이다.
+     * 화면에는 지금 재생할 동작만 [HomeUIState.catMotion]으로 넘긴다.
+     */
+    private var catAnimations: CatAnimationSetVO? = null
 
     override fun onIntent(intent: HomeIntent) {
         when (intent) {
-            HomeIntent.ScreenResumed -> loadSummary()
+            HomeIntent.ScreenResumed -> {
+                loadSummary()
+                loadCatAnimationsIfNeeded()
+            }
             // TODO: 지갑, 우편, 공지, 설정, 스트릭 화면이 생기면 각 목적지로 연결한다.
             HomeIntent.ClickWallet -> Unit
             HomeIntent.ClickMail -> Unit
@@ -46,6 +65,8 @@ class HomeViewModel @Inject constructor(
                 dispatch(HomeReducerEvent.TodaySheetVisibilityChanged(visible = false))
                 navigationHelper.navigateTo(MealRecordPage)
             }
+            HomeIntent.ClickCat -> currentState.catState?.let { startCatMotion(it, newLine = true) }
+            is HomeIntent.CatMotionFinished -> if (intent.playId == currentState.catPlayId) finishCatMotion()
         }
     }
 
@@ -62,6 +83,15 @@ class HomeViewModel @Inject constructor(
             )
             HomeReducerEvent.TodayMealsLoadFailed -> state.copy(isTodayMealsLoading = false, isTodayMealsFailed = true)
             is HomeReducerEvent.RoomMenuExpansionChanged -> state.copy(isRoomMenuExpanded = event.expanded)
+            HomeReducerEvent.CatAnimationsLoaded -> state.copy(isCatAnimationFailed = false)
+            HomeReducerEvent.CatAnimationsLoadFailed -> state.copy(isCatAnimationFailed = true)
+            is HomeReducerEvent.CatMotionChanged -> state.copy(
+                catState = event.state,
+                catGroup = event.group,
+                catPlayId = event.playId,
+                catLine = event.line,
+                catMotion = event.motion,
+            )
         }
 
     /**
@@ -71,7 +101,74 @@ class HomeViewModel @Inject constructor(
     private fun loadSummary() {
         summaryJob?.cancel()
         summaryJob = viewModelScope.launch {
-            getHomeSummary().onSuccess { dispatch(HomeReducerEvent.SummaryLoaded(it)) }
+            getHomeSummary().onSuccess { summary ->
+                val recordedJustNow = hasLoadedSummary &&
+                    summary.todayRecordedCount > currentState.summary.todayRecordedCount
+                hasLoadedSummary = true
+                dispatch(HomeReducerEvent.SummaryLoaded(summary))
+                updateCatState(recordedJustNow)
+            }
+        }
+    }
+
+    /** 냐미 애니메이션을 아직 받지 못했으면 받는다. 실패하면 기본 냐미를 두고, 다음에 화면이 보일 때 다시 받는다. */
+    private fun loadCatAnimationsIfNeeded() {
+        if (catAnimations != null || catAnimationsJob?.isActive == true) return
+        catAnimationsJob = viewModelScope.launch {
+            getCatAnimations()
+                .onSuccess {
+                    catAnimations = it
+                    dispatch(HomeReducerEvent.CatAnimationsLoaded)
+                    currentState.catState?.let { state -> startCatMotion(state, newLine = true) }
+                }
+                .onFailure { dispatch(HomeReducerEvent.CatAnimationsLoadFailed) }
+        }
+    }
+
+    /** 홈 요약이 바뀌면 냐미 상태를 다시 고른다. 상태가 그대로면 지금 동작을 끊지 않는다. */
+    private fun updateCatState(recordedJustNow: Boolean) {
+        val current = currentState.catState
+        val next = homeCatState(
+            hasRecordedToday = currentState.hasRecordedToday,
+            recordedJustNow = recordedJustNow,
+            isCelebrating = current == CatState.CONTENT,
+        )
+        if (next != current || recordedJustNow) startCatMotion(next, newLine = true)
+    }
+
+    /**
+     * [state]에서 다음 동작을 고른다. 같은 상태 안에서는 바로 전 동작을 피한다.
+     * 대사는 [newLine]일 때만 새로 고르고, 바로 전 대사를 피한다.
+     */
+    private fun startCatMotion(state: CatState, newLine: Boolean) {
+        val animation = catAnimations?.animationFor(state)
+        val previousGroup = currentState.catGroup.takeIf { currentState.catState == state }
+        val line = if (newLine) {
+            catMotionPicker.nextLine(animation?.lines.orEmpty(), currentState.catLine)
+        } else {
+            currentState.catLine
+        }
+        val group = catMotionPicker.nextGroup(animation?.groups?.size ?: 0, previousGroup)
+        val playId = currentState.catPlayId + 1
+        dispatch(
+            HomeReducerEvent.CatMotionChanged(
+                state = state,
+                group = group,
+                playId = playId,
+                line = line,
+                motion = animation?.toHomeCatMotion(group, playId, catMotionPicker.restMillis()),
+            ),
+        )
+    }
+
+    /** 먹는 반응이 끝나면 오늘 상황에 맞는 상태로 돌아가고, 그 밖에는 같은 상태의 다른 동작을 이어 간다. */
+    private fun finishCatMotion() {
+        val current = currentState.catState ?: return
+        if (current == CatState.CONTENT) {
+            val next = homeCatState(currentState.hasRecordedToday, recordedJustNow = false, isCelebrating = false)
+            startCatMotion(next, newLine = true)
+        } else {
+            startCatMotion(current, newLine = false)
         }
     }
 

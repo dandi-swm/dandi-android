@@ -46,4 +46,13 @@ sealed interface HomeIntent : MviIntent {
 
     /** 식사 추가하기(시트 안 버튼). */
     data object ClickAddMeal : HomeIntent
+
+    /** 냐미를 눌렀다. 같은 상태의 다른 동작과 새 대사를 보여 준다. */
+    data object ClickCat : HomeIntent
+
+    /**
+     * 냐미 동작 하나가 끝나고 쉬는 시간도 지났다.
+     * 그사이 다른 동작으로 바뀌었으면 늦게 온 신호이므로 [playId]로 걸러 낸다.
+     */
+    data class CatMotionFinished(val playId: Int) : HomeIntent
 }

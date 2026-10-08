@@ -45,6 +45,10 @@ include(":home:domain")
 include(":home:data")
 include(":home:entity")
 
+include(":cat:domain")
+include(":cat:data")
+include(":cat:entity")
+
 include(":meal:presentation")
 include(":meal:domain")
 include(":meal:data")

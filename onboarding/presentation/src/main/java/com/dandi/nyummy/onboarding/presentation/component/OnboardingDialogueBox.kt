@@ -32,6 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTypewriterText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.onboarding.presentation.OnboardingSpeaker
 import com.dandi.nyummy.onboarding.presentation.R
@@ -83,7 +84,7 @@ internal fun OnboardingDialogueBox(
                 ),
             verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
         ) {
-            TypewriterText(
+            NyummyTypewriterText(
                 text = text,
                 lineKey = lineKey,
                 revealed = revealed,

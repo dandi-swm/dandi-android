@@ -14,6 +14,9 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.dandi.nyummy.cat.entity.CatState
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteFrame
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
@@ -203,6 +206,49 @@ class HomeScreenTest {
         composeRule.onNodeWithText(text(R.string.home_sheet_add_meal)).performClick()
 
         assertEquals(listOf(HomeIntent.RetryTodayMeals, HomeIntent.ClickAddMeal), intents)
+    }
+
+    // 테스트에서는 시트를 받지 못해 기본 냐미로 대신 그려진다.
+    private val catMotion = HomeCatMotion(
+        clips = persistentListOf(NyummySpriteClip(url = "file:///nyummy/not-found.png", frames = 8)),
+        frame = NyummySpriteFrame(width = 136, height = 136, framesPerRow = 4, durationMs = 100),
+        sheetUrls = persistentListOf("file:///nyummy/not-found.png"),
+        playId = 1,
+        restMillis = 6_000L,
+    )
+
+    @Test
+    fun 냐미_대사가_있으면_말풍선에_보여주고_냐미를_누르면_의도를_보낸다() {
+        val intents = mutableListOf<HomeIntent>()
+        setScreen(
+            HomeUIState(
+                summary = recordedSummary,
+                catMotion = catMotion,
+                catState = CatState.RELAXED,
+                catLine = "이제 느긋하게 쉬어도 돼",
+            ),
+        ) { intents += it }
+
+        composeRule.onNodeWithText("이제 느긋하게 쉬어도 돼").assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.home_speech_recorded)).assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(text(R.string.home_character_description)).performClick()
+
+        assertEquals(listOf<HomeIntent>(HomeIntent.ClickCat), intents)
+    }
+
+    @Test
+    fun 냐미_애니메이션을_받지_못하면_기본_냐미와_기본_대사를_보여준다() {
+        setScreen(HomeUIState(summary = recordedSummary.copy(todayRecordedCount = 0), isCatAnimationFailed = true))
+
+        composeRule.onNodeWithContentDescription(text(R.string.home_character_description)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.home_speech_waiting)).assertIsDisplayed()
+    }
+
+    @Test
+    fun 냐미_애니메이션을_받는_중에는_냐미를_그리지_않는다() {
+        setScreen(HomeUIState(summary = recordedSummary))
+
+        composeRule.onNodeWithContentDescription(text(R.string.home_character_description)).assertDoesNotExist()
     }
 
     @Test
