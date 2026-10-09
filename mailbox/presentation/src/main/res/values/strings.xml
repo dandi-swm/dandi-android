@@ -23,7 +23,5 @@
     <string name="mailbox_write_sent">문의를 보냈어요</string>
     <string name="mailbox_write_send_failed">문의를 보내지 못했어요. 잠시 후 다시 시도해 주세요.</string>
 
-    <string name="mailbox_detail_answer_label">문의 답변</string>
-    <string name="mailbox_detail_answer_title">보내 주신 문의에 답장했어요</string>
-    <string name="mailbox_detail_my_inquiry">내가 보낸 문의</string>
+    <string name="mailbox_detail_reply_from">냐미 팀 답장</string>
 </resources>

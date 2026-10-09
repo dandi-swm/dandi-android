@@ -3,10 +3,9 @@ package com.dandi.nyummy.mailbox.presentation.detail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -23,7 +22,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDivider
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -32,8 +30,8 @@ import com.dandi.nyummy.mailbox.presentation.R
 import com.dandi.nyummy.mailbox.presentation.model.labelRes
 
 /**
- * 문의 상세. 답장이 왔으면 답장 제목, 시각, 본문 아래에 내가 보낸 문의를 둔다.
- * 아직 답장이 없으면 유형과 보낸 시각, 내가 보낸 문의만 보여 준다.
+ * 문의 상세. 목록에서 누른 내 문의(유형, 보낸 시각, 내용)를 먼저 보여 주고,
+ * 그 아래 카드에 냐미 팀 답장을 둔다. 아직 답장이 없으면 같은 카드에 기다리는 중이라고만 적는다.
  */
 @Composable
 fun InquiryDetailPage(
@@ -78,79 +76,92 @@ internal fun InquiryDetailScreen(
                 .wrapContentWidth(Alignment.CenterHorizontally)
                 .widthIn(max = ContentMaxWidth)
                 .padding(horizontal = NyummyTheme.spacing.gutter)
-                .padding(top = ContentTopGap, bottom = NyummyTheme.spacing.s24),
+                .padding(top = NyummyTheme.spacing.s16, bottom = NyummyTheme.spacing.s24),
+            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s24),
         ) {
-            val answer = inquiry.answer
-            if (answer != null) {
-                NyummyText(
-                    text = stringResource(R.string.mailbox_detail_answer_label),
-                    style = NyummyTheme.typography.labelS,
-                    color = NyummyTheme.colors.content.brand,
-                )
-                Spacer(Modifier.height(NyummyTheme.spacing.s4))
-                NyummyText(
-                    text = stringResource(R.string.mailbox_detail_answer_title),
-                    style = NyummyTheme.typography.titleL,
-                )
-                NyummyText(
-                    text = answer.answeredAtLabel,
-                    style = NyummyTheme.typography.bodyS,
-                    color = NyummyTheme.colors.content.tertiary,
-                )
-                Spacer(Modifier.height(NyummyTheme.spacing.s16))
-                NyummyDivider()
-                Spacer(Modifier.height(NyummyTheme.spacing.s16))
-                NyummyText(
-                    text = answer.content,
-                    style = NyummyTheme.typography.bodyL,
-                )
-                Spacer(Modifier.height(NyummyTheme.spacing.s24))
-            } else {
-                NyummyText(
-                    text = stringResource(inquiry.category.labelRes),
-                    style = NyummyTheme.typography.labelS,
-                    color = NyummyTheme.colors.content.brand,
-                )
-                Spacer(Modifier.height(NyummyTheme.spacing.s4))
-                NyummyText(
-                    text = inquiry.createdAtLabel,
-                    style = NyummyTheme.typography.bodyS,
-                    color = NyummyTheme.colors.content.tertiary,
-                )
-                Spacer(Modifier.height(NyummyTheme.spacing.s16))
-            }
-            MyInquiryCard(content = inquiry.content)
+            MyInquiry(inquiry)
+            ReplyCard(inquiry.answer)
         }
     }
 }
 
-/** 내가 보낸 문의 원문. 움푹한 바탕의 둥근 카드. */
+/** 내가 보낸 문의. 목록 행처럼 위에 유형과 보낸 시각을 두고 아래에 전문을 쓴다. */
 @Composable
-private fun MyInquiryCard(content: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(NyummyTheme.colors.bg.surfaceSunken, RoundedCornerShape(NyummyTheme.radius.m))
-            .padding(horizontal = NyummyTheme.spacing.s16, vertical = CardVerticalPadding),
-        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
-    ) {
-        NyummyText(
-            text = stringResource(R.string.mailbox_detail_my_inquiry),
-            style = NyummyTheme.typography.labelS,
-            color = NyummyTheme.colors.content.tertiary,
+private fun MyInquiry(inquiry: InquiryDetailUiModel) {
+    Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
+        MetaRow(
+            label = stringResource(inquiry.category.labelRes),
+            time = inquiry.createdAtLabel,
+            isLabelEmphasized = false,
         )
         NyummyText(
-            text = content,
-            style = NyummyTheme.typography.bodyM,
-            color = NyummyTheme.colors.content.secondary,
+            text = inquiry.content,
+            style = NyummyTheme.typography.bodyL,
         )
     }
 }
 
-/** 상단 바와 첫 줄 사이. */
-private val ContentTopGap = 4.dp
+/** 냐미 팀 답장 카드. 답장이 없으면 같은 자리에 기다리는 중이라고만 쓴다. */
+@Composable
+private fun ReplyCard(answer: InquiryAnswerUiModel?) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(NyummyTheme.colors.bg.surfaceSunken, RoundedCornerShape(NyummyTheme.radius.m))
+            .padding(
+                start = NyummyTheme.spacing.s16,
+                end = NyummyTheme.spacing.s16,
+                top = CardTopPadding,
+                bottom = NyummyTheme.spacing.s16,
+            ),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
+    ) {
+        if (answer != null) {
+            MetaRow(
+                label = stringResource(R.string.mailbox_detail_reply_from),
+                time = answer.answeredAtLabel,
+                isLabelEmphasized = true,
+            )
+            NyummyText(
+                text = answer.content,
+                style = NyummyTheme.typography.bodyM,
+            )
+        } else {
+            NyummyText(
+                text = stringResource(R.string.mailbox_status_waiting),
+                style = NyummyTheme.typography.bodyM,
+                color = NyummyTheme.colors.content.tertiary,
+            )
+        }
+    }
+}
 
-private val CardVerticalPadding = 14.dp
+/** 왼쪽 라벨(유형이나 보낸 사람)과 오른쪽 시각. */
+@Composable
+private fun MetaRow(label: String, time: String, isLabelEmphasized: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(MetaGap),
+    ) {
+        NyummyText(
+            text = label,
+            style = NyummyTheme.typography.labelS,
+            color = if (isLabelEmphasized) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.tertiary,
+            maxLines = 1,
+            modifier = Modifier.weight(1f),
+        )
+        NyummyText(
+            text = time,
+            style = NyummyTheme.typography.labelS,
+            color = NyummyTheme.colors.content.tertiary,
+            maxLines = 1,
+        )
+    }
+}
+
+private val CardTopPadding = 14.dp
+
+private val MetaGap = 6.dp
 
 private val ContentMaxWidth = 480.dp
 
@@ -183,7 +194,7 @@ private fun InquiryDetailWaitingPreview() {
             uiState = InquiryDetailUIState(
                 inquiry = InquiryDetailUiModel(
                     category = InquiryCategory.SUGGESTION,
-                    content = "히스토리에서 사진을 크게 보고 싶어요.",
+                    content = "히스토리에서 사진을 크게 보고 싶어요. 식사 사진을 눌렀을 때 화면 가득 보여 주면 좋겠어요.",
                     createdAtLabel = "9월 28일 오후 7:05",
                     answer = null,
                 ),
