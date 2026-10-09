@@ -90,4 +90,29 @@ class EmailVerificationUseCaseTest {
 
         assertEquals("인증 코드를 여러 번 틀렸어요. 코드를 다시 받아 주세요.", result.exceptionOrNull()?.message)
     }
+
+    @Test
+    fun `챌린지 토큰이 무효한 401 은 로그인 만료가 아니라 코드를 다시 받으라고 입력란 아래에 돌려준다`() = runBlocking {
+        repository.confirmEmailVerificationError =
+            httpException(401, AuthErrorType.INVALID_EMAIL_CHALLENGE_TOKEN.type)
+
+        val result = useCase.confirmCode(authCode = "123456", emailChallengeToken = "challenge")
+
+        val error = result.exceptionOrNull()
+        assertTrue(error is CodeVerificationFailedException)
+        assertEquals("인증 요청이 올바르지 않아요. 인증 코드를 다시 받아 주세요.", error?.message)
+        assertTrue(messageHelper.dialogs.isEmpty())
+        assertEquals(0, navigationHelper.initialCount)
+    }
+
+    @Test
+    fun `모르는 code 가 붙은 401 도 로그인 만료로 보내지 않고 입력란 아래에 돌려준다`() = runBlocking {
+        repository.confirmEmailVerificationError = httpException(401, "api.auth.somethingNew")
+
+        val result = useCase.confirmCode(authCode = "123456", emailChallengeToken = "challenge")
+
+        assertTrue(result.exceptionOrNull() is CodeVerificationFailedException)
+        assertTrue(messageHelper.dialogs.isEmpty())
+        assertEquals(0, navigationHelper.initialCount)
+    }
 }

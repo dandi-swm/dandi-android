@@ -1,6 +1,7 @@
 package com.dandi.nyummy.auth.domain
 
 import com.dandi.nyummy.auth.entity.Gender
+import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -139,6 +140,60 @@ class SignUpUseCaseSocialTest {
 
         assertEquals("이미 가입된 이메일이에요. 로그인해주세요.", messageHelper.dialogs.single().descText)
     }
+
+    @Test
+    fun `이메일 가입에서 인증 완료 토큰이 무효하면(401) 로그인 만료 대신 재인증을 안내하고 인증 단계로 돌려보낸다`() = runBlocking {
+        repository.signUpError = httpException(401, AuthErrorType.INVALID_VERIFIED_TOKEN.type)
+
+        val result = signUpWithEmail()
+
+        assertTrue(result.exceptionOrNull() is EmailVerificationRestartRequiredException)
+        val dialog = messageHelper.dialogs.single()
+        assertEquals("인증이 만료됐어요. 처음부터 다시 인증해 주세요.", dialog.descText)
+        dialog.onClickButton?.invoke()
+        assertEquals(0, navigationHelper.initialCount)
+    }
+
+    @Test
+    fun `이메일 가입에서 인증이 만료돼도 인증 단계로 돌려보낸다`() = runBlocking {
+        repository.signUpError = httpException(401, AuthErrorType.VERIFICATION_EXPIRED.type)
+
+        val result = signUpWithEmail()
+
+        assertTrue(result.exceptionOrNull() is EmailVerificationRestartRequiredException)
+        assertEquals(0, navigationHelper.initialCount)
+    }
+
+    @Test
+    fun `이메일 가입의 다른 code 오류는 인증 단계로 돌려보내지 않는다`() = runBlocking {
+        repository.signUpError = httpException(409, AuthErrorType.EMAIL_ALREADY_EXISTS.type)
+
+        val result = signUpWithEmail()
+
+        assertTrue(result.exceptionOrNull() is HttpResponseException)
+        assertEquals(AuthErrorType.EMAIL_ALREADY_EXISTS.errorMsg, messageHelper.dialogs.single().descText)
+    }
+
+    @Test
+    fun `소셜 가입에서 인증 완료 토큰이 무효하면(401) 세션을 비우고 다시 로그인하게 한다`() = runBlocking {
+        session.start("social-verified")
+        repository.signUpError = httpException(401, AuthErrorType.INVALID_VERIFIED_TOKEN.type)
+
+        signUpWithSocial()
+
+        assertNull(session.pendingToken)
+        val dialog = messageHelper.dialogs.single()
+        assertEquals("가입 유효 시간이 지났어요. 다시 로그인해주세요.", dialog.descText)
+        dialog.onClickButton?.invoke()
+        assertEquals(1, navigationHelper.initialCount)
+    }
+
+    private suspend fun signUpWithEmail() = useCase.signUp(
+        emailVerifiedToken = "email-verified",
+        password = "pw1234",
+        confirmPassword = "pw1234",
+        nickname = "단디",
+    )
 
     private suspend fun signUpWithSocial() = useCase.signUpWithSocial(
         nickname = "단디",
