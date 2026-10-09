@@ -10,12 +10,13 @@ class FirebaseJankTraceValuesTest {
         page: String = "/history",
         reason: JankSnapshot.Reason = JankSnapshot.Reason.PAGE_EXIT,
         totalFrames: Int = 200,
+        jankFrames: Int = 12,
         states: Map<String, String> = emptyMap(),
     ) = JankSnapshot(
         page = page,
         reason = reason,
         totalFrames = totalFrames,
-        jankFrames = 12,
+        jankFrames = jankFrames,
         frozenFrames = 1,
         maxFrameDurationMs = 820L,
         sumFrameDurationMs = 4_000L,
@@ -42,6 +43,14 @@ class FirebaseJankTraceValuesTest {
     }
 
     @Test
+    fun `버벅임 천분율은 실수 오차 없이 정수로 계산한다`() {
+        // 7 / 10 을 실수로 곱하면 699.999... 가 되어 699 로 내려간다.
+        val values = FirebaseJankTraceValues.from(snapshot(totalFrames = 10, jankFrames = 7))!!
+
+        assertEquals(700L, values.metrics["jank_permille"])
+    }
+
+    @Test
     fun `스크롤 중 멈춘 프레임은 during_scroll 로 표시한다`() {
         val values = FirebaseJankTraceValues.from(
             snapshot(reason = JankSnapshot.Reason.FROZEN_FRAME, states = mapOf("scrolling" to "true")),
@@ -60,7 +69,7 @@ class FirebaseJankTraceValuesTest {
     fun `화면 경로를 트레이스 이름으로 쓸 수 있게 바꾼다`() {
         assertEquals("jank_meal_record", FirebaseJankTraceValues.traceNameOf("/meal/record"))
         assertEquals("jank_signup_social", FirebaseJankTraceValues.traceNameOf("/signup/social"))
-        assertEquals("jank_root", FirebaseJankTraceValues.traceNameOf(""))
+        assertEquals("jank_intro", FirebaseJankTraceValues.traceNameOf(""))
         assertEquals("jank_article_articleId", FirebaseJankTraceValues.traceNameOf("/article/{articleId}"))
     }
 }

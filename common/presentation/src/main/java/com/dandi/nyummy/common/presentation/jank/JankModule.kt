@@ -1,20 +1,18 @@
 package com.dandi.nyummy.common.presentation.jank
 
-import android.content.Context
-import android.content.pm.ApplicationInfo
+import com.dandi.nyummy.common.domain.buildtype.ReleaseBuild
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
  * 빌드 타입에 따라 [DebugJankReport] / [RemoteJankReport] 를 선택해 주입한다.
  *
- * `BuildConfig.DEBUG` 대신 `ApplicationInfo.FLAG_DEBUGGABLE` 을 사용하는 이유:
- * 모듈마다 buildConfig 를 켜지 않고도 동일하게 분기할 수 있고, 사내 다이렉트 빌드(debuggable=true)
- * 같은 비공식 변형도 자동으로 Debug 경로로 흐른다.
+ * release 빌드에서만 [RemoteJankReport](Firebase)를 쓴다. benchmark 와 베이스라인 프로파일 수집 빌드는
+ * debuggable 이 아니어서 `FLAG_DEBUGGABLE` 로는 release 와 구분되지 않으므로 [ReleaseBuild] 로 정한다.
+ * [RemoteJankReport] 는 Firebase 를 쓸 수 없으면 아무것도 보내지 않는다.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -22,12 +20,8 @@ object JankModule {
     @Provides
     @Singleton
     fun provideJankReport(
-        @ApplicationContext context: Context,
+        @ReleaseBuild isReleaseBuild: Boolean,
         debugReport: dagger.Lazy<DebugJankReport>,
         remoteReport: dagger.Lazy<RemoteJankReport>,
-    ): JankReport {
-        val isDebuggable =
-            (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
-        return if (isDebuggable) debugReport.get() else remoteReport.get()
-    }
+    ): JankReport = if (isReleaseBuild) remoteReport.get() else debugReport.get()
 }

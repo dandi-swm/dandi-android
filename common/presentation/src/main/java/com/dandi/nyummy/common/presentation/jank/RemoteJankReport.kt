@@ -39,6 +39,7 @@ class RemoteJankReport @Inject constructor() : JankReport {
  * - 스크롤 구간 통계(SCROLL_END)는 보내지 않는다. 같은 프레임이 화면 통계에도 들어가 중복이고,
  *   스크롤마다 보내면 SDK 의 전송량 제한에 걸려 TTI 같은 다른 트레이스가 버려질 수 있다.
  * - 트레이스 이름은 화면 경로를 영문, 숫자, 밑줄로 바꿔 만든다(`/meal/record` → `jank_meal_record`).
+ *   인트로는 경로가 빈 문자열이라 `jank_intro` 로 둔다.
  */
 data class FirebaseJankTraceValues(
     val traceName: String,
@@ -47,9 +48,12 @@ data class FirebaseJankTraceValues(
 ) {
     companion object {
         private const val TRACE_PREFIX = "jank_"
+
+        // 인트로 화면의 경로는 빈 문자열("")이다.
+        private const val INTRO_TRACE_NAME = "intro"
         private const val MAX_TRACE_NAME_LENGTH = 100
         private const val STATE_SCROLLING = "scrolling"
-        private const val PERMILLE = 1000
+        private const val PERMILLE = 1000L
 
         fun from(snapshot: JankSnapshot): FirebaseJankTraceValues? {
             if (snapshot.reason == JankSnapshot.Reason.SCROLL_END) return null
@@ -61,8 +65,8 @@ data class FirebaseJankTraceValues(
                     "total_frames" to snapshot.totalFrames.toLong(),
                     "jank_frames" to snapshot.jankFrames.toLong(),
                     "frozen_frames" to snapshot.frozenFrames.toLong(),
-                    // metric 은 정수만 받으므로 비율은 천분율로 보낸다.
-                    "jank_permille" to (snapshot.jankRatio * PERMILLE).toLong(),
+                    // metric 은 정수만 받으므로 비율은 천분율로 보낸다. 실수 곱셈은 7/10 이 699 가 되는 식으로 내려가 정수로 계산한다.
+                    "jank_permille" to snapshot.jankFrames.toLong() * PERMILLE / snapshot.totalFrames,
                     "avg_frame_ms" to avgFrameMs,
                     "max_frame_ms" to snapshot.maxFrameDurationMs,
                 ),
@@ -77,7 +81,7 @@ data class FirebaseJankTraceValues(
             val name = page.trim('/')
                 .replace(Regex("[^A-Za-z0-9]+"), "_")
                 .trim('_')
-                .ifEmpty { "root" }
+                .ifEmpty { INTRO_TRACE_NAME }
             return (TRACE_PREFIX + name).take(MAX_TRACE_NAME_LENGTH)
         }
     }

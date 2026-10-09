@@ -46,7 +46,16 @@ Logcat 출력 예(디버그 빌드, `[TTI]` 태그): `Shot TTI Logging : intro#1
 
 기록 필드 ([TTIInfo.kt](../../tti/src/main/java/com/dandi/nyummy/tti/TTIInfo.kt) / [TTIEnums.kt](../../tti/src/main/java/com/dandi/nyummy/tti/TTIEnums.kt)): `page_name`, `instance_no`, `tti_time`, `api_request_ready_time`, `api_response_time`, `view_creation_time`, `view_binding_time`, `image_loaded_time`(단위 ns, 측정하지 않은 구간은 -1), `is_bounced`(측정 구간 중 빠진 것이 있음), `is_timeout`(20초 안에 끝나지 않아 타임아웃으로 보고됨), `tti_log_version`.
 
-외부 전송(`TTIReporter`, release 빌드의 `RemoteTTILogger`)은 관측 도구가 연결되기 전까지 no-op이다.
+### 외부 전송 (Firebase Performance)
+
+- release 빌드에서만 보낸다. 앱 모듈이 빌드 타입 이름(`release`)으로 정한 `@ReleaseBuild Boolean`을 Hilt로 주입하고, 전송 경로는 이 값으로만 고른다. debug, benchmark, 베이스라인 프로파일 수집 빌드는 보내지 않는다(이 빌드들은 debuggable이 아니어서 `FLAG_DEBUGGABLE`로는 release와 구분되지 않는다).
+- Firebase Performance SDK 수집 자체도 매니페스트 `firebase_performance_collection_enabled`로 release에서만 켠다(자동 앱 시작, 네트워크 트레이스 포함). 값은 `app/build.gradle.kts`의 `androidComponents.onVariants`가 정한다.
+- TTI: [TTIReporterModule](../../common/data/src/main/java/com/dandi/nyummy/common/data/di/TTIReporterModule.kt)이 기본 `NoOpTTIReporter`를 주입하고, release에서만 [FirebaseTTIReporter](../../common/data/src/main/java/com/dandi/nyummy/common/data/tti/FirebaseTTIReporter.kt)를 주입한다. Firebase를 만들다 실패하면 release도 `NoOpTTIReporter`로 떨어진다. 주입 뒤 전송 중 예외는 reporter와 `TTIHelperImpl`이 삼켜 측정과 앱 동작에 영향이 없다.
+  - 트레이스 `tti_{page_name}`. metric은 구간 값(ns)을 ms로 바꾼 `{구간}_ms`(예: `tti_ms`, `api_response_ms`), 측정하지 않은 구간(-1)은 넣지 않는다.
+  - attribute는 `is_bounced`, `is_timeout`, `user_wait_included`, `tti_log_version`(트레이스당 최대 5개).
+  - 트레이스 자체 길이는 측정 시작부터 보고까지라 TTI와 다르다. 콘솔에서는 `tti_ms`를 본다.
+- 버벅임: [RemoteJankReport](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/jank/RemoteJankReport.kt)가 화면별 `jank_{경로}` 트레이스로 보낸다(인트로는 `jank_intro`). metric `total_frames`, `jank_frames`, `frozen_frames`, `jank_permille`(정수 천분율), `avg_frame_ms`, `max_frame_ms`, attribute `reason`, `during_scroll`. 스크롤 구간 통계(SCROLL_END)는 보내지 않는다.
+- `RemoteTTILogger`는 디버그 로그 싱크의 release 자리로, 지금은 아무것도 하지 않는다. 외부 전송은 `TTIReporter`만 맡는다.
 
 ## 2. JankStats (프레임 품질)
 
@@ -55,7 +64,7 @@ Logcat 출력 예(디버그 빌드, `[TTI]` 태그): `Shot TTI Logging : intro#1
 - **페이지 단위는 자동**: AppNavHost가 라우트 렌더마다 `JankPageEffect(path)` 적용 — 새 화면은 등록만 하면 계측이 따라온다.
 - 스크롤 리스트에는 `JankScrollWatcher(scrollableState)`를 화면에서 직접 추가 (스크롤 종료 시 구간 통계 flush). 파라미터는 `ScrollableState`라 LazyList(검색 `ContentsList`)·LazyGrid(즐겨찾기 `ContentsGrid`) 양쪽에 동일하게 쓴다.
 - [JankReporter.kt](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/jank/JankReporter.kt) 발사 조건: PAGE_EXIT / SCROLL_END / FROZEN_FRAME(700ms+ 즉시) / THRESHOLD_EXCEEDED(120프레임 이상 표본에서 jank 비율 5%+).
-- 리포트 채널: DebugJankReport(Logcat `tag:"JankStats"`) ↔ RemoteJankReport — [JankModule](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/jank/JankModule.kt)에서 `ApplicationInfo.FLAG_DEBUGGABLE`(BuildConfig.DEBUG 아님)로 분기해 바인딩 교체.
+- 리포트 채널: DebugJankReport(Logcat `tag:"JankStats"`) ↔ RemoteJankReport(Firebase) — [JankModule](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/jank/JankModule.kt)에서 `@ReleaseBuild`로 분기한다. release 빌드에서만 RemoteJankReport다.
 
 ## 3. Baseline Profile / Macrobenchmark
 
