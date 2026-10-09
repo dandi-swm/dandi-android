@@ -13,6 +13,7 @@ import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.home.domain.tti.HomeTTIPage
 import com.dandi.nyummy.mailbox.domain.MailboxPage
 import com.dandi.nyummy.meal.domain.MealRecordPage
+import com.dandi.nyummy.settings.domain.SettingsPage
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TimelineCategory
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -63,7 +64,7 @@ class HomeViewModel @Inject constructor(
             // TODO: 지갑, 공지, 설정, 스트릭 화면이 생기면 각 목적지로 연결한다.
             HomeIntent.ClickWallet -> Unit
             HomeIntent.ClickMail -> navigationHelper.navigateTo(MailboxPage)
-            HomeIntent.ClickSettings -> Unit
+            HomeIntent.ClickSettings -> navigationHelper.navigateTo(SettingsPage)
             HomeIntent.ClickStreak -> Unit
             // TODO: 마이룸, 친구에게 공유, 냐미 상태 화면이 생기면 연결한다.
             HomeIntent.ClickMyRoom -> Unit

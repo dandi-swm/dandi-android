@@ -119,6 +119,10 @@ dependencies {
     implementation(project(":mailbox:domain"))
     implementation(project(":mailbox:data"))
     implementation(project(":mailbox:entity"))
+    implementation(project(":settings:presentation"))
+    implementation(project(":settings:domain"))
+    implementation(project(":settings:data"))
+    implementation(project(":settings:entity"))
 
     implementation(project(":collection:presentation"))
     implementation(project(":collection:domain"))
