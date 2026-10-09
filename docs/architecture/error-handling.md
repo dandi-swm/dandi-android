@@ -30,11 +30,14 @@ class HttpResponseException(
 
 interface HttpErrorType { val type: String; val errorMsg: String; val isHandledOnDomain: Boolean }
 
-fun HttpResponseException.isCommonErrorHandling(): Boolean   // 401 || 404 || 5xx
-inline fun <reified ErrorType> HttpResponseException.handlingErrorOnUseCase(): ErrorType?
-        where ErrorType : Enum<ErrorType>, ErrorType : HttpErrorType
-    // enum 중 type == cause.message && isHandledOnDomain 인 것
+val HttpResponseException.serverErrorCode: String?            // 에러 바디의 code. 없으면 null
+fun HttpResponseException.isSessionExpired(): Boolean         // 401 && (code 없음 || code == "api.auth.unauthorized")
+fun HttpResponseException.isCommonErrorHandling(): Boolean    // isSessionExpired() || 404 || 5xx
+inline fun <reified ErrorType> HttpResponseException.registeredErrorType(): ErrorType?      // type == code 인 항목
+inline fun <reified ErrorType> HttpResponseException.handlingErrorOnUseCase(): ErrorType?   // 그중 isHandledOnDomain 인 것
 ```
+
+- data는 에러 바디의 `code`만 `cause`에 담는다. 바디에 `code`가 없으면 `cause`는 null이고, 원문 바디는 디버그용으로 `message`에만 남는다.
 
 ## UseCase 처리 패턴
 
@@ -72,7 +75,9 @@ class GetIntroUseCase @Inject constructor(
 ```
 
 - **순서는 서버 code가 먼저다.** 같은 404라도 `api.meal.notFound`처럼 code가 있으면 비즈니스 에러이므로 화면에 맞게 안내하고, code가 없을 때만 공통 처리로 넘긴다. [BaseUseCase.handleHttpError](../../common/domain/src/main/java/com/dandi/nyummy/common/domain/base/BaseUseCase.kt)가 이 순서를 고정한다.
-- 공통 처리는 [BaseUseCase.executeCommonErrorHanding](../../common/domain/src/main/java/com/dandi/nyummy/common/domain/base/BaseUseCase.kt): 401→로그인 만료 다이얼로그, 404→"준비 중인 기능이에요.", 그 외→"잠시 문제가 생겼어요" 다이얼로그. 상태 코드나 서버 메시지는 보여 주지 않는다.
+- 공통 처리는 [BaseUseCase.executeCommonErrorHanding](../../common/domain/src/main/java/com/dandi/nyummy/common/domain/base/BaseUseCase.kt): 로그인 만료 401→로그인 만료 다이얼로그, 404→"준비 중인 기능이에요.", 그 외→"잠시 문제가 생겼어요" 다이얼로그. 상태 코드나 서버 메시지는 보여 주지 않는다.
+- **401이라고 다 로그인 만료가 아니다.** 서버는 로그인 세션(AccessToken) 실패에만 `api.auth.unauthorized`를 주고, 회원가입·비밀번호 찾기의 인증 토큰 오류는 `api.auth.invalidEmailChallengeToken`, `api.auth.invalidVerifiedToken`처럼 따로 준다(백엔드 #103). 그래서 code가 없거나 `api.auth.unauthorized`인 401만 로그인 만료로 보고, 다른 code의 401은 그 화면의 오류로 처리한다. 등록하지 않은 code의 401은 화면 기본 안내(`onUnknownError`)로 간다.
+- `isHandledOnDomain = false`로 등록한 code는 `handleHttpError`가 아무 안내도 하지 않고 넘긴다. 공통 안내로 새지 않는다.
 - 로그인 전 화면(이메일 로그인, 소셜 로그인과 가입)처럼 공통 401 안내("로그인 만료")가 맞지 않는 곳은 code를 먼저 본 뒤 상태 코드로 직접 분기한다.
 - 단순 위임 UseCase는 처리 없이 **그대로 전파**하고 ViewModel이 `runCatching { ... }.onFailure { dispatch(Failed); messageHelper.showSnackBar(...) }`로 UI 복구한다 — 어느 쪽이든 "처리 위치는 한 곳"이 원칙.
 
