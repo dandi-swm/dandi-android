@@ -54,6 +54,7 @@ sealed interface NyummyListRowTrailing {
  * 앞 아이콘은 움푹한 40dp 칸 안의 20dp Lucide 아이콘이다.
  *
  * Chevron, Value, None은 [onClick]으로, Switch, Checkbox, Radio는 각 trailing의 콜백으로 반응한다.
+ * [enabled]가 false면 누를 수 없고 오른쪽 컨트롤을 비활성 색으로 그린다(기기 알림이 꺼져 있을 때 등).
  */
 @Composable
 fun NyummyListRow(
@@ -63,6 +64,7 @@ fun NyummyListRow(
     @DrawableRes leadingIcon: Int? = null,
     trailing: NyummyListRowTrailing = NyummyListRowTrailing.Chevron,
     onClick: (() -> Unit)? = null,
+    enabled: Boolean = true,
 ) {
     val interactionSource = rememberNyummyInteractionSource()
     val interaction = when (trailing) {
@@ -70,6 +72,7 @@ fun NyummyListRow(
             value = trailing.checked,
             interactionSource = interactionSource,
             indication = null,
+            enabled = enabled,
             role = Role.Switch,
             onValueChange = trailing.onCheckedChange,
         )
@@ -77,6 +80,7 @@ fun NyummyListRow(
             value = trailing.checked,
             interactionSource = interactionSource,
             indication = null,
+            enabled = enabled,
             role = Role.Checkbox,
             onValueChange = trailing.onCheckedChange,
         )
@@ -84,6 +88,7 @@ fun NyummyListRow(
             selected = trailing.selected,
             interactionSource = interactionSource,
             indication = null,
+            enabled = enabled,
             role = Role.RadioButton,
             onClick = trailing.onClick,
         )
@@ -91,6 +96,7 @@ fun NyummyListRow(
             Modifier.clickable(
                 interactionSource = interactionSource,
                 indication = null,
+                enabled = enabled,
                 role = Role.Button,
                 onClick = onClick,
             )
@@ -137,12 +143,12 @@ fun NyummyListRow(
                 )
             }
         }
-        ListRowTrailing(trailing)
+        ListRowTrailing(trailing, enabled)
     }
 }
 
 @Composable
-private fun ListRowTrailing(trailing: NyummyListRowTrailing) {
+private fun ListRowTrailing(trailing: NyummyListRowTrailing, enabled: Boolean) {
     when (trailing) {
         NyummyListRowTrailing.None -> Unit
         NyummyListRowTrailing.Chevron -> Icon(
@@ -168,9 +174,9 @@ private fun ListRowTrailing(trailing: NyummyListRowTrailing) {
                 modifier = Modifier.size(NyummyTheme.size.iconM),
             )
         }
-        is NyummyListRowTrailing.Switch -> NyummySwitch(checked = trailing.checked, onCheckedChange = null)
-        is NyummyListRowTrailing.Checkbox -> NyummyCheckbox(checked = trailing.checked, onCheckedChange = null)
-        is NyummyListRowTrailing.Radio -> NyummyRadio(selected = trailing.selected, onClick = null)
+        is NyummyListRowTrailing.Switch -> NyummySwitch(checked = trailing.checked, onCheckedChange = null, enabled = enabled)
+        is NyummyListRowTrailing.Checkbox -> NyummyCheckbox(checked = trailing.checked, onCheckedChange = null, enabled = enabled)
+        is NyummyListRowTrailing.Radio -> NyummyRadio(selected = trailing.selected, onClick = null, enabled = enabled)
     }
 }
 
