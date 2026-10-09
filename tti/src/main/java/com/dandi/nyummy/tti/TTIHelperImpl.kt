@@ -50,7 +50,7 @@ class TTIHelperImpl(
         val ttiInfo = TTIInfo(page, nextInstanceNo(page.pageName))
         this.ttiInfo = ttiInfo
         scope.launch {
-            reporter.startView(ttiInfo.ttiKey, page.pageName, emptyMap())
+            report { reporter.startView(ttiInfo.ttiKey, page.pageName, emptyMap()) }
             ttiInfo.recordStartTime(TimelineCategory.TTI_TIME)
             logger.d(
                 tag = "TTI",
@@ -69,7 +69,7 @@ class TTIHelperImpl(
             ttiInfo.isSent = true
             try {
                 val info = ttiInfo.getTTIInfo()
-                reporter.stopView(key = ttiInfo.ttiKey, info)
+                report { reporter.stopView(key = ttiInfo.ttiKey, info) }
                 logger.d(tag = "TTI", msg = "Timeout TTI Tracking $info")
             } finally {
                 // 자기 scope 의 cancel 을 포함하므로 반드시 코루틴의 마지막 문장이어야 한다.
@@ -77,6 +77,14 @@ class TTIHelperImpl(
             }
         }
         // endTTITracking 이 이미 온 정상 케이스: scope 는 페이지 이탈(shotTTILogging)까지 유지된다.
+    }
+
+    // 외부 전송이 실패해도 측정은 계속돼야 하므로 reporter 예외는 로그만 남기고 삼킨다.
+    // 예외가 새면 이 코루틴이 중단돼 시작 시각 기록이나 타임아웃 감시가 빠진다.
+    private inline fun report(block: () -> Unit) {
+        runCatching(block).onFailure { e ->
+            logger.d(tag = "TTI", msg = "Report failed: ${e.message}")
+        }
     }
 
     // cancel 이후의 launch 는 실행되지 않으므로, 발사 뒤 늦게 도착한 호출은 자연스럽게 무시된다.
@@ -121,7 +129,7 @@ class TTIHelperImpl(
         ttiInfo.isSent = true
         try {
             val info = ttiInfo.getTTIInfo()
-            reporter.stopView(key = ttiInfo.ttiKey, info)
+            report { reporter.stopView(key = ttiInfo.ttiKey, info) }
             logger.d(tag = "TTI", msg = "Shot TTI Logging : ${ttiInfo.ttiKey} / $info")
         } finally {
             // 자기 scope 의 cancel 을 포함하므로 반드시 코루틴의 마지막 문장이어야 한다.

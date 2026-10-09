@@ -162,6 +162,34 @@ class TTIHelperImplTest {
         assertEquals(false, report["tti.is_bounced"] == "late")
     }
 
+    @Test
+    fun `외부 전송이 실패해도 측정은 이어진다`() = runTest {
+        val helper = TTIHelperImpl(
+            reporter = FailingReporter,
+            logger = logger,
+            dispatcher = StandardTestDispatcher(testScheduler),
+        )
+
+        helper.startTTITracking(ApiPage)
+        helper.startTTITimeline(TimelineCategory.API_RESPONSE_TIME)
+        helper.endTTITimeline(TimelineCategory.API_RESPONSE_TIME)
+        helper.endTTITracking()
+        helper.shotTTILogging()
+        runCurrent()
+
+        assertTrue(logger.messages.any { it.startsWith("End TTI Tracking") })
+        assertTrue(logger.messages.any { it.startsWith("Shot TTI Logging") && "tti.is_bounced=false" in it })
+        assertTrue(logger.messages.any { it.startsWith("Report failed") })
+    }
+
+    private object FailingReporter : TTIReporter {
+        override fun startView(key: String, name: String, attributes: Map<String, Any?>) =
+            throw IllegalStateException("firebase down")
+
+        override fun stopView(key: String, attributes: Map<String, Any?>) =
+            throw IllegalStateException("firebase down")
+    }
+
     private object ApiPage : TTIPage {
         override val pageName = "api_page"
         override val timelines = listOf(TimelineCategory.API_RESPONSE_TIME)

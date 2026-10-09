@@ -11,7 +11,6 @@ import com.dandi.nyummy.common.presentation.helper.MessageHelperImpl
 import com.dandi.nyummy.common.presentation.helper.NavigationHelperImpl
 import com.dandi.nyummy.common.presentation.helper.ResourceHelperImpl
 import com.dandi.nyummy.tti.DebugTTILogger
-import com.dandi.nyummy.tti.NoOpTTIReporter
 import com.dandi.nyummy.tti.RemoteTTILogger
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIHelperImpl
@@ -54,10 +53,6 @@ object CommonPresentationModule {
     fun provideTTILogger(): TTILogger {
         return if (BuildConfig.DEBUG) DebugTTILogger() else RemoteTTILogger()
     }
-
-    @Provides
-    @Singleton
-    fun provideTTIReporter(): TTIReporter = NoOpTTIReporter
 }
 
 /**

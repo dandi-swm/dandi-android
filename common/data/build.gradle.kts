@@ -77,4 +77,10 @@ dependencies {
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+
+    // TTI 외부 전송(Firebase Performance 커스텀 트레이스)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.perf)
+
+    testImplementation(libs.junit)
 }
