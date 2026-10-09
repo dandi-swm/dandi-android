@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -166,7 +168,15 @@ private fun MessageEffect(
                     Toast.LENGTH_LONG
                 ).show()
 
-                is MessageEffect.ShowSnackBarError -> snackBarHostState.showSnackbar(effect.message)
+                is MessageEffect.ShowSnackBarError -> {
+                    // 버튼이 있으면 Material 기본값이 계속 띄워 두기라, 짧게(약 4초) 띄우도록 명시한다.
+                    val result = snackBarHostState.showSnackbar(
+                        message = effect.message,
+                        actionLabel = effect.actionLabel,
+                        duration = SnackbarDuration.Short,
+                    )
+                    if (result == SnackbarResult.ActionPerformed) effect.onAction?.invoke()
+                }
                 is MessageEffect.ShowOneButtonDialog -> onShowOneButtonDialog(effect)
                 is MessageEffect.ShowTwoButtonDialog -> onShowTwoButtonDialog(effect)
             }

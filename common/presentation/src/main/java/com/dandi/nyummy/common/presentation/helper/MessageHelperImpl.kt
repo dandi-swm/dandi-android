@@ -24,7 +24,7 @@ class MessageHelperImpl(val context: Context) : MessageHelper {
         callToActionText: String?,
         onClickCTA: (() -> Unit)?,
     ) {
-        emit(MessageEffect.ShowSnackBarError(messageText))
+        emit(MessageEffect.ShowSnackBarError(messageText, callToActionText, onClickCTA))
     }
 
     override fun showSnackBar(
@@ -33,7 +33,7 @@ class MessageHelperImpl(val context: Context) : MessageHelper {
         callToActionText: String?,
         onClickCTA: (() -> Unit)?,
     ) {
-        emit(MessageEffect.ShowSnackBarError(context.getString(messageRes)))
+        emit(MessageEffect.ShowSnackBarError(context.getString(messageRes), callToActionText, onClickCTA))
     }
 
     override fun showOneButtonDialog(

@@ -83,6 +83,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateAc
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateSurface
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStepIndicator
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStreakPill
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySwipeToDelete
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySwitch
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTabs
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
@@ -139,6 +140,7 @@ private val CatalogEntries = listOf(
     CatalogEntry("Card") { CardSection() },
     CatalogEntry("List Row") { ListRowSection() },
     CatalogEntry("Mail Row") { MailRowSection() },
+    CatalogEntry("Swipe To Delete") { SwipeToDeleteSection() },
     CatalogEntry("Badge, HUD Pill") { BadgeHudSection() },
     CatalogEntry("Progress") { ProgressSection() },
     CatalogEntry("Section Header, Divider, Skeleton") { StructureSection() },
@@ -362,6 +364,20 @@ private fun MailRowSection() {
             type = "건의",
             time = "9월 28일",
             title = "히스토리에서 사진을 크게 보고 싶어요",
+            status = "답장을 기다리는 중",
+            isStatusEmphasized = false,
+            onClick = {},
+        )
+    }
+}
+
+@Composable
+private fun SwipeToDeleteSection() {
+    NyummySwipeToDelete(onDelete = {}) {
+        NyummyMailRow(
+            type = "건의",
+            time = "9월 28일",
+            title = "왼쪽으로 밀어 지워 보세요",
             status = "답장을 기다리는 중",
             isStatusEmphasized = false,
             onClick = {},
