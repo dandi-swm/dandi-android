@@ -70,9 +70,9 @@ class TTIInfo(
     }
 
     private fun updateTTITimeline(ttiInfo: MutableMap<String, Any?>) {
-        val expectedTimelineCount = page.timelines.size
+        // 개수로 세면 자동으로 들어가는 TTI_TIME 때문에 중간 구간이 빠져도 개수가 맞을 수 있다. 구간마다 기록됐는지 본다.
         ttiInfo[TTI_PREFIX + TTIMetaData.IS_BOUNCED.metadataName] =
-            ttiTimelineMap.size < expectedTimelineCount
+            page.timelines.any { ttiTimelineMap[it.categoryName] == null }
 
         val timelineEntries = ttiTimelineMap.entries.toList()
         for ((timelineKey, timeline) in timelineEntries) {
