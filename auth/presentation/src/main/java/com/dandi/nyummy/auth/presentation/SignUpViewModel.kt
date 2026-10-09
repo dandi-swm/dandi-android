@@ -2,6 +2,7 @@ package com.dandi.nyummy.auth.presentation
 
 import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.auth.domain.CodeVerificationFailedException
+import com.dandi.nyummy.auth.domain.EmailVerificationRestartRequiredException
 import com.dandi.nyummy.auth.domain.EmailVerificationUseCase
 import com.dandi.nyummy.auth.domain.SignUpUseCase
 import com.dandi.nyummy.auth.domain.SignUpValidator
@@ -110,6 +111,14 @@ class SignUpViewModel @AssistedInject constructor(
             )
             is SignUpReducerEvent.MovedToProfile ->
                 state.copy(step = SignUpStep.PROFILE, emailVerifiedToken = event.emailVerifiedToken)
+            SignUpReducerEvent.EmailVerificationRestarted -> state.copy(
+                step = SignUpStep.ACCOUNT,
+                emailChallengeToken = "",
+                emailVerifiedToken = "",
+                code = "",
+                codeError = null,
+                resendRemainingSeconds = 0,
+            )
             is SignUpReducerEvent.ResendTicked ->
                 state.copy(resendRemainingSeconds = event.remainingSeconds)
             is SignUpReducerEvent.NicknameChanged ->
@@ -266,7 +275,12 @@ class SignUpViewModel @AssistedInject constructor(
                     birth = birth,
                     height = state.height,
                     weight = state.weight,
-                )
+                ).onFailure { e ->
+                    if (e is EmailVerificationRestartRequiredException) {
+                        resendTimerJob?.cancel()
+                        dispatch(SignUpReducerEvent.EmailVerificationRestarted)
+                    }
+                }
             }
             dispatch(SignUpReducerEvent.LoadingFinished)
         }

@@ -19,6 +19,9 @@ sealed interface SignUpReducerEvent : ReducerEvent {
     data class MovedToCode(val emailChallengeToken: String) : SignUpReducerEvent
     data class ChallengeTokenRefreshed(val emailChallengeToken: String) : SignUpReducerEvent
     data class MovedToProfile(val emailVerifiedToken: String) : SignUpReducerEvent
+
+    /** 가입 중 이메일 인증이 만료됐거나 무효해 계정 단계(인증 코드 받기)로 돌아간다. 입력한 이메일과 비밀번호는 남긴다. */
+    data object EmailVerificationRestarted : SignUpReducerEvent
     data class ResendTicked(val remainingSeconds: Int) : SignUpReducerEvent
 
     data class NicknameChanged(val value: String) : SignUpReducerEvent
