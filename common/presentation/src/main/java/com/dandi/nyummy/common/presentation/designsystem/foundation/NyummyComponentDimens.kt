@@ -61,6 +61,11 @@ internal object NyummyComponentDimens {
     val MailRowLeadingSize = 52.dp
     val MailRowVerticalPadding = 14.dp
 
+    /** 스와이프 삭제 버튼 폭, 위아래 안쪽 여백, 행이 밀려 멈추는 거리. */
+    val SwipeActionWidth = 64.dp
+    val SwipeActionVerticalInset = 8.dp
+    val SwipeRevealDistance = 80.dp
+
     /** Mail Row 유형과 시각 사이. */
     val MailRowMetaGap = 6.dp
 

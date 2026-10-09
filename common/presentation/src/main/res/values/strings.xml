@@ -8,6 +8,7 @@
     <string name="nyummy_scrim_dismiss_label">Close</string>
     <string name="nyummy_password_show_description">Show password</string>
     <string name="nyummy_password_hide_description">Hide password</string>
+    <string name="nyummy_swipe_delete">Delete</string>
     <string name="nyummy_back_description">Back</string>
     <string name="nyummy_coming_soon_body">Stay tuned</string>
     <string name="nyummy_snackbar_dismiss_description">Dismiss notification</string>
