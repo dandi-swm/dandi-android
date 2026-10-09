@@ -13,6 +13,7 @@ import com.dandi.nyummy.common.entity.time.KstDateTime
 import com.dandi.nyummy.common.entity.time.KstTime
 import com.dandi.nyummy.meal.entity.CreatedMealVO
 import com.dandi.nyummy.meal.entity.MealImageUploadVO
+import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -70,17 +71,14 @@ class ImportGalleryMealPhotoUseCaseTest {
     }
 
     @Test
-    fun `촬영 시각 정보가 없으면 확인 불가 안내를 띄우고 가져오지 않는다`() = runBlocking {
+    fun `촬영 시각 정보가 없으면 확인할 수 없으므로 그대로 가져온다`() = runBlocking {
         val repository = FakeMealRecordRepository(takenAt = null)
 
         val result = useCase(repository)(PHOTO_URI, nowMillis)
 
-        assertTrue(result.isFailure)
-        assertTrue(repository.importedUris.isEmpty())
-        assertEquals(
-            StringResource.MEAL_GALLERY_UNKNOWN_TAKEN_DATE.name,
-            messageHelper.snackBars.single().messageText,
-        )
+        assertTrue(result.isSuccess)
+        assertEquals(listOf(PHOTO_URI), repository.importedUris)
+        assertTrue(messageHelper.snackBars.isEmpty())
     }
 
     @Test
@@ -136,7 +134,7 @@ class ImportGalleryMealPhotoUseCaseTest {
             return IMPORTED_PATH
         }
 
-        override suspend fun prepareUploadImage(photoPath: String) = Unit
+        override suspend fun prepareUploadImage(photoPath: String, source: MealPhotoSource) = Unit
         override suspend fun issueImageUploadUrl(photoPath: String) = MealImageUploadVO()
         override suspend fun uploadImage(uploadTarget: MealImageUploadVO, photoPath: String) = Unit
         override suspend fun createMeal(imageKey: String) = CreatedMealVO()
