@@ -263,4 +263,61 @@ class NyummySpriteAnimationTest {
         }
         composeRule.onNodeWithTag("error").assertIsDisplayed()
     }
+
+    @Test
+    fun 받는_중에는_보였다고_알리지_않는다() {
+        val shown = showCount(persistentListOf(NyummySpriteClip(url = "$PendingScheme://never.png", frames = 8)))
+
+        composeRule.waitForIdle()
+        composeRule.mainClock.advanceTimeBy(1_000L)
+
+        assertEquals(0, shown())
+    }
+
+    @Test
+    fun 시트를_받아_그리면_보였다고_한_번만_알린다() {
+        val shown = showCount(persistentListOf(NyummySpriteClip(url = Uri.fromFile(sheetFile()).toString(), frames = 8)))
+
+        composeRule.waitUntil(timeoutMillis = 5_000L) { shown() > 0 }
+        composeRule.mainClock.advanceTimeBy(2_000L)
+
+        assertEquals(1, shown())
+    }
+
+    @Test
+    fun 시트를_받지_못해_오류_자리를_보여도_보였다고_한_번만_알린다() {
+        val shown = showCount(persistentListOf(NyummySpriteClip(url = "file:///nyummy/not-found.png", frames = 8)))
+
+        composeRule.waitUntil(timeoutMillis = 5_000L) { shown() > 0 }
+        composeRule.mainClock.advanceTimeBy(1_000L)
+
+        assertEquals(1, shown())
+    }
+
+    /** [clips]를 그리고 onShown이 불린 횟수를 돌려주는 함수를 준다. */
+    private fun showCount(clips: ImmutableList<NyummySpriteClip>): () -> Int {
+        var shown = 0
+        composeRule.setContent {
+            NyummyTheme {
+                NyummySpriteAnimation(
+                    clips = clips,
+                    frame = frame,
+                    restMillis = 1_000L,
+                    onFinished = {},
+                    modifier = Modifier.size(136.dp),
+                    onShown = { shown++ },
+                )
+            }
+        }
+        return { shown }
+    }
+
+    private fun sheetFile(): File {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        return File(context.cacheDir, "sprite-shown-test.png").apply {
+            outputStream().use { out ->
+                Bitmap.createBitmap(136 * 4, 136 * 2, Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+        }
+    }
 }

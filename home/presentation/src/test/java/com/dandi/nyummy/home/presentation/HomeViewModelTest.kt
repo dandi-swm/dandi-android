@@ -28,6 +28,7 @@ import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.home.domain.HomeRepository
+import com.dandi.nyummy.home.domain.tti.HomeTTIPage
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.meal.domain.MealRecordPage
 import com.dandi.nyummy.tti.TTIHelper
@@ -63,6 +64,7 @@ class HomeViewModelTest {
     private val historyRepository = FakeHistoryRepository()
     private val catRepository = FakeCatRepository()
     private val navigationHelper = RecordingNavigationHelper()
+    private val tti = RecordingTTIHelper()
     private lateinit var viewModel: HomeViewModel
 
     private val state get() = viewModel.uiState.value
@@ -94,7 +96,7 @@ class HomeViewModelTest {
                 ttiHelper = FakeTTIHelper,
             ),
             catMotionPicker = CatMotionPicker(Random(seed = 1)),
-            ttiHelper = FakeTTIHelper,
+            ttiHelper = tti,
         )
     }
 
@@ -107,6 +109,50 @@ class HomeViewModelTest {
         homeRepository.next = { summary }
         viewModel.onIntent(HomeIntent.ScreenResumed)
         advanceUntilIdle()
+    }
+
+    @Test
+    fun `홈에 들어오면 홈 TTI 를 시작한다`() {
+        assertEquals("track:${HomeTTIPage.pageName}", tti.calls.first())
+    }
+
+    @Test
+    fun `요약을 받았어도 화면이 그렸다고 알리기 전에는 홈 TTI 를 끝내지 않는다`() = runTest(testDispatcher) {
+        resumeWith(HomeSummaryVO(coinBalance = 100))
+        viewModel.onIntent(HomeIntent.CatShown)
+
+        assertFalse(TTI_END in tti.calls)
+        assertFalse(TTI_SHOT in tti.calls)
+    }
+
+    @Test
+    fun `냐미만 그려지면 이미지 구간만 끝내고 홈 TTI 는 기다린다`() = runTest(testDispatcher) {
+        viewModel.onIntent(HomeIntent.CatShown)
+
+        assertTrue(IMAGE_END in tti.calls)
+        assertFalse(TTI_END in tti.calls)
+    }
+
+    @Test
+    fun `요약과 냐미가 둘 다 그려지면 홈 TTI 를 끝내고 바로 보낸다`() = runTest(testDispatcher) {
+        resumeWith(HomeSummaryVO(coinBalance = 100))
+        viewModel.onIntent(HomeIntent.SummaryShown)
+        viewModel.onIntent(HomeIntent.CatShown)
+
+        assertEquals(listOf(TTI_END, TTI_SHOT), tti.calls.filter { it == TTI_END || it == TTI_SHOT })
+    }
+
+    @Test
+    fun `그렸다는 신호가 여러 번 와도 홈 TTI 는 한 번만 보낸다`() = runTest(testDispatcher) {
+        resumeWith(HomeSummaryVO(coinBalance = 100))
+        viewModel.onIntent(HomeIntent.CatShown)
+        viewModel.onIntent(HomeIntent.SummaryShown)
+        viewModel.onIntent(HomeIntent.CatShown)
+        viewModel.onIntent(HomeIntent.SummaryShown)
+
+        assertEquals(1, tti.calls.count { it == IMAGE_END })
+        assertEquals(1, tti.calls.count { it == TTI_END })
+        assertEquals(1, tti.calls.count { it == TTI_SHOT })
     }
 
     @Test
@@ -490,5 +536,38 @@ class HomeViewModelTest {
         override fun endTTITracking() = Unit
         override fun shotTTILogging() = Unit
         override fun addTTIMetaData(metadata: TTIMetaData, value: Any?) = Unit
+    }
+
+    /** ViewModel 이 부른 TTI 호출을 순서대로 기록한다. UseCase 들은 [FakeTTIHelper] 를 써서 섞이지 않는다. */
+    private class RecordingTTIHelper : TTIHelper {
+        val calls = mutableListOf<String>()
+
+        override fun startTTITracking(page: TTIPage) {
+            calls += "track:${page.pageName}"
+        }
+
+        override fun startTTITimeline(category: TimelineCategory) {
+            calls += "start:${category.name}"
+        }
+
+        override fun endTTITimeline(category: TimelineCategory) {
+            calls += "end:${category.name}"
+        }
+
+        override fun endTTITracking() {
+            calls += TTI_END
+        }
+
+        override fun shotTTILogging() {
+            calls += TTI_SHOT
+        }
+
+        override fun addTTIMetaData(metadata: TTIMetaData, value: Any?) = Unit
+    }
+
+    private companion object {
+        const val TTI_END = "endTracking"
+        const val TTI_SHOT = "shot"
+        val IMAGE_END = "end:${TimelineCategory.IMAGE_LOADED_TIME.name}"
     }
 }

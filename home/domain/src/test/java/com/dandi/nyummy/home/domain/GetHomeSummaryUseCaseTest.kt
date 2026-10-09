@@ -29,13 +29,14 @@ class GetHomeSummaryUseCaseTest {
 
     private val navigationHelper = RecordingNavigationHelper()
     private val messageHelper = RecordingMessageHelper()
+    private val tti = RecordingTTIHelper()
 
     private fun useCase(repository: HomeRepository) = GetHomeSummaryUseCase(
         repository = repository,
         resourceHelper = FakeResourceHelper,
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
-        ttiHelper = FakeTTIHelper,
+        ttiHelper = tti,
     )
 
     @Test
@@ -91,6 +92,28 @@ class GetHomeSummaryUseCaseTest {
     fun `취소는 삼키지 않고 그대로 던진다`(): Unit = runBlocking {
         useCase(FakeHomeRepository { throw CancellationException("left home") })()
         Unit
+    }
+
+    @Test
+    fun `요약 API 구간을 시작하고 응답을 받으면 끝낸다`() = runBlocking {
+        useCase(FakeHomeRepository { HomeSummaryVO() })()
+
+        assertEquals(listOf(API_START, API_END), tti.calls)
+    }
+
+    @Test
+    fun `요약 API 가 실패해도 구간은 끝낸다`() = runBlocking {
+        useCase(FakeHomeRepository { throw httpException(500) })()
+
+        assertEquals(listOf(API_START, API_END), tti.calls)
+    }
+
+    @Test
+    fun `요약 API 가 취소돼도 구간은 끝내고 취소는 그대로 던진다`() = runBlocking {
+        val cancelled = runCatching { useCase(FakeHomeRepository { throw CancellationException("left home") })() }
+
+        assertTrue(cancelled.exceptionOrNull() is CancellationException)
+        assertEquals(listOf(API_START, API_END), tti.calls)
     }
 
     private fun httpException(code: Int) = HttpResponseException(
@@ -169,12 +192,26 @@ class GetHomeSummaryUseCaseTest {
         override fun getString(resource: StringResource): String = ""
     }
 
-    private object FakeTTIHelper : TTIHelper {
+    /** 타임라인 시작과 끝을 부른 순서대로 기록한다. */
+    private class RecordingTTIHelper : TTIHelper {
+        val calls = mutableListOf<String>()
+
         override fun startTTITracking(page: TTIPage) = Unit
-        override fun startTTITimeline(category: TimelineCategory) = Unit
-        override fun endTTITimeline(category: TimelineCategory) = Unit
+        override fun startTTITimeline(category: TimelineCategory) {
+            calls += "start:${category.name}"
+        }
+
+        override fun endTTITimeline(category: TimelineCategory) {
+            calls += "end:${category.name}"
+        }
+
         override fun endTTITracking() = Unit
         override fun shotTTILogging() = Unit
         override fun addTTIMetaData(metadata: TTIMetaData, value: Any?) = Unit
+    }
+
+    private companion object {
+        val API_START = "start:${TimelineCategory.API_RESPONSE_TIME.name}"
+        val API_END = "end:${TimelineCategory.API_RESPONSE_TIME.name}"
     }
 }
