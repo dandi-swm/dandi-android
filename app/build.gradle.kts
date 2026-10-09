@@ -62,7 +62,8 @@ androidComponents {
             "IS_RELEASE_BUILD",
             BuildConfigField("boolean", isReleaseBuild.toString(), "release 빌드에서만 성능 지표를 외부로 보낸다"),
         )
-        // Firebase Performance SDK 수집(자동 앱 시작, 네트워크 트레이스 포함)도 release 에서만 켠다.
+        // Firebase Performance SDK 수집도 release 에서만 켠다. 모으는 것은 SDK 자동 트레이스(앱 시작, 화면 렌더링)와
+        // 이 앱의 커스텀 트레이스(TTI, 버벅임, 이미지 로딩)다. Performance Gradle 플러그인은 적용하지 않아 네트워크 요청은 자동 계측하지 않는다.
         variant.manifestPlaceholders.put("firebasePerformanceCollectionEnabled", isReleaseBuild.toString())
     }
 }

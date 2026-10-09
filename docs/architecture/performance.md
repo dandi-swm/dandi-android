@@ -49,7 +49,9 @@ Logcat 출력 예(디버그 빌드, `[TTI]` 태그): `Shot TTI Logging : intro#1
 ### 외부 전송 (Firebase Performance)
 
 - release 빌드에서만 보낸다. 앱 모듈이 빌드 타입 이름(`release`)으로 정한 `@ReleaseBuild Boolean`을 Hilt로 주입하고, 전송 경로는 이 값으로만 고른다. debug, benchmark, 베이스라인 프로파일 수집 빌드는 보내지 않는다(이 빌드들은 debuggable이 아니어서 `FLAG_DEBUGGABLE`로는 release와 구분되지 않는다).
-- Firebase Performance SDK 수집 자체도 매니페스트 `firebase_performance_collection_enabled`로 release에서만 켠다(자동 앱 시작, 네트워크 트레이스 포함). 값은 `app/build.gradle.kts`의 `androidComponents.onVariants`가 정한다.
+- Firebase Performance SDK 수집 자체도 매니페스트 `firebase_performance_collection_enabled`로 release에서만 켠다. 값은 `app/build.gradle.kts`의 `androidComponents.onVariants`가 정한다.
+  - 모으는 것: SDK 자동 트레이스(앱 시작, 화면 렌더링)와 이 앱의 커스텀 트레이스(TTI, 버벅임, 이미지 로딩).
+  - 네트워크 요청 자동 계측은 하지 않는다. `firebase-perf` SDK만 있고 Performance Gradle 플러그인은 적용하지 않았기 때문이다.
 - TTI: [TTIReporterModule](../../common/data/src/main/java/com/dandi/nyummy/common/data/di/TTIReporterModule.kt)이 기본 `NoOpTTIReporter`를 주입하고, release에서만 [FirebaseTTIReporter](../../common/data/src/main/java/com/dandi/nyummy/common/data/tti/FirebaseTTIReporter.kt)를 주입한다. Firebase를 만들다 실패하면 release도 `NoOpTTIReporter`로 떨어진다. 주입 뒤 전송 중 예외는 reporter와 `TTIHelperImpl`이 삼켜 측정과 앱 동작에 영향이 없다.
   - 트레이스 `tti_{page_name}`. metric은 구간 값(ns)을 ms로 바꾼 `{구간}_ms`(예: `tti_ms`, `api_response_ms`), 측정하지 않은 구간(-1)은 넣지 않는다.
   - attribute는 `is_bounced`, `is_timeout`, `user_wait_included`, `tti_log_version`(트레이스당 최대 5개).
