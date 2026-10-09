@@ -44,7 +44,6 @@ import com.dandi.nyummy.onboarding.presentation.R
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import java.util.Locale
 import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
@@ -122,7 +121,7 @@ private fun MealTimeRow(
 }
 
 /**
- * 한 끼의 시각을 고르는 시트. 오전/오후, 시(1~12), 분(10분 단위) 세 휠과 "안 먹어요", "확인".
+ * 한 끼의 시각을 고르는 시트. 오전/오후, 시(1~12) 두 휠과 "안 먹어요", "확인". 정시 단위만 고른다.
  * 안 먹는다고 골라 둔 끼니를 다시 열면 남겨 둔 시각에서 시작한다.
  */
 @Composable
@@ -135,23 +134,18 @@ internal fun OnboardingMealTimeSheet(
     val mealLabel = stringResource(meal.labelRes)
     var periodIndex by rememberSaveable(meal) { mutableIntStateOf(if (initial.hour >= 12) 1 else 0) }
     var hourIndex by rememberSaveable(meal) { mutableIntStateOf(hour12(initial.hour) - 1) }
-    var minuteIndex by rememberSaveable(meal) { mutableIntStateOf((initial.minute / MinuteStep).coerceIn(0, MinuteSlots - 1)) }
     val periods = persistentListOf(stringResource(R.string.onboarding_meal_am), stringResource(R.string.onboarding_meal_pm))
     val hours = remember { (1..12).map(Int::toString).toImmutableList() }
-    val minutes = remember { (0 until MinuteSlots).map { String.format(Locale.US, "%02d", it * MinuteStep) }.toImmutableList() }
 
     NyummyBottomSheet(onDismissRequest = onDismissRequest) {
         NyummySheetTitle(text = stringResource(R.string.onboarding_meal_sheet_title, mealLabel))
         TimeWheels(
             periods = periods,
             hours = hours,
-            minutes = minutes,
             periodIndex = periodIndex,
             hourIndex = hourIndex,
-            minuteIndex = minuteIndex,
             onPeriodChange = { periodIndex = it },
             onHourChange = { hourIndex = it },
-            onMinuteChange = { minuteIndex = it },
         )
         NyummyTextButton(
             text = stringResource(R.string.onboarding_meal_sheet_skip, mealLabel),
@@ -163,7 +157,7 @@ internal fun OnboardingMealTimeSheet(
             text = stringResource(R.string.onboarding_meal_sheet_confirm),
             onClick = {
                 val hour24 = (hourIndex + 1) % 12 + if (periodIndex == 1) 12 else 0
-                onSelect(MealTimeVO(hour = hour24, minute = minuteIndex * MinuteStep))
+                onSelect(MealTimeVO(hour = hour24))
             },
             size = NyummyButtonSize.L,
             modifier = Modifier.fillMaxWidth(),
@@ -171,18 +165,15 @@ internal fun OnboardingMealTimeSheet(
     }
 }
 
-/** 세 휠을 나란히 두고 가운데 선택 밴드를 셋에 걸쳐 그린다(시트 바탕 위라 테두리는 없다). */
+/** 두 휠을 나란히 두고 가운데 선택 밴드를 둘에 걸쳐 그린다(시트 바탕 위라 테두리는 없다). */
 @Composable
 private fun TimeWheels(
     periods: ImmutableList<String>,
     hours: ImmutableList<String>,
-    minutes: ImmutableList<String>,
     periodIndex: Int,
     hourIndex: Int,
-    minuteIndex: Int,
     onPeriodChange: (Int) -> Unit,
     onHourChange: (Int) -> Unit,
-    onMinuteChange: (Int) -> Unit,
 ) {
     NyummyWheelPickerFrame(
         framed = false,
@@ -205,24 +196,15 @@ private fun TimeWheels(
             contentDescription = stringResource(R.string.onboarding_meal_hour_description),
             modifier = Modifier.weight(1f),
         )
-        NyummyWheelColumn(
-            items = minutes,
-            selectedIndex = minuteIndex,
-            onSelectedIndexChange = onMinuteChange,
-            unit = stringResource(R.string.onboarding_meal_unit_minute),
-            contentDescription = stringResource(R.string.onboarding_meal_minute_description),
-            modifier = Modifier.weight(1f),
-        )
     }
 }
 
-/** "오전 8:00", "오후 12:30"처럼 읽는 시각. */
+/** "오전 8시", "오후 12시"처럼 읽는 시각. */
 @Composable
 internal fun mealTimeText(time: MealTimeVO): String = stringResource(
     R.string.onboarding_meal_time_format,
     stringResource(if (time.hour >= 12) R.string.onboarding_meal_pm else R.string.onboarding_meal_am),
     hour12(time.hour),
-    time.minute,
 )
 
 internal val Meal.labelRes: Int
@@ -235,8 +217,6 @@ internal val Meal.labelRes: Int
 /** 0~23시를 12시간제 1~12로 바꾼다(0시는 12, 13시는 1). */
 private fun hour12(hour24: Int): Int = (hour24 + 11) % 12 + 1
 
-private const val MinuteStep = 10
-private const val MinuteSlots = 60 / MinuteStep
 private val MealRowHeight = 52.dp
 private val WheelsHorizontalInset = 10.dp
 

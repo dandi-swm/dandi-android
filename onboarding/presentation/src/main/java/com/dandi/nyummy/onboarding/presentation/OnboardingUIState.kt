@@ -14,7 +14,7 @@ import com.dandi.nyummy.onboarding.domain.CatNameError
  * @property isLineRevealed 현재 대사의 타이핑이 끝났는지
  * @property catNameInput 이름 입력창의 값
  * @property catName 등록이 끝난 고양이 이름. 등록 전에는 빈 문자열(이름표는 "???")
- * @property mealTimes 평소 식사 시각. 기본값(오전 8:00, 오후 12:30, 오후 6:30)을 미리 채워 둔다.
+ * @property mealTimes 평소 식사 시각. 기본값(오전 8시, 오후 12시, 오후 6시)을 미리 채워 둔다.
  * @property editingMeal 시간 시트를 열어 고치고 있는 끼니. 닫혀 있으면 null
  * @property isFinishing 식사 시각을 저장하고 홈으로 넘어가는 중
  */
