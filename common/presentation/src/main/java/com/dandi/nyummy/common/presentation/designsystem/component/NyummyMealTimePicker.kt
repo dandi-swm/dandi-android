@@ -90,6 +90,7 @@ fun NyummyMealTimeSheet(
     initial: MealTimeVO,
     onSelect: (MealTimeVO) -> Unit,
     onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val mealLabel = stringResource(meal.nyummyLabelRes)
     var periodIndex by rememberSaveable(meal) { mutableIntStateOf(if (initial.hour >= 12) 1 else 0) }
@@ -97,7 +98,7 @@ fun NyummyMealTimeSheet(
     val periods = persistentListOf(stringResource(R.string.nyummy_meal_am), stringResource(R.string.nyummy_meal_pm))
     val hours = remember { (1..12).map(Int::toString).toImmutableList() }
 
-    NyummyBottomSheet(onDismissRequest = onDismissRequest) {
+    NyummyBottomSheet(onDismissRequest = onDismissRequest, modifier = modifier) {
         NyummySheetTitle(text = stringResource(R.string.nyummy_meal_sheet_title, mealLabel))
         TimeWheels(
             periods = periods,
