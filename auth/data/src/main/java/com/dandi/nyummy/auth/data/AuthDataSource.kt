@@ -30,4 +30,7 @@ class AuthDataSource(
 
     suspend fun confirmEmailVerification(request: EmailVerificationConfirmRequestDTO): EmailVerifiedDTO =
         checkResponse(apiService.confirmEmailVerification(request))
+
+    suspend fun logout() =
+        checkResponse(apiService.logout())
 }

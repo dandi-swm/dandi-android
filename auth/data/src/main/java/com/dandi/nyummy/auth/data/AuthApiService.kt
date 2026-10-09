@@ -15,7 +15,7 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 
 /**
- * 회원가입 · 로그인 · 이메일 인증 API
+ * 회원가입 · 로그인 · 로그아웃 · 이메일 인증 API
  */
 interface AuthApiService {
     /** 로그인 */
@@ -41,6 +41,10 @@ interface AuthApiService {
     /** 토큰 재발급 */
     @POST("${AUTH_PATH}/refresh")
     suspend fun refresh(@Body request: RefreshTokenRequestDTO): Response<AuthTokenDTO>
+
+    /** 로그아웃. 서버의 RefreshToken을 지운다(204, 이미 지웠어도 성공). */
+    @POST("${AUTH_PATH}/logout")
+    suspend fun logout(): Response<Unit>
 
     companion object {
         const val AUTH_PATH = "/api/v1/auth"

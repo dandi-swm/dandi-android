@@ -87,6 +87,15 @@ class AuthRepositoryImpl(
             ),
         ).toVO()
 
+    override suspend fun logout() {
+        // 서버가 실패해도 이 기기의 토큰은 꼭 지운다. 지우지 않으면 로그아웃했는데도 로그인된 채로 남는다.
+        try {
+            dataSource.logout()
+        } finally {
+            tokenProvider.clear()
+        }
+    }
+
     /** 발급 토큰 영속화 — 이후 요청부터 인증 헤더/Authenticator 가 사용한다. */
     private suspend fun saveToken(token: AuthTokenVO) {
         if (token.accessToken.isBlank() || token.refreshToken.isBlank()) return
