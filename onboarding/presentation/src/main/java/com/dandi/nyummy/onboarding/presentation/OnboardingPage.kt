@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.domain.helper.AppPermission
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMealTimeSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -46,7 +47,6 @@ import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequest
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingCatNameSlot
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingChoiceList
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingDialogueBox
-import com.dandi.nyummy.onboarding.presentation.component.OnboardingMealTimeSheet
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingMealTimeSlot
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingStage
 import com.dandi.nyummy.onboarding.presentation.component.OnboardingStartButton
@@ -190,7 +190,7 @@ internal fun OnboardingScreen(
     }
 
     uiState.editingMeal?.let { meal ->
-        OnboardingMealTimeSheet(
+        NyummyMealTimeSheet(
             meal = meal,
             initial = uiState.mealTimes[meal],
             onSelect = { onIntent(OnboardingIntent.SelectMealTime(meal, it)) },
