@@ -52,21 +52,5 @@
 
     <!-- 7. Usual meal times -->
     <string name="onboarding_line_meal_time_1">I\'ll let you know when it\'s time to eat. When do you usually eat?</string>
-    <string name="onboarding_meal_breakfast">Breakfast</string>
-    <string name="onboarding_meal_lunch">Lunch</string>
-    <string name="onboarding_meal_dinner">Dinner</string>
-    <string name="onboarding_meal_am">AM</string>
-    <string name="onboarding_meal_pm">PM</string>
-    <!-- %1$s: AM/PM, %2$d: hour (1-12), %3$02d: minute -->
-    <string name="onboarding_meal_time_format">%2$d:%3$02d %1$s</string>
-    <string name="onboarding_meal_skipped">Skip</string>
     <string name="onboarding_meal_done">Remind me at these times</string>
-    <string name="onboarding_meal_sheet_title">%1$s time</string>
-    <string name="onboarding_meal_sheet_skip">I skip %1$s</string>
-    <string name="onboarding_meal_sheet_confirm">Done</string>
-    <string name="onboarding_meal_unit_hour">h</string>
-    <string name="onboarding_meal_unit_minute">m</string>
-    <string name="onboarding_meal_period_description">AM or PM</string>
-    <string name="onboarding_meal_hour_description">Hour</string>
-    <string name="onboarding_meal_minute_description">Minute</string>
 </resources>

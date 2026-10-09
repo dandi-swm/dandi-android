@@ -13,8 +13,9 @@ import javax.inject.Inject
 /**
  * 갤러리에서 고른 사진을 식사 기록용 촬영본으로 가져온다.
  *
- * 사진 메타데이터의 촬영 시각이 오늘(KST)일 때만 앱 캐시로 복사해 그 파일 경로를 돌려준다.
- * 오늘 찍은 사진이 아니거나 촬영 시각을 확인할 수 없으면 안내 후 [Result.failure] 를 돌려준다.
+ * 앱 캐시로 복사해 그 파일 경로를 돌려준다. 사진 메타데이터(EXIF)의 촬영 시각이 오늘(KST)이 아니면
+ * 안내 후 [Result.failure] 를 돌려준다. 촬영 시각이 없는 사진은 확인할 수 없으므로 그대로 가져온다
+ * (EXIF를 채워 넣지 않는다).
  */
 class ImportGalleryMealPhotoUseCase @Inject constructor(
     private val repository: MealRecordRepository,
@@ -31,8 +32,7 @@ class ImportGalleryMealPhotoUseCase @Inject constructor(
     ): Result<String> = try {
         val takenAt = repository.readGalleryPhotoTakenAt(photoUri)
         when {
-            takenAt == null -> reject(StringResource.MEAL_GALLERY_UNKNOWN_TAKEN_DATE)
-            takenAt.isoDate != KstTime.now(nowMillis).isoDate ->
+            takenAt != null && takenAt.isoDate != KstTime.now(nowMillis).isoDate ->
                 reject(StringResource.MEAL_GALLERY_NOT_TAKEN_TODAY)
             else -> Result.success(repository.importGalleryPhoto(photoUri))
         }

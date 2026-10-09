@@ -14,6 +14,7 @@ import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.time.KstDateTime
 import com.dandi.nyummy.meal.entity.CreatedMealVO
 import com.dandi.nyummy.meal.entity.MealImageUploadVO
+import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -39,7 +40,7 @@ class SubmitMealUseCaseTest {
 
     @Test
     fun `오래된 사진 code 는 사진에 맞는 문구로 안내한다`() = runBlocking {
-        val result = useCase(httpException(400, MealErrorType.STALE_IMAGE.type))(PHOTO_PATH)
+        val result = useCase(httpException(400, MealErrorType.STALE_IMAGE.type))(PHOTO_PATH, MealPhotoSource.CAMERA)
 
         assertTrue(result.isFailure)
         assertEquals(MealErrorType.STALE_IMAGE.errorMsg, messageHelper.snackBars.single().messageText)
@@ -48,21 +49,21 @@ class SubmitMealUseCaseTest {
 
     @Test
     fun `S3 용량 초과 code 도 사진 문구로 안내한다`() = runBlocking {
-        useCase(httpException(400, "api.s3.fileSizeExceeded"))(PHOTO_PATH)
+        useCase(httpException(400, "api.s3.fileSizeExceeded"))(PHOTO_PATH, MealPhotoSource.CAMERA)
 
         assertEquals("사진 용량이 너무 커요. 다시 찍어주세요", messageHelper.snackBars.single().messageText)
     }
 
     @Test
     fun `모르는 code 의 400 은 기록 실패 문구로 안내한다`() = runBlocking {
-        useCase(httpException(400, "api.s3.invalidKey"))(PHOTO_PATH)
+        useCase(httpException(400, "api.s3.invalidKey"))(PHOTO_PATH, MealPhotoSource.CAMERA)
 
         assertEquals("식사를 기록하지 못했어요. 다시 시도해주세요", messageHelper.snackBars.single().messageText)
     }
 
     @Test
     fun `code 없는 500 은 공통 오류 다이얼로그로 안내한다`() = runBlocking {
-        useCase(httpException(500))(PHOTO_PATH)
+        useCase(httpException(500))(PHOTO_PATH, MealPhotoSource.CAMERA)
 
         assertTrue(messageHelper.snackBars.isEmpty())
         assertEquals("잠시 후 다시 시도해 주세요.", messageHelper.dialogs.single())
@@ -82,7 +83,7 @@ class SubmitMealUseCaseTest {
     ) : MealRecordRepository {
         override suspend fun readGalleryPhotoTakenAt(photoUri: String): KstDateTime? = null
         override suspend fun importGalleryPhoto(photoUri: String) = photoUri
-        override suspend fun prepareUploadImage(photoPath: String) = Unit
+        override suspend fun prepareUploadImage(photoPath: String, source: MealPhotoSource) = Unit
         override suspend fun issueImageUploadUrl(photoPath: String) = MealImageUploadVO()
         override suspend fun uploadImage(uploadTarget: MealImageUploadVO, photoPath: String) = Unit
         override suspend fun createMeal(imageKey: String): CreatedMealVO = throw createMealError

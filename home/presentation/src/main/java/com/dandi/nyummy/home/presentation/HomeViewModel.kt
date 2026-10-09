@@ -10,7 +10,10 @@ import com.dandi.nyummy.common.entity.time.KstTime
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
+import com.dandi.nyummy.home.domain.tti.HomeTTIPage
 import com.dandi.nyummy.meal.domain.MealRecordPage
+import com.dandi.nyummy.tti.TTIHelper
+import com.dandi.nyummy.tti.TimelineCategory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Job
@@ -24,7 +27,13 @@ class HomeViewModel @Inject constructor(
     private val getDailyMeals: GetDailyMealsUseCase,
     private val getCatAnimations: GetCatAnimationsUseCase,
     private val catMotionPicker: CatMotionPicker,
+    private val ttiHelper: TTIHelper,
 ) : MviViewModel<HomeIntent, HomeUIState, HomeReducerEvent>(HomeUIState.empty) {
+
+    init {
+        // 홈 TTI: 요약 숫자와 냐미가 둘 다 보일 때까지. 요약 API 구간은 GetHomeSummaryUseCase 가 찍는다.
+        ttiHelper.startTTITracking(HomeTTIPage)
+    }
 
     private var summaryJob: Job? = null
     private var todayMealsJob: Job? = null
@@ -32,6 +41,11 @@ class HomeViewModel @Inject constructor(
 
     /** 홈 요약을 한 번이라도 읽었는지. 첫 진입을 "방금 기록하고 돌아옴"으로 착각하지 않게 한다. */
     private var hasLoadedSummary = false
+
+    /** 냐미와 요약 숫자가 한 번이라도 화면에 그려졌는지. 둘 다 그려지면 홈 TTI 를 끝낸다. */
+    private var isCatShown = false
+    private var isSummaryShown = false
+    private var isTTIFinished = false
 
     /**
      * 받아 둔 냐미 상태별 애니메이션. 아직 받지 못했으면 null이다.
@@ -67,12 +81,14 @@ class HomeViewModel @Inject constructor(
             }
             HomeIntent.ClickCat -> currentState.catState?.let { startCatMotion(it, newLine = true) }
             is HomeIntent.CatMotionFinished -> if (intent.playId == currentState.catPlayId) finishCatMotion()
+            HomeIntent.CatShown -> onCatShown()
+            HomeIntent.SummaryShown -> onSummaryShown()
         }
     }
 
     override fun reduce(state: HomeUIState, event: HomeReducerEvent): HomeUIState =
         when (event) {
-            is HomeReducerEvent.SummaryLoaded -> state.copy(summary = event.summary)
+            is HomeReducerEvent.SummaryLoaded -> state.copy(summary = event.summary, isSummaryLoaded = true)
             is HomeReducerEvent.TodaySheetVisibilityChanged -> state.copy(isTodaySheetVisible = event.visible)
             HomeReducerEvent.TodayMealsLoadStarted -> state.copy(isTodayMealsLoading = true, isTodayMealsFailed = false)
             is HomeReducerEvent.TodayMealsLoaded -> state.copy(
@@ -114,6 +130,8 @@ class HomeViewModel @Inject constructor(
     /** 냐미 애니메이션을 아직 받지 못했으면 받는다. 실패하면 기본 냐미를 두고, 다음에 화면이 보일 때 다시 받는다. */
     private fun loadCatAnimationsIfNeeded() {
         if (catAnimations != null || catAnimationsJob?.isActive == true) return
+        // 냐미가 보이기까지(애니메이션 정보 + 스프라이트 시트). 다시 받을 때는 처음 찍은 값이 유지된다.
+        ttiHelper.startTTITimeline(TimelineCategory.IMAGE_LOADED_TIME)
         catAnimationsJob = viewModelScope.launch {
             getCatAnimations()
                 .onSuccess {
@@ -170,6 +188,30 @@ class HomeViewModel @Inject constructor(
         } else {
             startCatMotion(current, newLine = false)
         }
+    }
+
+    private fun onCatShown() {
+        if (isCatShown) return
+        isCatShown = true
+        ttiHelper.endTTITimeline(TimelineCategory.IMAGE_LOADED_TIME)
+        finishTTIIfShown()
+    }
+
+    private fun onSummaryShown() {
+        if (isSummaryShown) return
+        isSummaryShown = true
+        finishTTIIfShown()
+    }
+
+    /**
+     * 요약 숫자와 냐미가 둘 다 그려졌으면 홈 TTI 를 끝내고 바로 보고한다. 홈은 루트라 오래 살아 있어서 이탈을 기다리지 않는다.
+     * API 완료가 아니라 화면이 그렸다고 알린 시점을 쓴다(요약이 늦게 오면 그 숫자가 보인 때가 끝이다).
+     */
+    private fun finishTTIIfShown() {
+        if (isTTIFinished || !isSummaryShown || !isCatShown) return
+        isTTIFinished = true
+        ttiHelper.endTTITracking()
+        ttiHelper.shotTTILogging()
     }
 
     /** 오늘 기록이 없으면 바로 식사 기록으로, 있으면 오늘 식사 시트를 열고 내용을 읽는다. */

@@ -54,7 +54,7 @@ internal fun HistoryFoodIcon(
     )
 }
 
-private const val FOOD_ICON_URL_FORMAT = "https://cdn.nyummy.co.kr/icons/%s.jpeg"
+private const val FOOD_ICON_URL_FORMAT = "https://cdn.nyummy.co.kr/icons/%s.png"
 
 /** 이전 로컬 아이콘이 캔버스의 절반가량만 차지하던 크기감에 맞춘 슬롯 대비 기본 비율. */
 private const val FOOD_ICON_SLOT_FRACTION = 0.5f

@@ -13,7 +13,6 @@ class ResourceHelperImpl(private val context: Context) : ResourceHelper {
         StringResource.APP_NAME -> R.string.app_name
         StringResource.NAV_BACK_BUTTON -> R.string.nav_back_button
         StringResource.MEAL_GALLERY_NOT_TAKEN_TODAY -> R.string.meal_gallery_not_taken_today
-        StringResource.MEAL_GALLERY_UNKNOWN_TAKEN_DATE -> R.string.meal_gallery_unknown_taken_date
         StringResource.MEAL_GALLERY_LOAD_FAILED -> R.string.meal_gallery_load_failed
         StringResource.MEAL_GALLERY_IMPORT_FAILED -> R.string.meal_gallery_import_failed
     }

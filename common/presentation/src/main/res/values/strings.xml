@@ -3,7 +3,6 @@
     <string name="nav_back_button">Back to previous</string>
     <string name="nav_camera_button">Record a meal</string>
     <string name="meal_gallery_not_taken_today">Only photos taken today can be uploaded</string>
-    <string name="meal_gallery_unknown_taken_date">We couldn\'t find when this photo was taken. Only photos taken today can be uploaded</string>
     <string name="meal_gallery_load_failed">We couldn\'t load the photo. Please choose it again</string>
     <string name="meal_gallery_import_failed">We couldn\'t load the photo. Please try again</string>
     <string name="nyummy_scrim_dismiss_label">Close</string>
@@ -20,4 +19,17 @@
     <string name="nyummy_nutrient_protein">Protein</string>
     <string name="nyummy_nutrient_fat">Fat</string>
     <string name="nyummy_nutrient_grams">%1$dg</string>
+    <string name="nyummy_meal_breakfast">Breakfast</string>
+    <string name="nyummy_meal_lunch">Lunch</string>
+    <string name="nyummy_meal_dinner">Dinner</string>
+    <string name="nyummy_meal_am">AM</string>
+    <string name="nyummy_meal_pm">PM</string>
+    <string name="nyummy_meal_time_format">%2$d %1$s</string>
+    <string name="nyummy_meal_skipped">Skip</string>
+    <string name="nyummy_meal_sheet_title">%1$s time</string>
+    <string name="nyummy_meal_sheet_skip">I skip %1$s</string>
+    <string name="nyummy_meal_sheet_confirm">Done</string>
+    <string name="nyummy_meal_unit_hour">h</string>
+    <string name="nyummy_meal_period_description">AM or PM</string>
+    <string name="nyummy_meal_hour_description">Hour</string>
 </resources>

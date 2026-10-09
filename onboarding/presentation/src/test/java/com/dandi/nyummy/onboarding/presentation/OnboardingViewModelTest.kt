@@ -241,12 +241,12 @@ class OnboardingViewModelTest {
         reachMealTimeScene()
 
         viewModel.onIntent(OnboardingIntent.ClickMealTime(Meal.LUNCH))
-        viewModel.onIntent(OnboardingIntent.SelectMealTime(Meal.LUNCH, MealTimeVO(hour = 13, minute = 10)))
+        viewModel.onIntent(OnboardingIntent.SelectMealTime(Meal.LUNCH, MealTimeVO(hour = 13)))
         viewModel.onIntent(OnboardingIntent.ClickMealTime(Meal.BREAKFAST))
         viewModel.onIntent(OnboardingIntent.SelectMealTime(Meal.BREAKFAST, MealTimesVO.DefaultBreakfast.copy(isSkipped = true)))
 
         assertNull(state.editingMeal)
-        assertEquals(MealTimeVO(hour = 13, minute = 10), state.mealTimes.lunch)
+        assertEquals(MealTimeVO(hour = 13), state.mealTimes.lunch)
         assertTrue(state.mealTimes.breakfast.isSkipped)
         assertEquals(MealTimesVO.DefaultDinner, state.mealTimes.dinner)
     }
@@ -265,7 +265,7 @@ class OnboardingViewModelTest {
     @Test
     fun `식사 시각을 확인하면 한 번만 저장하고 홈을 루트로 이동한다`() = runTest(testDispatcher) {
         reachMealTimeScene()
-        viewModel.onIntent(OnboardingIntent.SelectMealTime(Meal.DINNER, MealTimeVO(hour = 19, minute = 0)))
+        viewModel.onIntent(OnboardingIntent.SelectMealTime(Meal.DINNER, MealTimeVO(hour = 19)))
 
         viewModel.onIntent(OnboardingIntent.ConfirmMealTimes)
         // 권한 응답 등으로 두 번 들어와도 저장과 이동은 한 번이다.
@@ -273,7 +273,7 @@ class OnboardingViewModelTest {
         advanceUntilIdle()
 
         assertTrue(state.isFinishing)
-        assertEquals(listOf(MealTimesVO(dinner = MealTimeVO(hour = 19, minute = 0))), repository.savedMealTimes)
+        assertEquals(listOf(MealTimesVO(dinner = MealTimeVO(hour = 19))), repository.savedMealTimes)
         assertEquals(listOf("/home"), navigationHelper.rootPages.map { it.toRoute().path })
     }
 

@@ -16,6 +16,7 @@ import okio.Path.Companion.toOkioPath
  * 모든 `AsyncImage` 가 같은 로더(같은 메모리/디스크 캐시)를 공유합니다.
  * 기본값에 맡기지 않고 캐시를 명시하며, S3 presigned URL 의 서명 쿼리가
  * 발급마다 바뀌어 캐시가 전혀 맞지 않는 문제를 [PresignedUrlKeyer] 로 바로잡습니다.
+ * 요청마다 로딩 시간과 출처(메모리 캐시, 디스크, 네트워크)를 [ImageLoadReport] 로 남깁니다.
  */
 object NyummyImageLoaderFactory {
 
@@ -27,7 +28,7 @@ object NyummyImageLoaderFactory {
 
     private const val DISK_CACHE_DIR = "image_cache"
 
-    fun create(context: PlatformContext): ImageLoader =
+    fun create(context: PlatformContext, loadReport: ImageLoadReport): ImageLoader =
         ImageLoader.Builder(context)
             .memoryCache {
                 MemoryCache.Builder()
@@ -43,6 +44,7 @@ object NyummyImageLoaderFactory {
             .components {
                 add(PresignedUrlKeyer())
             }
+            .eventListenerFactory(ImageLoadEventListener.factory(loadReport))
             .build()
 }
 

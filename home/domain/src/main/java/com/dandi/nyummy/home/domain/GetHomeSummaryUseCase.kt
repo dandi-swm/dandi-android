@@ -9,6 +9,7 @@ import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.tti.TTIHelper
+import com.dandi.nyummy.tti.TimelineCategory
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -25,7 +26,13 @@ class GetHomeSummaryUseCase @Inject constructor(
 ) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
 
     suspend operator fun invoke(): Result<HomeSummaryVO> = try {
-        Result.success(repository.getHomeSummary())
+        ttiHelper.startTTITimeline(TimelineCategory.API_RESPONSE_TIME)
+        val summary = try {
+            repository.getHomeSummary()
+        } finally {
+            ttiHelper.endTTITimeline(TimelineCategory.API_RESPONSE_TIME)
+        }
+        Result.success(summary)
     } catch (e: HttpResponseException) {
         if (e.isCommonErrorHandling()) {
             executeCommonErrorHanding(e)

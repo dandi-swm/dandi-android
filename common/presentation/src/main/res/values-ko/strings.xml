@@ -3,7 +3,6 @@
     <string name="nav_back_button">이전으로</string>
     <string name="nav_camera_button">식사 기록하기</string>
     <string name="meal_gallery_not_taken_today">오늘 찍은 사진만 업로드 가능해요</string>
-    <string name="meal_gallery_unknown_taken_date">촬영 날짜를 확인할 수 없어요. 오늘 찍은 사진만 업로드 가능해요</string>
     <string name="meal_gallery_load_failed">사진을 불러오지 못했어요. 다시 선택해주세요</string>
     <string name="meal_gallery_import_failed">사진을 불러오지 못했어요. 다시 시도해주세요</string>
     <string name="nyummy_scrim_dismiss_label">닫기</string>
@@ -20,4 +19,18 @@
     <string name="nyummy_nutrient_protein">단백질</string>
     <string name="nyummy_nutrient_fat">지방</string>
     <string name="nyummy_nutrient_grams">%1$dg</string>
+    <!-- 평소 식사 시각. %1$s: 오전/오후, %2$d: 시(1~12) -->
+    <string name="nyummy_meal_breakfast">아침</string>
+    <string name="nyummy_meal_lunch">점심</string>
+    <string name="nyummy_meal_dinner">저녁</string>
+    <string name="nyummy_meal_am">오전</string>
+    <string name="nyummy_meal_pm">오후</string>
+    <string name="nyummy_meal_time_format">%1$s %2$d시</string>
+    <string name="nyummy_meal_skipped">안 먹어요</string>
+    <string name="nyummy_meal_sheet_title">%1$s 시간</string>
+    <string name="nyummy_meal_sheet_skip">%1$s은 안 먹어요</string>
+    <string name="nyummy_meal_sheet_confirm">확인</string>
+    <string name="nyummy_meal_unit_hour">시</string>
+    <string name="nyummy_meal_period_description">오전 또는 오후</string>
+    <string name="nyummy_meal_hour_description">시</string>
 </resources>

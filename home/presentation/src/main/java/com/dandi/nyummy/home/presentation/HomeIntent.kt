@@ -55,4 +55,10 @@ sealed interface HomeIntent : MviIntent {
      * 그사이 다른 동작으로 바뀌었으면 늦게 온 신호이므로 [playId]로 걸러 낸다.
      */
     data class CatMotionFinished(val playId: Int) : HomeIntent
+
+    /** 냐미가 처음 화면에 그려졌다(받은 스프라이트든 앱에 든 기본 냐미든). 홈 TTI 끝 판단에 쓴다. */
+    data object CatShown : HomeIntent
+
+    /** 받은 요약 숫자가 처음 화면에 그려졌다. 홈 TTI 끝 판단에 쓴다. */
+    data object SummaryShown : HomeIntent
 }

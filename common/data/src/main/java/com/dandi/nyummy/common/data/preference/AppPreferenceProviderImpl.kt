@@ -65,7 +65,7 @@ class AppPreferenceProviderImpl(
         private val KEY_PERMISSION_NOTICE_SHOWN = booleanPreferencesKey("permission_notice_shown")
         private val KEY_ONBOARDING_INCOMPLETE = booleanPreferencesKey("onboarding_incomplete")
 
-        // 평소 식사 시각: 자정부터 몇 분째인지와 "안 먹어요" 여부.
+        // 평소 식사 시각: 자정부터 몇 분째인지(정시라 늘 60의 배수)와 "안 먹어요" 여부.
         private val KEY_BREAKFAST_MINUTE = intPreferencesKey("meal_time_breakfast_minute")
         private val KEY_BREAKFAST_SKIPPED = booleanPreferencesKey("meal_time_breakfast_skipped")
         private val KEY_LUNCH_MINUTE = intPreferencesKey("meal_time_lunch_minute")

@@ -21,12 +21,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,6 +61,7 @@ import kotlin.math.max
  *
  * @param catMotion 서버에서 받은 냐미 동작. 받는 중이면 null이다.
  * @param useFallbackCat 냐미 애니메이션을 받지 못해 기본 냐미(앱에 든 스프라이트)로 대신한다.
+ * @param onCatShown 냐미가 처음 화면에 보인 순간(시트를 받아 그렸거나 기본 냐미를 그렸을 때). 홈 TTI 에 쓴다.
  */
 @Composable
 internal fun HomeRoomCard(
@@ -67,6 +70,7 @@ internal fun HomeRoomCard(
     useFallbackCat: Boolean,
     onCatClick: () -> Unit,
     onCatMotionFinished: (playId: Int) -> Unit,
+    onCatShown: () -> Unit,
     speech: String,
     isMenuExpanded: Boolean,
     onToggleMenu: () -> Unit,
@@ -102,13 +106,21 @@ internal fun HomeRoomCard(
                 motion = catMotion,
                 onClick = onCatClick,
                 onMotionFinished = { onCatMotionFinished(catMotion.playId) },
+                onShown = onCatShown,
                 // 바깥 냐미가 이미 설명을 전달하므로 안쪽 기본 냐미는 설명을 빼서 두 번 읽히지 않게 한다.
                 fallback = {
                     HomeFallbackNyami(hasRecordedToday = hasRecordedToday, describe = false, modifier = Modifier.fillMaxSize())
                 },
                 modifier = nyamiModifier,
             )
-            useFallbackCat -> HomeFallbackNyami(hasRecordedToday = hasRecordedToday, modifier = nyamiModifier)
+            useFallbackCat -> {
+                HomeFallbackNyami(hasRecordedToday = hasRecordedToday, modifier = nyamiModifier)
+                // 앱에 든 기본 냐미는 받을 이미지가 없어 그리는 즉시 보인다. 그려진 다음 프레임에 알린다.
+                LaunchedEffect(Unit) {
+                    withFrameNanos { }
+                    onCatShown()
+                }
+            }
         }
         NyummyVoiceBubble(
             text = speech,
@@ -149,6 +161,7 @@ private fun HomeNyami(
     motion: HomeCatMotion,
     onClick: () -> Unit,
     onMotionFinished: () -> Unit,
+    onShown: () -> Unit,
     fallback: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -162,6 +175,7 @@ private fun HomeNyami(
         onFinished = onMotionFinished,
         playId = motion.playId,
         error = fallback,
+        onShown = onShown,
         modifier = modifier
             .nyummyClickable(onClick = onClick)
             .semantics { contentDescription = description },
@@ -314,6 +328,7 @@ private fun HomeRoomCardPreview() {
             useFallbackCat = true,
             onCatClick = {},
             onCatMotionFinished = {},
+            onCatShown = {},
             speech = "냠냠! 오늘도 챙겨줘서 고마워",
             isMenuExpanded = true,
             onToggleMenu = {},

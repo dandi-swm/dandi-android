@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.meal.domain.ImportGalleryMealPhotoUseCase
 import com.dandi.nyummy.meal.domain.SubmitMealUseCase
+import com.dandi.nyummy.meal.entity.MealPhotoSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.io.File
@@ -99,14 +100,14 @@ class MealRecordViewModel @Inject constructor(
             MealRecordReducerEvent.CaptureStarted -> state.copy(isCapturing = true)
 
             is MealRecordReducerEvent.CaptureSucceeded ->
-                state.copy(phase = MealCameraPhase.Captured(event.photoPath), isCapturing = false)
+                state.copy(phase = MealCameraPhase.Captured(event.photoPath, MealPhotoSource.CAMERA), isCapturing = false)
 
             MealRecordReducerEvent.CaptureEnded -> state.copy(isCapturing = false)
 
             MealRecordReducerEvent.GalleryImportStarted -> state.copy(isImportingGalleryPhoto = true)
 
             is MealRecordReducerEvent.GalleryImportSucceeded -> state.copy(
-                phase = MealCameraPhase.Captured(event.photoPath),
+                phase = MealCameraPhase.Captured(event.photoPath, MealPhotoSource.GALLERY),
                 isImportingGalleryPhoto = false,
             )
 
@@ -121,7 +122,7 @@ class MealRecordViewModel @Inject constructor(
             MealRecordReducerEvent.SubmitStarted ->
                 (state.phase as? MealCameraPhase.Captured)?.let { captured ->
                     state.copy(
-                        phase = MealCameraPhase.Feeding(captured.photoPath),
+                        phase = MealCameraPhase.Feeding(captured.photoPath, captured.source),
                         isSubmitSucceeded = false,
                     )
                 } ?: state
@@ -131,7 +132,7 @@ class MealRecordViewModel @Inject constructor(
             MealRecordReducerEvent.SubmitFailed ->
                 (state.phase as? MealCameraPhase.Feeding)?.let { feeding ->
                     state.copy(
-                        phase = MealCameraPhase.Captured(feeding.photoPath),
+                        phase = MealCameraPhase.Captured(feeding.photoPath, feeding.source),
                         isSubmitSucceeded = false,
                     )
                 } ?: state.copy(isSubmitSucceeded = false)
@@ -166,7 +167,7 @@ class MealRecordViewModel @Inject constructor(
         val phase = currentState.phase as? MealCameraPhase.Captured ?: return
         dispatch(MealRecordReducerEvent.SubmitStarted)
         viewModelScope.launch {
-            submitMeal(phase.photoPath)
+            submitMeal(phase.photoPath, phase.source)
                 // 실패 스낵바는 UseCase 가 이미 띄우므로 여기서는 상태 복귀만 한다.
                 .onSuccess { dispatch(MealRecordReducerEvent.SubmitSucceeded) }
                 .onFailure { dispatch(MealRecordReducerEvent.SubmitFailed) }
