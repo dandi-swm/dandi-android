@@ -25,6 +25,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMailRow
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySwipeToDelete
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
@@ -103,16 +104,21 @@ internal fun MailboxScreen(
                     ),
                 ) {
                     items(uiState.inquiries, key = { it.inquiryId }) { row ->
-                        NyummyMailRow(
-                            type = stringResource(row.category.labelRes),
-                            time = row.timeLabel,
-                            title = row.title,
-                            status = stringResource(
-                                if (row.isAnswered) R.string.mailbox_status_answered else R.string.mailbox_status_waiting,
-                            ),
-                            isStatusEmphasized = row.isAnswered,
-                            onClick = { onIntent(MailboxIntent.ClickInquiry(row.inquiryId)) },
-                        )
+                        NyummySwipeToDelete(
+                            onDelete = { onIntent(MailboxIntent.DeleteInquiry(row.inquiryId)) },
+                            modifier = Modifier.animateItem(),
+                        ) {
+                            NyummyMailRow(
+                                type = stringResource(row.category.labelRes),
+                                time = row.timeLabel,
+                                title = row.title,
+                                status = stringResource(
+                                    if (row.isAnswered) R.string.mailbox_status_answered else R.string.mailbox_status_waiting,
+                                ),
+                                isStatusEmphasized = row.isAnswered,
+                                onClick = { onIntent(MailboxIntent.ClickInquiry(row.inquiryId)) },
+                            )
+                        }
                     }
                 }
             }

@@ -30,6 +30,9 @@ class MailboxDataSource(
     private val mutex = Mutex()
     private var inquiries: List<InquiryDTO>? = null
 
+    // 소프트 삭제된 문의. 목록과 단건 조회에서 빠진다.
+    private val deletedIds = mutableSetOf<Long>()
+
     suspend fun getInquiries(): InquiryListResponseDTO {
         delay(latencyMillis)
         return InquiryListResponseDTO(inquiries = loadedInquiries())
@@ -56,8 +59,23 @@ class MailboxDataSource(
         }
     }
 
+    /** `DELETE /api/v1/inquiries/{inquiryId}`(204). 서버처럼 소프트 삭제라 지운 표시만 한다. */
+    suspend fun deleteInquiry(inquiryId: Long) {
+        delay(latencyMillis)
+        mutex.withLock { deletedIds += inquiryId }
+    }
+
+    /** `POST /api/v1/inquiries/{inquiryId}/restore`(200). 지운 표시를 지우고 문의를 돌려준다. */
+    suspend fun restoreInquiry(inquiryId: Long): InquiryDTO {
+        delay(latencyMillis)
+        return mutex.withLock {
+            deletedIds -= inquiryId
+            (inquiries ?: readHappyCase().also { inquiries = it }).first { it.inquiryId == inquiryId }
+        }
+    }
+
     private suspend fun loadedInquiries(): List<InquiryDTO> = mutex.withLock {
-        inquiries ?: readHappyCase().also { inquiries = it }
+        (inquiries ?: readHappyCase().also { inquiries = it }).filterNot { it.inquiryId in deletedIds }
     }
 
     private suspend fun readHappyCase(): List<InquiryDTO> = withContext(Dispatchers.IO) {

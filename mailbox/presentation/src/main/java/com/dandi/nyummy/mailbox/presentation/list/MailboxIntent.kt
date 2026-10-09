@@ -14,4 +14,10 @@ sealed interface MailboxIntent : MviIntent {
     data object ClickWrite : MailboxIntent
 
     data class ClickInquiry(val inquiryId: Long) : MailboxIntent
+
+    /** 행을 왼쪽으로 밀어 지웠다. 목록에서 바로 빼고 서버에서 지운다(소프트 삭제). */
+    data class DeleteInquiry(val inquiryId: Long) : MailboxIntent
+
+    /** 지운 뒤 스낵바의 되돌리기. [row]를 원래 자리([index])에 되살린다. */
+    data class UndoDelete(val row: InquiryRowUiModel, val index: Int) : MailboxIntent
 }
