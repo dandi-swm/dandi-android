@@ -17,6 +17,7 @@ import kotlinx.collections.immutable.persistentListOf
  * @property isTodayMealsLoading 오늘 식사를 읽는 중
  * @property isTodayMealsFailed 오늘 식사를 읽지 못했다(시트에서 다시 시도할 수 있다)
  * @property isTodaySheetVisible 오늘 식사 시트 표시 여부
+ * @property isSummaryLoaded 홈 요약을 한 번이라도 받았다. 요약이 그려졌는지 화면이 알리는 데(홈 TTI) 쓴다.
  * @property isRoomMenuExpanded 고양이방 메뉴 펼침 여부
  * @property isCatAnimationFailed 냐미 애니메이션을 받지 못했다(고양이가 없거나 서버, 네트워크 실패). 기본 냐미로 대신한다.
  * @property catState 지금 냐미 상태. 홈 요약을 읽기 전에는 null
@@ -27,6 +28,7 @@ import kotlinx.collections.immutable.persistentListOf
  */
 data class HomeUIState(
     val summary: HomeSummaryVO = HomeSummaryVO.empty,
+    val isSummaryLoaded: Boolean = false,
     val todayNutrition: DailyNutritionVO? = null,
     val todayMeals: ImmutableList<MealHistoryVO> = persistentListOf(),
     val isTodayMealsLoading: Boolean = false,

@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -52,6 +54,13 @@ internal fun HomeScreen(
     uiState: HomeUIState,
     onIntent: (HomeIntent) -> Unit,
 ) {
+    if (uiState.isSummaryLoaded) {
+        // 받은 요약 숫자가 그려진 다음 프레임에 알린다. 홈 TTI 는 API 완료가 아니라 이 시점에 끝난다.
+        LaunchedEffect(Unit) {
+            withFrameNanos { }
+            onIntent(HomeIntent.SummaryShown)
+        }
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()

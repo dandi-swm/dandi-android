@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -114,8 +115,11 @@ internal fun HomeRoomCard(
             )
             useFallbackCat -> {
                 HomeFallbackNyami(hasRecordedToday = hasRecordedToday, modifier = nyamiModifier)
-                // 앱에 든 기본 냐미는 받을 이미지가 없어 그리는 즉시 보인다.
-                LaunchedEffect(Unit) { onCatShown() }
+                // 앱에 든 기본 냐미는 받을 이미지가 없어 그리는 즉시 보인다. 그려진 다음 프레임에 알린다.
+                LaunchedEffect(Unit) {
+                    withFrameNanos { }
+                    onCatShown()
+                }
             }
         }
         NyummyVoiceBubble(

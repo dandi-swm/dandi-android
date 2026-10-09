@@ -56,6 +56,9 @@ sealed interface HomeIntent : MviIntent {
      */
     data class CatMotionFinished(val playId: Int) : HomeIntent
 
-    /** 냐미가 처음 화면에 보였다(받은 스프라이트든 앱에 든 기본 냐미든). 홈 TTI 끝 판단에 쓴다. */
+    /** 냐미가 처음 화면에 그려졌다(받은 스프라이트든 앱에 든 기본 냐미든). 홈 TTI 끝 판단에 쓴다. */
     data object CatShown : HomeIntent
+
+    /** 받은 요약 숫자가 처음 화면에 그려졌다. 홈 TTI 끝 판단에 쓴다. */
+    data object SummaryShown : HomeIntent
 }

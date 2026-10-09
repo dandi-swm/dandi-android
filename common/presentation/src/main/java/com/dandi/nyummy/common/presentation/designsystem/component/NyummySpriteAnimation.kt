@@ -10,6 +10,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
@@ -51,7 +52,7 @@ import kotlin.math.roundToInt
  * [clips], [frame], [restMillis], [loopTimes] 중 하나라도 바뀌면 처음부터 다시 재생한다.
  *
  * @param playId 값이 바뀌면 [clips]가 같아도 처음부터 다시 재생한다.
- * @param onShown 시트를 받아 그리기 시작했거나 받지 못해 [error]를 보여 준 순간 불린다. 화면 표시 시점 계측(TTI)에 쓴다.
+ * @param onShown 시트를 받아 그렸거나 받지 못해 [error]를 보여 준 뒤 한 번 불린다(받는 중에는 부르지 않는다). 화면 표시 시점 계측(TTI)에 쓴다.
  */
 @Composable
 fun NyummySpriteAnimation(
@@ -69,10 +70,16 @@ fun NyummySpriteAnimation(
 ) {
     val lastDrawn = remember { LastDrawnCell() }
     val sheets = rememberSpriteSheets(clips)
-    // 시트를 받아 그렸거나, 받지 못해 [error]를 보여 준 순간을 알린다(화면에 무언가 보인 시점).
+    // 시트를 받아 그렸거나, 받지 못해 [error]를 보여 준 순간을 한 번만 알린다(화면에 무언가 보인 시점).
+    // 그 상태가 그려진 다음 프레임까지 기다려 실제로 보인 뒤에 부른다.
     val currentOnShown by rememberUpdatedState(onShown)
+    val shown = remember { booleanArrayOf(false) }
     LaunchedEffect(sheets is SpriteSheets.Loading) {
-        if (sheets !is SpriteSheets.Loading) currentOnShown()
+        if (sheets !is SpriteSheets.Loading && !shown[0]) {
+            withFrameNanos { }
+            shown[0] = true
+            currentOnShown()
+        }
     }
     when (sheets) {
         SpriteSheets.Loading -> {

@@ -42,8 +42,9 @@ class HomeViewModel @Inject constructor(
     /** 홈 요약을 한 번이라도 읽었는지. 첫 진입을 "방금 기록하고 돌아옴"으로 착각하지 않게 한다. */
     private var hasLoadedSummary = false
 
-    /** 냐미가 한 번이라도 보였는지. 요약까지 보이면 홈 TTI 를 끝낸다. */
+    /** 냐미와 요약 숫자가 한 번이라도 화면에 그려졌는지. 둘 다 그려지면 홈 TTI 를 끝낸다. */
     private var isCatShown = false
+    private var isSummaryShown = false
     private var isTTIFinished = false
 
     /**
@@ -81,12 +82,13 @@ class HomeViewModel @Inject constructor(
             HomeIntent.ClickCat -> currentState.catState?.let { startCatMotion(it, newLine = true) }
             is HomeIntent.CatMotionFinished -> if (intent.playId == currentState.catPlayId) finishCatMotion()
             HomeIntent.CatShown -> onCatShown()
+            HomeIntent.SummaryShown -> onSummaryShown()
         }
     }
 
     override fun reduce(state: HomeUIState, event: HomeReducerEvent): HomeUIState =
         when (event) {
-            is HomeReducerEvent.SummaryLoaded -> state.copy(summary = event.summary)
+            is HomeReducerEvent.SummaryLoaded -> state.copy(summary = event.summary, isSummaryLoaded = true)
             is HomeReducerEvent.TodaySheetVisibilityChanged -> state.copy(isTodaySheetVisible = event.visible)
             HomeReducerEvent.TodayMealsLoadStarted -> state.copy(isTodayMealsLoading = true, isTodayMealsFailed = false)
             is HomeReducerEvent.TodayMealsLoaded -> state.copy(
@@ -121,7 +123,6 @@ class HomeViewModel @Inject constructor(
                 hasLoadedSummary = true
                 dispatch(HomeReducerEvent.SummaryLoaded(summary))
                 updateCatState(recordedJustNow)
-                finishTTIIfShown()
             }
         }
     }
@@ -196,9 +197,18 @@ class HomeViewModel @Inject constructor(
         finishTTIIfShown()
     }
 
-    /** 요약 숫자와 냐미가 둘 다 보였으면 홈 TTI 를 끝내고 바로 보고한다. 홈은 루트라 오래 살아 있어서 이탈을 기다리지 않는다. */
+    private fun onSummaryShown() {
+        if (isSummaryShown) return
+        isSummaryShown = true
+        finishTTIIfShown()
+    }
+
+    /**
+     * 요약 숫자와 냐미가 둘 다 그려졌으면 홈 TTI 를 끝내고 바로 보고한다. 홈은 루트라 오래 살아 있어서 이탈을 기다리지 않는다.
+     * API 완료가 아니라 화면이 그렸다고 알린 시점을 쓴다(요약이 늦게 오면 그 숫자가 보인 때가 끝이다).
+     */
     private fun finishTTIIfShown() {
-        if (isTTIFinished || !hasLoadedSummary || !isCatShown) return
+        if (isTTIFinished || !isSummaryShown || !isCatShown) return
         isTTIFinished = true
         ttiHelper.endTTITracking()
         ttiHelper.shotTTILogging()
