@@ -156,6 +156,9 @@ private fun ensureCaptureExif(file: File) {
         val exif = ExifInterface(file)
         if (EXIF_DATE_TIME_TAGS.any { !exif.getAttribute(it).isNullOrBlank() }) return
         val captureMillis = file.lastModified().takeIf { it > 0 } ?: System.currentTimeMillis()
+        // EXIF 는 찍은 곳의 벽시계 시각과 그 UTC 오프셋을 짝으로 적는다. 기기 시간대로 둘을 함께 적으면 어느 지역에서
+        // 찍어도 같은 순간을 가리키고, 서버도 오프셋을 읽어 시간대와 함께 저장한다. KST 로 고정해 적으면 촬영지의
+        // 시간대 정보를 잃으므로 여기서는 KstTime 을 쓰지 않는다(앱이 날짜를 계산할 때는 KstTime 으로 바꿔 쓴다).
         val dateTime = formatExifDateTime(captureMillis)
         val utcOffset = formatUtcOffset(TimeZone.getDefault().getOffset(captureMillis))
         EXIF_DATE_TIME_TAGS.forEach { tag -> exif.setAttribute(tag, dateTime) }

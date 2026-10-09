@@ -32,15 +32,22 @@ interface TTIHelper {                    // 한 번의 TTI 측정(화면 인스�
 적용 절차:
 
 1. feature/domain에 `object {Feature}TTIPage : TTIPage` 를 정의한다. `timelines` 에는 **실제로 측정하는 구간만** 넣는다. 마지막 타임라인이 완성되어야 `endTTITracking()` 이 받아들여지므로, 찍지 않는 구간을 넣으면 매번 미완료로 리포트된다.
-2. ViewModel 생성자로 `val ttiHelper: TTIHelper` 를 주입받고, `init` 에서 다른 작업보다 먼저 `ttiHelper.startTTITracking({Feature}TTIPage)` 를 호출한다.
-3. View(Composable)는 `viewModel.ttiHelper` 로 구간을 찍고, 핵심 콘텐츠가 보일 때 `endTTITracking()` 을 호출한다. 이탈 시 shot 은 위 안전망이 맡으므로 필요할 때만 직접 부른다.
+2. ViewModel 생성자로 `private val ttiHelper: TTIHelper` 를 주입받고, `init` 에서 다른 작업보다 먼저 `ttiHelper.startTTITracking({Feature}TTIPage)` 를 호출한다.
+3. View(Composable)는 `TTIHelper` 를 직접 부르지 않는다(MVI: View → `onIntent` 단일 진입). 핵심 콘텐츠가 그려지면 "보였다" Intent 를 보내고(예: 홈 `HomeIntent.SummaryShown`, `HomeIntent.CatShown`), ViewModel 이 구간 끝과 `endTTITracking()` 을 처리한다. 실제로 그려진 뒤에 보내려면 `LaunchedEffect` 안에서 `withFrameNanos { }` 로 다음 프레임을 기다린 뒤 보낸다. 이탈 시 shot 은 위 안전망이 맡는다.
 4. `BaseUseCase` 도 같은 `ttiHelper` 를 받으므로 UseCase 안에서 API 구간(`API_REQUEST_READY_TIME` / `API_RESPONSE_TIME`)을 suspend 호출과 같은 코루틴 안에서 start/end 로 감싼다.
 5. UseCase 는 ViewModel 에서만 주입한다. `TTIHelper` 가 ViewModel 스코프라 Activity, Worker, Singleton 에서는 주입할 수 없다.
 
-현재 TTI가 연결된 화면은 인트로 하나다([IntroViewModel.kt](../../intro/presentation/src/main/java/com/dandi/nyummy/intro/presentation/IntroViewModel.kt), [GetIntroUseCase.kt](../../intro/domain/src/main/java/com/dandi/nyummy/intro/domain/GetIntroUseCase.kt)).
+현재 TTI가 연결된 화면은 인트로와 홈이다.
+
+인트로([IntroViewModel.kt](../../intro/presentation/src/main/java/com/dandi/nyummy/intro/presentation/IntroViewModel.kt), [GetIntroUseCase.kt](../../intro/domain/src/main/java/com/dandi/nyummy/intro/domain/GetIntroUseCase.kt))
 - 인트로 TTI 는 앱 진입(VM init)부터 버전 확인이 끝나 다음 행동이 정해질 때까지다. `GetIntroUseCase` 가 버전 확인 직후 `endTTITracking()` 을 부르므로 강제 업데이트 다이얼로그, 진행바 채움 대기, 화면 이동은 들어가지 않는다.
 - 버전 확인이 실패하면 끝을 찍지 않는다. 재시도가 성공하면 그때 보고되고, 아니면 이탈 안전망이나 타임아웃으로 미완료 보고된다.
 - 첫 실행 권한 안내를 기다린 시간은 구간에서 뺄 수 없어 `user_wait_included=true` 로 표시한다.
+
+홈([HomeTTIPage.kt](../../home/domain/src/main/java/com/dandi/nyummy/home/domain/tti/HomeTTIPage.kt), [HomeViewModel.kt](../../home/presentation/src/main/java/com/dandi/nyummy/home/presentation/HomeViewModel.kt))
+- 홈 TTI 는 ViewModel init 부터 요약 숫자와 냐미가 둘 다 화면에 그려질 때까지다. API 완료가 아니라 화면이 그렸다고 알린 시점(`SummaryShown`, `CatShown`)으로 끝낸다.
+- 구간: `API_RESPONSE_TIME`(홈 요약 API, `GetHomeSummaryUseCase` 가 성공, 실패, 취소 모두에서 닫는다), `IMAGE_LOADED_TIME`(냐미 애니메이션 정보와 스프라이트 시트, 받지 못하면 앱에 든 기본 냐미가 그려질 때까지).
+- 홈은 루트라 오래 살아 있으므로 이탈을 기다리지 않고 끝나자마자 `shotTTILogging()` 으로 보낸다. 신호가 여러 번 와도 한 번만 보낸다.
 
 Logcat 출력 예(디버그 빌드, `[TTI]` 태그): `Shot TTI Logging : intro#1_... / {tti.page_name=intro, tti.instance_no=1, tti.is_bounced=false, tti.is_timeout=false, tti.tti_time=..., tti.api_response_time=..., ...}`
 
