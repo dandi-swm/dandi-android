@@ -1,0 +1,4 @@
+<resources>
+    <!-- 디버그 빌드는 런처에서 release 와 구분되도록 이름에 표시를 붙인다. 디버그 전용이라 번역하지 않는다. -->
+    <string name="debug_app_name" translatable="false">냐미 디버그</string>
+</resources>
