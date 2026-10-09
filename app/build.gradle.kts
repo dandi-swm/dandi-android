@@ -115,6 +115,11 @@ dependencies {
     implementation(project(":history:data"))
     implementation(project(":history:entity"))
 
+    implementation(project(":mailbox:presentation"))
+    implementation(project(":mailbox:domain"))
+    implementation(project(":mailbox:data"))
+    implementation(project(":mailbox:entity"))
+
     implementation(project(":collection:presentation"))
     implementation(project(":collection:domain"))
     implementation(project(":collection:data"))

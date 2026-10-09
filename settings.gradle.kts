@@ -59,6 +59,11 @@ include(":history:domain")
 include(":history:data")
 include(":history:entity")
 
+include(":mailbox:presentation")
+include(":mailbox:domain")
+include(":mailbox:data")
+include(":mailbox:entity")
+
 include(":collection:presentation")
 include(":collection:domain")
 include(":collection:data")
