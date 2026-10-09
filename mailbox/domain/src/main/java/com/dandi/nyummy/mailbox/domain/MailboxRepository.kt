@@ -13,4 +13,10 @@ interface MailboxRepository {
 
     /** 문의를 보내고, 만들어진 문의를 돌려준다. */
     suspend fun sendInquiry(category: InquiryCategory, content: String): InquiryVO
+
+    /** 문의를 우편함에서 지운다(서버는 소프트 삭제). */
+    suspend fun deleteInquiry(inquiryId: Long)
+
+    /** 지운 문의를 되살리고, 되살린 문의를 돌려준다. */
+    suspend fun restoreInquiry(inquiryId: Long): InquiryVO
 }

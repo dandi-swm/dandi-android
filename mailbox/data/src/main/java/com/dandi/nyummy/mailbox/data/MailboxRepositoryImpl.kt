@@ -16,4 +16,10 @@ class MailboxRepositoryImpl(
 
     override suspend fun sendInquiry(category: InquiryCategory, content: String) =
         dataSource.sendInquiry(SendInquiryRequestDTO(category = category.name, content = content)).toVO()
+
+    override suspend fun deleteInquiry(inquiryId: Long) =
+        dataSource.deleteInquiry(inquiryId)
+
+    override suspend fun restoreInquiry(inquiryId: Long) =
+        dataSource.restoreInquiry(inquiryId).toVO()
 }
