@@ -11,13 +11,14 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.dandi.nyummy.common.entity.meal.Meal
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMealTimeSheet
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.onboarding.domain.CatNameError
-import com.dandi.nyummy.onboarding.presentation.component.OnboardingMealTimeSheet
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import com.dandi.nyummy.common.presentation.R as CommonR
 
 @RunWith(AndroidJUnit4::class)
 class OnboardingScreenTest {
@@ -110,10 +111,10 @@ class OnboardingScreenTest {
         val mealTimes = MealTimesVO(breakfast = MealTimesVO.DefaultBreakfast.copy(isSkipped = true))
         setScreen(mealTimeState().copy(mealTimes = mealTimes)) { intents += it }
 
-        composeRule.onNodeWithText(text(R.string.onboarding_meal_skipped)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(CommonR.string.nyummy_meal_skipped)).assertIsDisplayed()
         composeRule.onNodeWithText(timeText(isPm = true, hour12 = 12)).assertIsDisplayed()
         composeRule.onNodeWithText(timeText(isPm = true, hour12 = 6)).assertIsDisplayed()
-        composeRule.onNodeWithText(text(R.string.onboarding_meal_lunch)).performClick()
+        composeRule.onNodeWithText(text(CommonR.string.nyummy_meal_lunch)).performClick()
 
         assertEquals(listOf<OnboardingIntent>(OnboardingIntent.ClickMealTime(Meal.LUNCH)), intents)
     }
@@ -123,7 +124,7 @@ class OnboardingScreenTest {
         var selected: MealTimeVO? = null
         composeRule.setContent {
             NyummyTheme {
-                OnboardingMealTimeSheet(
+                NyummyMealTimeSheet(
                     meal = Meal.DINNER,
                     initial = MealTimesVO.DefaultDinner,
                     onSelect = { selected = it },
@@ -132,9 +133,9 @@ class OnboardingScreenTest {
             }
         }
 
-        composeRule.onNodeWithText(text(R.string.onboarding_meal_sheet_title, text(R.string.onboarding_meal_dinner)))
+        composeRule.onNodeWithText(text(CommonR.string.nyummy_meal_sheet_title, text(CommonR.string.nyummy_meal_dinner)))
             .assertIsDisplayed()
-        composeRule.onNodeWithText(text(R.string.onboarding_meal_sheet_confirm)).performClick()
+        composeRule.onNodeWithText(text(CommonR.string.nyummy_meal_sheet_confirm)).performClick()
 
         assertEquals(MealTimeVO(hour = 18), selected)
     }
@@ -144,7 +145,7 @@ class OnboardingScreenTest {
         var selected: MealTimeVO? = null
         composeRule.setContent {
             NyummyTheme {
-                OnboardingMealTimeSheet(
+                NyummyMealTimeSheet(
                     meal = Meal.BREAKFAST,
                     initial = MealTimesVO.DefaultBreakfast,
                     onSelect = { selected = it },
@@ -154,7 +155,7 @@ class OnboardingScreenTest {
         }
 
         composeRule.onNodeWithText(
-            text(R.string.onboarding_meal_sheet_skip, text(R.string.onboarding_meal_breakfast)),
+            text(CommonR.string.nyummy_meal_sheet_skip, text(CommonR.string.nyummy_meal_breakfast)),
         ).performClick()
 
         assertEquals(MealTimesVO.DefaultBreakfast.copy(isSkipped = true), selected)
@@ -173,8 +174,8 @@ class OnboardingScreenTest {
     )
 
     private fun timeText(isPm: Boolean, hour12: Int): String = text(
-        R.string.onboarding_meal_time_format,
-        text(if (isPm) R.string.onboarding_meal_pm else R.string.onboarding_meal_am),
+        CommonR.string.nyummy_meal_time_format,
+        text(if (isPm) CommonR.string.nyummy_meal_pm else CommonR.string.nyummy_meal_am),
         hour12,
     )
 }
