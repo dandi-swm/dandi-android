@@ -39,9 +39,10 @@ abstract class BaseRemoteDataSource {
             rawCode = code(),
             errorRequestUrl = raw().request.url.toString(),
             msg = "Http Request Failed (${code()}) ${message()}, $errorBody",
-            // handlingErrorOnUseCase 가 ErrorType.type 과 cause.message 를 비교하므로,
-            // 공통 에러 바디 {"code":"api...","message":"..."} 의 code 만 추출해 담는다.
-            cause = (extractErrorCode(errorBody) ?: errorBody)?.let(::Throwable),
+            // domain 은 cause.message 를 서버 code 로 읽는다(serverErrorCode).
+            // 공통 에러 바디 {"code":"api...","message":"..."} 의 code 만 담고, code 가 없으면 비워 둔다.
+            // 원문 바디는 디버그용으로 msg 에만 남긴다.
+            cause = extractErrorCode(errorBody)?.let(::Throwable),
         )
     }
 

@@ -165,7 +165,7 @@ class HistoryUseCasesTest {
 
         val result = useCase(1L)
 
-        assertEquals("A temporary error occurred.", messageHelper.oneButtonDialogs.single().titleText)
+        assertEquals("잠시 문제가 생겼어요", messageHelper.oneButtonDialogs.single().titleText)
         assertTrue(result.isFailure)
     }
 
@@ -204,11 +204,98 @@ class HistoryUseCasesTest {
         assertTrue(result.isFailure)
     }
 
-    private fun httpException(code: Int): HttpResponseException = HttpResponseException(
+    @Test
+    fun `지운 기록의 404 는 공통 404 대신 지워진 기록으로 안내한다`() = runBlocking {
+        val useCase = GetMealDetailUseCase(
+            repository = ThrowingHistoryRepository(httpException(404, HistoryErrorType.MEAL_NOT_FOUND.type)),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(1L)
+
+        assertEquals("이미 지워진 기록이에요", messageHelper.snackBars.single().messageText)
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+        assertEquals(0, navigationHelper.backCount)
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `code 없는 404 는 준비 중인 기능으로 안내하고 뒤로 간다`() = runBlocking {
+        val useCase = GetMealDetailUseCase(
+            repository = ThrowingHistoryRepository(httpException(404)),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        useCase(1L)
+
+        val dialog = messageHelper.oneButtonDialogs.single()
+        assertEquals("준비 중인 기능이에요.", dialog.descText)
+        dialog.onClickButton?.invoke()
+        assertEquals(1, navigationHelper.backCount)
+    }
+
+    @Test
+    fun `이미 지워진 기록을 지우면 성공으로 돌려준다`() = runBlocking {
+        val useCase = DeleteMealUseCase(
+            repository = ThrowingHistoryRepository(httpException(404, HistoryErrorType.MEAL_NOT_FOUND.type)),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(1L)
+
+        assertTrue(result.isSuccess)
+        assertTrue(messageHelper.snackBars.isEmpty())
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+    }
+
+    @Test
+    fun `분석 중인 기록을 다시 분석하면 code 에 맞는 문구로 안내한다`() = runBlocking {
+        val useCase = ReanalyzeMealUseCase(
+            repository = ThrowingHistoryRepository(httpException(409, HistoryErrorType.ANALYSIS_NOT_RETRYABLE.type)),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        useCase(1L)
+
+        assertEquals("이미 분석하고 있는 기록이에요", messageHelper.snackBars.single().messageText)
+    }
+
+    @Test
+    fun `5xx 공통 오류는 서버 상태 문자열을 보여 주지 않는다`() = runBlocking {
+        val useCase = GetMealDetailUseCase(
+            repository = ThrowingHistoryRepository(httpException(500, "api.common.internalServerError")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        useCase(1L)
+
+        val dialog = messageHelper.oneButtonDialogs.single()
+        assertEquals("잠시 후 다시 시도해 주세요.", dialog.descText)
+        assertTrue("500" !in dialog.descText && "api." !in dialog.descText)
+    }
+
+    /** 서버 에러 바디의 `code` 를 cause 로 담는 실제 변환(BaseRemoteDataSource)과 같은 형태로 만든다. */
+    private fun httpException(code: Int, errorCode: String? = null): HttpResponseException = HttpResponseException(
         status = HttpResponseStatus.create(code),
         rawCode = code,
         errorRequestUrl = "https://test/meals",
         msg = "Http Request Failed ($code)",
+        cause = errorCode?.let(::Throwable),
     )
 
     private class FakeHistoryRepository(

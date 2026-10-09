@@ -57,8 +57,7 @@ class SignUpUseCase @Inject constructor(
         navigationHelper.navigateToAsRoot(OnboardingPage)
         Result.success(Unit)
     } catch (e: HttpResponseException) {
-        handleSignUpError(e)
-        Result.failure(e)
+        Result.failure(handleSignUpError(e))
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
@@ -126,28 +125,45 @@ class SignUpUseCase @Inject constructor(
         socialSignUpSession.clear()
     }
 
-    private fun handleSignUpError(e: HttpResponseException) {
-        val errorType = e.handlingErrorOnUseCase<AuthErrorType>()
-        when {
-            errorType != null -> messageHelper.showOneButtonDialog(descText = errorType.errorMsg)
-            e.rawCode == HTTP_CONFLICT -> showError(ALREADY_REGISTERED_EMAIL_MESSAGE)
-            e.isCommonErrorHandling() -> executeCommonErrorHanding(e)
-            else -> showError(SIGN_UP_FAILED_MESSAGE)
-        }
+    /**
+     * 이메일 가입 실패를 안내하고, ViewModel에 돌려줄 실패를 고른다.
+     * 인증 완료 토큰이 만료됐거나 무효하면 이메일 인증을 처음부터 다시 해야 하므로
+     * [EmailVerificationRestartRequiredException]을 돌려준다.
+     */
+    private fun handleSignUpError(e: HttpResponseException): Exception {
+        var failure: Exception = e
+        handleHttpError<AuthErrorType>(
+            e,
+            onDomainError = { errorType ->
+                showError(errorType.errorMsg)
+                if (errorType in VERIFICATION_RESTART_ERRORS) failure = EmailVerificationRestartRequiredException()
+            },
+            onUnknownError = {
+                showError(if (e.rawCode == HTTP_CONFLICT) ALREADY_REGISTERED_EMAIL_MESSAGE else SIGN_UP_FAILED_MESSAGE)
+            },
+        )
+        return failure
     }
 
     /**
-     * 소셜 가입 실패. 토큰이 만료됐거나(401) 이미 가입된 계정이면(409) 다시 로그인해야 하므로
+     * 소셜 가입 실패. 인증이 만료됐거나 이미 가입된 계정이면 다시 로그인해야 하므로
      * 토큰을 버리고 초기(로그인) 화면으로 보낸다. 그 외에는 토큰을 남겨 다시 제출할 수 있게 한다.
+     *
+     * 서버 code로 먼저 구분한다. code 없는 401은 공통 처리로 넘기지 않는다. 로그인 전이라
+     * "로그인 만료" 안내가 맞지 않고, 가입 대기 토큰도 비워야 하기 때문이다.
      */
     private fun handleSocialSignUpError(e: HttpResponseException) {
-        when (e.rawCode) {
-            HTTP_UNAUTHORIZED -> restartSocialLogin(SOCIAL_SIGN_UP_EXPIRED_MESSAGE)
-            HTTP_CONFLICT -> restartSocialLogin(ALREADY_REGISTERED_ACCOUNT_MESSAGE)
-            else -> showError(
-                e.handlingErrorOnUseCase<AuthErrorType>()?.errorMsg
-                    ?: if (e.rawCode == HTTP_BAD_REQUEST) INVALID_PROFILE_MESSAGE else TEMPORARY_ERROR_MESSAGE,
-            )
+        val errorType = e.handlingErrorOnUseCase<AuthErrorType>()
+        when {
+            errorType in VERIFICATION_RESTART_ERRORS -> restartSocialLogin(SOCIAL_SIGN_UP_EXPIRED_MESSAGE)
+            errorType == AuthErrorType.OAUTH_ACCOUNT_ALREADY_EXISTS ||
+                errorType == AuthErrorType.EMAIL_ALREADY_EXISTS -> restartSocialLogin(ALREADY_REGISTERED_ACCOUNT_MESSAGE)
+            errorType != null -> showError(errorType.errorMsg)
+            e.rawCode == HTTP_UNAUTHORIZED -> restartSocialLogin(SOCIAL_SIGN_UP_EXPIRED_MESSAGE)
+            e.rawCode == HTTP_CONFLICT -> restartSocialLogin(ALREADY_REGISTERED_ACCOUNT_MESSAGE)
+            e.isCommonErrorHandling() -> executeCommonErrorHanding(e)
+            e.rawCode == HTTP_BAD_REQUEST -> showError(INVALID_PROFILE_MESSAGE)
+            else -> showError(TEMPORARY_ERROR_MESSAGE)
         }
     }
 
@@ -169,6 +185,9 @@ class SignUpUseCase @Inject constructor(
         if (this is IOException) NETWORK_ERROR_MESSAGE else TEMPORARY_ERROR_MESSAGE
 
     private companion object {
+        /** 인증 완료 토큰을 다시 받아야 하는 오류. 만료(`verificationExpired`)와 무효(`invalidVerifiedToken`). */
+        val VERIFICATION_RESTART_ERRORS = setOf(AuthErrorType.VERIFICATION_EXPIRED, AuthErrorType.INVALID_VERIFIED_TOKEN)
+
         const val HTTP_BAD_REQUEST = 400
         const val HTTP_UNAUTHORIZED = 401
         const val HTTP_CONFLICT = 409
@@ -184,3 +203,6 @@ class SignUpUseCase @Inject constructor(
         const val CONFIRM_BUTTON_TEXT = "확인"
     }
 }
+
+/** 가입에 쓴 이메일 인증이 만료됐거나 무효하다. 안내는 UseCase가 이미 했고, 화면은 인증 단계로 돌아간다. */
+class EmailVerificationRestartRequiredException : Exception("Email verification must be restarted")

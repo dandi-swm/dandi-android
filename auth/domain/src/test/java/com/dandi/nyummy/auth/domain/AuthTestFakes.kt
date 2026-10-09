@@ -41,6 +41,8 @@ internal class FakeAuthRepository(
     var socialLoginResult: SocialLoginVO = SocialLoginVO.empty,
     var socialLoginError: Exception? = null,
     var signUpError: Exception? = null,
+    var requestEmailVerificationError: Exception? = null,
+    var confirmEmailVerificationError: Exception? = null,
 ) : AuthRepository {
 
     data class SignUpCall(
@@ -87,12 +89,18 @@ internal class FakeAuthRepository(
     override suspend fun requestEmailVerification(
         email: String,
         purpose: EmailVerificationPurpose,
-    ) = EmailChallengeVO()
+    ): EmailChallengeVO {
+        requestEmailVerificationError?.let { throw it }
+        return EmailChallengeVO()
+    }
 
     override suspend fun confirmEmailVerification(
         authCode: String,
         emailChallengeToken: String,
-    ) = EmailVerifiedVO()
+    ): EmailVerifiedVO {
+        confirmEmailVerificationError?.let { throw it }
+        return EmailVerifiedVO()
+    }
 }
 
 internal class RecordingNavigationHelper : NavigationHelper {

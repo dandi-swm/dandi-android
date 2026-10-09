@@ -4,6 +4,7 @@ import com.dandi.nyummy.auth.entity.SocialCredentialVO
 import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.HttpResponseException
+import com.dandi.nyummy.common.domain.error.handlingErrorOnUseCase
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -17,7 +18,7 @@ import javax.inject.Inject
 /**
  * 소셜 로그인. 제공자 SDK 로 얻은 자격 증명을 서버에서 검증하고 결과에 따라 이동한다.
  *
- * 실패 안내는 상태 코드로만 구분한다. 공통 처리([executeCommonErrorHanding])를 쓰면 401 이
+ * 실패 안내는 서버 code로 먼저 구분하고, code가 없으면 상태 코드로 구분한다. 공통 처리([executeCommonErrorHanding])를 쓰면 401 이
  * "세션 만료"로, 404 가 루트 화면에서의 뒤로가기로 처리되고, 이메일 로그인용 도메인 문구
  * (이메일·비밀번호 확인)가 소셜 로그인에 뜰 수 있어서다.
  */
@@ -82,13 +83,21 @@ class SocialLoginUseCase @Inject constructor(
         )
     }
 
+    /** 서버 code로 먼저 구분하고, code가 없을 때만 상태 코드로 판단한다. 문구에 제공자 이름을 넣는다. */
     private fun httpErrorMessage(e: HttpResponseException, type: SocialLoginType): String =
-        when (e.rawCode) {
-            400 -> BAD_REQUEST_MESSAGE
-            401 -> providerFailedMessage(type)
-            503 -> "${type.displayName} 서버에 연결할 수 없어요. 잠시 후 다시 시도해주세요."
-            else -> TEMPORARY_ERROR_MESSAGE
+        when (e.handlingErrorOnUseCase<AuthErrorType>()) {
+            AuthErrorType.INVALID_OAUTH_TOKEN -> providerFailedMessage(type)
+            AuthErrorType.OAUTH_PROVIDER_UNAVAILABLE -> providerUnavailableMessage(type)
+            else -> when (e.rawCode) {
+                400 -> BAD_REQUEST_MESSAGE
+                401 -> providerFailedMessage(type)
+                503 -> providerUnavailableMessage(type)
+                else -> TEMPORARY_ERROR_MESSAGE
+            }
         }
+
+    private fun providerUnavailableMessage(type: SocialLoginType): String =
+        "${type.displayName} 서버에 연결할 수 없어요. 잠시 후 다시 시도해주세요."
 
     private fun providerFailedMessage(type: SocialLoginType): String =
         "${type.displayName} 로그인에 실패했어요. 다시 시도해주세요."

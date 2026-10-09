@@ -24,7 +24,7 @@ interface MessageHelper {
         titleText: String? = null,
         descText: String,
         cantIgnore: Boolean = false,
-        buttonText: String = "Ok",
+        buttonText: String = "확인",
         onClickButton: (() -> Unit)? = null,
     )
 
@@ -32,9 +32,9 @@ interface MessageHelper {
         titleText: String? = null,
         descText: String,
         cantIgnore: Boolean = false,
-        leftButtonText: String = "Cancel",
+        leftButtonText: String = "취소",
         onClickLeftButton: (() -> Unit)? = null,
-        rightButtonText: String = "Ok",
+        rightButtonText: String = "확인",
         onClickRightButton: (() -> Unit)? = null,
     )
 }
