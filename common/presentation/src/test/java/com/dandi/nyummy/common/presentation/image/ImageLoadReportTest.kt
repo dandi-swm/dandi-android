@@ -22,6 +22,14 @@ class ImageLoadReportTest {
     }
 
     @Test
+    fun `스킴은 대소문자를 가리지 않고 http, https 만 원격으로 본다`() {
+        assertEquals(ImageKind.FOOD_ICON, ImageKind.of("HTTPS://cdn.nyummy.co.kr/icons/12.png"))
+        assertEquals(ImageKind.OTHER_REMOTE, ImageKind.of("Http://example.com/banner.png"))
+        assertEquals(ImageKind.LOCAL, ImageKind.of("http-image/icons/12.png"))
+        assertEquals(ImageKind.LOCAL, ImageKind.of("httpcache://icons/12.png"))
+    }
+
+    @Test
     fun `메모리 캐시 적중만 일부만 보낸다`() {
         assertTrue(RemoteImageLoadReport.shouldSend(ImageSource.NETWORK) { 0.99 })
         assertTrue(RemoteImageLoadReport.shouldSend(ImageSource.DISK) { 0.99 })
