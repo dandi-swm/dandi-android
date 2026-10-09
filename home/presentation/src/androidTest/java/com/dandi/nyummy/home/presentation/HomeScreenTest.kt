@@ -258,10 +258,8 @@ class HomeScreenTest {
             NyummyTheme {
                 HomeHud(
                     coinBalance = 1240,
-                    hasUnreadNotice = false,
                     onWalletClick = {},
                     onMailClick = {},
-                    onNoticeClick = {},
                     onSettingsClick = {},
                     modifier = Modifier.width(320.dp),
                 )
