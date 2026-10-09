@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.dandi.nyummy.home.presentation"
+    namespace = "com.dandi.nyummy.mailbox.presentation"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
@@ -54,14 +54,8 @@ composeCompiler {
 }
 
 dependencies {
-    implementation(project(":home:domain"))
-    implementation(project(":home:entity"))
-    implementation(project(":cat:domain"))
-    implementation(project(":cat:entity"))
-    implementation(project(":meal:domain"))
-    implementation(project(":history:domain"))
-    implementation(project(":history:entity"))
     implementation(project(":mailbox:domain"))
+    implementation(project(":mailbox:entity"))
     implementation(project(":common:presentation"))
 
     implementation(libs.androidx.lifecycle.runtime.compose)

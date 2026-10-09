@@ -61,6 +61,8 @@ dependencies {
     implementation(project(":history:presentation"))
     implementation(project(":home:domain"))
     implementation(project(":home:presentation"))
+    implementation(project(":mailbox:domain"))
+    implementation(project(":mailbox:presentation"))
     implementation(project(":meal:domain"))
     implementation(project(":meal:presentation"))
     implementation(project(":auth:domain"))

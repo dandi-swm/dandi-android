@@ -18,6 +18,12 @@ import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.home.presentation.HomePage
 import com.dandi.nyummy.intro.domain.IntroPage
 import com.dandi.nyummy.intro.presentation.IntroPage
+import com.dandi.nyummy.mailbox.domain.InquiryDetailPage as InquiryDetailRoute
+import com.dandi.nyummy.mailbox.domain.InquiryWritePage
+import com.dandi.nyummy.mailbox.domain.MailboxPage
+import com.dandi.nyummy.mailbox.presentation.detail.InquiryDetailPage
+import com.dandi.nyummy.mailbox.presentation.list.MailboxPage
+import com.dandi.nyummy.mailbox.presentation.write.InquiryWritePage
 import com.dandi.nyummy.main.domain.deeplink.RoutePattern
 import com.dandi.nyummy.meal.domain.MealRecordPage
 import com.dandi.nyummy.meal.presentation.MealRecordPage
@@ -113,6 +119,40 @@ val appRoutes: List<AppRoute> = listOf(
         path = HistoryPage.PATH,
         isBottomTab = true,
         render = { HistoryPage() },
+    ),
+    AppRoute(
+        path = MailboxPage.PATH,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(HomePage.PATH),
+                GenericNavKey(MailboxPage.PATH, args),
+            )
+        },
+        render = { MailboxPage() },
+    ),
+    AppRoute(
+        path = InquiryWritePage.PATH,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(HomePage.PATH),
+                GenericNavKey(MailboxPage.PATH),
+                GenericNavKey(InquiryWritePage.PATH, args),
+            )
+        },
+        render = { InquiryWritePage() },
+    ),
+    AppRoute(
+        path = InquiryDetailRoute.PATH,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(HomePage.PATH),
+                GenericNavKey(MailboxPage.PATH),
+                GenericNavKey(InquiryDetailRoute.PATH, args),
+            )
+        },
+        render = { args ->
+            InquiryDetailPage(inquiryId = args[InquiryDetailRoute.ARG_INQUIRY_ID]?.toLongOrNull() ?: 0L)
+        },
     ),
     AppRoute(
         // 하단 탭에서 빠져 링크로만 열린다. 기능을 열 때 진입 위치를 다시 정한다.

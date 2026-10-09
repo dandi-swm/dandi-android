@@ -11,6 +11,7 @@ import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.home.domain.tti.HomeTTIPage
+import com.dandi.nyummy.mailbox.domain.MailboxPage
 import com.dandi.nyummy.meal.domain.MealRecordPage
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TimelineCategory
@@ -59,9 +60,9 @@ class HomeViewModel @Inject constructor(
                 loadSummary()
                 loadCatAnimationsIfNeeded()
             }
-            // TODO: 지갑, 우편, 공지, 설정, 스트릭 화면이 생기면 각 목적지로 연결한다.
+            // TODO: 지갑, 공지, 설정, 스트릭 화면이 생기면 각 목적지로 연결한다.
             HomeIntent.ClickWallet -> Unit
-            HomeIntent.ClickMail -> Unit
+            HomeIntent.ClickMail -> navigationHelper.navigateTo(MailboxPage)
             HomeIntent.ClickNotice -> Unit
             HomeIntent.ClickSettings -> Unit
             HomeIntent.ClickStreak -> Unit

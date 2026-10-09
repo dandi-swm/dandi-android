@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mailbox_title">우편함</string>
+    <string name="mailbox_write_action">문의하기</string>
+
+    <string name="mailbox_category_bug_report">버그 제보</string>
+    <string name="mailbox_category_question">단순 문의</string>
+    <string name="mailbox_category_suggestion">건의</string>
+
+    <string name="mailbox_status_answered">답장이 왔어요</string>
+    <string name="mailbox_status_waiting">답장을 기다리는 중</string>
+
+    <string name="mailbox_empty_title">보낸 문의가 없어요</string>
+    <string name="mailbox_empty_body">궁금한 점이나 불편한 점을 알려 주세요</string>
+
+    <string name="mailbox_write_title">문의하기</string>
+    <string name="mailbox_write_reply_notice">답장은 우편함으로 보내 드려요</string>
+    <string name="mailbox_write_category_label">문의 유형</string>
+    <string name="mailbox_write_content_label">문의 내용</string>
+    <string name="mailbox_write_content_placeholder">어떤 점이 궁금하거나 불편했는지 알려 주세요</string>
+    <string name="mailbox_write_content_empty_error">내용을 입력해 주세요</string>
+    <string name="mailbox_write_send">보내기</string>
+    <string name="mailbox_write_sent">문의를 보냈어요</string>
+    <string name="mailbox_write_send_failed">문의를 보내지 못했어요. 잠시 후 다시 시도해 주세요.</string>
+
+    <string name="mailbox_detail_answer_label">문의 답변</string>
+    <string name="mailbox_detail_answer_title">보내 주신 문의에 답장했어요</string>
+    <string name="mailbox_detail_my_inquiry">내가 보낸 문의</string>
+</resources>
