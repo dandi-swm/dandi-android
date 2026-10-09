@@ -281,7 +281,7 @@ class GetIntroUseCaseTest {
     }
 
     @Test
-    fun `버전 확인이 실패하면 API 구간만 닫고 TTI 끝은 찍지 않는다`() = runBlocking {
+    fun `버전 확인이 실패하면 API 구간을 닫지 않고 재시도 대기를 표시한다`() = runBlocking {
         val useCase = buildUseCase(
             repository = FakeIntroRepository(hasRefreshToken = true),
             remoteConfigHelper = ThrowingRemoteConfigHelper(),
@@ -290,7 +290,27 @@ class GetIntroUseCaseTest {
 
         useCase()
 
-        assertEquals(listOf("start:api_response_time", "end:api_response_time"), ttiHelper.calls)
+        assertEquals(listOf("start:api_response_time"), ttiHelper.calls)
+        assertEquals(true, ttiHelper.metadata[TTIMetaData.USER_WAIT_INCLUDED])
+    }
+
+    @Test
+    fun `재시도로 성공하면 그때 API 구간을 닫고 TTI 끝을 찍는다`() = runBlocking {
+        val remoteConfig = FailOnceRemoteConfigHelper(versionCheck(minimumVersionCode = 3))
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = true),
+            remoteConfigHelper = remoteConfig,
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        useCase()
+        useCase()
+
+        // 두 번째 시작은 TTIInfo 가 무시하므로 API 구간은 첫 요청부터 재시도 성공까지가 된다.
+        assertEquals(
+            listOf("start:api_response_time", "start:api_response_time", "end:api_response_time", "endTracking"),
+            ttiHelper.calls,
+        )
     }
 
     @Test
@@ -374,6 +394,20 @@ class GetIntroUseCaseTest {
     ) : RemoteConfigHelper {
         override suspend fun sync() = Unit
         override fun getVersionCheck(): VersionCheckVO = version
+    }
+
+    private class FailOnceRemoteConfigHelper(
+        private val version: VersionCheckVO,
+    ) : RemoteConfigHelper {
+        private var failed = false
+        override suspend fun sync() = Unit
+        override fun getVersionCheck(): VersionCheckVO {
+            if (!failed) {
+                failed = true
+                throw IllegalStateException("remote config failed")
+            }
+            return version
+        }
     }
 
     private class ThrowingRemoteConfigHelper : RemoteConfigHelper {

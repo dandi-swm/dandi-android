@@ -17,6 +17,34 @@ class TTIInfoTest {
     }
 
     @Test
+    fun `TTI 끝과 마지막 구간이 있어도 중간 구간이 빠지면 is_bounced 로 표시한다`() {
+        val info = TTIInfo(TwoTimelinePage)
+
+        info.recordStartTime(TimelineCategory.TTI_TIME)
+        info.recordStartTime(TimelineCategory.VIEW_BINDING_TIME)
+        info.recordEndTime(TimelineCategory.VIEW_BINDING_TIME)
+        info.recordEndTime(TimelineCategory.TTI_TIME)
+
+        val result = info.getTTIInfo()
+        assertEquals(true, result["tti.is_bounced"])
+        assertEquals(-1, result["tti.api_response_time"])
+    }
+
+    @Test
+    fun `모든 구간과 TTI 를 기록하면 is_bounced 가 아니다`() {
+        val info = TTIInfo(TwoTimelinePage)
+
+        info.recordStartTime(TimelineCategory.TTI_TIME)
+        TwoTimelinePage.timelines.forEach {
+            info.recordStartTime(it)
+            info.recordEndTime(it)
+        }
+        info.recordEndTime(TimelineCategory.TTI_TIME)
+
+        assertEquals(false, info.getTTIInfo()["tti.is_bounced"])
+    }
+
+    @Test
     fun `끝만 있고 시작이 없는 구간은 -1 로 두고 is_bounced 로 표시한다`() {
         val info = TTIInfo(TwoTimelinePage)
 
