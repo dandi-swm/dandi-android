@@ -54,6 +54,8 @@ internal class FakeAuthRepository : AuthRepository {
 
     override suspend fun confirmEmailVerification(authCode: String, emailChallengeToken: String) =
         EmailVerifiedVO()
+
+    override suspend fun logout() = Unit
 }
 
 internal class RecordingNavigationHelper : NavigationHelper {
