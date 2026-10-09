@@ -111,8 +111,8 @@ class OnboardingScreenTest {
         setScreen(mealTimeState().copy(mealTimes = mealTimes)) { intents += it }
 
         composeRule.onNodeWithText(text(R.string.onboarding_meal_skipped)).assertIsDisplayed()
-        composeRule.onNodeWithText(timeText(isPm = true, hour12 = 12, minute = 30)).assertIsDisplayed()
-        composeRule.onNodeWithText(timeText(isPm = true, hour12 = 6, minute = 30)).assertIsDisplayed()
+        composeRule.onNodeWithText(timeText(isPm = true, hour12 = 12)).assertIsDisplayed()
+        composeRule.onNodeWithText(timeText(isPm = true, hour12 = 6)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.onboarding_meal_lunch)).performClick()
 
         assertEquals(listOf<OnboardingIntent>(OnboardingIntent.ClickMealTime(Meal.LUNCH)), intents)
@@ -136,7 +136,7 @@ class OnboardingScreenTest {
             .assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.onboarding_meal_sheet_confirm)).performClick()
 
-        assertEquals(MealTimeVO(hour = 18, minute = 30), selected)
+        assertEquals(MealTimeVO(hour = 18), selected)
     }
 
     @Test
@@ -172,10 +172,9 @@ class OnboardingScreenTest {
         catName = "냐미",
     )
 
-    private fun timeText(isPm: Boolean, hour12: Int, minute: Int): String = text(
+    private fun timeText(isPm: Boolean, hour12: Int): String = text(
         R.string.onboarding_meal_time_format,
         text(if (isPm) R.string.onboarding_meal_pm else R.string.onboarding_meal_am),
         hour12,
-        minute,
     )
 }

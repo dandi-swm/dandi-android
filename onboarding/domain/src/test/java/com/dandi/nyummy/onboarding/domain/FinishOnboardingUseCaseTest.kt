@@ -23,7 +23,7 @@ class FinishOnboardingUseCaseTest {
 
     @Test
     fun `고른 식사 시각을 저장하고 온보딩 완료를 기록한 뒤 홈을 루트로 이동한다`() = runBlocking {
-        val mealTimes = MealTimesVO(lunch = MealTimeVO(hour = 13, minute = 0))
+        val mealTimes = MealTimesVO(lunch = MealTimeVO(hour = 13))
 
         useCase(mealTimes)
 
