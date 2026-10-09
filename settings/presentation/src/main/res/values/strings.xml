@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">설정</string>
+    <string name="settings_section_sound">소리</string>
+    <string name="settings_bgm">배경음</string>
+    <string name="settings_bgm_desc">앱 안의 소리</string>
+    <string name="settings_section_notification">알림</string>
+    <string name="settings_device_notification_off_title">기기 알림이 꺼져 있어요</string>
+    <string name="settings_device_notification_off_body">알림을 받으려면 기기 설정에서 허용해 주세요.</string>
+    <string name="settings_open_device_settings">기기 설정 열기</string>
+    <string name="settings_notification_all">전체 알림</string>
+    <string name="settings_notification_meal">식사 기록 알림</string>
+    <string name="settings_notification_meal_desc">평소 기록하는 시간에 알려 드려요</string>
+    <string name="settings_meal_time">식사 시간</string>
+    <string name="settings_meal_time_none">모두 안 먹어요</string>
+    <string name="settings_notification_notice">중요 공지 알림</string>
+    <string name="settings_notification_notice_desc">운영과 보상 소식</string>
+    <string name="settings_section_legal">약관</string>
+    <string name="settings_terms">이용약관</string>
+    <string name="settings_privacy">개인정보처리방침</string>
+    <string name="settings_logout">로그아웃</string>
+    <string name="settings_logout_dialog_title">로그아웃할까요?</string>
+    <string name="settings_logout_dialog_body">기록은 계정에 안전하게 저장돼 있어요.</string>
+    <string name="settings_logout_dialog_confirm">로그아웃하기</string>
+    <string name="settings_meal_time_title">식사 시간</string>
+    <string name="settings_meal_time_save">저장</string>
+</resources>
