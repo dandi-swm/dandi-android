@@ -3,7 +3,6 @@
     <string name="nav_back_button">이전으로</string>
     <string name="nav_camera_button">식사 기록하기</string>
     <string name="meal_gallery_not_taken_today">오늘 찍은 사진만 업로드 가능해요</string>
-    <string name="meal_gallery_unknown_taken_date">촬영 날짜를 확인할 수 없어요. 오늘 찍은 사진만 업로드 가능해요</string>
     <string name="meal_gallery_load_failed">사진을 불러오지 못했어요. 다시 선택해주세요</string>
     <string name="meal_gallery_import_failed">사진을 불러오지 못했어요. 다시 시도해주세요</string>
     <string name="nyummy_scrim_dismiss_label">닫기</string>

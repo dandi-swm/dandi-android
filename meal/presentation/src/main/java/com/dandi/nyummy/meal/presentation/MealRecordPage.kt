@@ -64,6 +64,7 @@ import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequest
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.meal.presentation.component.MealCameraOverlay
 import com.dandi.nyummy.meal.presentation.component.MealCameraPreview
 import com.dandi.nyummy.meal.presentation.component.MealFeedCeremony
@@ -605,7 +606,10 @@ private fun MealRecordScreenCapturedPhase() {
     DesignSystemTheme {
         MealRecordScreen(
             uiState = MealRecordUIState(
-                phase = MealCameraPhase.Captured(photoPath = "/cache/meal_capture_preview.jpg"),
+                phase = MealCameraPhase.Captured(
+                    photoPath = "/cache/meal_capture_preview.jpg",
+                    source = MealPhotoSource.CAMERA,
+                ),
                 cameraPermission = MealCameraPermission.Granted,
             ),
             onIntent = {},
@@ -620,7 +624,10 @@ private fun MealRecordScreenFeedingPhase() {
     DesignSystemTheme {
         MealRecordScreen(
             uiState = MealRecordUIState(
-                phase = MealCameraPhase.Feeding(photoPath = "/cache/meal_capture_preview.jpg"),
+                phase = MealCameraPhase.Feeding(
+                    photoPath = "/cache/meal_capture_preview.jpg",
+                    source = MealPhotoSource.CAMERA,
+                ),
                 cameraPermission = MealCameraPermission.Granted,
                 isSubmitSucceeded = true,
             ),

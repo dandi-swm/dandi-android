@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.meal.entity.CreatedMealVO
+import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
 
@@ -25,8 +26,8 @@ class SubmitMealUseCase @Inject constructor(
     ttiHelper: TTIHelper,
 ) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
 
-    suspend operator fun invoke(photoPath: String): Result<CreatedMealVO> = try {
-        repository.prepareUploadImage(photoPath)
+    suspend operator fun invoke(photoPath: String, source: MealPhotoSource): Result<CreatedMealVO> = try {
+        repository.prepareUploadImage(photoPath, source)
         val uploadTarget = repository.issueImageUploadUrl(photoPath)
         repository.uploadImage(uploadTarget, photoPath)
         Result.success(repository.createMeal(uploadTarget.imageKey))

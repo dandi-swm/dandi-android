@@ -5,6 +5,7 @@ import com.dandi.nyummy.meal.data.dto.UploadImageUrlRequestDTO
 import com.dandi.nyummy.meal.data.util.prepareMealPhotoFile
 import com.dandi.nyummy.meal.domain.MealRecordRepository
 import com.dandi.nyummy.meal.entity.MealImageUploadVO
+import com.dandi.nyummy.meal.entity.MealPhotoSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -24,8 +25,8 @@ class MealRecordRepositoryImpl(
         galleryPhotoDataSource.copyToCache(photoUri)
     }
 
-    override suspend fun prepareUploadImage(photoPath: String) = withContext(Dispatchers.IO) {
-        prepareMealPhotoFile(photoPath)
+    override suspend fun prepareUploadImage(photoPath: String, source: MealPhotoSource) = withContext(Dispatchers.IO) {
+        prepareMealPhotoFile(photoPath, source)
     }
 
     override suspend fun issueImageUploadUrl(photoPath: String): MealImageUploadVO =

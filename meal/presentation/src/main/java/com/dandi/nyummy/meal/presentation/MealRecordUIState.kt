@@ -1,6 +1,7 @@
 package com.dandi.nyummy.meal.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.UiState
+import com.dandi.nyummy.meal.entity.MealPhotoSource
 
 /** 카메라 화면의 진행 단계입니다. */
 sealed interface MealCameraPhase {
@@ -10,12 +11,12 @@ sealed interface MealCameraPhase {
 
     /**
      * 촬영본(또는 갤러리에서 가져온 사진)을 확인하고 취소/먹이기를 선택하는 단계입니다.
-     * [photoPath] 는 캐시 파일 절대 경로입니다.
+     * [photoPath] 는 캐시 파일 절대 경로이고, [source] 에 따라 업로드 전 EXIF 처리가 달라집니다.
      */
-    data class Captured(val photoPath: String) : MealCameraPhase
+    data class Captured(val photoPath: String, val source: MealPhotoSource) : MealCameraPhase
 
     /** 먹이기 세리머니(픽셀화 연출) 중이며 업로드가 진행되는 단계입니다. */
-    data class Feeding(val photoPath: String) : MealCameraPhase
+    data class Feeding(val photoPath: String, val source: MealPhotoSource) : MealCameraPhase
 
     /** 냐미가 다 먹은 뒤 기록 완료를 확인하는 단계입니다. 촬영 파일은 이미 정리된 상태입니다. */
     data object Done : MealCameraPhase
