@@ -94,7 +94,7 @@ Modifier.background(
 - `Retrying`은 재분석 요청/폴링 중인 UI 파생 상태이지 새로운 서버 enum이 아니다.
 - 히스토리는 분석 중/실패 식사를 목록에서 제거하지 않는다.
 - 캘린더의 영양 평가는 `POSITIVE`, `NEGATIVE`, `UNRECORDED`를 UI variant `Positive`, `OutOfRange`, `NoRecord`에 매핑한다. `None`은 marker를 숨기는 표현 상태다.
-- 캘린더와 목록은 실제 사진 대신 `foodIconIds`로 CDN 이미지(`https://cdn.nyummy.co.kr/icons/{iconId}.jpeg`)를 내려받아 표시한다. iconId가 빈 값이면(일일/상세 API 미제공) 임시로 로컬 밥 아이콘(`nyummy_food_rice`)을 표시한다.
+- 캘린더와 목록은 실제 사진 대신 `foodIconIds`로 CDN 이미지(`https://cdn.nyummy.co.kr/icons/{iconId}.png`)를 내려받아 표시한다. iconId가 빈 값이면(일일/상세 API 미제공) 임시로 로컬 밥 아이콘(`nyummy_food_rice`)을 표시한다.
 - 홈 Bottom Sheet는 Bottom Navigation을 가리지 않고 그 위에서 열린다.
 
 ## 변경 절차
