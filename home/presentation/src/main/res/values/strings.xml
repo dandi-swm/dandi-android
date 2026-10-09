@@ -2,7 +2,6 @@
     <string name="home_wallet_label">Coins</string>
     <string name="home_wallet_description">%1$s coins</string>
     <string name="home_action_mail">Mail</string>
-    <string name="home_action_notice">Notice</string>
     <string name="home_action_settings">Settings</string>
     <string name="home_streak_days">Day %1$d</string>
     <string name="home_streak_message">You fed Nyummy!</string>

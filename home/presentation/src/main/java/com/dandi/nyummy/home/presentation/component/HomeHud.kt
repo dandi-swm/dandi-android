@@ -12,11 +12,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -36,15 +34,13 @@ import java.text.NumberFormat
 import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
- * 홈 상단. 왼쪽 지갑 카드(보유 코인)가 남는 폭을 차지하고, 오른쪽에 우편, 공지, 설정 버튼이 붙는다.
+ * 홈 상단. 왼쪽 지갑 카드(보유 코인)가 남는 폭을 차지하고, 오른쪽에 우편, 설정 버튼이 붙는다.
  */
 @Composable
 internal fun HomeHud(
     coinBalance: Int,
-    hasUnreadNotice: Boolean,
     onWalletClick: () -> Unit,
     onMailClick: () -> Unit,
-    onNoticeClick: () -> Unit,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -61,12 +57,6 @@ internal fun HomeHud(
             icon = CommonR.drawable.nyummy_ic_mail,
             label = stringResource(R.string.home_action_mail),
             onClick = onMailClick,
-        )
-        HomeHudAction(
-            icon = CommonR.drawable.nyummy_ic_bell,
-            label = stringResource(R.string.home_action_notice),
-            onClick = onNoticeClick,
-            showDot = hasUnreadNotice,
         )
         HomeHudAction(
             icon = CommonR.drawable.nyummy_ic_settings,
@@ -131,13 +121,12 @@ private fun HomeWalletCard(
     }
 }
 
-/** 상단 작은 버튼. 아이콘 24 + 라벨(label/s). 공지는 읽지 않은 글이 있으면 빨간 점을 단다. */
+/** 상단 작은 버튼. 아이콘 24 + 라벨(label/s). */
 @Composable
 private fun HomeHudAction(
     @DrawableRes icon: Int,
     label: String,
     onClick: () -> Unit,
-    showDot: Boolean = false,
 ) {
     val shape = RoundedCornerShape(NyummyTheme.radius.m)
     Box(
@@ -164,16 +153,6 @@ private fun HomeHudAction(
                 style = NyummyTheme.typography.labelS,
                 color = NyummyTheme.colors.content.secondary,
                 maxLines = 1,
-            )
-        }
-        if (showDot) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = -DotInset, y = DotInset)
-                    .size(DotSize)
-                    .background(NyummyTheme.colors.content.danger, CircleShape)
-                    .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.bg.surface, CircleShape),
             )
         }
     }
@@ -224,8 +203,6 @@ private val WalletStartPadding = 10.dp
 /** 지갑 카드가 이 폭보다 좁으면 셰브론을 숨긴다(390 화면 170, 360 화면 140). */
 private val WalletChevronMinWidth = 160.dp
 private val CoinSize = 32.dp
-private val DotSize = 9.dp
-private val DotInset = 10.dp
 private val StreakHeight = 44.dp
 private val StreakStartPadding = 14.dp
 
@@ -239,10 +216,8 @@ private fun HomeHudPreview() {
         ) {
             HomeHud(
                 coinBalance = 1240,
-                hasUnreadNotice = true,
                 onWalletClick = {},
                 onMailClick = {},
-                onNoticeClick = {},
                 onSettingsClick = {},
             )
             HomeStreakBanner(streakDays = 7, onClick = {})

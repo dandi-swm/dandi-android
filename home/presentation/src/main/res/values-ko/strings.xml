@@ -2,7 +2,6 @@
     <string name="home_wallet_label">보유 코인</string>
     <string name="home_wallet_description">보유 코인 %1$s개</string>
     <string name="home_action_mail">우편</string>
-    <string name="home_action_notice">공지</string>
     <string name="home_action_settings">설정</string>
     <string name="home_streak_days">%1$d일째</string>
     <string name="home_streak_message">냐미에게 밥을 챙겼어요!</string>

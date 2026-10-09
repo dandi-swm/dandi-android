@@ -14,9 +14,6 @@ sealed interface HomeIntent : MviIntent {
     /** 우편함. */
     data object ClickMail : HomeIntent
 
-    /** 공지. */
-    data object ClickNotice : HomeIntent
-
     /** 설정. */
     data object ClickSettings : HomeIntent
 

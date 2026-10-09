@@ -76,11 +76,8 @@ internal fun HomeScreen(
             Spacer(Modifier.height(NyummyTheme.spacing.s8))
             HomeHud(
                 coinBalance = uiState.summary.coinBalance,
-                // 공지 API가 아직 없어 읽지 않은 공지 점은 띄우지 않는다.
-                hasUnreadNotice = false,
                 onWalletClick = { onIntent(HomeIntent.ClickWallet) },
                 onMailClick = { onIntent(HomeIntent.ClickMail) },
-                onNoticeClick = { onIntent(HomeIntent.ClickNotice) },
                 onSettingsClick = { onIntent(HomeIntent.ClickSettings) },
             )
             Spacer(Modifier.height(NyummyTheme.spacing.s12))
