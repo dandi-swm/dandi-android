@@ -31,7 +31,7 @@ internal class ImageLoadEventListener(
     }
 
     override fun onCancel(request: ImageRequest) {
-        // 화면을 떠나 취소된 요청은 로딩 시간으로 보지 않는다.
+        // 화면을 떠나 취소된 요청은 로딩 시간으로 보지 않는다. 측정은 시작 시각만 들고 있어 버리면 끝이다.
         trace = null
     }
 
