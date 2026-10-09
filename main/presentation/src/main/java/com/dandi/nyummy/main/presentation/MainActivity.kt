@@ -11,7 +11,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.metrics.performance.JankStats
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
-import com.dandi.nyummy.common.presentation.LocalTTIHelper
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
@@ -20,7 +19,6 @@ import com.dandi.nyummy.common.presentation.jank.LocalJankReporter
 import com.dandi.nyummy.main.presentation.deeplink.resolveNewIntentRoute
 import com.dandi.nyummy.main.presentation.deeplink.resolveStartStack
 import com.dandi.nyummy.main.presentation.navigation.RootComposable
-import com.dandi.nyummy.tti.TTIHelper
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -35,9 +33,6 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var jankReporter: JankReporter
-
-    @Inject
-    lateinit var ttiHelper: TTIHelper
 
     private var jankStats: JankStats? = null
 
@@ -76,7 +71,6 @@ class MainActivity : ComponentActivity() {
                 LocalNavigationHelper provides navigationHelper,
                 LocalMessageHelper provides messageHelper,
                 LocalJankReporter provides jankReporter,
-                LocalTTIHelper provides ttiHelper,
             ) {
                 // 새 디자인 시스템 값(색, 글자, 간격 등)은 여기서 한 번만 공급하고, 화면은 NyummyTheme.colors처럼 읽기만 한다.
                 NyummyTheme {

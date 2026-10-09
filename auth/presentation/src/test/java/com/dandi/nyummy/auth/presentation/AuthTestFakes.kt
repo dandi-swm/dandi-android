@@ -124,9 +124,9 @@ internal object FakeResourceHelper : ResourceHelper {
 
 internal object FakeTTIHelper : TTIHelper {
     override fun startTTITracking(page: TTIPage) = Unit
-    override fun startTTITimeline(page: TTIPage, timelineCategory: TimelineCategory) = Unit
-    override fun endTTITimeline(page: TTIPage, timelineCategory: TimelineCategory) = Unit
-    override fun endTTITracking(page: TTIPage) = Unit
-    override fun shotTTILogging(page: TTIPage) = Unit
-    override fun addTTIMetaData(page: TTIPage, metadata: TTIMetaData, value: Any?) = Unit
+    override fun startTTITimeline(category: TimelineCategory) = Unit
+    override fun endTTITimeline(category: TimelineCategory) = Unit
+    override fun endTTITracking() = Unit
+    override fun shotTTILogging() = Unit
+    override fun addTTIMetaData(metadata: TTIMetaData, value: Any?) = Unit
 }

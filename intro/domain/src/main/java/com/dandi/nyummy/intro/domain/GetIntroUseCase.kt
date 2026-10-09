@@ -12,7 +12,7 @@ import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.intro.entity.VersionCheckVO
 import com.dandi.nyummy.tti.TTIHelper
-import com.dandi.nyummy.tti.TTIPage
+import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TimelineCategory
 import javax.inject.Inject
 
@@ -53,21 +53,23 @@ class GetIntroUseCase @Inject constructor(
         onRetry: () -> Unit = {},
         requestPermissions: suspend (List<AppPermission>) -> Unit = {},
         onBeforeNavigate: suspend () -> Unit = {},
-        ttiPage: TTIPage? = null,
     ): Result<VersionCheckVO> = try {
         val ungranted = ungrantedStartupPermissions()
         if (ungranted.isNotEmpty() && !repository.hasShownPermissionNotice()) {
+            // 권한 안내를 기다린 시간은 TTI 구간에서 뺄 수 없어 표시만 남긴다.
+            ttiHelper.addTTIMetaData(TTIMetaData.USER_WAIT_INCLUDED, true)
             requestPermissions(ungranted)
             repository.markPermissionNoticeShown()
         }
 
-        ttiPage?.let { ttiHelper.startTTITimeline(it, TimelineCategory.API_RESPONSE_TIME) }
-        val version = try {
-            remoteConfigHelper.sync()
-            remoteConfigHelper.getVersionCheck()
-        } finally {
-            ttiPage?.let { ttiHelper.endTTITimeline(it, TimelineCategory.API_RESPONSE_TIME) }
-        }
+        // API 구간은 성공했을 때만 닫는다. 구간은 처음 찍은 시작과 끝을 유지하므로, 실패 뒤 재시도로 성공하면
+        // 첫 요청부터 재시도 성공까지가 한 구간이 되어 같은 범위를 재는 TTI 값과 어긋나지 않는다.
+        ttiHelper.startTTITimeline(TimelineCategory.API_RESPONSE_TIME)
+        remoteConfigHelper.sync()
+        val version = remoteConfigHelper.getVersionCheck()
+        ttiHelper.endTTITimeline(TimelineCategory.API_RESPONSE_TIME)
+        // 버전 확인이 끝나 다음 행동이 정해진 시점이 인트로의 TTI다. 실패하면 여기까지 오지 않아 미완료로 남는다.
+        ttiHelper.endTTITracking()
 
         if (isForceUpdateRequired(version)) {
             showForceUpdateDialog(version)
@@ -84,6 +86,8 @@ class GetIntroUseCase @Inject constructor(
         navigationHelper.navigateToAsRoot(destination)
         Result.success(version)
     } catch (e: Throwable) {
+        // 재시도 다이얼로그는 사용자가 누를 때까지 기다리므로, 재시도로 끝난 측정에는 사용자 대기가 들어간다.
+        ttiHelper.addTTIMetaData(TTIMetaData.USER_WAIT_INCLUDED, true)
         showIntroErrorDialog(onRetry)
         Result.failure(e)
     }

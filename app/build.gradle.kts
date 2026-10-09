@@ -1,3 +1,4 @@
+import com.android.build.api.variant.BuildConfigField
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -48,6 +49,22 @@ android {
     buildFeatures {
         buildConfig = true
         compose = true
+    }
+}
+
+// 실사용자 성능 지표는 release 빌드에서만 Firebase 로 보낸다.
+// benchmark 와 베이스라인 프로파일 플러그인이 만드는 빌드(nonMinifiedRelease, benchmarkRelease)는 release 설정을
+// 이어받지만 측정용이라 빼야 하므로, 빌드 타입 이름으로 한 곳에서 정한다.
+androidComponents {
+    onVariants { variant ->
+        val isReleaseBuild = variant.buildType == "release"
+        variant.buildConfigFields?.put(
+            "IS_RELEASE_BUILD",
+            BuildConfigField("boolean", isReleaseBuild.toString(), "release 빌드에서만 성능 지표를 외부로 보낸다"),
+        )
+        // Firebase Performance SDK 수집도 release 에서만 켠다. 모으는 것은 SDK 자동 트레이스(앱 시작, 화면 렌더링)와
+        // 이 앱의 커스텀 트레이스(TTI, 버벅임, 이미지 로딩)다. Performance Gradle 플러그인은 적용하지 않아 네트워크 요청은 자동 계측하지 않는다.
+        variant.manifestPlaceholders.put("firebasePerformanceCollectionEnabled", isReleaseBuild.toString())
     }
 }
 

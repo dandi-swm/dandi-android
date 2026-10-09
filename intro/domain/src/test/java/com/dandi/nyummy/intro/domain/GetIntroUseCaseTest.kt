@@ -31,6 +31,7 @@ class GetIntroUseCaseTest {
 
     private val navigationHelper = RecordingNavigationHelper()
     private val messageHelper = RecordingMessageHelper()
+    private val ttiHelper = RecordingTTIHelper()
 
     @Test
     fun `버전 통과 후 리프레시 토큰이 있으면 홈을 루트로 이동한다`() = runBlocking {
@@ -250,6 +251,95 @@ class GetIntroUseCaseTest {
         assertTrue(navigationHelper.rootPages.isEmpty())
     }
 
+    @Test
+    fun `버전 확인이 끝나면 API 구간을 닫고 바로 TTI 끝을 찍는다`() = runBlocking {
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = true),
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        useCase()
+
+        assertEquals(
+            listOf("start:api_response_time", "end:api_response_time", "endTracking"),
+            ttiHelper.calls,
+        )
+    }
+
+    @Test
+    fun `강제 업데이트여도 버전 확인 직후 TTI 끝을 찍는다`() = runBlocking {
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = true),
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 10)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        useCase()
+
+        assertEquals("endTracking", ttiHelper.calls.last())
+    }
+
+    @Test
+    fun `버전 확인이 실패하면 API 구간을 닫지 않고 재시도 대기를 표시한다`() = runBlocking {
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = true),
+            remoteConfigHelper = ThrowingRemoteConfigHelper(),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        useCase()
+
+        assertEquals(listOf("start:api_response_time"), ttiHelper.calls)
+        assertEquals(true, ttiHelper.metadata[TTIMetaData.USER_WAIT_INCLUDED])
+    }
+
+    @Test
+    fun `재시도로 성공하면 그때 API 구간을 닫고 TTI 끝을 찍는다`() = runBlocking {
+        val remoteConfig = FailOnceRemoteConfigHelper(versionCheck(minimumVersionCode = 3))
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = true),
+            remoteConfigHelper = remoteConfig,
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        useCase()
+        useCase()
+
+        // 두 번째 시작은 TTIInfo 가 무시하므로 API 구간은 첫 요청부터 재시도 성공까지가 된다.
+        assertEquals(
+            listOf("start:api_response_time", "start:api_response_time", "end:api_response_time", "endTracking"),
+            ttiHelper.calls,
+        )
+    }
+
+    @Test
+    fun `권한 안내를 거치면 사용자 대기 포함으로 표시한다`() = runBlocking {
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = false, permissionNoticeShown = false),
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+            permissionHelper = FakePermissionHelper(granted = false),
+        )
+
+        useCase()
+
+        assertEquals(true, ttiHelper.metadata[TTIMetaData.USER_WAIT_INCLUDED])
+    }
+
+    @Test
+    fun `권한 안내를 건너뛰면 사용자 대기 표시를 남기지 않는다`() = runBlocking {
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = false),
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        useCase()
+
+        assertTrue(ttiHelper.metadata.isEmpty())
+    }
+
     private fun versionCheck(
         minimumVersionCode: Long,
         latestVersionUpdateLink: String = "",
@@ -273,7 +363,7 @@ class GetIntroUseCaseTest {
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
-        ttiHelper = FakeTTIHelper(),
+        ttiHelper = ttiHelper,
     )
 
     private class FakeIntroRepository(
@@ -304,6 +394,20 @@ class GetIntroUseCaseTest {
     ) : RemoteConfigHelper {
         override suspend fun sync() = Unit
         override fun getVersionCheck(): VersionCheckVO = version
+    }
+
+    private class FailOnceRemoteConfigHelper(
+        private val version: VersionCheckVO,
+    ) : RemoteConfigHelper {
+        private var failed = false
+        override suspend fun sync() = Unit
+        override fun getVersionCheck(): VersionCheckVO {
+            if (!failed) {
+                failed = true
+                throw IllegalStateException("remote config failed")
+            }
+            return version
+        }
     }
 
     private class ThrowingRemoteConfigHelper : RemoteConfigHelper {
@@ -396,12 +500,28 @@ class GetIntroUseCaseTest {
         ) = Unit
     }
 
-    private class FakeTTIHelper : TTIHelper {
-        override fun startTTITracking(page: TTIPage) = Unit
-        override fun startTTITimeline(page: TTIPage, timelineCategory: TimelineCategory) = Unit
-        override fun endTTITimeline(page: TTIPage, timelineCategory: TimelineCategory) = Unit
-        override fun endTTITracking(page: TTIPage) = Unit
-        override fun shotTTILogging(page: TTIPage) = Unit
-        override fun addTTIMetaData(page: TTIPage, metadata: TTIMetaData, value: Any?) = Unit
+    /** UseCase 가 찍은 TTI 마크를 순서대로 기록한다. */
+    private class RecordingTTIHelper : TTIHelper {
+        val calls = mutableListOf<String>()
+        val metadata = mutableMapOf<TTIMetaData, Any?>()
+
+        override fun startTTITracking(page: TTIPage) {
+            calls += "startTracking"
+        }
+        override fun startTTITimeline(category: TimelineCategory) {
+            calls += "start:${category.categoryName}"
+        }
+        override fun endTTITimeline(category: TimelineCategory) {
+            calls += "end:${category.categoryName}"
+        }
+        override fun endTTITracking() {
+            calls += "endTracking"
+        }
+        override fun shotTTILogging() {
+            calls += "shot"
+        }
+        override fun addTTIMetaData(metadata: TTIMetaData, value: Any?) {
+            this.metadata[metadata] = value
+        }
     }
 }
