@@ -4,8 +4,9 @@ import com.dandi.nyummy.cat.entity.CatAnimationVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.cat.entity.SpriteClipVO
 import com.dandi.nyummy.cat.entity.SpriteFrameVO
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteFrame
+import com.dandi.nyummy.common.presentation.component.NyummySpriteClip
+import com.dandi.nyummy.common.presentation.component.NyummySpriteSheet
+import com.dandi.nyummy.common.presentation.component.NyummySpriteSource
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -33,15 +34,24 @@ class HomeCatStateTest {
         lines = listOf("쉬자"),
     )
 
+    /** 응답의 칸 규격(136x120, 한 줄 4칸, 90ms)을 담은 시트. */
+    private fun sheet(url: String, frames: Int) = NyummySpriteSheet(
+        url = url,
+        frameWidth = 136,
+        frameHeight = 120,
+        totalFrames = frames,
+        framesPerRow = 4,
+        frameDurationMillis = 90,
+    )
+
     @Test
     fun `고른 동작 묶음을 재생 모델로 바꾸고 상태의 시트 주소를 모두 모은다`() {
         val motion = animation.toHomeCatMotion(group = 1, playId = 7, restMillis = 6_000L)
 
         assertEquals(
-            listOf(NyummySpriteClip("https://cdn/a.png", 9), NyummySpriteClip("https://cdn/c.png", 13)),
+            listOf(NyummySpriteClip(sheet("https://cdn/a.png", 9)), NyummySpriteClip(sheet("https://cdn/c.png", 13))),
             motion.clips,
         )
-        assertEquals(NyummySpriteFrame(width = 136, height = 120, framesPerRow = 4, durationMs = 90), motion.frame)
         assertEquals(listOf("https://cdn/a.png", "https://cdn/b.png", "https://cdn/c.png"), motion.sheetUrls)
         assertEquals(7, motion.playId)
         assertEquals(6_000L, motion.restMillis)
@@ -51,7 +61,10 @@ class HomeCatStateTest {
     fun `묶음 번호가 범위를 벗어나면 첫 묶음을 재생한다`() {
         val motion = animation.toHomeCatMotion(group = 5, playId = 1, restMillis = 6_000L)
 
-        assertEquals(listOf("https://cdn/a.png", "https://cdn/b.png"), motion.clips.map { it.url })
+        assertEquals(
+            listOf(NyummySpriteSource.Url("https://cdn/a.png"), NyummySpriteSource.Url("https://cdn/b.png")),
+            motion.clips.map { it.sheet.source },
+        )
         assertEquals(true, motion.clips.last().loop)
     }
 }

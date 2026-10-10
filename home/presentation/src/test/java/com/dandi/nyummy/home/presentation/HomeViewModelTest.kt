@@ -20,6 +20,7 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.time.KstTime
+import com.dandi.nyummy.common.presentation.component.NyummySpriteSource
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.history.domain.HistoryRepository
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
@@ -305,7 +306,10 @@ class HomeViewModelTest {
 
         val motion = state.catMotion!!
         assertEquals(sheetUrls(CatState.CONFLICTED_CAUTIOUS), motion.sheetUrls)
-        assertEquals(listOf(sheetUrl(CatState.CONFLICTED_CAUTIOUS, state.catGroup)), motion.clips.map { it.url })
+        assertEquals(
+            listOf(NyummySpriteSource.Url(sheetUrl(CatState.CONFLICTED_CAUTIOUS, state.catGroup))),
+            motion.clips.map { it.sheet.source },
+        )
         assertEquals(state.catPlayId, motion.playId)
         assertTrue(state.catLine in lines(CatState.CONFLICTED_CAUTIOUS))
         assertTrue(motion.restMillis in CatMotionPicker.MIN_REST_MILLIS..CatMotionPicker.MAX_REST_MILLIS)
