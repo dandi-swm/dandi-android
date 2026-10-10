@@ -38,11 +38,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.dandi.nyummy.common.presentation.component.NyummySpritePrefetch
+import com.dandi.nyummy.common.presentation.component.NyummySpriteSequenceView
 import com.dandi.nyummy.common.presentation.component.NyummySpriteSheet
 import com.dandi.nyummy.common.presentation.component.NyummySpriteView
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteAnimation
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpritePrefetch
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceBubble
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -104,6 +105,7 @@ internal fun HomeRoomCard(
         when {
             catMotion != null -> HomeNyami(
                 motion = catMotion,
+                displayWidth = nyamiSize,
                 onClick = onCatClick,
                 onMotionFinished = { onCatMotionFinished(catMotion.playId) },
                 onShown = onCatShown,
@@ -159,6 +161,7 @@ internal fun HomeRoomCard(
 @Composable
 private fun HomeNyami(
     motion: HomeCatMotion,
+    displayWidth: Dp,
     onClick: () -> Unit,
     onMotionFinished: () -> Unit,
     onShown: () -> Unit,
@@ -168,12 +171,13 @@ private fun HomeNyami(
     // 같은 상태의 다른 동작으로 넘어갈 때 시트를 받느라 멈칫하지 않게 상태의 모든 시트를 미리 받아 둔다.
     NyummySpritePrefetch(urls = motion.sheetUrls)
     val description = stringResource(R.string.home_character_description)
-    NyummySpriteAnimation(
+    NyummySpriteSequenceView(
         clips = motion.clips,
-        frame = motion.frame,
         restMillis = motion.restMillis,
         onFinished = onMotionFinished,
+        displayWidth = displayWidth,
         playId = motion.playId,
+        integerScale = true,
         error = fallback,
         onShown = onShown,
         modifier = modifier
@@ -204,6 +208,8 @@ private fun HomeFallbackNyami(
             displayWidth = maxWidth,
             iterations = if (sheet == SleepLoopSheet) null else 1,
             onAnimationEnd = { if (sheet == DozeSheet) lyingDown = false },
+            // 서버 냐미와 같은 자리에 같은 크기로 보이도록 같은 정수배로 그린다.
+            integerScale = true,
             contentDescription = if (describe) stringResource(R.string.home_character_description) else null,
         )
     }
