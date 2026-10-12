@@ -33,6 +33,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.R
+import com.dandi.nyummy.common.presentation.component.NyummySpriteClip
+import com.dandi.nyummy.common.presentation.component.NyummySpriteSequenceView
+import com.dandi.nyummy.common.presentation.component.NyummySpriteSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadge
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadgeTone
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomCta
@@ -76,9 +79,6 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeleto
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeletonShape
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackbar
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackbarHost
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteAnimation
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteFrame
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateAction
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateSurface
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStepIndicator
@@ -513,12 +513,12 @@ private fun SpriteSection() {
         verticalAlignment = Alignment.Bottom,
     ) {
         listOf(SpriteLeadSize, 160.dp).forEach { size ->
-            NyummySpriteAnimation(
+            NyummySpriteSequenceView(
                 clips = clips,
-                frame = SampleSpriteFrame,
                 restMillis = 2_000L,
                 onFinished = { if (size == SpriteLeadSize) group = (group + 1) % SampleSpriteGroups.size },
-                modifier = Modifier.size(size),
+                displayWidth = size,
+                integerScale = true,
                 placeholder = { NyummySkeleton(shape = NyummySkeletonShape.Block, modifier = Modifier.fillMaxSize()) },
             )
         }
@@ -527,20 +527,31 @@ private fun SpriteSection() {
 
 private val SpriteLeadSize = 120.dp
 private const val SampleSpriteBase = "https://cdn.nyummy.co.kr/cats/normal/v1/relaxed/"
-private val SampleSpriteFrame = NyummySpriteFrame(width = 136, height = 136, framesPerRow = 4, durationMs = 100)
 private val SampleSpriteGroups = listOf(
     persistentListOf(
-        NyummySpriteClip(SampleSpriteBase + "stretch/nyami_relaxed_stretch_01_stretch_grid_136.png", frames = 9),
-        NyummySpriteClip(SampleSpriteBase + "stretch/nyami_relaxed_stretch_02_return_grid_136.png", frames = 8),
+        sampleClip("stretch/nyami_relaxed_stretch_01_stretch_grid_136.png", frames = 9),
+        sampleClip("stretch/nyami_relaxed_stretch_02_return_grid_136.png", frames = 8),
     ),
     persistentListOf(
-        NyummySpriteClip(SampleSpriteBase + "yawn/nyami_relaxed_yawn_01_yawn_grid_136.png", frames = 13),
+        sampleClip("yawn/nyami_relaxed_yawn_01_yawn_grid_136.png", frames = 13),
     ),
     persistentListOf(
-        NyummySpriteClip(SampleSpriteBase + "lie_down/nyami_relaxed_lie_down_01_lie_grid_136.png", frames = 9),
-        NyummySpriteClip(SampleSpriteBase + "lie_down/nyami_relaxed_lie_down_02_sleep_grid_136.png", frames = 8, loop = true),
-        NyummySpriteClip(SampleSpriteBase + "lie_down/nyami_relaxed_lie_down_03_wake_grid_136.png", frames = 8),
+        sampleClip("lie_down/nyami_relaxed_lie_down_01_lie_grid_136.png", frames = 9),
+        sampleClip("lie_down/nyami_relaxed_lie_down_02_sleep_grid_136.png", frames = 8, loop = true),
+        sampleClip("lie_down/nyami_relaxed_lie_down_03_wake_grid_136.png", frames = 8),
     ),
+)
+
+private fun sampleClip(path: String, frames: Int, loop: Boolean = false) = NyummySpriteClip(
+    sheet = NyummySpriteSheet(
+        url = SampleSpriteBase + path,
+        frameWidth = 136,
+        frameHeight = 136,
+        totalFrames = frames,
+        framesPerRow = 4,
+        frameDurationMillis = 100,
+    ),
+    loop = loop,
 )
 
 private enum class CatalogOverlay { Confirm, Alert, Destructive, Input, Sheet, KeepGoing, DeleteSheet }

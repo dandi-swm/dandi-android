@@ -3,8 +3,8 @@ package com.dandi.nyummy.home.presentation
 import androidx.compose.runtime.Immutable
 import com.dandi.nyummy.cat.entity.CatAnimationVO
 import com.dandi.nyummy.cat.entity.CatState
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteFrame
+import com.dandi.nyummy.common.presentation.component.NyummySpriteClip
+import com.dandi.nyummy.common.presentation.component.NyummySpriteSheet
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -31,8 +31,7 @@ internal fun homeCatState(
 /**
  * 지금 재생할 냐미 동작. 화면이 그대로 그릴 수 있게 재생 컴포넌트의 모델로 바꿔 둔다.
  *
- * @property clips 재생할 동작 묶음의 시트들
- * @property frame 시트 한 칸의 규격과 프레임 시간
+ * @property clips 재생할 동작 묶음의 시트들(시트마다 칸 규격과 프레임 시간을 담는다)
  * @property sheetUrls 같은 상태의 모든 시트 주소. 다음 동작으로 넘어갈 때 멈칫하지 않게 미리 받아 둔다.
  * @property playId 바뀌면 같은 묶음이어도 처음부터 다시 재생한다
  * @property restMillis 동작이 끝난 뒤 다음 동작까지 쉬는 시간
@@ -40,7 +39,6 @@ internal fun homeCatState(
 @Immutable
 data class HomeCatMotion(
     val clips: ImmutableList<NyummySpriteClip>,
-    val frame: NyummySpriteFrame,
     val sheetUrls: ImmutableList<String>,
     val playId: Int,
     val restMillis: Long,
@@ -50,14 +48,20 @@ data class HomeCatMotion(
 internal fun CatAnimationVO.toHomeCatMotion(group: Int, playId: Int, restMillis: Long): HomeCatMotion =
     HomeCatMotion(
         clips = (groups.getOrNull(group) ?: groups.firstOrNull().orEmpty())
-            .map { NyummySpriteClip(url = it.url, frames = it.frames, loop = it.loop) }
+            .map { clip ->
+                NyummySpriteClip(
+                    sheet = NyummySpriteSheet(
+                        url = clip.url,
+                        frameWidth = frame.width,
+                        frameHeight = frame.height,
+                        totalFrames = clip.frames,
+                        framesPerRow = frame.framesPerRow,
+                        frameDurationMillis = frame.durationMs,
+                    ),
+                    loop = clip.loop,
+                )
+            }
             .toImmutableList(),
-        frame = NyummySpriteFrame(
-            width = frame.width,
-            height = frame.height,
-            framesPerRow = frame.framesPerRow,
-            durationMs = frame.durationMs,
-        ),
         sheetUrls = groups.flatten().map { it.url }.distinct().toImmutableList(),
         playId = playId,
         restMillis = restMillis,
