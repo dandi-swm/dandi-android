@@ -33,15 +33,6 @@ class EmailVerificationUseCaseTest {
     }
 
     @Test
-    fun `이전 SES 발송 실패 code 도 같은 문구로 안내한다`() = runBlocking {
-        repository.requestEmailVerificationError = httpException(500, "api.ses.emailSendFailed")
-
-        sendCode()
-
-        assertEquals(AuthErrorType.EMAIL_SEND_FAILED.errorMsg, messageHelper.dialogs.single().descText)
-    }
-
-    @Test
     fun `이미 가입된 이메일이면 code 에 맞는 문구로 안내한다`() = runBlocking {
         repository.requestEmailVerificationError = httpException(409, "api.auth.emailAlreadyExists")
 
@@ -112,6 +103,7 @@ class EmailVerificationUseCaseTest {
         val result = useCase.confirmCode(authCode = "123456", emailChallengeToken = "challenge")
 
         assertTrue(result.exceptionOrNull() is CodeVerificationFailedException)
+        assertEquals("알 수 없는 오류가 발생했습니다.", result.exceptionOrNull()?.message)
         assertTrue(messageHelper.dialogs.isEmpty())
         assertEquals(0, navigationHelper.initialCount)
     }

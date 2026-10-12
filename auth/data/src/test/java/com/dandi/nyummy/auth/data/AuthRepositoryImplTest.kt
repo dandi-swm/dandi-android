@@ -98,7 +98,7 @@ class AuthRepositoryImplTest {
     fun `회원가입 실패 시 예외를 던지고 토큰을 저장하지 않는다`() {
         server.enqueue(
             MockResponse().setResponseCode(400).setBody(
-                """{"code":"api.common.missingParameter","message":"입력값이 누락되었습니다."}"""
+                """{"code":"api.common.invalidInputValue","message":"요청 값이 올바르지 않습니다."}"""
             )
         )
 
@@ -225,6 +225,40 @@ class AuthRepositoryImplTest {
         token = "id-token",
         nonce = "nonce-1",
     )
+
+    @Test
+    fun `로그아웃은 저장된 액세스 토큰을 Authorization 헤더에 넣어 보내고 기기 토큰을 지운다`() = runBlocking {
+        tokenProvider.update(access = "access-123", refresh = "refresh-456")
+        server.enqueue(MockResponse().setResponseCode(204))
+
+        repository.logout()
+
+        val request = server.takeRequest()
+        assertEquals("POST", request.method)
+        assertEquals("/api/v1/auth/logout", request.path)
+        assertEquals("Bearer access-123", request.getHeader("Authorization"))
+        assertNull(tokenProvider.accessToken)
+        assertNull(tokenProvider.refreshToken)
+    }
+
+    @Test
+    fun `로그아웃 서버가 실패해도 기기 토큰은 지운다`() = runBlocking {
+        tokenProvider.update(access = "expired-access", refresh = "refresh-456")
+        server.enqueue(MockResponse().setResponseCode(401))
+
+        assertThrows(HttpResponseException::class.java) { runBlocking { repository.logout() } }
+
+        assertNull(tokenProvider.accessToken)
+        assertNull(tokenProvider.refreshToken)
+    }
+
+    @Test
+    fun `액세스 토큰이 없으면 서버를 부르지 않고 기기 토큰만 지운다`() = runBlocking {
+        repository.logout()
+
+        assertEquals(0, server.requestCount)
+        assertNull(tokenProvider.accessToken)
+    }
 
     private class FakePushTokenHelper : PushTokenHelper {
         var registerCount = 0

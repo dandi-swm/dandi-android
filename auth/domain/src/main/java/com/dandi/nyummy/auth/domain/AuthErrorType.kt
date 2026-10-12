@@ -17,10 +17,6 @@ enum class AuthErrorType(
     override val errorMsg: String,
     override val isHandledOnDomain: Boolean = true,
 ) : HttpErrorType {
-    MISSING_PARAMETER(
-        type = "api.common.missingParameter",
-        errorMsg = "입력값이 누락 되었습니다. 다시 시도해주세요.",
-    ),
     INVALID_CREDENTIALS(
         type = "api.auth.invalidCredentials",
         errorMsg = "올바른 이메일과 비밀번호를 입력해주세요.",
@@ -31,14 +27,9 @@ enum class AuthErrorType(
     ),
     EMAIL_SEND_FAILED(
         type = "api.email.sendFailed",
-        errorMsg = EMAIL_SEND_FAILED_MESSAGE,
+        errorMsg = "인증 메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.",
     ),
 
-    /** 서버가 메일 발송 수단을 바꾸기 전(SES)의 코드. 배포가 끝나면 지운다. */
-    SES_EMAIL_SEND_FAILED(
-        type = "api.ses.emailSendFailed",
-        errorMsg = EMAIL_SEND_FAILED_MESSAGE,
-    ),
     INCORRECT_EMAIL(
         type = "api.auth.incorrectEmail",
         errorMsg = "이 이메일로 보낸 인증 코드가 없어요. 코드를 다시 받아 주세요.",
@@ -91,11 +82,6 @@ enum class AuthErrorType(
         type = "api.auth.oauthProviderUnavailable",
         errorMsg = "소셜 로그인 서버에 연결할 수 없어요. 잠시 후 다시 시도해주세요.",
     ),
-    UNKNOWN(
-        type = "api.auth.unknown",
-        errorMsg = "알 수 없는 오류가 발생했습니다.",
-    ),
 }
 
-private const val EMAIL_SEND_FAILED_MESSAGE = "인증 메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요."
 private const val VERIFICATION_RESTART_MESSAGE = "인증이 만료됐어요. 처음부터 다시 인증해 주세요."

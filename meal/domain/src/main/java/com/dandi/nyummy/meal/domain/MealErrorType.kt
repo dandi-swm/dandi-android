@@ -18,10 +18,6 @@ enum class MealErrorType(
         type = "api.meal.staleImage",
         errorMsg = "찍은 지 오래된 사진은 기록할 수 없어요. 다시 찍어주세요",
     ),
-    CAPTURE_TIME_NOT_FOUND(
-        type = "api.meal.captureTimeNotFound",
-        errorMsg = "촬영 시각을 확인할 수 없는 사진이에요. 다시 찍어주세요",
-    ),
     DUPLICATE_IMAGE_KEY(
         type = "api.meal.duplicateImageKey",
         errorMsg = "이미 기록한 사진이에요",

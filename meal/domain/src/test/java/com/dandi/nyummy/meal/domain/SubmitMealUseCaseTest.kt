@@ -30,8 +30,8 @@ class SubmitMealUseCaseTest {
 
     private val messageHelper = RecordingMessageHelper()
 
-    private fun useCase(createMealError: Exception) = SubmitMealUseCase(
-        repository = FakeMealRecordRepository(createMealError),
+    private fun useCase(createMealError: Exception, issueUrlError: Exception? = null) = SubmitMealUseCase(
+        repository = FakeMealRecordRepository(createMealError, issueUrlError),
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = FakeNavigationHelper(),
@@ -62,6 +62,26 @@ class SubmitMealUseCaseTest {
     }
 
     @Test
+    fun `하루 기록 횟수를 넘기면 다시 시도 대신 내일 기록하라고 안내한다`() = runBlocking {
+        val result = useCase(httpException(409, "api.meal.dailyCountExceeded"))(PHOTO_PATH, MealPhotoSource.CAMERA)
+
+        assertTrue(result.isFailure)
+        assertEquals("오늘은 더 기록할 수 없어요. 내일 다시 기록해주세요", messageHelper.snackBars.single().messageText)
+        assertTrue(messageHelper.dialogs.isEmpty())
+    }
+
+    @Test
+    fun `하루 기록 횟수 초과는 사진 업로드 주소를 받을 때 와도 같은 문구로 안내한다`() = runBlocking {
+        val result = useCase(
+            createMealError = IllegalStateException("업로드 주소 발급에서 멈춰 식사 생성까지 가지 않는다"),
+            issueUrlError = httpException(409, "api.meal.dailyCountExceeded"),
+        )(PHOTO_PATH, MealPhotoSource.CAMERA)
+
+        assertTrue(result.isFailure)
+        assertEquals("오늘은 더 기록할 수 없어요. 내일 다시 기록해주세요", messageHelper.snackBars.single().messageText)
+    }
+
+    @Test
     fun `code 없는 500 은 공통 오류 다이얼로그로 안내한다`() = runBlocking {
         useCase(httpException(500))(PHOTO_PATH, MealPhotoSource.CAMERA)
 
@@ -80,11 +100,13 @@ class SubmitMealUseCaseTest {
 
     private class FakeMealRecordRepository(
         private val createMealError: Exception,
+        private val issueUrlError: Exception? = null,
     ) : MealRecordRepository {
         override suspend fun readGalleryPhotoTakenAt(photoUri: String): KstDateTime? = null
         override suspend fun importGalleryPhoto(photoUri: String) = photoUri
         override suspend fun prepareUploadImage(photoPath: String, source: MealPhotoSource) = Unit
-        override suspend fun issueImageUploadUrl(photoPath: String) = MealImageUploadVO()
+        override suspend fun issueImageUploadUrl(photoPath: String): MealImageUploadVO =
+            issueUrlError?.let { throw it } ?: MealImageUploadVO()
         override suspend fun uploadImage(uploadTarget: MealImageUploadVO, photoPath: String) = Unit
         override suspend fun createMeal(imageKey: String): CreatedMealVO = throw createMealError
     }

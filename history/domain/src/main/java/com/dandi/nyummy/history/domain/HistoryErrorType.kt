@@ -20,9 +20,12 @@ enum class HistoryErrorType(
         errorMsg = "이미 지워진 기록이에요",
     ),
 
-    /** 분석 실패 상태가 아닌 식사를 다시 분석하려 할 때(409). */
+    /**
+     * 분석 실패(FAILED) 상태가 아닌 식사를 다시 분석하려 할 때(409).
+     * 재분석 버튼은 실패한 식사에만 보이므로, 다른 곳에서 이미 다시 분석했거나 분석이 끝나 목록이 낡은 경우다.
+     */
     ANALYSIS_NOT_RETRYABLE(
         type = "api.meal.analysisNotRetryable",
-        errorMsg = "이미 분석하고 있는 기록이에요",
+        errorMsg = "이미 다시 분석한 기록이에요",
     ),
 }

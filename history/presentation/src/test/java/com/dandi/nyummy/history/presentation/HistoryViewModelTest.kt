@@ -508,6 +508,7 @@ class HistoryViewModelTest {
         repository.reanalyzeOverride = { throw httpException(400) }
         val viewModel = createViewModel()
         advanceUntilIdle()
+        val dailyRequestsBefore = repository.dailyRequests.size
 
         viewModel.onIntent(HistoryIntent.ClickRetryAnalysis("2"))
         advanceUntilIdle()
@@ -515,6 +516,45 @@ class HistoryViewModelTest {
         val state = viewModel.uiState.value
         assertFalse(state.isReanalyzing("2"))
         assertEquals(MealAnalysisStatus.FAILED, state.selectedDayMeals.single { it.id == "2" }.status)
+        // 목록이 낡아서 난 실패가 아니므로 다시 받지 않는다.
+        assertEquals(dailyRequestsBefore, repository.dailyRequests.size)
+    }
+
+    @Test
+    fun `이미 다시 분석한 식사라 재분석이 거절되면 그날 목록을 다시 받아 지금 상태를 보여 준다`() = runTest(testDispatcher) {
+        var serverStatus = MealAnalysisStatus.FAILED
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal(status = serverStatus) }
+        repository.reanalyzeOverride = { throw httpException(409, "api.meal.analysisNotRetryable") }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        val dailyRequestsBefore = repository.dailyRequests.size
+        // 다른 곳에서 이미 다시 분석해 서버에서는 분석 중이다. 화면은 아직 실패 카드다.
+        serverStatus = MealAnalysisStatus.ANALYZING
+
+        viewModel.onIntent(HistoryIntent.ClickRetryAnalysis("2"))
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(dailyRequestsBefore + 1, repository.dailyRequests.size)
+        assertEquals(MealAnalysisStatus.ANALYZING, state.selectedDayMeals.single { it.id == "2" }.status)
+        assertFalse(state.isReanalyzing("2"))
+    }
+
+    @Test
+    fun `지운 식사라 재분석이 거절되면 그날 목록을 다시 받아 카드를 없앤다`() = runTest(testDispatcher) {
+        var deleted = false
+        repository.dailyOverride = { _, _, _ ->
+            dailyWithFailedMeal().let { daily -> if (deleted) daily.copy(meals = daily.meals.filterNot { it.id == "2" }) else daily }
+        }
+        repository.reanalyzeOverride = { throw httpException(404, "api.meal.notFound") }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        deleted = true
+
+        viewModel.onIntent(HistoryIntent.ClickRetryAnalysis("2"))
+        advanceUntilIdle()
+
+        assertEquals(listOf("1"), viewModel.uiState.value.selectedDayMeals.map { it.id })
     }
 
     @Test
@@ -762,23 +802,25 @@ class HistoryViewModelTest {
     )
 
     /** 완료 1건 + 분석 실패 1건이 섞인 하루. */
-    private fun dailyWithFailedMeal(): DailyMealHistoryVO = DailyMealHistoryVO(
+    private fun dailyWithFailedMeal(status: MealAnalysisStatus = MealAnalysisStatus.FAILED): DailyMealHistoryVO = DailyMealHistoryVO(
         meals = listOf(
             MealHistoryVO(id = "1", name = "김치찌개 A", orderIndex = 1),
             MealHistoryVO(
                 id = "2",
                 recordedAt = "12:30",
                 orderIndex = 2,
-                status = MealAnalysisStatus.FAILED,
+                status = status,
             ),
         ),
     )
 
-    private fun httpException(code: Int): HttpResponseException = HttpResponseException(
+    /** 서버 에러 바디의 `code` 를 cause 로 담는 실제 변환(BaseRemoteDataSource)과 같은 형태로 만든다. */
+    private fun httpException(code: Int, errorCode: String? = null): HttpResponseException = HttpResponseException(
         status = HttpResponseStatus.create(code),
         rawCode = code,
         errorRequestUrl = "https://test/meals",
         msg = "Http Request Failed ($code)",
+        cause = errorCode?.let(::Throwable),
     )
 
     private class FakeHistoryRepository : HistoryRepository {

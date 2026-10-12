@@ -1,4 +1,4 @@
-package com.dandi.nyummy.common.presentation.designsystem.component
+package com.dandi.nyummy.common.presentation.component
 
 import android.graphics.Bitmap
 import android.net.Uri
@@ -40,12 +40,11 @@ import coil3.Uri as CoilUri
 private const val PendingScheme = "pending"
 
 @RunWith(AndroidJUnit4::class)
-class NyummySpriteAnimationTest {
+class NyummySpriteSequenceViewTest {
 
     @get:Rule
     val composeRule = createComposeRule()
 
-    private val frame = NyummySpriteFrame(width = 136, height = 136, framesPerRow = 4, durationMs = 100)
 
     /** `pending://` 주소는 영원히 받는 중으로 두는 이미지 로더. 네트워크 상태와 상관없이 "받는 중"을 재현한다. */
     @Before
@@ -68,7 +67,16 @@ class NyummySpriteAnimationTest {
             if (data.scheme == PendingScheme) Fetcher { awaitCancellation() } else null
     }
 
-    private fun clip(frames: Int, loop: Boolean = false) = NyummySpriteClip(url = "https://cdn/test.png", frames = frames, loop = loop)
+    private fun sheet(url: String, frames: Int = 8) = NyummySpriteSheet(
+        url = url,
+        frameWidth = 136,
+        frameHeight = 136,
+        totalFrames = frames,
+        framesPerRow = 4,
+        frameDurationMillis = 100,
+    )
+
+    private fun clip(frames: Int, loop: Boolean = false) = NyummySpriteClip(sheet("https://cdn/test.png", frames), loop = loop)
 
     private fun images(count: Int): ImmutableList<ImageBitmap> =
         persistentListOf<ImageBitmap>().builder().apply { repeat(count) { add(ImageBitmap(136 * 4, 136 * 2)) } }.build()
@@ -79,14 +87,13 @@ class NyummySpriteAnimationTest {
         composeRule.mainClock.autoAdvance = false
         composeRule.setContent {
             NyummyTheme {
-                NyummySpriteAnimation(
+                NyummySpriteSequenceView(
                     images = images(clips.size),
                     clips = clips,
-                    frame = frame,
                     restMillis = restMillis,
                     onFinished = { finished++ },
                     contentDescription = "냐미",
-                    modifier = Modifier.size(136.dp),
+                    displayWidth = 136.dp,
                 )
             }
         }
@@ -136,14 +143,13 @@ class NyummySpriteAnimationTest {
         composeRule.mainClock.autoAdvance = false
         composeRule.setContent {
             NyummyTheme {
-                NyummySpriteAnimation(
+                NyummySpriteSequenceView(
                     images = images(1),
                     clips = clips,
-                    frame = frame,
                     restMillis = 1_000L,
                     onFinished = { finished++ },
                     playId = playId,
-                    modifier = Modifier.size(136.dp),
+                    displayWidth = 136.dp,
                 )
             }
         }
@@ -165,13 +171,12 @@ class NyummySpriteAnimationTest {
         composeRule.mainClock.autoAdvance = false
         composeRule.setContent {
             NyummyTheme {
-                NyummySpriteAnimation(
+                NyummySpriteSequenceView(
                     images = images(1),
                     clips = clips,
-                    frame = frame,
                     restMillis = restMillis,
                     onFinished = { finished++ },
-                    modifier = Modifier.size(136.dp),
+                    displayWidth = 136.dp,
                 )
             }
         }
@@ -190,22 +195,21 @@ class NyummySpriteAnimationTest {
     fun 다른_동작의_시트를_받는_동안_직전_프레임을_그대로_보여준다() {
         // 앱 캐시에 시트 한 장을 만들어 두고, 다음 동작은 끝나지 않는 주소로 둔다.
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val sheet = File(context.cacheDir, "sprite-test.png")
-        sheet.outputStream().use { out ->
+        val file = File(context.cacheDir, "sprite-test.png")
+        file.outputStream().use { out ->
             Bitmap.createBitmap(136 * 4, 136 * 2, Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.PNG, 100, out)
         }
-        val loaded = persistentListOf(NyummySpriteClip(url = Uri.fromFile(sheet).toString(), frames = 8))
-        val pending = persistentListOf(NyummySpriteClip(url = "$PendingScheme://never.png", frames = 8))
+        val loaded = persistentListOf(NyummySpriteClip(sheet(Uri.fromFile(file).toString())))
+        val pending = persistentListOf(NyummySpriteClip(sheet("$PendingScheme://never.png")))
         var clips by mutableStateOf(loaded)
         composeRule.setContent {
             NyummyTheme {
-                NyummySpriteAnimation(
+                NyummySpriteSequenceView(
                     clips = clips,
-                    frame = frame,
                     restMillis = 60_000L,
                     onFinished = {},
                     contentDescription = "냐미",
-                    modifier = Modifier.size(136.dp),
+                    displayWidth = 136.dp,
                     placeholder = { Box(Modifier.size(10.dp).testTag("placeholder")) },
                 )
             }
@@ -227,13 +231,12 @@ class NyummySpriteAnimationTest {
     fun 처음_받는_동안에는_자리만_잡아_둔다() {
         composeRule.setContent {
             NyummyTheme {
-                NyummySpriteAnimation(
-                    clips = persistentListOf(NyummySpriteClip(url = "$PendingScheme://never.png", frames = 8)),
-                    frame = frame,
+                NyummySpriteSequenceView(
+                    clips = persistentListOf(NyummySpriteClip(sheet("$PendingScheme://never.png"))),
                     restMillis = 1_000L,
                     onFinished = {},
                     contentDescription = "냐미",
-                    modifier = Modifier.size(136.dp),
+                    displayWidth = 136.dp,
                     placeholder = { Box(Modifier.size(10.dp).testTag("placeholder")) },
                 )
             }
@@ -247,12 +250,11 @@ class NyummySpriteAnimationTest {
     fun 시트를_받지_못하면_오류_자리를_보여준다() {
         composeRule.setContent {
             NyummyTheme {
-                NyummySpriteAnimation(
-                    clips = persistentListOf(NyummySpriteClip(url = "file:///nyummy/not-found.png", frames = 8)),
-                    frame = frame,
+                NyummySpriteSequenceView(
+                    clips = persistentListOf(NyummySpriteClip(sheet("file:///nyummy/not-found.png"))),
                     restMillis = 1_000L,
                     onFinished = {},
-                    modifier = Modifier.size(136.dp),
+                    displayWidth = 136.dp,
                     error = { Box(Modifier.size(10.dp).testTag("error")) },
                 )
             }
@@ -266,7 +268,7 @@ class NyummySpriteAnimationTest {
 
     @Test
     fun 받는_중에는_보였다고_알리지_않는다() {
-        val shown = showCount(persistentListOf(NyummySpriteClip(url = "$PendingScheme://never.png", frames = 8)))
+        val shown = showCount(persistentListOf(NyummySpriteClip(sheet("$PendingScheme://never.png"))))
 
         composeRule.waitForIdle()
         composeRule.mainClock.advanceTimeBy(1_000L)
@@ -276,7 +278,7 @@ class NyummySpriteAnimationTest {
 
     @Test
     fun 시트를_받아_그리면_보였다고_한_번만_알린다() {
-        val shown = showCount(persistentListOf(NyummySpriteClip(url = Uri.fromFile(sheetFile()).toString(), frames = 8)))
+        val shown = showCount(persistentListOf(NyummySpriteClip(sheet(Uri.fromFile(sheetFile()).toString()))))
 
         composeRule.waitUntil(timeoutMillis = 5_000L) { shown() > 0 }
         composeRule.mainClock.advanceTimeBy(2_000L)
@@ -286,7 +288,7 @@ class NyummySpriteAnimationTest {
 
     @Test
     fun 시트를_받지_못해_오류_자리를_보여도_보였다고_한_번만_알린다() {
-        val shown = showCount(persistentListOf(NyummySpriteClip(url = "file:///nyummy/not-found.png", frames = 8)))
+        val shown = showCount(persistentListOf(NyummySpriteClip(sheet("file:///nyummy/not-found.png"))))
 
         composeRule.waitUntil(timeoutMillis = 5_000L) { shown() > 0 }
         composeRule.mainClock.advanceTimeBy(1_000L)
@@ -299,12 +301,11 @@ class NyummySpriteAnimationTest {
         var shown = 0
         composeRule.setContent {
             NyummyTheme {
-                NyummySpriteAnimation(
+                NyummySpriteSequenceView(
                     clips = clips,
-                    frame = frame,
                     restMillis = 1_000L,
                     onFinished = {},
-                    modifier = Modifier.size(136.dp),
+                    displayWidth = 136.dp,
                     onShown = { shown++ },
                 )
             }

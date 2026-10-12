@@ -25,6 +25,20 @@ class ErrorParserTest {
     }
 
     @Test
+    fun `만료 code 가 붙은 401 은 재발급까지 실패한 것이라 로그인 만료다`() {
+        val e = httpException(401, SESSION_TOKEN_EXPIRED_CODE)
+
+        assertEquals("api.auth.tokenExpired", SESSION_TOKEN_EXPIRED_CODE)
+        assertTrue(e.isSessionExpired())
+        assertTrue(e.isCommonErrorHandling())
+    }
+
+    @Test
+    fun `만료 code 라도 401 이 아니면 로그인 만료가 아니다`() {
+        assertFalse(httpException(400, SESSION_TOKEN_EXPIRED_CODE).isSessionExpired())
+    }
+
+    @Test
     fun `다른 code 가 붙은 401 은 로그인 만료도 공통 오류도 아니다`() {
         val e = httpException(401, "api.auth.invalidVerifiedToken")
 

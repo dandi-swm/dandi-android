@@ -101,6 +101,8 @@ internal class FakeAuthRepository(
         confirmEmailVerificationError?.let { throw it }
         return EmailVerifiedVO()
     }
+
+    override suspend fun logout() = Unit
 }
 
 internal class RecordingNavigationHelper : NavigationHelper {
