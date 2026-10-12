@@ -1,12 +1,12 @@
 package com.dandi.nyummy.onboarding.data
 
 import com.dandi.nyummy.common.data.BaseRemoteDataSource
-import com.dandi.nyummy.onboarding.data.dto.CatDTO
-import com.dandi.nyummy.onboarding.data.dto.CatRegisterRequestDTO
+import com.dandi.nyummy.onboarding.data.dto.CreateCatRequestDTO
 
 class OnboardingDataSource(
     private val apiService: OnboardingApiService,
 ) : BaseRemoteDataSource() {
-    suspend fun registerCat(name: String): CatDTO =
-        checkResponse(apiService.registerCat(CatRegisterRequestDTO(name = name)))
+    suspend fun createCat(request: CreateCatRequestDTO) {
+        checkResponse(apiService.createCat(request))
+    }
 }

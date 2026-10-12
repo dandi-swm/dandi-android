@@ -4,14 +4,12 @@ import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.onboarding.domain.CatNameValidator
 import com.dandi.nyummy.onboarding.domain.FinishOnboardingUseCase
-import com.dandi.nyummy.onboarding.domain.RegisterCatUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    private val registerCatUseCase: RegisterCatUseCase,
     private val finishOnboardingUseCase: FinishOnboardingUseCase,
 ) : MviViewModel<OnboardingIntent, OnboardingUIState, OnboardingReducerEvent>(OnboardingUIState.empty) {
 
@@ -45,11 +43,9 @@ class OnboardingViewModel @Inject constructor(
         OnboardingReducerEvent.SkippedToNaming -> state.toScene(OnboardingScript.namingSceneIndex)
         is OnboardingReducerEvent.CatNameChanged -> state.copy(catNameInput = event.value, catNameError = null)
         is OnboardingReducerEvent.CatNameInvalid -> state.copy(catNameError = event.error)
-        OnboardingReducerEvent.SubmitStarted -> state.copy(isSubmitting = true, catNameError = null)
-        is OnboardingReducerEvent.CatRegistered -> state
+        is OnboardingReducerEvent.CatNamed -> state
             .toScene(state.sceneIndex + 1)
-            .copy(catName = event.name, isSubmitting = false)
-        OnboardingReducerEvent.SubmitFailed -> state.copy(isSubmitting = false)
+            .copy(catName = event.name, catNameError = null)
         is OnboardingReducerEvent.MealTimeEditStarted -> state.copy(editingMeal = event.meal)
         is OnboardingReducerEvent.MealTimeChanged -> state.copy(
             mealTimes = state.mealTimes.with(event.meal, event.time),
@@ -57,6 +53,7 @@ class OnboardingViewModel @Inject constructor(
         )
         OnboardingReducerEvent.MealTimeEditDismissed -> state.copy(editingMeal = null)
         OnboardingReducerEvent.FinishStarted -> state.copy(isFinishing = true, editingMeal = null)
+        OnboardingReducerEvent.FinishFailed -> state.copy(isFinishing = false)
     }
 
     private fun OnboardingUIState.toScene(index: Int) = copy(
@@ -69,7 +66,6 @@ class OnboardingViewModel @Inject constructor(
     private fun advance() {
         val state = currentState
         when {
-            state.isSubmitting -> Unit
             !state.isLineRevealed -> dispatch(OnboardingReducerEvent.LineRevealed)
             !state.isLastLine -> dispatch(OnboardingReducerEvent.NextLine)
             // 선택지·이름 입력·시작 버튼이 떠 있으면 탭으로 넘기지 않고 사용자의 행동을 기다린다.
@@ -88,11 +84,15 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
+    /** 이름과 식사 시각으로 고양이를 만들고 홈으로 간다. 실패하면 이 장면에 머물러 다시 누를 수 있다. */
     private fun finish() {
         val state = currentState
         if (state.isFinishing || state.currentScene.action != OnboardingSceneAction.MealTime) return
         dispatch(OnboardingReducerEvent.FinishStarted)
-        viewModelScope.launch { finishOnboardingUseCase(state.mealTimes) }
+        viewModelScope.launch {
+            finishOnboardingUseCase(state.catName, state.mealTimes)
+                .onFailure { dispatch(OnboardingReducerEvent.FinishFailed) }
+        }
     }
 
     private fun selectChoice(index: Int) {
@@ -101,18 +101,14 @@ class OnboardingViewModel @Inject constructor(
         dispatch(OnboardingReducerEvent.ChoiceSelected(index))
     }
 
+    /** 이름은 여기서 검사만 하고 넘어간다. 서버에는 마지막 장면에서 식사 시각과 함께 보낸다. */
     private fun submitCatName() {
         val state = currentState
-        if (state.isSubmitting || state.currentScene.action != OnboardingSceneAction.NameInput) return
+        if (state.currentScene.action != OnboardingSceneAction.NameInput) return
         CatNameValidator.validate(state.catNameInput)?.let { error ->
             dispatch(OnboardingReducerEvent.CatNameInvalid(error))
             return
         }
-        dispatch(OnboardingReducerEvent.SubmitStarted)
-        viewModelScope.launch {
-            registerCatUseCase(state.catNameInput)
-                .onSuccess { cat -> dispatch(OnboardingReducerEvent.CatRegistered(cat.name.ifBlank { state.catNameInput.trim() })) }
-                .onFailure { dispatch(OnboardingReducerEvent.SubmitFailed) }
-        }
+        dispatch(OnboardingReducerEvent.CatNamed(state.catNameInput.trim()))
     }
 }

@@ -13,11 +13,10 @@ sealed interface OnboardingReducerEvent : ReducerEvent {
     data object SkippedToNaming : OnboardingReducerEvent
     data class CatNameChanged(val value: String) : OnboardingReducerEvent
     data class CatNameInvalid(val error: CatNameError) : OnboardingReducerEvent
-    data object SubmitStarted : OnboardingReducerEvent
-    data class CatRegistered(val name: String) : OnboardingReducerEvent
-    data object SubmitFailed : OnboardingReducerEvent
+    data class CatNamed(val name: String) : OnboardingReducerEvent
     data class MealTimeEditStarted(val meal: Meal) : OnboardingReducerEvent
     data class MealTimeChanged(val meal: Meal, val time: MealTimeVO) : OnboardingReducerEvent
     data object MealTimeEditDismissed : OnboardingReducerEvent
     data object FinishStarted : OnboardingReducerEvent
+    data object FinishFailed : OnboardingReducerEvent
 }
