@@ -41,7 +41,7 @@ data class MealDTO(
         proteinGram = nutrition?.protein ?: 0,
         fatGram = nutrition?.fat ?: 0,
         orderIndex = 0,
-        status = status.toMealAnalysisStatus(name = name, calorieKcal = nutrition?.calory),
+        status = status.toMealAnalysisStatus(),
         catComment = catComment?.trim() ?: "",
         date = mealAt.toKstHistoryDate(),
     )

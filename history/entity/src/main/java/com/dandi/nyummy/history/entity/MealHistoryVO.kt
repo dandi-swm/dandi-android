@@ -15,7 +15,7 @@ import kotlinx.serialization.Serializable
  * @property proteinGram 이 식사의 단백질(g)
  * @property fatGram 이 식사의 지방(g)
  * @property orderIndex 하루 안에서의 순서, 1부터 시작 ("첫 끼" 라벨용)
- * @property status AI 영양 분석 상태. 서버 값이 없으면 data 레이어에서 이름/열량으로 보정합니다.
+ * @property status AI 영양 분석 상태. 서버 값이 없거나 모르는 값이면 [MealAnalysisStatus.UNKNOWN]입니다.
  * @property catComment 이 식사에 대한 냐미의 한 줄 피드백. 단건 상세 조회에서만 내려오며 없으면 빈 값입니다.
  * @property date 식사한 날짜(KST). 단건 상세 조회에서만 채워지며 없으면 [HistoryDateVO.empty]입니다.
  */
@@ -43,6 +43,10 @@ data class MealHistoryVO(
     /** 음식으로 인식하지 못해 재분석이 필요한 기록인지 여부. */
     val isAnalysisFailed: Boolean
         get() = status == MealAnalysisStatus.FAILED || status == MealAnalysisStatus.UNKNOWN
+
+    /** 다시 분석을 요청할 수 있는 기록인지 여부. 서버는 분석에 실패(FAILED)한 식사만 다시 분석한다. */
+    val canRetryAnalysis: Boolean
+        get() = status == MealAnalysisStatus.FAILED
 
     /** 결과를 기다리는 중인 기록인지 여부. */
     val isAnalyzing: Boolean

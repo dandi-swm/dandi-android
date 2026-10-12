@@ -6,7 +6,7 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.message.IconType
-import com.dandi.nyummy.history.entity.MealHistoryVO
+import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
 
@@ -19,7 +19,7 @@ class ReanalyzeMealUseCase @Inject constructor(
     ttiHelper: TTIHelper,
 ) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
 
-    suspend operator fun invoke(mealId: Long): Result<MealHistoryVO> = try {
+    suspend operator fun invoke(mealId: Long): Result<MealAnalysisStatus> = try {
         Result.success(repository.reanalyzeMeal(mealId))
     } catch (e: HttpResponseException) {
         handleHttpError<HistoryErrorType>(

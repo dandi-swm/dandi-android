@@ -3,51 +3,35 @@ package com.dandi.nyummy.history.entity
 import kotlinx.serialization.Serializable
 
 /**
- * 하루의 영양 목표 달성 상태입니다. 캘린더 날짜 셀의 상태 마커와 범례에 사용합니다.
+ * 서버가 판정한 하루 영양 평가입니다(서버 enum `DailyNutritionEvaluation`과 같은 값).
+ * 앱은 판정하지 않고 서버 값을 그대로 씁니다.
  */
 @Serializable
-enum class DailyNutritionStatus {
-    /** 기록 자체가 없는 날 (마커 없음) */
-    NONE,
+enum class DailyNutritionEvaluation {
+    /** 목표에 맞게 먹은 날 */
+    POSITIVE,
 
-    /** 목표 범위 안 */
-    IN_RANGE,
+    /** 목표에서 벗어난 날 */
+    NEGATIVE,
 
-    /** 목표 범위 밖 */
-    OUT_OF_RANGE,
+    /** 기록이 없는 날 */
+    UNRECORDED,
 
-    /** 기록은 있으나 영양 판정이 없는 날 */
-    NOT_RECORDED,
-    ;
-
-    companion object {
-        private const val IN_RANGE_MIN_PERCENT = 85
-        private const val IN_RANGE_MAX_PERCENT = 105
-
-        /** 하루 누적 열량과 목표 열량으로 목표 범위 상태를 판정합니다. */
-        fun of(totalCalorieKcal: Int, targetCalorieKcal: Int, hasRecord: Boolean): DailyNutritionStatus =
-            when {
-                !hasRecord -> NOT_RECORDED
-                targetCalorieKcal <= 0 -> NOT_RECORDED
-                totalCalorieKcal * 100 in
-                    (targetCalorieKcal * IN_RANGE_MIN_PERCENT)..(targetCalorieKcal * IN_RANGE_MAX_PERCENT)
-                -> IN_RANGE
-
-                else -> OUT_OF_RANGE
-            }
-    }
+    /** 서버 값이 없거나 앱이 모르는 값 */
+    UNKNOWN,
 }
 
 /**
  * 캘린더 한 칸에 해당하는 하루 기록 요약입니다.
  *
+ * @property evaluation 서버가 판정한 하루 영양 평가
  * @property foodIconIds 셀에 노출할 음식 아이콘 식별자, 최대 2개
  * @property mealCount 그날의 식사 기록 수
  */
 @Serializable
 data class HistoryCalendarDayVO(
     val date: HistoryDateVO = HistoryDateVO(),
-    val status: DailyNutritionStatus = DailyNutritionStatus.NONE,
+    val evaluation: DailyNutritionEvaluation = DailyNutritionEvaluation.UNKNOWN,
     val foodIconIds: List<String> = emptyList(),
     val mealCount: Int = 0,
 )
