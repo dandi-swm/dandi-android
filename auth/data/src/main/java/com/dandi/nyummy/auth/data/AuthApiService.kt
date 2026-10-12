@@ -10,12 +10,14 @@ import com.dandi.nyummy.auth.data.dto.OAuthLoginDTO
 import com.dandi.nyummy.auth.data.dto.OAuthLoginRequestDTO
 import com.dandi.nyummy.auth.data.dto.RefreshTokenRequestDTO
 import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
+import com.dandi.nyummy.common.data.token.TokenAuthenticator
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.Header
 import retrofit2.http.POST
 
 /**
- * 회원가입 · 로그인 · 이메일 인증 API
+ * 회원가입 · 로그인 · 로그아웃 · 이메일 인증 API
  */
 interface AuthApiService {
     /** 로그인 */
@@ -41,6 +43,15 @@ interface AuthApiService {
     /** 토큰 재발급 */
     @POST("${AUTH_PATH}/refresh")
     suspend fun refresh(@Body request: RefreshTokenRequestDTO): Response<AuthTokenDTO>
+
+    /**
+     * 로그아웃. 서버는 액세스 토큰으로 사용자를 찾아 RefreshToken과 디바이스 토큰을 지운다(204, 이미 지웠어도 성공).
+     * 이 서비스는 인증 헤더가 붙지 않는 클라이언트라 [authorization]에 `Bearer {액세스 토큰}`을 직접 넘긴다.
+     */
+    @POST("${AUTH_PATH}/logout")
+    suspend fun logout(
+        @Header(TokenAuthenticator.HEADER_AUTHORIZATION) authorization: String,
+    ): Response<Unit>
 
     companion object {
         const val AUTH_PATH = "/api/v1/auth"

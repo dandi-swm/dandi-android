@@ -17,7 +17,10 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AuthDataModule {
-    /** 로그인/회원가입/이메일 인증은 전부 비인증 엔드포인트 — 인증 스택 없는 Retrofit 으로 생성한다. */
+    /**
+     * 로그인/회원가입/이메일 인증은 전부 비인증 엔드포인트 — 인증 스택 없는 Retrofit 으로 생성한다.
+     * 로그아웃만 인증이 필요한데, 이 서비스에 두고 액세스 토큰을 헤더로 직접 넘긴다(재발급은 타지 않는다).
+     */
     @Provides
     @Singleton
     fun provideAuthApiService(@NoAuthApi retrofit: Retrofit): AuthApiService =

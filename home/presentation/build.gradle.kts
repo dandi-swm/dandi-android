@@ -62,6 +62,7 @@ dependencies {
     implementation(project(":history:domain"))
     implementation(project(":history:entity"))
     implementation(project(":mailbox:domain"))
+    implementation(project(":settings:domain"))
     implementation(project(":common:presentation"))
 
     implementation(libs.androidx.lifecycle.runtime.compose)

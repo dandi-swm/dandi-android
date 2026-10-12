@@ -64,6 +64,11 @@ include(":mailbox:domain")
 include(":mailbox:data")
 include(":mailbox:entity")
 
+include(":settings:presentation")
+include(":settings:domain")
+include(":settings:data")
+include(":settings:entity")
+
 include(":collection:presentation")
 include(":collection:domain")
 include(":collection:data")

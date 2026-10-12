@@ -10,6 +10,7 @@ import com.dandi.nyummy.auth.data.dto.OAuthLoginDTO
 import com.dandi.nyummy.auth.data.dto.OAuthLoginRequestDTO
 import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
 import com.dandi.nyummy.common.data.BaseRemoteDataSource
+import com.dandi.nyummy.common.data.token.TokenAuthenticator
 import javax.inject.Inject
 
 class AuthDataSource(
@@ -30,4 +31,7 @@ class AuthDataSource(
 
     suspend fun confirmEmailVerification(request: EmailVerificationConfirmRequestDTO): EmailVerifiedDTO =
         checkResponse(apiService.confirmEmailVerification(request))
+
+    suspend fun logout(accessToken: String) =
+        checkResponse(apiService.logout("${TokenAuthenticator.BEARER_PREFIX}$accessToken"))
 }

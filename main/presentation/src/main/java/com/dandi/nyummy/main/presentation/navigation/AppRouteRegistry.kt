@@ -31,6 +31,10 @@ import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.onboarding.presentation.OnboardingPage
 import com.dandi.nyummy.quest.domain.QuestPage
 import com.dandi.nyummy.quest.presentation.QuestPage
+import com.dandi.nyummy.settings.domain.MealTimeSettingPage
+import com.dandi.nyummy.settings.domain.SettingsPage
+import com.dandi.nyummy.settings.presentation.main.SettingsPage
+import com.dandi.nyummy.settings.presentation.mealtime.MealTimeSettingPage
 import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.shop.presentation.ShopPage
 
@@ -153,6 +157,27 @@ val appRoutes: List<AppRoute> = listOf(
         render = { args ->
             InquiryDetailPage(inquiryId = args[InquiryDetailRoute.ARG_INQUIRY_ID]?.toLongOrNull() ?: 0L)
         },
+    ),
+    AppRoute(
+        path = SettingsPage.PATH,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(HomePage.PATH),
+                GenericNavKey(SettingsPage.PATH, args),
+            )
+        },
+        render = { SettingsPage() },
+    ),
+    AppRoute(
+        path = MealTimeSettingPage.PATH,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(HomePage.PATH),
+                GenericNavKey(SettingsPage.PATH),
+                GenericNavKey(MealTimeSettingPage.PATH, args),
+            )
+        },
+        render = { MealTimeSettingPage() },
     ),
     AppRoute(
         // 하단 탭에서 빠져 링크로만 열린다. 기능을 열 때 진입 위치를 다시 정한다.

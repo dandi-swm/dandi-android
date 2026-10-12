@@ -15,6 +15,8 @@ import com.dandi.nyummy.auth.entity.SocialCredentialVO
 import com.dandi.nyummy.auth.entity.SocialLoginVO
 import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.common.data.token.TokenProvider
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 
 class AuthRepositoryImpl(
     private val dataSource: AuthDataSource,
@@ -86,6 +88,18 @@ class AuthRepositoryImpl(
                 emailChallengeToken = emailChallengeToken,
             ),
         ).toVO()
+
+    override suspend fun logout() {
+        // 서버가 실패해도 이 기기의 토큰은 꼭 지운다. 지우지 않으면 로그아웃했는데도 로그인된 채로 남는다.
+        try {
+            // 서버는 액세스 토큰으로 사용자를 찾는다. 토큰이 없으면 지울 세션을 알 수 없으니 부르지 않는다.
+            // 토큰이 만료돼 401이 나면 재발급하지 않고 실패로 둔다(이 서비스는 인증 클라이언트가 아니다).
+            tokenProvider.accessToken?.takeIf { it.isNotBlank() }?.let { dataSource.logout(it) }
+        } finally {
+            // 요청이 취소돼도(화면을 나가는 등) 지운다. 취소된 코루틴에서는 suspend 저장도 바로 취소되기 때문이다.
+            withContext(NonCancellable) { tokenProvider.clear() }
+        }
+    }
 
     /** 발급 토큰 영속화 — 이후 요청부터 인증 헤더/Authenticator 가 사용한다. */
     private suspend fun saveToken(token: AuthTokenVO) {
