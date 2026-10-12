@@ -7,6 +7,7 @@ import com.dandi.nyummy.history.domain.DeleteMealUseCase
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.history.domain.GetMealDetailUseCase
 import com.dandi.nyummy.history.domain.GetMonthlyMealsUseCase
+import com.dandi.nyummy.history.domain.OutdatedMealException
 import com.dandi.nyummy.history.domain.ReanalyzeMealUseCase
 import com.dandi.nyummy.history.domain.UpdateMealNameUseCase
 import com.dandi.nyummy.history.entity.DailyNutritionVO
@@ -440,7 +441,11 @@ class HistoryViewModel @Inject constructor(
                         ),
                     )
                 }
-                .onFailure { dispatch(HistoryReducerEvent.MealReanalyzeFailed(mealId)) }
+                .onFailure { error ->
+                    dispatch(HistoryReducerEvent.MealReanalyzeFailed(mealId))
+                    // 이미 다시 분석했거나 지운 식사라 실패 카드가 낡았다. 목록을 새로 받아 지금 상태를 보여 준다.
+                    if (error is OutdatedMealException) refreshSelectedDayQuietly()
+                }
         }
     }
 
