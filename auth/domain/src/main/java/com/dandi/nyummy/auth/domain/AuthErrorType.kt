@@ -10,7 +10,7 @@ import com.dandi.nyummy.common.domain.error.HttpErrorType
  * 서버 `message` 는 디버그용이라 화면에는 [errorMsg] 만 보여 준다.
  * 서버의 에러 코드(AuthErrorCode, EmailErrorCode)가 바뀌면 여기도 같이 고친다.
  *
- * `api.auth.unauthorized`는 로그인 세션 실패 전용이라 여기 두지 않는다. 공통 처리(로그인 만료)가 맡는다.
+ * `api.auth.unauthorized`, `api.auth.tokenExpired`는 로그인 세션 실패 전용이라 여기 두지 않는다. 공통 처리(로그인 만료)가 맡는다.
  */
 enum class AuthErrorType(
     override val type: String,
