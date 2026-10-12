@@ -37,8 +37,7 @@ class FinishOnboardingUseCase @Inject constructor(
         }
         createCat(catName.trim(), mealTimes).onFailure { return Result.failure(it) }
 
-        // 기기 저장이 실패해도 홈으로 간다. 고양이는 이미 만들었고, 식사 시각은 나중에 다시 정할 수 있다.
-        runIgnoringFailure { repository.saveMealTimes(mealTimes) }
+        // 기기 저장이 실패해도 홈으로 간다. 고양이는 이미 만들었다. 식사 시각은 고양이와 함께 서버에 저장했다.
         runIgnoringFailure { repository.markOnboardingComplete() }
         navigationHelper.navigateToAsRoot(HomePage)
         return Result.success(Unit)
