@@ -2,6 +2,7 @@ package com.dandi.nyummy.history.data
 
 import com.dandi.nyummy.history.data.dto.DailyMealsDTO
 import com.dandi.nyummy.history.data.dto.MealDTO
+import com.dandi.nyummy.history.data.dto.MealStatusDTO
 import com.dandi.nyummy.history.data.dto.MonthlyMealsDTO
 import retrofit2.Response
 import retrofit2.http.DELETE
@@ -42,8 +43,8 @@ interface HistoryApiService {
     ): Response<MealDTO>
 
     /** 식사 재분석 요청 */
-    @POST("$MEALS_PATH/{mealId}/$ANALYSIS_PATH")
-    suspend fun reanalyzeMeal(@Path("mealId") mealId: Long): Response<MealDTO>
+    @POST("$MEALS_PATH/{mealId}/analysis")
+    suspend fun reanalyzeMeal(@Path("mealId") mealId: Long): Response<MealStatusDTO>
 
     /** 식사 삭제 */
     @DELETE("$MEALS_PATH/{mealId}")
@@ -51,8 +52,5 @@ interface HistoryApiService {
 
     companion object {
         const val MEALS_PATH = "/api/v1/meals"
-
-        // TODO 재분석 엔드포인트 스펙 확정 전 잠정 경로. 확정되면 이 상수만 수정한다.
-        const val ANALYSIS_PATH = "analysis"
     }
 }

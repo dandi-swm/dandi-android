@@ -55,23 +55,10 @@
         <!-- 앱이 백그라운드일 때 OS가 서버 푸시를 띄우는 기본 아이콘과 채널 -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_stat_nyami" />
+            android:resource="@drawable/ic_stat_nyummy" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="nyami_reminder" />
-
-        <!-- 냐미 무드 홈 위젯 (임시 구현) -->
-        <receiver
-            android:name=".widget.NyamiWidgetReceiver"
-            android:exported="true"
-            android:label="@string/nyami_widget_description">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/nyami_widget_info" />
-        </receiver>
+            android:value="nyummy_reminder" />
     </application>
 
 </manifest>

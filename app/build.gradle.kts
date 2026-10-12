@@ -186,10 +186,9 @@ dependencies {
     implementation(project(":onboarding:data"))
     implementation(project(":onboarding:entity"))
 
-    // 서버 푸시(FCM) 수신, 냐미 홈 위젯
+    // 서버 푸시(FCM) 수신
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
-    implementation(libs.androidx.glance.appwidget)
 
     implementation(libs.hilt.android)
     debugImplementation(libs.leakcanary)

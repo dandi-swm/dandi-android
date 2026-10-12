@@ -432,11 +432,11 @@ class HistoryViewModel @Inject constructor(
         // 실패 시 에러 안내는 UseCase 의 스낵바가 담당하고, 카드는 다시 재시도할 수 있는 상태로 되돌린다.
         viewModelScope.launch {
             reanalyzeMeal(id)
-                .onSuccess { meal ->
+                .onSuccess { status ->
                     dispatch(
                         HistoryReducerEvent.MealReanalyzeSucceeded(
                             mealId = mealId,
-                            status = meal.status,
+                            status = status,
                         ),
                     )
                 }

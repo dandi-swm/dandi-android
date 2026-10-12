@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 리마인드 알림 채널 -->
-    <string name="nyami_reminder_channel_name">냐미 리마인드</string>
-    <string name="nyami_reminder_channel_description">식사 기록을 잊지 않도록 냐미가 보내는 알림</string>
-
-    <!-- 위젯 -->
-    <string name="nyami_widget_description">냐미의 기분으로 오늘의 식사 기록 상태를 보여줘요</string>
-    <string name="nyami_widget_msg_happy">오늘도 냠냠 기록 완료!</string>
-    <string name="nyami_widget_msg_sad">오늘 밥 기록 아직이에요…</string>
-    <string name="nyami_widget_msg_crying">냐미가 기다리다 울어요 😿</string>
-    <string name="nyami_widget_msg_angry">지금 당장 기록하라냥!!</string>
+    <string name="nyummy_reminder_channel_name">냐미 리마인드</string>
+    <string name="nyummy_reminder_channel_description">식사 기록을 잊지 않도록 냐미가 보내는 알림</string>
 </resources>

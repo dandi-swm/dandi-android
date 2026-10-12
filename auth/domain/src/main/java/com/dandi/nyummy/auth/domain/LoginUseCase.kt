@@ -42,6 +42,10 @@ class LoginUseCase @Inject constructor(
     } catch (e: IOException) {
         showError(NETWORK_ERROR_MESSAGE)
         Result.failure(e)
+    } catch (e: Exception) {
+        // 응답을 읽지 못한 경우(본문 없는 200 등)에도 앱이 죽지 않게 기본 안내를 한다.
+        showError(LOGIN_FAILED_MESSAGE)
+        Result.failure(e)
     }
 
     private fun showError(message: String) {

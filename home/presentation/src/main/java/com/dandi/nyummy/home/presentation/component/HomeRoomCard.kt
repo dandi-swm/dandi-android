@@ -77,7 +77,7 @@ internal fun HomeRoomCard(
     onToggleMenu: () -> Unit,
     onMyRoomClick: () -> Unit,
     onShareFriendClick: () -> Unit,
-    onNyamiStatusClick: () -> Unit,
+    onNyummyStatusClick: () -> Unit,
     modifier: Modifier = Modifier,
     bottom: @Composable () -> Unit,
 ) {
@@ -88,8 +88,8 @@ internal fun HomeRoomCard(
             .background(NyummyTheme.colors.bg.sceneRoomFloor),
     ) {
         val roomScale = max(maxWidth / RoomDesignWidth, maxHeight / RoomDesignHeight)
-        val nyamiSize = (NyamiDesignSize * roomScale).coerceAtLeast(NyamiMinSize)
-        val nyamiTop = maxHeight - NyamiDesignBottom * roomScale - nyamiSize
+        val nyummySize = (NyummyDesignSize * roomScale).coerceAtLeast(NyummyMinSize)
+        val nyummyTop = maxHeight - NyummyDesignBottom * roomScale - nyummySize
         Image(
             bitmap = background,
             contentDescription = null,
@@ -98,25 +98,25 @@ internal fun HomeRoomCard(
             filterQuality = FilterQuality.None,
             modifier = Modifier.fillMaxSize(),
         )
-        val nyamiModifier = Modifier
+        val nyummyModifier = Modifier
             .align(Alignment.TopCenter)
-            .offset(y = nyamiTop)
-            .size(nyamiSize)
+            .offset(y = nyummyTop)
+            .size(nyummySize)
         when {
-            catMotion != null -> HomeNyami(
+            catMotion != null -> HomeNyummy(
                 motion = catMotion,
-                displayWidth = nyamiSize,
+                displayWidth = nyummySize,
                 onClick = onCatClick,
                 onMotionFinished = { onCatMotionFinished(catMotion.playId) },
                 onShown = onCatShown,
                 // 바깥 냐미가 이미 설명을 전달하므로 안쪽 기본 냐미는 설명을 빼서 두 번 읽히지 않게 한다.
                 fallback = {
-                    HomeFallbackNyami(hasRecordedToday = hasRecordedToday, describe = false, modifier = Modifier.fillMaxSize())
+                    HomeFallbackNyummy(hasRecordedToday = hasRecordedToday, describe = false, modifier = Modifier.fillMaxSize())
                 },
-                modifier = nyamiModifier,
+                modifier = nyummyModifier,
             )
             useFallbackCat -> {
-                HomeFallbackNyami(hasRecordedToday = hasRecordedToday, modifier = nyamiModifier)
+                HomeFallbackNyummy(hasRecordedToday = hasRecordedToday, modifier = nyummyModifier)
                 // 앱에 든 기본 냐미는 받을 이미지가 없어 그리는 즉시 보인다. 그려진 다음 프레임에 알린다.
                 LaunchedEffect(Unit) {
                     withFrameNanos { }
@@ -131,14 +131,14 @@ internal fun HomeRoomCard(
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = NyummyTheme.spacing.gutter)
                 .widthIn(max = BubbleMaxWidth)
-                .offset(y = -(maxHeight - nyamiTop - nyamiSize * BubbleOverlapRatio)),
+                .offset(y = -(maxHeight - nyummyTop - nyummySize * BubbleOverlapRatio)),
         )
         HomeRoomMenu(
             isExpanded = isMenuExpanded,
             onToggle = onToggleMenu,
             onMyRoomClick = onMyRoomClick,
             onShareFriendClick = onShareFriendClick,
-            onNyamiStatusClick = onNyamiStatusClick,
+            onNyummyStatusClick = onNyummyStatusClick,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(NyummyTheme.spacing.s12),
@@ -159,7 +159,7 @@ internal fun HomeRoomCard(
  * 누르면 [onClick]. 시트 이미지를 받지 못하면 [fallback]을 보여 준다.
  */
 @Composable
-private fun HomeNyami(
+private fun HomeNyummy(
     motion: HomeCatMotion,
     displayWidth: Dp,
     onClick: () -> Unit,
@@ -191,7 +191,7 @@ private fun HomeNyami(
  * 오늘 기록 전이면 엎드려 조는 동작을 반복하고, 기록 후면 일어나 앉은 뒤 그 자세로 머문다.
  */
 @Composable
-private fun HomeFallbackNyami(
+private fun HomeFallbackNyummy(
     hasRecordedToday: Boolean,
     modifier: Modifier = Modifier,
     describe: Boolean = true,
@@ -225,7 +225,7 @@ private fun HomeRoomMenu(
     onToggle: () -> Unit,
     onMyRoomClick: () -> Unit,
     onShareFriendClick: () -> Unit,
-    onNyamiStatusClick: () -> Unit,
+    onNyummyStatusClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(NyummyTheme.radius.full)
@@ -244,7 +244,7 @@ private fun HomeRoomMenu(
             Row(horizontalArrangement = Arrangement.spacedBy(MenuGap)) {
                 RoomMenuButton(R.drawable.home_ic_my_room, stringResource(R.string.home_menu_my_room), onMyRoomClick)
                 RoomMenuButton(R.drawable.home_ic_share_friend, stringResource(R.string.home_menu_share_friend), onShareFriendClick)
-                RoomMenuButton(R.drawable.home_ic_nyami_status, stringResource(R.string.home_menu_nyami_status), onNyamiStatusClick)
+                RoomMenuButton(R.drawable.home_ic_nyummy_status, stringResource(R.string.home_menu_nyummy_status), onNyummyStatusClick)
             }
         }
         RoomMenuButton(
@@ -283,9 +283,9 @@ private fun RoomMenuButton(
  */
 private val RoomDesignWidth = 430.dp
 private val RoomDesignHeight = 564.dp
-private val NyamiDesignSize = 155.dp
-private val NyamiDesignBottom = 116.dp
-private val NyamiMinSize = 120.dp
+private val NyummyDesignSize = 155.dp
+private val NyummyDesignBottom = 116.dp
+private val NyummyMinSize = 120.dp
 
 /** 말풍선 꼬리 끝이 냐미 위쪽에서 이만큼(냐미 크기 대비) 내려와 머리에 닿는다. 스프라이트 위쪽 여백 때문이다. */
 private const val BubbleOverlapRatio = 0.267f
@@ -298,7 +298,7 @@ private val MenuGap = 6.dp
 private const val MenuAnimationMillis = 180
 
 private val SleepLoopSheet = NyummySpriteSheet(
-    imageRes = R.drawable.nyami_sleep_loop_grid_136,
+    imageRes = R.drawable.nyummy_sleep_loop_grid_136,
     frameWidth = 136,
     frameHeight = 136,
     totalFrames = 8,
@@ -307,7 +307,7 @@ private val SleepLoopSheet = NyummySpriteSheet(
 )
 
 private val WakeSheet = NyummySpriteSheet(
-    imageRes = R.drawable.nyami_wake_grid_136,
+    imageRes = R.drawable.nyummy_wake_grid_136,
     frameWidth = 136,
     frameHeight = 136,
     totalFrames = 17,
@@ -316,7 +316,7 @@ private val WakeSheet = NyummySpriteSheet(
 )
 
 private val DozeSheet = NyummySpriteSheet(
-    imageRes = R.drawable.nyami_doze_grid_136,
+    imageRes = R.drawable.nyummy_doze_grid_136,
     frameWidth = 136,
     frameHeight = 136,
     totalFrames = 17,
@@ -340,7 +340,7 @@ private fun HomeRoomCardPreview() {
             onToggleMenu = {},
             onMyRoomClick = {},
             onShareFriendClick = {},
-            onNyamiStatusClick = {},
+            onNyummyStatusClick = {},
             bottom = {},
         )
     }

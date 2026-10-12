@@ -73,7 +73,7 @@ data class DailyMealDTO(
         proteinGram = protein ?: 0,
         fatGram = fat ?: 0,
         orderIndex = orderIndex,
-        status = status.toMealAnalysisStatus(name = name, calorieKcal = calory),
+        status = status.toMealAnalysisStatus(),
     )
 }
 

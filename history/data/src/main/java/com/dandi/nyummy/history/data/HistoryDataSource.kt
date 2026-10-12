@@ -3,6 +3,7 @@ package com.dandi.nyummy.history.data
 import com.dandi.nyummy.common.data.BaseRemoteDataSource
 import com.dandi.nyummy.history.data.dto.DailyMealsDTO
 import com.dandi.nyummy.history.data.dto.MealDTO
+import com.dandi.nyummy.history.data.dto.MealStatusDTO
 import com.dandi.nyummy.history.data.dto.MonthlyMealsDTO
 
 class HistoryDataSource(
@@ -20,7 +21,7 @@ class HistoryDataSource(
     suspend fun updateMealName(mealId: Long, name: String): MealDTO =
         checkResponse(apiService.updateMealName(mealId, name))
 
-    suspend fun reanalyzeMeal(mealId: Long): MealDTO =
+    suspend fun reanalyzeMeal(mealId: Long): MealStatusDTO =
         checkResponse(apiService.reanalyzeMeal(mealId))
 
     suspend fun deleteMeal(mealId: Long) =

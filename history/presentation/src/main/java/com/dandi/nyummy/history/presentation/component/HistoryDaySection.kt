@@ -125,7 +125,7 @@ internal fun HistoryDaySection(
                         meal.isAnalyzing || meal.id in reanalyzingMealIds -> AnalyzingMealRow(meal)
                         meal.isAnalysisFailed -> FailedMealRow(
                             meal = meal,
-                            onRetry = { onRetryAnalysis(meal.id) },
+                            onRetry = if (meal.canRetryAnalysis) ({ onRetryAnalysis(meal.id) }) else null,
                             onDelete = { onDeleteFailedMeal(meal.id) },
                         )
                         else -> CompletedMealRow(meal = meal, onClick = { onClickMeal(meal.id) })
@@ -226,9 +226,9 @@ private fun AnalyzingMealRow(meal: MealHistoryVO) {
     )
 }
 
-/** 사진에서 음식을 찾지 못한 식사. 다시 분석하거나 기록을 지울 수 있다. */
+/** 사진에서 음식을 찾지 못한 식사. 기록을 지울 수 있고, 서버가 다시 분석할 수 있는 상태면 재분석도 할 수 있다. */
 @Composable
-private fun FailedMealRow(meal: MealHistoryVO, onRetry: () -> Unit, onDelete: () -> Unit) {
+private fun FailedMealRow(meal: MealHistoryVO, onRetry: (() -> Unit)?, onDelete: () -> Unit) {
     val failedDescription = stringResource(R.string.history_analysis_failed_description)
     MealRowFrame(
         leading = { NyummyPoseImage(pose = NyummyPose.Worry, size = LeadingSize) },
@@ -243,13 +243,15 @@ private fun FailedMealRow(meal: MealHistoryVO, onRetry: () -> Unit, onDelete: ()
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
             ) {
-                NyummyTextButton(
-                    text = stringResource(R.string.history_analysis_retry),
-                    onClick = onRetry,
-                    size = NyummyTextButtonSize.S,
-                    leadingIcon = CommonR.drawable.nyummy_ic_refresh_cw,
-                )
-                NyummyVerticalDivider(height = ActionDividerHeight)
+                if (onRetry != null) {
+                    NyummyTextButton(
+                        text = stringResource(R.string.history_analysis_retry),
+                        onClick = onRetry,
+                        size = NyummyTextButtonSize.S,
+                        leadingIcon = CommonR.drawable.nyummy_ic_refresh_cw,
+                    )
+                    NyummyVerticalDivider(height = ActionDividerHeight)
+                }
                 NyummyTextButton(
                     text = stringResource(R.string.history_analysis_delete),
                     onClick = onDelete,

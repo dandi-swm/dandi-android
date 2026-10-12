@@ -1,7 +1,7 @@
 package com.dandi.nyummy.history.data.dto
 
 import com.dandi.nyummy.history.data.util.toHistoryDateVO
-import com.dandi.nyummy.history.entity.DailyNutritionStatus
+import com.dandi.nyummy.history.entity.DailyNutritionEvaluation
 import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import kotlinx.serialization.Serializable
@@ -51,7 +51,7 @@ data class MonthlyMealDayDTO(
         val iconIds = foodIconIds.orEmpty().map { it.toString() }.take(2)
         return HistoryCalendarDayVO(
             date = date.toHistoryDateVO(),
-            status = dailyNutritionEvaluation.toDailyNutritionStatus(),
+            evaluation = dailyNutritionEvaluation.toDailyNutritionEvaluation(),
             foodIconIds = iconIds,
             // 월간 API 는 식사 수를 내려주지 않으므로 아이콘 수로 대체한다(캘린더 그리드는 미사용).
             mealCount = iconIds.size,
@@ -59,10 +59,10 @@ data class MonthlyMealDayDTO(
     }
 }
 
-/** 서버의 하루 영양 평가 문자열을 [DailyNutritionStatus] 로 매핑한다. */
-private fun String?.toDailyNutritionStatus(): DailyNutritionStatus = when (this) {
-    "POSITIVE" -> DailyNutritionStatus.IN_RANGE
-    "NEGATIVE" -> DailyNutritionStatus.OUT_OF_RANGE
-    "UNRECORDED" -> DailyNutritionStatus.NOT_RECORDED
-    else -> DailyNutritionStatus.NONE
+/** 서버의 하루 영양 평가 문자열을 [DailyNutritionEvaluation] 로 매핑한다. 모르는 값은 UNKNOWN. */
+private fun String?.toDailyNutritionEvaluation(): DailyNutritionEvaluation = when (this) {
+    "POSITIVE" -> DailyNutritionEvaluation.POSITIVE
+    "NEGATIVE" -> DailyNutritionEvaluation.NEGATIVE
+    "UNRECORDED" -> DailyNutritionEvaluation.UNRECORDED
+    else -> DailyNutritionEvaluation.UNKNOWN
 }

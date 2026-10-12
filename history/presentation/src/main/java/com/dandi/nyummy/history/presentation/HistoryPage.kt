@@ -25,7 +25,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
-import com.dandi.nyummy.history.entity.DailyNutritionStatus
+import com.dandi.nyummy.history.entity.DailyNutritionEvaluation
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
@@ -173,13 +173,13 @@ private fun previewUiState(): HistoryUIState {
     val records = mapOf(
         selectedDate to HistoryCalendarDayVO(
             date = selectedDate,
-            status = DailyNutritionStatus.IN_RANGE,
+            evaluation = DailyNutritionEvaluation.POSITIVE,
             foodIconIds = listOf("salad", "rice"),
             mealCount = 2,
         ),
         HistoryDateVO(2026, 7, 10) to HistoryCalendarDayVO(
             date = HistoryDateVO(2026, 7, 10),
-            status = DailyNutritionStatus.OUT_OF_RANGE,
+            evaluation = DailyNutritionEvaluation.NEGATIVE,
             foodIconIds = listOf("pasta"),
             mealCount = 1,
         ),

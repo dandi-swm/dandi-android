@@ -70,7 +70,7 @@ class HomeViewModel @Inject constructor(
             // TODO: 마이룸, 친구에게 공유, 냐미 상태 화면이 생기면 연결한다.
             HomeIntent.ClickMyRoom -> Unit
             HomeIntent.ClickShareFriend -> Unit
-            HomeIntent.ClickNyamiStatus -> Unit
+            HomeIntent.ClickNyummyStatus -> Unit
             HomeIntent.ToggleRoomMenu ->
                 dispatch(HomeReducerEvent.RoomMenuExpansionChanged(expanded = !currentState.isRoomMenuExpanded))
             HomeIntent.ClickTodayBar -> clickTodayBar()

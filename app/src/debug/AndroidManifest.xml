@@ -21,7 +21,7 @@
         <activity
             android:name="com.dandi.nyummy.debug.SpriteDebugActivity"
             android:exported="true"
-            android:label="Nyami Sprite Debug"
+            android:label="Nyummy Sprite Debug"
             android:theme="@style/Theme.Dandi" />
     </application>
 

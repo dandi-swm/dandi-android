@@ -2,6 +2,7 @@ package com.dandi.nyummy.history.domain
 
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
+import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
 
 interface HistoryRepository {
@@ -17,8 +18,8 @@ interface HistoryRepository {
     /** 식사 이름 수정 (PUT /api/v1/meals/{mealId}). 수정된 식사를 반환. */
     suspend fun updateMealName(mealId: Long, name: String): MealHistoryVO
 
-    /** 식사 재분석 요청 (POST /api/v1/meals/{mealId}/analysis). 갱신된 상태의 식사를 반환. */
-    suspend fun reanalyzeMeal(mealId: Long): MealHistoryVO
+    /** 식사 재분석 요청 (POST /api/v1/meals/{mealId}/analysis). 요청 뒤의 분석 상태를 반환. */
+    suspend fun reanalyzeMeal(mealId: Long): MealAnalysisStatus
 
     /** 식사 삭제 (DELETE /api/v1/meals/{mealId}). */
     suspend fun deleteMeal(mealId: Long)

@@ -36,7 +36,7 @@ sealed interface HomeIntent : MviIntent {
     data object ClickShareFriend : HomeIntent
 
     /** 방 메뉴: 냐미 상태. */
-    data object ClickNyamiStatus : HomeIntent
+    data object ClickNyummyStatus : HomeIntent
 
     /** 오늘 식사 시트를 닫았다. */
     data object DismissTodaySheet : HomeIntent
