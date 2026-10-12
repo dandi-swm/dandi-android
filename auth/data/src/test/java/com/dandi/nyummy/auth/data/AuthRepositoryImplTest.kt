@@ -7,6 +7,7 @@ import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.common.domain.error.HttpResponseException
+import com.dandi.nyummy.common.domain.helper.PushTokenHelper
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -32,6 +33,7 @@ class AuthRepositoryImplTest {
     private lateinit var server: MockWebServer
     private lateinit var tokenProvider: FakeTokenProvider
     private lateinit var appPreferenceProvider: FakeAppPreferenceProvider
+    private lateinit var pushTokenHelper: FakePushTokenHelper
     private lateinit var repository: AuthRepositoryImpl
 
     private val json = Json {
@@ -51,7 +53,8 @@ class AuthRepositoryImplTest {
             .create(AuthApiService::class.java)
         tokenProvider = FakeTokenProvider()
         appPreferenceProvider = FakeAppPreferenceProvider()
-        repository = AuthRepositoryImpl(AuthDataSource(apiService), tokenProvider, appPreferenceProvider)
+        pushTokenHelper = FakePushTokenHelper()
+        repository = AuthRepositoryImpl(AuthDataSource(apiService), tokenProvider, appPreferenceProvider, pushTokenHelper)
     }
 
     @After
@@ -80,6 +83,8 @@ class AuthRepositoryImplTest {
 
         assertEquals("access-123", tokenProvider.accessToken)
         assertEquals("refresh-456", tokenProvider.refreshToken)
+        // 토큰을 저장한 뒤 이 기기의 푸시 토큰을 서버에 등록하도록 요청한다.
+        assertEquals(1, pushTokenHelper.registerCount)
     }
 
     @Test
@@ -170,6 +175,8 @@ class AuthRepositoryImplTest {
         assertEquals("social-verified", result.verifiedToken)
         assertNull(tokenProvider.accessToken)
         assertNull(tokenProvider.refreshToken)
+        // 아직 로그인 전이라 푸시 토큰도 등록하지 않는다.
+        assertEquals(0, pushTokenHelper.registerCount)
     }
 
     @Test
@@ -218,6 +225,17 @@ class AuthRepositoryImplTest {
         token = "id-token",
         nonce = "nonce-1",
     )
+
+    private class FakePushTokenHelper : PushTokenHelper {
+        var registerCount = 0
+            private set
+
+        override fun register(token: String?) {
+            registerCount++
+        }
+
+        override suspend fun deleteToken() = Unit
+    }
 
     private class FakeTokenProvider : TokenProvider {
         override var accessToken: String? = null

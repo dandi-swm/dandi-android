@@ -79,4 +79,40 @@ class RouteMatcherTest {
         )
         assertNull(route)
     }
+
+    @Test
+    fun `alias - external link maps to app route and path params become args`() {
+        val route = matchRoute(
+            segments = listOf("meals", "123"),
+            query = emptyMap(),
+            literalPaths = setOf("/history"),
+            templates = emptyList(),
+            aliases = listOf(LinkAlias("/meals/{mealId}", targetPath = "/history")),
+        )
+        assertEquals(NavRoute("/history", mapOf("mealId" to "123")), route)
+    }
+
+    @Test
+    fun `alias - app routes are tried before aliases`() {
+        val route = matchRoute(
+            segments = listOf("meals", "123"),
+            query = emptyMap(),
+            literalPaths = emptySet(),
+            templates = listOf(RoutePattern("/meals/{id}")),
+            aliases = listOf(LinkAlias("/meals/{mealId}", targetPath = "/history")),
+        )
+        assertEquals(NavRoute("/meals/{id}", mapOf("id" to "123")), route)
+    }
+
+    @Test
+    fun `alias - unmatched link returns null`() {
+        val route = matchRoute(
+            segments = listOf("meals"),
+            query = emptyMap(),
+            literalPaths = emptySet(),
+            templates = emptyList(),
+            aliases = listOf(LinkAlias("/meals/{mealId}", targetPath = "/history")),
+        )
+        assertNull(route)
+    }
 }

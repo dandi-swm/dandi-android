@@ -1,9 +1,7 @@
 package com.dandi.nyummy.history.presentation
 
-import com.dandi.nyummy.common.domain.analysis.MealAnalysisEvent
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.HttpResponseStatus
-import com.dandi.nyummy.common.domain.helper.MealAnalysisEventHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -27,7 +25,6 @@ import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
-import com.dandi.nyummy.history.presentation.model.isoDateOf
 import com.dandi.nyummy.history.presentation.model.HistoryMonth
 import com.dandi.nyummy.history.presentation.util.previousMonthOf
 import com.dandi.nyummy.history.presentation.util.todayDate
@@ -40,7 +37,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -62,7 +58,6 @@ class HistoryViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val repository = FakeHistoryRepository()
-    private val analysisEvents = FakeMealAnalysisEventHelper()
     private val navigationHelper = FakeNavigationHelper()
 
     @Before
@@ -542,25 +537,6 @@ class HistoryViewModelTest {
     }
 
     @Test
-    fun `분석 완료 알림을 받으면 로딩 표시 없이 선택 날짜를 다시 불러온다`() = runTest(testDispatcher) {
-        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-        val requestsBefore = repository.dailyRequests.size
-        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
-
-        analysisEvents.publish(
-            MealAnalysisEvent(mealId = "2", date = isoDateOf(viewModel.uiState.value.selectedDate)),
-        )
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertEquals(requestsBefore + 1, repository.dailyRequests.size)
-        assertFalse(state.isLoading)
-        assertEquals(2, state.completedMealCount)
-    }
-
-    @Test
     fun `조용한 새로고침이 끼어들어도 진행 중인 재분석 표시는 유지된다`() = runTest(testDispatcher) {
         repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
         val gate = CompletableDeferred<MealHistoryVO>()
@@ -570,10 +546,8 @@ class HistoryViewModelTest {
 
         viewModel.onIntent(HistoryIntent.ClickRetryAnalysis("2"))
         advanceUntilIdle()
-        // 다른 식사의 분석 완료 푸시가 같은 날짜의 조용한 새로고침을 트리거한다.
-        analysisEvents.publish(
-            MealAnalysisEvent(mealId = "1", date = isoDateOf(viewModel.uiState.value.selectedDate)),
-        )
+        // 다른 식사의 알림 링크가 같은 날짜의 조용한 새로고침을 트리거한다.
+        viewModel.onIntent(HistoryIntent.OpenMealFromLink(1L, eventId = "n-1"))
         advanceUntilIdle()
 
         // 서버 응답에는 "2"가 아직 FAILED 지만, 재분석 요청이 끝나기 전이므로 진행 표시를 유지한다.
@@ -585,15 +559,96 @@ class HistoryViewModelTest {
     }
 
     @Test
-    fun `다른 날짜의 분석 완료 알림은 화면을 다시 불러오지 않는다`() = runTest(testDispatcher) {
+    fun `링크로 열리면 처음 목록을 받은 뒤 그 식사 상세를 연다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+
+        val viewModel = createViewModel()
+        // 화면이 그려지자마자(처음 조회가 끝나기 전) 링크 인자가 들어온다.
+        viewModel.onIntent(HistoryIntent.OpenMealFromLink(2L, eventId = "n-1"))
+        advanceUntilIdle()
+
+        assertEquals("2", viewModel.uiState.value.mealDetail?.meal?.id)
+    }
+
+    @Test
+    fun `목록을 받은 뒤 링크가 오면 목록을 새로 받아 그 식사 상세를 연다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
         val viewModel = createViewModel()
         advanceUntilIdle()
         val requestsBefore = repository.dailyRequests.size
 
-        analysisEvents.publish(MealAnalysisEvent(mealId = "9", date = "1999-01-01"))
+        viewModel.onIntent(HistoryIntent.OpenMealFromLink(1L, eventId = "n-1"))
         advanceUntilIdle()
 
+        // 받을 때의 목록은 분석 전일 수 있어 다시 받은 뒤 연다.
+        assertEquals(requestsBefore + 1, repository.dailyRequests.size)
+        assertEquals("1", viewModel.uiState.value.mealDetail?.meal?.id)
+    }
+
+    @Test
+    fun `요청한 식사가 목록에 없거나 분석 전이면 목록만 보여 준다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.OpenMealFromLink(2L, eventId = "n-1"))
+        advanceUntilIdle()
+        assertNull(viewModel.uiState.value.mealDetail)
+
+        viewModel.onIntent(HistoryIntent.OpenMealFromLink(9L, eventId = "n-2"))
+        advanceUntilIdle()
+        assertNull(viewModel.uiState.value.mealDetail)
+    }
+
+    @Test
+    fun `탭을 오가며 같은 알림의 링크 인자로 다시 그려져도 상세를 또 열지 않는다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+        val viewModel = createViewModel()
+        viewModel.onIntent(HistoryIntent.OpenMealFromLink(2L, eventId = "n-1"))
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.DismissMealDetail)
+        advanceUntilIdle()
+        val requestsBefore = repository.dailyRequests.size
+
+        viewModel.onIntent(HistoryIntent.OpenMealFromLink(2L, eventId = "n-1"))
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.mealDetail)
         assertEquals(requestsBefore, repository.dailyRequests.size)
+    }
+
+    @Test
+    fun `같은 식사라도 다른 알림의 링크면 다시 연다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+        val viewModel = createViewModel()
+        // 분석 실패 알림을 연 뒤, 재분석 완료 알림이 같은 식사 링크로 온다.
+        viewModel.onIntent(HistoryIntent.OpenMealFromLink(2L, eventId = "failed"))
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.DismissMealDetail)
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.OpenMealFromLink(2L, eventId = "completed"))
+        advanceUntilIdle()
+
+        assertEquals("2", viewModel.uiState.value.mealDetail?.meal?.id)
+    }
+
+    @Test
+    fun `지난 식사의 링크면 그 식사의 날짜로 옮겨 상세를 연다`() = runTest(testDispatcher) {
+        val previous = HistoryMonth.of(todayDate()).plusMonths(-1)
+        val mealDate = HistoryDateVO(previous.year, previous.month, 15)
+        repository.mealOverride = { mealId -> MealHistoryVO(id = mealId.toString(), date = mealDate) }
+        repository.dailyOverride = { year, month, day ->
+            if (HistoryDateVO(year, month, day) == mealDate) dailyWithTwoMeals() else DailyMealHistoryVO.empty
+        }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.OpenMealFromLink(2L, eventId = "n-1"))
+        advanceUntilIdle()
+
+        assertEquals(mealDate, viewModel.uiState.value.selectedDate)
+        assertEquals("2", viewModel.uiState.value.mealDetail?.meal?.id)
     }
 
     @Test
@@ -695,7 +750,6 @@ class HistoryViewModelTest {
             reanalyzeMeal = ReanalyzeMealUseCase(
                 repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
             ),
-            mealAnalysisEventHelper = analysisEvents,
             navigationHelper = navigationHelper,
         )
     }
@@ -769,15 +823,6 @@ class HistoryViewModelTest {
         override suspend fun deleteMeal(mealId: Long) {
             deleteRequests += mealId
             deleteOverride(mealId)
-        }
-    }
-
-    private class FakeMealAnalysisEventHelper : MealAnalysisEventHelper {
-        private val _events = MutableSharedFlow<MealAnalysisEvent>(extraBufferCapacity = 8)
-        override val events: Flow<MealAnalysisEvent> = _events
-
-        override fun publish(event: MealAnalysisEvent) {
-            _events.tryEmit(event)
         }
     }
 
