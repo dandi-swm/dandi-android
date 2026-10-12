@@ -39,7 +39,7 @@ class FinishOnboardingUseCaseTest {
 
     @Test
     fun `이미 고양이가 있으면 만들어진 것으로 보고 온보딩을 마친다`() = runBlocking {
-        repository.error = httpException(409, OnboardingErrorType.CAT_ALREADY_EXISTS.type)
+        repository.error = httpException(409, "api.cat.alreadyExists")
 
         val result = useCase("냐미", MealTimesVO.default)
 
