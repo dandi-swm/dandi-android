@@ -26,6 +26,14 @@ enum class MealErrorType(
         type = "api.meal.duplicateImageKey",
         errorMsg = "이미 기록한 사진이에요",
     ),
+    /**
+     * 오늘 기록할 수 있는 횟수를 다 썼다(409). 지우거나 분석에 실패한 기록도 횟수에 들어간다.
+     * 사진 업로드 주소 발급과 식사 생성 두 단계에서 온다. 다시 시도해도 내일까지는 성공하지 않는다.
+     */
+    DAILY_COUNT_EXCEEDED(
+        type = "api.meal.dailyCountExceeded",
+        errorMsg = "오늘은 더 기록할 수 없어요. 내일 다시 기록해주세요",
+    ),
     UNSUPPORTED_CONTENT_TYPE(
         type = "api.s3.unsupportedContentType",
         errorMsg = "기록할 수 없는 사진 형식이에요. 다시 찍어주세요",
