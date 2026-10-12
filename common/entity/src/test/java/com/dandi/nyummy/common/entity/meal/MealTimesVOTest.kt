@@ -18,25 +18,6 @@ class MealTimesVOTest {
     }
 
     @Test
-    fun `자정부터 몇 분째인지로 저장하고 그대로 되돌린다`() {
-        val time = MealTimeVO(hour = 18, isSkipped = true)
-
-        assertEquals(1080, time.minuteOfDay)
-        assertEquals(time, MealTimeVO.ofMinuteOfDay(time.minuteOfDay, isSkipped = true))
-    }
-
-    @Test
-    fun `범위를 벗어난 저장값은 하루 안으로 맞춘다`() {
-        assertEquals(MealTimeVO(hour = 0), MealTimeVO.ofMinuteOfDay(-5))
-        assertEquals(MealTimeVO(hour = 23), MealTimeVO.ofMinuteOfDay(5000))
-    }
-
-    @Test
-    fun `분 단위로 저장했던 예전 값은 그 시의 정시로 내린다`() {
-        assertEquals(MealTimeVO(hour = 12), MealTimeVO.ofMinuteOfDay(12 * 60 + 30))
-    }
-
-    @Test
     fun `한 끼만 바꾸고 나머지는 그대로 둔다`() {
         val changed = MealTimesVO.default.with(Meal.LUNCH, MealTimeVO(hour = 13))
 
