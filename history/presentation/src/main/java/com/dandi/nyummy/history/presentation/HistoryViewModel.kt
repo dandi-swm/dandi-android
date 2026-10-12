@@ -59,10 +59,13 @@ class HistoryViewModel @Inject constructor(
     private var pendingMealId: String? = null
 
     /**
-     * 이 화면에서 이미 처리한 링크의 식사. 탭을 오가며 화면이 다시 그려질 때 같은 인자로 다시 오므로 한 번만 연다.
-     * 다른 식사의 링크는 새 화면(새 ViewModel)으로 열린다.
+     * 이 화면에서 이미 처리한 링크의 알림. 탭을 오가며 화면이 다시 그려질 때 같은 인자로 다시 오므로 한 번만 연다.
+     * 다른 알림의 링크는 라우트 키가 달라 새 화면(새 ViewModel)으로 열린다.
      */
-    private var handledLinkMealId: String? = null
+    private var handledLinkEventId: String? = null
+
+    /** 링크로 연 식사의 날짜를 찾는 job. 새 링크가 오면 이전 것을 취소한다. */
+    private var linkJob: Job? = null
 
     init {
         val today = currentState.selectedDate
@@ -88,7 +91,7 @@ class HistoryViewModel @Inject constructor(
 
             is HistoryIntent.ClickMeal -> openMealDetail(intent.mealId)
 
-            is HistoryIntent.OpenMealFromLink -> openMealFromLink(intent.mealId)
+            is HistoryIntent.OpenMealFromLink -> openMealFromLink(intent.mealId, intent.eventId)
 
             is HistoryIntent.ClickRetryAnalysis -> requestReanalysis(intent.mealId)
 
@@ -398,20 +401,19 @@ class HistoryViewModel @Inject constructor(
     }
 
     /**
-     * 알림의 식사 상세 링크(`/meals/{mealId}`)로 열렸다. 분석 결과 알림은 오늘 기록한 식사라 오늘 목록에서 찾는다.
-     * 받은 시점의 목록은 분석 전 상태일 수 있어 목록을 새로 받은 뒤 연다.
+     * 알림의 식사 상세 링크(`/meals/{mealId}`)로 열렸다. 과거 식사의 재분석 알림이나 자정을 넘겨 누른 알림도 있어서,
+     * 식사를 먼저 조회해 그 날짜를 연다(날짜를 모르면 오늘). 받은 시점의 목록은 분석 전 상태일 수 있어 그날 목록을 새로 받은 뒤 연다.
      */
-    private fun openMealFromLink(mealId: Long) {
-        val id = mealId.toString()
-        if (id == handledLinkMealId) return
-        handledLinkMealId = id
-        pendingMealId = id
-        val today = todayDate()
-        when {
-            // 진행 중인 조회(화면을 처음 열 때의 조회 등)가 끝나면 연다.
-            loadJob?.isActive == true -> Unit
-            currentState.selectedDate != today -> selectDate(today)
-            else -> refreshSelectedDayQuietly()
+    private fun openMealFromLink(mealId: Long, eventId: String) {
+        if (eventId == handledLinkEventId) return
+        handledLinkEventId = eventId
+        linkJob?.cancel()
+        linkJob = viewModelScope.launch {
+            val date = getMealDetail(mealId).getOrNull()?.date?.takeUnless { it.isEmpty } ?: todayDate()
+            // 화면을 처음 열 때의 조회가 끝난 뒤에 날짜를 옮긴다. 중간에 끊으면 캘린더가 빈 채로 남는다.
+            loadJob?.join()
+            pendingMealId = mealId.toString()
+            if (date != currentState.selectedDate) selectDate(date) else refreshSelectedDayQuietly()
         }
     }
 

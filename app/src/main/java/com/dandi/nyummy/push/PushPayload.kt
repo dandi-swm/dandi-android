@@ -1,5 +1,6 @@
 package com.dandi.nyummy.push
 
+import com.dandi.nyummy.common.domain.navigation.LinkArgs
 import com.dandi.nyummy.main.presentation.deeplink.PUSH_APP_LINK_KEY
 
 /**
@@ -17,7 +18,7 @@ data class PushPayload(
     val appLink: String?,
 ) {
     companion object {
-        const val KEY_NOTIFICATION_ID = "notificationId"
+        const val KEY_NOTIFICATION_ID = LinkArgs.NOTIFICATION_ID
         const val KEY_TITLE = "title"
         const val KEY_BODY = "body"
 

@@ -189,7 +189,8 @@ fun handleResetTo(route: NavRoute, backStack: NavBackStack<NavKey>) {
 internal fun MutableList<NavKey>.bringTabToFront(key: GenericNavKey) {
     val isSameTab = { entry: NavKey -> (entry as? GenericNavKey)?.path == key.path }
     val target = if (key.args.isEmpty()) lastOrNull(isSameTab) ?: key else key
-    if (lastOrNull() == target) return
+    // 맨 위가 이미 그 엔트리여도, 앞쪽에 같은 탭이 남아 있으면 정리한다.
+    if (lastOrNull() == target && count(isSameTab) == 1) return
     removeAll(isSameTab)
     add(target)
 }

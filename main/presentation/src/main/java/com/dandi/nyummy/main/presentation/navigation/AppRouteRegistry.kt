@@ -12,6 +12,7 @@ import com.dandi.nyummy.auth.presentation.SignUpPage
 import com.dandi.nyummy.collection.domain.CollectionPage
 import com.dandi.nyummy.collection.presentation.CollectionPage
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
+import com.dandi.nyummy.common.domain.navigation.LinkArgs
 import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.history.presentation.HistoryPage
 import com.dandi.nyummy.home.domain.HomePage
@@ -123,7 +124,12 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = HistoryPage.PATH,
         isBottomTab = true,
-        render = { args -> HistoryPage(openMealId = args[HistoryPage.ARG_MEAL_ID]?.toLongOrNull()) },
+        render = { args ->
+            HistoryPage(
+                openMealId = args[HistoryPage.ARG_MEAL_ID]?.toLongOrNull(),
+                linkEventId = args[LinkArgs.NOTIFICATION_ID],
+            )
+        },
     ),
     AppRoute(
         path = MailboxPage.PATH,

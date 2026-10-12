@@ -13,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.dandi.nyummy.R
+import com.dandi.nyummy.common.domain.navigation.LinkArgs
 import com.dandi.nyummy.main.presentation.MainActivity
 
 /**
@@ -73,7 +74,7 @@ object PushNotifier {
                 Uri.parse(deepLink ?: DEFAULT_DEEP_LINK),
                 context,
                 MainActivity::class.java,
-            ),
+            ).putExtra(LinkArgs.NOTIFICATION_ID, notificationId),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
 

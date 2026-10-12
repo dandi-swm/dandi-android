@@ -26,6 +26,11 @@ internal fun String?.toHistoryDateVO(): HistoryDateVO {
 internal fun String?.toDisplayTime(): String =
     KstTime.parseIsoToKstOrNull(this)?.hourMinuteLabel.orEmpty()
 
+/** ISO date-time 문자열의 **KST 기준** 날짜. 파싱 실패 시 [HistoryDateVO.empty]. */
+internal fun String?.toKstHistoryDate(): HistoryDateVO =
+    KstTime.parseIsoToKstOrNull(this)?.let { HistoryDateVO(year = it.year, month = it.month, day = it.day) }
+        ?: HistoryDateVO.empty
+
 /** ISO date-time 문자열을 정렬용 epoch millis 로 변환한다. 파싱 실패 시 null. */
 internal fun String?.toKstEpochMillisOrNull(): Long? =
     KstTime.parseIsoToEpochMillisOrNull(this)
