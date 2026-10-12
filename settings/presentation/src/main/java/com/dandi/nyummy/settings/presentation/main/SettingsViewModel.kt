@@ -63,7 +63,8 @@ class SettingsViewModel @Inject constructor(
         is SettingsReducerEvent.SettingsLoaded -> state.copy(
             isBgmEnabled = if (event.keepBgm) state.isBgmEnabled else event.settings.isBgmEnabled,
             notification = if (event.keepNotification) state.notification else event.settings.notification,
-            mealTimes = event.settings.mealTimes,
+            // 다시 읽다가 실패하면 마지막으로 읽은 값을 둔다.
+            mealTimes = event.settings.mealTimes ?: state.mealTimes,
         )
         is SettingsReducerEvent.DeviceNotificationChecked -> state.copy(isDeviceNotificationEnabled = event.enabled)
         is SettingsReducerEvent.BgmChanged -> state.copy(isBgmEnabled = event.enabled)

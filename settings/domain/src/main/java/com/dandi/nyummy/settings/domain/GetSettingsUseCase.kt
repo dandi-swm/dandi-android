@@ -3,9 +3,11 @@ package com.dandi.nyummy.settings.domain
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
+import com.dandi.nyummy.common.domain.error.isSessionExpired
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.settings.entity.SettingsVO
 import com.dandi.nyummy.tti.TTIHelper
 import kotlinx.coroutines.CancellationException
@@ -25,7 +27,7 @@ class GetSettingsUseCase @Inject constructor(
             SettingsVO(
                 isBgmEnabled = repository.isBgmEnabled(),
                 notification = repository.getNotificationSettings(),
-                mealTimes = repository.getMealTimes(),
+                mealTimes = getMealTimesOrNull(),
             ),
         )
     } catch (e: CancellationException) {
@@ -36,5 +38,20 @@ class GetSettingsUseCase @Inject constructor(
     } catch (e: Exception) {
         // 네트워크 끊김 등은 화면이 지금 값을 그대로 두도록 실패로 돌려준다. 던지면 화면 코루틴이 앱을 죽인다.
         Result.failure(e)
+    }
+
+    /**
+     * 식사 시각은 서버에서 읽는다. 설정 화면에서는 한 줄 요약일 뿐이라, 읽지 못해도 다른 설정은 보여 주도록 null로 둔다.
+     * 로그인 만료만 안내한다. 화면에 돌아올 때마다 다시 읽으므로 다른 오류까지 다이얼로그로 띄우지 않는다.
+     */
+    private suspend fun getMealTimesOrNull(): MealTimesVO? = try {
+        repository.getMealTimes()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: HttpResponseException) {
+        if (e.isSessionExpired()) executeCommonErrorHanding(e)
+        null
+    } catch (e: Exception) {
+        null
     }
 }

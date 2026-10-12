@@ -188,7 +188,7 @@ private fun NotificationSection(
     )
     NyummyListRow(
         title = stringResource(R.string.settings_meal_time),
-        subtitle = mealTimesSummary(uiState.mealTimes),
+        subtitle = uiState.mealTimes?.let { mealTimesSummary(it) },
         onClick = { onIntent(SettingsIntent.ClickMealTime) },
     )
     NyummyListRow(
