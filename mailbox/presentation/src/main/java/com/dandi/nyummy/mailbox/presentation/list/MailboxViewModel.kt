@@ -74,16 +74,19 @@ class MailboxViewModel @Inject constructor(
         if (index < 0) return
         val row = currentState.inquiries[index]
         dispatch(MailboxReducerEvent.InquiryRemoved(inquiryId))
-        messageHelper.showSnackBar(
-            messageText = DELETED_MESSAGE,
-            callToActionText = UNDO_LABEL,
-            onClickCTA = { onIntent(MailboxIntent.UndoDelete(row, index)) },
-        )
         viewModelScope.launch {
-            deleteInquiry(inquiryId).onFailure {
-                dispatch(MailboxReducerEvent.InquiryRestored(row, index))
-                messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = DELETE_FAILED_MESSAGE)
-            }
+            deleteInquiry(inquiryId)
+                .onSuccess {
+                    messageHelper.showSnackBar(
+                        messageText = DELETED_MESSAGE,
+                        callToActionText = UNDO_LABEL,
+                        onClickCTA = { onIntent(MailboxIntent.UndoDelete(row, index)) },
+                    )
+                }
+                .onFailure {
+                    dispatch(MailboxReducerEvent.InquiryRestored(row, index))
+                    messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = DELETE_FAILED_MESSAGE)
+                }
         }
     }
 
