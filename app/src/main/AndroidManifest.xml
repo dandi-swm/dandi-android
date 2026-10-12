@@ -55,10 +55,10 @@
         <!-- 앱이 백그라운드일 때 OS가 서버 푸시를 띄우는 기본 아이콘과 채널 -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_stat_nyami" />
+            android:resource="@drawable/ic_stat_nyummy" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="nyami_reminder" />
+            android:value="nyummy_reminder" />
     </application>
 
 </manifest>

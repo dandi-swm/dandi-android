@@ -13,7 +13,7 @@
     <string name="home_menu_collapse">방 메뉴 접기</string>
     <string name="home_menu_my_room">마이룸 꾸미기</string>
     <string name="home_menu_share_friend">친구에게 공유</string>
-    <string name="home_menu_nyami_status">냐미 상태</string>
+    <string name="home_menu_nyummy_status">냐미 상태</string>
     <string name="home_today_empty_title">첫 끼 기록하기</string>
     <string name="home_today_empty_body">아직 오늘 기록이 없어요</string>
     <string name="home_today_record_count">오늘 %1$d개 기록</string>

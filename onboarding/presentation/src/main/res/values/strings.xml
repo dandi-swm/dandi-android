@@ -37,7 +37,7 @@
     <string name="onboarding_line_name_1">But… I don\'t have a name yet.</string>
     <string name="onboarding_line_name_2">Will you give me one?</string>
     <string name="onboarding_name_label">Cat name</string>
-    <string name="onboarding_name_placeholder">e.g. Nyami</string>
+    <string name="onboarding_name_placeholder">e.g. Nyummy</string>
     <string name="onboarding_name_helper">Up to %1$d characters</string>
     <string name="onboarding_name_error_empty">Please give it a name</string>
     <string name="onboarding_name_error_too_long">Names can be up to %1$d characters</string>

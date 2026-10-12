@@ -458,7 +458,7 @@ private val TrailEndGap = 12.dp
 
 /** 대기 중 상단에서 엎드려 조는 냐미 (홈·프리뷰와 동일 시트). */
 private val CeremonyCatSleepSheet = NyummySpriteSheet(
-    imageRes = R.drawable.nyami_sleep_loop_grid_136,
+    imageRes = R.drawable.nyummy_sleep_loop_grid_136,
     frameWidth = 136,
     frameHeight = 136,
     totalFrames = 8,
@@ -468,7 +468,7 @@ private val CeremonyCatSleepSheet = NyummySpriteSheet(
 
 /** 응답 도착 시 일어나 앉는 전환. 마지막 프레임(앉은 자세)에 멈춰 먹이를 기다린다. */
 private val CeremonyCatWakeSheet = NyummySpriteSheet(
-    imageRes = R.drawable.nyami_wake_grid_136,
+    imageRes = R.drawable.nyummy_wake_grid_136,
     frameWidth = 136,
     frameHeight = 136,
     totalFrames = 17,

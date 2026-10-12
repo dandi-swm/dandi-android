@@ -104,7 +104,7 @@ internal fun HomeScreen(
                 onToggleMenu = { onIntent(HomeIntent.ToggleRoomMenu) },
                 onMyRoomClick = { onIntent(HomeIntent.ClickMyRoom) },
                 onShareFriendClick = { onIntent(HomeIntent.ClickShareFriend) },
-                onNyamiStatusClick = { onIntent(HomeIntent.ClickNyamiStatus) },
+                onNyummyStatusClick = { onIntent(HomeIntent.ClickNyummyStatus) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),

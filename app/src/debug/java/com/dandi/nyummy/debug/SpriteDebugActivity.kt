@@ -59,7 +59,7 @@ private val segments = listOf(
         label = "졸음 doze",
         // 544x680 격자(4x5)지만 실제 프레임은 17개 — 마지막 줄 3칸은 빈 칸
         sheet = NyummySpriteSheet(
-            imageRes = R.drawable.nyami_doze_grid_136,
+            imageRes = R.drawable.nyummy_doze_grid_136,
             frameWidth = 136,
             frameHeight = 136,
             totalFrames = 17,
@@ -71,7 +71,7 @@ private val segments = listOf(
     SpriteSegment(
         label = "잠 sleep_loop",
         sheet = NyummySpriteSheet(
-            imageRes = R.drawable.nyami_sleep_loop_grid_136,
+            imageRes = R.drawable.nyummy_sleep_loop_grid_136,
             frameWidth = 136,
             frameHeight = 136,
             totalFrames = 8,
@@ -83,7 +83,7 @@ private val segments = listOf(
     SpriteSegment(
         label = "기상 wake",
         sheet = NyummySpriteSheet(
-            imageRes = R.drawable.nyami_wake_grid_136,
+            imageRes = R.drawable.nyummy_wake_grid_136,
             frameWidth = 136,
             frameHeight = 136,
             totalFrames = 17,

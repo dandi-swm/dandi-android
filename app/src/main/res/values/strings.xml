@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 리마인드 알림 채널 -->
-    <string name="nyami_reminder_channel_name">냐미 리마인드</string>
-    <string name="nyami_reminder_channel_description">식사 기록을 잊지 않도록 냐미가 보내는 알림</string>
+    <string name="nyummy_reminder_channel_name">냐미 리마인드</string>
+    <string name="nyummy_reminder_channel_description">식사 기록을 잊지 않도록 냐미가 보내는 알림</string>
 </resources>

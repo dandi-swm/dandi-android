@@ -1,6 +1,6 @@
 <resources>
     <string name="auth_login_wordmark">Nyummy</string>
-    <string name="auth_login_subtitle">Log today\'s meal together with Nyami.</string>
+    <string name="auth_login_subtitle">Log today\'s meal together with Nyummy.</string>
     <string name="auth_login_kakao">Login with Kakao</string>
     <string name="auth_login_or">Or start another way</string>
     <string name="auth_login_naver_description">Sign in with Naver</string>

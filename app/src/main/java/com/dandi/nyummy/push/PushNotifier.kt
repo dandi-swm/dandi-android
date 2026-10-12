@@ -24,7 +24,7 @@ import com.dandi.nyummy.main.presentation.MainActivity
  */
 object PushNotifier {
 
-    const val CHANNEL_ID = "nyami_reminder"
+    const val CHANNEL_ID = "nyummy_reminder"
     private const val DEFAULT_NOTIFICATION_ID = 1001
     private const val DEFAULT_DEEP_LINK = "https://link.nyummy.co.kr/home"
 
@@ -33,10 +33,10 @@ object PushNotifier {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val channel = NotificationChannel(
             CHANNEL_ID,
-            context.getString(R.string.nyami_reminder_channel_name),
+            context.getString(R.string.nyummy_reminder_channel_name),
             NotificationManager.IMPORTANCE_HIGH,
         ).apply {
-            description = context.getString(R.string.nyami_reminder_channel_description)
+            description = context.getString(R.string.nyummy_reminder_channel_description)
         }
         NotificationManagerCompat.from(context).createNotificationChannel(channel)
     }
@@ -79,7 +79,7 @@ object PushNotifier {
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_nyami)
+            .setSmallIcon(R.drawable.ic_stat_nyummy)
             .setContentTitle(title)
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

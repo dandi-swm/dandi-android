@@ -6,23 +6,23 @@
     <string name="meal_record_capture">Capture</string>
     <string name="meal_record_gallery_content_description">Choose from gallery</string>
     <string name="meal_record_retake">Retake</string>
-    <string name="meal_record_submit">Give to Nyami</string>
+    <string name="meal_record_submit">Give to Nyummy</string>
     <string name="meal_record_permission_denied_title">Camera permission needed</string>
     <string name="meal_record_permission_denied_body">Allow camera access to record your meal.\nIf it stays off, enable it in Settings &gt; Apps &gt; Permissions.</string>
     <string name="meal_record_permission_retry">Allow camera</string>
     <string name="meal_record_capture_failed">Couldn\'t take the photo. Please try again.</string>
     <string name="meal_record_captured_photo_content_description">Captured food photo</string>
     <string name="meal_record_wordmark" translatable="false">nyummy</string>
-    <string name="meal_record_feeding_in_progress">Delivering to Nyami…</string>
+    <string name="meal_record_feeding_in_progress">Delivering to Nyummy…</string>
     <string name="meal_record_ceremony_title_line1">Delivering a meal</string>
-    <string name="meal_record_ceremony_title_line2">to Nyami</string>
+    <string name="meal_record_ceremony_title_line2">to Nyummy</string>
     <string name="meal_record_ceremony_subtitle">Preparing a tasty record</string>
     <string name="meal_record_feed_item_content_description">Food turned into a pixel item</string>
-    <string name="meal_record_feed_to_cat_hint">Feed it to Nyami!</string>
-    <string name="meal_record_feed_action">Feed to Nyami</string>
-    <string name="meal_record_cat_content_description">Nyami</string>
-    <string name="meal_record_done_title">Nyami loved the meal!</string>
-    <string name="meal_record_done_body">Keep building healthy days\ntogether with Nyami</string>
+    <string name="meal_record_feed_to_cat_hint">Feed it to Nyummy!</string>
+    <string name="meal_record_feed_action">Feed to Nyummy</string>
+    <string name="meal_record_cat_content_description">Nyummy</string>
+    <string name="meal_record_done_title">Nyummy loved the meal!</string>
+    <string name="meal_record_done_body">Keep building healthy days\ntogether with Nyummy</string>
     <string name="meal_record_done">Done</string>
-    <string name="meal_record_done_mascot_content_description">Nyami enjoying the meal</string>
+    <string name="meal_record_done_mascot_content_description">Nyummy enjoying the meal</string>
 </resources>

@@ -15,11 +15,11 @@ enum class OnboardingSpeaker {
 /** 장면마다 무대에 서는 고양이 일러스트. 길냥이 장면은 반다나가 없고, 이름을 받은 뒤에만 반다나를 한다. */
 enum class OnboardingCharacter(@DrawableRes val imageRes: Int?) {
     NONE(null),
-    WARY(R.drawable.onboarding_nyami_wary),
-    NUZZLE(R.drawable.onboarding_nyami_nuzzle),
-    TALK(R.drawable.onboarding_nyami_talk),
-    SHY(R.drawable.onboarding_nyami_shy),
-    CELEBRATE(R.drawable.onboarding_nyami_celebrate),
+    WARY(R.drawable.onboarding_nyummy_wary),
+    NUZZLE(R.drawable.onboarding_nyummy_nuzzle),
+    TALK(R.drawable.onboarding_nyummy_talk),
+    SHY(R.drawable.onboarding_nyummy_shy),
+    CELEBRATE(R.drawable.onboarding_nyummy_celebrate),
 }
 
 /**

@@ -3,5 +3,5 @@
     <background android:drawable="@color/ic_launcher_background" />
     <foreground android:drawable="@mipmap/ic_launcher_foreground" />
     <!-- API 33+ 테마 아이콘: 상태바용 냐미 실루엣 재사용 -->
-    <monochrome android:drawable="@drawable/ic_stat_nyami" />
+    <monochrome android:drawable="@drawable/ic_stat_nyummy" />
 </adaptive-icon>
