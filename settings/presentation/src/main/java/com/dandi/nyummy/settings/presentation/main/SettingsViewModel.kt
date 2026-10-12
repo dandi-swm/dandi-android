@@ -34,6 +34,10 @@ class SettingsViewModel @Inject constructor(
     // 서버에 저장된 것으로 확인한 알림 설정. 저장이 실패하면 이 값으로 되돌린다.
     private var savedNotification: NotificationSettingsVO? = null
 
+    // 사용자가 바꾼 횟수. 읽기를 시작한 뒤 늘었으면 늦게 도착한 읽기 결과로 그 값을 덮지 않는다.
+    private var bgmEditCount = 0
+    private var notificationEditCount = 0
+
     override fun onIntent(intent: SettingsIntent) {
         when (intent) {
             is SettingsIntent.ScreenResumed -> {
@@ -42,12 +46,9 @@ class SettingsViewModel @Inject constructor(
             }
             SettingsIntent.ClickBack -> navigationHelper.navigateToBack()
             is SettingsIntent.ToggleBgm -> changeBgm(intent.enabled)
-            is SettingsIntent.ToggleAllNotification ->
-                changeNotification(currentState.notification.copy(isAllEnabled = intent.enabled))
-            is SettingsIntent.ToggleMealReminder ->
-                changeNotification(currentState.notification.copy(isMealReminderEnabled = intent.enabled))
-            is SettingsIntent.ToggleNotice ->
-                changeNotification(currentState.notification.copy(isNoticeEnabled = intent.enabled))
+            is SettingsIntent.ToggleAllNotification -> changeNotification { it.copy(isAllEnabled = intent.enabled) }
+            is SettingsIntent.ToggleMealReminder -> changeNotification { it.copy(isMealReminderEnabled = intent.enabled) }
+            is SettingsIntent.ToggleNotice -> changeNotification { it.copy(isNoticeEnabled = intent.enabled) }
             SettingsIntent.ClickMealTime -> navigationHelper.navigateTo(MealTimeSettingPage)
             is SettingsIntent.ClickLegal -> dispatch(SettingsReducerEvent.LegalLinkRequested(intent.document))
             is SettingsIntent.LegalLinkHandled -> onLegalLinkHandled(intent.document, intent.opened)
@@ -60,8 +61,8 @@ class SettingsViewModel @Inject constructor(
 
     override fun reduce(state: SettingsUIState, event: SettingsReducerEvent): SettingsUIState = when (event) {
         is SettingsReducerEvent.SettingsLoaded -> state.copy(
-            isBgmEnabled = event.settings.isBgmEnabled,
-            notification = event.settings.notification,
+            isBgmEnabled = if (event.keepBgm) state.isBgmEnabled else event.settings.isBgmEnabled,
+            notification = if (event.keepNotification) state.notification else event.settings.notification,
             mealTimes = event.settings.mealTimes,
         )
         is SettingsReducerEvent.DeviceNotificationChecked -> state.copy(isDeviceNotificationEnabled = event.enabled)
@@ -73,15 +74,26 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun load() {
+        val bgmEditsAtStart = bgmEditCount
+        val notificationEditsAtStart = notificationEditCount
         viewModelScope.launch {
-            getSettings().onSuccess {
-                savedNotification = it.notification
-                dispatch(SettingsReducerEvent.SettingsLoaded(it))
+            getSettings().onSuccess { loaded ->
+                val notificationEdited = notificationEditCount != notificationEditsAtStart
+                // 읽는 사이 알림을 바꿨으면 그 저장 결과가 되돌릴 기준이 된다. 기준이 아직 없을 때만 읽은 값을 쓴다.
+                if (!notificationEdited || savedNotification == null) savedNotification = loaded.notification
+                dispatch(
+                    SettingsReducerEvent.SettingsLoaded(
+                        settings = loaded,
+                        keepBgm = bgmEditCount != bgmEditsAtStart,
+                        keepNotification = notificationEdited,
+                    ),
+                )
             }
         }
     }
 
     private fun changeBgm(enabled: Boolean) {
+        bgmEditCount++
         dispatch(SettingsReducerEvent.BgmChanged(enabled))
         viewModelScope.launch {
             setBgmEnabled(enabled).onFailure {
@@ -91,8 +103,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    /** 바로 반영하고 저장한다. 저장이 실패하면 되돌리고 "다시 시도" 스낵바를 띄운다. */
-    private fun changeNotification(next: NotificationSettingsVO) {
+    /**
+     * 바로 반영하고 저장한다. 저장이 실패하면 되돌리고 "다시 시도" 스낵바를 띄운다.
+     * 다시 시도는 실패한 토글 하나([change])만 그때의 값에 다시 적용한다. 스낵바가 떠 있는 동안 바꾼 다른 토글을 덮지 않기 위해서다.
+     */
+    private fun changeNotification(change: (NotificationSettingsVO) -> NotificationSettingsVO) {
+        notificationEditCount++
+        val next = change(currentState.notification)
         dispatch(SettingsReducerEvent.NotificationChanged(next))
         // 빠르게 여러 번 누르면 마지막 값만 결과를 반영한다.
         notificationJob?.cancel()
@@ -103,7 +120,7 @@ class SettingsViewModel @Inject constructor(
                 savedNotification?.let { dispatch(SettingsReducerEvent.NotificationChanged(it)) }
                 // 로그인 만료는 UseCase가 이미 다이얼로그로 알렸다.
                 if ((error as? HttpResponseException)?.isSessionExpired() != true) {
-                    showSaveFailed { changeNotification(next) }
+                    showSaveFailed { changeNotification(change) }
                 }
             }
         }
