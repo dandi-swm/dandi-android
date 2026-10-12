@@ -30,6 +30,7 @@ class SettingsViewModel @Inject constructor(
 ) : MviViewModel<SettingsIntent, SettingsUIState, SettingsReducerEvent>(SettingsUIState.empty) {
 
     private var notificationJob: Job? = null
+    private var loadJob: Job? = null
 
     // 서버에 저장된 것으로 확인한 알림 설정. 저장이 실패하면 이 값으로 되돌린다.
     private var savedNotification: NotificationSettingsVO? = null
@@ -45,11 +46,12 @@ class SettingsViewModel @Inject constructor(
                 load()
             }
             SettingsIntent.ClickBack -> navigationHelper.navigateToBack()
-            is SettingsIntent.ToggleBgm -> changeBgm(intent.enabled)
-            is SettingsIntent.ToggleAllNotification -> changeNotification { it.copy(isAllEnabled = intent.enabled) }
-            is SettingsIntent.ToggleMealReminder -> changeNotification { it.copy(isMealReminderEnabled = intent.enabled) }
-            is SettingsIntent.ToggleNotice -> changeNotification { it.copy(isNoticeEnabled = intent.enabled) }
-            SettingsIntent.ClickMealTime -> navigationHelper.navigateTo(MealTimeSettingPage)
+            is SettingsIntent.ToggleBgm -> whenLoaded { changeBgm(intent.enabled) }
+            is SettingsIntent.ToggleAllNotification -> whenLoaded { changeNotification { it.copy(isAllEnabled = intent.enabled) } }
+            is SettingsIntent.ToggleMealReminder ->
+                whenLoaded { changeNotification { it.copy(isMealReminderEnabled = intent.enabled) } }
+            is SettingsIntent.ToggleNotice -> whenLoaded { changeNotification { it.copy(isNoticeEnabled = intent.enabled) } }
+            SettingsIntent.ClickMealTime -> whenLoaded { navigationHelper.navigateTo(MealTimeSettingPage) }
             is SettingsIntent.ClickLegal -> dispatch(SettingsReducerEvent.LegalLinkRequested(intent.document))
             is SettingsIntent.LegalLinkHandled -> onLegalLinkHandled(intent.document, intent.opened)
             SettingsIntent.ClickLogout -> dispatch(SettingsReducerEvent.LogoutDialogVisibilityChanged(visible = true))
@@ -61,6 +63,7 @@ class SettingsViewModel @Inject constructor(
 
     override fun reduce(state: SettingsUIState, event: SettingsReducerEvent): SettingsUIState = when (event) {
         is SettingsReducerEvent.SettingsLoaded -> state.copy(
+            isLoaded = true,
             isBgmEnabled = if (event.keepBgm) state.isBgmEnabled else event.settings.isBgmEnabled,
             notification = if (event.keepNotification) state.notification else event.settings.notification,
             // 다시 읽다가 실패하면 마지막으로 읽은 값을 둔다.
@@ -74,10 +77,15 @@ class SettingsViewModel @Inject constructor(
         SettingsReducerEvent.LoggingOut -> state.copy(isLoggingOut = true)
     }
 
+    /**
+     * 설정 값을 다시 읽는다. 화면에 돌아올 때마다 부르므로, 앞서 시작한 읽기는 취소하고 마지막 읽기 결과만 쓴다.
+     * 그러지 않으면 식사 시간을 저장하고 돌아왔을 때 늦게 끝난 이전 읽기가 새 값을 덮을 수 있다.
+     */
     private fun load() {
         val bgmEditsAtStart = bgmEditCount
         val notificationEditsAtStart = notificationEditCount
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             getSettings().onSuccess { loaded ->
                 val notificationEdited = notificationEditCount != notificationEditsAtStart
                 // 읽는 사이 알림을 바꿨으면 그 저장 결과가 되돌릴 기준이 된다. 기준이 아직 없을 때만 읽은 값을 쓴다.
@@ -91,6 +99,11 @@ class SettingsViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /** 설정 값을 처음 읽기 전에는 바꾸거나 식사 시간 화면으로 가지 않는다. 읽기 전 값으로 저장하지 않게 하려는 것이다. */
+    private inline fun whenLoaded(action: () -> Unit) {
+        if (currentState.isLoaded) action()
     }
 
     private fun changeBgm(enabled: Boolean) {
