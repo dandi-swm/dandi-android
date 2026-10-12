@@ -20,7 +20,7 @@ class TokenRefresherImpl(
             apiService.refresh(RefreshTokenRequestDTO(refreshToken = refreshToken))
         }.getOrNull() ?: return null // IOException 등 네트워크 장애: 토큰 보존, 원본 401 전파
 
-        // 401(api.auth.unauthorized): 리프레시 토큰 확정 무효 → 세션 종료.
+        // 401(api.auth.invalidRefreshToken): 리프레시 토큰 확정 무효 → 세션 종료.
         // 죽은 토큰을 남기면 이후 모든 401 이 헛된 refresh 를 반복한다.
         if (response.code() == 401) {
             tokenProvider.clear()
