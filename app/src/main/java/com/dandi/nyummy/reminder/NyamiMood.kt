@@ -12,32 +12,22 @@ import com.dandi.nyummy.R
  */
 enum class NyamiMood(
     @field:DrawableRes val imageRes: Int,
-    @field:StringRes val notiTitleRes: Int,
-    @field:StringRes val notiBodyRes: Int,
     @field:StringRes val widgetMessageRes: Int,
 ) {
     HAPPY(
         imageRes = R.drawable.nyami_mood_happy,
-        notiTitleRes = R.string.nyami_noti_title_happy,
-        notiBodyRes = R.string.nyami_noti_body_happy,
         widgetMessageRes = R.string.nyami_widget_msg_happy,
     ),
     SAD(
         imageRes = R.drawable.nyami_mood_sad,
-        notiTitleRes = R.string.nyami_noti_title_sad,
-        notiBodyRes = R.string.nyami_noti_body_sad,
         widgetMessageRes = R.string.nyami_widget_msg_sad,
     ),
     CRYING(
         imageRes = R.drawable.nyami_mood_crying,
-        notiTitleRes = R.string.nyami_noti_title_crying,
-        notiBodyRes = R.string.nyami_noti_body_crying,
         widgetMessageRes = R.string.nyami_widget_msg_crying,
     ),
     ANGRY(
         imageRes = R.drawable.nyami_mood_angry,
-        notiTitleRes = R.string.nyami_noti_title_angry,
-        notiBodyRes = R.string.nyami_noti_body_angry,
         widgetMessageRes = R.string.nyami_widget_msg_angry,
     ),
     ;

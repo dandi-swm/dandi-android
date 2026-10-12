@@ -186,7 +186,7 @@ dependencies {
     implementation(project(":onboarding:data"))
     implementation(project(":onboarding:entity"))
 
-    // FCM 리마인드 알림 + 냐미 홈 위젯 (임시 구현)
+    // 서버 푸시(FCM) 수신, 냐미 홈 위젯
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.androidx.glance.appwidget)
@@ -198,4 +198,6 @@ dependencies {
     implementation(libs.androidx.profileinstaller)
 
     "baselineProfile"(project(":baselineprofile"))
+
+    testImplementation(libs.junit)
 }

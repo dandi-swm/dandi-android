@@ -16,6 +16,8 @@ import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.common.presentation.jank.JankReporter
 import com.dandi.nyummy.common.presentation.jank.LocalJankReporter
+import com.dandi.nyummy.main.presentation.deeplink.appLinkUri
+import com.dandi.nyummy.main.presentation.deeplink.pushNotificationId
 import com.dandi.nyummy.main.presentation.deeplink.resolveNewIntentRoute
 import com.dandi.nyummy.main.presentation.deeplink.resolveStartStack
 import com.dandi.nyummy.main.presentation.navigation.RootComposable
@@ -39,8 +41,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // App Link 진입 시 Intent.data 에서 시작 백스택을 구성한다.
-        val startStack = resolveStartStack(intent?.data)
+        // App Link 진입 시 링크(Intent.data, 또는 OS가 띄운 푸시 알림의 extras)에서 시작 백스택을 구성한다.
+        val startStack = resolveStartStack(intent?.appLinkUri(), intent?.pushNotificationId())
 
         // JankStats 는 DecorView 가 생성된 이후에만 만들 수 있다. setContent 가 DecorView 를
         // 보장하므로 lifecycle observer 안에서 lazy 하게 생성하고, tracking on/off 와 백그라운드
@@ -90,8 +92,8 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
 
-        val uri = intent.data ?: return
-        val route = resolveNewIntentRoute(uri) ?: return
+        val uri = intent.appLinkUri() ?: return
+        val route = resolveNewIntentRoute(uri, intent.pushNotificationId()) ?: return
         navigationHelper.navigateDeepLink(route)
     }
 }

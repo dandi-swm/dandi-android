@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.intro.domain.IntroPage
 import com.dandi.nyummy.main.domain.deeplink.matchRoute
 import com.dandi.nyummy.main.presentation.navigation.GenericNavKey
+import com.dandi.nyummy.main.presentation.navigation.appLinkAliases
 import com.dandi.nyummy.main.presentation.navigation.appRouteByPath
 import com.dandi.nyummy.main.presentation.navigation.appRoutePatterns
 
@@ -17,6 +18,7 @@ private const val TAG = "[DeepLink]"
  *
  * 1. 정적 path **exact** 매칭 (예: "/home") — 항상 우선.
  * 2. 동적 **템플릿** 매칭 (예: "/articleList/articlePage/{articleId}") — path 구간 값을 args 로 추출.
+ * 3. 외부 링크 **별칭**([appLinkAliases], 예: 서버 푸시의 "/meals/{mealId}" → 기록 탭) — path 인자가 대상 라우트의 args 가 된다.
  *
  * 해석된 [NavRoute.path] 는 항상 등록된 "템플릿" path 다(= 백스택 키 [GenericNavKey] 의 식별자이자
  * in-app path). path 파라미터와 query parameter 가 모두 [NavRoute.args] 에 담기며, 이름이 충돌하면
@@ -34,6 +36,7 @@ fun Uri.resolveRoute(): NavRoute? {
         query = query,
         literalPaths = appRouteByPath.keys,
         templates = appRoutePatterns.map { it.first },
+        aliases = appLinkAliases,
     )
 }
 
@@ -46,8 +49,8 @@ fun Uri.resolveRoute(): NavRoute? {
  * 예) "/articleList/articlePage/{articleId}" 가 syntheticStack 으로
  *     `[Home, ArticleList, ArticlePage(args)]` 를 선언했다면, 그 전체 스택이 깔린 채 진입한다.
  */
-fun resolveStartStack(uri: Uri?): List<NavKey> {
-    val route = uri?.resolveRoute()
+fun resolveStartStack(uri: Uri?, notificationId: String? = null): List<NavKey> {
+    val route = uri?.resolveRoute()?.withNotificationId(notificationId)
     if (route == null) {
         if (uri != null) Log.w(TAG, "No matching route for uri=$uri")
         return listOf(GenericNavKey(IntroPage.PATH))
@@ -64,8 +67,8 @@ fun resolveStartStack(uri: Uri?): List<NavKey> {
  * bring-to-front 정책([com.dandi.nyummy.main.presentation.navigation.handleDeepLink])이
  * 담당하여 사용자의 현재 스택을 보존한다. 미매칭이면 null(호출부가 무시).
  */
-fun resolveNewIntentRoute(uri: Uri): NavRoute? {
-    val route = uri.resolveRoute()
+fun resolveNewIntentRoute(uri: Uri, notificationId: String? = null): NavRoute? {
+    val route = uri.resolveRoute()?.withNotificationId(notificationId)
     if (route == null) {
         Log.w(TAG, "onNewIntent: unhandled uri=$uri")
         return null

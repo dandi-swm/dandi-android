@@ -28,6 +28,13 @@ sealed interface HistoryIntent : MviIntent {
     /** 식사 목록에서 기록 하나를 눌렀습니다. */
     data class ClickMeal(val mealId: String) : HistoryIntent
 
+    /**
+     * 알림의 식사 상세 링크로 화면이 열렸습니다. 그 식사의 날짜를 열고 상세를 엽니다.
+     *
+     * @param eventId 이 링크를 연 알림의 식별자. 같은 식사라도 알림이 다르면(실패 뒤 재분석 완료 등) 새로 엽니다.
+     */
+    data class OpenMealFromLink(val mealId: Long, val eventId: String) : HistoryIntent
+
     /** 분석 실패 카드의 `다시 분석하기` 를 눌렀습니다. */
     data class ClickRetryAnalysis(val mealId: String) : HistoryIntent
 

@@ -6,6 +6,7 @@ import com.dandi.nyummy.common.data.di.NoAuthApi
 import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.data.token.TokenRefresher
+import com.dandi.nyummy.common.domain.helper.PushTokenHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -38,7 +39,8 @@ object AuthDataModule {
         dataSource: AuthDataSource,
         tokenProvider: TokenProvider,
         appPreferenceProvider: AppPreferenceProvider,
-    ): AuthRepository = AuthRepositoryImpl(dataSource, tokenProvider, appPreferenceProvider)
+        pushTokenHelper: PushTokenHelper,
+    ): AuthRepository = AuthRepositoryImpl(dataSource, tokenProvider, appPreferenceProvider, pushTokenHelper)
 
     /** 소셜 로그인 신규 회원의 가입 대기 토큰 — 로그인 화면과 소셜 가입 화면이 같은 인스턴스를 공유해야 한다. */
     @Provides

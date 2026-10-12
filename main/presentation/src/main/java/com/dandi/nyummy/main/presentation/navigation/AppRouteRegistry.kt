@@ -12,6 +12,7 @@ import com.dandi.nyummy.auth.presentation.SignUpPage
 import com.dandi.nyummy.collection.domain.CollectionPage
 import com.dandi.nyummy.collection.presentation.CollectionPage
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
+import com.dandi.nyummy.common.domain.navigation.LinkArgs
 import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.history.presentation.HistoryPage
 import com.dandi.nyummy.home.domain.HomePage
@@ -24,6 +25,7 @@ import com.dandi.nyummy.mailbox.domain.MailboxPage
 import com.dandi.nyummy.mailbox.presentation.detail.InquiryDetailPage
 import com.dandi.nyummy.mailbox.presentation.list.MailboxPage
 import com.dandi.nyummy.mailbox.presentation.write.InquiryWritePage
+import com.dandi.nyummy.main.domain.deeplink.LinkAlias
 import com.dandi.nyummy.main.domain.deeplink.RoutePattern
 import com.dandi.nyummy.meal.domain.MealRecordPage
 import com.dandi.nyummy.meal.presentation.MealRecordPage
@@ -122,7 +124,12 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = HistoryPage.PATH,
         isBottomTab = true,
-        render = { HistoryPage() },
+        render = { args ->
+            HistoryPage(
+                openMealId = args[HistoryPage.ARG_MEAL_ID]?.toLongOrNull(),
+                linkEventId = args[LinkArgs.NOTIFICATION_ID],
+            )
+        },
     ),
     AppRoute(
         path = MailboxPage.PATH,
@@ -202,6 +209,16 @@ val appRoutes: List<AppRoute> = listOf(
 )
 
 val appRouteByPath: Map<String, AppRoute> = appRoutes.associateBy { it.path }
+
+/**
+ * 앱 라우트와 경로가 다른 외부 링크(서버 푸시 등)를 앱 라우트로 바꾸는 별칭 목록.
+ *
+ * 외부에서 주는 딥링크 경로가 실제로 타켓팅 되어야하는 우리 앱에서의 관심사로 설계된 링크와 다르다면, 이 별칭을 등록한다.
+ */
+val appLinkAliases: List<LinkAlias> = listOf(
+    // 분석 결과 푸시의 식사 상세 링크(서버 app-link meal-detail-url) → 기록 탭에서 그 식사 상세 열기
+    LinkAlias("/meals/{${HistoryPage.ARG_MEAL_ID}}", targetPath = HistoryPage.PATH),
+)
 
 /**
  * 동적 구간(`{param}`)을 가진 계층형 라우트의 (패턴, 라우트) 목록.

@@ -1,17 +1,15 @@
 package com.dandi.nyummy
 
 import android.app.Application
-import android.util.Log
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import com.dandi.nyummy.auth.presentation.social.initializeSocialLoginSdks
+import com.dandi.nyummy.common.domain.helper.PushTokenHelper
 import com.dandi.nyummy.common.presentation.image.ImageLoadReport
 import com.dandi.nyummy.common.presentation.image.NoOpImageLoadReport
 import com.dandi.nyummy.common.presentation.image.NyummyImageLoaderFactory
-import com.dandi.nyummy.reminder.FcmTokenStore
-import com.dandi.nyummy.reminder.ReminderNotifier
-import com.google.firebase.messaging.FirebaseMessaging
+import com.dandi.nyummy.push.PushNotifier
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -20,6 +18,9 @@ class DandiApplication : Application(), SingletonImageLoader.Factory {
 
     @Inject
     lateinit var imageLoadReport: ImageLoadReport
+
+    @Inject
+    lateinit var pushTokenHelper: PushTokenHelper
 
     /**
      * AsyncImage 등 Coil 싱글턴이 쓰는 전역 ImageLoader. 캐시 설정은 [NyummyImageLoaderFactory] 참고.
@@ -38,14 +39,10 @@ class DandiApplication : Application(), SingletonImageLoader.Factory {
         // 카카오 등 소셜 로그인 SDK. 앱 키 없이 빌드되면 건너뛴다.
         initializeSocialLoginSdks(this)
 
-        // 냐미 리마인드 알림 채널을 미리 등록한다 (FCM 백그라운드 자동 표시 대비).
-        ReminderNotifier.ensureChannel(this)
+        // 푸시 알림 채널을 미리 등록한다. 앱이 백그라운드일 때 OS가 서버 알림을 이 채널(manifest 기본 채널)로 띄운다.
+        PushNotifier.ensureChannel(this)
 
-        // TODO 서버 push 토큰 등록 API 연동 전까지, 테스트 발송용 토큰을 로그로만 확인한다.
-        // 토큰은 재설치·데이터 삭제 때만 바뀐다. 회전 시 로그에 ROTATED 로 표시된다.
-        FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
-            val rotated = FcmTokenStore.saveAndCheckRotated(this, token)
-            Log.d("[NyummyFcm]", "FCM token${if (rotated) " (ROTATED)" else ""}: $token")
-        }
+        // 로그인한 상태면 이 기기의 푸시 토큰을 서버에 등록한다. 서버가 멱등이라 켤 때마다 보내도 된다.
+        pushTokenHelper.register()
     }
 }
