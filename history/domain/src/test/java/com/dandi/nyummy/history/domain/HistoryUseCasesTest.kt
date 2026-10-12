@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
@@ -64,6 +65,26 @@ class HistoryUseCasesTest {
 
         val dialog = messageHelper.oneButtonDialogs.single()
         assertTrue(dialog.cantIgnore)
+        dialog.onClickButton?.invoke()
+        assertEquals(1, navigationHelper.initialCount)
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `월간 조회 중 액세스 토큰 만료 code 의 401 도 세션 만료 다이얼로그를 띄운다`() = runBlocking {
+        // 이 401은 토큰 재발급을 거친 뒤에 올라온다. 재발급까지 실패했다는 뜻이다.
+        val useCase = GetMonthlyMealsUseCase(
+            repository = ThrowingHistoryRepository(httpException(401, "api.auth.tokenExpired")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(2026, 8)
+
+        val dialog = messageHelper.oneButtonDialogs.single()
+        assertEquals("로그인이 만료됐어요. 다시 로그인해 주세요.", dialog.descText)
         dialog.onClickButton?.invoke()
         assertEquals(1, navigationHelper.initialCount)
         assertTrue(result.isFailure)
@@ -202,6 +223,7 @@ class HistoryUseCasesTest {
         assertEquals(IconType.ERROR, snackBar.iconType)
         assertEquals("다시 분석하지 못했어요", snackBar.messageText)
         assertTrue(result.isFailure)
+        assertFalse(result.exceptionOrNull() is OutdatedMealException)
     }
 
     @Test
@@ -258,7 +280,7 @@ class HistoryUseCasesTest {
     }
 
     @Test
-    fun `분석 중인 기록을 다시 분석하면 code 에 맞는 문구로 안내한다`() = runBlocking {
+    fun `이미 다시 분석한 기록이면 안내하고 화면의 식사가 낡았다고 알린다`() = runBlocking {
         val useCase = ReanalyzeMealUseCase(
             repository = ThrowingHistoryRepository(httpException(409, HistoryErrorType.ANALYSIS_NOT_RETRYABLE.type)),
             resourceHelper = FakeResourceHelper(),
@@ -267,9 +289,27 @@ class HistoryUseCasesTest {
             ttiHelper = FakeTTIHelper(),
         )
 
-        useCase(1L)
+        val result = useCase(1L)
 
-        assertEquals("이미 분석하고 있는 기록이에요", messageHelper.snackBars.single().messageText)
+        assertEquals("이미 다시 분석한 기록이에요", messageHelper.snackBars.single().messageText)
+        assertTrue(result.exceptionOrNull() is OutdatedMealException)
+    }
+
+    @Test
+    fun `지운 기록을 다시 분석하면 지워진 기록으로 안내하고 화면의 식사가 낡았다고 알린다`() = runBlocking {
+        val useCase = ReanalyzeMealUseCase(
+            repository = ThrowingHistoryRepository(httpException(404, HistoryErrorType.MEAL_NOT_FOUND.type)),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(1L)
+
+        assertEquals("이미 지워진 기록이에요", messageHelper.snackBars.single().messageText)
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+        assertTrue(result.exceptionOrNull() is OutdatedMealException)
     }
 
     @Test

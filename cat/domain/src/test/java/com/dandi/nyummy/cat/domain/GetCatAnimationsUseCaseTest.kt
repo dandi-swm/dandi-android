@@ -76,6 +76,25 @@ class GetCatAnimationsUseCaseTest {
         assertTrue(result.isFailure)
     }
 
+    @Test
+    fun `액세스 토큰 만료 code 의 401 도 재발급까지 실패한 것이라 세션 만료로 안내한다`() = runBlocking {
+        val result = useCase { throw httpException(401, "api.auth.tokenExpired") }()
+
+        val dialog = messageHelper.dialogs.single()
+        assertTrue(dialog.cantIgnore)
+        dialog.onClickButton?.invoke()
+        assertEquals(1, navigationHelper.initialCount)
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `로그인 만료가 아닌 code 의 401 은 다른 실패처럼 조용히 넘긴다`() = runBlocking {
+        val result = useCase { throw httpException(401, "api.auth.invalidVerifiedToken") }()
+
+        assertTrue(result.isFailure)
+        assertNothingShown()
+    }
+
     @Test(expected = CancellationException::class)
     fun `취소는 삼키지 않고 그대로 던진다`(): Unit = runBlocking {
         useCase { throw CancellationException("left home") }()

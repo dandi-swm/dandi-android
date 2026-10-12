@@ -98,7 +98,7 @@ class AuthRepositoryImplTest {
     fun `회원가입 실패 시 예외를 던지고 토큰을 저장하지 않는다`() {
         server.enqueue(
             MockResponse().setResponseCode(400).setBody(
-                """{"code":"api.common.missingParameter","message":"입력값이 누락되었습니다."}"""
+                """{"code":"api.common.invalidInputValue","message":"요청 값이 올바르지 않습니다."}"""
             )
         )
 
