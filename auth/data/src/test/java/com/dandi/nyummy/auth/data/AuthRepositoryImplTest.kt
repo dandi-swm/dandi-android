@@ -234,7 +234,7 @@ class AuthRepositoryImplTest {
             registerCount++
         }
 
-        override fun deleteToken() = Unit
+        override suspend fun deleteToken() = Unit
     }
 
     private class FakeTokenProvider : TokenProvider {

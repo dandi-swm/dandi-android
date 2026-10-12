@@ -40,6 +40,15 @@ class BringTabToFrontTest {
     }
 
     @Test
+    fun `맨 위가 이미 그 엔트리여도 앞쪽에 남은 같은 탭은 정리한다`() {
+        val stack = mutableListOf<NavKey>(home, history, historyOpening("1"))
+
+        stack.bringTabToFront(historyOpening("1"))
+
+        assertEquals(listOf(home, historyOpening("1")), stack)
+    }
+
+    @Test
     fun `탭 엔트리가 없으면 맨 위에 추가한다`() {
         val stack = mutableListOf<NavKey>(home)
 

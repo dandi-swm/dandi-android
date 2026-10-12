@@ -1,5 +1,6 @@
 package com.dandi.nyummy.history.data.dto
 
+import com.dandi.nyummy.history.entity.HistoryDateVO
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -33,5 +34,13 @@ class MealDTOTest {
 
         assertEquals("", vo.catComment)
         assertEquals("", vo.foodIconId)
+    }
+
+    @Test
+    fun `식사 날짜는 KST 기준으로 옮긴다`() {
+        assertEquals(HistoryDateVO(2026, 9, 29), MealDTO(mealAt = "2026-09-29T11:42:29.863Z").toVO().date)
+        // UTC로는 전날이어도 한국 시각으로 자정을 넘기면 다음 날이다.
+        assertEquals(HistoryDateVO(2026, 9, 30), MealDTO(mealAt = "2026-09-29T16:30:00Z").toVO().date)
+        assertEquals(HistoryDateVO.empty, MealDTO(mealId = 1).toVO().date)
     }
 }
