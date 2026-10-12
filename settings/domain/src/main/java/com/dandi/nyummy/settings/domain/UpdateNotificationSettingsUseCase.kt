@@ -8,6 +8,7 @@ import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import com.dandi.nyummy.tti.TTIHelper
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 
 /**
@@ -24,8 +25,13 @@ class UpdateNotificationSettingsUseCase @Inject constructor(
 
     suspend operator fun invoke(settings: NotificationSettingsVO): Result<NotificationSettingsVO> = try {
         Result.success(repository.updateNotificationSettings(settings))
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: HttpResponseException) {
         if (e.isSessionExpired()) executeCommonErrorHanding(e)
+        Result.failure(e)
+    } catch (e: Exception) {
+        // 응답을 받기 전 실패(네트워크 끊김 등)도 화면이 되돌리고 "다시 시도"를 띄우도록 실패로 돌려준다.
         Result.failure(e)
     }
 }
