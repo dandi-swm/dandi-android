@@ -60,6 +60,14 @@ data class MealTimesVO(
     val hasAnyMeal: Boolean
         get() = Meal.entries.any { !get(it).isSkipped }
 
+    /**
+     * 먹는 끼니(건너뛴 끼니 제외)끼리 시각이 겹치는지. 서버는 겹치는 시각을 거절한다.
+     * 같은 시각이면 식사 알림이 한 끼니만 나가기 때문이다.
+     */
+    val hasDuplicateHours: Boolean
+        get() = Meal.entries.map(::get).filterNot { it.isSkipped }.map { it.hour }
+            .let { hours -> hours.size != hours.toSet().size }
+
     companion object {
         /** 기본값: 오전 8시, 오후 12시, 오후 6시. 그대로 넘어가도 되도록 미리 채워 둔다. */
         val DefaultBreakfast = MealTimeVO(hour = 8)
