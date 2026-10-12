@@ -15,7 +15,7 @@ import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 
 /**
- * 설정 화면 값(배경음, 알림, 식사 시각)을 한 번에 읽는다.
+ * 설정 화면 값(알림, 식사 시각)을 한 번에 읽는다.
  * 알림 설정을 읽지 못하면 안내하고 [Result.failure]를 돌려준다. 다시 시도는 [onRetry]로 화면에 맡긴다.
  */
 class GetSettingsUseCase @Inject constructor(
@@ -29,7 +29,6 @@ class GetSettingsUseCase @Inject constructor(
     suspend operator fun invoke(onRetry: () -> Unit): Result<SettingsVO> = try {
         Result.success(
             SettingsVO(
-                isBgmEnabled = repository.isBgmEnabled(),
                 notification = repository.getNotificationSettings(),
                 mealTimes = getMealTimesOrNull(),
             ),

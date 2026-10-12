@@ -8,15 +8,8 @@ import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 
 class SettingsRepositoryImpl(
-    private val localDataSource: SettingsLocalDataSource,
     private val remoteDataSource: SettingsRemoteDataSource,
 ) : SettingsRepository {
-
-    override suspend fun isBgmEnabled(): Boolean = localDataSource.isBgmEnabled()
-
-    override suspend fun setBgmEnabled(enabled: Boolean) {
-        localDataSource.setBgmEnabled(enabled)
-    }
 
     override suspend fun getNotificationSettings(): NotificationSettingsVO = remoteDataSource.getPushSetting().toVO()
 

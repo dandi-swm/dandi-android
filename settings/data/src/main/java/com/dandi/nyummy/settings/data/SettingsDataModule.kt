@@ -1,8 +1,5 @@
 package com.dandi.nyummy.settings.data
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import com.dandi.nyummy.common.data.di.AppPreferenceDataStore
 import com.dandi.nyummy.settings.domain.SettingsRepository
 import dagger.Module
 import dagger.Provides
@@ -17,12 +14,6 @@ object SettingsDataModule {
 
     @Provides
     @Singleton
-    fun provideSettingsLocalDataSource(
-        @AppPreferenceDataStore dataStore: DataStore<Preferences>,
-    ): SettingsLocalDataSource = SettingsLocalDataSource(dataStore)
-
-    @Provides
-    @Singleton
     fun provideSettingsApiService(retrofit: Retrofit): SettingsApiService =
         retrofit.create(SettingsApiService::class.java)
 
@@ -33,8 +24,6 @@ object SettingsDataModule {
 
     @Provides
     @Singleton
-    fun provideSettingsRepository(
-        localDataSource: SettingsLocalDataSource,
-        remoteDataSource: SettingsRemoteDataSource,
-    ): SettingsRepository = SettingsRepositoryImpl(localDataSource, remoteDataSource)
+    fun provideSettingsRepository(remoteDataSource: SettingsRemoteDataSource): SettingsRepository =
+        SettingsRepositoryImpl(remoteDataSource)
 }

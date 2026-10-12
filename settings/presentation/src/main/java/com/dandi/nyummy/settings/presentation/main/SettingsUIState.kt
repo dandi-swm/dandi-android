@@ -17,7 +17,6 @@ import com.dandi.nyummy.settings.entity.NotificationSettingsVO
  */
 data class SettingsUIState(
     val isLoaded: Boolean = false,
-    val isBgmEnabled: Boolean = true,
     val notification: NotificationSettingsVO = NotificationSettingsVO.default,
     val mealTimes: MealTimesVO? = null,
     val isDeviceNotificationEnabled: Boolean = true,

@@ -15,8 +15,6 @@ sealed interface SettingsIntent : MviIntent {
 
     data object ClickBack : SettingsIntent
 
-    data class ToggleBgm(val enabled: Boolean) : SettingsIntent
-
     /** 서비스 알림(식사 시간 알림, 분석 결과 알림)을 켜거나 껐다. */
     data class ToggleServicePush(val enabled: Boolean) : SettingsIntent
 

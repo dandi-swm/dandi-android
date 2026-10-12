@@ -27,8 +27,6 @@ internal class FakeSettingsRepository : SettingsRepository {
     var saveMealTimesError: Exception? = null
     val savedMealTimes = mutableListOf<MealTimesVO>()
 
-    override suspend fun isBgmEnabled(): Boolean = false
-    override suspend fun setBgmEnabled(enabled: Boolean) = Unit
     var notificationSettings: NotificationSettingsVO = NotificationSettingsVO(isMarketingEnabled = true)
     var getNotificationSettingsError: Exception? = null
     var updateNotificationSettingsError: Exception? = null

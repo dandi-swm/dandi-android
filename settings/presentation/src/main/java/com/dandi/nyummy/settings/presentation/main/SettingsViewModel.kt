@@ -11,7 +11,6 @@ import com.dandi.nyummy.common.entity.time.KstTime
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
-import com.dandi.nyummy.settings.domain.SetBgmEnabledUseCase
 import com.dandi.nyummy.settings.domain.UpdateNotificationSettingsUseCase
 import com.dandi.nyummy.settings.entity.LegalDocument
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
@@ -24,7 +23,6 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val getSettings: GetSettingsUseCase,
-    private val setBgmEnabled: SetBgmEnabledUseCase,
     private val updateNotificationSettings: UpdateNotificationSettingsUseCase,
     private val logout: LogoutUseCase,
     private val navigationHelper: NavigationHelper,
@@ -41,7 +39,6 @@ class SettingsViewModel @Inject constructor(
     private var savedNotification: NotificationSettingsVO? = null
 
     // 사용자가 바꾼 횟수. 읽기를 시작한 뒤 늘었으면 늦게 도착한 읽기 결과로 그 값을 덮지 않는다.
-    private var bgmEditCount = 0
     private var notificationEditCount = 0
 
     override fun onIntent(intent: SettingsIntent) {
@@ -51,7 +48,6 @@ class SettingsViewModel @Inject constructor(
                 load()
             }
             SettingsIntent.ClickBack -> navigationHelper.navigateToBack()
-            is SettingsIntent.ToggleBgm -> whenLoaded { changeBgm(intent.enabled) }
             is SettingsIntent.ToggleServicePush -> whenLoaded {
                 changeNotification(NotificationKind.SERVICE, NotificationSettingsChange(isServiceEnabled = intent.enabled))
             }
@@ -73,13 +69,11 @@ class SettingsViewModel @Inject constructor(
     override fun reduce(state: SettingsUIState, event: SettingsReducerEvent): SettingsUIState = when (event) {
         is SettingsReducerEvent.SettingsLoaded -> state.copy(
             isLoaded = true,
-            isBgmEnabled = if (event.keepBgm) state.isBgmEnabled else event.settings.isBgmEnabled,
             notification = if (event.keepNotification) state.notification else event.settings.notification,
             // 다시 읽다가 실패하면 마지막으로 읽은 값을 둔다.
             mealTimes = event.settings.mealTimes ?: state.mealTimes,
         )
         is SettingsReducerEvent.DeviceNotificationChecked -> state.copy(isDeviceNotificationEnabled = event.enabled)
-        is SettingsReducerEvent.BgmChanged -> state.copy(isBgmEnabled = event.enabled)
         is SettingsReducerEvent.NotificationChanged -> state.copy(notification = event.notification)
         is SettingsReducerEvent.NotificationDetailChanged -> state.copy(notificationDetail = event.kind)
         is SettingsReducerEvent.LegalLinkRequested -> state.copy(pendingLegalDocument = event.document)
@@ -92,7 +86,6 @@ class SettingsViewModel @Inject constructor(
      * 그러지 않으면 식사 시간을 저장하고 돌아왔을 때 늦게 끝난 이전 읽기가 새 값을 덮을 수 있다.
      */
     private fun load() {
-        val bgmEditsAtStart = bgmEditCount
         val notificationEditsAtStart = notificationEditCount
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
@@ -104,7 +97,6 @@ class SettingsViewModel @Inject constructor(
                 dispatch(
                     SettingsReducerEvent.SettingsLoaded(
                         settings = loaded,
-                        keepBgm = bgmEditCount != bgmEditsAtStart,
                         keepNotification = notificationEdited,
                     ),
                 )
@@ -115,17 +107,6 @@ class SettingsViewModel @Inject constructor(
     /** 설정 값을 처음 읽기 전에는 바꾸거나 식사 시간 화면으로 가지 않는다. 읽기 전 값으로 저장하지 않게 하려는 것이다. */
     private inline fun whenLoaded(action: () -> Unit) {
         if (currentState.isLoaded) action()
-    }
-
-    private fun changeBgm(enabled: Boolean) {
-        bgmEditCount++
-        dispatch(SettingsReducerEvent.BgmChanged(enabled))
-        viewModelScope.launch {
-            setBgmEnabled(enabled).onFailure {
-                dispatch(SettingsReducerEvent.BgmChanged(!enabled))
-                showSaveFailed { changeBgm(enabled) }
-            }
-        }
     }
 
     /**

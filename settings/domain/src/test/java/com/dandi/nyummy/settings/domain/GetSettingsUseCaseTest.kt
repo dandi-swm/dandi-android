@@ -25,13 +25,12 @@ class GetSettingsUseCaseTest {
     )
 
     @Test
-    fun `배경음과 알림과 서버의 식사 시각을 함께 돌려준다`() = runBlocking {
+    fun `알림 설정과 서버의 식사 시각을 함께 돌려준다`() = runBlocking {
         val mealTimes = MealTimesVO(lunch = MealTimeVO(hour = 13))
         repository.mealTimes = mealTimes
 
         val settings = useCase(onRetry = {}).getOrThrow()
 
-        assertEquals(false, settings.isBgmEnabled)
         assertEquals(NotificationSettingsVO(isMarketingEnabled = true), settings.notification)
         assertEquals(mealTimes, settings.mealTimes)
     }

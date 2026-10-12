@@ -6,11 +6,6 @@ import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 
 interface SettingsRepository {
 
-    /** 앱 안의 배경음을 켤지. 이 기기에만 저장한다. */
-    suspend fun isBgmEnabled(): Boolean
-
-    suspend fun setBgmEnabled(enabled: Boolean)
-
     /** 서버에 저장된 알림 수신 설정(서비스 알림, 마케팅 알림). */
     suspend fun getNotificationSettings(): NotificationSettingsVO
 

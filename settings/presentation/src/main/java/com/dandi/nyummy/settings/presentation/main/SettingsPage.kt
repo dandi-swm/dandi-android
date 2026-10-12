@@ -54,7 +54,7 @@ import com.dandi.nyummy.settings.entity.LegalDocument
 import com.dandi.nyummy.settings.presentation.R
 
 /**
- * 설정. 소리(배경음), 알림(서비스 알림, 마케팅 알림, 식사 시간), 약관, 로그아웃.
+ * 설정. 알림(서비스 알림, 마케팅 알림, 식사 시간), 약관, 로그아웃.
  * 기기에서 알림을 꺼 두었으면 기기 설정으로 가는 안내를 띄운다. 알림 토글은 계정 설정이라 그와 상관없이 바꿀 수 있다.
  */
 @Composable
@@ -112,7 +112,6 @@ internal fun SettingsScreen(
                 .padding(horizontal = NyummyTheme.spacing.gutter)
                 .padding(bottom = NyummyTheme.spacing.s24),
         ) {
-            SoundSection(uiState, onIntent)
             NotificationSection(uiState, onIntent, onOpenDeviceSettings)
             LegalSection(onIntent)
             Spacer(Modifier.height(NyummyTheme.spacing.s24))
@@ -139,20 +138,6 @@ internal fun SettingsScreen(
             dismissEnabled = !uiState.isLoggingOut,
         )
     }
-}
-
-@Composable
-private fun SoundSection(uiState: SettingsUIState, onIntent: (SettingsIntent) -> Unit) {
-    NyummySectionCaption(title = stringResource(R.string.settings_section_sound))
-    NyummyListRow(
-        title = stringResource(R.string.settings_bgm),
-        subtitle = stringResource(R.string.settings_bgm_desc),
-        trailing = NyummyListRowTrailing.Switch(
-            checked = uiState.isBgmEnabled,
-            onCheckedChange = { onIntent(SettingsIntent.ToggleBgm(it)) },
-        ),
-        enabled = uiState.isLoaded,
-    )
 }
 
 /**

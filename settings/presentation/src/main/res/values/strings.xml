@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_title">설정</string>
-    <string name="settings_section_sound">소리</string>
-    <string name="settings_bgm">배경음</string>
-    <string name="settings_bgm_desc">앱 안의 소리</string>
     <string name="settings_section_notification">알림</string>
     <string name="settings_device_notification_off_title">기기 알림이 꺼져 있어요</string>
     <string name="settings_device_notification_off_body">알림을 받으려면 기기 설정에서 허용해 주세요.</string>

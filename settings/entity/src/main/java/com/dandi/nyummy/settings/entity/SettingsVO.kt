@@ -41,11 +41,9 @@ data class NotificationSettingsChange(
 /**
  * 설정 화면이 한 번에 읽는 값.
  *
- * @property isBgmEnabled 앱 안의 배경음. 이 기기에만 저장한다.
  * @property mealTimes 평소 식사 시각. 서버에 저장한다(온보딩에서 처음 받는다). 읽지 못했으면 null.
  */
 data class SettingsVO(
-    val isBgmEnabled: Boolean = true,
     val notification: NotificationSettingsVO = NotificationSettingsVO.default,
     val mealTimes: MealTimesVO? = null,
 ) {

@@ -1,11 +1,7 @@
 package com.dandi.nyummy.settings.data
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -40,11 +36,7 @@ class SettingsRepositoryImplTest {
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
             .create(SettingsApiService::class.java)
-        repository = SettingsRepositoryImpl(
-            // 서버 값만 확인한다. 배경음(기기 저장)은 만들기만 하고 부르지 않는다.
-            localDataSource = SettingsLocalDataSource(UnusedDataStore),
-            remoteDataSource = SettingsRemoteDataSource(apiService),
-        )
+        repository = SettingsRepositoryImpl(remoteDataSource = SettingsRemoteDataSource(apiService))
     }
 
     @After
@@ -84,11 +76,5 @@ class SettingsRepositoryImplTest {
             Json.parseToJsonElement("""{"lunchHour":12,"dinnerHour":18}"""),
             Json.parseToJsonElement(request.body.readUtf8()),
         )
-    }
-
-    private object UnusedDataStore : DataStore<Preferences> {
-        override val data: Flow<Preferences> = emptyFlow()
-        override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences =
-            error("not used")
     }
 }

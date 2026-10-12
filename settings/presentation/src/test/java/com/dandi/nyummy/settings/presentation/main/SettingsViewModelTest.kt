@@ -5,8 +5,9 @@ import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
-import com.dandi.nyummy.settings.domain.SetBgmEnabledUseCase
 import com.dandi.nyummy.settings.domain.UpdateNotificationSettingsUseCase
+import com.dandi.nyummy.settings.entity.NotificationSettingsChange
+import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import com.dandi.nyummy.settings.presentation.FakeAuthRepository
 import com.dandi.nyummy.settings.presentation.FakePushTokenHelper
 import com.dandi.nyummy.settings.presentation.FakeResourceHelper
@@ -42,7 +43,6 @@ class SettingsViewModelTest {
     private val viewModel by lazy {
         SettingsViewModel(
             getSettings = GetSettingsUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
-            setBgmEnabled = SetBgmEnabledUseCase(repository),
             updateNotificationSettings = UpdateNotificationSettingsUseCase(
                 repository,
                 FakeResourceHelper,
@@ -78,25 +78,24 @@ class SettingsViewModelTest {
         advanceUntilIdle()
         assertFalse(state.isLoaded)
 
-        viewModel.onIntent(SettingsIntent.ToggleBgm(false))
+        viewModel.onIntent(SettingsIntent.ToggleServicePush(false))
         viewModel.onIntent(SettingsIntent.ToggleMarketingPush(true))
         viewModel.onIntent(SettingsIntent.ClickMealTime)
         advanceUntilIdle()
 
-        assertTrue(repository.savedBgm.isEmpty())
         assertTrue(repository.savedNotifications.isEmpty())
         assertTrue(navigationHelper.pages.isEmpty())
-        assertTrue(state.isBgmEnabled)
+        assertEquals(NotificationSettingsVO.default, state.notification)
 
         gate.complete(MealTimesVO.default)
         advanceUntilIdle()
         assertTrue(state.isLoaded)
 
-        viewModel.onIntent(SettingsIntent.ToggleBgm(false))
+        viewModel.onIntent(SettingsIntent.ToggleServicePush(false))
         viewModel.onIntent(SettingsIntent.ClickMealTime)
         advanceUntilIdle()
 
-        assertEquals(listOf(false), repository.savedBgm)
+        assertEquals(listOf(NotificationSettingsChange(isServiceEnabled = false)), repository.savedNotifications)
         assertEquals(listOf(MealTimeSettingPage), navigationHelper.pages)
     }
 
@@ -129,9 +128,9 @@ class SettingsViewModelTest {
 
         assertTrue(state.isLoaded)
         assertNull(state.mealTimes)
-        viewModel.onIntent(SettingsIntent.ToggleBgm(false))
+        viewModel.onIntent(SettingsIntent.ToggleServicePush(false))
         advanceUntilIdle()
-        assertEquals(listOf(false), repository.savedBgm)
+        assertEquals(listOf(NotificationSettingsChange(isServiceEnabled = false)), repository.savedNotifications)
     }
 
     @Test
