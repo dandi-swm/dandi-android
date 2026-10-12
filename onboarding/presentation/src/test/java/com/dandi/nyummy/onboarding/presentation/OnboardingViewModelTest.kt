@@ -15,8 +15,6 @@ import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.onboarding.domain.CatNameError
 import com.dandi.nyummy.onboarding.domain.FinishOnboardingUseCase
 import com.dandi.nyummy.onboarding.domain.OnboardingRepository
-import com.dandi.nyummy.onboarding.domain.RegisterCatUseCase
-import com.dandi.nyummy.onboarding.entity.CatVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -38,6 +36,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnboardingViewModelTest {
@@ -53,13 +52,6 @@ class OnboardingViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         viewModel = OnboardingViewModel(
-            registerCatUseCase = RegisterCatUseCase(
-                repository = repository,
-                resourceHelper = FakeResourceHelper,
-                messageHelper = SilentMessageHelper,
-                navigationHelper = navigationHelper,
-                ttiHelper = FakeTTIHelper,
-            ),
             finishOnboardingUseCase = FinishOnboardingUseCase(
                 repository = repository,
                 resourceHelper = FakeResourceHelper,
@@ -183,39 +175,25 @@ class OnboardingViewModelTest {
         advanceUntilIdle()
 
         assertEquals(CatNameError.EMPTY, state.catNameError)
-        assertTrue(repository.registeredNames.isEmpty())
+        assertTrue(repository.createdCats.isEmpty())
     }
 
     @Test
-    fun `이름을 등록하면 이름을 받은 축하 장면으로 넘어가고 이름표가 바뀐다`() = runTest(testDispatcher) {
+    fun `이름을 정하면 서버를 부르지 않고 이름을 받은 축하 장면으로 넘어가며 이름표가 바뀐다`() = runTest(testDispatcher) {
         viewModel.onIntent(OnboardingIntent.Skip)
         viewModel.onIntent(OnboardingIntent.InputCatName(" 냐미 "))
         viewModel.onIntent(OnboardingIntent.SubmitCatName)
-        assertTrue(state.isSubmitting)
         advanceUntilIdle()
 
-        assertEquals(listOf("냐미"), repository.registeredNames)
+        // 고양이는 마지막 장면에서 식사 시각과 함께 만든다.
+        assertTrue(repository.createdCats.isEmpty())
         assertEquals("냐미", state.catName)
-        assertFalse(state.isSubmitting)
         assertEquals(OnboardingCharacter.CELEBRATE, state.currentScene.character)
     }
 
     @Test
-    fun `등록에 실패하면 이름 장면에 머물고 다시 시도할 수 있다`() = runTest(testDispatcher) {
-        repository.error = IllegalStateException("boom")
-        viewModel.onIntent(OnboardingIntent.Skip)
-        viewModel.onIntent(OnboardingIntent.InputCatName("냐미"))
-        viewModel.onIntent(OnboardingIntent.SubmitCatName)
-        advanceUntilIdle()
-
-        assertEquals(OnboardingScript.namingSceneIndex, state.sceneIndex)
-        assertFalse(state.isSubmitting)
-        assertEquals("", state.catName)
-    }
-
-    @Test
     fun `이름을 받은 뒤 시작하기를 누르면 평소 식사 시각 장면으로 넘어간다`() = runTest(testDispatcher) {
-        registerCatAndReachStart()
+        nameCatAndReachStart()
 
         viewModel.onIntent(OnboardingIntent.ClickStart)
 
@@ -273,8 +251,43 @@ class OnboardingViewModelTest {
         advanceUntilIdle()
 
         assertTrue(state.isFinishing)
-        assertEquals(listOf(MealTimesVO(dinner = MealTimeVO(hour = 19))), repository.savedMealTimes)
+        val mealTimes = MealTimesVO(dinner = MealTimeVO(hour = 19))
+        assertEquals(listOf("냐미" to mealTimes), repository.createdCats)
+        assertEquals(listOf(mealTimes), repository.savedMealTimes)
         assertEquals(listOf("/home"), navigationHelper.rootPages.map { it.toRoute().path })
+    }
+
+    @Test
+    fun `고양이를 만들지 못하면 식사 시각 장면에 머물고 다시 확인할 수 있다`() = runTest(testDispatcher) {
+        reachMealTimeScene()
+        repository.error = IOException("offline")
+
+        viewModel.onIntent(OnboardingIntent.ConfirmMealTimes)
+        advanceUntilIdle()
+
+        assertFalse(state.isFinishing)
+        assertEquals(OnboardingSceneAction.MealTime, state.currentScene.action)
+        assertTrue(navigationHelper.rootPages.isEmpty())
+
+        repository.error = null
+        viewModel.onIntent(OnboardingIntent.ConfirmMealTimes)
+        advanceUntilIdle()
+
+        assertEquals(2, repository.createdCats.size)
+        assertEquals(listOf("/home"), navigationHelper.rootPages.map { it.toRoute().path })
+    }
+
+    @Test
+    fun `끼니 시각이 겹치면 고양이를 만들지 않고 식사 시각 장면에 머문다`() = runTest(testDispatcher) {
+        reachMealTimeScene()
+        viewModel.onIntent(OnboardingIntent.SelectMealTime(Meal.DINNER, MealTimeVO(hour = 12)))
+
+        viewModel.onIntent(OnboardingIntent.ConfirmMealTimes)
+        advanceUntilIdle()
+
+        assertFalse(state.isFinishing)
+        assertTrue(repository.createdCats.isEmpty())
+        assertTrue(navigationHelper.rootPages.isEmpty())
     }
 
     @Test
@@ -282,12 +295,12 @@ class OnboardingViewModelTest {
         viewModel.onIntent(OnboardingIntent.ConfirmMealTimes)
         advanceUntilIdle()
 
-        assertTrue(repository.savedMealTimes.isEmpty())
+        assertTrue(repository.createdCats.isEmpty())
         assertTrue(navigationHelper.rootPages.isEmpty())
     }
 
-    /** 이름을 등록하고 축하 장면의 마지막 대사까지 넘겨 시작 버튼이 뜬 상태로 만든다. */
-    private fun TestScope.registerCatAndReachStart() {
+    /** 이름을 정하고 축하 장면의 마지막 대사까지 넘겨 시작 버튼이 뜬 상태로 만든다. */
+    private fun TestScope.nameCatAndReachStart() {
         viewModel.onIntent(OnboardingIntent.Skip)
         viewModel.onIntent(OnboardingIntent.InputCatName("냐미"))
         viewModel.onIntent(OnboardingIntent.SubmitCatName)
@@ -299,19 +312,20 @@ class OnboardingViewModelTest {
     }
 
     private fun TestScope.reachMealTimeScene(revealLine: Boolean = true) {
-        registerCatAndReachStart()
+        nameCatAndReachStart()
         viewModel.onIntent(OnboardingIntent.ClickStart)
         if (revealLine) viewModel.onIntent(OnboardingIntent.TypingFinished)
     }
 
     private class FakeOnboardingRepository : OnboardingRepository {
         var error: Exception? = null
-        val registeredNames = mutableListOf<String>()
 
-        override suspend fun registerCat(name: String): CatVO {
+        /** createCat에 넘어온 (이름, 식사 시각). 실패한 요청도 남긴다. */
+        val createdCats = mutableListOf<Pair<String, MealTimesVO>>()
+
+        override suspend fun createCat(name: String, mealTimes: MealTimesVO) {
+            createdCats += name to mealTimes
             error?.let { throw it }
-            registeredNames += name
-            return CatVO(id = 1L, name = name)
         }
 
         override suspend fun markOnboardingComplete() = Unit

@@ -12,7 +12,6 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
-import com.dandi.nyummy.onboarding.entity.CatVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -33,14 +32,14 @@ internal fun httpException(code: Int, errorCode: String? = null): HttpResponseEx
 internal class FakeOnboardingRepository(
     var error: Exception? = null,
 ) : OnboardingRepository {
-    val registeredNames = mutableListOf<String>()
+    /** createCat에 넘어온 (이름, 식사 시각). 실패한 요청도 남긴다. */
+    val createdCats = mutableListOf<Pair<String, MealTimesVO>>()
     var onboardingCompleteCount = 0
         private set
 
-    override suspend fun registerCat(name: String): CatVO {
-        registeredNames += name
+    override suspend fun createCat(name: String, mealTimes: MealTimesVO) {
+        createdCats += name to mealTimes
         error?.let { throw it }
-        return CatVO(id = 1L, name = name)
     }
 
     override suspend fun markOnboardingComplete() {
@@ -78,6 +77,7 @@ internal class RecordingNavigationHelper : NavigationHelper {
 
 internal class RecordingMessageHelper : MessageHelper {
     val dialogs = mutableListOf<String>()
+    val snackBars = mutableListOf<String>()
 
     override val effect: Flow<MessageEffect> = emptyFlow()
     override fun showToast(toastMsg: String) = Unit
@@ -86,7 +86,9 @@ internal class RecordingMessageHelper : MessageHelper {
         messageText: String,
         callToActionText: String?,
         onClickCTA: (() -> Unit)?,
-    ) = Unit
+    ) {
+        snackBars += messageText
+    }
 
     override fun showSnackBar(
         iconType: IconType,

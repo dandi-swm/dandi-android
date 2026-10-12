@@ -51,4 +51,5 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.retrofit.converter.kotlinx.serialization)
+    testImplementation(libs.okhttp.mockwebserver)
 }

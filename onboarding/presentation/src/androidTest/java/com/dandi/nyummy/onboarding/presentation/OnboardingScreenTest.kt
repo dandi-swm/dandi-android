@@ -2,7 +2,6 @@ package com.dandi.nyummy.onboarding.presentation
 
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -77,13 +76,6 @@ class OnboardingScreenTest {
         setScreen(namingState().copy(catNameError = CatNameError.EMPTY))
 
         composeRule.onNodeWithText(text(R.string.onboarding_name_error_empty)).assertIsDisplayed()
-    }
-
-    @Test
-    fun 등록_중에는_버튼_문구가_바뀌고_누를_수_없다() {
-        setScreen(namingState().copy(catNameInput = "냐미", isSubmitting = true))
-
-        composeRule.onNodeWithText(text(R.string.onboarding_name_submitting)).assertIsNotEnabled()
     }
 
     @Test
