@@ -31,8 +31,10 @@ class SettingsViewModel @Inject constructor(
     private val messageHelper: MessageHelper,
 ) : MviViewModel<SettingsIntent, SettingsUIState, SettingsReducerEvent>(SettingsUIState.empty) {
 
-    // 알림 묶음별 저장 요청. 같은 토글을 빠르게 여러 번 누르면 마지막 값만 반영하고, 다른 토글의 저장은 끊지 않는다.
-    private val notificationJobs = mutableMapOf<NotificationKind, Job>()
+    // 알림 묶음별로 저장 요청을 하나씩만 보낸다. 보내는 중에 또 바꾸면 마지막 값만 기억했다가 앞 요청이 끝난 뒤 보낸다.
+    // 앞 요청을 취소해도 서버는 이미 처리하고 있을 수 있어, 늦게 반영된 옛 값이 새 값을 덮을 수 있기 때문이다.
+    private val savingKinds = mutableSetOf<NotificationKind>()
+    private val pendingChanges = mutableMapOf<NotificationKind, NotificationSettingsChange>()
     private var loadJob: Job? = null
 
     // 서버에 저장된 것으로 확인한 알림 설정. 저장이 실패하면 이 값으로 되돌린다.
@@ -127,25 +129,44 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
-     * 바로 반영하고 바꾼 항목만 저장한다. 저장이 실패하면 그 항목만 되돌리고 "다시 시도" 스낵바를 띄운다.
+     * 바로 반영하고 바꾼 항목만 저장한다. 같은 묶음의 저장이 진행 중이면 마지막 값만 기억해 두고 끝난 뒤 보낸다.
      * 다시 시도는 실패한 토글 하나([change])만 다시 저장한다. 스낵바가 떠 있는 동안 바꾼 다른 토글을 덮지 않기 위해서다.
-     * 마케팅 알림은 저장되면 동의하거나 철회한 날짜를 알린다(광고성 정보 수신 동의 결과 안내).
      */
     private fun changeNotification(kind: NotificationKind, change: NotificationSettingsChange) {
         notificationEditCount++
         dispatch(SettingsReducerEvent.NotificationChanged(change.applyTo(currentState.notification)))
-        notificationJobs[kind]?.cancel()
-        notificationJobs[kind] = viewModelScope.launch {
-            updateNotificationSettings(change).onSuccess {
+        if (kind in savingKinds) {
+            pendingChanges[kind] = change
+            return
+        }
+        saveNotification(kind, change)
+    }
+
+    /**
+     * [change]를 서버에 저장한다. 마케팅 알림은 저장되면 동의하거나 철회한 날짜를 알린다(광고성 정보 수신 동의 결과 안내).
+     * 끝난 뒤 그사이 바꾼 값이 있으면 서버 값과 다를 때만 이어서 보낸다. 실패했는데 그사이 바꾼 값도 없으면
+     * 그 항목만 서버 값으로 되돌리고 "다시 시도" 스낵바를 띄운다.
+     */
+    private fun saveNotification(kind: NotificationKind, change: NotificationSettingsChange) {
+        savingKinds += kind
+        viewModelScope.launch {
+            val result = updateNotificationSettings(change)
+            savingKinds -= kind
+            if (result.isSuccess) {
                 savedNotification = change.applyTo(savedNotification ?: currentState.notification)
                 change.isMarketingEnabled?.let(::showMarketingConsentResult)
-            }.onFailure { error ->
-                savedNotification?.let { saved ->
+            }
+            val saved = savedNotification ?: currentState.notification
+            val pending = pendingChanges.remove(kind)
+            when {
+                // 화면은 이미 마지막 값을 보여 준다. 서버 값과 같으면 보낼 것이 없다.
+                pending != null -> if (pending.applyTo(saved) != saved) saveNotification(kind, pending)
+                result.isFailure -> {
                     dispatch(SettingsReducerEvent.NotificationChanged(change.revertTo(saved).applyTo(currentState.notification)))
-                }
-                // 로그인 만료는 UseCase가 이미 다이얼로그로 알렸다.
-                if ((error as? HttpResponseException)?.isSessionExpired() != true) {
-                    showSaveFailed { changeNotification(kind, change) }
+                    // 로그인 만료는 UseCase가 이미 다이얼로그로 알렸다.
+                    if ((result.exceptionOrNull() as? HttpResponseException)?.isSessionExpired() != true) {
+                        showSaveFailed { changeNotification(kind, change) }
+                    }
                 }
             }
         }

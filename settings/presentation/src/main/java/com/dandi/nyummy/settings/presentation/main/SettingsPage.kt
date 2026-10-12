@@ -55,7 +55,7 @@ import com.dandi.nyummy.settings.presentation.R
 
 /**
  * 설정. 소리(배경음), 알림(서비스 알림, 마케팅 알림, 식사 시간), 약관, 로그아웃.
- * 기기에서 알림을 꺼 두었으면 알림 토글을 막고 기기 설정으로 가는 안내를 띄운다.
+ * 기기에서 알림을 꺼 두었으면 기기 설정으로 가는 안내를 띄운다. 알림 토글은 계정 설정이라 그와 상관없이 바꿀 수 있다.
  */
 @Composable
 fun SettingsPage(
@@ -157,7 +157,8 @@ private fun SoundSection(uiState: SettingsUIState, onIntent: (SettingsIntent) ->
 
 /**
  * 알림 묶음. 서비스 알림과 마케팅 알림 토글(각각 "자세히 보기"), 그 아래 식사 시간.
- * 기기 알림이 꺼져 있으면 두 토글을 꺼진 모습으로 막는다. 설정 값을 읽기 전에도 막는다.
+ * 토글은 계정 단위 서버 값이라 기기 알림과 상관없이 그대로 보여 주고 바꿀 수 있다(마케팅 동의는 언제든 철회할 수 있어야 한다).
+ * 기기 알림이 꺼져 있으면 안내와 기기 설정 버튼만 띄운다. 설정 값을 읽기 전에는 토글을 막는다.
  */
 @Composable
 private fun NotificationSection(
@@ -167,7 +168,7 @@ private fun NotificationSection(
 ) {
     val device = uiState.isDeviceNotificationEnabled
     val notification = uiState.notification
-    val togglesEnabled = uiState.isLoaded && device
+    val togglesEnabled = uiState.isLoaded
     NyummySectionCaption(title = stringResource(R.string.settings_section_notification))
     if (!device) {
         NyummyInlineNotice(
@@ -185,7 +186,7 @@ private fun NotificationSection(
         title = stringResource(R.string.settings_notification_service),
         subtitle = stringResource(R.string.settings_notification_service_desc),
         trailing = NyummyListRowTrailing.Switch(
-            checked = device && notification.isServiceEnabled,
+            checked = notification.isServiceEnabled,
             onCheckedChange = { onIntent(SettingsIntent.ToggleServicePush(it)) },
         ),
         enabled = togglesEnabled,
@@ -195,7 +196,7 @@ private fun NotificationSection(
         title = stringResource(R.string.settings_notification_marketing),
         subtitle = stringResource(R.string.settings_notification_marketing_desc),
         trailing = NyummyListRowTrailing.Switch(
-            checked = device && notification.isMarketingEnabled,
+            checked = notification.isMarketingEnabled,
             onCheckedChange = { onIntent(SettingsIntent.ToggleMarketingPush(it)) },
         ),
         enabled = togglesEnabled,
