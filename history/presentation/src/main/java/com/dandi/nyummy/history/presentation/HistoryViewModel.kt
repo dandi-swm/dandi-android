@@ -1,8 +1,6 @@
 package com.dandi.nyummy.history.presentation
 
 import androidx.lifecycle.viewModelScope
-import com.dandi.nyummy.common.domain.analysis.MealAnalysisEvent
-import com.dandi.nyummy.common.domain.helper.MealAnalysisEventHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.history.domain.DeleteMealUseCase
@@ -16,7 +14,6 @@ import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.presentation.model.HistoryMonth
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
-import com.dandi.nyummy.history.presentation.model.isoDateOf
 import com.dandi.nyummy.history.presentation.util.isAfter
 import com.dandi.nyummy.history.presentation.util.lastDayOf
 import com.dandi.nyummy.history.presentation.util.todayDate
@@ -36,7 +33,6 @@ class HistoryViewModel @Inject constructor(
     private val updateMealName: UpdateMealNameUseCase,
     private val deleteMeal: DeleteMealUseCase,
     private val reanalyzeMeal: ReanalyzeMealUseCase,
-    private val mealAnalysisEventHelper: MealAnalysisEventHelper,
     private val navigationHelper: NavigationHelper,
 ) : MviViewModel<HistoryIntent, HistoryUIState, HistoryReducerEvent>(
     HistoryUIState.initial(todayDate()),
@@ -49,8 +45,8 @@ class HistoryViewModel @Inject constructor(
     private var loadJob: Job? = null
 
     /**
-     * 분석 완료 알림으로 인한 조용한 재조회 job. 사용자의 월/일 조회([loadJob])와 분리해,
-     * 알림이 도착해도 진행 중인 사용자 조작이 취소되지 않게 한다.
+     * 알림 링크로 식사를 열 때의 조용한 재조회 job. 사용자의 월/일 조회([loadJob])와 분리해,
+     * 진행 중인 사용자 조작이 취소되지 않게 한다.
      */
     private var refreshJob: Job? = null
 
@@ -71,7 +67,6 @@ class HistoryViewModel @Inject constructor(
     init {
         val today = currentState.selectedDate
         loadMonth(month = HistoryMonth.of(today), selectedDate = today)
-        observeAnalysisEvents()
     }
 
     override fun onIntent(intent: HistoryIntent) {
@@ -389,21 +384,6 @@ class HistoryViewModel @Inject constructor(
         mealDetailJob = null
         dispatch(HistoryReducerEvent.MealDetailDismissed)
     }
-
-    /**
-     * 분석 완료 알림을 구독한다. 이벤트에 날짜가 실려 있고 그 날짜가 지금 보고 있는 날이 아니면
-     * 화면에 보이지 않는 갱신이라 흘려보낸다(다시 그 날짜를 선택할 때 새로 조회된다).
-     */
-    private fun observeAnalysisEvents() {
-        viewModelScope.launch {
-            mealAnalysisEventHelper.events.collect { event ->
-                if (isEventForSelectedDate(event)) refreshSelectedDayQuietly()
-            }
-        }
-    }
-
-    private fun isEventForSelectedDate(event: MealAnalysisEvent): Boolean =
-        event.date.isBlank() || event.date == isoDateOf(currentState.selectedDate)
 
     /** 로딩 표시 없이 선택 날짜의 식사 목록만 다시 불러온다. 실패하면 화면을 그대로 둔다. */
     private fun refreshSelectedDayQuietly() {
