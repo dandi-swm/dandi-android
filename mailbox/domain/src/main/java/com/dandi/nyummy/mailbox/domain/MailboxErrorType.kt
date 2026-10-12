@@ -11,7 +11,7 @@ enum class MailboxErrorType(
     override val errorMsg: String,
     override val isHandledOnDomain: Boolean = true,
 ) : HttpErrorType {
-    /** 없는 문의이거나 다른 사용자의 문의(404). 화면은 우편함으로 돌아간다. */
+    /** 없는 문의이거나 다른 사용자의 문의(404). 상세는 우편함으로 돌아가고, 삭제는 성공으로, 복구는 복구 실패로 본다. */
     INQUIRY_NOT_FOUND(
         type = "api.inquiry.notFound",
         errorMsg = "",
