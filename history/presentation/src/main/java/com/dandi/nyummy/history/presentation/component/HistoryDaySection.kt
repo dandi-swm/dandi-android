@@ -25,11 +25,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgress
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDivider
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyFoodIcon
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyInlineNotice
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyInlineNoticeTone
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyNutrient
@@ -59,7 +61,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
-import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
  * 고른 날의 기록. 날짜 제목 아래에 상황에 맞는 내용 하나를 보여 준다.
@@ -192,7 +193,7 @@ private fun CompletedMealRow(meal: MealHistoryVO, onClick: () -> Unit) {
     MealRowFrame(
         leading = {
             Box(Modifier.size(FoodIconSize), contentAlignment = Alignment.Center) {
-                HistoryFoodIcon(foodIconId = meal.foodIconId, sizeFraction = 1f)
+                NyummyFoodIcon(foodIconId = meal.foodIconId)
             }
         },
         meta = stringResource(

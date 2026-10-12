@@ -41,6 +41,8 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyFoodIcon
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonTone
@@ -63,7 +65,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.launch
-import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
  * 좌우로 넘겨 달을 바꾸는 월 캘린더. 월 이름과 요일 줄은 고정하고 날짜 6줄만 넘어간다.
@@ -312,7 +313,7 @@ private fun CalendarDay(
             Row(horizontalArrangement = Arrangement.spacedBy(FoodIconOverlap)) {
                 day.foodIconIds.forEach { iconId ->
                     Box(modifier = Modifier.size(FoodIconSize), contentAlignment = Alignment.Center) {
-                        HistoryFoodIcon(foodIconId = iconId, sizeFraction = 1f)
+                        NyummyFoodIcon(foodIconId = iconId)
                     }
                 }
             }

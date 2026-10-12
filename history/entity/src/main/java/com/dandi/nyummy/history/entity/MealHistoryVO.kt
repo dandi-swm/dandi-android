@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
  * @property id 식사 기록 식별자
  * @property name 음식 이름 (예: "치킨 샐러드"). 분석 실패/진행 중에는 비어 있습니다.
  * @property photoUrl 촬영 사진 URL. 백엔드 연동 전에는 빈 값입니다.
- * @property foodIconId 음식 픽셀 아이콘 식별자 (예: "salad")
+ * @property foodIconId 음식 픽셀 아이콘 식별자. 분석이 끝난 식사만 값이 있고, 분석 전이거나 실패했으면 빈 값입니다.
  * @property recordedAt 촬영 시각 표시 문자열 (예: "08:10"). 서버 포맷 변환은 data 레이어 toVO() 에서 담당합니다.
  * @property calorieKcal 이 식사의 열량(kcal)
  * @property carbohydrateGram 이 식사의 탄수화물(g)
