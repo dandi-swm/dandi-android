@@ -51,4 +51,17 @@ class MealTimesVOTest {
 
         assertFalse(none.hasAnyMeal)
     }
+
+    @Test
+    fun `먹는 끼니끼리 시각이 같으면 겹친다고 본다`() {
+        assertFalse(MealTimesVO.default.hasDuplicateHours)
+        assertTrue(MealTimesVO.default.with(Meal.LUNCH, MealTimeVO(hour = 8)).hasDuplicateHours)
+    }
+
+    @Test
+    fun `건너뛴 끼니의 시각은 겹쳐도 상관없다`() {
+        val skippedBreakfast = MealTimesVO.default.with(Meal.BREAKFAST, MealTimeVO(hour = 12, isSkipped = true))
+
+        assertFalse(skippedBreakfast.hasDuplicateHours)
+    }
 }
