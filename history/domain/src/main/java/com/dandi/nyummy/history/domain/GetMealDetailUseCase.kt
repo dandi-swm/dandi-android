@@ -9,6 +9,7 @@ import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 /** 식사 단건 상세 조회 (사진 URL 포함). */
 class GetMealDetailUseCase @Inject constructor(
@@ -26,6 +27,11 @@ class GetMealDetailUseCase @Inject constructor(
             e,
             onDomainError = { messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = it.errorMsg) },
         )
+        Result.failure(e)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        // 네트워크 끊김 등 HTTP 응답 전 실패. 상세는 목록 데이터로 이미 열려 있어 따로 안내하지 않는다.
         Result.failure(e)
     }
 }
