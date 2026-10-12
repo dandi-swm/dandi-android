@@ -83,4 +83,5 @@ dependencies {
     implementation(libs.firebase.perf)
 
     testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
 }
