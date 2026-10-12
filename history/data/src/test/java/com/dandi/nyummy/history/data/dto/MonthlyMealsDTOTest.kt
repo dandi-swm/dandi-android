@@ -1,5 +1,6 @@
 package com.dandi.nyummy.history.data.dto
 
+import com.dandi.nyummy.history.entity.DailyNutritionEvaluation
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -35,5 +36,22 @@ class MonthlyMealsDTOTest {
         )
 
         assertEquals(listOf("1", "2"), dto.toVO().days.single().foodIconIds)
+    }
+
+    @Test
+    fun `하루 평가는 서버 값을 그대로 옮기고 모르는 값은 UNKNOWN으로 둔다`() {
+        fun evaluationOf(value: String?) = MonthlyMealDayDTO(
+            date = "2026-10-07",
+            isCurrentMonth = true,
+            dailyNutritionEvaluation = value,
+            foodIconIds = listOf(1),
+        ).toVO().evaluation
+
+        assertEquals(DailyNutritionEvaluation.POSITIVE, evaluationOf("POSITIVE"))
+        assertEquals(DailyNutritionEvaluation.NEGATIVE, evaluationOf("NEGATIVE"))
+        assertEquals(DailyNutritionEvaluation.UNRECORDED, evaluationOf("UNRECORDED"))
+        assertEquals(DailyNutritionEvaluation.UNKNOWN, evaluationOf(null))
+        // 서버가 새 평가 값을 더하거나 예전 앱 이름이 와도 다른 평가로 잘못 옮기지 않는다.
+        assertEquals(DailyNutritionEvaluation.UNKNOWN, evaluationOf("IN_RANGE"))
     }
 }

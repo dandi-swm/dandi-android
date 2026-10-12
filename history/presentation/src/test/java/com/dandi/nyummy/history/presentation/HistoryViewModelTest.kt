@@ -520,7 +520,7 @@ class HistoryViewModelTest {
     @Test
     fun `재분석 응답 전에는 같은 식사의 재요청을 무시한다`() = runTest(testDispatcher) {
         repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
-        val gate = CompletableDeferred<MealHistoryVO>()
+        val gate = CompletableDeferred<MealAnalysisStatus>()
         repository.reanalyzeOverride = { gate.await() }
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -532,14 +532,14 @@ class HistoryViewModelTest {
 
         assertTrue(viewModel.uiState.value.isReanalyzing("2"))
         assertEquals(listOf(2L), repository.reanalyzeRequests)
-        gate.complete(MealHistoryVO(id = "2", status = MealAnalysisStatus.ANALYZING))
+        gate.complete(MealAnalysisStatus.ANALYZING)
         advanceUntilIdle()
     }
 
     @Test
     fun `조용한 새로고침이 끼어들어도 진행 중인 재분석 표시는 유지된다`() = runTest(testDispatcher) {
         repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
-        val gate = CompletableDeferred<MealHistoryVO>()
+        val gate = CompletableDeferred<MealAnalysisStatus>()
         repository.reanalyzeOverride = { gate.await() }
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -553,7 +553,7 @@ class HistoryViewModelTest {
         // 서버 응답에는 "2"가 아직 FAILED 지만, 재분석 요청이 끝나기 전이므로 진행 표시를 유지한다.
         assertTrue(viewModel.uiState.value.isReanalyzing("2"))
 
-        gate.complete(MealHistoryVO(id = "2", status = MealAnalysisStatus.ANALYZING))
+        gate.complete(MealAnalysisStatus.ANALYZING)
         advanceUntilIdle()
         assertFalse(viewModel.uiState.value.isReanalyzing("2"))
     }
@@ -796,9 +796,7 @@ class HistoryViewModelTest {
             { mealId, name -> MealHistoryVO(id = mealId.toString(), name = name) }
         var deleteOverride: suspend (Long) -> Unit = { }
         val reanalyzeRequests = mutableListOf<Long>()
-        var reanalyzeOverride: suspend (Long) -> MealHistoryVO = { mealId ->
-            MealHistoryVO(id = mealId.toString(), status = MealAnalysisStatus.ANALYZING)
-        }
+        var reanalyzeOverride: suspend (Long) -> MealAnalysisStatus = { MealAnalysisStatus.ANALYZING }
 
         override suspend fun getMonthlyCalendar(year: Int, month: Int): HistoryCalendarVO {
             monthlyRequests += year to month
@@ -815,7 +813,7 @@ class HistoryViewModelTest {
         override suspend fun updateMealName(mealId: Long, name: String): MealHistoryVO =
             updateOverride(mealId, name)
 
-        override suspend fun reanalyzeMeal(mealId: Long): MealHistoryVO {
+        override suspend fun reanalyzeMeal(mealId: Long): MealAnalysisStatus {
             reanalyzeRequests += mealId
             return reanalyzeOverride(mealId)
         }

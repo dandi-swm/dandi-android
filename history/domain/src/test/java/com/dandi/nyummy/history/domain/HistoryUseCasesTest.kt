@@ -26,6 +26,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
+import kotlin.coroutines.cancellation.CancellationException
 
 class HistoryUseCasesTest {
 
@@ -170,10 +171,9 @@ class HistoryUseCasesTest {
     }
 
     @Test
-    fun `재분석 성공 시 갱신된 식사 VO 를 돌려준다`() = runBlocking {
-        val meal = MealHistoryVO(id = "7", status = MealAnalysisStatus.ANALYZING)
+    fun `재분석 성공 시 서버가 준 분석 상태를 돌려준다`() = runBlocking {
         val useCase = ReanalyzeMealUseCase(
-            repository = FakeHistoryRepository(meal = meal),
+            repository = FakeHistoryRepository(reanalyzed = MealAnalysisStatus.ANALYZING),
             resourceHelper = FakeResourceHelper(),
             messageHelper = messageHelper,
             navigationHelper = navigationHelper,
@@ -182,7 +182,7 @@ class HistoryUseCasesTest {
 
         val result = useCase(7L)
 
-        assertEquals(Result.success(meal), result)
+        assertEquals(Result.success(MealAnalysisStatus.ANALYZING), result)
         assertTrue(messageHelper.snackBars.isEmpty())
     }
 
@@ -273,6 +273,123 @@ class HistoryUseCasesTest {
     }
 
     @Test
+    fun `상세 조회 중 네트워크 오류면 죽지 않고 아무것도 띄우지 않는다`() = runBlocking {
+        val useCase = GetMealDetailUseCase(
+            repository = ThrowingHistoryRepository(IOException("offline")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(7L)
+
+        assertTrue(messageHelper.snackBars.isEmpty())
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `이름 수정 중 네트워크 오류면 죽지 않고 수정 실패를 안내한다`() = runBlocking {
+        val useCase = UpdateMealNameUseCase(
+            repository = ThrowingHistoryRepository(IOException("offline")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(7L, "김치찌개")
+
+        assertEquals("이름 수정에 실패했어요", messageHelper.snackBars.single().messageText)
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `재분석 중 네트워크 오류면 죽지 않고 재분석 실패를 안내한다`() = runBlocking {
+        val useCase = ReanalyzeMealUseCase(
+            repository = ThrowingHistoryRepository(IOException("offline")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(7L)
+
+        assertEquals("다시 분석하지 못했어요", messageHelper.snackBars.single().messageText)
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `삭제 중 네트워크 오류면 죽지 않고 삭제 실패를 안내한다`() = runBlocking {
+        val useCase = DeleteMealUseCase(
+            repository = ThrowingHistoryRepository(IOException("offline")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(7L)
+
+        assertEquals("삭제에 실패했어요", messageHelper.snackBars.single().messageText)
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `상세 조회가 취소되면 실패로 바꾸지 않고 그대로 던진다`() = runBlocking {
+        val useCase = GetMealDetailUseCase(
+            repository = ThrowingHistoryRepository(CancellationException("left history")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        assertCancelledSilently { useCase(7L) }
+    }
+
+    @Test
+    fun `이름 수정이 취소되면 실패로 바꾸지 않고 그대로 던진다`() = runBlocking {
+        val useCase = UpdateMealNameUseCase(
+            repository = ThrowingHistoryRepository(CancellationException("left history")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        assertCancelledSilently { useCase(7L, "김치찌개") }
+    }
+
+    @Test
+    fun `재분석이 취소되면 실패로 바꾸지 않고 그대로 던진다`() = runBlocking {
+        val useCase = ReanalyzeMealUseCase(
+            repository = ThrowingHistoryRepository(CancellationException("left history")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        assertCancelledSilently { useCase(7L) }
+    }
+
+    @Test
+    fun `삭제가 취소되면 실패로 바꾸지 않고 그대로 던진다`() = runBlocking {
+        val useCase = DeleteMealUseCase(
+            repository = ThrowingHistoryRepository(CancellationException("left history")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        assertCancelledSilently { useCase(7L) }
+    }
+
+    @Test
     fun `5xx 공통 오류는 서버 상태 문자열을 보여 주지 않는다`() = runBlocking {
         val useCase = GetMealDetailUseCase(
             repository = ThrowingHistoryRepository(httpException(500, "api.common.internalServerError")),
@@ -289,6 +406,15 @@ class HistoryUseCasesTest {
         assertTrue("500" !in dialog.descText && "api." !in dialog.descText)
     }
 
+    /** 취소는 `Result.failure`로 바꾸지 않고 그대로 던져야 하고, 실패 안내도 띄우지 않아야 한다. */
+    private suspend fun assertCancelledSilently(block: suspend () -> Result<*>) {
+        val thrown = runCatching { block() }.exceptionOrNull()
+
+        assertTrue("취소가 전파되지 않았다: $thrown", thrown is CancellationException)
+        assertTrue(messageHelper.snackBars.isEmpty())
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+    }
+
     /** 서버 에러 바디의 `code` 를 cause 로 담는 실제 변환(BaseRemoteDataSource)과 같은 형태로 만든다. */
     private fun httpException(code: Int, errorCode: String? = null): HttpResponseException = HttpResponseException(
         status = HttpResponseStatus.create(code),
@@ -302,12 +428,13 @@ class HistoryUseCasesTest {
         private val monthly: HistoryCalendarVO = HistoryCalendarVO.empty,
         private val daily: DailyMealHistoryVO = DailyMealHistoryVO.empty,
         private val meal: MealHistoryVO = MealHistoryVO.empty,
+        private val reanalyzed: MealAnalysisStatus = MealAnalysisStatus.ANALYZING,
     ) : HistoryRepository {
         override suspend fun getMonthlyCalendar(year: Int, month: Int) = monthly
         override suspend fun getDailyMeals(year: Int, month: Int, day: Int) = daily
         override suspend fun getMeal(mealId: Long) = meal
         override suspend fun updateMealName(mealId: Long, name: String) = meal
-        override suspend fun reanalyzeMeal(mealId: Long) = meal
+        override suspend fun reanalyzeMeal(mealId: Long) = reanalyzed
         override suspend fun deleteMeal(mealId: Long) = Unit
     }
 
@@ -318,7 +445,7 @@ class HistoryUseCasesTest {
         override suspend fun getDailyMeals(year: Int, month: Int, day: Int) = throw exception
         override suspend fun getMeal(mealId: Long) = throw exception
         override suspend fun updateMealName(mealId: Long, name: String) = throw exception
-        override suspend fun reanalyzeMeal(mealId: Long): MealHistoryVO = throw exception
+        override suspend fun reanalyzeMeal(mealId: Long): MealAnalysisStatus = throw exception
         override suspend fun deleteMeal(mealId: Long) = throw exception
     }
 
