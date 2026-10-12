@@ -1,7 +1,7 @@
 package com.dandi.nyummy.meal.data
 
 import android.content.Context
-import com.dandi.nyummy.common.data.di.NoAuthApi
+import com.dandi.nyummy.common.data.image.ImageUploadDataSource
 import com.dandi.nyummy.meal.domain.MealRecordRepository
 import dagger.Module
 import dagger.Provides
@@ -20,18 +20,10 @@ object MealRecordDataModule {
     fun provideMealRecordApiService(retrofit: Retrofit): MealRecordApiService =
         retrofit.create(MealRecordApiService::class.java)
 
-    // presigned 업로드는 Bearer 헤더·401 재발급이 붙으면 안 되므로 공개 클라이언트로 생성한다.
     @Provides
     @Singleton
-    fun provideMealImageUploadApiService(@NoAuthApi retrofit: Retrofit): MealImageUploadApiService =
-        retrofit.create(MealImageUploadApiService::class.java)
-
-    @Provides
-    @Singleton
-    fun provideMealRecordDataSource(
-        apiService: MealRecordApiService,
-        uploadApiService: MealImageUploadApiService,
-    ): MealRecordDataSource = MealRecordDataSource(apiService, uploadApiService)
+    fun provideMealRecordDataSource(apiService: MealRecordApiService): MealRecordDataSource =
+        MealRecordDataSource(apiService)
 
     @Provides
     @Singleton
@@ -39,10 +31,12 @@ object MealRecordDataModule {
         @ApplicationContext context: Context,
     ): MealGalleryPhotoDataSource = MealGalleryPhotoDataSource(context)
 
+    // 사진 업로드 URL 발급과 스토리지 업로드는 공통 이미지 업로드(common:data ImageUploadModule)를 쓴다.
     @Provides
     @Singleton
     fun provideMealRecordRepository(
         dataSource: MealRecordDataSource,
+        imageUploadDataSource: ImageUploadDataSource,
         galleryPhotoDataSource: MealGalleryPhotoDataSource,
-    ): MealRecordRepository = MealRecordRepositoryImpl(dataSource, galleryPhotoDataSource)
+    ): MealRecordRepository = MealRecordRepositoryImpl(dataSource, imageUploadDataSource, galleryPhotoDataSource)
 }

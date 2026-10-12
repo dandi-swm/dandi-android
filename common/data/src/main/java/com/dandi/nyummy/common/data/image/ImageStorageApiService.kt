@@ -1,4 +1,4 @@
-package com.dandi.nyummy.meal.data
+package com.dandi.nyummy.common.data.image
 
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -13,7 +13,7 @@ import retrofit2.http.Url
  * 서버가 아닌 외부 스토리지(S3)로 직접 요청하므로 `@NoAuthApi` Retrofit 으로 생성해야 한다 —
  * presigned 쿼리 서명과 Bearer Authorization 헤더가 함께 실리면 스토리지가 요청을 거부한다.
  */
-interface MealImageUploadApiService {
+interface ImageStorageApiService {
     /** presigned URL 로 이미지 업로드 */
     @PUT
     suspend fun uploadImage(
