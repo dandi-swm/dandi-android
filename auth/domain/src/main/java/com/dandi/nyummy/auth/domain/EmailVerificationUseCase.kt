@@ -63,7 +63,7 @@ class EmailVerificationUseCase @Inject constructor(
         handleHttpError<AuthErrorType>(
             e,
             onDomainError = { inlineMessage = it.errorMsg },
-            onUnknownError = { inlineMessage = AuthErrorType.UNKNOWN.errorMsg },
+            onUnknownError = { inlineMessage = CONFIRM_FAILED_MESSAGE },
         )
         Result.failure(inlineMessage?.let(::CodeVerificationFailedException) ?: e)
     } catch (e: CancellationException) {
@@ -71,7 +71,7 @@ class EmailVerificationUseCase @Inject constructor(
     } catch (e: IOException) {
         Result.failure(CodeVerificationFailedException(NETWORK_ERROR_MESSAGE))
     } catch (e: Exception) {
-        Result.failure(CodeVerificationFailedException(AuthErrorType.UNKNOWN.errorMsg))
+        Result.failure(CodeVerificationFailedException(CONFIRM_FAILED_MESSAGE))
     }
 
     private fun showError(message: String) {
@@ -81,6 +81,7 @@ class EmailVerificationUseCase @Inject constructor(
     private companion object {
         const val SEND_FAILED_MESSAGE = "인증 메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요."
         const val NETWORK_ERROR_MESSAGE = "네트워크 연결을 확인한 뒤 다시 시도해주세요."
+        const val CONFIRM_FAILED_MESSAGE = "알 수 없는 오류가 발생했습니다."
     }
 }
 
