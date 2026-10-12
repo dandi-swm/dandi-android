@@ -35,8 +35,9 @@ import com.dandi.nyummy.common.entity.meal.Meal
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomSheet
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCard
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialog
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDivider
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyInlineNotice
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRowTrailing
@@ -53,7 +54,7 @@ import com.dandi.nyummy.settings.entity.LegalDocument
 import com.dandi.nyummy.settings.presentation.R
 
 /**
- * 설정. 소리(배경음), 알림(서비스 알림, 식사 시간, 마케팅 알림), 약관, 로그아웃.
+ * 설정. 소리(배경음), 알림(서비스 알림, 마케팅 알림, 식사 시간), 약관, 로그아웃.
  * 기기에서 알림을 꺼 두었으면 알림 토글을 막고 기기 설정으로 가는 안내를 띄운다.
  */
 @Composable
@@ -155,7 +156,7 @@ private fun SoundSection(uiState: SettingsUIState, onIntent: (SettingsIntent) ->
 }
 
 /**
- * 알림 묶음. 서비스 알림과 마케팅 알림 토글, 각 묶음에 어떤 알림이 들어 있는지 보는 "자세히 보기", 식사 시간.
+ * 알림 묶음. 서비스 알림과 마케팅 알림 토글(각각 "자세히 보기"), 그 아래 식사 시간.
  * 기기 알림이 꺼져 있으면 두 토글을 꺼진 모습으로 막는다. 설정 값을 읽기 전에도 막는다.
  */
 @Composable
@@ -191,12 +192,6 @@ private fun NotificationSection(
     )
     NotificationDetailButton { onIntent(SettingsIntent.ClickNotificationDetail(NotificationKind.SERVICE)) }
     NyummyListRow(
-        title = stringResource(R.string.settings_meal_time),
-        subtitle = uiState.mealTimes?.let { mealTimesSummary(it) },
-        onClick = { onIntent(SettingsIntent.ClickMealTime) },
-        enabled = uiState.isLoaded,
-    )
-    NyummyListRow(
         title = stringResource(R.string.settings_notification_marketing),
         subtitle = stringResource(R.string.settings_notification_marketing_desc),
         trailing = NyummyListRowTrailing.Switch(
@@ -206,6 +201,12 @@ private fun NotificationSection(
         enabled = togglesEnabled,
     )
     NotificationDetailButton { onIntent(SettingsIntent.ClickNotificationDetail(NotificationKind.MARKETING)) }
+    NyummyListRow(
+        title = stringResource(R.string.settings_meal_time),
+        subtitle = uiState.mealTimes?.let { mealTimesSummary(it) },
+        onClick = { onIntent(SettingsIntent.ClickMealTime) },
+        enabled = uiState.isLoaded,
+    )
 }
 
 /** 알림 묶음 토글 아래의 "자세히 보기". 기기 알림이 꺼져 있거나 읽기 전이어도 볼 수 있다. */
@@ -220,69 +221,110 @@ private fun NotificationDetailButton(onClick: () -> Unit) {
     )
 }
 
-/** 알림 묶음에 들어 있는 알림 하나. 언제 오는지와 실제 푸시 문구 예시를 보여 준다. */
+/** 알림 묶음에 들어 있는 알림 하나와 언제 오는지. */
 private data class IncludedPush(
     @StringRes val name: Int,
-    @StringRes val whenSent: Int,
-    @StringRes val previewTitle: Int,
-    @StringRes val previewBody: Int,
+    @StringRes val description: Int,
 )
 
-private val NotificationKind.title: Int
-    @StringRes get() = when (this) {
-        NotificationKind.SERVICE -> R.string.settings_notification_service
-        NotificationKind.MARKETING -> R.string.settings_notification_marketing
-    }
+/**
+ * "자세히 보기" 시트에 밝히는 내용. 스토어 정책과 광고성 정보 전송 규정에 맞춰
+ * 보내는 곳, 알림 목적, 알림 내용, 받지 않는(동의를 철회하는) 방법을 같은 틀로 보여 준다.
+ */
+private data class NotificationDisclosure(
+    @StringRes val title: Int,
+    @StringRes val purpose: Int,
+    val contents: List<IncludedPush>,
+    @StringRes val optOutLabel: Int,
+    @StringRes val optOut: Int,
+)
 
-private val NotificationKind.includedPushes: List<IncludedPush>
+private val NotificationKind.disclosure: NotificationDisclosure
     get() = when (this) {
-        NotificationKind.SERVICE -> listOf(
-            IncludedPush(
-                name = R.string.settings_push_meal_time,
-                whenSent = R.string.settings_push_meal_time_when,
-                previewTitle = R.string.settings_push_meal_time_preview_title,
-                previewBody = R.string.settings_push_meal_time_preview_body,
+        NotificationKind.SERVICE -> NotificationDisclosure(
+            title = R.string.settings_notification_service,
+            purpose = R.string.settings_push_service_purpose,
+            contents = listOf(
+                IncludedPush(R.string.settings_push_meal_time, R.string.settings_push_meal_time_desc),
+                IncludedPush(R.string.settings_push_analysis, R.string.settings_push_analysis_desc),
             ),
-            IncludedPush(
-                name = R.string.settings_push_analysis,
-                whenSent = R.string.settings_push_analysis_when,
-                previewTitle = R.string.settings_push_analysis_preview_title,
-                previewBody = R.string.settings_push_analysis_preview_body,
-            ),
+            optOutLabel = R.string.settings_push_service_opt_out_label,
+            optOut = R.string.settings_push_service_opt_out,
         )
-        NotificationKind.MARKETING -> listOf(
-            IncludedPush(
-                name = R.string.settings_push_retention,
-                whenSent = R.string.settings_push_retention_when,
-                previewTitle = R.string.settings_push_retention_preview_title,
-                previewBody = R.string.settings_push_retention_preview_body,
+        NotificationKind.MARKETING -> NotificationDisclosure(
+            title = R.string.settings_notification_marketing,
+            purpose = R.string.settings_push_marketing_purpose,
+            contents = listOf(
+                IncludedPush(R.string.settings_push_retention, R.string.settings_push_retention_desc),
             ),
+            optOutLabel = R.string.settings_push_marketing_opt_out_label,
+            optOut = R.string.settings_push_marketing_opt_out,
         )
     }
 
-/** "자세히 보기" 시트. 묶음에 들어 있는 알림마다 이름, 언제 오는지, 실제 푸시 문구 예시를 보여 준다. */
+/** "자세히 보기" 시트. 알림 묶음이 무엇을 위해 어떤 알림을 보내는지, 받지 않으려면 어떻게 하는지 밝힌다. */
 @Composable
 private fun NotificationDetailSheet(kind: NotificationKind, onDismiss: () -> Unit) {
+    val disclosure = kind.disclosure
     NyummyBottomSheet(onDismissRequest = onDismiss) {
-        NyummySheetTitle(text = stringResource(kind.title))
-        kind.includedPushes.forEach { push ->
-            Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
-                Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4)) {
-                    NyummyText(text = stringResource(push.name), style = NyummyTheme.typography.titleS)
-                    NyummyText(
-                        text = stringResource(push.whenSent),
-                        style = NyummyTheme.typography.bodyS,
-                        color = NyummyTheme.colors.content.secondary,
-                    )
+        NyummySheetTitle(text = stringResource(disclosure.title))
+        Column {
+            DisclosureRow(label = R.string.settings_push_detail_sender_label) {
+                DisclosureValue(text = stringResource(R.string.settings_push_detail_sender))
+            }
+            NyummyDivider()
+            DisclosureRow(label = R.string.settings_push_detail_purpose_label) {
+                DisclosureValue(text = stringResource(disclosure.purpose))
+            }
+            NyummyDivider()
+            DisclosureRow(label = R.string.settings_push_detail_contents_label) {
+                Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12)) {
+                    disclosure.contents.forEach { push ->
+                        Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2)) {
+                            NyummyText(text = stringResource(push.name), style = NyummyTheme.typography.labelMStrong)
+                            NyummyText(
+                                text = stringResource(push.description),
+                                style = NyummyTheme.typography.bodyS,
+                                color = NyummyTheme.colors.content.secondary,
+                            )
+                        }
+                    }
                 }
-                NyummyCard(
-                    title = stringResource(push.previewTitle),
-                    body = stringResource(push.previewBody),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            }
+            NyummyDivider()
+            DisclosureRow(label = disclosure.optOutLabel) {
+                DisclosureValue(text = stringResource(disclosure.optOut))
             }
         }
+        NyummyButton(
+            text = stringResource(R.string.settings_push_detail_confirm),
+            onClick = onDismiss,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
+}
+
+/** 시트의 항목 한 줄. 좁은 화면에서도 값이 잘리지 않게 이름을 위, 값을 아래에 둔다. */
+@Composable
+private fun DisclosureRow(@StringRes label: Int, value: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = NyummyTheme.spacing.s12),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
+    ) {
+        NyummyText(
+            text = stringResource(label),
+            style = NyummyTheme.typography.labelM,
+            color = NyummyTheme.colors.content.secondary,
+        )
+        value()
+    }
+}
+
+@Composable
+private fun DisclosureValue(text: String) {
+    NyummyText(text = text, style = NyummyTheme.typography.bodyM)
 }
 
 @Composable
