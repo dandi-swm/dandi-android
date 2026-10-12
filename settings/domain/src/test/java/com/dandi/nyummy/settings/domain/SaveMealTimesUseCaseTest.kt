@@ -92,7 +92,11 @@ class SaveMealTimesUseCaseTest {
 
         save(MealTimesVO.default)
 
-        assertEquals("식사 시간을 저장하지 못했어요", messageHelper.snackBars.single().messageText)
+        val snackBar = messageHelper.snackBars.single()
+        assertEquals("식사 시간을 저장하지 못했어요", snackBar.messageText)
+        assertEquals("다시 시도", snackBar.callToActionText)
+        snackBar.onClickCTA?.invoke()
+        assertEquals(1, retryCount)
     }
 
     @Test

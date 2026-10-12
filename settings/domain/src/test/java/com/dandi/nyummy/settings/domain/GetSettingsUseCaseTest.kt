@@ -56,6 +56,7 @@ class GetSettingsUseCaseTest {
 
         assertNull(settings.mealTimes)
         assertTrue(messageHelper.dialogs.isEmpty())
+        assertTrue(messageHelper.snackBars.isEmpty())
     }
 
     @Test

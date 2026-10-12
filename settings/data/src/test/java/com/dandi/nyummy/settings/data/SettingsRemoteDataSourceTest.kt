@@ -26,6 +26,7 @@ class SettingsRemoteDataSourceTest {
     private val json = Json {
         ignoreUnknownKeys = true
         explicitNulls = false
+        coerceInputValues = true
     }
 
     @Before
