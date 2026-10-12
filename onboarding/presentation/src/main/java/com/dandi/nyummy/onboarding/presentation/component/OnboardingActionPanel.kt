@@ -59,14 +59,13 @@ internal fun OnboardingStartButton(onClick: () -> Unit, modifier: Modifier = Mod
 }
 
 /**
- * 대화창 안에 들어가는 고양이 이름 입력. 등록 중에는 입력과 버튼을 막고 버튼 문구를 "등록 중…"으로 바꾼다.
+ * 대화창 안에 들어가는 고양이 이름 입력. 이름은 앱에서 검사만 하고 바로 다음 장면으로 넘어간다.
  * 오류는 입력칸 아래에 원인과 방법으로 보여 준다.
  */
 @Composable
 internal fun ColumnScope.OnboardingCatNameSlot(
     value: String,
     error: CatNameError?,
-    isSubmitting: Boolean,
     onValueChange: (String) -> Unit,
     onSubmit: () -> Unit,
 ) {
@@ -81,17 +80,15 @@ internal fun ColumnScope.OnboardingCatNameSlot(
             CatNameError.TOO_LONG -> stringResource(R.string.onboarding_name_error_too_long, CatNameValidator.MAX_LENGTH)
             null -> null
         },
-        enabled = !isSubmitting,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { onSubmit() }),
         modifier = Modifier.fillMaxWidth(),
     )
     Spacer(Modifier.height(SlotGap))
     NyummyButton(
-        text = stringResource(if (isSubmitting) R.string.onboarding_name_submitting else R.string.onboarding_name_submit),
+        text = stringResource(R.string.onboarding_name_submit),
         onClick = onSubmit,
         size = NyummyButtonSize.M,
-        enabled = !isSubmitting,
         modifier = Modifier.fillMaxWidth(),
     )
 }

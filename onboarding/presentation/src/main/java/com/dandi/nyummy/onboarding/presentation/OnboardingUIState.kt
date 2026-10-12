@@ -13,10 +13,10 @@ import com.dandi.nyummy.onboarding.domain.CatNameError
  * @property choiceIndex 현재 장면에서 고른 선택지. 고르기 전이면 null
  * @property isLineRevealed 현재 대사의 타이핑이 끝났는지
  * @property catNameInput 이름 입력창의 값
- * @property catName 등록이 끝난 고양이 이름. 등록 전에는 빈 문자열(이름표는 "???")
+ * @property catName 이름 장면에서 정한 고양이 이름. 정하기 전에는 빈 문자열(이름표는 "???"). 서버에는 마지막 장면에서 식사 시각과 함께 보낸다.
  * @property mealTimes 평소 식사 시각. 기본값(오전 8시, 오후 12시, 오후 6시)을 미리 채워 둔다.
  * @property editingMeal 시간 시트를 열어 고치고 있는 끼니. 닫혀 있으면 null
- * @property isFinishing 식사 시각을 저장하고 홈으로 넘어가는 중
+ * @property isFinishing 고양이를 만들고 홈으로 넘어가는 중. 실패하면 풀려 다시 누를 수 있다.
  */
 data class OnboardingUIState(
     val sceneIndex: Int = 0,
@@ -26,7 +26,6 @@ data class OnboardingUIState(
     val catNameInput: String = "",
     val catNameError: CatNameError? = null,
     val catName: String = "",
-    val isSubmitting: Boolean = false,
     val mealTimes: MealTimesVO = MealTimesVO.default,
     val editingMeal: Meal? = null,
     val isFinishing: Boolean = false,

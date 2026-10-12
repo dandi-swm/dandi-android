@@ -76,8 +76,8 @@ internal fun OnboardingScreen(
         OnboardingSpeaker.NARRATOR -> ""
     }
 
-    // 온보딩은 루트 화면이다. 이름 등록 중이나 마무리 중에는 뒤로 가기로 앱이 닫히지 않게 막는다.
-    BackHandler(enabled = uiState.isSubmitting || uiState.isFinishing) {}
+    // 온보딩은 루트 화면이다. 고양이를 만드는 중에는 뒤로 가기로 앱이 닫히지 않게 막는다.
+    BackHandler(enabled = uiState.isFinishing) {}
 
     // 식사 알림을 받을 끼니가 있으면 마치기 전에 알림 권한을 묻는다. 허용 여부와 관계없이 이어서 마친다.
     // 이미 허용됐거나 요청이 필요 없는 기기(Android 12 이하)면 공통 요청기가 팝업 없이 바로 결과를 준다.
@@ -145,7 +145,6 @@ internal fun OnboardingScreen(
                             OnboardingCatNameSlot(
                                 value = uiState.catNameInput,
                                 error = uiState.catNameError,
-                                isSubmitting = uiState.isSubmitting,
                                 onValueChange = { onIntent(OnboardingIntent.InputCatName(it)) },
                                 onSubmit = { onIntent(OnboardingIntent.SubmitCatName) },
                             )
