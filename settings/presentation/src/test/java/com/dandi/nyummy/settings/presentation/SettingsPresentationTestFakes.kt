@@ -40,10 +40,19 @@ internal class FakeSettingsRepository : SettingsRepository {
     val savedMealTimes = mutableListOf<MealTimesVO>()
     val savedNotifications = mutableListOf<NotificationSettingsChange>()
     var notificationSettings: NotificationSettingsVO = NotificationSettingsVO.default
+    var getNotificationSettingsError: Exception? = null
+
+    /** 알림 저장마다 따로 정할 수 있는 응답. 비어 있으면 바로 성공한다. */
+    val notificationUpdateResponses = ArrayDeque<suspend (NotificationSettingsChange) -> Unit>()
 
 
-    override suspend fun getNotificationSettings(): NotificationSettingsVO = notificationSettings
+    override suspend fun getNotificationSettings(): NotificationSettingsVO {
+        getNotificationSettingsError?.let { throw it }
+        return notificationSettings
+    }
+
     override suspend fun updateNotificationSettings(change: NotificationSettingsChange) {
+        notificationUpdateResponses.removeFirstOrNull()?.invoke(change)
         savedNotifications += change
     }
 

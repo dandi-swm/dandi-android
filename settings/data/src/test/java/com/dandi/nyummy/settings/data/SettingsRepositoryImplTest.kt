@@ -2,6 +2,8 @@ package com.dandi.nyummy.settings.data
 
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
+import com.dandi.nyummy.settings.entity.NotificationSettingsChange
+import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -76,5 +78,28 @@ class SettingsRepositoryImplTest {
             Json.parseToJsonElement("""{"lunchHour":12,"dinnerHour":18}"""),
             Json.parseToJsonElement(request.body.readUtf8()),
         )
+    }
+
+    @Test
+    fun `알림 수신 설정을 읽어 VO 로 바꾼다`() = runBlocking {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody("""{"isServicePushEnabled":true,"isMarketingPushEnabled":true}"""),
+        )
+
+        val settings = repository.getNotificationSettings()
+
+        assertEquals("/api/v1/users/me/push", server.takeRequest().path)
+        assertEquals(NotificationSettingsVO(isServiceEnabled = true, isMarketingEnabled = true), settings)
+    }
+
+    @Test
+    fun `알림 수신 설정은 바꾸는 항목만 서버로 보낸다`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(200))
+
+        repository.updateNotificationSettings(NotificationSettingsChange(isServiceEnabled = false))
+
+        val request = server.takeRequest()
+        assertEquals("PATCH", request.method)
+        assertEquals("""{"isServicePushEnabled":false}""", request.body.readUtf8())
     }
 }

@@ -3,6 +3,7 @@ package com.dandi.nyummy.settings.data
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.serverErrorCode
 import com.dandi.nyummy.settings.data.dto.MealTimeRequestDTO
+import com.dandi.nyummy.settings.data.dto.PushSettingDTO
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -102,5 +103,32 @@ class SettingsRemoteDataSourceTest {
 
         assertEquals(400, error.rawCode)
         assertEquals("api.common.invalidInputValue", error.serverErrorCode)
+    }
+
+    @Test
+    fun `알림 수신 설정을 GET 으로 읽는다`() = runBlocking {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody("""{"isServicePushEnabled":false,"isMarketingPushEnabled":true}"""),
+        )
+
+        val setting = dataSource.getPushSetting()
+
+        val request = server.takeRequest()
+        assertEquals("GET", request.method)
+        assertEquals("/api/v1/users/me/push", request.path)
+        assertEquals(false, setting.isServicePushEnabled)
+        assertEquals(true, setting.isMarketingPushEnabled)
+    }
+
+    @Test
+    fun `알림 수신 설정은 PATCH 로 바꾸는 항목만 보내고 본문 없는 200을 성공으로 본다`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(200))
+
+        dataSource.updatePushSetting(PushSettingDTO(isMarketingPushEnabled = true))
+
+        val request = server.takeRequest()
+        assertEquals("PATCH", request.method)
+        assertEquals("/api/v1/users/me/push", request.path)
+        assertEquals("""{"isMarketingPushEnabled":true}""", request.body.readUtf8())
     }
 }
