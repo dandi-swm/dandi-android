@@ -90,7 +90,9 @@ class AuthRepositoryImpl(
     override suspend fun logout() {
         // 서버가 실패해도 이 기기의 토큰은 꼭 지운다. 지우지 않으면 로그아웃했는데도 로그인된 채로 남는다.
         try {
-            dataSource.logout()
+            // 서버는 액세스 토큰으로 사용자를 찾는다. 토큰이 없으면 지울 세션을 알 수 없으니 부르지 않는다.
+            // 토큰이 만료돼 401이 나면 재발급하지 않고 실패로 둔다(이 서비스는 인증 클라이언트가 아니다).
+            tokenProvider.accessToken?.takeIf { it.isNotBlank() }?.let { dataSource.logout(it) }
         } finally {
             tokenProvider.clear()
         }

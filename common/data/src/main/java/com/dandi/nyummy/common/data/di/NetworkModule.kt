@@ -21,7 +21,7 @@ import javax.inject.Singleton
 
 /**
  * 인증 헤더·재발급이 붙지 않는 공개 API 바인딩 qualifier
- * (login/signup/email-verification/refresh).
+ * (login/signup/email-verification/refresh). logout 은 같은 서비스에 있어 액세스 토큰을 헤더로 직접 넘긴다.
  *
  * 비인증 엔드포인트를 클라이언트 수준에서 분리하면:
  * - refresh 호출이 [TokenAuthenticator] 를 타지 않아 401 재귀·데드락이 구조적으로 불가능하다.
