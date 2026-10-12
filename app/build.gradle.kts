@@ -1,5 +1,6 @@
 import com.android.build.api.variant.BuildConfigField
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -9,6 +10,22 @@ plugins {
     alias(libs.plugins.androidx.baselineprofile)
     alias(libs.plugins.google.services)
 }
+
+// 릴리즈 서명 정보. 공개 저장소라 소스에 두지 않고 git 무시 대상인 local.properties(없거나 빈 값이면 환경변수)에서 읽는다.
+//   RELEASE_STORE_FILE, RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS, RELEASE_KEY_PASSWORD
+// 하나라도 없으면 release 는 서명하지 않는다(debug 키로 대신 서명해 잘못된 릴리즈가 나가지 않게 한다).
+val localProperties = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+
+fun signingValue(key: String): String? =
+    localProperties.getProperty(key)?.takeIf { it.isNotBlank() } ?: System.getenv(key)?.takeIf { it.isNotBlank() }
+
+val releaseSigning = listOf("RELEASE_STORE_FILE", "RELEASE_STORE_PASSWORD", "RELEASE_KEY_ALIAS", "RELEASE_KEY_PASSWORD")
+    .associateWith(::signingValue)
+    .takeIf { values -> values.values.all { it != null } }
+    ?.mapValues { it.value!! }
 
 android {
     namespace = "com.dandi.nyummy"
@@ -24,11 +41,22 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseSigning != null) {
+            create("release") {
+                storeFile = file(releaseSigning.getValue("RELEASE_STORE_FILE"))
+                storePassword = releaseSigning.getValue("RELEASE_STORE_PASSWORD")
+                keyAlias = releaseSigning.getValue("RELEASE_KEY_ALIAS")
+                keyPassword = releaseSigning.getValue("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
