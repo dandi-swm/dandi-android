@@ -1,6 +1,7 @@
 package com.dandi.nyummy.settings.presentation.main
 
 import com.dandi.nyummy.auth.domain.LogoutUseCase
+import com.dandi.nyummy.common.entity.time.KstDateTime
 import com.dandi.nyummy.common.entity.time.KstTime
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
@@ -165,19 +166,68 @@ class SettingsViewModelTest {
     fun `마케팅 알림에 동의하거나 철회하면 처리한 날짜를 알린다`() = runTest(testDispatcher) {
         resume()
         advanceUntilIdle()
-        val today = KstTime.now()
-        val date = "${today.year}년 ${today.month}월 ${today.day}일"
+        // 처리 사이에 KST 자정이 지나도 실패하지 않도록 전후 날짜를 모두 허용한다.
+        val before = dateLabel(KstTime.now())
+
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(true))
+        advanceUntilIdle()
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(false))
+        advanceUntilIdle()
+        val after = dateLabel(KstTime.now())
+
+        val messages = messageHelper.snackBars.map { it.messageText }
+        assertEquals(2, messages.size)
+        assertTrue(messages[0] in setOf(before, after).map { "$it 마케팅 알림 수신에 동의했어요" })
+        assertTrue(messages[1] in setOf(before, after).map { "$it 마케팅 알림 수신 동의를 철회했어요" })
+    }
+
+    @Test
+    fun `같은 토글은 앞 저장이 끝난 뒤 마지막 값만 보낸다`() = runTest(testDispatcher) {
+        // 앞 요청을 취소하면 서버가 이미 처리한 옛 값(동의)이 새 값(철회)보다 늦게 반영될 수 있다.
+        val firstSave = CompletableDeferred<Unit>()
+        repository.notificationUpdateResponses += { firstSave.await() }
+        resume()
+        advanceUntilIdle()
 
         viewModel.onIntent(SettingsIntent.ToggleMarketingPush(true))
         advanceUntilIdle()
         viewModel.onIntent(SettingsIntent.ToggleMarketingPush(false))
         advanceUntilIdle()
 
+        // 앞 저장이 끝나기 전에는 다음 요청을 보내지 않는다. 화면은 마지막 값을 보여 준다.
+        assertEquals(listOf(NotificationSettingsChange(isMarketingEnabled = true)), repository.requestedNotifications)
+        assertFalse(state.notification.isMarketingEnabled)
+
+        firstSave.complete(Unit)
+        advanceUntilIdle()
+
         assertEquals(
-            listOf("$date 마케팅 알림 수신에 동의했어요", "$date 마케팅 알림 수신 동의를 철회했어요"),
-            messageHelper.snackBars.map { it.messageText },
+            listOf(NotificationSettingsChange(isMarketingEnabled = true), NotificationSettingsChange(isMarketingEnabled = false)),
+            repository.savedNotifications,
         )
+        assertFalse(state.notification.isMarketingEnabled)
     }
+
+    @Test
+    fun `저장 중에 바꿨다가 서버 값으로 돌아오면 더 보내지 않는다`() = runTest(testDispatcher) {
+        val firstSave = CompletableDeferred<Unit>()
+        repository.notificationUpdateResponses += { firstSave.await() }
+        resume()
+        advanceUntilIdle()
+
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(true))
+        advanceUntilIdle()
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(false))
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(true))
+        advanceUntilIdle()
+        firstSave.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(listOf(NotificationSettingsChange(isMarketingEnabled = true)), repository.requestedNotifications)
+        assertTrue(state.notification.isMarketingEnabled)
+    }
+
+    private fun dateLabel(time: KstDateTime) = "${time.year}년 ${time.month}월 ${time.day}일"
 
     @Test
     fun `저장에 실패하면 그 항목만 되돌리고 아직 저장 중인 다른 항목은 둔다`() = runTest(testDispatcher) {

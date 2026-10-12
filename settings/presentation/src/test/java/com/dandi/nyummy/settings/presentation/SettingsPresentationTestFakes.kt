@@ -38,6 +38,8 @@ internal class FakeSettingsRepository : SettingsRepository {
 
     var saveMealTimesError: Exception? = null
     val savedMealTimes = mutableListOf<MealTimesVO>()
+    /** 보내기 시작한 알림 저장 요청. [savedNotifications]는 응답까지 끝난 요청만 담는다. */
+    val requestedNotifications = mutableListOf<NotificationSettingsChange>()
     val savedNotifications = mutableListOf<NotificationSettingsChange>()
     var notificationSettings: NotificationSettingsVO = NotificationSettingsVO.default
     var getNotificationSettingsError: Exception? = null
@@ -52,6 +54,7 @@ internal class FakeSettingsRepository : SettingsRepository {
     }
 
     override suspend fun updateNotificationSettings(change: NotificationSettingsChange) {
+        requestedNotifications += change
         notificationUpdateResponses.removeFirstOrNull()?.invoke(change)
         savedNotifications += change
     }
