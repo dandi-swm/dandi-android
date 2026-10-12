@@ -1,6 +1,9 @@
 package com.dandi.nyummy.history.data.dto
 
+import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DailyMealsDTOTest {
@@ -41,5 +44,30 @@ class DailyMealsDTOTest {
     @Test
     fun `식사 목록이 없어도 빈 결과를 돌려준다`() {
         assertEquals(0, DailyMealsDTO().toVO().meals.size)
+    }
+
+    @Test
+    fun `서버 status를 그대로 옮기고 없거나 모르는 값은 UNKNOWN으로 둔다`() {
+        fun statusOf(status: String?) =
+            DailyMealsDTO(meals = listOf(DailyMealDTO(mealId = 1, name = "김밥", calory = 300, status = status)))
+                .toVO().meals.single().status
+
+        assertEquals(MealAnalysisStatus.COMPLETED, statusOf("COMPLETED"))
+        assertEquals(MealAnalysisStatus.FAILED, statusOf("FAILED"))
+        assertEquals(MealAnalysisStatus.WAITING, statusOf("WAITING"))
+        // 이름과 열량이 있어도 완료로 추측하지 않는다.
+        assertEquals(MealAnalysisStatus.UNKNOWN, statusOf(null))
+        assertEquals(MealAnalysisStatus.UNKNOWN, statusOf("RETRYING"))
+    }
+
+    @Test
+    fun `분석에 실패한 식사만 다시 분석할 수 있다`() {
+        fun canRetry(status: String) =
+            DailyMealsDTO(meals = listOf(DailyMealDTO(mealId = 1, status = status))).toVO().meals.single().canRetryAnalysis
+
+        assertTrue(canRetry("FAILED"))
+        assertFalse(canRetry("UNKNOWN"))
+        assertFalse(canRetry("WAITING"))
+        assertFalse(canRetry("COMPLETED"))
     }
 }

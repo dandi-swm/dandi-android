@@ -116,14 +116,14 @@ class HomeScreenTest {
 
         composeRule.onNodeWithContentDescription(text(R.string.home_menu_my_room)).performClick()
         composeRule.onNodeWithContentDescription(text(R.string.home_menu_share_friend)).performClick()
-        composeRule.onNodeWithContentDescription(text(R.string.home_menu_nyami_status)).performClick()
+        composeRule.onNodeWithContentDescription(text(R.string.home_menu_nyummy_status)).performClick()
         composeRule.onNodeWithContentDescription(text(R.string.home_menu_collapse)).performClick()
 
         assertEquals(
             listOf(
                 HomeIntent.ClickMyRoom,
                 HomeIntent.ClickShareFriend,
-                HomeIntent.ClickNyamiStatus,
+                HomeIntent.ClickNyummyStatus,
                 HomeIntent.ToggleRoomMenu,
             ),
             intents,

@@ -170,10 +170,9 @@ class HistoryUseCasesTest {
     }
 
     @Test
-    fun `재분석 성공 시 갱신된 식사 VO 를 돌려준다`() = runBlocking {
-        val meal = MealHistoryVO(id = "7", status = MealAnalysisStatus.ANALYZING)
+    fun `재분석 성공 시 서버가 준 분석 상태를 돌려준다`() = runBlocking {
         val useCase = ReanalyzeMealUseCase(
-            repository = FakeHistoryRepository(meal = meal),
+            repository = FakeHistoryRepository(reanalyzed = MealAnalysisStatus.ANALYZING),
             resourceHelper = FakeResourceHelper(),
             messageHelper = messageHelper,
             navigationHelper = navigationHelper,
@@ -182,7 +181,7 @@ class HistoryUseCasesTest {
 
         val result = useCase(7L)
 
-        assertEquals(Result.success(meal), result)
+        assertEquals(Result.success(MealAnalysisStatus.ANALYZING), result)
         assertTrue(messageHelper.snackBars.isEmpty())
     }
 
@@ -273,6 +272,71 @@ class HistoryUseCasesTest {
     }
 
     @Test
+    fun `상세 조회 중 네트워크 오류면 죽지 않고 아무것도 띄우지 않는다`() = runBlocking {
+        val useCase = GetMealDetailUseCase(
+            repository = ThrowingHistoryRepository(IOException("offline")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(7L)
+
+        assertTrue(messageHelper.snackBars.isEmpty())
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `이름 수정 중 네트워크 오류면 죽지 않고 수정 실패를 안내한다`() = runBlocking {
+        val useCase = UpdateMealNameUseCase(
+            repository = ThrowingHistoryRepository(IOException("offline")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(7L, "김치찌개")
+
+        assertEquals("이름 수정에 실패했어요", messageHelper.snackBars.single().messageText)
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `재분석 중 네트워크 오류면 죽지 않고 재분석 실패를 안내한다`() = runBlocking {
+        val useCase = ReanalyzeMealUseCase(
+            repository = ThrowingHistoryRepository(IOException("offline")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(7L)
+
+        assertEquals("다시 분석하지 못했어요", messageHelper.snackBars.single().messageText)
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `삭제 중 네트워크 오류면 죽지 않고 삭제 실패를 안내한다`() = runBlocking {
+        val useCase = DeleteMealUseCase(
+            repository = ThrowingHistoryRepository(IOException("offline")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        val result = useCase(7L)
+
+        assertEquals("삭제에 실패했어요", messageHelper.snackBars.single().messageText)
+        assertTrue(result.isFailure)
+    }
+
+    @Test
     fun `5xx 공통 오류는 서버 상태 문자열을 보여 주지 않는다`() = runBlocking {
         val useCase = GetMealDetailUseCase(
             repository = ThrowingHistoryRepository(httpException(500, "api.common.internalServerError")),
@@ -302,12 +366,13 @@ class HistoryUseCasesTest {
         private val monthly: HistoryCalendarVO = HistoryCalendarVO.empty,
         private val daily: DailyMealHistoryVO = DailyMealHistoryVO.empty,
         private val meal: MealHistoryVO = MealHistoryVO.empty,
+        private val reanalyzed: MealAnalysisStatus = MealAnalysisStatus.ANALYZING,
     ) : HistoryRepository {
         override suspend fun getMonthlyCalendar(year: Int, month: Int) = monthly
         override suspend fun getDailyMeals(year: Int, month: Int, day: Int) = daily
         override suspend fun getMeal(mealId: Long) = meal
         override suspend fun updateMealName(mealId: Long, name: String) = meal
-        override suspend fun reanalyzeMeal(mealId: Long) = meal
+        override suspend fun reanalyzeMeal(mealId: Long) = reanalyzed
         override suspend fun deleteMeal(mealId: Long) = Unit
     }
 
@@ -318,7 +383,7 @@ class HistoryUseCasesTest {
         override suspend fun getDailyMeals(year: Int, month: Int, day: Int) = throw exception
         override suspend fun getMeal(mealId: Long) = throw exception
         override suspend fun updateMealName(mealId: Long, name: String) = throw exception
-        override suspend fun reanalyzeMeal(mealId: Long): MealHistoryVO = throw exception
+        override suspend fun reanalyzeMeal(mealId: Long): MealAnalysisStatus = throw exception
         override suspend fun deleteMeal(mealId: Long) = throw exception
     }
 

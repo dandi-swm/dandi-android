@@ -25,6 +25,7 @@ import com.dandi.nyummy.history.domain.HistoryRepository
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
+import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.home.domain.HomeRepository
@@ -469,7 +470,7 @@ class HomeViewModelTest {
         override suspend fun getMonthlyCalendar(year: Int, month: Int) = HistoryCalendarVO.empty
         override suspend fun getMeal(mealId: Long) = MealHistoryVO.empty
         override suspend fun updateMealName(mealId: Long, name: String) = MealHistoryVO.empty
-        override suspend fun reanalyzeMeal(mealId: Long) = MealHistoryVO.empty
+        override suspend fun reanalyzeMeal(mealId: Long) = MealAnalysisStatus.UNKNOWN
         override suspend fun deleteMeal(mealId: Long) = Unit
     }
 
