@@ -16,7 +16,7 @@
 
 | 링크 | 화면 |
 |---|---|
-| `https://link.nyummy.co.kr/meal/record` | 식사 기록 (리마인드 푸시·위젯 기본값) |
+| `https://link.nyummy.co.kr/meal/record` | 식사 기록 |
 | `https://link.nyummy.co.kr/home` · `/history` · `/collection` · `/shop` | 각 탭 |
 
 ## S3 / CloudFront 설정

@@ -59,19 +59,6 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="nyami_reminder" />
-
-        <!-- 냐미 무드 홈 위젯 (임시 구현) -->
-        <receiver
-            android:name=".widget.NyamiWidgetReceiver"
-            android:exported="true"
-            android:label="@string/nyami_widget_description">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/nyami_widget_info" />
-        </receiver>
     </application>
 
 </manifest>
