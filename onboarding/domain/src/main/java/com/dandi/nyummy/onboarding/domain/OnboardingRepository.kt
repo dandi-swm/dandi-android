@@ -9,7 +9,4 @@ interface OnboardingRepository {
 
     /** 고양이를 만든 뒤 온보딩 완료 상태를 저장한다. */
     suspend fun markOnboardingComplete()
-
-    /** 온보딩에서 고른 평소 식사 시각을 기기에 저장한다. */
-    suspend fun saveMealTimes(mealTimes: MealTimesVO)
 }

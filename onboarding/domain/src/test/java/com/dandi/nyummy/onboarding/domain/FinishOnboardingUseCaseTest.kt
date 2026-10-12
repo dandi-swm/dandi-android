@@ -31,7 +31,6 @@ class FinishOnboardingUseCaseTest {
 
         assertTrue(result.isSuccess)
         assertEquals(listOf("냐미" to mealTimes), repository.createdCats)
-        assertEquals(listOf(mealTimes), repository.savedMealTimes)
         assertEquals(1, repository.onboardingCompleteCount)
         assertEquals(listOf(HomePage), navigationHelper.rootPages)
         assertTrue(messageHelper.dialogs.isEmpty())
@@ -96,17 +95,5 @@ class FinishOnboardingUseCaseTest {
         assertEquals(1, messageHelper.dialogs.size)
         assertEquals(0, repository.onboardingCompleteCount)
         assertTrue(navigationHelper.rootPages.isEmpty())
-    }
-
-    @Test
-    fun `고양이를 만든 뒤 기기 저장에 실패해도 완료를 기록하고 홈으로 간다`() = runBlocking {
-        repository.saveMealTimesError = IOException("disk full")
-
-        val result = useCase("냐미", MealTimesVO.default)
-
-        assertTrue(result.isSuccess)
-        assertTrue(repository.savedMealTimes.isEmpty())
-        assertEquals(1, repository.onboardingCompleteCount)
-        assertEquals(listOf(HomePage), navigationHelper.rootPages)
     }
 }

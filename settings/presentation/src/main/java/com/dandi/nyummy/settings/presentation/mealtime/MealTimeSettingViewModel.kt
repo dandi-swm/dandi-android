@@ -1,9 +1,7 @@
 package com.dandi.nyummy.settings.presentation.mealtime
 
 import androidx.lifecycle.viewModelScope
-import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
-import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.settings.domain.GetMealTimesUseCase
 import com.dandi.nyummy.settings.domain.SaveMealTimesUseCase
@@ -16,7 +14,6 @@ class MealTimeSettingViewModel @Inject constructor(
     private val getMealTimes: GetMealTimesUseCase,
     private val saveMealTimes: SaveMealTimesUseCase,
     private val navigationHelper: NavigationHelper,
-    private val messageHelper: MessageHelper,
 ) : MviViewModel<MealTimeSettingIntent, MealTimeSettingUIState, MealTimeSettingReducerEvent>(
     MealTimeSettingUIState.empty,
 ) {
@@ -47,7 +44,11 @@ class MealTimeSettingViewModel @Inject constructor(
 
     private fun load() {
         if (currentState.isLoaded) return
-        viewModelScope.launch { dispatch(MealTimeSettingReducerEvent.Loaded(getMealTimes())) }
+        // 실패 안내와 "다시 시도"는 UseCase가 띄운다. 다시 시도하면 읽기부터 다시 한다.
+        viewModelScope.launch {
+            getMealTimes(onRetry = { onIntent(MealTimeSettingIntent.Enter) })
+                .onSuccess { dispatch(MealTimeSettingReducerEvent.Loaded(it)) }
+        }
     }
 
     private fun save() {
@@ -55,22 +56,10 @@ class MealTimeSettingViewModel @Inject constructor(
         if (state.isSaving || !state.isLoaded) return
         dispatch(MealTimeSettingReducerEvent.SavingChanged(saving = true))
         viewModelScope.launch {
-            saveMealTimes(state.mealTimes)
+            // 실패 안내와 "다시 시도"는 UseCase가 띄운다. 여기서는 저장 버튼만 다시 연다.
+            saveMealTimes(state.mealTimes, onRetry = { onIntent(MealTimeSettingIntent.ClickSave) })
                 .onSuccess { navigationHelper.navigateToBack() }
-                .onFailure {
-                    dispatch(MealTimeSettingReducerEvent.SavingChanged(saving = false))
-                    messageHelper.showSnackBar(
-                        iconType = IconType.ERROR,
-                        messageText = SAVE_FAILED_MESSAGE,
-                        callToActionText = RETRY_LABEL,
-                        onClickCTA = { onIntent(MealTimeSettingIntent.ClickSave) },
-                    )
-                }
+                .onFailure { dispatch(MealTimeSettingReducerEvent.SavingChanged(saving = false)) }
         }
-    }
-
-    private companion object {
-        const val SAVE_FAILED_MESSAGE = "식사 시간을 저장하지 못했어요"
-        const val RETRY_LABEL = "다시 시도"
     }
 }

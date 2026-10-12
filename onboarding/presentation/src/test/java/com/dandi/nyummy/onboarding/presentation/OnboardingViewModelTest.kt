@@ -246,14 +246,13 @@ class OnboardingViewModelTest {
         viewModel.onIntent(OnboardingIntent.SelectMealTime(Meal.DINNER, MealTimeVO(hour = 19)))
 
         viewModel.onIntent(OnboardingIntent.ConfirmMealTimes)
-        // 권한 응답 등으로 두 번 들어와도 저장과 이동은 한 번이다.
+        // 권한 응답 등으로 두 번 들어와도 고양이 생성(식사 시각 저장 포함)과 이동은 한 번이다.
         viewModel.onIntent(OnboardingIntent.ConfirmMealTimes)
         advanceUntilIdle()
 
         assertTrue(state.isFinishing)
         val mealTimes = MealTimesVO(dinner = MealTimeVO(hour = 19))
         assertEquals(listOf("냐미" to mealTimes), repository.createdCats)
-        assertEquals(listOf(mealTimes), repository.savedMealTimes)
         assertEquals(listOf("/home"), navigationHelper.rootPages.map { it.toRoute().path })
     }
 
@@ -329,12 +328,6 @@ class OnboardingViewModelTest {
         }
 
         override suspend fun markOnboardingComplete() = Unit
-
-        val savedMealTimes = mutableListOf<MealTimesVO>()
-
-        override suspend fun saveMealTimes(mealTimes: MealTimesVO) {
-            savedMealTimes += mealTimes
-        }
     }
 
     private class RecordingNavigationHelper : NavigationHelper {

@@ -140,12 +140,13 @@ private fun SoundSection(uiState: SettingsUIState, onIntent: (SettingsIntent) ->
             checked = uiState.isBgmEnabled,
             onCheckedChange = { onIntent(SettingsIntent.ToggleBgm(it)) },
         ),
+        enabled = uiState.isLoaded,
     )
 }
 
 /**
  * 알림 묶음. 전체 알림을 끄면 식사 기록, 중요 공지 토글은 값을 그대로 둔 채 막는다.
- * 기기 알림이 꺼져 있으면 세 토글을 모두 꺼진 모습으로 막는다.
+ * 기기 알림이 꺼져 있으면 세 토글을 모두 꺼진 모습으로 막는다. 설정 값을 읽기 전에는 모두 막는다.
  */
 @Composable
 private fun NotificationSection(
@@ -155,7 +156,8 @@ private fun NotificationSection(
 ) {
     val device = uiState.isDeviceNotificationEnabled
     val notification = uiState.notification
-    val subEnabled = device && notification.isAllEnabled
+    val allEnabled = uiState.isLoaded && device
+    val subEnabled = allEnabled && notification.isAllEnabled
     NyummySectionCaption(title = stringResource(R.string.settings_section_notification))
     if (!device) {
         NyummyInlineNotice(
@@ -175,7 +177,7 @@ private fun NotificationSection(
             checked = device && notification.isAllEnabled,
             onCheckedChange = { onIntent(SettingsIntent.ToggleAllNotification(it)) },
         ),
-        enabled = device,
+        enabled = allEnabled,
     )
     NyummyListRow(
         title = stringResource(R.string.settings_notification_meal),
@@ -188,8 +190,9 @@ private fun NotificationSection(
     )
     NyummyListRow(
         title = stringResource(R.string.settings_meal_time),
-        subtitle = mealTimesSummary(uiState.mealTimes),
+        subtitle = uiState.mealTimes?.let { mealTimesSummary(it) },
         onClick = { onIntent(SettingsIntent.ClickMealTime) },
+        enabled = uiState.isLoaded,
     )
     NyummyListRow(
         title = stringResource(R.string.settings_notification_notice),
@@ -245,7 +248,7 @@ private val ContentMaxWidth = 480.dp
 @Composable
 private fun SettingsScreenPreview() {
     NyummyTheme {
-        SettingsScreen(uiState = SettingsUIState.empty, onIntent = {}, onOpenDeviceSettings = {})
+        SettingsScreen(uiState = SettingsUIState(isLoaded = true), onIntent = {}, onOpenDeviceSettings = {})
     }
 }
 
@@ -254,7 +257,7 @@ private fun SettingsScreenPreview() {
 private fun SettingsScreenDeviceOffPreview() {
     NyummyTheme {
         SettingsScreen(
-            uiState = SettingsUIState(isDeviceNotificationEnabled = false),
+            uiState = SettingsUIState(isLoaded = true, isDeviceNotificationEnabled = false),
             onIntent = {},
             onOpenDeviceSettings = {},
         )

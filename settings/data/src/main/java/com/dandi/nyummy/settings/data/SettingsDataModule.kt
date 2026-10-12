@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import com.dandi.nyummy.common.data.di.AppPreferenceDataStore
-import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.settings.domain.SettingsRepository
 import dagger.Module
 import dagger.Provides
@@ -12,6 +11,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
+import retrofit2.Retrofit
 import javax.inject.Singleton
 
 @Module
@@ -34,9 +34,19 @@ object SettingsDataModule {
 
     @Provides
     @Singleton
+    fun provideSettingsApiService(retrofit: Retrofit): SettingsApiService =
+        retrofit.create(SettingsApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideSettingsRemoteDataSource(apiService: SettingsApiService): SettingsRemoteDataSource =
+        SettingsRemoteDataSource(apiService)
+
+    @Provides
+    @Singleton
     fun provideSettingsRepository(
         notificationDataSource: NotificationSettingsDataSource,
         localDataSource: SettingsLocalDataSource,
-        appPreferenceProvider: AppPreferenceProvider,
-    ): SettingsRepository = SettingsRepositoryImpl(notificationDataSource, localDataSource, appPreferenceProvider)
+        remoteDataSource: SettingsRemoteDataSource,
+    ): SettingsRepository = SettingsRepositoryImpl(notificationDataSource, localDataSource, remoteDataSource)
 }

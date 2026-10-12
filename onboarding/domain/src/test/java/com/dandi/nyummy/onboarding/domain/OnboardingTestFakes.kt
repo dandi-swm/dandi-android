@@ -45,14 +45,6 @@ internal class FakeOnboardingRepository(
     override suspend fun markOnboardingComplete() {
         onboardingCompleteCount++
     }
-
-    val savedMealTimes = mutableListOf<MealTimesVO>()
-    var saveMealTimesError: Exception? = null
-
-    override suspend fun saveMealTimes(mealTimes: MealTimesVO) {
-        saveMealTimesError?.let { throw it }
-        savedMealTimes += mealTimes
-    }
 }
 
 internal class RecordingNavigationHelper : NavigationHelper {

@@ -10,34 +10,21 @@ enum class Meal {
 /**
  * 한 끼의 평소 식사 시각(KST). 정시 단위만 쓴다(시는 0~23).
  *
- * @property isSkipped 이 끼니는 안 먹는다고 고른 상태. 알림을 보내지 않고, 다시 켤 때를 위해 시각은 남겨 둔다.
+ * @property isSkipped 이 끼니는 안 먹는다고 고른 상태. 알림을 보내지 않는다.
+ * 화면 안에서는 다시 켤 때를 위해 시각을 남겨 두지만, 서버에는 시각 없이(null) 저장된다.
  */
 data class MealTimeVO(
     val hour: Int = 0,
     val isSkipped: Boolean = false,
 ) {
-    /** 자정부터 몇 분째인지. 저장할 때 쓴다. */
-    val minuteOfDay: Int
-        get() = hour * MinutesPerHour
-
     companion object {
         val empty: MealTimeVO = MealTimeVO()
-
-        /**
-         * 저장해 둔 "자정부터 몇 분째" 값을 시각으로 되돌린다. 범위를 벗어난 값은 하루 안으로 맞추고,
-         * 분 단위로 저장했던 예전 값(12:30 등)은 그 시의 정시로 내린다.
-         */
-        fun ofMinuteOfDay(value: Int, isSkipped: Boolean = false): MealTimeVO =
-            MealTimeVO(hour = value.coerceIn(0, MinutesPerDay - 1) / MinutesPerHour, isSkipped = isSkipped)
-
-        private const val MinutesPerHour = 60
-        private const val MinutesPerDay = 24 * MinutesPerHour
     }
 }
 
 /**
  * 평소 식사 시각. "밥 시간인데 아직 기록이 없네?" 알림을 보낼 기준이 된다.
- * 온보딩에서 처음 받고, 설정 화면과 식사 알림이 함께 쓰므로 common에 둔다.
+ * 서버에 저장하고 알림도 서버가 보낸다. 온보딩에서 처음 받고 설정 화면에서 바꾸므로 common에 둔다.
  */
 data class MealTimesVO(
     val breakfast: MealTimeVO = DefaultBreakfast,

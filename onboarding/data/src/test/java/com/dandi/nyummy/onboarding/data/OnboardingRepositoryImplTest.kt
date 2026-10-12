@@ -99,15 +99,6 @@ class OnboardingRepositoryImplTest {
         assertEquals(false, preferences.onboardingIncomplete)
     }
 
-    @Test
-    fun `평소 식사 시각은 기기 저장소에 그대로 저장한다`() = runBlocking {
-        val mealTimes = MealTimesVO(breakfast = MealTimesVO.DefaultBreakfast.copy(isSkipped = true))
-
-        repository.saveMealTimes(mealTimes)
-
-        assertEquals(mealTimes, preferences.mealTimes)
-    }
-
     private class FakeAppPreferenceProvider : AppPreferenceProvider {
         var onboardingIncomplete = false
 
@@ -118,11 +109,5 @@ class OnboardingRepositoryImplTest {
             onboardingIncomplete = incomplete
         }
 
-        var mealTimes: MealTimesVO? = null
-
-        override suspend fun getMealTimes(): MealTimesVO? = mealTimes
-        override suspend fun setMealTimes(mealTimes: MealTimesVO) {
-            this.mealTimes = mealTimes
-        }
     }
 }

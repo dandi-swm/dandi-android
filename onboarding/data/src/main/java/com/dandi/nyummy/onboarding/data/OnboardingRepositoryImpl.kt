@@ -17,9 +17,4 @@ class OnboardingRepositoryImpl(
     override suspend fun markOnboardingComplete() {
         appPreferenceProvider.setOnboardingIncomplete(incomplete = false)
     }
-
-    // 서버에는 고양이를 만들 때 함께 보낸다. 설정 화면이 아직 기기 값을 읽어서 기기에도 둔다.
-    override suspend fun saveMealTimes(mealTimes: MealTimesVO) {
-        appPreferenceProvider.setMealTimes(mealTimes)
-    }
 }
