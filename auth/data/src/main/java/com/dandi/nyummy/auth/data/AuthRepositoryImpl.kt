@@ -15,6 +15,8 @@ import com.dandi.nyummy.auth.entity.SocialCredentialVO
 import com.dandi.nyummy.auth.entity.SocialLoginVO
 import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.common.data.token.TokenProvider
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 
 class AuthRepositoryImpl(
     private val dataSource: AuthDataSource,
@@ -94,7 +96,8 @@ class AuthRepositoryImpl(
             // 토큰이 만료돼 401이 나면 재발급하지 않고 실패로 둔다(이 서비스는 인증 클라이언트가 아니다).
             tokenProvider.accessToken?.takeIf { it.isNotBlank() }?.let { dataSource.logout(it) }
         } finally {
-            tokenProvider.clear()
+            // 요청이 취소돼도(화면을 나가는 등) 지운다. 취소된 코루틴에서는 suspend 저장도 바로 취소되기 때문이다.
+            withContext(NonCancellable) { tokenProvider.clear() }
         }
     }
 
