@@ -15,8 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.dandi.nyummy.cat.entity.CatState
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteFrame
+import com.dandi.nyummy.common.presentation.component.NyummySpriteClip
+import com.dandi.nyummy.common.presentation.component.NyummySpriteSheet
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
@@ -210,8 +210,18 @@ class HomeScreenTest {
 
     // 테스트에서는 시트를 받지 못해 기본 냐미로 대신 그려진다.
     private val catMotion = HomeCatMotion(
-        clips = persistentListOf(NyummySpriteClip(url = "file:///nyummy/not-found.png", frames = 8)),
-        frame = NyummySpriteFrame(width = 136, height = 136, framesPerRow = 4, durationMs = 100),
+        clips = persistentListOf(
+            NyummySpriteClip(
+                sheet = NyummySpriteSheet(
+                    url = "file:///nyummy/not-found.png",
+                    frameWidth = 136,
+                    frameHeight = 136,
+                    totalFrames = 8,
+                    framesPerRow = 4,
+                    frameDurationMillis = 100,
+                ),
+            ),
+        ),
         sheetUrls = persistentListOf("file:///nyummy/not-found.png"),
         playId = 1,
         restMillis = 6_000L,
@@ -233,7 +243,8 @@ class HomeScreenTest {
         composeRule.onNodeWithText(text(R.string.home_speech_recorded)).assertDoesNotExist()
         composeRule.onNodeWithContentDescription(text(R.string.home_character_description)).performClick()
 
-        assertEquals(listOf<HomeIntent>(HomeIntent.ClickCat), intents)
+        // 냐미를 그리면 홈 TTI용 CatShown도 보내므로 누른 의도만 본다.
+        assertEquals(listOf<HomeIntent>(HomeIntent.ClickCat), intents.filterNot { it == HomeIntent.CatShown })
     }
 
     @Test

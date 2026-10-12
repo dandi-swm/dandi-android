@@ -51,5 +51,7 @@ class MonthlyMealsDTOTest {
         assertEquals(DailyNutritionEvaluation.NEGATIVE, evaluationOf("NEGATIVE"))
         assertEquals(DailyNutritionEvaluation.UNRECORDED, evaluationOf("UNRECORDED"))
         assertEquals(DailyNutritionEvaluation.UNKNOWN, evaluationOf(null))
+        // 서버가 새 평가 값을 더하거나 예전 앱 이름이 와도 다른 평가로 잘못 옮기지 않는다.
+        assertEquals(DailyNutritionEvaluation.UNKNOWN, evaluationOf("IN_RANGE"))
     }
 }

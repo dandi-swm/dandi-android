@@ -26,6 +26,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
+import kotlin.coroutines.cancellation.CancellationException
 
 class HistoryUseCasesTest {
 
@@ -337,6 +338,58 @@ class HistoryUseCasesTest {
     }
 
     @Test
+    fun `상세 조회가 취소되면 실패로 바꾸지 않고 그대로 던진다`() = runBlocking {
+        val useCase = GetMealDetailUseCase(
+            repository = ThrowingHistoryRepository(CancellationException("left history")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        assertCancelledSilently { useCase(7L) }
+    }
+
+    @Test
+    fun `이름 수정이 취소되면 실패로 바꾸지 않고 그대로 던진다`() = runBlocking {
+        val useCase = UpdateMealNameUseCase(
+            repository = ThrowingHistoryRepository(CancellationException("left history")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        assertCancelledSilently { useCase(7L, "김치찌개") }
+    }
+
+    @Test
+    fun `재분석이 취소되면 실패로 바꾸지 않고 그대로 던진다`() = runBlocking {
+        val useCase = ReanalyzeMealUseCase(
+            repository = ThrowingHistoryRepository(CancellationException("left history")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        assertCancelledSilently { useCase(7L) }
+    }
+
+    @Test
+    fun `삭제가 취소되면 실패로 바꾸지 않고 그대로 던진다`() = runBlocking {
+        val useCase = DeleteMealUseCase(
+            repository = ThrowingHistoryRepository(CancellationException("left history")),
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        )
+
+        assertCancelledSilently { useCase(7L) }
+    }
+
+    @Test
     fun `5xx 공통 오류는 서버 상태 문자열을 보여 주지 않는다`() = runBlocking {
         val useCase = GetMealDetailUseCase(
             repository = ThrowingHistoryRepository(httpException(500, "api.common.internalServerError")),
@@ -351,6 +404,15 @@ class HistoryUseCasesTest {
         val dialog = messageHelper.oneButtonDialogs.single()
         assertEquals("잠시 후 다시 시도해 주세요.", dialog.descText)
         assertTrue("500" !in dialog.descText && "api." !in dialog.descText)
+    }
+
+    /** 취소는 `Result.failure`로 바꾸지 않고 그대로 던져야 하고, 실패 안내도 띄우지 않아야 한다. */
+    private suspend fun assertCancelledSilently(block: suspend () -> Result<*>) {
+        val thrown = runCatching { block() }.exceptionOrNull()
+
+        assertTrue("취소가 전파되지 않았다: $thrown", thrown is CancellationException)
+        assertTrue(messageHelper.snackBars.isEmpty())
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
     }
 
     /** 서버 에러 바디의 `code` 를 cause 로 담는 실제 변환(BaseRemoteDataSource)과 같은 형태로 만든다. */
