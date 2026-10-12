@@ -1,29 +1,17 @@
 package com.dandi.nyummy.settings.presentation.mealtime
 
-import com.dandi.nyummy.common.domain.helper.MessageHelper
-import com.dandi.nyummy.common.domain.helper.NavigationHelper
-import com.dandi.nyummy.common.domain.helper.ResourceHelper
-import com.dandi.nyummy.common.domain.helper.StringResource
-import com.dandi.nyummy.common.domain.message.IconType
-import com.dandi.nyummy.common.domain.message.MessageEffect
-import com.dandi.nyummy.common.domain.navigation.NavRoute
-import com.dandi.nyummy.common.domain.navigation.NavSignal
-import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.meal.Meal
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.settings.domain.GetMealTimesUseCase
 import com.dandi.nyummy.settings.domain.SaveMealTimesUseCase
-import com.dandi.nyummy.settings.domain.SettingsRepository
-import com.dandi.nyummy.settings.entity.NotificationSettingsVO
-import com.dandi.nyummy.tti.TTIHelper
-import com.dandi.nyummy.tti.TTIMetaData
-import com.dandi.nyummy.tti.TTIPage
-import com.dandi.nyummy.tti.TimelineCategory
+import com.dandi.nyummy.settings.presentation.FakeResourceHelper
+import com.dandi.nyummy.settings.presentation.FakeSettingsRepository
+import com.dandi.nyummy.settings.presentation.FakeTTIHelper
+import com.dandi.nyummy.settings.presentation.RecordingMessageHelper
+import com.dandi.nyummy.settings.presentation.RecordingNavigationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -127,100 +115,5 @@ class MealTimeSettingViewModelTest {
 
         assertEquals(listOf(MealTimesVO.default), repository.savedMealTimes)
         assertEquals(1, navigationHelper.backCount)
-    }
-
-    private class FakeSettingsRepository : SettingsRepository {
-        var mealTimes: MealTimesVO = MealTimesVO.default
-        var getMealTimesError: Exception? = null
-        var getMealTimesCount = 0
-        var saveMealTimesError: Exception? = null
-        val savedMealTimes = mutableListOf<MealTimesVO>()
-
-        override suspend fun isBgmEnabled(): Boolean = true
-        override suspend fun setBgmEnabled(enabled: Boolean) = Unit
-        override suspend fun getNotificationSettings(): NotificationSettingsVO = NotificationSettingsVO.default
-        override suspend fun updateNotificationSettings(settings: NotificationSettingsVO): NotificationSettingsVO = settings
-
-        override suspend fun getMealTimes(): MealTimesVO {
-            getMealTimesCount++
-            getMealTimesError?.let { throw it }
-            return mealTimes
-        }
-
-        override suspend fun saveMealTimes(mealTimes: MealTimesVO) {
-            saveMealTimesError?.let { throw it }
-            savedMealTimes += mealTimes
-        }
-    }
-
-    private class RecordingMessageHelper : MessageHelper {
-        data class SnackBarCall(val messageText: String, val onClickCTA: (() -> Unit)?)
-
-        val snackBars = mutableListOf<SnackBarCall>()
-
-        override val effect: Flow<MessageEffect> = emptyFlow()
-        override fun showToast(toastMsg: String) = Unit
-        override fun showSnackBar(
-            iconType: IconType,
-            messageText: String,
-            callToActionText: String?,
-            onClickCTA: (() -> Unit)?,
-        ) {
-            snackBars += SnackBarCall(messageText, onClickCTA)
-        }
-
-        override fun showSnackBar(
-            iconType: IconType,
-            messageRes: Int,
-            callToActionText: String?,
-            onClickCTA: (() -> Unit)?,
-        ) = Unit
-
-        override fun showOneButtonDialog(
-            titleText: String?,
-            descText: String,
-            cantIgnore: Boolean,
-            buttonText: String,
-            onClickButton: (() -> Unit)?,
-        ) = Unit
-
-        override fun showTwoButtonDialog(
-            titleText: String?,
-            descText: String,
-            cantIgnore: Boolean,
-            leftButtonText: String,
-            onClickLeftButton: (() -> Unit)?,
-            rightButtonText: String,
-            onClickRightButton: (() -> Unit)?,
-        ) = Unit
-    }
-
-    private class RecordingNavigationHelper : NavigationHelper {
-        var backCount = 0
-
-        override val navigationFlow: Flow<NavSignal> = emptyFlow()
-        override fun navigateByRoute(route: NavRoute) = Unit
-        override fun navigateTo(page: Page) = Unit
-        override fun navigateDeepLink(route: NavRoute) = Unit
-        override fun navigateToBack() {
-            backCount++
-        }
-
-        override fun navigateToAsRoot(page: Page) = Unit
-        override fun navigateToInitial() = Unit
-        override fun navigateToExternalLink(url: String) = Unit
-    }
-
-    private object FakeResourceHelper : ResourceHelper {
-        override fun getString(resource: StringResource): String = ""
-    }
-
-    private object FakeTTIHelper : TTIHelper {
-        override fun startTTITracking(page: TTIPage) = Unit
-        override fun startTTITimeline(category: TimelineCategory) = Unit
-        override fun endTTITimeline(category: TimelineCategory) = Unit
-        override fun endTTITracking() = Unit
-        override fun shotTTILogging() = Unit
-        override fun addTTIMetaData(metadata: TTIMetaData, value: Any?) = Unit
     }
 }
