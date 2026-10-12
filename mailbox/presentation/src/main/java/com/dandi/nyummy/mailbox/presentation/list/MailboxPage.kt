@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -30,6 +31,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.jank.JankScrollWatcher
 import com.dandi.nyummy.mailbox.entity.InquiryCategory
 import com.dandi.nyummy.mailbox.presentation.R
 import com.dandi.nyummy.mailbox.presentation.model.labelRes
@@ -91,7 +93,10 @@ internal fun MailboxScreen(
                     modifier = Modifier.align(EmptyAlignment),
                 )
             } else {
+                val listState = rememberLazyListState()
+                JankScrollWatcher(listState)
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier
                         .fillMaxSize()
                         .wrapContentWidth(Alignment.CenterHorizontally)
