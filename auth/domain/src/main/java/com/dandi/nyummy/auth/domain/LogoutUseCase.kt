@@ -2,6 +2,7 @@ package com.dandi.nyummy.auth.domain
 
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.helper.PushTokenHelper
 import java.io.IOException
 import javax.inject.Inject
 
@@ -10,9 +11,11 @@ import javax.inject.Inject
  *
  * 서버 로그아웃은 멱등이고, 실패해도 이 기기의 토큰은 이미 지웠으므로 사용자에게 알리지 않는다.
  * 로그인 만료(401)도 같은 결과라 공통 안내를 띄우지 않는다.
+ * 이 기기의 푸시 토큰도 지운다. 서버 로그아웃이 실패해 서버에 토큰이 남아도 이 기기로는 푸시가 가지 않는다.
  */
 class LogoutUseCase @Inject constructor(
     private val repository: AuthRepository,
+    private val pushTokenHelper: PushTokenHelper,
     private val navigationHelper: NavigationHelper,
 ) {
     suspend operator fun invoke() {
@@ -21,6 +24,7 @@ class LogoutUseCase @Inject constructor(
         } catch (_: HttpResponseException) {
         } catch (_: IOException) {
         }
+        pushTokenHelper.deleteToken()
         navigationHelper.navigateToInitial()
     }
 }

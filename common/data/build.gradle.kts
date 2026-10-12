@@ -82,6 +82,10 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.perf)
 
+    // 푸시 토큰 등록, 삭제(PushTokenHelperImpl)
+    implementation(libs.firebase.messaging)
+    implementation(libs.kotlinx.coroutines.play.services)
+
     testImplementation(libs.junit)
     testImplementation(libs.okhttp.mockwebserver)
 }

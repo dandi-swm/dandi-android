@@ -15,6 +15,7 @@ import com.dandi.nyummy.auth.entity.SocialCredentialVO
 import com.dandi.nyummy.auth.entity.SocialLoginVO
 import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.common.data.token.TokenProvider
+import com.dandi.nyummy.common.domain.helper.PushTokenHelper
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 
@@ -22,6 +23,7 @@ class AuthRepositoryImpl(
     private val dataSource: AuthDataSource,
     private val tokenProvider: TokenProvider,
     private val appPreferenceProvider: AppPreferenceProvider,
+    private val pushTokenHelper: PushTokenHelper,
 ) : AuthRepository {
     override suspend fun setOnboardingIncomplete(incomplete: Boolean) {
         appPreferenceProvider.setOnboardingIncomplete(incomplete)
@@ -101,9 +103,13 @@ class AuthRepositoryImpl(
         }
     }
 
-    /** 발급 토큰 영속화 — 이후 요청부터 인증 헤더/Authenticator 가 사용한다. */
+    /**
+     * 발급 토큰 영속화 — 이후 요청부터 인증 헤더/Authenticator 가 사용한다.
+     * 로그인과 가입이 모두 여기를 지나므로, 이 기기의 푸시 토큰도 여기서 서버에 등록한다(재발급은 지나지 않는다).
+     */
     private suspend fun saveToken(token: AuthTokenVO) {
         if (token.accessToken.isBlank() || token.refreshToken.isBlank()) return
         tokenProvider.update(access = token.accessToken, refresh = token.refreshToken)
+        pushTokenHelper.register()
     }
 }
