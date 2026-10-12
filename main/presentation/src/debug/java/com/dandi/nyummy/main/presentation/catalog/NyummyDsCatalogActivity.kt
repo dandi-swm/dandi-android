@@ -60,6 +60,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconBut
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyLinearProgress
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRowTrailing
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMailRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMainTabs
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPasswordVisibilityToggle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPose
@@ -69,6 +70,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySection
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionHeader
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionHeaderWithMeta
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySegmentedControl
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySelectField
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySheetTitle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeleton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeletonShape
@@ -81,6 +83,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateAc
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateSurface
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStepIndicator
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStreakPill
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySwipeToDelete
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySwitch
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTabs
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
@@ -129,12 +132,15 @@ private val CatalogEntries = listOf(
     CatalogEntry("Bottom CTA") { BottomCtaSection() },
     CatalogEntry("Text Field") { TextFieldSection() },
     CatalogEntry("Text Area") { TextAreaSection() },
+    CatalogEntry("Select Field") { SelectFieldSection() },
     CatalogEntry("Code Input") { CodeInputSection() },
     CatalogEntry("Segmented Control") { SegmentedSection() },
     CatalogEntry("Wheel Picker") { WheelPickerSection() },
     CatalogEntry("Checkbox, Radio, Switch") { SelectionSection() },
     CatalogEntry("Card") { CardSection() },
     CatalogEntry("List Row") { ListRowSection() },
+    CatalogEntry("Mail Row") { MailRowSection() },
+    CatalogEntry("Swipe To Delete") { SwipeToDeleteSection() },
     CatalogEntry("Badge, HUD Pill") { BadgeHudSection() },
     CatalogEntry("Progress") { ProgressSection() },
     CatalogEntry("Section Header, Divider, Skeleton") { StructureSection() },
@@ -261,6 +267,12 @@ private fun TextAreaSection() {
 }
 
 @Composable
+private fun SelectFieldSection() {
+    NyummySelectField(value = "단순 문의", label = "문의 유형", onClick = {})
+    NyummySelectField(value = "단순 문의", label = "문의 유형", onClick = {}, enabled = false)
+}
+
+@Composable
 private fun CodeInputSection() {
     var code by remember { mutableStateOf("427") }
     NyummyCodeInput(value = code, onValueChange = { code = it })
@@ -335,6 +347,42 @@ private fun SelectionSection() {
 private fun CardSection() {
     NyummyCard(title = "오늘 1개 기록했어요", body = "칼로리와 탄단지는 참고로만 보여 줄게요.", modifier = Modifier.fillMaxWidth())
     NyummyCard(title = "오늘 1개 기록했어요", body = "칼로리와 탄단지는 참고로만 보여 줄게요.", onClick = {}, modifier = Modifier.fillMaxWidth())
+}
+
+@Composable
+private fun MailRowSection() {
+    Column {
+        NyummyMailRow(
+            type = "버그 제보",
+            time = "10월 4일",
+            title = "사진을 찍은 뒤 기록이 사라졌어요",
+            status = "답장이 왔어요",
+            isStatusEmphasized = true,
+            onClick = {},
+        )
+        NyummyMailRow(
+            type = "건의",
+            time = "9월 28일",
+            title = "히스토리에서 사진을 크게 보고 싶어요",
+            status = "답장을 기다리는 중",
+            isStatusEmphasized = false,
+            onClick = {},
+        )
+    }
+}
+
+@Composable
+private fun SwipeToDeleteSection() {
+    NyummySwipeToDelete(onDelete = {}) {
+        NyummyMailRow(
+            type = "건의",
+            time = "9월 28일",
+            title = "왼쪽으로 밀어 지워 보세요",
+            status = "답장을 기다리는 중",
+            isStatusEmphasized = false,
+            onClick = {},
+        )
+    }
 }
 
 @Composable
