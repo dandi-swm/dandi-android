@@ -1,6 +1,5 @@
 package com.dandi.nyummy.settings.data
 
-import android.content.ContextWrapper
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
@@ -19,7 +18,7 @@ import org.junit.Test
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
-/** 저장소가 식사 시각을 서버에서 읽고 쓸 때 DTO 변환과 원격 호출을 이어 주는지 확인합니다. */
+/** 저장소가 서버 값(식사 시각, 알림 수신 설정)을 읽고 쓸 때 DTO 변환과 원격 호출을 이어 주는지 확인합니다. */
 class SettingsRepositoryImplTest {
 
     private lateinit var server: MockWebServer
@@ -42,8 +41,7 @@ class SettingsRepositoryImplTest {
             .build()
             .create(SettingsApiService::class.java)
         repository = SettingsRepositoryImpl(
-            // 식사 시각은 알림 설정과 배경음을 쓰지 않는다. 만들기만 하고 부르지 않는다.
-            notificationDataSource = NotificationSettingsDataSource(ContextWrapper(null), json),
+            // 서버 값만 확인한다. 배경음(기기 저장)은 만들기만 하고 부르지 않는다.
             localDataSource = SettingsLocalDataSource(UnusedDataStore),
             remoteDataSource = SettingsRemoteDataSource(apiService),
         )

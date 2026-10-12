@@ -29,10 +29,10 @@ class GetSettingsUseCaseTest {
         val mealTimes = MealTimesVO(lunch = MealTimeVO(hour = 13))
         repository.mealTimes = mealTimes
 
-        val settings = useCase().getOrThrow()
+        val settings = useCase(onRetry = {}).getOrThrow()
 
         assertEquals(false, settings.isBgmEnabled)
-        assertEquals(NotificationSettingsVO(isNoticeEnabled = false), settings.notification)
+        assertEquals(NotificationSettingsVO(isMarketingEnabled = true), settings.notification)
         assertEquals(mealTimes, settings.mealTimes)
     }
 
@@ -40,9 +40,9 @@ class GetSettingsUseCaseTest {
     fun `식사 시각을 읽지 못해도 다른 설정은 돌려주고 식사 시각만 비운다`() = runBlocking {
         repository.getMealTimesError = IOException("offline")
 
-        val settings = useCase().getOrThrow()
+        val settings = useCase(onRetry = {}).getOrThrow()
 
-        assertEquals(NotificationSettingsVO(isNoticeEnabled = false), settings.notification)
+        assertEquals(NotificationSettingsVO(isMarketingEnabled = true), settings.notification)
         assertNull(settings.mealTimes)
         assertTrue(messageHelper.dialogs.isEmpty())
         assertTrue(messageHelper.snackBars.isEmpty())
@@ -52,7 +52,7 @@ class GetSettingsUseCaseTest {
     fun `식사 시각 서버 오류는 화면에 돌아올 때마다 다시 읽으므로 안내하지 않는다`() = runBlocking {
         repository.getMealTimesError = httpException(500, "api.user.profileNotFound")
 
-        val settings = useCase().getOrThrow()
+        val settings = useCase(onRetry = {}).getOrThrow()
 
         assertNull(settings.mealTimes)
         assertTrue(messageHelper.dialogs.isEmpty())
@@ -63,7 +63,7 @@ class GetSettingsUseCaseTest {
     fun `로그인이 만료됐으면 세션 만료를 안내하고 식사 시각만 비운다`() = runBlocking {
         repository.getMealTimesError = httpException(401, "api.auth.tokenExpired")
 
-        val settings = useCase().getOrThrow()
+        val settings = useCase(onRetry = {}).getOrThrow()
 
         assertNull(settings.mealTimes)
         messageHelper.dialogs.single().onClickButton?.invoke()

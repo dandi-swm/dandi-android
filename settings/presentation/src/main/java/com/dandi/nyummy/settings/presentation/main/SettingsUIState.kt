@@ -10,6 +10,7 @@ import com.dandi.nyummy.settings.entity.NotificationSettingsVO
  *
  * @property isLoaded 설정 값을 한 번 읽었다. 읽기 전에는 토글과 식사 시간 줄을 막아 저장하지 못하게 한다.
  * @property isDeviceNotificationEnabled 기기에서 이 앱의 알림을 허용했는지. 꺼져 있으면 알림 토글을 모두 막고 안내를 띄운다.
+ * @property notificationDetail "자세히 보기" 시트로 보여 줄 알림 묶음. 닫혀 있으면 null.
  * @property pendingLegalDocument 화면이 브라우저로 열어야 할 약관. 열어 본 뒤 비운다.
  * @property mealTimes 평소 식사 시각. 서버에서 읽기 전이거나 한 번도 읽지 못했으면 null이고, 요약 줄을 비운다.
  * @property isLoggingOut 로그아웃 요청 중. 다이얼로그 버튼을 막는다.
@@ -20,6 +21,7 @@ data class SettingsUIState(
     val notification: NotificationSettingsVO = NotificationSettingsVO.default,
     val mealTimes: MealTimesVO? = null,
     val isDeviceNotificationEnabled: Boolean = true,
+    val notificationDetail: NotificationKind? = null,
     val pendingLegalDocument: LegalDocument? = null,
     val isLogoutDialogVisible: Boolean = false,
     val isLoggingOut: Boolean = false,

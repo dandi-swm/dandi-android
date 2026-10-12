@@ -79,7 +79,7 @@ class SettingsViewModelTest {
         assertFalse(state.isLoaded)
 
         viewModel.onIntent(SettingsIntent.ToggleBgm(false))
-        viewModel.onIntent(SettingsIntent.ToggleNotice(false))
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(true))
         viewModel.onIntent(SettingsIntent.ClickMealTime)
         advanceUntilIdle()
 

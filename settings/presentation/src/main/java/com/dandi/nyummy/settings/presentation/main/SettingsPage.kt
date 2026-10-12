@@ -5,7 +5,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,11 +34,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.entity.meal.Meal
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomSheet
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCard
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialog
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyInlineNotice
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRowTrailing
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionCaption
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySheetTitle
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonTone
@@ -47,7 +53,7 @@ import com.dandi.nyummy.settings.entity.LegalDocument
 import com.dandi.nyummy.settings.presentation.R
 
 /**
- * 설정. 소리(배경음), 알림(전체, 식사 기록, 식사 시간, 중요 공지), 약관, 로그아웃.
+ * 설정. 소리(배경음), 알림(서비스 알림, 식사 시간, 마케팅 알림), 약관, 로그아웃.
  * 기기에서 알림을 꺼 두었으면 알림 토글을 막고 기기 설정으로 가는 안내를 띄운다.
  */
 @Composable
@@ -117,6 +123,10 @@ internal fun SettingsScreen(
         }
     }
 
+    uiState.notificationDetail?.let { kind ->
+        NotificationDetailSheet(kind = kind, onDismiss = { onIntent(SettingsIntent.DismissNotificationDetail) })
+    }
+
     if (uiState.isLogoutDialogVisible) {
         NyummyDialog(
             title = stringResource(R.string.settings_logout_dialog_title),
@@ -145,8 +155,8 @@ private fun SoundSection(uiState: SettingsUIState, onIntent: (SettingsIntent) ->
 }
 
 /**
- * 알림 묶음. 전체 알림을 끄면 식사 기록, 중요 공지 토글은 값을 그대로 둔 채 막는다.
- * 기기 알림이 꺼져 있으면 세 토글을 모두 꺼진 모습으로 막는다. 설정 값을 읽기 전에는 모두 막는다.
+ * 알림 묶음. 서비스 알림과 마케팅 알림 토글, 각 묶음에 어떤 알림이 들어 있는지 보는 "자세히 보기", 식사 시간.
+ * 기기 알림이 꺼져 있으면 두 토글을 꺼진 모습으로 막는다. 설정 값을 읽기 전에도 막는다.
  */
 @Composable
 private fun NotificationSection(
@@ -156,8 +166,7 @@ private fun NotificationSection(
 ) {
     val device = uiState.isDeviceNotificationEnabled
     val notification = uiState.notification
-    val allEnabled = uiState.isLoaded && device
-    val subEnabled = allEnabled && notification.isAllEnabled
+    val togglesEnabled = uiState.isLoaded && device
     NyummySectionCaption(title = stringResource(R.string.settings_section_notification))
     if (!device) {
         NyummyInlineNotice(
@@ -172,22 +181,15 @@ private fun NotificationSection(
         )
     }
     NyummyListRow(
-        title = stringResource(R.string.settings_notification_all),
+        title = stringResource(R.string.settings_notification_service),
+        subtitle = stringResource(R.string.settings_notification_service_desc),
         trailing = NyummyListRowTrailing.Switch(
-            checked = device && notification.isAllEnabled,
-            onCheckedChange = { onIntent(SettingsIntent.ToggleAllNotification(it)) },
+            checked = device && notification.isServiceEnabled,
+            onCheckedChange = { onIntent(SettingsIntent.ToggleServicePush(it)) },
         ),
-        enabled = allEnabled,
+        enabled = togglesEnabled,
     )
-    NyummyListRow(
-        title = stringResource(R.string.settings_notification_meal),
-        subtitle = stringResource(R.string.settings_notification_meal_desc),
-        trailing = NyummyListRowTrailing.Switch(
-            checked = device && notification.isMealReminderEnabled,
-            onCheckedChange = { onIntent(SettingsIntent.ToggleMealReminder(it)) },
-        ),
-        enabled = subEnabled,
-    )
+    NotificationDetailButton { onIntent(SettingsIntent.ClickNotificationDetail(NotificationKind.SERVICE)) }
     NyummyListRow(
         title = stringResource(R.string.settings_meal_time),
         subtitle = uiState.mealTimes?.let { mealTimesSummary(it) },
@@ -195,14 +197,92 @@ private fun NotificationSection(
         enabled = uiState.isLoaded,
     )
     NyummyListRow(
-        title = stringResource(R.string.settings_notification_notice),
-        subtitle = stringResource(R.string.settings_notification_notice_desc),
+        title = stringResource(R.string.settings_notification_marketing),
+        subtitle = stringResource(R.string.settings_notification_marketing_desc),
         trailing = NyummyListRowTrailing.Switch(
-            checked = device && notification.isNoticeEnabled,
-            onCheckedChange = { onIntent(SettingsIntent.ToggleNotice(it)) },
+            checked = device && notification.isMarketingEnabled,
+            onCheckedChange = { onIntent(SettingsIntent.ToggleMarketingPush(it)) },
         ),
-        enabled = subEnabled,
+        enabled = togglesEnabled,
     )
+    NotificationDetailButton { onIntent(SettingsIntent.ClickNotificationDetail(NotificationKind.MARKETING)) }
+}
+
+/** 알림 묶음 토글 아래의 "자세히 보기". 기기 알림이 꺼져 있거나 읽기 전이어도 볼 수 있다. */
+@Composable
+private fun NotificationDetailButton(onClick: () -> Unit) {
+    NyummyTextButton(
+        text = stringResource(R.string.settings_notification_detail),
+        onClick = onClick,
+        tone = NyummyTextButtonTone.Neutral,
+        size = NyummyTextButtonSize.S,
+        trailingIcon = CommonR.drawable.nyummy_ic_chevron_right,
+    )
+}
+
+/** 알림 묶음에 들어 있는 알림 하나. 언제 오는지와 실제 푸시 문구 예시를 보여 준다. */
+private data class IncludedPush(
+    @StringRes val name: Int,
+    @StringRes val whenSent: Int,
+    @StringRes val previewTitle: Int,
+    @StringRes val previewBody: Int,
+)
+
+private val NotificationKind.title: Int
+    @StringRes get() = when (this) {
+        NotificationKind.SERVICE -> R.string.settings_notification_service
+        NotificationKind.MARKETING -> R.string.settings_notification_marketing
+    }
+
+private val NotificationKind.includedPushes: List<IncludedPush>
+    get() = when (this) {
+        NotificationKind.SERVICE -> listOf(
+            IncludedPush(
+                name = R.string.settings_push_meal_time,
+                whenSent = R.string.settings_push_meal_time_when,
+                previewTitle = R.string.settings_push_meal_time_preview_title,
+                previewBody = R.string.settings_push_meal_time_preview_body,
+            ),
+            IncludedPush(
+                name = R.string.settings_push_analysis,
+                whenSent = R.string.settings_push_analysis_when,
+                previewTitle = R.string.settings_push_analysis_preview_title,
+                previewBody = R.string.settings_push_analysis_preview_body,
+            ),
+        )
+        NotificationKind.MARKETING -> listOf(
+            IncludedPush(
+                name = R.string.settings_push_retention,
+                whenSent = R.string.settings_push_retention_when,
+                previewTitle = R.string.settings_push_retention_preview_title,
+                previewBody = R.string.settings_push_retention_preview_body,
+            ),
+        )
+    }
+
+/** "자세히 보기" 시트. 묶음에 들어 있는 알림마다 이름, 언제 오는지, 실제 푸시 문구 예시를 보여 준다. */
+@Composable
+private fun NotificationDetailSheet(kind: NotificationKind, onDismiss: () -> Unit) {
+    NyummyBottomSheet(onDismissRequest = onDismiss) {
+        NyummySheetTitle(text = stringResource(kind.title))
+        kind.includedPushes.forEach { push ->
+            Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
+                Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4)) {
+                    NyummyText(text = stringResource(push.name), style = NyummyTheme.typography.titleS)
+                    NyummyText(
+                        text = stringResource(push.whenSent),
+                        style = NyummyTheme.typography.bodyS,
+                        color = NyummyTheme.colors.content.secondary,
+                    )
+                }
+                NyummyCard(
+                    title = stringResource(push.previewTitle),
+                    body = stringResource(push.previewBody),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
 }
 
 @Composable

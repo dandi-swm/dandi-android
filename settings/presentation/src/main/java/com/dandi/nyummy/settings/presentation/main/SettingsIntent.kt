@@ -17,11 +17,16 @@ sealed interface SettingsIntent : MviIntent {
 
     data class ToggleBgm(val enabled: Boolean) : SettingsIntent
 
-    data class ToggleAllNotification(val enabled: Boolean) : SettingsIntent
+    /** 서비스 알림(식사 시간 알림, 분석 결과 알림)을 켜거나 껐다. */
+    data class ToggleServicePush(val enabled: Boolean) : SettingsIntent
 
-    data class ToggleMealReminder(val enabled: Boolean) : SettingsIntent
+    /** 마케팅 알림(기록을 쉴 때 알림) 수신에 동의하거나 철회했다. */
+    data class ToggleMarketingPush(val enabled: Boolean) : SettingsIntent
 
-    data class ToggleNotice(val enabled: Boolean) : SettingsIntent
+    /** 알림 묶음의 "자세히 보기"를 눌렀다. 어떤 알림이 들어 있는지 시트로 보여 준다. */
+    data class ClickNotificationDetail(val kind: NotificationKind) : SettingsIntent
+
+    data object DismissNotificationDetail : SettingsIntent
 
     data object ClickMealTime : SettingsIntent
 

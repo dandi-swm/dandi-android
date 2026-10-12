@@ -6,7 +6,7 @@ import com.dandi.nyummy.common.domain.error.isSessionExpired
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
-import com.dandi.nyummy.settings.entity.NotificationSettingsVO
+import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.tti.TTIHelper
 import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
@@ -23,8 +23,8 @@ class UpdateNotificationSettingsUseCase @Inject constructor(
     ttiHelper: TTIHelper,
 ) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
 
-    suspend operator fun invoke(settings: NotificationSettingsVO): Result<NotificationSettingsVO> = try {
-        Result.success(repository.updateNotificationSettings(settings))
+    suspend operator fun invoke(change: NotificationSettingsChange): Result<Unit> = try {
+        Result.success(repository.updateNotificationSettings(change))
     } catch (e: CancellationException) {
         throw e
     } catch (e: HttpResponseException) {
