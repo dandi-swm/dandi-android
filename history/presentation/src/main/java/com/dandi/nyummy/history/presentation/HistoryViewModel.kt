@@ -59,6 +59,15 @@ class HistoryViewModel @Inject constructor(
     /** 지난달 캘린더를 미리 받는 job. 사용자의 조회([loadJob])와 따로 두어 서로 취소하지 않는다. */
     private var prefetchJob: Job? = null
 
+    /** 알림의 식사 상세 링크로 열어 달라고 받은 식사. 목록을 새로 받으면 [openPendingMealDetail]이 연다. */
+    private var pendingMealId: String? = null
+
+    /**
+     * 이 화면에서 이미 처리한 링크의 식사. 탭을 오가며 화면이 다시 그려질 때 같은 인자로 다시 오므로 한 번만 연다.
+     * 다른 식사의 링크는 새 화면(새 ViewModel)으로 열린다.
+     */
+    private var handledLinkMealId: String? = null
+
     init {
         val today = currentState.selectedDate
         loadMonth(month = HistoryMonth.of(today), selectedDate = today)
@@ -83,6 +92,8 @@ class HistoryViewModel @Inject constructor(
                 dispatch(HistoryReducerEvent.NutritionSummaryToggled)
 
             is HistoryIntent.ClickMeal -> openMealDetail(intent.mealId)
+
+            is HistoryIntent.OpenMealFromLink -> openMealFromLink(intent.mealId)
 
             is HistoryIntent.ClickRetryAnalysis -> requestReanalysis(intent.mealId)
 
@@ -315,6 +326,7 @@ class HistoryViewModel @Inject constructor(
                     dailyDetail = dailyDetail,
                 ),
             )
+            openPendingMealDetail()
             prefetchPreviousMonth(month)
         }
     }
@@ -342,7 +354,10 @@ class HistoryViewModel @Inject constructor(
         dispatch(HistoryReducerEvent.DaySelectionStarted(date))
         loadJob = viewModelScope.launch {
             getDailyMeals(date.year, date.month, date.day)
-                .onSuccess { dispatch(HistoryReducerEvent.DaySelected(date = date, dailyDetail = it)) }
+                .onSuccess {
+                    dispatch(HistoryReducerEvent.DaySelected(date = date, dailyDetail = it))
+                    openPendingMealDetail()
+                }
                 .onFailure { dispatch(HistoryReducerEvent.LoadFailed) }
         }
     }
@@ -397,8 +412,34 @@ class HistoryViewModel @Inject constructor(
         refreshJob = viewModelScope.launch {
             getDailyMeals(date.year, date.month, date.day).onSuccess {
                 dispatch(HistoryReducerEvent.DayRefreshed(date = date, dailyDetail = it))
+                openPendingMealDetail()
             }
         }
+    }
+
+    /**
+     * 알림의 식사 상세 링크(`/meals/{mealId}`)로 열렸다. 분석 결과 알림은 오늘 기록한 식사라 오늘 목록에서 찾는다.
+     * 받은 시점의 목록은 분석 전 상태일 수 있어 목록을 새로 받은 뒤 연다.
+     */
+    private fun openMealFromLink(mealId: Long) {
+        val id = mealId.toString()
+        if (id == handledLinkMealId) return
+        handledLinkMealId = id
+        pendingMealId = id
+        val today = todayDate()
+        when {
+            // 진행 중인 조회(화면을 처음 열 때의 조회 등)가 끝나면 연다.
+            loadJob?.isActive == true -> Unit
+            currentState.selectedDate != today -> selectDate(today)
+            else -> refreshSelectedDayQuietly()
+        }
+    }
+
+    /** 기다리던 식사가 지금 목록에 있으면 상세를 연다. 없거나 분석이 끝나지 않았으면 목록만 둔다([openMealDetail]이 거른다). */
+    private fun openPendingMealDetail() {
+        val mealId = pendingMealId ?: return
+        pendingMealId = null
+        openMealDetail(mealId)
     }
 
     /** 분석에 실패한 식사의 재분석을 요청한다. 같은 식사의 요청이 진행 중이면 무시한다. */

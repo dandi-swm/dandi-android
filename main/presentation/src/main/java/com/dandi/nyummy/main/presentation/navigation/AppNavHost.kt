@@ -92,14 +92,20 @@ fun openExternalLink(url: String, context: Context) {
  * NavRoute 한 건을 받아 백스택에 push(앱 내 전진 이동).
  * 동일 키가 이미 스택에 있으면 중복을 만들지 않고 최전면으로 끌어올린다 — Navigation3 의
  * contentKey 는 키별 1회만 유효하므로, 같은 (path,args) 키가 스택에 둘 이상 존재해선 안 된다.
+ * 탭 화면은 인자와 상관없이 path 하나에 엔트리 하나만 둔다([bringTabToFront]).
  * 미등록 path 는 무시 + 경고 로그.
  */
 fun handleNavRoute(route: NavRoute, backStack: NavBackStack<NavKey>) {
-    if (appRouteByPath[route.path] == null) {
+    val appRoute = appRouteByPath[route.path]
+    if (appRoute == null) {
         Log.w(TAG, "Unhandled NavRoute: ${route.path}")
         return
     }
     val navKey = GenericNavKey.of(route)
+    if (appRoute.isBottomTab) {
+        backStack.bringTabToFront(navKey)
+        return
+    }
     if (backStack.lastOrNull() != navKey) {
         backStack.bringToFront(navKey)
         Log.d(TAG, "navigateTo: $navKey")
@@ -170,6 +176,22 @@ fun handleResetTo(route: NavRoute, backStack: NavBackStack<NavKey>) {
     backStack.clear()
     backStack.add(GenericNavKey.of(route))
     Log.d(TAG, "navigateToAsRoot: ${route.path}")
+}
+
+/**
+ * 탭 화면은 path 하나에 엔트리 하나만 둔다. 인자가 달라도 같은 탭이다.
+ * 같은 탭이 둘 생기면 하단 탭 선택과 뒤로 가기가 어긋나기 때문이다.
+ *
+ * - 인자 없이 오면(하단 탭 누름) 이미 있는 그 탭 엔트리를 인자째 맨 위로 올린다. 화면 상태가 그대로 남는다.
+ * - 인자와 함께 오면(알림 링크 등) 같은 탭 엔트리를 지우고 새 인자로 맨 위에 올린다.
+ *   키가 바뀌므로 새 엔트리가 되어 화면이 새 인자로 다시 그려진다.
+ */
+internal fun MutableList<NavKey>.bringTabToFront(key: GenericNavKey) {
+    val isSameTab = { entry: NavKey -> (entry as? GenericNavKey)?.path == key.path }
+    val target = if (key.args.isEmpty()) lastOrNull(isSameTab) ?: key else key
+    if (lastOrNull() == target) return
+    removeAll(isSameTab)
+    add(target)
 }
 
 /**
