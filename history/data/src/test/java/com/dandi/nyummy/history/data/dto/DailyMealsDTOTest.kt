@@ -70,4 +70,19 @@ class DailyMealsDTOTest {
         assertFalse(canRetry("WAITING"))
         assertFalse(canRetry("COMPLETED"))
     }
+
+    @Test
+    fun `분석이 끝난 식사만 음식 아이콘을 쓰고 서버 기본 아이콘은 버린다`() {
+        fun iconOf(status: String?, iconId: Long?) =
+            DailyMealsDTO(meals = listOf(DailyMealDTO(mealId = 1, status = status, iconId = iconId)))
+                .toVO().meals.single().foodIconId
+
+        assertEquals("12", iconOf("COMPLETED", 12))
+        // 서버는 분석 전이거나 실패한 식사에도 기본 아이콘(1)을 준다.
+        assertEquals("", iconOf("FAILED", 1))
+        assertEquals("", iconOf("ANALYZING", 1))
+        assertEquals("", iconOf("WAITING", 1))
+        assertEquals("", iconOf(null, 1))
+        assertEquals("", iconOf("COMPLETED", null))
+    }
 }
