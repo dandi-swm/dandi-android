@@ -70,6 +70,16 @@ internal class FakeSettingsRepository : SettingsRepository {
         saveMealTimesError?.let { throw it }
         savedMealTimes += mealTimes
     }
+
+    var withdrawCount = 0
+
+    /** 탈퇴 요청의 응답. null 이면 바로 성공한다. */
+    var withdrawResponse: (suspend () -> Unit)? = null
+
+    override suspend fun withdraw() {
+        withdrawCount++
+        withdrawResponse?.invoke()
+    }
 }
 
 internal class RecordingMessageHelper : MessageHelper {

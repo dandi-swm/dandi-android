@@ -51,6 +51,14 @@ internal class FakeSettingsRepository : SettingsRepository {
         saveMealTimesError?.let { throw it }
         savedMealTimes += mealTimes
     }
+
+    var withdrawError: Exception? = null
+    var withdrawCount = 0
+
+    override suspend fun withdraw() {
+        withdrawCount++
+        withdrawError?.let { throw it }
+    }
 }
 
 internal class RecordingMessageHelper : MessageHelper {

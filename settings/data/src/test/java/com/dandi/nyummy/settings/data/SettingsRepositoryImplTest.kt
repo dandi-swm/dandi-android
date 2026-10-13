@@ -1,5 +1,7 @@
 package com.dandi.nyummy.settings.data
 
+import com.dandi.nyummy.common.data.token.TokenProvider
+import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
@@ -11,6 +13,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import retrofit2.Retrofit
@@ -21,6 +24,7 @@ class SettingsRepositoryImplTest {
 
     private lateinit var server: MockWebServer
     private lateinit var repository: SettingsRepositoryImpl
+    private val tokenProvider = FakeTokenProvider()
 
     // 앱의 Json 설정(NetworkModule)과 같게 둔다.
     private val json = Json {
@@ -38,7 +42,10 @@ class SettingsRepositoryImplTest {
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
             .create(SettingsApiService::class.java)
-        repository = SettingsRepositoryImpl(remoteDataSource = SettingsRemoteDataSource(apiService))
+        repository = SettingsRepositoryImpl(
+            remoteDataSource = SettingsRemoteDataSource(apiService),
+            tokenProvider = tokenProvider,
+        )
     }
 
     @After
@@ -101,5 +108,36 @@ class SettingsRepositoryImplTest {
         val request = server.takeRequest()
         assertEquals("PATCH", request.method)
         assertEquals("""{"isServicePushEnabled":false}""", request.body.readUtf8())
+    }
+
+    @Test
+    fun `탈퇴하면 내 계정을 DELETE 로 지우고 이 기기의 토큰도 지운다`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(204))
+
+        repository.withdraw()
+
+        val request = server.takeRequest()
+        assertEquals("DELETE", request.method)
+        assertEquals("/api/v1/users/me", request.path)
+        assertEquals(1, tokenProvider.clearCount)
+    }
+
+    @Test
+    fun `탈퇴하지 못하면 회원은 그대로라 토큰을 남겨 둔다`() {
+        server.enqueue(MockResponse().setResponseCode(500))
+
+        assertThrows(HttpResponseException::class.java) { runBlocking { repository.withdraw() } }
+
+        assertEquals(0, tokenProvider.clearCount)
+    }
+
+    private class FakeTokenProvider : TokenProvider {
+        var clearCount = 0
+        override val accessToken: String? = "access"
+        override val refreshToken: String? = "refresh"
+        override suspend fun update(access: String, refresh: String) = Unit
+        override suspend fun clear() {
+            clearCount++
+        }
     }
 }
