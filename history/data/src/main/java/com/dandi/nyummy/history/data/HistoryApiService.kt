@@ -1,10 +1,12 @@
 package com.dandi.nyummy.history.data
 
+import com.dandi.nyummy.history.data.dto.CreateAnalysisFeedbackRequestDTO
 import com.dandi.nyummy.history.data.dto.DailyMealsDTO
 import com.dandi.nyummy.history.data.dto.MealDTO
 import com.dandi.nyummy.history.data.dto.MealStatusDTO
 import com.dandi.nyummy.history.data.dto.MonthlyMealsDTO
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -45,6 +47,13 @@ interface HistoryApiService {
     /** 식사 재분석 요청 */
     @POST("$MEALS_PATH/{mealId}/analysis")
     suspend fun reanalyzeMeal(@Path("mealId") mealId: Long): Response<MealStatusDTO>
+
+    /** 영양 분석 평가 등록 */
+    @POST("$MEALS_PATH/{mealId}/analysis/feedback")
+    suspend fun createAnalysisFeedback(
+        @Path("mealId") mealId: Long,
+        @Body request: CreateAnalysisFeedbackRequestDTO,
+    ): Response<Unit>
 
     /** 식사 삭제 */
     @DELETE("$MEALS_PATH/{mealId}")

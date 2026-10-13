@@ -18,6 +18,7 @@ import kotlinx.serialization.Serializable
  * @property imageUrl 촬영 사진 URL
  * @property catComment 이 식사에 대한 냐미의 한 줄 피드백
  * @property iconId 음식 픽셀 아이콘 식별자. 분석 전이거나 실패한 식사에도 서버 기본값(1)이 온다.
+ * @property canCreateAnalysisFeedback AI 분석 평가를 받을 식사인지 여부. 분석이 끝났고 아직 평가하지 않은 식사 중 서버가 고른 것만 true.
  */
 @Serializable
 data class MealDTO(
@@ -29,6 +30,7 @@ data class MealDTO(
     val imageUrl: String? = null,
     val catComment: String? = null,
     val iconId: Long? = null,
+    val canCreateAnalysisFeedback: Boolean? = null,
 ) {
     // 단건 조회에는 하루 내 순서 정보가 없으므로 orderIndex 는 0. 음식 아이콘은 분석이 끝난 식사만 쓴다.
     fun toVO(): MealHistoryVO {
@@ -47,6 +49,7 @@ data class MealDTO(
             status = analysisStatus,
             catComment = catComment?.trim() ?: "",
             date = mealAt.toDeviceHistoryDate(),
+            canCreateAnalysisFeedback = canCreateAnalysisFeedback == true,
         )
     }
 }

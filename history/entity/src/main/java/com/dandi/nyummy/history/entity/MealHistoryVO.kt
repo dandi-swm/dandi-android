@@ -18,6 +18,8 @@ import kotlinx.serialization.Serializable
  * @property status AI 영양 분석 상태. 서버 값이 없거나 모르는 값이면 [MealAnalysisStatus.UNKNOWN]입니다.
  * @property catComment 이 식사에 대한 냐미의 한 줄 피드백. 단건 상세 조회에서만 내려오며 없으면 빈 값입니다.
  * @property date 식사한 날짜(기기 타임존). 단건 상세 조회에서만 채워지며 없으면 [HistoryDateVO.empty]입니다.
+ * @property canCreateAnalysisFeedback AI 분석 결과를 평가받을 식사인지 여부. 서버가 분석이 끝났고 아직 평가하지 않은 식사 중
+ * 일부를 골라 true로 준다. 단건 상세 조회에서만 채워집니다.
  */
 @Serializable
 data class MealHistoryVO(
@@ -34,6 +36,7 @@ data class MealHistoryVO(
     val status: MealAnalysisStatus = MealAnalysisStatus.COMPLETED,
     val catComment: String = "",
     val date: HistoryDateVO = HistoryDateVO.empty,
+    val canCreateAnalysisFeedback: Boolean = false,
 ) {
 
     /** 분석이 끝나 이름/영양 정보를 믿을 수 있는 기록인지 여부. */
