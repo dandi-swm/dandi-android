@@ -42,15 +42,13 @@ class AuthScreensTest {
             NyummyTheme { LoginPageContent(uiState = LoginUIState.empty, onIntent = { intents += it }) }
         }
 
-        composeRule.onNodeWithText(text(R.string.auth_login_kakao)).performClick()
-        composeRule.onNodeWithContentDescription(text(R.string.auth_login_naver_description)).performClick()
+        composeRule.onNodeWithContentDescription(text(R.string.auth_login_kakao_description)).performClick()
         composeRule.onNodeWithContentDescription(text(R.string.auth_login_google_description)).performClick()
         composeRule.onNodeWithContentDescription(text(R.string.auth_login_email_description)).performClick()
 
         assertEquals(
             listOf(
                 LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO),
-                LoginIntent.ClickSocialLogin(SocialLoginType.NAVER),
                 LoginIntent.ClickSocialLogin(SocialLoginType.GOOGLE),
                 LoginIntent.ClickEmailLogin,
             ),
