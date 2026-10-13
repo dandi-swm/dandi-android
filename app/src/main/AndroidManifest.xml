@@ -51,6 +51,9 @@
         <meta-data
             android:name="firebase_performance_collection_enabled"
             android:value="${firebasePerformanceCollectionEnabled}" />
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="${firebaseCrashlyticsCollectionEnabled}" />
 
         <!-- 앱이 백그라운드일 때 OS가 서버 푸시를 띄우는 기본 아이콘과 채널 -->
         <meta-data

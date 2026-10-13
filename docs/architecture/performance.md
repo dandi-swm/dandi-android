@@ -66,6 +66,12 @@ Logcat 출력 예(디버그 빌드, `[TTI]` 태그): `Shot TTI Logging : intro#1
 - 버벅임: [RemoteJankReport](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/jank/RemoteJankReport.kt)가 화면별 `jank_{경로}` 트레이스로 보낸다(인트로는 `jank_intro`). metric `total_frames`, `jank_frames`, `frozen_frames`, `jank_permille`(정수 천분율), `avg_frame_ms`, `max_frame_ms`, attribute `reason`, `during_scroll`. 스크롤 구간 통계(SCROLL_END)는 보내지 않는다.
 - `RemoteTTILogger`는 디버그 로그 싱크의 release 자리로, 지금은 아무것도 하지 않는다. 외부 전송은 `TTIReporter`만 맡는다.
 
+### 비정상 종료 보고 (Firebase Crashlytics)
+
+- 수집은 release 빌드에서만 켠다. 매니페스트 `firebase_crashlytics_collection_enabled`를 `app/build.gradle.kts`의 `androidComponents.onVariants`가 Performance와 같은 기준(빌드 타입 이름 `release`)으로 정한다. debug, benchmark, 베이스라인 프로파일 빌드는 보내지 않는다.
+- 난독화 매핑은 `uploadCrashlyticsMappingFileRelease`만 올린다. benchmark 계열 빌드도 난독화되지만 측정용이라 업로드 태스크를 끈다.
+- 스택의 파일 이름과 줄 번호를 남기도록 `app/proguard-rules.pro`에 `-keepattributes SourceFile,LineNumberTable`을 둔다.
+
 ## 2. JankStats (프레임 품질)
 
 [jank/](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/jank/) — AndroidX JankStats 기반.

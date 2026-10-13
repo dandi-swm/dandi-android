@@ -13,3 +13,7 @@
 -keep class androidx.credentials.playservices.** {
   *;
 }
+
+# Crashlytics: 난독화된 크래시 스택에 파일 이름과 줄 번호를 남기고, 사용자 정의 예외 이름은 그대로 둔다.
+-keepattributes SourceFile,LineNumberTable
+-keep public class * extends java.lang.Exception

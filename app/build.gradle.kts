@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.androidx.baselineprofile)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 // 릴리즈 서명 정보. 공개 저장소라 소스에 두지 않고 git 무시 대상인 local.properties(없거나 빈 값이면 환경변수)에서 읽는다.
@@ -95,6 +96,16 @@ androidComponents {
         // Firebase Performance SDK 수집도 release 에서만 켠다. 모으는 것은 SDK 자동 트레이스(앱 시작, 화면 렌더링)와
         // 이 앱의 커스텀 트레이스(TTI, 버벅임, 이미지 로딩)다. Performance Gradle 플러그인은 적용하지 않아 네트워크 요청은 자동 계측하지 않는다.
         variant.manifestPlaceholders.put("firebasePerformanceCollectionEnabled", isReleaseBuild.toString())
+        // 비정상 종료 보고(Crashlytics)도 release 에서만 보낸다. 개발 중 크래시가 실사용자 지표에 섞이지 않게 한다.
+        variant.manifestPlaceholders.put("firebaseCrashlyticsCollectionEnabled", isReleaseBuild.toString())
+    }
+}
+
+// Crashlytics 난독화 매핑은 실제 release 빌드에서만 올린다. benchmark 와 베이스라인 프로파일용 빌드(benchmarkRelease 등)도
+// 난독화되지만 측정용이라 매핑을 올릴 필요가 없고, 빌드할 때마다 네트워크 업로드가 붙지 않게 한다.
+tasks.configureEach {
+    if (name.startsWith("uploadCrashlyticsMappingFile") && name != "uploadCrashlyticsMappingFileRelease") {
+        enabled = false
     }
 }
 
@@ -192,6 +203,8 @@ dependencies {
     // 서버 푸시(FCM) 수신
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+    // 비정상 종료 보고. 수집은 release 에서만 켠다(androidComponents 의 manifestPlaceholders).
+    implementation(libs.firebase.crashlytics)
 
     implementation(libs.hilt.android)
     debugImplementation(libs.leakcanary)
