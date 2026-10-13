@@ -17,4 +17,7 @@ interface SettingsRepository {
 
     /** 평소 식사 시각을 서버에 저장한다. 서버는 이 시각으로 식사 알림을 보낸다. */
     suspend fun saveMealTimes(mealTimes: MealTimesVO)
+
+    /** 회원 탈퇴. 되돌릴 수 없다. 성공하면 이 기기에 저장한 로그인 토큰도 지운다. */
+    suspend fun withdraw()
 }

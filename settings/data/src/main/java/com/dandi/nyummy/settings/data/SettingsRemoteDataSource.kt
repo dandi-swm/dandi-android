@@ -20,4 +20,8 @@ class SettingsRemoteDataSource(
     suspend fun updatePushSetting(request: PushSettingDTO) {
         checkResponse(apiService.updatePushSetting(request))
     }
+
+    suspend fun withdraw() {
+        checkResponse(apiService.withdraw())
+    }
 }
