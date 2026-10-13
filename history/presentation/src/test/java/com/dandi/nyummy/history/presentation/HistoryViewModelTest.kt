@@ -17,7 +17,9 @@ import com.dandi.nyummy.history.domain.GetMealDetailUseCase
 import com.dandi.nyummy.history.domain.GetMonthlyMealsUseCase
 import com.dandi.nyummy.history.domain.HistoryRepository
 import com.dandi.nyummy.history.domain.ReanalyzeMealUseCase
+import com.dandi.nyummy.history.domain.SubmitAnalysisFeedbackUseCase
 import com.dandi.nyummy.history.domain.UpdateMealNameUseCase
+import com.dandi.nyummy.history.entity.AnalysisFeedbackReason
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
@@ -39,6 +41,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -47,6 +50,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -799,6 +803,140 @@ class HistoryViewModelTest {
         assertEquals(1, viewModel.uiState.value.completedMealCount)
     }
 
+    @Test
+    fun `평가 대상 식사의 상세를 열면 1500ms 뒤에 평가 카드를 띄운다`() = runTest(testDispatcher) {
+        val viewModel = openFeedbackTargetDetail()
+
+        advanceTimeBy(1_499)
+        assertNull(viewModel.uiState.value.mealDetail?.feedback)
+        advanceTimeBy(2)
+        assertNotNull(viewModel.uiState.value.mealDetail?.feedback)
+    }
+
+    @Test
+    fun `평가 대상이 아니면 평가 카드를 띄우지 않는다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ClickMeal("1"))
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.mealDetail?.feedback)
+    }
+
+    @Test
+    fun `1500ms 가 지나기 전에 상세를 닫으면 평가 카드를 띄우지 않는다`() = runTest(testDispatcher) {
+        val viewModel = openFeedbackTargetDetail()
+
+        advanceTimeBy(1_000)
+        viewModel.onIntent(HistoryIntent.DismissMealDetail)
+        viewModel.onIntent(HistoryIntent.ClickMeal("2"))
+        advanceUntilIdle()
+
+        assertEquals("2", viewModel.uiState.value.mealDetail?.meal?.id)
+        assertNull(viewModel.uiState.value.mealDetail?.feedback)
+    }
+
+    @Test
+    fun `아쉬운 점은 하나만 고르고 같은 것을 다시 누르면 풀린다`() = runTest(testDispatcher) {
+        val viewModel = openFeedbackTargetDetail()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.SelectFeedbackReason(AnalysisFeedbackReason.WRONG_FOOD))
+        viewModel.onIntent(HistoryIntent.SelectFeedbackReason(AnalysisFeedbackReason.MISSING_FOOD))
+        assertEquals(AnalysisFeedbackReason.MISSING_FOOD, viewModel.uiState.value.mealDetail?.feedback?.selectedReason)
+
+        viewModel.onIntent(HistoryIntent.SelectFeedbackReason(AnalysisFeedbackReason.MISSING_FOOD))
+        assertNull(viewModel.uiState.value.mealDetail?.feedback?.selectedReason)
+    }
+
+    @Test
+    fun `별점을 고르기 전에는 보내지 않는다`() = runTest(testDispatcher) {
+        val viewModel = openFeedbackTargetDetail()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.SubmitFeedback)
+        advanceUntilIdle()
+
+        assertTrue(repository.feedbackRequests.isEmpty())
+    }
+
+    @Test
+    fun `평가를 보내기에 성공하면 상세 시트를 닫는다`() = runTest(testDispatcher) {
+        val viewModel = openFeedbackTargetDetail()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ChangeFeedbackRating(7))
+        viewModel.onIntent(HistoryIntent.SelectFeedbackReason(AnalysisFeedbackReason.WRONG_PORTION))
+        viewModel.onIntent(HistoryIntent.SubmitFeedback)
+        advanceUntilIdle()
+
+        assertEquals(Triple(1L, 7, "양을 다르게 봤어요"), repository.feedbackRequests.single())
+        assertNull(viewModel.uiState.value.mealDetail)
+    }
+
+    @Test
+    fun `평가를 보내지 못하면 카드를 남겨 다시 보낼 수 있게 한다`() = runTest(testDispatcher) {
+        repository.feedbackOverride = { throw IOException("offline") }
+        val viewModel = openFeedbackTargetDetail()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ChangeFeedbackRating(4))
+        viewModel.onIntent(HistoryIntent.SubmitFeedback)
+        advanceUntilIdle()
+
+        val feedback = viewModel.uiState.value.mealDetail?.feedback
+        assertNotNull(feedback)
+        assertFalse(feedback!!.isSubmitting)
+        assertTrue(feedback.canSubmit)
+    }
+
+    @Test
+    fun `보내는 동안 바꾼 입력은 무시해 화면과 보낸 내용이 같게 둔다`() = runTest(testDispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        repository.feedbackOverride = {
+            gate.await()
+            throw IOException("offline")
+        }
+        val viewModel = openFeedbackTargetDetail()
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.ChangeFeedbackRating(7))
+        viewModel.onIntent(HistoryIntent.SelectFeedbackReason(AnalysisFeedbackReason.WRONG_FOOD))
+        viewModel.onIntent(HistoryIntent.ChangeFeedbackComment("국이 빠졌어요"))
+        viewModel.onIntent(HistoryIntent.SubmitFeedback)
+        runCurrent() // 요청이 나가 응답을 기다리는 중
+
+        viewModel.onIntent(HistoryIntent.ChangeFeedbackRating(2))
+        viewModel.onIntent(HistoryIntent.SelectFeedbackReason(AnalysisFeedbackReason.MISSING_FOOD))
+        viewModel.onIntent(HistoryIntent.ChangeFeedbackComment("다른 내용"))
+
+        val feedback = viewModel.uiState.value.mealDetail?.feedback
+        assertEquals(7, feedback?.ratingHalfSteps)
+        assertEquals(AnalysisFeedbackReason.WRONG_FOOD, feedback?.selectedReason)
+        assertEquals("국이 빠졌어요", feedback?.comment)
+        assertEquals(Triple(1L, 7, "음식을 잘못 알아봤어요\n국이 빠졌어요"), repository.feedbackRequests.single())
+
+        // 보내기에 실패해 카드가 남으면 다시 고칠 수 있다.
+        gate.complete(Unit)
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.SelectFeedbackReason(AnalysisFeedbackReason.MISSING_FOOD))
+        assertEquals(AnalysisFeedbackReason.MISSING_FOOD, viewModel.uiState.value.mealDetail?.feedback?.selectedReason)
+    }
+
+    /** 평가 대상인 식사 1 의 상세를 연다. 상세 응답까지만 받고 1.5초 타이머는 돌리지 않는다. */
+    private fun kotlinx.coroutines.test.TestScope.openFeedbackTargetDetail(): HistoryViewModel {
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+        repository.mealOverride = { mealId ->
+            MealHistoryVO(id = mealId.toString(), canCreateAnalysisFeedback = mealId == 1L)
+        }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.ClickMeal("1"))
+        runCurrent()
+        return viewModel
+    }
+
     private fun createViewModel(): HistoryViewModel {
         val resourceHelper = FakeResourceHelper()
         val messageHelper = FakeMessageHelper()
@@ -820,6 +958,9 @@ class HistoryViewModelTest {
                 repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
             ),
             reanalyzeMeal = ReanalyzeMealUseCase(
+                repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
+            ),
+            submitAnalysisFeedback = SubmitAnalysisFeedbackUseCase(
                 repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
             ),
             navigationHelper = navigationHelper,
@@ -895,6 +1036,14 @@ class HistoryViewModelTest {
         override suspend fun deleteMeal(mealId: Long) {
             deleteRequests += mealId
             deleteOverride(mealId)
+        }
+
+        val feedbackRequests = mutableListOf<Triple<Long, Int, String?>>()
+        var feedbackOverride: suspend () -> Unit = { }
+
+        override suspend fun submitAnalysisFeedback(mealId: Long, ratingHalfSteps: Int, reason: String?) {
+            feedbackRequests += Triple(mealId, ratingHalfSteps, reason)
+            feedbackOverride()
         }
     }
 
