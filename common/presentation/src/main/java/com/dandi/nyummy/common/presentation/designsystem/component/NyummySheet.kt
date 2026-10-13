@@ -13,20 +13,27 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyPressable
@@ -35,6 +42,7 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
  * 바텀 시트. 위 모서리 radius l, 손잡이 40×4, 아래로 끌어 닫거나 바깥을 눌러 닫는다. 딤은 bg/scrim.
+ * 내용이 길어도 상태바 아래까지만 올라온다.
  * 시트 상태는 안에서 만들어 Material3 실험적 API가 호출하는 쪽으로 새지 않게 한다.
  * 안쪽은 좌우 gutter, 위 12, 아래 24 + 내비게이션 바. 요소 사이 16.
  */
@@ -47,7 +55,10 @@ fun NyummyBottomSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
-        modifier = modifier,
+        // 시트가 상태바 밑으로 올라가지 않게 바깥에서 상태바만큼 비운다. Material3 시트는 위치에 따라 상단 시스템 바 여백을
+        // 넣었다 빼는데, 그 여백이 다시 시트 높이를 바꿔 내용 높이가 화면 높이 근처면 시트가 계속 흔들린다.
+        // 바깥에서 상태바 영역을 먼저 빼 두면 안쪽 여백이 위치와 상관없이 0이 되어 흔들리지 않는다.
+        modifier = modifier.statusBarsPadding(),
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         shape = RoundedCornerShape(topStart = NyummyTheme.radius.l, topEnd = NyummyTheme.radius.l),
         containerColor = NyummyTheme.colors.bg.surface,
@@ -56,7 +67,34 @@ fun NyummyBottomSheet(
         scrimColor = NyummyTheme.colors.bg.scrim,
         dragHandle = null,
     ) {
-        NyummySheetContent(content = content)
+        NyummySheetContent(
+            modifier = Modifier.nestedScroll(remember { SheetFlingGuard() }),
+            content = content,
+        )
+    }
+}
+
+/**
+ * 시트 안 내용을 끝까지 튕겨 스크롤했을 때 남은 속도를 시트로 넘기지 않는다.
+ *
+ * Material3 시트는 그 속도로 제자리에 다시 안착하는 스프링 애니메이션을 돌리는데, 살짝 넘쳤다 돌아오면서 넘친 만큼
+ * 시트를 세로로 늘려 그려 다 펼쳐진 시트가 스크롤할 때마다 들썩인다. 손가락으로 시트를 끌어내린 뒤 놓았을 때는
+ * 그 속도로 닫히거나 제자리로 돌아가야 하므로 그대로 넘긴다.
+ */
+private class SheetFlingGuard : NestedScrollConnection {
+
+    /** 이번 손가락 동작에서 내용이 맨 위를 넘어 시트까지 끌어내렸는지. */
+    private var isDraggingSheet = false
+
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+        if (source == NestedScrollSource.UserInput && available.y > 0f) isDraggingSheet = true
+        return Offset.Zero
+    }
+
+    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+        val draggedSheet = isDraggingSheet
+        isDraggingSheet = false
+        return if (draggedSheet) Velocity.Zero else available
     }
 }
 
@@ -117,7 +155,10 @@ fun NyummyConfirmSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
-        modifier = modifier,
+        // 시트가 상태바 밑으로 올라가지 않게 바깥에서 상태바만큼 비운다. Material3 시트는 위치에 따라 상단 시스템 바 여백을
+        // 넣었다 빼는데, 그 여백이 다시 시트 높이를 바꿔 내용 높이가 화면 높이 근처면 시트가 계속 흔들린다.
+        // 바깥에서 상태바 영역을 먼저 빼 두면 안쪽 여백이 위치와 상관없이 0이 되어 흔들리지 않는다.
+        modifier = modifier.statusBarsPadding(),
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         shape = RoundedCornerShape(topStart = NyummyTheme.radius.l, topEnd = NyummyTheme.radius.l),
         containerColor = NyummyTheme.colors.bg.surface,
