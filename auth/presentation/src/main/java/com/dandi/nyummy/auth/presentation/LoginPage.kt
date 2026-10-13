@@ -193,7 +193,7 @@ private fun LoginTitleBlock(modifier: Modifier = Modifier) {
     }
 }
 
-/** 카카오 로그인 + "다른 방법으로 시작하기" + 원형 버튼 3개 + 약관 고지를 담은 하단 카드. */
+/** 원형 로그인 버튼 3개(카카오, 구글, 이메일) + 약관 고지를 담은 하단 카드. 네이버 로그인은 보류해 버튼을 두지 않는다. */
 @Composable
 private fun LoginCard(
     uiState: LoginUIState,
@@ -211,11 +211,6 @@ private fun LoginCard(
         verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        KakaoLoginButton(
-            enabled = enabled,
-            onClick = { onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO)) },
-        )
-        LoginOrDivider()
         LoginSocialCircles(enabled = enabled, onIntent = onIntent)
         LoginTermsNotice()
         if (uiState.isTestLoginAvailable) {
@@ -231,65 +226,9 @@ private fun LoginCard(
 }
 
 /**
- * 카카오 공식 로그인 버튼. 카카오 노랑, radius 12, 높이 52.
- * 심볼은 왼쪽에 고정하고 라벨은 가운데에 둔다. 재채색이나 변형은 하지 않는다.
+ * 카카오는 카카오 로그인 디자인 가이드의 축약형(심볼만) 버튼을 원형으로 쓴다. 컨테이너 #FEE500, 심볼 #000000이고
+ * 재채색이나 변형은 하지 않는다. 구글은 공식 원형 에셋(재채색 금지), 이메일은 냐미 스타일 원형 버튼.
  */
-@Composable
-private fun KakaoLoginButton(
-    enabled: Boolean,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .nyummyClickable(onClick = onClick, enabled = enabled)
-            .height(KakaoButtonHeight)
-            .clip(RoundedCornerShape(NyummyTheme.radius.s))
-            .background(NyummyTheme.colors.external.kakaoYellow),
-        contentAlignment = Alignment.Center,
-    ) {
-        Image(
-            painter = painterResource(R.drawable.auth_ic_kakao_symbol),
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = KakaoSymbolStartPadding)
-                .size(KakaoSymbolSize),
-        )
-        NyummyText(
-            text = stringResource(R.string.auth_login_kakao),
-            style = NyummyTheme.typography.labelM,
-            color = NyummyTheme.colors.external.kakaoLabel,
-        )
-    }
-}
-
-@Composable
-private fun LoginOrDivider() {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        DividerLine()
-        NyummyText(
-            text = stringResource(R.string.auth_login_or),
-            style = NyummyTheme.typography.bodyS,
-            color = NyummyTheme.colors.content.tertiary,
-        )
-        DividerLine()
-    }
-}
-
-@Composable
-private fun DividerLine() {
-    Box(
-        Modifier
-            .size(DividerLineWidth, NyummyTheme.borderWidth.hairline)
-            .background(NyummyTheme.colors.border.default),
-    )
-}
-
-/** 네이버와 구글은 공식 원형 에셋(재채색 금지), 이메일은 냐미 스타일 원형 버튼. */
 @Composable
 private fun LoginSocialCircles(
     enabled: Boolean,
@@ -297,14 +236,15 @@ private fun LoginSocialCircles(
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s24)) {
         SocialCircle(
-            description = stringResource(R.string.auth_login_naver_description),
+            description = stringResource(R.string.auth_login_kakao_description),
             enabled = enabled,
-            onClick = { onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.NAVER)) },
+            onClick = { onIntent(LoginIntent.ClickSocialLogin(SocialLoginType.KAKAO)) },
+            modifier = Modifier.background(NyummyTheme.colors.external.kakaoYellow, CircleShape),
         ) {
             Image(
-                painterResource(R.drawable.auth_icon_naver_circle),
+                painter = painterResource(R.drawable.auth_ic_kakao_symbol),
                 contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.size(KakaoSymbolSize),
             )
         }
         SocialCircle(
@@ -490,11 +430,10 @@ private val CardMaxWidth = 480.dp
 private val LogoWidth = 150.dp
 private val LogoHeight = 88.dp
 private val TitleBlockGap = 14.dp
-private val KakaoButtonHeight = 52.dp
-private val KakaoSymbolStartPadding = 18.dp
-private val KakaoSymbolSize = 20.dp
-private val DividerLineWidth = 56.dp
 private val SocialCircleSize = 56.dp
+
+/** 원형 버튼 안 카카오 심볼. 구글 원형 에셋의 G와 비슷한 비중(지름의 약 40%)으로 맞춘다. */
+private val KakaoSymbolSize = 24.dp
 private val SpinnerTextGap = 16.dp
 private val LoadingTextGap = 6.dp
 

@@ -11,7 +11,7 @@
 - 로그인 직후 이동은 응답 `redirectUrl`의 path로 결정(`PostLoginDestination`: `/onboarding`이면 온보딩, 그 외 홈). 회원가입 직후는 항상 온보딩. 온보딩은 미연시형 냥줍 대본(`OnboardingScript`) → 이름 짓기(앱에서 검사만) → 평소 식사 시각 → 고양이 생성(`FinishOnboardingUseCase`) → 홈.
 - 빈 스캐폴드: `main:entity` `main:data` `home:data` `meal:data` + `collection`/`shop`의 entity·data.
 - 홈은 100% 목업(`HomeMockData`), 컬렉션·상점은 "준비 중" 플레이스홀더 화면. 식사 기록은 촬영(또는 갤러리 첨부 — EXIF 촬영일이 오늘(KST)인 사진만, ImportGalleryMealPhotoUseCase)→확인→제출(SubmitMealUseCase)→픽셀 세리머니→완료 화면까지 연동됨.
-- 소셜 로그인: 카카오·구글 동작(카카오 SDK / Credential Manager로 OIDC ID 토큰 → `SocialLoginUseCase` 서버 검증 → 기존 회원 redirectUrl 분기 / 신규 회원 `/signup/social` 프로필 입력). 제공자 추가는 `auth/presentation/.../social/SocialLoginClient` 구현 후 `socialLoginClientOf`에 등록. 네이버·비밀번호 찾기 미구현(버튼 UI만). 테스트 계정 로그인 버튼은 debug 빌드에서 `local.properties`의 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`가 있을 때만 노출 — 자격 증명을 소스에 하드코딩 금지(공개 저장소).
+- 소셜 로그인: 카카오·구글 동작(카카오 SDK / Credential Manager로 OIDC ID 토큰 → `SocialLoginUseCase` 서버 검증 → 기존 회원 redirectUrl 분기 / 신규 회원 `/signup/social` 프로필 입력). 제공자 추가는 `auth/presentation/.../social/SocialLoginClient` 구현 후 `socialLoginClientOf`에 등록. 네이버 로그인은 보류(로그인 화면에 버튼 없음, `SocialLoginType.NAVER`만 남김), 비밀번호 찾기 미구현(버튼 UI만). 로그인 화면은 원형 버튼 3개(카카오 축약형·구글·이메일). 테스트 계정 로그인 버튼은 debug 빌드에서 `local.properties`의 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`가 있을 때만 노출 — 자격 증명을 소스에 하드코딩 금지(공개 저장소).
 
 ## 빌드 / 테스트
 
