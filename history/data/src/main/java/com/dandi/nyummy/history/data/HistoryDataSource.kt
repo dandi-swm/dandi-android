@@ -1,6 +1,7 @@
 package com.dandi.nyummy.history.data
 
 import com.dandi.nyummy.common.data.BaseRemoteDataSource
+import com.dandi.nyummy.history.data.dto.CreateAnalysisFeedbackRequestDTO
 import com.dandi.nyummy.history.data.dto.DailyMealsDTO
 import com.dandi.nyummy.history.data.dto.MealDTO
 import com.dandi.nyummy.history.data.dto.MealStatusDTO
@@ -23,6 +24,9 @@ class HistoryDataSource(
 
     suspend fun reanalyzeMeal(mealId: Long): MealStatusDTO =
         checkResponse(apiService.reanalyzeMeal(mealId))
+
+    suspend fun createAnalysisFeedback(mealId: Long, request: CreateAnalysisFeedbackRequestDTO) =
+        checkResponse(apiService.createAnalysisFeedback(mealId, request))
 
     suspend fun deleteMeal(mealId: Long) =
         checkResponse(apiService.deleteMeal(mealId))

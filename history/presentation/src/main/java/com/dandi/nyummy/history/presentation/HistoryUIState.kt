@@ -1,6 +1,7 @@
 package com.dandi.nyummy.history.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.UiState
+import com.dandi.nyummy.history.entity.AnalysisFeedbackReason
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
@@ -184,13 +185,41 @@ data class HistoryUIState(
  *
  * @property nameDraft 이름 수정 다이얼로그의 입력값. [HistoryMealDetailMode.EditingName]에서만 의미가 있습니다.
  * @property isActionInFlight 수정/삭제 요청이 진행 중인지 여부. true 인 동안 확정/취소 조작을 무시합니다.
+ * @property feedback AI 분석 평가 카드. null 이면 카드를 보여 주지 않습니다.
  */
 data class HistoryMealDetailUiState(
     val meal: MealHistoryVO = MealHistoryVO.empty,
     val mode: HistoryMealDetailMode = HistoryMealDetailMode.Viewing,
     val nameDraft: String = "",
     val isActionInFlight: Boolean = false,
-)
+    val feedback: AnalysisFeedbackUiState? = null,
+) {
+    /** 평가 카드가 떠 있을 때만 [transform]을 적용합니다. */
+    fun withFeedback(transform: (AnalysisFeedbackUiState) -> AnalysisFeedbackUiState): HistoryMealDetailUiState =
+        feedback?.let { copy(feedback = transform(it)) } ?: this
+}
+
+/**
+ * 식사 상세 안 AI 분석 평가 카드의 상태입니다.
+ *
+ * @property ratingHalfSteps 고른 별점(반 칸 수, 1~10 = 0.5~5.0점). 0 이면 아직 고르지 않았습니다.
+ * @property selectedReason 고른 아쉬운 점(하나). 고르지 않았으면 null
+ * @property comment 직접 쓴 이유
+ * @property isSubmitting 보내는 중. 그동안 다시 보내지 않고, 별점·아쉬운 점·직접 쓰기도 바꾸지 못하게 막습니다. 보내기에 성공하면 상세 시트를 닫습니다.
+ */
+data class AnalysisFeedbackUiState(
+    val ratingHalfSteps: Int = 0,
+    val selectedReason: AnalysisFeedbackReason? = null,
+    val comment: String = "",
+    val isSubmitting: Boolean = false,
+) {
+    /** 별점을 골랐을 때만 이유 입력과 보내기를 펼칩니다. */
+    val isRated: Boolean
+        get() = ratingHalfSteps > 0
+
+    val canSubmit: Boolean
+        get() = isRated && !isSubmitting
+}
 
 /** 식사 상세 오버레이가 보여주는 단계입니다. */
 enum class HistoryMealDetailMode {

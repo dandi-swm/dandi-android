@@ -128,6 +128,10 @@ internal object NyummyComponentDimens {
     val DialogMaxWidth = 320.dp
     val DialogScreenMargin = 32.dp
 
+    /** Star Rating 별 하나 크기와 별 사이 간격. */
+    val StarRatingStarSize = 36.dp
+    val StarRatingGap = 6.dp
+
     /** Bottom Sheet 손잡이. */
     val SheetHandleWidth = 40.dp
     val SheetHandleHeight = 4.dp

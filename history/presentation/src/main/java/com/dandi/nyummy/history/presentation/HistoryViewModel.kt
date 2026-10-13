@@ -9,6 +9,7 @@ import com.dandi.nyummy.history.domain.GetMealDetailUseCase
 import com.dandi.nyummy.history.domain.GetMonthlyMealsUseCase
 import com.dandi.nyummy.history.domain.OutdatedMealException
 import com.dandi.nyummy.history.domain.ReanalyzeMealUseCase
+import com.dandi.nyummy.history.domain.SubmitAnalysisFeedbackUseCase
 import com.dandi.nyummy.history.domain.UpdateMealNameUseCase
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
@@ -23,6 +24,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -34,6 +36,7 @@ class HistoryViewModel @Inject constructor(
     private val updateMealName: UpdateMealNameUseCase,
     private val deleteMeal: DeleteMealUseCase,
     private val reanalyzeMeal: ReanalyzeMealUseCase,
+    private val submitAnalysisFeedback: SubmitAnalysisFeedbackUseCase,
     private val navigationHelper: NavigationHelper,
 ) : MviViewModel<HistoryIntent, HistoryUIState, HistoryReducerEvent>(
     HistoryUIState.initial(todayDate()),
@@ -118,6 +121,21 @@ class HistoryViewModel @Inject constructor(
 
             HistoryIntent.CancelDeleteMeal ->
                 dispatch(HistoryReducerEvent.MealDeleteCanceled)
+
+            is HistoryIntent.ChangeFeedbackRating ->
+                dispatch(HistoryReducerEvent.FeedbackRatingChanged(intent.halfSteps))
+
+            is HistoryIntent.SelectFeedbackReason ->
+                dispatch(HistoryReducerEvent.FeedbackReasonSelected(intent.reason))
+
+            is HistoryIntent.ChangeFeedbackComment ->
+                dispatch(HistoryReducerEvent.FeedbackCommentChanged(intent.text))
+
+            HistoryIntent.SubmitFeedback -> submitFeedback()
+
+            HistoryIntent.DismissFeedback -> currentState.mealDetail?.let {
+                dispatch(HistoryReducerEvent.FeedbackDismissed(it.meal.id))
+            }
         }
     }
 
@@ -233,6 +251,34 @@ class HistoryViewModel @Inject constructor(
 
             is HistoryReducerEvent.MealDetailOpened ->
                 state.copy(mealDetail = HistoryMealDetailUiState(meal = event.meal))
+
+            is HistoryReducerEvent.FeedbackPromptShown -> state.withMealDetail { detail ->
+                if (detail.meal.id == event.mealId) detail.copy(feedback = AnalysisFeedbackUiState()) else detail
+            }
+
+            is HistoryReducerEvent.FeedbackRatingChanged -> state.withEditableFeedback {
+                it.copy(ratingHalfSteps = event.halfSteps)
+            }
+
+            is HistoryReducerEvent.FeedbackReasonSelected -> state.withEditableFeedback { feedback ->
+                feedback.copy(selectedReason = event.reason.takeIf { it != feedback.selectedReason })
+            }
+
+            is HistoryReducerEvent.FeedbackCommentChanged -> state.withEditableFeedback {
+                it.copy(comment = event.text)
+            }
+
+            is HistoryReducerEvent.FeedbackSubmitStarted -> state.withFeedbackOf(event.mealId) {
+                it.copy(isSubmitting = true)
+            }
+
+            is HistoryReducerEvent.FeedbackSubmitFailed -> state.withFeedbackOf(event.mealId) {
+                it.copy(isSubmitting = false)
+            }
+
+            is HistoryReducerEvent.FeedbackDismissed -> state.withMealDetail { detail ->
+                if (detail.meal.id == event.mealId) detail.copy(feedback = null) else detail
+            }
 
             HistoryReducerEvent.MealDetailDismissed ->
                 state.copy(mealDetail = null)
@@ -379,7 +425,31 @@ class HistoryViewModel @Inject constructor(
                         catComment = detail.catComment,
                     ),
                 )
+                // 평가 대상이면 상세를 잠깐 본 뒤 평가 카드를 띄운다. 그 전에 상세를 닫으면 이 job 과 함께 취소된다.
+                if (detail.canCreateAnalysisFeedback) {
+                    delay(FEEDBACK_PROMPT_DELAY_MILLIS)
+                    dispatch(HistoryReducerEvent.FeedbackPromptShown(mealId))
+                }
             }
+        }
+    }
+
+    /**
+     * 평가를 보낸다. 상세를 닫아도 보내던 평가는 끝까지 보낸다(결과는 같은 식사가 열려 있을 때만 화면에 반영).
+     * 보내기에 성공하면 상세 시트를 닫는다. 고맙다는 안내는 UseCase 의 스낵바가 맡는데, 시트가 별도 창이라
+     * 열려 있으면 스낵바가 그 아래에 가려지기 때문이다.
+     */
+    private fun submitFeedback() {
+        val detail = currentState.mealDetail ?: return
+        val feedback = detail.feedback ?: return
+        if (!feedback.canSubmit) return
+        val mealId = detail.meal.id
+        val id = mealId.toLongOrNull() ?: return
+        dispatch(HistoryReducerEvent.FeedbackSubmitStarted(mealId))
+        viewModelScope.launch {
+            submitAnalysisFeedback(id, feedback.ratingHalfSteps, feedback.selectedReason, feedback.comment)
+                .onSuccess { if (currentState.mealDetail?.meal?.id == mealId) dismissMealDetail() }
+                .onFailure { dispatch(HistoryReducerEvent.FeedbackSubmitFailed(mealId)) }
         }
     }
 
@@ -493,6 +563,27 @@ class HistoryViewModel @Inject constructor(
         }
     }
 }
+
+/** 식사 [mealId]의 상세가 열려 있고 평가 카드가 떠 있을 때만 [transform]을 적용한다. */
+private fun HistoryUIState.withFeedbackOf(
+    mealId: String,
+    transform: (AnalysisFeedbackUiState) -> AnalysisFeedbackUiState,
+): HistoryUIState = withMealDetail { detail ->
+    if (detail.meal.id == mealId) detail.withFeedback(transform) else detail
+}
+
+/**
+ * 평가 카드가 떠 있고 보내는 중이 아닐 때만 입력 변경 [transform]을 적용한다.
+ * 보내는 동안 바꾼 입력은 이미 보낸 내용과 달라 화면과 서버가 어긋나므로 무시한다.
+ */
+private fun HistoryUIState.withEditableFeedback(
+    transform: (AnalysisFeedbackUiState) -> AnalysisFeedbackUiState,
+): HistoryUIState = withMealDetail { detail ->
+    detail.withFeedback { feedback -> if (feedback.isSubmitting) feedback else transform(feedback) }
+}
+
+/** 상세가 열리고 평가 카드를 띄우기까지 기다리는 시간. 상세를 먼저 보게 한 뒤 묻는다. */
+private const val FEEDBACK_PROMPT_DELAY_MILLIS = 1_500L
 
 private fun monthOf(calendar: HistoryCalendarVO) = HistoryMonth(year = calendar.year, month = calendar.month)
 

@@ -27,6 +27,7 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 /**
  * 필터, 선택 칩. 높이 36(터치 영역 48), pill 모양, 2px 테두리.
  * 선택되면 연민트 바탕 + 그린 테두리 + 브랜드색 글자.
+ * 누를 수 없으면([enabled] false) 글자가 흐려지고 테두리가 기본색이 된다. 고른 칩은 바탕색이 남아 무엇을 골랐는지 보인다.
  */
 @Composable
 fun NyummyChip(
@@ -34,18 +35,23 @@ fun NyummyChip(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val shape = RoundedCornerShape(NyummyTheme.radius.full)
     val container = if (selected) NyummyTheme.colors.bg.selected else NyummyTheme.colors.bg.surface
-    val border = if (selected) NyummyTheme.colors.border.selected else NyummyTheme.colors.border.default
-    val content = if (selected) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.secondary
+    val border = if (selected && enabled) NyummyTheme.colors.border.selected else NyummyTheme.colors.border.default
+    val content = when {
+        !enabled -> NyummyTheme.colors.content.disabled
+        selected -> NyummyTheme.colors.content.brand
+        else -> NyummyTheme.colors.content.secondary
+    }
 
     Box(
         modifier = modifier
             .semantics { this.selected = selected }
             .nyummyPressable(
                 interactionSource = rememberNyummyInteractionSource(),
-                enabled = true,
+                enabled = enabled,
                 role = Role.Tab,
                 onClick = onClick,
             )
@@ -68,6 +74,7 @@ private fun NyummyChipPreview() {
             listOf("아침", "점심", "저녁").forEach { meal ->
                 NyummyChip(text = meal, selected = meal == selected, onClick = { selected = meal })
             }
+            NyummyChip(text = "간식", selected = true, onClick = {}, enabled = false)
         }
     }
 }

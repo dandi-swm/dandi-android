@@ -28,4 +28,22 @@ enum class HistoryErrorType(
         type = "api.meal.analysisNotRetryable",
         errorMsg = "이미 다시 분석한 기록이에요",
     ),
+
+    /** 별점이 0.5 ~ 5.0, 0.5 단위가 아닐 때(400). 화면이 반 칸 단위로만 고르게 하므로 정상 흐름에서는 나오지 않는다. */
+    INVALID_RATING(
+        type = "api.meal.invalidRating",
+        errorMsg = "별점을 다시 골라 주세요",
+    ),
+
+    /** 이미 평가한 식사(409). 다른 기기에서 먼저 평가한 경우라 평가는 끝난 것으로 본다. */
+    ANALYSIS_FEEDBACK_ALREADY_EXISTS(
+        type = "api.meal.analysisFeedbackAlreadyExists",
+        errorMsg = "이미 평가한 식사예요",
+    ),
+
+    /** 분석이 끝나지 않은 식사를 평가하려 할 때(409). */
+    ANALYSIS_NOT_COMPLETED(
+        type = "api.meal.analysisNotCompleted",
+        errorMsg = "분석이 끝난 식사만 평가할 수 있어요",
+    ),
 }
