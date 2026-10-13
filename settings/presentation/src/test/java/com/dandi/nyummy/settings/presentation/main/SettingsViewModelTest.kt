@@ -4,6 +4,8 @@ import com.dandi.nyummy.auth.domain.LogoutUseCase
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
+import com.dandi.nyummy.legal.domain.LegalPage
+import com.dandi.nyummy.legal.entity.LegalDocument
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
 import com.dandi.nyummy.settings.domain.UpdateNotificationSettingsUseCase
@@ -328,5 +330,13 @@ class SettingsViewModelTest {
         assertFalse(state.isWithdrawing)
         assertFalse(state.isWithdrawDialogVisible)
         assertEquals(WithdrawUseCase.WITHDRAW_FAILED_MESSAGE, messageHelper.snackBars.single().messageText)
+    }
+
+    @Test
+    fun `약관 행을 누르면 앱 안의 약관 화면으로 간다`() = runTest(testDispatcher) {
+        viewModel.onIntent(SettingsIntent.ClickLegal(LegalDocument.TERMS))
+        viewModel.onIntent(SettingsIntent.ClickLegal(LegalDocument.PRIVACY))
+
+        assertEquals(listOf(LegalPage(LegalDocument.TERMS), LegalPage(LegalDocument.PRIVACY)), navigationHelper.pages)
     }
 }

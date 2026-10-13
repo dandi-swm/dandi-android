@@ -10,6 +10,8 @@ import com.dandi.nyummy.auth.entity.SocialLoginVO
 import com.dandi.nyummy.auth.presentation.social.SocialLoginResult
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.navigation.Page
+import com.dandi.nyummy.legal.domain.LegalPage
+import com.dandi.nyummy.legal.entity.LegalDocument
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -228,6 +230,15 @@ class LoginViewModelTest {
     /** 지금 결과를 기다리는 시도. 없으면(실행 요청 전 등) 발급된 적 없는 시도를 돌려준다. */
     private fun LoginViewModel.awaiting(): SocialLoginAttempt =
         uiState.value.awaitingSocialLogin ?: SocialLoginAttempt(id = -1, socialType = SocialLoginType.KAKAO)
+
+    @Test
+    fun `약관 고지의 링크를 누르면 앱 안의 약관 화면으로 간다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+
+        viewModel.onIntent(LoginIntent.ClickLegal(LegalDocument.PRIVACY))
+
+        assertEquals(listOf<Page>(LegalPage(LegalDocument.PRIVACY)), navigationHelper.pages)
+    }
 
     private fun assertIdle(viewModel: LoginViewModel) {
         val state = viewModel.uiState.value
