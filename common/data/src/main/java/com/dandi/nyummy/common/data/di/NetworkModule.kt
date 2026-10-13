@@ -1,14 +1,19 @@
 package com.dandi.nyummy.common.data.di
 
+import android.content.Context
 import com.dandi.nyummy.common.data.BuildConfig
+import com.dandi.nyummy.common.data.network.CommonHeaderInterceptor
 import com.dandi.nyummy.common.data.token.TokenAuthenticator
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.data.token.TokenRefresher
+import com.dandi.nyummy.common.domain.helper.DeviceHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -44,18 +49,23 @@ object NetworkModule {
     }
 
     /**
-     * 공개 클라이언트 — 로깅·타임아웃만. 인증 클라이언트도 이 설정을 이어받는다.
+     * 공개 클라이언트 — 공통 헤더·로깅·타임아웃만. 인증 클라이언트도 이 설정을 이어받는다.
      * 운영 빌드에서는 요청과 응답을 남기지 않고, 디버그 빌드에서도 Authorization 값은 가린다.
      */
     @Provides
     @Singleton
     @NoAuthApi
-    fun provideNoAuthOkHttpClient(): OkHttpClient {
+    fun provideNoAuthOkHttpClient(
+        @ApplicationContext context: Context,
+        deviceHelper: DeviceHelper,
+    ): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
             level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
             redactHeader(TokenAuthenticator.HEADER_AUTHORIZATION)
         }
         return OkHttpClient.Builder()
+            // 로깅보다 앞에 둬야 공통 헤더가 붙었는지 로그로 볼 수 있다. presigned URL 등 외부 호스트에는 붙지 않는다.
+            .addInterceptor(CommonHeaderInterceptor(context, deviceHelper, BuildConfig.API_BASE_URL.toHttpUrlOrNull()?.host))
             .addInterceptor(logging)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
