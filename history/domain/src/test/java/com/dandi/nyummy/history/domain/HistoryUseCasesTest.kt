@@ -496,9 +496,18 @@ class HistoryUseCasesTest {
         assertEquals("평가를 보내지 못했어요. 잠시 후 다시 시도해 주세요.", messageHelper.snackBars.single().messageText)
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun `반 칸 수가 0 이면 보내지 않는다`() {
-        runBlocking { submitFeedbackUseCase(FakeHistoryRepository())(7L, ratingHalfSteps = 0, reason = null, comment = "") }
+    @Test
+    fun `범위를 벗어난 별점은 죽지 않고 보내지 않은 채 다시 고르라고 안내한다`() = runBlocking {
+        val repository = FakeHistoryRepository()
+        val useCase = submitFeedbackUseCase(repository)
+
+        listOf(0, 11).forEach { halfSteps ->
+            val result = useCase(7L, ratingHalfSteps = halfSteps, reason = null, comment = "")
+            assertTrue(result.isFailure)
+        }
+
+        assertTrue(repository.feedbackRequests.isEmpty())
+        assertEquals(listOf("별점을 다시 골라 주세요", "별점을 다시 골라 주세요"), messageHelper.snackBars.map { it.messageText })
     }
 
     @Test

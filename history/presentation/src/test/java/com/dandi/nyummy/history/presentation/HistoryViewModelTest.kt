@@ -892,6 +892,38 @@ class HistoryViewModelTest {
         assertTrue(feedback.canSubmit)
     }
 
+    @Test
+    fun `보내는 동안 바꾼 입력은 무시해 화면과 보낸 내용이 같게 둔다`() = runTest(testDispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        repository.feedbackOverride = {
+            gate.await()
+            throw IOException("offline")
+        }
+        val viewModel = openFeedbackTargetDetail()
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.ChangeFeedbackRating(7))
+        viewModel.onIntent(HistoryIntent.SelectFeedbackReason(AnalysisFeedbackReason.WRONG_FOOD))
+        viewModel.onIntent(HistoryIntent.ChangeFeedbackComment("국이 빠졌어요"))
+        viewModel.onIntent(HistoryIntent.SubmitFeedback)
+        runCurrent() // 요청이 나가 응답을 기다리는 중
+
+        viewModel.onIntent(HistoryIntent.ChangeFeedbackRating(2))
+        viewModel.onIntent(HistoryIntent.SelectFeedbackReason(AnalysisFeedbackReason.MISSING_FOOD))
+        viewModel.onIntent(HistoryIntent.ChangeFeedbackComment("다른 내용"))
+
+        val feedback = viewModel.uiState.value.mealDetail?.feedback
+        assertEquals(7, feedback?.ratingHalfSteps)
+        assertEquals(AnalysisFeedbackReason.WRONG_FOOD, feedback?.selectedReason)
+        assertEquals("국이 빠졌어요", feedback?.comment)
+        assertEquals(Triple(1L, 7, "음식을 잘못 알아봤어요\n국이 빠졌어요"), repository.feedbackRequests.single())
+
+        // 보내기에 실패해 카드가 남으면 다시 고칠 수 있다.
+        gate.complete(Unit)
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.SelectFeedbackReason(AnalysisFeedbackReason.MISSING_FOOD))
+        assertEquals(AnalysisFeedbackReason.MISSING_FOOD, viewModel.uiState.value.mealDetail?.feedback?.selectedReason)
+    }
+
     /** 평가 대상인 식사 1 의 상세를 연다. 상세 응답까지만 받고 1.5초 타이머는 돌리지 않는다. */
     private fun kotlinx.coroutines.test.TestScope.openFeedbackTargetDetail(): HistoryViewModel {
         repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
