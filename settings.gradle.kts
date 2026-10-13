@@ -86,6 +86,10 @@ include(":achievement:presentation")
 include(":achievement:domain")
 include(":achievement:data")
 include(":achievement:entity")
+include(":legal:presentation")
+include(":legal:domain")
+include(":legal:data")
+include(":legal:entity")
 
 include(":tti")
 

@@ -84,6 +84,8 @@ dependencies {
     implementation(project(":quest:presentation"))
     implementation(project(":achievement:domain"))
     implementation(project(":achievement:presentation"))
+    implementation(project(":legal:domain"))
+    implementation(project(":legal:presentation"))
 
     implementation(libs.androidx.activity.compose)
     api(libs.androidx.navigation3.runtime)

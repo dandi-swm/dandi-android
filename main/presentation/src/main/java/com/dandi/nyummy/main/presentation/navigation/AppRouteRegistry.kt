@@ -19,6 +19,9 @@ import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.home.presentation.HomePage
 import com.dandi.nyummy.intro.domain.IntroPage
 import com.dandi.nyummy.intro.presentation.IntroPage
+import com.dandi.nyummy.legal.domain.LegalPage as LegalRoute
+import com.dandi.nyummy.legal.entity.LegalDocument
+import com.dandi.nyummy.legal.presentation.LegalPage
 import com.dandi.nyummy.mailbox.domain.InquiryDetailPage as InquiryDetailRoute
 import com.dandi.nyummy.mailbox.domain.InquiryWritePage
 import com.dandi.nyummy.mailbox.domain.MailboxPage
@@ -185,6 +188,15 @@ val appRoutes: List<AppRoute> = listOf(
             )
         },
         render = { MealTimeSettingPage() },
+    ),
+    AppRoute(
+        // 로그인 화면과 설정에서 연다. 로그인하지 않아도 열린다.
+        path = LegalRoute.TERMS_PATH,
+        render = { LegalPage(document = LegalDocument.TERMS) },
+    ),
+    AppRoute(
+        path = LegalRoute.PRIVACY_PATH,
+        render = { LegalPage(document = LegalDocument.PRIVACY) },
     ),
     AppRoute(
         // 하단 탭에서 빠져 링크로만 열린다. 기능을 열 때 진입 위치를 다시 정한다.
