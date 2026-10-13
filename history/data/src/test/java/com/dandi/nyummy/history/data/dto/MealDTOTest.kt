@@ -61,6 +61,13 @@ class MealDTOTest {
     }
 
     @Test
+    fun `평가 가능 여부는 서버가 true 를 줄 때만 켠다`() {
+        assertEquals(true, MealDTO(mealId = 1, canCreateAnalysisFeedback = true).toVO().canCreateAnalysisFeedback)
+        assertEquals(false, MealDTO(mealId = 1, canCreateAnalysisFeedback = false).toVO().canCreateAnalysisFeedback)
+        assertEquals(false, MealDTO(mealId = 1).toVO().canCreateAnalysisFeedback)
+    }
+
+    @Test
     fun `분석이 끝나지 않은 식사는 서버 기본 아이콘을 버린다`() {
         val vo = MealDTO(mealId = 7, status = "FAILED", iconId = 1).toVO()
 

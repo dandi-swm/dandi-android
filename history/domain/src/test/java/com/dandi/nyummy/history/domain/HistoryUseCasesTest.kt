@@ -11,6 +11,7 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
+import com.dandi.nyummy.history.entity.AnalysisFeedbackReason
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
@@ -446,6 +448,81 @@ class HistoryUseCasesTest {
         assertTrue("500" !in dialog.descText && "api." !in dialog.descText)
     }
 
+    @Test
+    fun `평가를 보내면 반 칸 수와 합친 이유를 넘기고 고맙다는 스낵바를 띄운다`() = runBlocking {
+        val repository = FakeHistoryRepository()
+        val useCase = submitFeedbackUseCase(repository)
+
+        val result = useCase(7L, ratingHalfSteps = 7, reason = AnalysisFeedbackReason.WRONG_PORTION, comment = "  밥이 더 많았어요 ")
+
+        assertTrue(result.isSuccess)
+        assertEquals(Triple(7L, 7, "양을 다르게 봤어요\n밥이 더 많았어요"), repository.feedbackRequests.single())
+        val snackBar = messageHelper.snackBars.single()
+        assertEquals(IconType.SUCCESS, snackBar.iconType)
+        assertEquals("고마워요! 냐미가 더 잘 알아볼게요", snackBar.messageText)
+    }
+
+    @Test
+    fun `다른 기기에서 이미 평가한 식사면 성공으로 보고 고맙다는 스낵바를 띄운다`() = runBlocking {
+        val useCase = submitFeedbackUseCase(
+            ThrowingHistoryRepository(httpException(409, "api.meal.analysisFeedbackAlreadyExists")),
+        )
+
+        val result = useCase(7L, ratingHalfSteps = 10, reason = null, comment = "")
+
+        assertTrue(result.isSuccess)
+        assertEquals(IconType.SUCCESS, messageHelper.snackBars.single().iconType)
+    }
+
+    @Test
+    fun `분석이 끝나지 않은 식사를 평가하면 안내하고 실패를 돌려준다`() = runBlocking {
+        val useCase = submitFeedbackUseCase(ThrowingHistoryRepository(httpException(409, "api.meal.analysisNotCompleted")))
+
+        val result = useCase(7L, ratingHalfSteps = 6, reason = null, comment = "")
+
+        assertTrue(result.isFailure)
+        val snackBar = messageHelper.snackBars.single()
+        assertEquals(IconType.ERROR, snackBar.iconType)
+        assertEquals("분석이 끝난 식사만 평가할 수 있어요", snackBar.messageText)
+    }
+
+    @Test
+    fun `평가 중 네트워크 오류면 죽지 않고 보내지 못했다고 안내한다`() = runBlocking {
+        val useCase = submitFeedbackUseCase(ThrowingHistoryRepository(IOException("offline")))
+
+        val result = useCase(7L, ratingHalfSteps = 6, reason = null, comment = "")
+
+        assertTrue(result.isFailure)
+        assertEquals("평가를 보내지 못했어요. 잠시 후 다시 시도해 주세요.", messageHelper.snackBars.single().messageText)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `반 칸 수가 0 이면 보내지 않는다`() {
+        runBlocking { submitFeedbackUseCase(FakeHistoryRepository())(7L, ratingHalfSteps = 0, reason = null, comment = "") }
+    }
+
+    @Test
+    fun `평가 이유는 아쉬운 점과 직접 쓴 글을 줄을 바꿔 합치고 둘 다 없으면 보내지 않는다`() {
+        assertNull(feedbackReasonOf(null, "   "))
+        assertEquals("빠진 음식이 있어요", feedbackReasonOf(AnalysisFeedbackReason.MISSING_FOOD, ""))
+        assertEquals("국이 빠졌어요", feedbackReasonOf(null, "  국이 빠졌어요\n"))
+        assertEquals(
+            "음식을 잘못 알아봤어요\n떡볶이가 아니라 라볶이예요",
+            feedbackReasonOf(AnalysisFeedbackReason.WRONG_FOOD, "떡볶이가 아니라 라볶이예요"),
+        )
+    }
+
+    @Test
+    fun `평가 이유는 서버 한도 500 자까지만 보낸다`() {
+        val reason = feedbackReasonOf(AnalysisFeedbackReason.WRONG_NUTRITION, "가".repeat(600))
+
+        assertEquals(SubmitAnalysisFeedbackUseCase.REASON_MAX_LENGTH, reason?.length)
+    }
+
+    private fun submitFeedbackUseCase(repository: HistoryRepository) = SubmitAnalysisFeedbackUseCase(
+        repository, FakeResourceHelper(), messageHelper, navigationHelper, FakeTTIHelper(),
+    )
+
     /** 취소는 `Result.failure`로 바꾸지 않고 그대로 던져야 하고, 실패 안내도 띄우지 않아야 한다. */
     private suspend fun assertCancelledSilently(block: suspend () -> Result<*>) {
         val thrown = runCatching { block() }.exceptionOrNull()
@@ -476,6 +553,12 @@ class HistoryUseCasesTest {
         override suspend fun updateMealName(mealId: Long, name: String) = meal
         override suspend fun reanalyzeMeal(mealId: Long) = reanalyzed
         override suspend fun deleteMeal(mealId: Long) = Unit
+
+        val feedbackRequests = mutableListOf<Triple<Long, Int, String?>>()
+
+        override suspend fun submitAnalysisFeedback(mealId: Long, ratingHalfSteps: Int, reason: String?) {
+            feedbackRequests += Triple(mealId, ratingHalfSteps, reason)
+        }
     }
 
     private class ThrowingHistoryRepository(
@@ -487,6 +570,7 @@ class HistoryUseCasesTest {
         override suspend fun updateMealName(mealId: Long, name: String) = throw exception
         override suspend fun reanalyzeMeal(mealId: Long): MealAnalysisStatus = throw exception
         override suspend fun deleteMeal(mealId: Long) = throw exception
+        override suspend fun submitAnalysisFeedback(mealId: Long, ratingHalfSteps: Int, reason: String?) = throw exception
     }
 
     private class RecordingNavigationHelper : NavigationHelper {
