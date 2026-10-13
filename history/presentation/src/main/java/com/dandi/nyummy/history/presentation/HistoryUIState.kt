@@ -205,7 +205,7 @@ data class HistoryMealDetailUiState(
  * @property ratingHalfSteps 고른 별점(반 칸 수, 1~10 = 0.5~5.0점). 0 이면 아직 고르지 않았습니다.
  * @property selectedReason 고른 아쉬운 점(하나). 고르지 않았으면 null
  * @property comment 직접 쓴 이유
- * @property isSubmitting 보내는 중. 그동안 다시 보내지 않게 막습니다. 보내기에 성공하면 상세 시트를 닫습니다.
+ * @property isSubmitting 보내는 중. 그동안 다시 보내지 않고, 별점·아쉬운 점·직접 쓰기도 바꾸지 못하게 막습니다. 보내기에 성공하면 상세 시트를 닫습니다.
  */
 data class AnalysisFeedbackUiState(
     val ratingHalfSteps: Int = 0,

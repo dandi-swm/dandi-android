@@ -256,18 +256,16 @@ class HistoryViewModel @Inject constructor(
                 if (detail.meal.id == event.mealId) detail.copy(feedback = AnalysisFeedbackUiState()) else detail
             }
 
-            is HistoryReducerEvent.FeedbackRatingChanged -> state.withMealDetail { detail ->
-                detail.withFeedback { it.copy(ratingHalfSteps = event.halfSteps) }
+            is HistoryReducerEvent.FeedbackRatingChanged -> state.withEditableFeedback {
+                it.copy(ratingHalfSteps = event.halfSteps)
             }
 
-            is HistoryReducerEvent.FeedbackReasonSelected -> state.withMealDetail { detail ->
-                detail.withFeedback { feedback ->
-                    feedback.copy(selectedReason = event.reason.takeIf { it != feedback.selectedReason })
-                }
+            is HistoryReducerEvent.FeedbackReasonSelected -> state.withEditableFeedback { feedback ->
+                feedback.copy(selectedReason = event.reason.takeIf { it != feedback.selectedReason })
             }
 
-            is HistoryReducerEvent.FeedbackCommentChanged -> state.withMealDetail { detail ->
-                detail.withFeedback { it.copy(comment = event.text) }
+            is HistoryReducerEvent.FeedbackCommentChanged -> state.withEditableFeedback {
+                it.copy(comment = event.text)
             }
 
             is HistoryReducerEvent.FeedbackSubmitStarted -> state.withFeedbackOf(event.mealId) {
@@ -572,6 +570,16 @@ private fun HistoryUIState.withFeedbackOf(
     transform: (AnalysisFeedbackUiState) -> AnalysisFeedbackUiState,
 ): HistoryUIState = withMealDetail { detail ->
     if (detail.meal.id == mealId) detail.withFeedback(transform) else detail
+}
+
+/**
+ * 평가 카드가 떠 있고 보내는 중이 아닐 때만 입력 변경 [transform]을 적용한다.
+ * 보내는 동안 바꾼 입력은 이미 보낸 내용과 달라 화면과 서버가 어긋나므로 무시한다.
+ */
+private fun HistoryUIState.withEditableFeedback(
+    transform: (AnalysisFeedbackUiState) -> AnalysisFeedbackUiState,
+): HistoryUIState = withMealDetail { detail ->
+    detail.withFeedback { feedback -> if (feedback.isSubmitting) feedback else transform(feedback) }
 }
 
 /** 상세가 열리고 평가 카드를 띄우기까지 기다리는 시간. 상세를 먼저 보게 한 뒤 묻는다. */

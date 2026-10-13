@@ -278,6 +278,7 @@ private fun AnalysisFeedbackCard(
                             text = stringResource(reason.labelRes),
                             selected = reason == feedback.selectedReason,
                             onClick = { onIntent(HistoryIntent.SelectFeedbackReason(reason)) },
+                            enabled = !feedback.isSubmitting,
                         )
                     }
                 }
