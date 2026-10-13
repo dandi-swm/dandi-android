@@ -15,6 +15,7 @@ enum class InquiryCategory {
  * @property title 문의 제목.
  * @property createdAtMillis 보낸 시각(epoch millis). 화면은 기기 타임존으로 바꿔 보여 준다.
  * @property isAnswered 운영팀 답장이 달렸다.
+ * @property hasUnreadAnswer 답장이 달렸는데 아직 상세를 열어 보지 않았다. 목록 조회에서만 채워진다.
  * @property answer 운영팀 답장. 아직 답장이 없거나 목록 조회면 [InquiryAnswerVO.empty].
  */
 data class InquiryVO(
@@ -24,6 +25,7 @@ data class InquiryVO(
     val content: String = "",
     val createdAtMillis: Long = 0L,
     val isAnswered: Boolean = false,
+    val hasUnreadAnswer: Boolean = false,
     val answer: InquiryAnswerVO = InquiryAnswerVO.empty,
 )
 

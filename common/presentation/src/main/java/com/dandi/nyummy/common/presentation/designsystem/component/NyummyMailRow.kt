@@ -2,14 +2,17 @@ package com.dandi.nyummy.common.presentation.designsystem.component
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -28,8 +31,9 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 /**
  * 보낸 편지(문의) 행. 앞 52 칸(움푹한 둥근 사각 + send 아이콘), 유형과 시각, 한 줄 제목, 답장 상태.
  * 답장이 왔으면 [status]를 브랜드색으로, 기다리는 중이면 회색으로 쓴다. 아래에 1px 구분선을 긋는다.
+ * [isUnread]면 앞 칸 오른쪽 위에 빨간 점을 단다(홈 HUD 안 읽음 점과 같은 모양).
  *
- * 받은 편지(운영 메시지, 안 읽음 점)는 우편함 아이템 탭이 열릴 때 추가한다.
+ * 받은 편지(운영 메시지)는 우편함 아이템 탭이 열릴 때 추가한다.
  */
 @Composable
 fun NyummyMailRow(
@@ -40,6 +44,7 @@ fun NyummyMailRow(
     isStatusEmphasized: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    isUnread: Boolean = false,
     @DrawableRes icon: Int = R.drawable.nyummy_ic_send,
 ) {
     val dividerColor = NyummyTheme.colors.border.subtle
@@ -73,6 +78,19 @@ fun NyummyMailRow(
                 tint = NyummyTheme.colors.content.secondary,
                 modifier = Modifier.size(NyummyTheme.size.iconL),
             )
+            if (isUnread) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(
+                            x = -NyummyComponentDimens.MailRowUnreadDotInset,
+                            y = NyummyComponentDimens.MailRowUnreadDotInset,
+                        )
+                        .size(NyummyComponentDimens.UnreadDotSize)
+                        .background(NyummyTheme.colors.content.danger, CircleShape)
+                        .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.bg.surface, CircleShape),
+                )
+            }
         }
         Column(
             modifier = Modifier.weight(1f),
@@ -121,6 +139,7 @@ private fun NyummyMailRowPreview() {
                 status = "답장이 왔어요",
                 isStatusEmphasized = true,
                 onClick = {},
+                isUnread = true,
             )
             NyummyMailRow(
                 type = "건의",

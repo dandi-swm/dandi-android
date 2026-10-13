@@ -167,4 +167,5 @@ private fun InquiryVO.toRowUiModel(nowMillis: Long) = InquiryRowUiModel(
     title = title,
     timeLabel = inquiryListTimeLabel(createdAtMillis, nowMillis),
     isAnswered = isAnswered,
+    hasUnreadAnswer = hasUnreadAnswer,
 )

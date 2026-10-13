@@ -61,6 +61,12 @@ internal object NyummyComponentDimens {
     val MailRowLeadingSize = 52.dp
     val MailRowVerticalPadding = 14.dp
 
+    /** Mail Row 앞 아이콘 칸 모서리에서 안 읽음 점까지. */
+    val MailRowUnreadDotInset = 6.dp
+
+    /** 안 읽은 소식을 알리는 빨간 점. 홈 HUD 버튼의 점과 같은 크기다. */
+    val UnreadDotSize = 9.dp
+
     /** 스와이프 삭제 버튼 폭, 위아래 안쪽 여백, 행이 밀려 멈추는 거리. */
     val SwipeActionWidth = 64.dp
     val SwipeActionVerticalInset = 8.dp

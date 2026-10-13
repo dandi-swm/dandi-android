@@ -42,13 +42,18 @@ data class InquirySummaryDTO(
     val isAnswered: Boolean? = null,
     val hasUnreadAnswer: Boolean? = null,
 ) {
-    fun toVO(): InquiryVO = InquiryVO(
-        inquiryId = inquiryId ?: 0L,
-        category = category.toInquiryCategory(),
-        title = questionTitle?.trim().orEmpty(),
-        createdAtMillis = DeviceTime.parseIsoToEpochMillisOrNull(createdAt) ?: 0L,
-        isAnswered = isAnswered == true,
-    )
+    fun toVO(): InquiryVO {
+        val answered = isAnswered == true
+        return InquiryVO(
+            inquiryId = inquiryId ?: 0L,
+            category = category.toInquiryCategory(),
+            title = questionTitle?.trim().orEmpty(),
+            createdAtMillis = DeviceTime.parseIsoToEpochMillisOrNull(createdAt) ?: 0L,
+            isAnswered = answered,
+            // 답장이 달린 문의만 안 읽음으로 본다.
+            hasUnreadAnswer = answered && hasUnreadAnswer == true,
+        )
+    }
 }
 
 /**

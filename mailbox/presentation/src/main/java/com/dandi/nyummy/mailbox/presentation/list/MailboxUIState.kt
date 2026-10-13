@@ -31,7 +31,11 @@ data class MailboxUIState(
     }
 }
 
-/** 목록 한 행. 제목은 넘치면 말줄임한다. */
+/**
+ * 목록 한 행. 제목은 넘치면 말줄임한다.
+ *
+ * @property hasUnreadAnswer 답장이 달렸는데 아직 열어 보지 않았다. 행 앞 칸에 빨간 점을 단다.
+ */
 @Immutable
 data class InquiryRowUiModel(
     val inquiryId: Long,
@@ -39,4 +43,5 @@ data class InquiryRowUiModel(
     val title: String,
     val timeLabel: String,
     val isAnswered: Boolean,
+    val hasUnreadAnswer: Boolean = false,
 )

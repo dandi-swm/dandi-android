@@ -135,6 +135,7 @@ internal fun MailboxScreen(
                                 ),
                                 isStatusEmphasized = row.isAnswered,
                                 onClick = { onIntent(MailboxIntent.ClickInquiry(row.inquiryId)) },
+                                isUnread = row.hasUnreadAnswer,
                             )
                         }
                     }
@@ -232,7 +233,7 @@ private fun MailboxScreenPreview() {
         MailboxScreen(
             uiState = MailboxUIState(
                 inquiries = persistentListOf(
-                    InquiryRowUiModel(3, InquiryCategory.BUG_REPORT, "사진을 찍은 뒤 기록이 사라졌어요", "10월 4일", true),
+                    InquiryRowUiModel(3, InquiryCategory.BUG_REPORT, "사진을 찍은 뒤 기록이 사라졌어요", "10월 4일", true, true),
                     InquiryRowUiModel(2, InquiryCategory.SUGGESTION, "히스토리에서 사진을 크게 보고 싶어요", "9월 28일", false),
                 ),
                 isLoaded = true,
