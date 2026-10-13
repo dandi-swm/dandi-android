@@ -1,12 +1,28 @@
 package com.dandi.nyummy.history.data.dto
 
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
+import java.util.TimeZone
 
 class DailyMealsDTOTest {
+
+    private val originalTimeZone: TimeZone = TimeZone.getDefault()
+
+    /** 시각·날짜는 기기 타임존을 따르므로, 실행 환경과 무관하게 서울로 고정해 둔다. */
+    @Before
+    fun setUp() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"))
+    }
+
+    @After
+    fun tearDown() {
+        TimeZone.setDefault(originalTimeZone)
+    }
 
     @Test
     fun `오프셋 표기가 섞여 있어도 실제 시간순으로 정렬한다`() {

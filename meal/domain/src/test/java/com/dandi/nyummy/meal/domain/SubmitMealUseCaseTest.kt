@@ -11,7 +11,6 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
-import com.dandi.nyummy.common.entity.time.KstDateTime
 import com.dandi.nyummy.meal.entity.CreatedMealVO
 import com.dandi.nyummy.meal.entity.MealImageUploadVO
 import com.dandi.nyummy.meal.entity.MealPhotoSource
@@ -25,6 +24,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.LocalDateTime
 
 class SubmitMealUseCaseTest {
 
@@ -102,7 +102,7 @@ class SubmitMealUseCaseTest {
         private val createMealError: Exception,
         private val issueUrlError: Exception? = null,
     ) : MealRecordRepository {
-        override suspend fun readGalleryPhotoTakenAt(photoUri: String): KstDateTime? = null
+        override suspend fun readGalleryPhotoTakenAt(photoUri: String): LocalDateTime? = null
         override suspend fun importGalleryPhoto(photoUri: String) = photoUri
         override suspend fun prepareUploadImage(photoPath: String, source: MealPhotoSource) = Unit
         override suspend fun issueImageUploadUrl(photoPath: String): MealImageUploadVO =

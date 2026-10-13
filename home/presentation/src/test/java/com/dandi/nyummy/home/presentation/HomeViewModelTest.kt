@@ -19,7 +19,7 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
-import com.dandi.nyummy.common.entity.time.KstTime
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.component.NyummySpriteSource
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.history.domain.HistoryRepository
@@ -195,19 +195,19 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `오늘 기록이 있으면 시트를 열고 KST 오늘 식사를 읽는다`() = runTest(testDispatcher) {
+    fun `오늘 기록이 있으면 시트를 열고 기기 타임존 기준 오늘 식사를 읽는다`() = runTest(testDispatcher) {
         val meal = MealHistoryVO(id = "1", name = "닭가슴살 샐러드")
         val nutrition = DailyNutritionVO(currentCalorieKcal = 420)
         historyRepository.next = { DailyMealHistoryVO(meals = listOf(meal), nutrition = nutrition) }
         resumeWith(HomeSummaryVO(todayRecordedCount = 1))
 
-        // 요청 사이에 KST 자정이 지나도 실패하지 않도록 전후 날짜를 모두 허용한다.
-        val before = KstTime.now().let { Triple(it.year, it.month, it.day) }
+        // 요청 사이에 기기 타임존 자정이 지나도 실패하지 않도록 전후 날짜를 모두 허용한다.
+        val before = DeviceTime.today().let { Triple(it.year, it.monthValue, it.dayOfMonth) }
         viewModel.onIntent(HomeIntent.ClickTodayBar)
         assertTrue(state.isTodaySheetVisible)
         assertTrue(state.isTodayMealsLoading)
         advanceUntilIdle()
-        val after = KstTime.now().let { Triple(it.year, it.month, it.day) }
+        val after = DeviceTime.today().let { Triple(it.year, it.monthValue, it.dayOfMonth) }
 
         assertTrue(historyRepository.dailyCalls.single() in setOf(before, after))
         assertEquals(nutrition, state.todayNutrition)
