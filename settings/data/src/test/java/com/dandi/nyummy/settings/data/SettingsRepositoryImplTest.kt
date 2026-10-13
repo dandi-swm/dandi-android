@@ -1,12 +1,9 @@
 package com.dandi.nyummy.settings.data
 
-import android.content.ContextWrapper
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
+import com.dandi.nyummy.settings.entity.NotificationSettingsChange
+import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -19,7 +16,7 @@ import org.junit.Test
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
-/** 저장소가 식사 시각을 서버에서 읽고 쓸 때 DTO 변환과 원격 호출을 이어 주는지 확인합니다. */
+/** 저장소가 서버 값(식사 시각, 알림 수신 설정)을 읽고 쓸 때 DTO 변환과 원격 호출을 이어 주는지 확인합니다. */
 class SettingsRepositoryImplTest {
 
     private lateinit var server: MockWebServer
@@ -41,12 +38,7 @@ class SettingsRepositoryImplTest {
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
             .create(SettingsApiService::class.java)
-        repository = SettingsRepositoryImpl(
-            // 식사 시각은 알림 설정과 배경음을 쓰지 않는다. 만들기만 하고 부르지 않는다.
-            notificationDataSource = NotificationSettingsDataSource(ContextWrapper(null), json),
-            localDataSource = SettingsLocalDataSource(UnusedDataStore),
-            remoteDataSource = SettingsRemoteDataSource(apiService),
-        )
+        repository = SettingsRepositoryImpl(remoteDataSource = SettingsRemoteDataSource(apiService))
     }
 
     @After
@@ -88,9 +80,26 @@ class SettingsRepositoryImplTest {
         )
     }
 
-    private object UnusedDataStore : DataStore<Preferences> {
-        override val data: Flow<Preferences> = emptyFlow()
-        override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences =
-            error("not used")
+    @Test
+    fun `알림 수신 설정을 읽어 VO 로 바꾼다`() = runBlocking {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody("""{"isServicePushEnabled":true,"isMarketingPushEnabled":true}"""),
+        )
+
+        val settings = repository.getNotificationSettings()
+
+        assertEquals("/api/v1/users/me/push", server.takeRequest().path)
+        assertEquals(NotificationSettingsVO(isServiceEnabled = true, isMarketingEnabled = true), settings)
+    }
+
+    @Test
+    fun `알림 수신 설정은 바꾸는 항목만 서버로 보낸다`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(200))
+
+        repository.updateNotificationSettings(NotificationSettingsChange(isServiceEnabled = false))
+
+        val request = server.takeRequest()
+        assertEquals("PATCH", request.method)
+        assertEquals("""{"isServicePushEnabled":false}""", request.body.readUtf8())
     }
 }

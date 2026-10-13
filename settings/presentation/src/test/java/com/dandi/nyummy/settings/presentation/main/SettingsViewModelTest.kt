@@ -1,12 +1,15 @@
 package com.dandi.nyummy.settings.presentation.main
 
 import com.dandi.nyummy.auth.domain.LogoutUseCase
+import com.dandi.nyummy.common.entity.time.KstDateTime
+import com.dandi.nyummy.common.entity.time.KstTime
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
-import com.dandi.nyummy.settings.domain.SetBgmEnabledUseCase
 import com.dandi.nyummy.settings.domain.UpdateNotificationSettingsUseCase
+import com.dandi.nyummy.settings.entity.NotificationSettingsChange
+import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import com.dandi.nyummy.settings.presentation.FakeAuthRepository
 import com.dandi.nyummy.settings.presentation.FakePushTokenHelper
 import com.dandi.nyummy.settings.presentation.FakeResourceHelper
@@ -42,7 +45,6 @@ class SettingsViewModelTest {
     private val viewModel by lazy {
         SettingsViewModel(
             getSettings = GetSettingsUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
-            setBgmEnabled = SetBgmEnabledUseCase(repository),
             updateNotificationSettings = UpdateNotificationSettingsUseCase(
                 repository,
                 FakeResourceHelper,
@@ -78,25 +80,24 @@ class SettingsViewModelTest {
         advanceUntilIdle()
         assertFalse(state.isLoaded)
 
-        viewModel.onIntent(SettingsIntent.ToggleBgm(false))
-        viewModel.onIntent(SettingsIntent.ToggleNotice(false))
+        viewModel.onIntent(SettingsIntent.ToggleServicePush(false))
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(true))
         viewModel.onIntent(SettingsIntent.ClickMealTime)
         advanceUntilIdle()
 
-        assertTrue(repository.savedBgm.isEmpty())
         assertTrue(repository.savedNotifications.isEmpty())
         assertTrue(navigationHelper.pages.isEmpty())
-        assertTrue(state.isBgmEnabled)
+        assertEquals(NotificationSettingsVO.default, state.notification)
 
         gate.complete(MealTimesVO.default)
         advanceUntilIdle()
         assertTrue(state.isLoaded)
 
-        viewModel.onIntent(SettingsIntent.ToggleBgm(false))
+        viewModel.onIntent(SettingsIntent.ToggleServicePush(false))
         viewModel.onIntent(SettingsIntent.ClickMealTime)
         advanceUntilIdle()
 
-        assertEquals(listOf(false), repository.savedBgm)
+        assertEquals(listOf(NotificationSettingsChange(isServiceEnabled = false)), repository.savedNotifications)
         assertEquals(listOf(MealTimeSettingPage), navigationHelper.pages)
     }
 
@@ -129,9 +130,9 @@ class SettingsViewModelTest {
 
         assertTrue(state.isLoaded)
         assertNull(state.mealTimes)
-        viewModel.onIntent(SettingsIntent.ToggleBgm(false))
+        viewModel.onIntent(SettingsIntent.ToggleServicePush(false))
         advanceUntilIdle()
-        assertEquals(listOf(false), repository.savedBgm)
+        assertEquals(listOf(NotificationSettingsChange(isServiceEnabled = false)), repository.savedNotifications)
     }
 
     @Test
@@ -146,5 +147,136 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(mealTimes, state.mealTimes)
+    }
+
+    @Test
+    fun `서비스 알림을 끄면 서비스 항목만 저장한다`() = runTest(testDispatcher) {
+        resume()
+        advanceUntilIdle()
+
+        viewModel.onIntent(SettingsIntent.ToggleServicePush(false))
+        advanceUntilIdle()
+
+        assertEquals(listOf(NotificationSettingsChange(isServiceEnabled = false)), repository.savedNotifications)
+        assertEquals(NotificationSettingsVO(isServiceEnabled = false, isMarketingEnabled = false), state.notification)
+        assertTrue(messageHelper.snackBars.isEmpty())
+    }
+
+    @Test
+    fun `마케팅 알림에 동의하거나 철회하면 처리한 날짜를 알린다`() = runTest(testDispatcher) {
+        resume()
+        advanceUntilIdle()
+        // 처리 사이에 KST 자정이 지나도 실패하지 않도록 전후 날짜를 모두 허용한다.
+        val before = dateLabel(KstTime.now())
+
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(true))
+        advanceUntilIdle()
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(false))
+        advanceUntilIdle()
+        val after = dateLabel(KstTime.now())
+
+        val messages = messageHelper.snackBars.map { it.messageText }
+        assertEquals(2, messages.size)
+        assertTrue(messages[0] in setOf(before, after).map { "$it 마케팅 알림 수신에 동의했어요" })
+        assertTrue(messages[1] in setOf(before, after).map { "$it 마케팅 알림 수신 동의를 철회했어요" })
+    }
+
+    @Test
+    fun `같은 토글은 앞 저장이 끝난 뒤 마지막 값만 보낸다`() = runTest(testDispatcher) {
+        // 앞 요청을 취소하면 서버가 이미 처리한 옛 값(동의)이 새 값(철회)보다 늦게 반영될 수 있다.
+        val firstSave = CompletableDeferred<Unit>()
+        repository.notificationUpdateResponses += { firstSave.await() }
+        resume()
+        advanceUntilIdle()
+
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(true))
+        advanceUntilIdle()
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(false))
+        advanceUntilIdle()
+
+        // 앞 저장이 끝나기 전에는 다음 요청을 보내지 않는다. 화면은 마지막 값을 보여 준다.
+        assertEquals(listOf(NotificationSettingsChange(isMarketingEnabled = true)), repository.requestedNotifications)
+        assertFalse(state.notification.isMarketingEnabled)
+
+        firstSave.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(NotificationSettingsChange(isMarketingEnabled = true), NotificationSettingsChange(isMarketingEnabled = false)),
+            repository.savedNotifications,
+        )
+        assertFalse(state.notification.isMarketingEnabled)
+    }
+
+    @Test
+    fun `저장 중에 바꿨다가 서버 값으로 돌아오면 더 보내지 않는다`() = runTest(testDispatcher) {
+        val firstSave = CompletableDeferred<Unit>()
+        repository.notificationUpdateResponses += { firstSave.await() }
+        resume()
+        advanceUntilIdle()
+
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(true))
+        advanceUntilIdle()
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(false))
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(true))
+        advanceUntilIdle()
+        firstSave.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(listOf(NotificationSettingsChange(isMarketingEnabled = true)), repository.requestedNotifications)
+        assertTrue(state.notification.isMarketingEnabled)
+    }
+
+    private fun dateLabel(time: KstDateTime) = "${time.year}년 ${time.month}월 ${time.day}일"
+
+    @Test
+    fun `저장에 실패하면 그 항목만 되돌리고 아직 저장 중인 다른 항목은 둔다`() = runTest(testDispatcher) {
+        val serviceSave = CompletableDeferred<Unit>()
+        val marketingSave = CompletableDeferred<Unit>()
+        repository.notificationUpdateResponses += { serviceSave.await() }
+        repository.notificationUpdateResponses += { marketingSave.await() }
+        resume()
+        advanceUntilIdle()
+
+        viewModel.onIntent(SettingsIntent.ToggleServicePush(false))
+        advanceUntilIdle()
+        viewModel.onIntent(SettingsIntent.ToggleMarketingPush(true))
+        advanceUntilIdle()
+        // 마케팅 저장이 끝나기 전에 서비스 저장이 실패한다. 서비스만 되돌리고 마케팅 변경은 남아야 한다.
+        serviceSave.completeExceptionally(IOException("offline"))
+        advanceUntilIdle()
+
+        assertEquals(NotificationSettingsVO(isServiceEnabled = true, isMarketingEnabled = true), state.notification)
+        marketingSave.complete(Unit)
+        advanceUntilIdle()
+        assertEquals(NotificationSettingsVO(isServiceEnabled = true, isMarketingEnabled = true), state.notification)
+        val retry = messageHelper.snackBars.single { it.messageText == "설정을 저장하지 못했어요" }
+        retry.onClickCTA?.invoke()
+        advanceUntilIdle()
+        assertEquals(NotificationSettingsVO(isServiceEnabled = false, isMarketingEnabled = true), state.notification)
+        assertEquals(NotificationSettingsChange(isServiceEnabled = false), repository.savedNotifications.last())
+    }
+
+    @Test
+    fun `자세히 보기를 누르면 그 알림 묶음 시트를 열고 닫는다`() = runTest(testDispatcher) {
+        viewModel.onIntent(SettingsIntent.ClickNotificationDetail(NotificationKind.MARKETING))
+        assertEquals(NotificationKind.MARKETING, state.notificationDetail)
+
+        viewModel.onIntent(SettingsIntent.DismissNotificationDetail)
+        assertNull(state.notificationDetail)
+    }
+
+    @Test
+    fun `설정을 읽지 못하면 다시 시도로 처음부터 다시 읽는다`() = runTest(testDispatcher) {
+        repository.getNotificationSettingsError = IOException("offline")
+        resume()
+        advanceUntilIdle()
+        assertFalse(state.isLoaded)
+
+        repository.getNotificationSettingsError = null
+        messageHelper.snackBars.single { it.messageText == "설정을 불러오지 못했어요" }.onClickCTA?.invoke()
+        advanceUntilIdle()
+
+        assertTrue(state.isLoaded)
     }
 }

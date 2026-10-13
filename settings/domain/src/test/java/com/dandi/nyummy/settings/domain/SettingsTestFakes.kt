@@ -12,6 +12,7 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
+import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
@@ -26,10 +27,20 @@ internal class FakeSettingsRepository : SettingsRepository {
     var saveMealTimesError: Exception? = null
     val savedMealTimes = mutableListOf<MealTimesVO>()
 
-    override suspend fun isBgmEnabled(): Boolean = false
-    override suspend fun setBgmEnabled(enabled: Boolean) = Unit
-    override suspend fun getNotificationSettings(): NotificationSettingsVO = NotificationSettingsVO(isNoticeEnabled = false)
-    override suspend fun updateNotificationSettings(settings: NotificationSettingsVO): NotificationSettingsVO = settings
+    var notificationSettings: NotificationSettingsVO = NotificationSettingsVO(isMarketingEnabled = true)
+    var getNotificationSettingsError: Exception? = null
+    var updateNotificationSettingsError: Exception? = null
+    val notificationChanges = mutableListOf<NotificationSettingsChange>()
+
+    override suspend fun getNotificationSettings(): NotificationSettingsVO {
+        getNotificationSettingsError?.let { throw it }
+        return notificationSettings
+    }
+
+    override suspend fun updateNotificationSettings(change: NotificationSettingsChange) {
+        updateNotificationSettingsError?.let { throw it }
+        notificationChanges += change
+    }
 
     override suspend fun getMealTimes(): MealTimesVO {
         getMealTimesError?.let { throw it }

@@ -20,6 +20,7 @@ import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.settings.domain.SettingsRepository
+import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
@@ -37,18 +38,25 @@ internal class FakeSettingsRepository : SettingsRepository {
 
     var saveMealTimesError: Exception? = null
     val savedMealTimes = mutableListOf<MealTimesVO>()
-    val savedBgm = mutableListOf<Boolean>()
-    val savedNotifications = mutableListOf<NotificationSettingsVO>()
+    /** 보내기 시작한 알림 저장 요청. [savedNotifications]는 응답까지 끝난 요청만 담는다. */
+    val requestedNotifications = mutableListOf<NotificationSettingsChange>()
+    val savedNotifications = mutableListOf<NotificationSettingsChange>()
+    var notificationSettings: NotificationSettingsVO = NotificationSettingsVO.default
+    var getNotificationSettingsError: Exception? = null
 
-    override suspend fun isBgmEnabled(): Boolean = true
-    override suspend fun setBgmEnabled(enabled: Boolean) {
-        savedBgm += enabled
+    /** 알림 저장마다 따로 정할 수 있는 응답. 비어 있으면 바로 성공한다. */
+    val notificationUpdateResponses = ArrayDeque<suspend (NotificationSettingsChange) -> Unit>()
+
+
+    override suspend fun getNotificationSettings(): NotificationSettingsVO {
+        getNotificationSettingsError?.let { throw it }
+        return notificationSettings
     }
 
-    override suspend fun getNotificationSettings(): NotificationSettingsVO = NotificationSettingsVO.default
-    override suspend fun updateNotificationSettings(settings: NotificationSettingsVO): NotificationSettingsVO {
-        savedNotifications += settings
-        return settings
+    override suspend fun updateNotificationSettings(change: NotificationSettingsChange) {
+        requestedNotifications += change
+        notificationUpdateResponses.removeFirstOrNull()?.invoke(change)
+        savedNotifications += change
     }
 
     override suspend fun getMealTimes(): MealTimesVO {

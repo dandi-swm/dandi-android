@@ -1,20 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_title">설정</string>
-    <string name="settings_section_sound">소리</string>
-    <string name="settings_bgm">배경음</string>
-    <string name="settings_bgm_desc">앱 안의 소리</string>
     <string name="settings_section_notification">알림</string>
     <string name="settings_device_notification_off_title">기기 알림이 꺼져 있어요</string>
     <string name="settings_device_notification_off_body">알림을 받으려면 기기 설정에서 허용해 주세요.</string>
     <string name="settings_open_device_settings">기기 설정 열기</string>
-    <string name="settings_notification_all">전체 알림</string>
-    <string name="settings_notification_meal">식사 기록 알림</string>
-    <string name="settings_notification_meal_desc">평소 기록하는 시간에 알려 드려요</string>
+    <string name="settings_notification_service">서비스 알림</string>
+    <string name="settings_notification_service_desc">식사 시간 알림, 분석 결과 알림</string>
+    <string name="settings_notification_marketing">마케팅 알림</string>
+    <string name="settings_notification_marketing_desc">기록을 쉴 때 알림</string>
+    <string name="settings_notification_detail">자세히 보기</string>
     <string name="settings_meal_time">식사 시간</string>
     <string name="settings_meal_time_none">모두 안 먹어요</string>
-    <string name="settings_notification_notice">중요 공지 알림</string>
-    <string name="settings_notification_notice_desc">운영과 보상 소식</string>
+    <!-- 알림 묶음 "자세히 보기" 시트. 스토어 정책과 광고성 정보 전송 규정에 맞춰 보내는 곳, 목적, 내용, 받지 않는 방법을 밝힌다. -->
+    <string name="settings_push_detail_sender_label">보내는 곳</string>
+    <string name="settings_push_detail_sender">냐미</string>
+    <string name="settings_push_detail_purpose_label">알림 목적</string>
+    <string name="settings_push_detail_contents_label">알림 내용</string>
+    <string name="settings_push_detail_confirm">확인</string>
+    <string name="settings_push_service_purpose">식사 기록 서비스 이용 안내</string>
+    <string name="settings_push_service_opt_out_label">받지 않으려면</string>
+    <string name="settings_push_service_opt_out">설정의 알림에서 서비스 알림을 끄면 돼요</string>
+    <string name="settings_push_marketing_purpose">냐미 이용을 권하는 광고성 정보 안내</string>
+    <string name="settings_push_marketing_opt_out_label">동의 철회</string>
+    <string name="settings_push_marketing_opt_out">설정의 알림에서 마케팅 알림을 끄면 언제든 철회할 수 있어요</string>
+    <string name="settings_push_meal_time">식사 시간 알림</string>
+    <string name="settings_push_meal_time_desc">평소 식사 시간에 기록이 없으면 알려요</string>
+    <string name="settings_push_analysis">분석 결과 알림</string>
+    <string name="settings_push_analysis_desc">사진 분석이 끝나면 알려요</string>
+    <string name="settings_push_retention">기록을 쉴 때 알림</string>
+    <string name="settings_push_retention_desc">하루 이상 기록이 없으면 다시 기록하도록 알려요</string>
     <string name="settings_section_legal">약관</string>
     <string name="settings_terms">이용약관</string>
     <string name="settings_privacy">개인정보처리방침</string>

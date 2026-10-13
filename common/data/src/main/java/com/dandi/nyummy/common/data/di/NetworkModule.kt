@@ -43,13 +43,17 @@ object NetworkModule {
         coerceInputValues = true
     }
 
-    /** 공개 클라이언트 — 로깅·타임아웃만. */
+    /**
+     * 공개 클라이언트 — 로깅·타임아웃만. 인증 클라이언트도 이 설정을 이어받는다.
+     * 운영 빌드에서는 요청과 응답을 남기지 않고, 디버그 빌드에서도 Authorization 값은 가린다.
+     */
     @Provides
     @Singleton
     @NoAuthApi
     fun provideNoAuthOkHttpClient(): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
+            redactHeader(TokenAuthenticator.HEADER_AUTHORIZATION)
         }
         return OkHttpClient.Builder()
             .addInterceptor(logging)
@@ -80,7 +84,7 @@ object NetworkModule {
             )
         }
         return noAuthClient.newBuilder()
-            // 로깅 인터셉터보다 앞에 둬야 Authorization 헤더가 로그에 남는다.
+            // 로깅 인터셉터보다 앞에 둬야 Authorization 헤더가 붙었는지 로그로 볼 수 있다(값은 가린다).
             .apply { interceptors().add(0, authHeaderInterceptor) }
             .authenticator(tokenAuthenticator)
             .build()

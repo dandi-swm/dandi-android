@@ -7,12 +7,13 @@ import com.dandi.nyummy.common.domain.error.isSessionExpired
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.entity.time.KstTime
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
-import com.dandi.nyummy.settings.domain.SetBgmEnabledUseCase
 import com.dandi.nyummy.settings.domain.UpdateNotificationSettingsUseCase
 import com.dandi.nyummy.settings.entity.LegalDocument
+import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -22,21 +23,22 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val getSettings: GetSettingsUseCase,
-    private val setBgmEnabled: SetBgmEnabledUseCase,
     private val updateNotificationSettings: UpdateNotificationSettingsUseCase,
     private val logout: LogoutUseCase,
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
 ) : MviViewModel<SettingsIntent, SettingsUIState, SettingsReducerEvent>(SettingsUIState.empty) {
 
-    private var notificationJob: Job? = null
+    // 알림 묶음별로 저장 요청을 하나씩만 보낸다. 보내는 중에 또 바꾸면 마지막 값만 기억했다가 앞 요청이 끝난 뒤 보낸다.
+    // 앞 요청을 취소해도 서버는 이미 처리하고 있을 수 있어, 늦게 반영된 옛 값이 새 값을 덮을 수 있기 때문이다.
+    private val savingKinds = mutableSetOf<NotificationKind>()
+    private val pendingChanges = mutableMapOf<NotificationKind, NotificationSettingsChange>()
     private var loadJob: Job? = null
 
     // 서버에 저장된 것으로 확인한 알림 설정. 저장이 실패하면 이 값으로 되돌린다.
     private var savedNotification: NotificationSettingsVO? = null
 
     // 사용자가 바꾼 횟수. 읽기를 시작한 뒤 늘었으면 늦게 도착한 읽기 결과로 그 값을 덮지 않는다.
-    private var bgmEditCount = 0
     private var notificationEditCount = 0
 
     override fun onIntent(intent: SettingsIntent) {
@@ -46,11 +48,14 @@ class SettingsViewModel @Inject constructor(
                 load()
             }
             SettingsIntent.ClickBack -> navigationHelper.navigateToBack()
-            is SettingsIntent.ToggleBgm -> whenLoaded { changeBgm(intent.enabled) }
-            is SettingsIntent.ToggleAllNotification -> whenLoaded { changeNotification { it.copy(isAllEnabled = intent.enabled) } }
-            is SettingsIntent.ToggleMealReminder ->
-                whenLoaded { changeNotification { it.copy(isMealReminderEnabled = intent.enabled) } }
-            is SettingsIntent.ToggleNotice -> whenLoaded { changeNotification { it.copy(isNoticeEnabled = intent.enabled) } }
+            is SettingsIntent.ToggleServicePush -> whenLoaded {
+                changeNotification(NotificationKind.SERVICE, NotificationSettingsChange(isServiceEnabled = intent.enabled))
+            }
+            is SettingsIntent.ToggleMarketingPush -> whenLoaded {
+                changeNotification(NotificationKind.MARKETING, NotificationSettingsChange(isMarketingEnabled = intent.enabled))
+            }
+            is SettingsIntent.ClickNotificationDetail -> dispatch(SettingsReducerEvent.NotificationDetailChanged(intent.kind))
+            SettingsIntent.DismissNotificationDetail -> dispatch(SettingsReducerEvent.NotificationDetailChanged(null))
             SettingsIntent.ClickMealTime -> whenLoaded { navigationHelper.navigateTo(MealTimeSettingPage) }
             is SettingsIntent.ClickLegal -> dispatch(SettingsReducerEvent.LegalLinkRequested(intent.document))
             is SettingsIntent.LegalLinkHandled -> onLegalLinkHandled(intent.document, intent.opened)
@@ -64,14 +69,13 @@ class SettingsViewModel @Inject constructor(
     override fun reduce(state: SettingsUIState, event: SettingsReducerEvent): SettingsUIState = when (event) {
         is SettingsReducerEvent.SettingsLoaded -> state.copy(
             isLoaded = true,
-            isBgmEnabled = if (event.keepBgm) state.isBgmEnabled else event.settings.isBgmEnabled,
             notification = if (event.keepNotification) state.notification else event.settings.notification,
             // 다시 읽다가 실패하면 마지막으로 읽은 값을 둔다.
             mealTimes = event.settings.mealTimes ?: state.mealTimes,
         )
         is SettingsReducerEvent.DeviceNotificationChecked -> state.copy(isDeviceNotificationEnabled = event.enabled)
-        is SettingsReducerEvent.BgmChanged -> state.copy(isBgmEnabled = event.enabled)
         is SettingsReducerEvent.NotificationChanged -> state.copy(notification = event.notification)
+        is SettingsReducerEvent.NotificationDetailChanged -> state.copy(notificationDetail = event.kind)
         is SettingsReducerEvent.LegalLinkRequested -> state.copy(pendingLegalDocument = event.document)
         is SettingsReducerEvent.LogoutDialogVisibilityChanged -> state.copy(isLogoutDialogVisible = event.visible)
         SettingsReducerEvent.LoggingOut -> state.copy(isLoggingOut = true)
@@ -82,18 +86,17 @@ class SettingsViewModel @Inject constructor(
      * 그러지 않으면 식사 시간을 저장하고 돌아왔을 때 늦게 끝난 이전 읽기가 새 값을 덮을 수 있다.
      */
     private fun load() {
-        val bgmEditsAtStart = bgmEditCount
         val notificationEditsAtStart = notificationEditCount
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            getSettings().onSuccess { loaded ->
+            // 읽지 못하면 UseCase가 "다시 시도"를 띄운다. 다시 시도하면 처음부터 다시 읽는다.
+            getSettings(onRetry = ::load).onSuccess { loaded ->
                 val notificationEdited = notificationEditCount != notificationEditsAtStart
                 // 읽는 사이 알림을 바꿨으면 그 저장 결과가 되돌릴 기준이 된다. 기준이 아직 없을 때만 읽은 값을 쓴다.
                 if (!notificationEdited || savedNotification == null) savedNotification = loaded.notification
                 dispatch(
                     SettingsReducerEvent.SettingsLoaded(
                         settings = loaded,
-                        keepBgm = bgmEditCount != bgmEditsAtStart,
                         keepNotification = notificationEdited,
                     ),
                 )
@@ -106,38 +109,58 @@ class SettingsViewModel @Inject constructor(
         if (currentState.isLoaded) action()
     }
 
-    private fun changeBgm(enabled: Boolean) {
-        bgmEditCount++
-        dispatch(SettingsReducerEvent.BgmChanged(enabled))
+    /**
+     * 바로 반영하고 바꾼 항목만 저장한다. 같은 묶음의 저장이 진행 중이면 마지막 값만 기억해 두고 끝난 뒤 보낸다.
+     * 다시 시도는 실패한 토글 하나([change])만 다시 저장한다. 스낵바가 떠 있는 동안 바꾼 다른 토글을 덮지 않기 위해서다.
+     */
+    private fun changeNotification(kind: NotificationKind, change: NotificationSettingsChange) {
+        notificationEditCount++
+        dispatch(SettingsReducerEvent.NotificationChanged(change.applyTo(currentState.notification)))
+        if (kind in savingKinds) {
+            pendingChanges[kind] = change
+            return
+        }
+        saveNotification(kind, change)
+    }
+
+    /**
+     * [change]를 서버에 저장한다. 마케팅 알림은 저장되면 동의하거나 철회한 날짜를 알린다(광고성 정보 수신 동의 결과 안내).
+     * 끝난 뒤 그사이 바꾼 값이 있으면 서버 값과 다를 때만 이어서 보낸다. 실패했는데 그사이 바꾼 값도 없으면
+     * 그 항목만 서버 값으로 되돌리고 "다시 시도" 스낵바를 띄운다.
+     */
+    private fun saveNotification(kind: NotificationKind, change: NotificationSettingsChange) {
+        savingKinds += kind
         viewModelScope.launch {
-            setBgmEnabled(enabled).onFailure {
-                dispatch(SettingsReducerEvent.BgmChanged(!enabled))
-                showSaveFailed { changeBgm(enabled) }
+            val result = updateNotificationSettings(change)
+            savingKinds -= kind
+            if (result.isSuccess) {
+                savedNotification = change.applyTo(savedNotification ?: currentState.notification)
+                change.isMarketingEnabled?.let(::showMarketingConsentResult)
+            }
+            val saved = savedNotification ?: currentState.notification
+            val pending = pendingChanges.remove(kind)
+            when {
+                // 화면은 이미 마지막 값을 보여 준다. 서버 값과 같으면 보낼 것이 없다.
+                pending != null -> if (pending.applyTo(saved) != saved) saveNotification(kind, pending)
+                result.isFailure -> {
+                    dispatch(SettingsReducerEvent.NotificationChanged(change.revertTo(saved).applyTo(currentState.notification)))
+                    // 로그인 만료는 UseCase가 이미 다이얼로그로 알렸다.
+                    if ((result.exceptionOrNull() as? HttpResponseException)?.isSessionExpired() != true) {
+                        showSaveFailed { changeNotification(kind, change) }
+                    }
+                }
             }
         }
     }
 
-    /**
-     * 바로 반영하고 저장한다. 저장이 실패하면 되돌리고 "다시 시도" 스낵바를 띄운다.
-     * 다시 시도는 실패한 토글 하나([change])만 그때의 값에 다시 적용한다. 스낵바가 떠 있는 동안 바꾼 다른 토글을 덮지 않기 위해서다.
-     */
-    private fun changeNotification(change: (NotificationSettingsVO) -> NotificationSettingsVO) {
-        notificationEditCount++
-        val next = change(currentState.notification)
-        dispatch(SettingsReducerEvent.NotificationChanged(next))
-        // 빠르게 여러 번 누르면 마지막 값만 결과를 반영한다.
-        notificationJob?.cancel()
-        notificationJob = viewModelScope.launch {
-            updateNotificationSettings(next).onSuccess {
-                savedNotification = it
-            }.onFailure { error ->
-                savedNotification?.let { dispatch(SettingsReducerEvent.NotificationChanged(it)) }
-                // 로그인 만료는 UseCase가 이미 다이얼로그로 알렸다.
-                if ((error as? HttpResponseException)?.isSessionExpired() != true) {
-                    showSaveFailed { changeNotification(change) }
-                }
-            }
-        }
+    /** 마케팅 알림 수신 동의나 철회가 처리된 날짜를 알린다. 광고성 정보 수신 동의 결과는 처리 날짜와 함께 알려야 한다. */
+    private fun showMarketingConsentResult(agreed: Boolean) {
+        val today = KstTime.now()
+        val date = "${today.year}년 ${today.month}월 ${today.day}일"
+        messageHelper.showSnackBar(
+            iconType = IconType.SUCCESS,
+            messageText = if (agreed) "$date $MARKETING_AGREED_MESSAGE" else "$date $MARKETING_WITHDRAWN_MESSAGE",
+        )
     }
 
     private fun showSaveFailed(retry: () -> Unit) {
@@ -174,5 +197,7 @@ class SettingsViewModel @Inject constructor(
         const val TERMS_OPEN_FAILED_MESSAGE = "이용약관을 열지 못했어요"
         const val PRIVACY_OPEN_FAILED_MESSAGE = "개인정보처리방침을 열지 못했어요"
         const val RETRY_LABEL = "다시 시도"
+        const val MARKETING_AGREED_MESSAGE = "마케팅 알림 수신에 동의했어요"
+        const val MARKETING_WITHDRAWN_MESSAGE = "마케팅 알림 수신 동의를 철회했어요"
     }
 }
