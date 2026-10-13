@@ -35,7 +35,7 @@ class MealPhotoExifTimeTest {
 
     @Test
     fun `오프셋이 있으면 그 순간을 넘긴 타임존으로 옮긴다`() {
-        // 미국 서부 9월 29일 저녁은 한국 9월 30일 오전이다.
+        // 미국 서부 9월 29일 저녁은 넘긴 타임존(서울)으로 9월 30일 오전이다.
         assertEquals(
             LocalDateTime.of(2026, 9, 30, 11, 0, 0),
             parseExifDateTimeOrNull("2026:09:29 19:00:00", "-07:00", seoul),

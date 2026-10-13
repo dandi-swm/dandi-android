@@ -195,13 +195,13 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `오늘 기록이 있으면 시트를 열고 KST 오늘 식사를 읽는다`() = runTest(testDispatcher) {
+    fun `오늘 기록이 있으면 시트를 열고 기기 타임존 기준 오늘 식사를 읽는다`() = runTest(testDispatcher) {
         val meal = MealHistoryVO(id = "1", name = "닭가슴살 샐러드")
         val nutrition = DailyNutritionVO(currentCalorieKcal = 420)
         historyRepository.next = { DailyMealHistoryVO(meals = listOf(meal), nutrition = nutrition) }
         resumeWith(HomeSummaryVO(todayRecordedCount = 1))
 
-        // 요청 사이에 KST 자정이 지나도 실패하지 않도록 전후 날짜를 모두 허용한다.
+        // 요청 사이에 기기 타임존 자정이 지나도 실패하지 않도록 전후 날짜를 모두 허용한다.
         val before = DeviceTime.today().let { Triple(it.year, it.monthValue, it.dayOfMonth) }
         viewModel.onIntent(HomeIntent.ClickTodayBar)
         assertTrue(state.isTodaySheetVisible)
