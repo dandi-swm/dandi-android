@@ -3,6 +3,7 @@ package com.dandi.nyummy.auth.presentation
 import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.auth.presentation.social.SocialLoginResult
 import com.dandi.nyummy.common.presentation.mvi.MviIntent
+import com.dandi.nyummy.legal.entity.LegalDocument
 
 sealed interface LoginIntent : MviIntent {
     // 소셜 로그인 버튼을 클릭했다.
@@ -25,5 +26,8 @@ sealed interface LoginIntent : MviIntent {
 
     // 테스트 계정 로그인 버튼을 클릭했다 (debug 빌드 전용).
     data object ClickTestLogin : LoginIntent
+
+    // 약관 고지의 이용약관·개인정보처리방침 링크를 눌렀다.
+    data class ClickLegal(val document: LegalDocument) : LoginIntent
 
 }

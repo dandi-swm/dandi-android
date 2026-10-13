@@ -1,7 +1,7 @@
 package com.dandi.nyummy.settings.presentation.main
 
 import com.dandi.nyummy.common.presentation.mvi.MviIntent
-import com.dandi.nyummy.settings.entity.LegalDocument
+import com.dandi.nyummy.legal.entity.LegalDocument
 
 /** 설정 화면에서 발생하는 사용자 의도. */
 sealed interface SettingsIntent : MviIntent {
@@ -28,11 +28,8 @@ sealed interface SettingsIntent : MviIntent {
 
     data object ClickMealTime : SettingsIntent
 
-    /** 약관 행을 눌렀다. 화면이 브라우저로 연다. */
+    /** 약관 행을 눌렀다. 앱 안의 약관 화면으로 간다. */
     data class ClickLegal(val document: LegalDocument) : SettingsIntent
-
-    /** 화면이 약관 링크를 열어 봤다. 못 열었으면 "다시 시도" 스낵바를 띄운다. */
-    data class LegalLinkHandled(val document: LegalDocument, val opened: Boolean) : SettingsIntent
 
     data object ClickLogout : SettingsIntent
 

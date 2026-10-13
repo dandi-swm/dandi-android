@@ -9,11 +9,11 @@ import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
+import com.dandi.nyummy.legal.domain.LegalPage
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
 import com.dandi.nyummy.settings.domain.UpdateNotificationSettingsUseCase
 import com.dandi.nyummy.settings.domain.WithdrawUseCase
-import com.dandi.nyummy.settings.entity.LegalDocument
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -59,8 +59,7 @@ class SettingsViewModel @Inject constructor(
             is SettingsIntent.ClickNotificationDetail -> dispatch(SettingsReducerEvent.NotificationDetailChanged(intent.kind))
             SettingsIntent.DismissNotificationDetail -> dispatch(SettingsReducerEvent.NotificationDetailChanged(null))
             SettingsIntent.ClickMealTime -> whenLoaded { navigationHelper.navigateTo(MealTimeSettingPage) }
-            is SettingsIntent.ClickLegal -> dispatch(SettingsReducerEvent.LegalLinkRequested(intent.document))
-            is SettingsIntent.LegalLinkHandled -> onLegalLinkHandled(intent.document, intent.opened)
+            is SettingsIntent.ClickLegal -> navigationHelper.navigateTo(LegalPage(intent.document))
             SettingsIntent.ClickLogout -> dispatch(SettingsReducerEvent.LogoutDialogVisibilityChanged(visible = true))
             SettingsIntent.DismissLogoutDialog ->
                 if (!currentState.isLoggingOut) dispatch(SettingsReducerEvent.LogoutDialogVisibilityChanged(visible = false))
@@ -82,7 +81,6 @@ class SettingsViewModel @Inject constructor(
         is SettingsReducerEvent.DeviceNotificationChecked -> state.copy(isDeviceNotificationEnabled = event.enabled)
         is SettingsReducerEvent.NotificationChanged -> state.copy(notification = event.notification)
         is SettingsReducerEvent.NotificationDetailChanged -> state.copy(notificationDetail = event.kind)
-        is SettingsReducerEvent.LegalLinkRequested -> state.copy(pendingLegalDocument = event.document)
         is SettingsReducerEvent.LogoutDialogVisibilityChanged -> state.copy(isLogoutDialogVisible = event.visible)
         SettingsReducerEvent.LoggingOut -> state.copy(isLoggingOut = true)
         is SettingsReducerEvent.WithdrawDialogVisibilityChanged -> state.copy(isWithdrawDialogVisible = event.visible)
@@ -181,20 +179,6 @@ class SettingsViewModel @Inject constructor(
         )
     }
 
-    private fun onLegalLinkHandled(document: LegalDocument, opened: Boolean) {
-        dispatch(SettingsReducerEvent.LegalLinkRequested(null))
-        if (opened) return
-        messageHelper.showSnackBar(
-            iconType = IconType.ERROR,
-            messageText = when (document) {
-                LegalDocument.TERMS -> TERMS_OPEN_FAILED_MESSAGE
-                LegalDocument.PRIVACY -> PRIVACY_OPEN_FAILED_MESSAGE
-            },
-            callToActionText = RETRY_LABEL,
-            onClickCTA = { onIntent(SettingsIntent.ClickLegal(document)) },
-        )
-    }
-
     private fun confirmLogout() {
         if (currentState.isLoggingOut) return
         dispatch(SettingsReducerEvent.LoggingOut)
@@ -212,8 +196,6 @@ class SettingsViewModel @Inject constructor(
 
     private companion object {
         const val SAVE_FAILED_MESSAGE = "설정을 저장하지 못했어요"
-        const val TERMS_OPEN_FAILED_MESSAGE = "이용약관을 열지 못했어요"
-        const val PRIVACY_OPEN_FAILED_MESSAGE = "개인정보처리방침을 열지 못했어요"
         const val RETRY_LABEL = "다시 시도"
         const val MARKETING_AGREED_MESSAGE = "마케팅 알림 수신에 동의했어요"
         const val MARKETING_WITHDRAWN_MESSAGE = "마케팅 알림 수신 동의를 철회했어요"
