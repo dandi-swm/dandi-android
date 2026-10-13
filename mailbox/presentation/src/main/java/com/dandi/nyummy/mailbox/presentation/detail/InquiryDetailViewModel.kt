@@ -53,6 +53,7 @@ class InquiryDetailViewModel @Inject constructor(
 
 private fun InquiryVO.toDetailUiModel() = InquiryDetailUiModel(
     category = category,
+    title = title,
     content = content,
     createdAtLabel = inquiryDetailTimeLabel(createdAtMillis),
     answer = if (isAnswered) {

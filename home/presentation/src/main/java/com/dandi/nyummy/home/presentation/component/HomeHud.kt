@@ -37,6 +37,7 @@ import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
  * 홈 상단. 왼쪽 지갑 카드(보유 코인)가 남는 폭을 차지하고, 오른쪽에 우편, 공지, 설정 버튼이 붙는다.
+ * 읽지 않은 문의 답장([hasUnreadMail])이나 공지([hasUnreadNotice])가 있으면 그 버튼에 빨간 점을 단다.
  */
 @Composable
 internal fun HomeHud(
@@ -47,6 +48,7 @@ internal fun HomeHud(
     onNoticeClick: () -> Unit,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
+    hasUnreadMail: Boolean = false,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -61,6 +63,7 @@ internal fun HomeHud(
             icon = CommonR.drawable.nyummy_ic_mail,
             label = stringResource(R.string.home_action_mail),
             onClick = onMailClick,
+            showDot = hasUnreadMail,
         )
         HomeHudAction(
             icon = CommonR.drawable.nyummy_ic_bell,
@@ -131,7 +134,7 @@ private fun HomeWalletCard(
     }
 }
 
-/** 상단 작은 버튼. 아이콘 24 + 라벨(label/s). 공지는 읽지 않은 글이 있으면 빨간 점을 단다. */
+/** 상단 작은 버튼. 아이콘 24 + 라벨(label/s). 읽지 않은 소식이 있으면 빨간 점을 단다. */
 @Composable
 private fun HomeHudAction(
     @DrawableRes icon: Int,
@@ -240,6 +243,7 @@ private fun HomeHudPreview() {
             HomeHud(
                 coinBalance = 1240,
                 hasUnreadNotice = true,
+                hasUnreadMail = true,
                 onWalletClick = {},
                 onMailClick = {},
                 onNoticeClick = {},

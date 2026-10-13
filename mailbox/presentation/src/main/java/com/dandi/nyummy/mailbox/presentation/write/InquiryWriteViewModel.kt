@@ -31,6 +31,8 @@ class InquiryWriteViewModel @Inject constructor(
                 dispatch(InquiryWriteReducerEvent.CategorySelected(intent.category))
             InquiryWriteIntent.DismissCategorySheet ->
                 dispatch(InquiryWriteReducerEvent.CategorySheetVisibilityChanged(visible = false))
+            is InquiryWriteIntent.ChangeTitle ->
+                dispatch(InquiryWriteReducerEvent.TitleChanged(intent.title))
             is InquiryWriteIntent.ChangeContent ->
                 dispatch(InquiryWriteReducerEvent.ContentChanged(intent.content))
             InquiryWriteIntent.ClickSend -> send()
@@ -43,22 +45,27 @@ class InquiryWriteViewModel @Inject constructor(
                 state.copy(isCategorySheetVisible = event.visible)
             is InquiryWriteReducerEvent.CategorySelected ->
                 state.copy(category = event.category, isCategorySheetVisible = false)
+            is InquiryWriteReducerEvent.TitleChanged ->
+                state.copy(title = event.title, isTitleEmptyError = false)
             is InquiryWriteReducerEvent.ContentChanged ->
                 state.copy(content = event.content, isContentEmptyError = false)
-            InquiryWriteReducerEvent.ContentEmptyRejected -> state.copy(isContentEmptyError = true)
+            is InquiryWriteReducerEvent.EmptyInputRejected ->
+                state.copy(isTitleEmptyError = event.isTitleEmpty, isContentEmptyError = event.isContentEmpty)
             is InquiryWriteReducerEvent.SendingChanged -> state.copy(isSending = event.sending)
         }
 
     private fun send() {
         val state = currentState
         if (state.isSending) return
-        if (state.content.isBlank()) {
-            dispatch(InquiryWriteReducerEvent.ContentEmptyRejected)
+        val isTitleEmpty = state.title.isBlank()
+        val isContentEmpty = state.content.isBlank()
+        if (isTitleEmpty || isContentEmpty) {
+            dispatch(InquiryWriteReducerEvent.EmptyInputRejected(isTitleEmpty, isContentEmpty))
             return
         }
         dispatch(InquiryWriteReducerEvent.SendingChanged(sending = true))
         viewModelScope.launch {
-            sendInquiry(state.category, state.content)
+            sendInquiry(state.category, state.title, state.content)
                 .onSuccess {
                     messageHelper.showSnackBar(messageRes = R.string.mailbox_write_sent)
                     navigationHelper.navigateToBack()

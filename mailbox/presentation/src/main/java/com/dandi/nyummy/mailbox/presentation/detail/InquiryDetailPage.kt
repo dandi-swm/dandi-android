@@ -85,7 +85,7 @@ internal fun InquiryDetailScreen(
     }
 }
 
-/** 내가 보낸 문의. 목록 행처럼 위에 유형과 보낸 시각을 두고 아래에 전문을 쓴다. */
+/** 내가 보낸 문의. 목록 행처럼 위에 유형과 보낸 시각을 두고 아래에 제목과 전문을 쓴다. */
 @Composable
 private fun MyInquiry(inquiry: InquiryDetailUiModel) {
     Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
@@ -94,6 +94,12 @@ private fun MyInquiry(inquiry: InquiryDetailUiModel) {
             time = inquiry.createdAtLabel,
             isLabelEmphasized = false,
         )
+        if (inquiry.title.isNotBlank()) {
+            NyummyText(
+                text = inquiry.title,
+                style = NyummyTheme.typography.titleS,
+            )
+        }
         NyummyText(
             text = inquiry.content,
             style = NyummyTheme.typography.bodyL,
@@ -173,6 +179,7 @@ private fun InquiryDetailAnsweredPreview() {
             uiState = InquiryDetailUIState(
                 inquiry = InquiryDetailUiModel(
                     category = InquiryCategory.BUG_REPORT,
+                    title = "사진을 찍은 뒤 기록이 사라졌어요",
                     content = "사진을 찍은 뒤 기록이 사라졌어요. 다시 찍어도 같은 문제가 있어요.",
                     createdAtLabel = "10월 4일 오후 9:12",
                     answer = InquiryAnswerUiModel(
@@ -194,6 +201,7 @@ private fun InquiryDetailWaitingPreview() {
             uiState = InquiryDetailUIState(
                 inquiry = InquiryDetailUiModel(
                     category = InquiryCategory.SUGGESTION,
+                    title = "히스토리에서 사진을 크게 보고 싶어요",
                     content = "히스토리에서 사진을 크게 보고 싶어요. 식사 사진을 눌렀을 때 화면 가득 보여 주면 좋겠어요.",
                     createdAtLabel = "9월 28일 오후 7:05",
                     answer = null,

@@ -4,7 +4,7 @@ import com.dandi.nyummy.common.domain.error.HttpErrorType
 
 /**
  * 우편함 문의 API 도메인 에러. `type`은 서버 에러 바디의 `code`와 철자까지 같아야 한다.
- * 명세: docs/api/mailbox-inquiry.md
+ * 명세: dandi-backend `InquiryErrorCode`
  */
 enum class MailboxErrorType(
     override val type: String,

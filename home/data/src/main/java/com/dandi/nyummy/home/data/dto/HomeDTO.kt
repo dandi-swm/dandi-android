@@ -9,12 +9,14 @@ import kotlinx.serialization.Serializable
  * @property user 사용자 지갑 정보
  * @property streak 연속 기록 현황
  * @property todayMealSummary 오늘의 식사 현황
+ * @property hasUnreadInquiryAnswer 문의에 답장이 왔는데 아직 열어 보지 않은 것이 있다
  */
 @Serializable
 data class HomeDTO(
     val user: HomeUserDTO? = null,
     val streak: HomeStreakDTO? = null,
     val todayMealSummary: TodayMealSummaryDTO? = null,
+    val hasUnreadInquiryAnswer: Boolean? = null,
 ) {
     fun toVO(): HomeSummaryVO = HomeSummaryVO(
         coinBalance = user?.coin ?: 0,
@@ -23,6 +25,7 @@ data class HomeDTO(
         todayRecordedCount = todayMealSummary?.todayRecordedCount ?: 0,
         todayCalorieKcal = todayMealSummary?.todayCurrentCalory ?: 0,
         goalCalorieKcal = todayMealSummary?.todayTargetCalory ?: 0,
+        hasUnreadInquiryAnswer = hasUnreadInquiryAnswer == true,
     )
 }
 

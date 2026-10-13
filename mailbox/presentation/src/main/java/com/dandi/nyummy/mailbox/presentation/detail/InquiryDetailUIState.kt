@@ -24,6 +24,7 @@ data class InquiryDetailUIState(
 @Immutable
 data class InquiryDetailUiModel(
     val category: InquiryCategory,
+    val title: String,
     val content: String,
     val createdAtLabel: String,
     val answer: InquiryAnswerUiModel?,

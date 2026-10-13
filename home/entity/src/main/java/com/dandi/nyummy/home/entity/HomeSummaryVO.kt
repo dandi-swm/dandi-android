@@ -11,6 +11,7 @@ import kotlinx.serialization.Serializable
  * @property todayRecordedCount 오늘 기록한 식사 수
  * @property todayCalorieKcal 오늘 섭취한 열량(kcal)
  * @property goalCalorieKcal 하루 목표 열량(kcal)
+ * @property hasUnreadInquiryAnswer 읽지 않은 문의 답장이 있다. 홈 우편 버튼에 빨간 점을 단다.
  */
 @Serializable
 data class HomeSummaryVO(
@@ -20,6 +21,7 @@ data class HomeSummaryVO(
     val todayRecordedCount: Int = 0,
     val todayCalorieKcal: Int = 0,
     val goalCalorieKcal: Int = 0,
+    val hasUnreadInquiryAnswer: Boolean = false,
 ) {
 
     companion object {

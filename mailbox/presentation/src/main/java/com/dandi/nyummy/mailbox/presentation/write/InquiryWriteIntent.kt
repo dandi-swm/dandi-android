@@ -16,6 +16,8 @@ sealed interface InquiryWriteIntent : MviIntent {
 
     data object DismissCategorySheet : InquiryWriteIntent
 
+    data class ChangeTitle(val title: String) : InquiryWriteIntent
+
     data class ChangeContent(val content: String) : InquiryWriteIntent
 
     data object ClickSend : InquiryWriteIntent
