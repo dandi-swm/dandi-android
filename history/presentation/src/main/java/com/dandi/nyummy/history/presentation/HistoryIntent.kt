@@ -1,6 +1,7 @@
 package com.dandi.nyummy.history.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.MviIntent
+import com.dandi.nyummy.history.entity.AnalysisFeedbackReason
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.presentation.model.HistoryMonth
 
@@ -64,4 +65,17 @@ sealed interface HistoryIntent : MviIntent {
 
     /** 삭제 확인 다이얼로그에서 취소를 눌렀습니다. */
     data object CancelDeleteMeal : HistoryIntent
+
+    /** 평가 카드에서 별점을 골랐습니다. [halfSteps]는 반 칸 수(1~10)입니다. */
+    data class ChangeFeedbackRating(val halfSteps: Int) : HistoryIntent
+
+    /** 평가 카드에서 아쉬운 점을 골랐습니다. 이미 고른 것을 다시 누르면 선택을 풉니다. */
+    data class SelectFeedbackReason(val reason: AnalysisFeedbackReason) : HistoryIntent
+
+    data class ChangeFeedbackComment(val text: String) : HistoryIntent
+
+    data object SubmitFeedback : HistoryIntent
+
+    /** 평가 카드를 닫았습니다. 아무것도 보내지 않습니다. */
+    data object DismissFeedback : HistoryIntent
 }

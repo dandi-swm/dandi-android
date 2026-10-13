@@ -67,4 +67,16 @@
     <string name="history_delete_dialog_title_unnamed">이 기록을 삭제할까요?</string>
     <string name="history_delete_dialog_body">삭제하면 하루 영양에서도 빠지고 되돌릴 수 없어요.</string>
     <string name="history_delete_dialog_confirm">삭제하기</string>
+    <string name="history_feedback_title">냐미의 분석, 정확했나요?</string>
+    <string name="history_feedback_subtitle">별점을 남겨 주면 냐미가 더 잘 알아볼게요</string>
+    <string name="history_feedback_dismiss">평가 닫기</string>
+    <string name="history_feedback_rating_description">분석 별점</string>
+    <string name="history_feedback_reasons_label">어떤 점이 아쉬웠나요? (선택)</string>
+    <string name="history_feedback_reason_wrong_food">음식을 잘못 알아봤어요</string>
+    <string name="history_feedback_reason_wrong_portion">양을 다르게 봤어요</string>
+    <string name="history_feedback_reason_wrong_nutrition">칼로리·영양이 이상해요</string>
+    <string name="history_feedback_reason_missing_food">빠진 음식이 있어요</string>
+    <string name="history_feedback_comment_label">더 알려 주고 싶은 점 (선택)</string>
+    <string name="history_feedback_comment_placeholder">예: 밥 양이 실제보다 적게 나왔어요</string>
+    <string name="history_feedback_submit">보내기</string>
 </resources>
