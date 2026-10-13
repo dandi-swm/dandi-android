@@ -12,6 +12,7 @@ import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
 import com.dandi.nyummy.settings.domain.UpdateNotificationSettingsUseCase
+import com.dandi.nyummy.settings.domain.WithdrawUseCase
 import com.dandi.nyummy.settings.entity.LegalDocument
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
@@ -25,6 +26,7 @@ class SettingsViewModel @Inject constructor(
     private val getSettings: GetSettingsUseCase,
     private val updateNotificationSettings: UpdateNotificationSettingsUseCase,
     private val logout: LogoutUseCase,
+    private val withdraw: WithdrawUseCase,
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
 ) : MviViewModel<SettingsIntent, SettingsUIState, SettingsReducerEvent>(SettingsUIState.empty) {
@@ -63,6 +65,10 @@ class SettingsViewModel @Inject constructor(
             SettingsIntent.DismissLogoutDialog ->
                 if (!currentState.isLoggingOut) dispatch(SettingsReducerEvent.LogoutDialogVisibilityChanged(visible = false))
             SettingsIntent.ConfirmLogout -> confirmLogout()
+            SettingsIntent.ClickWithdraw -> dispatch(SettingsReducerEvent.WithdrawDialogVisibilityChanged(visible = true))
+            SettingsIntent.DismissWithdrawDialog ->
+                if (!currentState.isWithdrawing) dispatch(SettingsReducerEvent.WithdrawDialogVisibilityChanged(visible = false))
+            SettingsIntent.ConfirmWithdraw -> confirmWithdraw()
         }
     }
 
@@ -79,6 +85,9 @@ class SettingsViewModel @Inject constructor(
         is SettingsReducerEvent.LegalLinkRequested -> state.copy(pendingLegalDocument = event.document)
         is SettingsReducerEvent.LogoutDialogVisibilityChanged -> state.copy(isLogoutDialogVisible = event.visible)
         SettingsReducerEvent.LoggingOut -> state.copy(isLoggingOut = true)
+        is SettingsReducerEvent.WithdrawDialogVisibilityChanged -> state.copy(isWithdrawDialogVisible = event.visible)
+        SettingsReducerEvent.Withdrawing -> state.copy(isWithdrawing = true)
+        SettingsReducerEvent.WithdrawFailed -> state.copy(isWithdrawing = false, isWithdrawDialogVisible = false)
     }
 
     /**
@@ -190,6 +199,15 @@ class SettingsViewModel @Inject constructor(
         if (currentState.isLoggingOut) return
         dispatch(SettingsReducerEvent.LoggingOut)
         viewModelScope.launch { logout() }
+    }
+
+    /** 탈퇴한다. 성공하면 UseCase가 첫 화면으로 보내고, 실패하면 다이얼로그를 닫아 오류 스낵바가 보이게 한다. */
+    private fun confirmWithdraw() {
+        if (currentState.isWithdrawing) return
+        dispatch(SettingsReducerEvent.Withdrawing)
+        viewModelScope.launch {
+            withdraw().onFailure { dispatch(SettingsReducerEvent.WithdrawFailed) }
+        }
     }
 
     private companion object {
