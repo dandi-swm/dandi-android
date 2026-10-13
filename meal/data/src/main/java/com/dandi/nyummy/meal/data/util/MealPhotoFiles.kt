@@ -6,14 +6,13 @@ import android.graphics.Matrix
 import android.os.Build
 import android.util.Log
 import androidx.exifinterface.media.ExifInterface
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.meal.domain.MealPhotoInvalidException
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.format.DateTimeFormatter
 import java.util.Locale
-import java.util.TimeZone
 import kotlin.math.abs
 
 /** 식사 사진 업로드 상한 (10MB). presigned 발급 전에 이 크기 이하로 맞춘다. */
@@ -158,9 +157,10 @@ private fun ensureCaptureExif(file: File) {
         val captureMillis = file.lastModified().takeIf { it > 0 } ?: System.currentTimeMillis()
         // EXIF 는 찍은 곳의 벽시계 시각과 그 UTC 오프셋을 짝으로 적는다. 기기 시간대로 둘을 함께 적으면 어느 지역에서
         // 찍어도 같은 순간을 가리키고, 서버도 오프셋을 읽어 시간대와 함께 저장한다. KST 로 고정해 적으면 촬영지의
-        // 시간대 정보를 잃으므로 여기서는 KstTime 을 쓰지 않는다(앱이 날짜를 계산할 때는 KstTime 으로 바꿔 쓴다).
-        val dateTime = formatExifDateTime(captureMillis)
-        val utcOffset = formatUtcOffset(TimeZone.getDefault().getOffset(captureMillis))
+        // 시간대 정보를 잃는다.
+        val capturedAt = DeviceTime.atZone(captureMillis)
+        val dateTime = capturedAt.format(DateTimeFormatter.ofPattern(EXIF_DATE_TIME_PATTERN, Locale.US))
+        val utcOffset = formatUtcOffset(capturedAt.offset.totalSeconds * 1000)
         EXIF_DATE_TIME_TAGS.forEach { tag -> exif.setAttribute(tag, dateTime) }
         EXIF_OFFSET_TIME_TAGS.forEach { tag -> exif.setAttribute(tag, utcOffset) }
         if (exif.getAttribute(ExifInterface.TAG_MAKE).isNullOrBlank()) {
@@ -176,10 +176,6 @@ private fun ensureCaptureExif(file: File) {
         throw MealPhotoInvalidException("사진 촬영 정보를 저장하지 못했어요. 다시 촬영해주세요")
     }
 }
-
-/** epoch millis 를 EXIF 시각 포맷(`yyyy:MM:dd HH:mm:ss`, 기기 로컬 시각)으로 변환한다. */
-private fun formatExifDateTime(epochMillis: Long): String =
-    SimpleDateFormat(EXIF_DATE_TIME_PATTERN, Locale.US).format(Date(epochMillis))
 
 /** 타임존 오프셋 millis 를 EXIF 오프셋 포맷(`+09:00`)으로 변환한다. */
 private fun formatUtcOffset(offsetMillis: Int): String {

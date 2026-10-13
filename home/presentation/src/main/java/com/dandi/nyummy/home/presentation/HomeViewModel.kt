@@ -6,7 +6,7 @@ import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
-import com.dandi.nyummy.common.entity.time.KstTime
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
@@ -226,13 +226,13 @@ class HomeViewModel @Inject constructor(
         loadTodayMeals()
     }
 
-    /** 오늘(KST) 식사 목록과 탄단지 합계를 읽는다. 시트를 열 때마다 새로 읽어 방금 기록한 식사도 보이게 한다. */
+    /** 오늘(기기 타임존) 식사 목록과 탄단지 합계를 읽는다. 시트를 열 때마다 새로 읽어 방금 기록한 식사도 보이게 한다. */
     private fun loadTodayMeals() {
         todayMealsJob?.cancel()
         dispatch(HomeReducerEvent.TodayMealsLoadStarted)
-        val today = KstTime.now()
+        val today = DeviceTime.today()
         todayMealsJob = viewModelScope.launch {
-            getDailyMeals(today.year, today.month, today.day)
+            getDailyMeals(today.year, today.monthValue, today.dayOfMonth)
                 .onSuccess { dispatch(HomeReducerEvent.TodayMealsLoaded(it)) }
                 .onFailure { dispatch(HomeReducerEvent.TodayMealsLoadFailed) }
         }

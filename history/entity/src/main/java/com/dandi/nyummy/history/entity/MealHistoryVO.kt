@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializable
  * @property orderIndex 하루 안에서의 순서, 1부터 시작 ("첫 끼" 라벨용)
  * @property status AI 영양 분석 상태. 서버 값이 없거나 모르는 값이면 [MealAnalysisStatus.UNKNOWN]입니다.
  * @property catComment 이 식사에 대한 냐미의 한 줄 피드백. 단건 상세 조회에서만 내려오며 없으면 빈 값입니다.
- * @property date 식사한 날짜(KST). 단건 상세 조회에서만 채워지며 없으면 [HistoryDateVO.empty]입니다.
+ * @property date 식사한 날짜(기기 타임존). 단건 상세 조회에서만 채워지며 없으면 [HistoryDateVO.empty]입니다.
  */
 @Serializable
 data class MealHistoryVO(

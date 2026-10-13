@@ -10,7 +10,7 @@ enum class InquiryCategory {
 /**
  * 내가 보낸 문의 하나.
  *
- * @property createdAtMillis 보낸 시각(epoch millis). 화면은 KST로 바꿔 보여 준다.
+ * @property createdAtMillis 보낸 시각(epoch millis). 화면은 기기 타임존으로 바꿔 보여 준다.
  * @property answer 운영팀 답장. 아직 답장이 없으면 [InquiryAnswerVO.empty].
  */
 data class InquiryVO(

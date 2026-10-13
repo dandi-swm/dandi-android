@@ -7,7 +7,7 @@ import com.dandi.nyummy.common.domain.error.isSessionExpired
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
-import com.dandi.nyummy.common.entity.time.KstTime
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
@@ -155,8 +155,8 @@ class SettingsViewModel @Inject constructor(
 
     /** 마케팅 알림 수신 동의나 철회가 처리된 날짜를 알린다. 광고성 정보 수신 동의 결과는 처리 날짜와 함께 알려야 한다. */
     private fun showMarketingConsentResult(agreed: Boolean) {
-        val today = KstTime.now()
-        val date = "${today.year}년 ${today.month}월 ${today.day}일"
+        val today = DeviceTime.today()
+        val date = "${today.year}년 ${today.monthValue}월 ${today.dayOfMonth}일"
         messageHelper.showSnackBar(
             iconType = IconType.SUCCESS,
             messageText = if (agreed) "$date $MARKETING_AGREED_MESSAGE" else "$date $MARKETING_WITHDRAWN_MESSAGE",

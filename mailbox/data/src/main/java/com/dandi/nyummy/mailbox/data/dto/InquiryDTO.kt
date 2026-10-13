@@ -1,6 +1,6 @@
 package com.dandi.nyummy.mailbox.data.dto
 
-import com.dandi.nyummy.common.entity.time.KstTime
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.mailbox.entity.InquiryAnswerVO
 import com.dandi.nyummy.mailbox.entity.InquiryCategory
 import com.dandi.nyummy.mailbox.entity.InquiryVO
@@ -37,7 +37,7 @@ data class InquiryDTO(
         inquiryId = inquiryId ?: 0L,
         category = category.toInquiryCategory(),
         content = content?.trim().orEmpty(),
-        createdAtMillis = KstTime.parseIsoToEpochMillisOrNull(createdAt) ?: 0L,
+        createdAtMillis = DeviceTime.parseIsoToEpochMillisOrNull(createdAt) ?: 0L,
         answer = answer?.toVO() ?: InquiryAnswerVO.empty,
     )
 }
@@ -54,7 +54,7 @@ data class InquiryAnswerDTO(
 ) {
     fun toVO(): InquiryAnswerVO = InquiryAnswerVO(
         content = content?.trim().orEmpty(),
-        answeredAtMillis = KstTime.parseIsoToEpochMillisOrNull(answeredAt) ?: 0L,
+        answeredAtMillis = DeviceTime.parseIsoToEpochMillisOrNull(answeredAt) ?: 0L,
     )
 }
 

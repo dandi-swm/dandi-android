@@ -28,6 +28,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // minSdk 24 에서 java.time 을 쓰기 위해 켠다.
+        isCoreLibraryDesugaringEnabled = true
     }
     buildFeatures {
         buildConfig = true
@@ -54,6 +56,7 @@ composeCompiler {
 }
 
 dependencies {
+    coreLibraryDesugaring(libs.android.desugar.jdk.libs)
     implementation(project(":onboarding:domain"))
     implementation(project(":onboarding:entity"))
     implementation(project(":common:presentation"))
