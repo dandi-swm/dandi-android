@@ -126,12 +126,8 @@ private fun TodayMealRow(meal: MealHistoryVO) {
             title = meal.name,
             subtitle = time,
             leading = {
-                // 일일 API에는 사진이 없어 음식 아이콘을 쓴다. 아이콘을 받지 못하면 자리를 비워 둔다.
-                if (meal.foodIconId.isNotBlank()) {
-                    NyummyFoodIcon(foodIconId = meal.foodIconId)
-                } else {
-                    NyummyMealRowPlaceholder()
-                }
+                // 일일 API에는 사진이 없어 음식 아이콘을 쓴다. 아이콘이 없거나 받지 못하면 카메라 placeholder를 보여 준다.
+                NyummyFoodIcon(foodIconId = meal.foodIconId, placeholder = { NyummyMealRowPlaceholder() })
             },
         )
     }

@@ -28,7 +28,7 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
  * 식사 기록 한 줄. 왼쪽 48 자리(음식 아이콘, 분석 중이거나 실패면 냐미) + 이름(title/s) + 시각 등 보조 문구(body/s, tertiary)
  * + 선택적 상태 배지. 흰 바탕, 2px 테두리, radius m.
  *
- * 왼쪽 자리는 [leading]으로 채운다. 음식 아이콘은 [NyummyFoodIcon]을, 보여 줄 것이 없으면 [NyummyMealRowPlaceholder]를 쓴다.
+ * 왼쪽 자리는 [leading]으로 채운다. 음식 아이콘은 [NyummyFoodIcon]을, 보여 줄 것이 없으면 [NyummyMealRowPlaceholder]를 쓴다(아이콘을 못 받을 때도 쓰려면 [NyummyFoodIcon]의 placeholder로 넘긴다).
  * [onClick]이 있으면 눌러서 상세로 갈 수 있다.
  */
 @Composable
