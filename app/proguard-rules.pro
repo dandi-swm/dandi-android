@@ -14,6 +14,7 @@
   *;
 }
 
-# Crashlytics: 난독화된 크래시 스택에 파일 이름과 줄 번호를 남기고, 사용자 정의 예외 이름은 그대로 둔다.
+# Crashlytics: 난독화된 크래시 스택에 파일 이름과 줄 번호를 남긴다.
 -keepattributes SourceFile,LineNumberTable
--keep public class * extends java.lang.Exception
+# 앱이 정의한 예외는 이름만 그대로 둔다(콘솔 이슈 제목). 쓰지 않는 예외는 지워지도록 -keep 대신 -keepnames, 범위는 앱 패키지로 한정한다.
+-keepnames class com.dandi.nyummy.** extends java.lang.Exception
