@@ -16,7 +16,7 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  * 별점은 반 칸 수([ratingHalfSteps], 1~10 = 0.5~5.0점)로 받는다. 이유는 고른 아쉬운 점과 직접 쓴 글을 합쳐 하나로 보내고,
  * 둘 다 없으면 보내지 않는다. 다른 기기에서 이미 평가했으면(409) 평가는 끝난 것이므로 성공으로 본다.
- * 성공하면 고맙다는 스낵바를, 실패하면 오류 스낵바를 띄운다.
+ * 성공하면 고맙다는 스낵바를, 실패하면 오류 스낵바를 띄운다. 범위를 벗어난 별점은 보내지 않고 다시 고르라고 안내한다.
  */
 class SubmitAnalysisFeedbackUseCase @Inject constructor(
     private val repository: HistoryRepository,
@@ -32,7 +32,11 @@ class SubmitAnalysisFeedbackUseCase @Inject constructor(
         reason: AnalysisFeedbackReason?,
         comment: String,
     ): Result<Unit> {
-        require(ratingHalfSteps in RATING_HALF_STEPS) { "rating half steps out of range: $ratingHalfSteps" }
+        if (ratingHalfSteps !in RATING_HALF_STEPS) {
+            // 화면이 범위를 지켜 여기 올 일은 없지만, 어겨도 앱을 죽이지 않고 서버가 거절할 때와 같이 안내한다.
+            showError(HistoryErrorType.INVALID_RATING.errorMsg)
+            return Result.failure(IllegalArgumentException("rating half steps out of range: $ratingHalfSteps"))
+        }
         return try {
             repository.submitAnalysisFeedback(mealId, ratingHalfSteps, feedbackReasonOf(reason, comment))
             showThanks()
