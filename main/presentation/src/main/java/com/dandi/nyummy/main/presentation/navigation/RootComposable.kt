@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
@@ -114,12 +115,20 @@ fun RootComposable(
             )
         }
 
+        val drawsBehindSystemBars = currentRoute?.drawsBehindSystemBars == true
         Scaffold(
             modifier = modifier.fillMaxSize(),
             containerColor = NyummyTheme.colors.bg.canvas,
-            snackbarHost = { NyummySnackbarHost(snackBarHostState) },
+            snackbarHost = {
+                // Scaffold는 스낵바를 하단 탭 위나 contentWindowInsets의 하단 인셋만큼 올린다. 전체 화면 라우트는 인셋을 0으로
+                // 두고 하단 탭도 없어, 직접 올리지 않으면 스낵바가 시스템 내비게이션 바(3버튼) 뒤에 깔린다.
+                NyummySnackbarHost(
+                    hostState = snackBarHostState,
+                    modifier = if (drawsBehindSystemBars) Modifier.navigationBarsPadding() else Modifier,
+                )
+            },
             // 전체 화면 라우트는 시스템 바 뒤까지 그리고 인셋을 스스로 처리한다. 나머지는 Scaffold가 민다.
-            contentWindowInsets = if (currentRoute?.drawsBehindSystemBars == true) {
+            contentWindowInsets = if (drawsBehindSystemBars) {
                 WindowInsets(0, 0, 0, 0)
             } else {
                 ScaffoldDefaults.contentWindowInsets
