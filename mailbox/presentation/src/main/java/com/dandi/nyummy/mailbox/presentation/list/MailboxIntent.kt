@@ -10,6 +10,9 @@ sealed interface MailboxIntent : MviIntent {
 
     data object ClickBack : MailboxIntent
 
+    /** 목록 끝에 가까워졌다. 다음 묶음이 있으면 읽는다. */
+    data object ReachListEnd : MailboxIntent
+
     /** 상단 바나 빈 화면의 문의하기. */
     data object ClickWrite : MailboxIntent
 

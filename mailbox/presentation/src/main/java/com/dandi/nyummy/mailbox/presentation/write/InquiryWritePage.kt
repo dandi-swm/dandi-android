@@ -14,12 +14,14 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -31,6 +33,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySelectField
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextArea
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextField
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.mailbox.entity.InquiryCategory
@@ -92,6 +95,21 @@ internal fun InquiryWriteScreen(
                 value = stringResource(uiState.category.labelRes),
                 label = stringResource(R.string.mailbox_write_category_label),
                 onClick = { onIntent(InquiryWriteIntent.ClickCategory) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(NyummyTheme.spacing.s20))
+            NyummyTextField(
+                value = uiState.title,
+                // 서버가 받는 제목 길이까지만 받는다.
+                onValueChange = { onIntent(InquiryWriteIntent.ChangeTitle(it.take(TITLE_MAX_LENGTH))) },
+                label = stringResource(R.string.mailbox_write_title_label),
+                placeholder = stringResource(R.string.mailbox_write_title_placeholder),
+                errorMessage = if (uiState.isTitleEmptyError) {
+                    stringResource(R.string.mailbox_write_title_empty_error)
+                } else {
+                    null
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(NyummyTheme.spacing.s20))
@@ -164,12 +182,18 @@ private val ContentTopGap = 8.dp
 
 private val ContentMaxWidth = 480.dp
 
+/** 서버가 받는 문의 제목 최대 길이. */
+private const val TITLE_MAX_LENGTH = 100
+
 @Preview(showBackground = true, widthDp = 390, heightDp = 800)
 @Composable
 private fun InquiryWriteScreenPreview() {
     NyummyTheme {
         InquiryWriteScreen(
-            uiState = InquiryWriteUIState(content = "사진을 찍은 뒤 기록이 사라졌어요. 다시 찍어도 같은 문제가 있어요."),
+            uiState = InquiryWriteUIState(
+                title = "사진을 찍은 뒤 기록이 사라졌어요",
+                content = "다시 찍어도 같은 문제가 있어요.",
+            ),
             onIntent = {},
         )
     }
@@ -180,7 +204,7 @@ private fun InquiryWriteScreenPreview() {
 private fun InquiryWriteScreenErrorPreview() {
     NyummyTheme {
         InquiryWriteScreen(
-            uiState = InquiryWriteUIState(isContentEmptyError = true),
+            uiState = InquiryWriteUIState(isTitleEmptyError = true, isContentEmptyError = true),
             onIntent = {},
         )
     }

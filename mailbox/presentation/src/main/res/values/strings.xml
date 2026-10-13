@@ -16,6 +16,9 @@
     <string name="mailbox_write_title">문의하기</string>
     <string name="mailbox_write_reply_notice">답장은 우편함으로 보내 드려요</string>
     <string name="mailbox_write_category_label">문의 유형</string>
+    <string name="mailbox_write_title_label">제목</string>
+    <string name="mailbox_write_title_placeholder">문의 제목을 적어 주세요</string>
+    <string name="mailbox_write_title_empty_error">제목을 입력해 주세요</string>
     <string name="mailbox_write_content_label">문의 내용</string>
     <string name="mailbox_write_content_placeholder">어떤 점이 궁금하거나 불편했는지 알려 주세요</string>
     <string name="mailbox_write_content_empty_error">내용을 입력해 주세요</string>
