@@ -9,6 +9,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,10 +34,10 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.entity.meal.Meal
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
-import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialog
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialogType
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDivider
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyInlineNotice
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRow
@@ -52,6 +53,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.nyummyMealTim
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.settings.entity.LegalDocument
 import com.dandi.nyummy.settings.presentation.R
+import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
  * 설정. 알림(서비스 알림, 마케팅 알림, 식사 시간), 약관, 로그아웃.
@@ -115,16 +117,31 @@ internal fun SettingsScreen(
             NotificationSection(uiState, onIntent, onOpenDeviceSettings)
             LegalSection(onIntent)
             Spacer(Modifier.height(NyummyTheme.spacing.s24))
-            NyummyTextButton(
-                text = stringResource(R.string.settings_logout),
-                onClick = { onIntent(SettingsIntent.ClickLogout) },
-                tone = NyummyTextButtonTone.Danger,
-            )
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                NyummyTextButton(
+                    text = stringResource(R.string.settings_logout),
+                    onClick = { onIntent(SettingsIntent.ClickLogout) },
+                    tone = NyummyTextButtonTone.Danger,
+                )
+                NyummyTextButton(
+                    text = stringResource(R.string.settings_withdraw),
+                    onClick = { onIntent(SettingsIntent.ClickWithdraw) },
+                    tone = NyummyTextButtonTone.Neutral,
+                    size = NyummyTextButtonSize.S,
+                )
+            }
+
         }
     }
 
     uiState.notificationDetail?.let { kind ->
-        NotificationDetailSheet(kind = kind, onDismiss = { onIntent(SettingsIntent.DismissNotificationDetail) })
+        NotificationDetailSheet(
+            kind = kind, onDismiss = { onIntent(SettingsIntent.DismissNotificationDetail) })
     }
 
     if (uiState.isLogoutDialogVisible) {
@@ -136,6 +153,19 @@ internal fun SettingsScreen(
             onDismissRequest = { onIntent(SettingsIntent.DismissLogoutDialog) },
             confirmEnabled = !uiState.isLoggingOut,
             dismissEnabled = !uiState.isLoggingOut,
+        )
+    }
+
+    if (uiState.isWithdrawDialogVisible) {
+        NyummyDialog(
+            title = stringResource(R.string.settings_withdraw_dialog_title),
+            body = stringResource(R.string.settings_withdraw_dialog_body),
+            confirmText = stringResource(R.string.settings_withdraw_dialog_confirm),
+            onConfirm = { onIntent(SettingsIntent.ConfirmWithdraw) },
+            onDismissRequest = { onIntent(SettingsIntent.DismissWithdrawDialog) },
+            type = NyummyDialogType.Destructive,
+            confirmEnabled = !uiState.isWithdrawing,
+            dismissEnabled = !uiState.isWithdrawing,
         )
     }
 }
@@ -231,17 +261,22 @@ private val NotificationKind.disclosure: NotificationDisclosure
             title = R.string.settings_notification_service,
             purpose = R.string.settings_push_service_purpose,
             contents = listOf(
-                IncludedPush(R.string.settings_push_meal_time, R.string.settings_push_meal_time_desc),
+                IncludedPush(
+                    R.string.settings_push_meal_time, R.string.settings_push_meal_time_desc
+                ),
                 IncludedPush(R.string.settings_push_analysis, R.string.settings_push_analysis_desc),
             ),
             optOutLabel = R.string.settings_push_service_opt_out_label,
             optOut = R.string.settings_push_service_opt_out,
         )
+
         NotificationKind.MARKETING -> NotificationDisclosure(
             title = R.string.settings_notification_marketing,
             purpose = R.string.settings_push_marketing_purpose,
             contents = listOf(
-                IncludedPush(R.string.settings_push_retention, R.string.settings_push_retention_desc),
+                IncludedPush(
+                    R.string.settings_push_retention, R.string.settings_push_retention_desc
+                ),
             ),
             optOutLabel = R.string.settings_push_marketing_opt_out_label,
             optOut = R.string.settings_push_marketing_opt_out,
@@ -267,7 +302,10 @@ private fun NotificationDetailSheet(kind: NotificationKind, onDismiss: () -> Uni
                 Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12)) {
                     disclosure.contents.forEach { push ->
                         Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2)) {
-                            NyummyText(text = stringResource(push.name), style = NyummyTheme.typography.labelMStrong)
+                            NyummyText(
+                                text = stringResource(push.name),
+                                style = NyummyTheme.typography.labelMStrong
+                            )
                             NyummyText(
                                 text = stringResource(push.description),
                                 style = NyummyTheme.typography.bodyS,
@@ -337,9 +375,14 @@ private fun mealTimesSummary(mealTimes: MealTimesVO): String {
 /** 이 앱의 기기 알림 설정 화면을 연다. Android 8 미만은 앱 정보 화면으로 간다. */
 private fun openNotificationSettings(context: Context) {
     val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(
+            Settings.EXTRA_APP_PACKAGE, context.packageName
+        )
     } else {
-        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+        Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.fromParts("package", context.packageName, null)
+        )
     }
     runCatching { context.startActivity(intent) }
 }
@@ -347,7 +390,13 @@ private fun openNotificationSettings(context: Context) {
 /** 브라우저로 연다. 주소가 없거나 열 앱이 없으면 false. */
 private fun openUrl(context: Context, url: String): Boolean {
     if (url.isBlank()) return false
-    return runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }.isSuccess
+    return runCatching {
+        context.startActivity(
+            Intent(
+                Intent.ACTION_VIEW, Uri.parse(url)
+            )
+        )
+    }.isSuccess
 }
 
 private val ContentMaxWidth = 480.dp
@@ -356,7 +405,10 @@ private val ContentMaxWidth = 480.dp
 @Composable
 private fun SettingsScreenPreview() {
     NyummyTheme {
-        SettingsScreen(uiState = SettingsUIState(isLoaded = true), onIntent = {}, onOpenDeviceSettings = {})
+        SettingsScreen(
+            uiState = SettingsUIState(isLoaded = true),
+            onIntent = {},
+            onOpenDeviceSettings = {})
     }
 }
 

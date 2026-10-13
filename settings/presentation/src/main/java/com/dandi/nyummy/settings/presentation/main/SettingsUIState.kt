@@ -14,6 +14,7 @@ import com.dandi.nyummy.settings.entity.NotificationSettingsVO
  * @property pendingLegalDocument 화면이 브라우저로 열어야 할 약관. 열어 본 뒤 비운다.
  * @property mealTimes 평소 식사 시각. 서버에서 읽기 전이거나 한 번도 읽지 못했으면 null이고, 요약 줄을 비운다.
  * @property isLoggingOut 로그아웃 요청 중. 다이얼로그 버튼을 막는다.
+ * @property isWithdrawing 탈퇴 요청 중. 다이얼로그 버튼을 막는다.
  */
 data class SettingsUIState(
     val isLoaded: Boolean = false,
@@ -24,6 +25,8 @@ data class SettingsUIState(
     val pendingLegalDocument: LegalDocument? = null,
     val isLogoutDialogVisible: Boolean = false,
     val isLoggingOut: Boolean = false,
+    val isWithdrawDialogVisible: Boolean = false,
+    val isWithdrawing: Boolean = false,
 ) : UiState {
 
     companion object {

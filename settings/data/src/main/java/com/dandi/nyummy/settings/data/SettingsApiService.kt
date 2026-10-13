@@ -5,6 +5,7 @@ import com.dandi.nyummy.settings.data.dto.PushSettingDTO
 import com.dandi.nyummy.settings.data.dto.UserProfileDTO
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.PUT
@@ -26,6 +27,10 @@ interface SettingsApiService {
     /** 알림 수신 설정을 바꾼다. 담은 항목만 바뀌고 빠진 항목은 그대로다. 성공은 본문 없는 200. */
     @PATCH("$USERS_ME_PATH/push")
     suspend fun updatePushSetting(@Body request: PushSettingDTO): Response<Unit>
+
+    /** 회원 탈퇴. 되돌릴 수 없다. 성공은 본문 없는 204. */
+    @DELETE(USERS_ME_PATH)
+    suspend fun withdraw(): Response<Unit>
 
     companion object {
         const val USERS_ME_PATH = "/api/v1/users/me"

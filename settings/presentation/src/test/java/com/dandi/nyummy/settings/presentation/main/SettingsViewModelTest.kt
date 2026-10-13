@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
 import com.dandi.nyummy.settings.domain.UpdateNotificationSettingsUseCase
+import com.dandi.nyummy.settings.domain.WithdrawUseCase
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import com.dandi.nyummy.settings.presentation.FakeAuthRepository
@@ -53,6 +54,14 @@ class SettingsViewModelTest {
                 FakeTTIHelper,
             ),
             logout = LogoutUseCase(FakeAuthRepository, FakePushTokenHelper, navigationHelper),
+            withdraw = WithdrawUseCase(
+                repository,
+                FakePushTokenHelper,
+                FakeResourceHelper,
+                messageHelper,
+                navigationHelper,
+                FakeTTIHelper,
+            ),
             navigationHelper = navigationHelper,
             messageHelper = messageHelper,
         )
@@ -278,5 +287,46 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertTrue(state.isLoaded)
+    }
+
+    @Test
+    fun `회원 탈퇴를 누르면 확인 다이얼로그를 띄우고 닫기로 닫는다`() = runTest(testDispatcher) {
+        viewModel.onIntent(SettingsIntent.ClickWithdraw)
+        assertTrue(state.isWithdrawDialogVisible)
+
+        viewModel.onIntent(SettingsIntent.DismissWithdrawDialog)
+        assertFalse(state.isWithdrawDialogVisible)
+        assertEquals(0, repository.withdrawCount)
+    }
+
+    @Test
+    fun `탈퇴하는 동안은 다이얼로그를 닫지 못하고 다시 눌러도 한 번만 보낸다`() = runTest(testDispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        repository.withdrawResponse = { gate.await() }
+        viewModel.onIntent(SettingsIntent.ClickWithdraw)
+
+        viewModel.onIntent(SettingsIntent.ConfirmWithdraw)
+        viewModel.onIntent(SettingsIntent.ConfirmWithdraw)
+        viewModel.onIntent(SettingsIntent.DismissWithdrawDialog)
+        advanceUntilIdle()
+
+        assertTrue(state.isWithdrawing)
+        assertTrue(state.isWithdrawDialogVisible)
+        assertEquals(1, repository.withdrawCount)
+        gate.complete(Unit)
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `탈퇴하지 못하면 다이얼로그를 닫아 오류 스낵바가 보이게 한다`() = runTest(testDispatcher) {
+        repository.withdrawResponse = { throw IOException("offline") }
+        viewModel.onIntent(SettingsIntent.ClickWithdraw)
+
+        viewModel.onIntent(SettingsIntent.ConfirmWithdraw)
+        advanceUntilIdle()
+
+        assertFalse(state.isWithdrawing)
+        assertFalse(state.isWithdrawDialogVisible)
+        assertEquals(WithdrawUseCase.WITHDRAW_FAILED_MESSAGE, messageHelper.snackBars.single().messageText)
     }
 }

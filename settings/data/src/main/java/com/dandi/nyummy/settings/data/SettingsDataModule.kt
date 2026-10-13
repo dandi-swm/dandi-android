@@ -1,5 +1,6 @@
 package com.dandi.nyummy.settings.data
 
+import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.settings.domain.SettingsRepository
 import dagger.Module
 import dagger.Provides
@@ -24,6 +25,8 @@ object SettingsDataModule {
 
     @Provides
     @Singleton
-    fun provideSettingsRepository(remoteDataSource: SettingsRemoteDataSource): SettingsRepository =
-        SettingsRepositoryImpl(remoteDataSource)
+    fun provideSettingsRepository(
+        remoteDataSource: SettingsRemoteDataSource,
+        tokenProvider: TokenProvider,
+    ): SettingsRepository = SettingsRepositoryImpl(remoteDataSource, tokenProvider)
 }

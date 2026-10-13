@@ -37,6 +37,10 @@
     <string name="settings_logout_dialog_title">로그아웃할까요?</string>
     <string name="settings_logout_dialog_body">기록은 계정에 안전하게 저장돼 있어요.</string>
     <string name="settings_logout_dialog_confirm">로그아웃하기</string>
+    <string name="settings_withdraw">회원 탈퇴</string>
+    <string name="settings_withdraw_dialog_title">정말 탈퇴할까요?</string>
+    <string name="settings_withdraw_dialog_body">탈퇴하면 식사 기록과 고양이, 코인까지 모든 정보가 사라지고 다시 되돌릴 수 없어요.\n\n회원님의 개인 정보는 안전하게 파기해요.</string>
+    <string name="settings_withdraw_dialog_confirm">탈퇴하기</string>
     <string name="settings_meal_time_title">식사 시간</string>
     <string name="settings_meal_time_save">저장</string>
 </resources>

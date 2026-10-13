@@ -22,4 +22,9 @@ sealed interface SettingsReducerEvent : ReducerEvent {
     data class LegalLinkRequested(val document: LegalDocument?) : SettingsReducerEvent
     data class LogoutDialogVisibilityChanged(val visible: Boolean) : SettingsReducerEvent
     data object LoggingOut : SettingsReducerEvent
+    data class WithdrawDialogVisibilityChanged(val visible: Boolean) : SettingsReducerEvent
+    data object Withdrawing : SettingsReducerEvent
+
+    /** 탈퇴하지 못했다. 오류 스낵바가 다이얼로그 창에 가려지지 않게 다이얼로그도 닫는다. */
+    data object WithdrawFailed : SettingsReducerEvent
 }

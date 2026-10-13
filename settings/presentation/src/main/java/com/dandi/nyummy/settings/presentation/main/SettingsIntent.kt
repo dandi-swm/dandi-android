@@ -39,4 +39,11 @@ sealed interface SettingsIntent : MviIntent {
     data object DismissLogoutDialog : SettingsIntent
 
     data object ConfirmLogout : SettingsIntent
+
+    /** "회원 탈퇴"를 눌렀다. 되돌릴 수 없다는 확인 다이얼로그를 띄운다. */
+    data object ClickWithdraw : SettingsIntent
+
+    data object DismissWithdrawDialog : SettingsIntent
+
+    data object ConfirmWithdraw : SettingsIntent
 }
