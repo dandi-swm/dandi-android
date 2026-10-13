@@ -45,10 +45,14 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
@@ -70,6 +74,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextBut
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
+import com.dandi.nyummy.legal.entity.LegalDocument
 import com.dandi.nyummy.common.presentation.R as CommonR
 import kotlin.math.roundToInt
 
@@ -212,7 +217,7 @@ private fun LoginCard(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         LoginSocialCircles(enabled = enabled, onIntent = onIntent)
-        LoginTermsNotice()
+        LoginTermsNotice(enabled = enabled, onIntent = onIntent)
         if (uiState.isTestLoginAvailable) {
             NyummyTextButton(
                 text = stringResource(R.string.auth_login_test_account),
@@ -300,15 +305,20 @@ private fun SocialCircle(
 /**
  * "계속하면 [이용약관] 및 [개인정보처리방침]에 동의하게 됩니다." 고지.
  * 한 문장으로 조합해 자동 줄바꿈되므로 긴 로케일에서도 잘리지 않고, 링크 부분만 밑줄과 진한 글자로 둔다.
+ * 링크를 누르면 앱 안의 약관 화면으로 간다. 로그인이 진행 중이면([enabled] false) 누를 수 없다.
  */
 @Composable
-private fun LoginTermsNotice() {
+private fun LoginTermsNotice(enabled: Boolean, onIntent: (LoginIntent) -> Unit) {
     val link = SpanStyle(textDecoration = TextDecoration.Underline, color = NyummyTheme.colors.content.secondary)
     val notice = buildAnnotatedString {
         append(stringResource(R.string.auth_login_terms_prefix))
-        withStyle(link) { append(stringResource(R.string.auth_login_terms_service)) }
+        appendLegalLink(stringResource(R.string.auth_login_terms_service), link, enabled) {
+            onIntent(LoginIntent.ClickLegal(LegalDocument.TERMS))
+        }
         append(stringResource(R.string.auth_login_terms_and))
-        withStyle(link) { append(stringResource(R.string.auth_login_terms_privacy)) }
+        appendLegalLink(stringResource(R.string.auth_login_terms_privacy), link, enabled) {
+            onIntent(LoginIntent.ClickLegal(LegalDocument.PRIVACY))
+        }
         append(stringResource(R.string.auth_login_terms_suffix))
     }
     NyummyText(
@@ -318,6 +328,22 @@ private fun LoginTermsNotice() {
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth(),
     )
+}
+
+/** 약관 링크 한 개. 누를 수 없을 때는 모양만 남긴다. */
+private fun AnnotatedString.Builder.appendLegalLink(
+    text: String,
+    style: SpanStyle,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    if (!enabled) {
+        withStyle(style) { append(text) }
+        return
+    }
+    withLink(LinkAnnotation.Clickable(tag = text, styles = TextLinkStyles(style = style)) { onClick() }) {
+        append(text)
+    }
 }
 
 /**

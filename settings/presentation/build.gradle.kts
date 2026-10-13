@@ -61,6 +61,8 @@ dependencies {
     implementation(project(":settings:entity"))
     implementation(project(":auth:domain"))
     implementation(project(":common:presentation"))
+    // 약관 화면으로 이동(LegalPage)
+    implementation(project(":legal:domain"))
 
     implementation(libs.androidx.lifecycle.runtime.compose)
 

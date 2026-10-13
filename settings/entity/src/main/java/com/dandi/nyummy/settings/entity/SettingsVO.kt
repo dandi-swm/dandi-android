@@ -51,9 +51,3 @@ data class SettingsVO(
         val default = SettingsVO()
     }
 }
-
-/** 설정에서 여는 약관 문서. */
-enum class LegalDocument {
-    TERMS,
-    PRIVACY,
-}

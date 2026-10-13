@@ -184,6 +184,10 @@ dependencies {
     implementation(project(":achievement:domain"))
     implementation(project(":achievement:data"))
     implementation(project(":achievement:entity"))
+    implementation(project(":legal:presentation"))
+    implementation(project(":legal:domain"))
+    implementation(project(":legal:data"))
+    implementation(project(":legal:entity"))
 
     implementation(project(":auth:presentation"))
     implementation(project(":auth:domain"))

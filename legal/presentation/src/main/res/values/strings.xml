@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="legal_terms_title">Terms of Service</string>
+    <string name="legal_privacy_title">Privacy Policy</string>
+    <string name="legal_loading">Loading</string>
+    <string name="legal_error_voice">Hmm, I couldn\'t open it</string>
+    <string name="legal_error_message">Check your internet connection and try again.</string>
+    <string name="legal_retry">Try again</string>
+    <string name="legal_account_deletion_title">Account Deletion</string>
+</resources>

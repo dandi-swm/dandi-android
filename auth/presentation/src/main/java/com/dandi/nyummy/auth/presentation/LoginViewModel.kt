@@ -8,6 +8,7 @@ import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.auth.presentation.social.SocialLoginResult
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
+import com.dandi.nyummy.legal.domain.LegalPage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -31,6 +32,7 @@ class LoginViewModel @Inject constructor(
             LoginIntent.SocialLoginBackPressed -> abandonSocialLogin()
             LoginIntent.ClickEmailLogin -> emailLogin()
             LoginIntent.ClickTestLogin -> testLogin()
+            is LoginIntent.ClickLegal -> navigationHelper.navigateTo(LegalPage(intent.document))
         }
     }
 

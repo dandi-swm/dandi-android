@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,7 +50,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextBut
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.component.nyummyMealTimeText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
-import com.dandi.nyummy.settings.entity.LegalDocument
+import com.dandi.nyummy.legal.entity.LegalDocument
 import com.dandi.nyummy.settings.presentation.R
 import com.dandi.nyummy.common.presentation.R as CommonR
 
@@ -72,12 +71,6 @@ fun SettingsPage(
         val enabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
         viewModel.onIntent(SettingsIntent.ScreenResumed(isDeviceNotificationEnabled = enabled))
         onPauseOrDispose { }
-    }
-
-    LaunchedEffect(uiState.pendingLegalDocument) {
-        val document = uiState.pendingLegalDocument ?: return@LaunchedEffect
-        val opened = openUrl(context, document.url)
-        viewModel.onIntent(SettingsIntent.LegalLinkHandled(document, opened))
     }
 
     SettingsScreen(
@@ -385,18 +378,6 @@ private fun openNotificationSettings(context: Context) {
         )
     }
     runCatching { context.startActivity(intent) }
-}
-
-/** 브라우저로 연다. 주소가 없거나 열 앱이 없으면 false. */
-private fun openUrl(context: Context, url: String): Boolean {
-    if (url.isBlank()) return false
-    return runCatching {
-        context.startActivity(
-            Intent(
-                Intent.ACTION_VIEW, Uri.parse(url)
-            )
-        )
-    }.isSuccess
 }
 
 private val ContentMaxWidth = 480.dp
