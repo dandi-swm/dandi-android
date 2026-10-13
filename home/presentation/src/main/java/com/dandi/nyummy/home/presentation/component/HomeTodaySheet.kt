@@ -12,16 +12,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadgeTone
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyFoodIcon
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMealRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMealRowPlaceholder
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyNutrient
@@ -39,7 +39,6 @@ import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.home.presentation.R
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
  * 오늘 식사 시트. "오늘 식사", 기록 횟수, 탄단지 합계, 오늘의 식사 목록, "식사 추가하기".
@@ -104,7 +103,7 @@ private fun TodayMealsContent(nutrition: DailyNutritionVO, meals: ImmutableList<
     }
 }
 
-/** 식사 한 줄. 분석 중이거나 실패한 기록은 이름 대신 상태 문구와 냐미를 보여 준다. */
+/** 식사 한 줄. 분석이 끝난 기록은 음식 아이콘을, 분석 중이거나 실패한 기록은 이름 대신 상태 문구와 냐미를 보여 준다. */
 @Composable
 private fun TodayMealRow(meal: MealHistoryVO) {
     val time = mealTimeText(meal.recordedAt)
@@ -127,16 +126,8 @@ private fun TodayMealRow(meal: MealHistoryVO) {
             title = meal.name,
             subtitle = time,
             leading = {
-                if (meal.photoUrl.isNotBlank()) {
-                    AsyncImage(
-                        model = meal.photoUrl,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.matchParentSize(),
-                    )
-                } else {
-                    NyummyMealRowPlaceholder()
-                }
+                // 일일 API에는 사진이 없어 음식 아이콘을 쓴다. 아이콘이 없거나 받지 못하면 카메라 placeholder를 보여 준다.
+                NyummyFoodIcon(foodIconId = meal.foodIconId, placeholder = { NyummyMealRowPlaceholder() })
             },
         )
     }

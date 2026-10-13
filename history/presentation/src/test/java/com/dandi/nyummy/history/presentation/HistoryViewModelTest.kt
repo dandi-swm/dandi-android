@@ -487,6 +487,38 @@ class HistoryViewModelTest {
     }
 
     @Test
+    fun `식사를 지운 뒤 캘린더 칸 아이콘은 아이콘이 있는 식사에서만 고른다`() = runTest(testDispatcher) {
+        val today = todayDate()
+        repository.monthlyOverride = { year, month ->
+            HistoryCalendarVO(
+                year = year,
+                month = month,
+                days = listOf(HistoryCalendarDayVO(date = today, foodIconIds = listOf("5", "9"), mealCount = 3)),
+            )
+        }
+        repository.dailyOverride = { _, _, _ ->
+            DailyMealHistoryVO(
+                meals = listOf(
+                    MealHistoryVO(id = "1", name = "김밥", foodIconId = "5", orderIndex = 1),
+                    MealHistoryVO(id = "2", orderIndex = 2, status = MealAnalysisStatus.FAILED),
+                    MealHistoryVO(id = "3", name = "라면", foodIconId = "9", orderIndex = 3),
+                ),
+            )
+        }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ClickMeal("1"))
+        viewModel.onIntent(HistoryIntent.ClickDeleteMeal)
+        viewModel.onIntent(HistoryIntent.ConfirmDeleteMeal)
+        advanceUntilIdle()
+
+        val cell = viewModel.uiState.value.calendarDays.single { it.inCurrentMonth && it.date == today }
+        assertTrue(cell.hasRecord)
+        assertEquals(listOf("9"), cell.foodIconIds)
+    }
+
+    @Test
     fun `재분석을 요청하면 그 식사만 분석 중으로 바뀐다`() = runTest(testDispatcher) {
         repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal() }
         val viewModel = createViewModel()

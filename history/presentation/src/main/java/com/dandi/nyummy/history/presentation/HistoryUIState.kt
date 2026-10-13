@@ -137,7 +137,8 @@ data class HistoryUIState(
         if (selectedDayMeals.none { it.id == mealId }) return copy(mealDetail = closedDetail)
         val remaining = selectedDayMeals.filterNot { it.id == mealId }.withCompletedMealOrder()
         val totalCalorie = remaining.sumOf { it.calorieKcal }
-        val cellIcons = remaining.take(2).map { it.foodIconId }.toImmutableList()
+        // 분석 전이거나 실패한 식사는 아이콘이 없다(빈 값). 아이콘이 있는 식사에서만 두 개를 고른다.
+        val cellIcons = remaining.map { it.foodIconId }.filter { it.isNotBlank() }.take(2).toImmutableList()
         val selectedMonth = HistoryMonth.of(selectedDate)
         val updatedDays = calendarDaysOf(selectedMonth).map { cell ->
             if (cell.inCurrentMonth && cell.date == selectedDate) {

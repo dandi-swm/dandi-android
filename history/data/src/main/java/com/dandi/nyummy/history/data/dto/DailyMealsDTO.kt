@@ -1,5 +1,6 @@
 package com.dandi.nyummy.history.data.dto
 
+import com.dandi.nyummy.history.data.util.foodIconIdOf
 import com.dandi.nyummy.history.data.util.toDisplayTime
 import com.dandi.nyummy.history.data.util.toHistoryDateVO
 import com.dandi.nyummy.history.data.util.toKstEpochMillisOrNull
@@ -49,6 +50,7 @@ data class DailyMealsDTO(
  * @property protein 단백질(g)
  * @property fat 지방(g)
  * @property status 영양 분석 상태 (WAITING / ANALYZING / COMPLETED / FAILED / UNKNOWN)
+ * @property iconId 음식 픽셀 아이콘 식별자. 분석 전이거나 실패한 식사에도 서버 기본값(1)이 온다.
  */
 @Serializable
 data class DailyMealDTO(
@@ -60,21 +62,25 @@ data class DailyMealDTO(
     val protein: Int? = null,
     val fat: Int? = null,
     val status: String? = null,
+    val iconId: Long? = null,
 ) {
-    // 일일 API 는 음식 아이콘/사진 URL 을 내려주지 않는다(UI 브랜치에서 보완 예정).
-    fun toVO(orderIndex: Int): MealHistoryVO = MealHistoryVO(
-        id = mealId?.toString() ?: "",
-        name = name ?: "",
-        photoUrl = "",
-        foodIconId = "",
-        recordedAt = mealAt.toDisplayTime(),
-        calorieKcal = calory ?: 0,
-        carbohydrateGram = carbs ?: 0,
-        proteinGram = protein ?: 0,
-        fatGram = fat ?: 0,
-        orderIndex = orderIndex,
-        status = status.toMealAnalysisStatus(),
-    )
+    // 일일 API는 사진 URL을 내려주지 않는다. 음식 아이콘은 분석이 끝난 식사만 쓴다([foodIconIdOf]).
+    fun toVO(orderIndex: Int): MealHistoryVO {
+        val analysisStatus = status.toMealAnalysisStatus()
+        return MealHistoryVO(
+            id = mealId?.toString() ?: "",
+            name = name ?: "",
+            photoUrl = "",
+            foodIconId = foodIconIdOf(iconId, analysisStatus),
+            recordedAt = mealAt.toDisplayTime(),
+            calorieKcal = calory ?: 0,
+            carbohydrateGram = carbs ?: 0,
+            proteinGram = protein ?: 0,
+            fatGram = fat ?: 0,
+            orderIndex = orderIndex,
+            status = analysisStatus,
+        )
+    }
 }
 
 /**

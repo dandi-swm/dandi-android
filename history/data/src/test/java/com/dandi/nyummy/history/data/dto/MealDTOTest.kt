@@ -43,4 +43,11 @@ class MealDTOTest {
         assertEquals(HistoryDateVO(2026, 9, 30), MealDTO(mealAt = "2026-09-29T16:30:00Z").toVO().date)
         assertEquals(HistoryDateVO.empty, MealDTO(mealId = 1).toVO().date)
     }
+
+    @Test
+    fun `분석이 끝나지 않은 식사는 서버 기본 아이콘을 버린다`() {
+        val vo = MealDTO(mealId = 7, status = "FAILED", iconId = 1).toVO()
+
+        assertEquals("", vo.foodIconId)
+    }
 }

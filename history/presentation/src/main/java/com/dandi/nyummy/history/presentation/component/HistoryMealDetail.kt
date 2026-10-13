@@ -31,12 +31,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCoachCard
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialog
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialogType
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyFoodIcon
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyNutrient
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyNutrientStat
@@ -54,7 +56,6 @@ import com.dandi.nyummy.history.presentation.R
 import com.dandi.nyummy.history.presentation.model.dayLabelOf
 import com.dandi.nyummy.history.presentation.model.meridiemTimeOf
 import com.dandi.nyummy.history.presentation.model.numberLabelOf
-import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
  * 식사 하나의 상세와 이름 수정, 삭제 확인.
@@ -184,7 +185,7 @@ private fun MealPhoto(meal: MealHistoryVO) {
     ) {
         if (meal.photoUrl.isBlank() || loadFailed) {
             Box(Modifier.size(PhotoFallbackIconSize)) {
-                HistoryFoodIcon(foodIconId = meal.foodIconId, sizeFraction = 1f)
+                NyummyFoodIcon(foodIconId = meal.foodIconId)
             }
         } else {
             AsyncImage(
