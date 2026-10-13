@@ -32,7 +32,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  
 5. **DTO/VO**: DTO는 `@Serializable`+전 필드 nullable, VO는 비-nullable+기본값. 변환은 data 레이어 `toVO()`에서만.
 6. **에러**: data는 `HttpResponseException` throw만, 처리(다이얼로그/네비게이션)는 domain UseCase에서 `isCommonErrorHandling()`/`handlingErrorOnUseCase<ErrorType>()`로.
 7. **네비게이션**: 화면 이동은 `navigationHelper.navigateTo(Page)`만. 새 화면은 `AppRouteRegistry.kt`에 등록.
-8. **시간/타임존**: 모든 날짜·시각은 **KST 고정** — `common/entity/.../time/KstTime.kt`만 사용. 서버 시간 문자열 → KST 변환은 data 레이어 `toVO()`에서만, VO에는 변환이 끝난 값만. `Calendar.getInstance()`/`TimeZone.getDefault()`로 날짜·시각 계산 금지(기기 타임존 오염). `java.time`은 desugaring 미적용(minSdk 24)이라 사용 금지 — 다국가 타임존 요구가 생기면 그때 desugaring 전환.
+8. **시간/타임존**: 서버와는 UTC 순간(ISO + 오프셋)으로 주고받고, 화면 표시·"오늘" 판정만 **기기 타임존**으로 한다. 기기 타임존은 `common/entity/.../time/DeviceTime.kt`로만 읽는다(`DeviceTime.zone()`/`today()`/`parseIsoOrNull()`) — 호출부에서 `ZoneId.systemDefault()`/`TimeZone.getDefault()`/`Calendar.getInstance()`를 직접 쓰지 않는다. 서버 시간 문자열 → 기기 타임존 변환은 data 레이어 `toVO()`에서만, VO에는 변환이 끝난 값만. 날짜 계산은 `java.time`(core library desugaring 적용, 모든 Android 모듈에 `coreLibraryDesugaring` 선언)을 쓴다. 서버는 `X-Timezone-Id` 헤더(`CommonHeaderInterceptor`)의 타임존으로 하루를 끊는다.
 9. **이미지 로딩**: Coil 의존성은 `common:presentation`에서만 `api`로 노출, ImageLoader 설정은 `common/presentation/.../image/NyummyImageLoaderFactory.kt` 한 곳(presigned URL 캐시 키 정규화 포함). feature 모듈에 coil 의존 개별 선언 금지.
 
 ## 네이밍
