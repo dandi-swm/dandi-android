@@ -13,6 +13,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -63,8 +64,8 @@ object NetworkModule {
             redactHeader(TokenAuthenticator.HEADER_AUTHORIZATION)
         }
         return OkHttpClient.Builder()
-            // 로깅보다 앞에 둬야 공통 헤더가 붙었는지 로그로 볼 수 있다.
-            .addInterceptor(CommonHeaderInterceptor(context, deviceHelper))
+            // 로깅보다 앞에 둬야 공통 헤더가 붙었는지 로그로 볼 수 있다. presigned URL 등 외부 호스트에는 붙지 않는다.
+            .addInterceptor(CommonHeaderInterceptor(context, deviceHelper, BuildConfig.API_BASE_URL.toHttpUrlOrNull()?.host))
             .addInterceptor(logging)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
