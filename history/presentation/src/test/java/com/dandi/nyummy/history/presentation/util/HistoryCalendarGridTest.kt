@@ -1,6 +1,6 @@
 package com.dandi.nyummy.history.presentation.util
 
-import com.dandi.nyummy.common.entity.time.KstTime
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.presentation.model.HistoryMonth
 import org.junit.After
@@ -9,13 +9,14 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.ZoneId
 import java.util.TimeZone
 
 class HistoryCalendarGridTest {
 
     private val originalTimeZone: TimeZone = TimeZone.getDefault()
 
-    /** 캘린더·오늘 계산이 기기 타임존과 무관해야 하므로, 일부러 KST 가 아닌 곳으로 바꿔 둔다. */
+    /** 캘린더 칸 계산은 기기 타임존과 무관해야 하므로, 일부러 서울이 아닌 곳으로 바꿔 둔다. */
     @Before
     fun setUp() {
         TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"))
@@ -76,20 +77,21 @@ class HistoryCalendarGridTest {
     }
 
     @Test
-    fun `오늘은 기기 타임존이 아니라 한국 기준이다`() {
-        // KST 2026-09-17 00:30 = LA 로는 아직 9/16 인 순간.
-        val kstMidnightish = KstTime.epochMillisOf(2026, 9, 17, 0, 30)
+    fun `오늘은 기기 타임존 기준이다`() {
+        // 서울 2026-09-17 00:30 = LA 로는 아직 9/16 인 순간.
+        val seoulAfterMidnight = DeviceTime.parseIsoToEpochMillisOrNull("2026-09-17T00:30:00+09:00")!!
 
-        assertEquals(HistoryDateVO(2026, 9, 17), todayDate(kstMidnightish))
+        assertEquals(HistoryDateVO(2026, 9, 16), todayDate(seoulAfterMidnight))
+        assertEquals(HistoryDateVO(2026, 9, 17), todayDate(seoulAfterMidnight, ZoneId.of("Asia/Seoul")))
     }
 
     @Test
-    fun `한국 자정 경계 전후로 날짜가 바뀐다`() {
-        val beforeKstMidnight = KstTime.epochMillisOf(2026, 9, 16, 23, 59)
-        val afterKstMidnight = KstTime.epochMillisOf(2026, 9, 17, 0, 0)
+    fun `기기 타임존 자정 경계 전후로 날짜가 바뀐다`() {
+        val beforeMidnight = DeviceTime.parseIsoToEpochMillisOrNull("2026-09-16T23:59:00-07:00")!!
+        val afterMidnight = DeviceTime.parseIsoToEpochMillisOrNull("2026-09-17T00:00:00-07:00")!!
 
-        assertEquals(HistoryDateVO(2026, 9, 16), todayDate(beforeKstMidnight))
-        assertEquals(HistoryDateVO(2026, 9, 17), todayDate(afterKstMidnight))
+        assertEquals(HistoryDateVO(2026, 9, 16), todayDate(beforeMidnight))
+        assertEquals(HistoryDateVO(2026, 9, 17), todayDate(afterMidnight))
     }
 
     @Test

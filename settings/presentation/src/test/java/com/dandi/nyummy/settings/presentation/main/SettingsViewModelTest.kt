@@ -1,8 +1,7 @@
 package com.dandi.nyummy.settings.presentation.main
 
 import com.dandi.nyummy.auth.domain.LogoutUseCase
-import com.dandi.nyummy.common.entity.time.KstDateTime
-import com.dandi.nyummy.common.entity.time.KstTime
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
@@ -33,6 +32,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
@@ -166,14 +166,14 @@ class SettingsViewModelTest {
     fun `마케팅 알림에 동의하거나 철회하면 처리한 날짜를 알린다`() = runTest(testDispatcher) {
         resume()
         advanceUntilIdle()
-        // 처리 사이에 KST 자정이 지나도 실패하지 않도록 전후 날짜를 모두 허용한다.
-        val before = dateLabel(KstTime.now())
+        // 처리 사이에 자정이 지나도 실패하지 않도록 전후 날짜를 모두 허용한다.
+        val before = dateLabel(DeviceTime.today())
 
         viewModel.onIntent(SettingsIntent.ToggleMarketingPush(true))
         advanceUntilIdle()
         viewModel.onIntent(SettingsIntent.ToggleMarketingPush(false))
         advanceUntilIdle()
-        val after = dateLabel(KstTime.now())
+        val after = dateLabel(DeviceTime.today())
 
         val messages = messageHelper.snackBars.map { it.messageText }
         assertEquals(2, messages.size)
@@ -227,7 +227,7 @@ class SettingsViewModelTest {
         assertTrue(state.notification.isMarketingEnabled)
     }
 
-    private fun dateLabel(time: KstDateTime) = "${time.year}년 ${time.month}월 ${time.day}일"
+    private fun dateLabel(date: LocalDate) = "${date.year}년 ${date.monthValue}월 ${date.dayOfMonth}일"
 
     @Test
     fun `저장에 실패하면 그 항목만 되돌리고 아직 저장 중인 다른 항목은 둔다`() = runTest(testDispatcher) {
