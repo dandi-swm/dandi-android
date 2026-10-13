@@ -3,12 +3,12 @@ package com.dandi.nyummy.meal.data
 import android.content.Context
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
-import com.dandi.nyummy.common.entity.time.KstDateTime
 import com.dandi.nyummy.meal.data.util.ensureJpegMealPhotoFile
-import com.dandi.nyummy.meal.data.util.takenAtKstOrNull
+import com.dandi.nyummy.meal.data.util.takenAtOrNull
 import com.dandi.nyummy.meal.domain.MealGalleryPhotoLoadException
 import java.io.File
 import java.io.InputStream
+import java.time.LocalDateTime
 
 /**
  * 갤러리에서 고른 사진(content URI)을 읽는 로컬 데이터소스.
@@ -20,10 +20,10 @@ class MealGalleryPhotoDataSource(
     private val context: Context,
 ) {
 
-    /** 사진 EXIF 의 촬영 시각을 KST 로 읽는다. 촬영 시각 정보가 없으면 null. */
-    fun readTakenAt(photoUri: String): KstDateTime? =
+    /** 사진 EXIF 의 촬영 시각을 기기 타임존 벽시계로 읽는다. 촬영 시각 정보가 없으면 null. */
+    fun readTakenAt(photoUri: String): LocalDateTime? =
         openPhoto(photoUri).use { input ->
-            runCatching { ExifInterface(input).takenAtKstOrNull() }.getOrNull()
+            runCatching { ExifInterface(input).takenAtOrNull() }.getOrNull()
         }
 
     /** 사진을 앱 캐시에 JPEG 파일로 복사하고 그 절대 경로를 돌려준다. */

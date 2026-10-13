@@ -4,10 +4,10 @@ import android.content.Context
 import android.os.Build
 import android.telephony.TelephonyManager
 import com.dandi.nyummy.common.domain.helper.DeviceHelper
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import okhttp3.Interceptor
 import okhttp3.Response
 import java.util.Locale
-import java.util.TimeZone
 
 /**
  * 자사 API 요청에 기기·환경 정보 공통 헤더 6종을 붙인다. 서버는 값이 없으면 null로 받으므로 빈 값은 보내지 않는다.
@@ -40,8 +40,7 @@ class CommonHeaderInterceptor(
         HEADER_OS_VERSION to "Android ${Build.VERSION.RELEASE}",
         HEADER_LANGUAGE to Locale.getDefault().language,
         HEADER_REGION to region(),
-        // 시각 계산이 아니라 서버에 기기 타임존을 알려 주는 용도라 기기 기본값을 그대로 읽는다.
-        HEADER_TIMEZONE_ID to TimeZone.getDefault().id,
+        HEADER_TIMEZONE_ID to DeviceTime.zone().id,
     )
 
     /**

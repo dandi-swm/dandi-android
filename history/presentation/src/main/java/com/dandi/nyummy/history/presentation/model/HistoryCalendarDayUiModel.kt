@@ -1,12 +1,13 @@
 package com.dandi.nyummy.history.presentation.model
 
 import androidx.compose.runtime.Immutable
-import com.dandi.nyummy.common.entity.time.KstTime
+import com.dandi.nyummy.common.entity.time.sundayBasedWeekday
 import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.presentation.util.buildCalendarCells
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import java.time.LocalDate
 import java.util.Locale
 
 /**
@@ -53,10 +54,8 @@ fun dayLabelOf(date: HistoryDateVO): String = "${date.month}월 ${date.day}일"
 
 /** "9월 8일 화요일" 형태로 요일까지 포함한 선택일 제목입니다. */
 fun dayTitleOf(date: HistoryDateVO): String {
-    // 기기 타임존에 의존하지 않는 순수 요일 계산(0 = 일요일).
-    val weekday = WEEKDAY_TITLE_LABELS[
-        KstTime.sundayBasedWeekdayOf(date.year, date.month, date.day),
-    ]
+    // 달력 날짜의 요일이라 타임존과 무관하다(0 = 일요일).
+    val weekday = WEEKDAY_TITLE_LABELS[LocalDate.of(date.year, date.month, date.day).sundayBasedWeekday]
     return "${dayLabelOf(date)} $weekday"
 }
 

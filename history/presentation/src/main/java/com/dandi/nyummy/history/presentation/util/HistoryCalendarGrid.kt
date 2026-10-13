@@ -1,8 +1,12 @@
 package com.dandi.nyummy.history.presentation.util
 
-import com.dandi.nyummy.common.entity.time.KstTime
+import com.dandi.nyummy.common.entity.time.DeviceTime
+import com.dandi.nyummy.common.entity.time.sundayBasedWeekday
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.presentation.model.HistoryMonth
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.ZoneId
 
 /** 캘린더 그리드 한 칸의 날짜와 표시 월 소속 여부입니다. */
 data class HistoryCalendarCell(
@@ -20,27 +24,27 @@ const val DAYS_IN_WEEK = 7
  * 다음 달 날짜만 있는 주는 그리지 않습니다.
  */
 fun buildCalendarCells(year: Int, month: Int): List<HistoryCalendarCell> {
-    // 날짜 산술은 epoch day 정수 연산으로 한다 — 기기 타임존/서머타임의 영향을 받지 않는다.
-    val firstEpochDay = KstTime.epochDayOf(year, month, 1)
-    val startEpochDay = firstEpochDay - KstTime.sundayBasedWeekdayOf(firstEpochDay)
+    // 달력 날짜 산술이라 타임존/서머타임의 영향을 받지 않는다.
+    val firstDay = LocalDate.of(year, month, 1)
+    val startDay = firstDay.minusDays(firstDay.sundayBasedWeekday.toLong())
 
     return List(weekCountOf(year, month) * DAYS_IN_WEEK) { index ->
-        val (cellYear, cellMonth, cellDay) = KstTime.civilOf(startEpochDay + index)
+        val cell = startDay.plusDays(index.toLong())
         HistoryCalendarCell(
-            date = HistoryDateVO(year = cellYear, month = cellMonth, day = cellDay),
-            inCurrentMonth = cellYear == year && cellMonth == month,
+            date = HistoryDateVO(year = cell.year, month = cell.monthValue, day = cell.dayOfMonth),
+            inCurrentMonth = cell.year == year && cell.monthValue == month,
         )
     }
 }
 
 /** 그 달 날짜가 걸쳐 있는 주 수(4~6). */
 fun weekCountOf(year: Int, month: Int): Int {
-    val leadingDays = KstTime.sundayBasedWeekdayOf(KstTime.epochDayOf(year, month, 1))
+    val leadingDays = LocalDate.of(year, month, 1).sundayBasedWeekday
     return (leadingDays + lastDayOf(year, month) + DAYS_IN_WEEK - 1) / DAYS_IN_WEEK
 }
 
 /** 해당 연/월의 말일(28~31)을 돌려줍니다. */
-fun lastDayOf(year: Int, month: Int): Int = KstTime.lengthOfMonth(year, month)
+fun lastDayOf(year: Int, month: Int): Int = YearMonth.of(year, month).lengthOfMonth()
 
 /** 기준 연/월의 이전 달 (연, 월) 쌍을 돌려줍니다. */
 fun previousMonthOf(year: Int, month: Int): Pair<Int, Int> =
@@ -51,15 +55,14 @@ fun nextMonthOf(year: Int, month: Int): Pair<Int, Int> =
     if (month == 12) year + 1 to 1 else year to month + 1
 
 /**
- * **한국 시각(KST) 기준** 오늘 날짜를 [HistoryDateVO]로 돌려줍니다.
+ * **기기 타임존 기준** 오늘 날짜를 [HistoryDateVO]로 돌려줍니다.
  *
- * 기기 타임존이 무엇이든 항상 한국 기준입니다 — 이 값이 그대로
- * `GET /meals/daily?year&month&day` 쿼리로 나가므로 서버의 날짜 구분과 일치해야 합니다.
- * [nowMillis] 는 테스트에서 시각을 고정하기 위한 훅입니다.
+ * 이 값이 그대로 `GET /meals/daily?year&month&day` 쿼리로 나가고, 서버는 `X-Timezone-Id` 헤더의
+ * 타임존으로 하루를 끊습니다. [nowMillis]·[zone] 은 테스트에서 시각을 고정하기 위한 훅입니다.
  */
-fun todayDate(nowMillis: Long = System.currentTimeMillis()): HistoryDateVO {
-    val now = KstTime.now(nowMillis)
-    return HistoryDateVO(year = now.year, month = now.month, day = now.day)
+fun todayDate(nowMillis: Long = System.currentTimeMillis(), zone: ZoneId = DeviceTime.zone()): HistoryDateVO {
+    val today = DeviceTime.today(nowMillis, zone)
+    return HistoryDateVO(year = today.year, month = today.monthValue, day = today.dayOfMonth)
 }
 
 /** 날짜가 다른 날짜보다 뒤인지(미래인지) 비교합니다. */

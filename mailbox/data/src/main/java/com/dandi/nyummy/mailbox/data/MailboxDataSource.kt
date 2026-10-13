@@ -1,7 +1,7 @@
 package com.dandi.nyummy.mailbox.data
 
 import android.content.Context
-import com.dandi.nyummy.common.entity.time.KstTime
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.mailbox.data.dto.InquiryDTO
 import com.dandi.nyummy.mailbox.data.dto.InquiryListResponseDTO
 import com.dandi.nyummy.mailbox.data.dto.SendInquiryRequestDTO
@@ -11,7 +11,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import java.util.Locale
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 /**
  * 서버 API가 생기기 전까지 쓰는 우편함 데이터 소스.
@@ -83,10 +84,9 @@ class MailboxDataSource(
         json.decodeFromString<InquiryListResponseDTO>(raw).inquiries.orEmpty()
     }
 
-    /** 서버가 줄 형태(KST 오프셋이 붙은 ISO)로 지금 시각을 만든다. */
-    private fun nowIso(): String = with(KstTime.now()) {
-        String.format(Locale.US, "%sT%02d:%02d:%02d+09:00", isoDate, hour, minute, second)
-    }
+    /** 서버가 줄 형태(오프셋이 붙은 ISO)로 지금 시각을 만든다. */
+    private fun nowIso(): String =
+        DeviceTime.now().truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
     companion object {
         const val HAPPY_CASE_ASSET = "mailbox_inquiries_happy_case.json"

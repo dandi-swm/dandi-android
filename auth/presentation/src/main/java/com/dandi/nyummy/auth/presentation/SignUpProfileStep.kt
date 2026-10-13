@@ -12,7 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.dandi.nyummy.auth.entity.Gender
-import com.dandi.nyummy.common.entity.time.KstTime
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyInlineNotice
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyInlineNoticeTone
@@ -171,7 +171,7 @@ private fun SectionGap() {
 private fun toTwoDigits(value: Int): String = "%02d".format(value)
 
 // 기기 타임존이 아니라 한국 기준 올해까지. 연말 자정 근처에서 한 해가 빠지지 않게 한다.
-private val BIRTH_YEAR_RANGE = 1900..KstTime.now().year
+private val BIRTH_YEAR_RANGE = 1900..DeviceTime.today().year
 private val MONTH_RANGE = 1..12
 private val HEIGHT_RANGE = 120..220
 private val WEIGHT_RANGE = 30..150

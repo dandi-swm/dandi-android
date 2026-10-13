@@ -1,6 +1,6 @@
 package com.dandi.nyummy.meal.domain
 
-import com.dandi.nyummy.common.entity.time.KstDateTime
+import java.time.LocalDateTime
 import com.dandi.nyummy.meal.entity.CreatedMealVO
 import com.dandi.nyummy.meal.entity.MealImageUploadVO
 import com.dandi.nyummy.meal.entity.MealPhotoSource
@@ -8,10 +8,10 @@ import com.dandi.nyummy.meal.entity.MealPhotoSource
 interface MealRecordRepository {
 
     /**
-     * 갤러리에서 고른 사진의 촬영 시각(KST)을 메타데이터에서 읽는다. 촬영 시각 정보가 없으면 null.
+     * 갤러리에서 고른 사진의 촬영 시각(기기 타임존 벽시계)을 메타데이터에서 읽는다. 촬영 시각 정보가 없으면 null.
      * 사진을 열 수 없으면 [MealGalleryPhotoLoadException] 을 던진다.
      */
-    suspend fun readGalleryPhotoTakenAt(photoUri: String): KstDateTime?
+    suspend fun readGalleryPhotoTakenAt(photoUri: String): LocalDateTime?
 
     /**
      * 갤러리에서 고른 사진을 앱 캐시에 JPEG 로 복사하고, 촬영본과 같은 형태의 파일 절대 경로를 돌려준다.
