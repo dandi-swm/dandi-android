@@ -118,6 +118,7 @@ internal fun InquiryWriteScreen(
                 onValueChange = { onIntent(InquiryWriteIntent.ChangeContent(it)) },
                 label = stringResource(R.string.mailbox_write_content_label),
                 placeholder = stringResource(R.string.mailbox_write_content_placeholder),
+                maxLength = CONTENT_MAX_LENGTH,
                 errorMessage = if (uiState.isContentEmptyError) {
                     stringResource(R.string.mailbox_write_content_empty_error)
                 } else {
@@ -184,6 +185,9 @@ private val ContentMaxWidth = 480.dp
 
 /** 서버가 받는 문의 제목 최대 길이. */
 private const val TITLE_MAX_LENGTH = 100
+
+/** 서버가 받는 문의 내용 최대 길이. */
+private const val CONTENT_MAX_LENGTH = 2_000
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 800)
 @Composable
