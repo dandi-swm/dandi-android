@@ -65,12 +65,12 @@ internal fun HomeHud(
             onClick = onMailClick,
             showDot = hasUnreadMail,
         )
-        HomeHudAction(
-            icon = CommonR.drawable.nyummy_ic_bell,
-            label = stringResource(R.string.home_action_notice),
-            onClick = onNoticeClick,
-            showDot = hasUnreadNotice,
-        )
+//        HomeHudAction(
+//            icon = CommonR.drawable.nyummy_ic_bell,
+//            label = stringResource(R.string.home_action_notice),
+//            onClick = onNoticeClick,
+//            showDot = hasUnreadNotice,
+//        )
         HomeHudAction(
             icon = CommonR.drawable.nyummy_ic_settings,
             label = stringResource(R.string.home_action_settings),
