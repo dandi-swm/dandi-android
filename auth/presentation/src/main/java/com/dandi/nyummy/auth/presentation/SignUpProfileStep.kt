@@ -7,10 +7,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
@@ -47,6 +49,7 @@ internal fun ColumnScope.SignUpProfileStep(
         errorMessage = uiState.nicknameError?.let { stringResource(it.messageRes()) },
         leadingIcon = CommonR.drawable.nyummy_ic_user_round,
         enabled = enabled,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         modifier = Modifier.fillMaxWidth(),
     )
     SectionGap()
