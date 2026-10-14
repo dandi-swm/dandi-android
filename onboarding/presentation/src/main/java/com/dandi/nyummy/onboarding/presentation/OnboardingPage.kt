@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -98,15 +99,17 @@ internal fun OnboardingScreen(
     ) {
         val density = LocalDensity.current
         var panelHeightPx by remember { mutableIntStateOf(0) }
-        val bottomInset = with(density) {
-            WindowInsets.navigationBars.union(WindowInsets.ime).getBottom(this).toDp()
-        }
-        val panelTop = maxHeight - bottomInset - PanelBottomGap - with(density) { panelHeightPx.toDp() }
+        val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
+        val panelHeight = with(density) { panelHeightPx.toDp() }
+        // 키보드가 떠 있는 동안 냐미는 키보드가 뜨기 직전 자리에 둔다. 패널을 따라가면 화면 위로 튀어 오른다.
+        val isImeVisible = WindowInsets.ime.getBottom(density) > 0
+        var stagePanelTop by remember { mutableStateOf(maxHeight) }
+        if (!isImeVisible) stagePanelTop = maxHeight - navBarInset - PanelBottomGap - panelHeight
 
         OnboardingStage(
             character = uiState.currentScene.character,
             isUserOnStage = uiState.isUserOnStage,
-            panelTop = panelTop,
+            panelTop = stagePanelTop,
         )
 
         if (uiState.isSkipVisible) {
