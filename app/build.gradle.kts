@@ -98,6 +98,8 @@ androidComponents {
         variant.manifestPlaceholders.put("firebasePerformanceCollectionEnabled", isReleaseBuild.toString())
         // 비정상 종료 보고(Crashlytics)도 release 에서만 보낸다. 개발 중 크래시가 실사용자 지표에 섞이지 않게 한다.
         variant.manifestPlaceholders.put("firebaseCrashlyticsCollectionEnabled", isReleaseBuild.toString())
+        // 평문 HTTP는 debug 에서만 허용한다(로컬 서버 등). 개발·운영 서버는 모두 HTTPS 라 그 밖의 빌드는 막는다.
+        variant.manifestPlaceholders.put("usesCleartextTraffic", (variant.buildType == "debug").toString())
     }
 }
 
