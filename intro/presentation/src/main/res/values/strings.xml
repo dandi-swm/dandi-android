@@ -13,6 +13,6 @@
     <string name="intro_permission_notification">알림</string>
     <string name="intro_permission_notification_desc">식단 기록 리마인드 알림에 사용해요</string>
     <string name="intro_permission_optional">선택</string>
-    <string name="intro_permission_notice">허용하지 않아도 서비스를 이용할 수 있으며, 필요한 시점에 다시 요청할 수 있어요.</string>
+    <string name="intro_permission_notice">허용하지 않아도 서비스를 이용할 수 있어요. 권한은 그 기능을 쓸 때 여쭤보고, 기기 설정 &gt; 애플리케이션 &gt; 냐미 &gt; 권한에서 언제든 바꿀 수 있어요.</string>
     <string name="intro_permission_confirm">확인</string>
 </resources>

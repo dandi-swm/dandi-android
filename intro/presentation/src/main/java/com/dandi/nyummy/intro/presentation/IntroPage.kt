@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
 
 /**
  * 앱 시작 부트스트랩 화면. 시작 게이트가 도는 동안 스플래시([IntroSplashContent])를
@@ -24,11 +23,6 @@ private fun IntroScreen(
     uiState: IntroUIState,
     onIntent: (IntroIntent) -> Unit,
 ) {
-    // 허용 여부는 보지 않는다 — 시작 게이트는 비차단이라 결과 도착 자체가 신호다.
-    val permissionRequester = rememberPermissionRequester {
-        onIntent(IntroIntent.OnPermissionsResult)
-    }
-
     IntroSplashContent(
         isComplete = uiState.isSplashComplete,
         isPermissionNoticeVisible = uiState.showPermissionNotice,
@@ -36,6 +30,6 @@ private fun IntroScreen(
 
     PermissionNoticeBottomSheet(
         visible = uiState.showPermissionNotice,
-        onConfirm = { permissionRequester.request(uiState.pendingPermissions) },
+        onConfirm = { onIntent(IntroIntent.ConfirmPermissionNotice) },
     )
 }
