@@ -132,7 +132,7 @@ class NyummyReviewFixesTest {
             NyummyTheme { NyummyBottomNav(NyummyMainTabs, 0, {}, modifier = Modifier.width(320.dp)) }
         }
 
-        val bounds = listOf("홈", "기록", "퀘스트", "업적", "상점").map { label ->
+        val bounds = listOf("홈", "기록").map { label ->
             // 탭은 selectable로 병합되어 라벨로 찾으면 탭 전체 영역이 잡힌다.
             composeRule.onNodeWithText(label).getBoundsInRoot()
         }

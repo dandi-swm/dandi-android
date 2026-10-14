@@ -316,13 +316,10 @@ fun NyummyStepIndicator(
     }
 }
 
-/** 냐미 하단 내비 5탭(홈, 기록, 퀘스트, 업적, 상점 순서). */
+/** 냐미 하단 내비 탭(홈, 기록 순서). 배포를 위해 임시로 2탭만 둔다. */
 val NyummyMainTabs: ImmutableList<NyummyBottomNavItem> = persistentListOf(
     NyummyBottomNavItem(label = "홈", icon = R.drawable.nyummy_nav_home),
     NyummyBottomNavItem(label = "기록", icon = R.drawable.nyummy_nav_record),
-    NyummyBottomNavItem(label = "퀘스트", icon = R.drawable.nyummy_nav_quest),
-    NyummyBottomNavItem(label = "업적", icon = R.drawable.nyummy_nav_achievement),
-    NyummyBottomNavItem(label = "상점", icon = R.drawable.nyummy_nav_shop),
 )
 
 @Preview(showBackground = true, widthDp = 390)
