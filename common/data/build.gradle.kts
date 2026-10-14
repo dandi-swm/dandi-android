@@ -8,6 +8,17 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+
+/** local.properties 값, 없으면 같은 이름의 환경변수. 빈 값은 없는 것으로 본다. */
+fun configValue(key: String): String? =
+    (localProps.getProperty(key) ?: System.getenv(key))?.takeIf { it.isNotBlank() }
+
+val PlaceholderBaseUrl = "https://example.com/"
+
 android {
     namespace = "com.dandi.nyummy.common.data"
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -15,22 +26,23 @@ android {
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
 
-        // API-CONFIG-INJECTION-POINT: API 키/베이스 URL 은 local.properties 에서 주입한다.
+        // API-CONFIG-INJECTION-POINT: API 키는 local.properties 에서 주입한다.
         //   API_KEY=...        (QA/Prod 빌드는 CI 단계에서 주입)
-        //   API_BASE_URL=...
-        // 기본값은 빌드 가능한 placeholder 이며, 실제 값은 local.properties/CI 에서 주입한다.
-        val localProps = Properties().apply {
-            val f = rootProject.file("local.properties")
-            if (f.exists()) f.inputStream().use { load(it) }
-        }
-        val apiKey = localProps.getProperty("API_KEY").orEmpty()
-        val apiBaseUrl = localProps.getProperty("API_BASE_URL") ?: "https://example.com/"
-        buildConfigField("String", "API_KEY", "\"$apiKey\"")
-        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("String", "API_KEY", "\"${localProps.getProperty("API_KEY").orEmpty()}\"")
     }
 
+    // API-CONFIG-INJECTION-POINT: 베이스 URL 은 빌드 타입마다 다른 서버를 본다. local.properties, 없으면 환경변수에서 읽는다.
+    //   API_BASE_URL_DEV=...   debug → 개발 서버 (예전 키 API_BASE_URL 도 받는다)
+    //   API_BASE_URL_PROD=...  release → 운영 서버
+    // 값이 없으면 빌드 가능한 placeholder 를 쓴다. release 가 개발 서버로 붙지 않도록 운영 값은 다른 키로 대신하지 않는다.
     buildTypes {
+        debug {
+            val apiBaseUrl = configValue("API_BASE_URL_DEV") ?: configValue("API_BASE_URL") ?: PlaceholderBaseUrl
+            buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        }
         release {
+            val apiBaseUrl = configValue("API_BASE_URL_PROD") ?: PlaceholderBaseUrl
+            buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

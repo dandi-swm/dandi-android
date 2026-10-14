@@ -18,7 +18,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  
 ./gradlew test                  # 단위 테스트 (run-android-tests 스킬)
 ```
 
-코드를 수정한 턴은 반드시 빌드 검증 후 종료한다. API 키/BASE_URL은 `local.properties`(`API_KEY`, `API_BASE_URL`) → BuildConfig 주입(debug 전용 테스트 계정 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`도 동일). `API_BASE_URL`은 개발용 EC2 서버 주소(cleartext HTTP)이며 값이 없으면 placeholder로 빌드만 된다. 단위 테스트는 auth/history/intro/main 모듈에, 디자인 시스템 계약 테스트는 androidTest에 있다.
+코드를 수정한 턴은 반드시 빌드 검증 후 종료한다. API 키/BASE_URL은 `local.properties`(`API_KEY`, debug는 `API_BASE_URL_DEV`·release는 `API_BASE_URL_PROD`) → BuildConfig 주입(debug 전용 테스트 계정 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`도 동일). 베이스 URL은 debug→개발 서버, release→운영 서버이며 값이 없으면 placeholder로 빌드만 된다(release는 운영 키만 읽는다). 단위 테스트는 auth/history/intro/main 모듈에, 디자인 시스템 계약 테스트는 androidTest에 있다.
 
 ## 불변 규칙 (위반 금지)
 

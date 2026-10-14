@@ -46,7 +46,7 @@ object IntroDataModule {
 
 [NetworkModule.kt](../../common/data/src/main/java/com/dandi/nyummy/common/data/di/NetworkModule.kt) — OkHttp/Retrofit/Json을 한 곳에서 생성.
 
-- `API-CONFIG-INJECTION-POINT` 마커 2곳: base URL과 인증 헤더 포맷. 값은 `local.properties`(`API_KEY`, `API_BASE_URL`) → BuildConfig 주입 ([common/data/build.gradle.kts](../../common/data/build.gradle.kts))
+- `API-CONFIG-INJECTION-POINT` 마커 2곳: base URL과 인증 헤더 포맷. 값은 `local.properties`(`API_KEY`, `API_BASE_URL_DEV`/`API_BASE_URL_PROD` — debug/release별) → BuildConfig 주입 ([common/data/build.gradle.kts](../../common/data/build.gradle.kts))
 - Json 정책: `ignoreUnknownKeys / explicitNulls=false / coerceInputValues`
 - 새 API 호스트가 추가되면 Retrofit 인스턴스를 `@Named`로 분리 제공
 
