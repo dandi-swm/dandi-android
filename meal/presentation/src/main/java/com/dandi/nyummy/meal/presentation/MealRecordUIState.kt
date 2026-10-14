@@ -31,8 +31,13 @@ val MealCameraPhase.photoPathOrNull: String?
         MealCameraPhase.Done -> null
     }
 
-/** 카메라 권한 상태입니다. */
-enum class MealCameraPermission { Requesting, Granted, Denied }
+/**
+ * 카메라 권한 상태입니다.
+ *
+ * [Denied] 는 다시 물을 수 있는 거부, [Blocked] 는 "다시 묻지 않음"이 된 거부입니다.
+ * [Blocked] 면 시스템 팝업이 뜨지 않으므로 다시 요청하지 않고 기기 설정으로 안내합니다.
+ */
+enum class MealCameraPermission { Requesting, Granted, Denied, Blocked }
 
 /**
  * 식사 기록(카메라) 화면의 UI 상태입니다.

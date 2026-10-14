@@ -5,8 +5,12 @@ import com.dandi.nyummy.common.presentation.mvi.MviIntent
 /** 식사 기록(카메라) 화면에서 발생하는 사용자 입력·기기 이벤트입니다. */
 sealed interface MealRecordIntent : MviIntent {
 
-    /** 카메라 권한 요청 결과가 도착했습니다. */
-    data class PermissionResult(val granted: Boolean) : MealRecordIntent
+    /**
+     * 카메라 권한 요청 결과가 도착했거나, 기기 설정에서 돌아와 다시 확인했습니다.
+     *
+     * @param canAskAgain 거부됐을 때 시스템 팝업으로 다시 물을 수 있는지. 아니면 기기 설정으로 안내합니다.
+     */
+    data class PermissionResult(val granted: Boolean, val canAskAgain: Boolean = true) : MealRecordIntent
 
     /** 권한 거부 안내에서 `다시 허용하기` 버튼을 눌렀습니다. */
     data object ClickRequestPermission : MealRecordIntent

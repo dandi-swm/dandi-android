@@ -25,7 +25,11 @@ class MealRecordViewModel @Inject constructor(
         when (intent) {
             is MealRecordIntent.PermissionResult -> dispatch(
                 MealRecordReducerEvent.PermissionChanged(
-                    if (intent.granted) MealCameraPermission.Granted else MealCameraPermission.Denied,
+                    when {
+                        intent.granted -> MealCameraPermission.Granted
+                        intent.canAskAgain -> MealCameraPermission.Denied
+                        else -> MealCameraPermission.Blocked
+                    },
                 ),
             )
 
