@@ -1,7 +1,5 @@
 package com.dandi.nyummy.main.presentation.navigation
 
-import com.dandi.nyummy.achievement.domain.AchievementPage
-import com.dandi.nyummy.achievement.presentation.AchievementPage
 import com.dandi.nyummy.auth.domain.EmailLoginPage
 import com.dandi.nyummy.auth.domain.LoginPage
 import com.dandi.nyummy.auth.domain.SignUpPage
@@ -9,8 +7,6 @@ import com.dandi.nyummy.auth.domain.SocialSignUpPage
 import com.dandi.nyummy.auth.presentation.EmailLoginPage
 import com.dandi.nyummy.auth.presentation.LoginPage
 import com.dandi.nyummy.auth.presentation.SignUpPage
-import com.dandi.nyummy.collection.domain.CollectionPage
-import com.dandi.nyummy.collection.presentation.CollectionPage
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.common.domain.navigation.LinkArgs
 import com.dandi.nyummy.history.domain.HistoryPage
@@ -34,14 +30,10 @@ import com.dandi.nyummy.meal.domain.MealRecordPage
 import com.dandi.nyummy.meal.presentation.MealRecordPage
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.onboarding.presentation.OnboardingPage
-import com.dandi.nyummy.quest.domain.QuestPage
-import com.dandi.nyummy.quest.presentation.QuestPage
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
 import com.dandi.nyummy.settings.domain.SettingsPage
 import com.dandi.nyummy.settings.presentation.main.SettingsPage
 import com.dandi.nyummy.settings.presentation.mealtime.MealTimeSettingPage
-import com.dandi.nyummy.shop.domain.ShopPage
-import com.dandi.nyummy.shop.presentation.ShopPage
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
@@ -197,26 +189,6 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = LegalRoute.PRIVACY_PATH,
         render = { LegalPage(document = LegalDocument.PRIVACY) },
-    ),
-    AppRoute(
-        // 하단 탭에서 빠져 링크로만 열린다. 기능을 열 때 진입 위치를 다시 정한다.
-        path = CollectionPage.PATH,
-        render = { CollectionPage() },
-    ),
-    AppRoute(
-        path = QuestPage.PATH,
-        isBottomTab = true,
-        render = { QuestPage() },
-    ),
-    AppRoute(
-        path = AchievementPage.PATH,
-        isBottomTab = true,
-        render = { AchievementPage() },
-    ),
-    AppRoute(
-        path = ShopPage.PATH,
-        isBottomTab = true,
-        render = { ShopPage() },
     ),
 )
 

@@ -116,7 +116,8 @@ presentation과 data는 서로 직접 의존하지 않습니다. entity와 domai
 
 ~~~properties
 API_KEY=
-API_BASE_URL=
+API_BASE_URL_DEV=
+API_BASE_URL_PROD=
 ~~~
 
 [auth/presentation/build.gradle.kts](auth/presentation/build.gradle.kts)는 카카오 로그인 네이티브 앱 키를 BuildConfig와 매니페스트(리다이렉트 스킴 `kakao{키}://oauth`)로 주입합니다. 없으면 환경변수 `KAKAO_NATIVE_APP_KEY`를 쓰고, 둘 다 없으면 SDK 초기화를 건너뛰어 카카오 버튼은 "준비 중" 안내만 띄웁니다.
@@ -131,7 +132,7 @@ KAKAO_NATIVE_APP_KEY=
 keytool -exportcert -alias androiddebugkey -keystore ~/.android/debug.keystore -storepass android | openssl sha1 -binary | openssl base64
 ~~~
 
-API_BASE_URL에는 개발용 EC2 서버 주소를 넣습니다(현재 dev 서버는 cleartext HTTP). 저장소에는 실제 키·주소를 기록하지 않습니다. 값이 없으면 빌드 가능한 placeholder(`https://example.com/`)가 사용되므로, 네트워크 기능 검증 전에는 환경별 값을 주입해야 합니다.
+debug 빌드는 `API_BASE_URL_DEV`(개발 서버), release 빌드는 `API_BASE_URL_PROD`(운영 서버)를 씁니다. local.properties에 없으면 같은 이름의 환경변수를 읽습니다. debug는 예전 키 `API_BASE_URL`도 받지만, release가 개발 서버에 붙지 않도록 운영 값은 다른 키로 대신하지 않습니다. 저장소에는 실제 키·주소를 기록하지 않습니다. 값이 없으면 빌드 가능한 placeholder(`https://example.com/`)가 사용되므로, 네트워크 기능 검증 전에는 환경별 값을 주입해야 합니다.
 
 ## 빌드와 테스트
 

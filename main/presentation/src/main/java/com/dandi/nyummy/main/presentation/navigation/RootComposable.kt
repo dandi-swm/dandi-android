@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
-import com.dandi.nyummy.achievement.domain.AchievementPage
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomNav
@@ -38,8 +37,6 @@ import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.home.domain.HomePage
-import com.dandi.nyummy.quest.domain.QuestPage
-import com.dandi.nyummy.shop.domain.ShopPage
 import kotlinx.coroutines.flow.Flow
 
 @Composable
@@ -152,8 +149,8 @@ fun RootComposable(
     }
 }
 
-/** 하단 내비 탭 순서대로 이동할 화면. [NyummyMainTabs]의 순서(홈, 기록, 퀘스트, 업적, 상점)와 같다. */
-internal val mainTabPages: List<Page> = listOf(HomePage, HistoryPage, QuestPage, AchievementPage, ShopPage)
+/** 하단 내비 탭 순서대로 이동할 화면. [NyummyMainTabs]의 순서(홈, 기록)와 같다. */
+internal val mainTabPages: List<Page> = listOf(HomePage, HistoryPage)
 
 /** [path] 화면이 몇 번째 탭인지. 탭 화면이 아니면 -1이다. */
 internal fun mainTabIndexOf(path: String?): Int =

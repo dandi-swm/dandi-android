@@ -34,11 +34,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -120,20 +124,17 @@ internal fun LoginPageContent(
     onIntent: (LoginIntent) -> Unit,
 ) {
     val enabled = !uiState.isLoading
+    // 배경 낙서가 제목과 문구를 가리지 않도록 제목 영역을 배경에 알려 준다.
+    var titleBounds by remember { mutableStateOf(Rect.Zero) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(NyummyTheme.colors.bg.canvas),
     ) {
-        // 반복 패턴이라 어떤 화면 비율로 잘려도 어색하지 않다. 50%로 옅게 깐다.
-        Image(
-            painter = painterResource(R.drawable.auth_bg_pattern),
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxSize()
-                .alpha(PatternAlpha),
-            contentScale = ContentScale.Crop,
+        LoginDoodleBackground(
+            clearAreaInWindow = titleBounds,
+            modifier = Modifier.fillMaxSize(),
         )
         // 높이가 넉넉하면 카드는 바닥에, 제목은 남는 공간의 가운데보다 살짝 위에 둔다.
         // 가로 화면이나 분할 화면처럼 높이가 모자라면 전체가 스크롤되어 카드까지 닿을 수 있다.
@@ -152,7 +153,11 @@ internal fun LoginPageContent(
                 verticalArrangement = LoginContentArrangement,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                LoginTitleBlock(modifier = Modifier.padding(vertical = NyummyTheme.spacing.s24))
+                LoginTitleBlock(
+                    modifier = Modifier
+                        .padding(vertical = NyummyTheme.spacing.s24)
+                        .onGloballyPositioned { titleBounds = it.boundsInWindow() },
+                )
                 LoginCard(
                     uiState = uiState,
                     enabled = enabled,
@@ -447,7 +452,6 @@ private val SocialLoginType.providerNameRes: Int
         SocialLoginType.NAVER -> R.string.auth_social_provider_naver
     }
 
-private const val PatternAlpha = 0.5f
 private const val TitleTopWeight = 1f
 private const val TitleBottomWeight = 1.3f
 private const val LoadingFadeMillis = 200
