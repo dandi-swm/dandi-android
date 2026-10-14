@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -30,6 +32,12 @@ internal fun ColumnScope.SignUpCodeStep(
     uiState: SignUpUIState,
     onIntent: (SignUpIntent) -> Unit,
 ) {
+    // 입력하는 동안 "인증하기"는 접혀 있으므로, 코드를 다 채우면 키보드를 내려 버튼을 바로 보여 준다.
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val isCodeFilled = uiState.code.length == SignUpUIState.CODE_LENGTH
+    LaunchedEffect(isCodeFilled) {
+        if (isCodeFilled) keyboardController?.hide()
+    }
     AuthFormHeader(
         title = stringResource(R.string.auth_signup_code_title),
         subtitle = stringResource(R.string.auth_signup_code_subtitle, uiState.email),

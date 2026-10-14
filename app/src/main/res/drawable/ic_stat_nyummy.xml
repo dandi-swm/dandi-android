@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 상태바 알림 아이콘: 냐미 발자국. 시스템이 알파만 써서 한 가지 색으로 칠하므로 흰색 단색으로 그린다. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,11C8.4,11 5.9,14.6 6.2,17.3C6.5,19.9 9.1,20.9 12,19.6C14.9,20.9 17.5,19.9 17.8,17.3C18.1,14.6 15.6,11 12,11Z" />
+    <group
+        android:pivotX="5"
+        android:pivotY="10.6"
+        android:rotation="-24">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M3.05,10.6a1.95,2.5 0,1 0,3.9,0a1.95,2.5 0,1 0,-3.9,0Z" />
+    </group>
+    <group
+        android:pivotX="9"
+        android:pivotY="6.4"
+        android:rotation="-8">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M6.95,6.4a2.05,2.7 0,1 0,4.1,0a2.05,2.7 0,1 0,-4.1,0Z" />
+    </group>
+    <group
+        android:pivotX="15"
+        android:pivotY="6.4"
+        android:rotation="8">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M12.95,6.4a2.05,2.7 0,1 0,4.1,0a2.05,2.7 0,1 0,-4.1,0Z" />
+    </group>
+    <group
+        android:pivotX="19"
+        android:pivotY="10.6"
+        android:rotation="24">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M17.05,10.6a1.95,2.5 0,1 0,3.9,0a1.95,2.5 0,1 0,-3.9,0Z" />
+    </group>
+</vector>

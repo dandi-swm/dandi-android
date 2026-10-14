@@ -3,8 +3,10 @@
     <string name="settings_title">설정</string>
     <string name="settings_section_notification">알림</string>
     <string name="settings_device_notification_off_title">기기 알림이 꺼져 있어요</string>
-    <string name="settings_device_notification_off_body">알림을 받으려면 기기 설정에서 허용해 주세요.</string>
+    <string name="settings_device_notification_off_body">알림을 받으려면 기기 설정에서 냐미 알림을 허용해 주세요.</string>
     <string name="settings_open_device_settings">기기 설정 열기</string>
+    <string name="settings_notification_app">앱 알림</string>
+    <string name="settings_notification_app_desc">이 기기에서 냐미 알림을 받아요</string>
     <string name="settings_notification_service">서비스 알림</string>
     <string name="settings_notification_service_desc">식사 시간 알림, 분석 결과 알림</string>
     <string name="settings_notification_marketing">마케팅 알림</string>

@@ -333,6 +333,84 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `앱 알림이 꺼져 있으면 서버 값과 상관없이 서비스와 마케팅 알림이 꺼져 보인다`() = runTest(testDispatcher) {
+        repository.notificationSettings = NotificationSettingsVO(isServiceEnabled = true, isMarketingEnabled = true)
+        viewModel.onIntent(SettingsIntent.ScreenResumed(isDeviceNotificationEnabled = false))
+        advanceUntilIdle()
+
+        assertFalse(state.isServiceOn)
+        assertFalse(state.isMarketingOn)
+        // 서버 값은 그대로 둔다. 앱 알림을 켜면 이 값이 다시 보인다.
+        assertEquals(NotificationSettingsVO(isServiceEnabled = true, isMarketingEnabled = true), state.notification)
+
+        viewModel.onIntent(SettingsIntent.ScreenResumed(isDeviceNotificationEnabled = true))
+        advanceUntilIdle()
+        assertTrue(state.isServiceOn)
+        assertTrue(state.isMarketingOn)
+    }
+
+    @Test
+    fun `앱 알림을 켜면 권한 팝업을 요청하고 허용되면 서버 값은 건드리지 않는다`() = runTest(testDispatcher) {
+        repository.notificationSettings = NotificationSettingsVO(isServiceEnabled = false, isMarketingEnabled = true)
+        viewModel.onIntent(SettingsIntent.ScreenResumed(isDeviceNotificationEnabled = false))
+        advanceUntilIdle()
+
+        viewModel.onIntent(SettingsIntent.EnableAppNotification)
+        assertTrue(state.isDeviceNotificationRequested)
+
+        viewModel.onIntent(SettingsIntent.DeviceNotificationRequestFinished(isDeviceNotificationEnabled = true))
+        advanceUntilIdle()
+
+        assertFalse(state.isDeviceNotificationRequested)
+        assertTrue(state.isDeviceNotificationEnabled)
+        assertFalse(state.isDeviceSettingsDialogVisible)
+        assertFalse(state.isServiceOn)
+        assertTrue(state.isMarketingOn)
+        assertTrue(repository.requestedNotifications.isEmpty())
+    }
+
+    @Test
+    fun `이미 앱 알림이 켜져 있으면 권한 팝업을 요청하지 않는다`() = runTest(testDispatcher) {
+        resume()
+        advanceUntilIdle()
+
+        viewModel.onIntent(SettingsIntent.EnableAppNotification)
+
+        assertFalse(state.isDeviceNotificationRequested)
+    }
+
+    @Test
+    fun `권한 팝업으로 허용받지 못하면 기기 설정 안내를 띄우고 닫을 수 있다`() = runTest(testDispatcher) {
+        viewModel.onIntent(SettingsIntent.ScreenResumed(isDeviceNotificationEnabled = false))
+        advanceUntilIdle()
+
+        viewModel.onIntent(SettingsIntent.EnableAppNotification)
+        viewModel.onIntent(SettingsIntent.DeviceNotificationRequestFinished(isDeviceNotificationEnabled = false))
+
+        assertFalse(state.isDeviceNotificationRequested)
+        assertFalse(state.isDeviceNotificationEnabled)
+        assertTrue(state.isDeviceSettingsDialogVisible)
+
+        viewModel.onIntent(SettingsIntent.ConfirmDeviceSettings)
+        assertFalse(state.isDeviceSettingsDialogVisible)
+
+        viewModel.onIntent(SettingsIntent.EnableAppNotification)
+        viewModel.onIntent(SettingsIntent.DeviceNotificationRequestFinished(isDeviceNotificationEnabled = false))
+        viewModel.onIntent(SettingsIntent.DismissDeviceSettingsDialog)
+        assertFalse(state.isDeviceSettingsDialogVisible)
+    }
+
+    @Test
+    fun `요청하지 않았는데 온 권한 결과는 무시한다`() = runTest(testDispatcher) {
+        viewModel.onIntent(SettingsIntent.ScreenResumed(isDeviceNotificationEnabled = false))
+        advanceUntilIdle()
+
+        viewModel.onIntent(SettingsIntent.DeviceNotificationRequestFinished(isDeviceNotificationEnabled = false))
+
+        assertFalse(state.isDeviceSettingsDialogVisible)
+    }
+
+    @Test
     fun `약관 행을 누르면 앱 안의 약관 화면으로 간다`() = runTest(testDispatcher) {
         viewModel.onIntent(SettingsIntent.ClickLegal(LegalDocument.TERMS))
         viewModel.onIntent(SettingsIntent.ClickLegal(LegalDocument.PRIVACY))

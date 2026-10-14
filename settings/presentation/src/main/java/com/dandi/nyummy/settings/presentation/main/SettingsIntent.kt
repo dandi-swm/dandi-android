@@ -15,6 +15,24 @@ sealed interface SettingsIntent : MviIntent {
 
     data object ClickBack : SettingsIntent
 
+    /**
+     * "앱 알림"을 켰다. 기기 알림이 꺼져 있으면 시스템 알림 권한 팝업을 띄운다.
+     * 끄는 것은 앱이 할 수 없어 화면이 기기 알림 설정을 바로 연다.
+     */
+    data object EnableAppNotification : SettingsIntent
+
+    /**
+     * 시스템 알림 권한 팝업이 끝났다.
+     *
+     * @param isDeviceNotificationEnabled 팝업이 끝난 뒤 기기에서 이 앱의 알림이 허용돼 있는지. 화면이 기기에서 읽어 넘긴다.
+     */
+    data class DeviceNotificationRequestFinished(val isDeviceNotificationEnabled: Boolean) : SettingsIntent
+
+    /** 기기 설정 안내 다이얼로그에서 "기기 설정 열기"를 눌렀다. 화면이 기기 설정을 열고, 돌아오면 [ScreenResumed]가 다시 확인한다. */
+    data object ConfirmDeviceSettings : SettingsIntent
+
+    data object DismissDeviceSettingsDialog : SettingsIntent
+
     /** 서비스 알림(식사 시간 알림, 분석 결과 알림)을 켜거나 껐다. */
     data class ToggleServicePush(val enabled: Boolean) : SettingsIntent
 

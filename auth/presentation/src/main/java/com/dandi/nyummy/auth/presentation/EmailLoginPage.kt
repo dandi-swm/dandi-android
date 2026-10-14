@@ -44,6 +44,8 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPasswor
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextField
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
+import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyHiddenWhileTyping
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClearFocusOnTap
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
@@ -148,7 +150,8 @@ internal fun EmailLoginContent(
 
 /**
  * 인증 화면 공통 틀. 상단 바(뒤로 가기) + 스크롤되는 본문 + 화면 아래에 고정되는 버튼 영역.
- * 키보드가 열리면 버튼 영역이 키보드 위로 올라가고, 본문은 남은 높이에서 스크롤된다.
+ * 키보드가 열려 있는 동안에는 버튼 영역을 접어 두고, 본문이 키보드 위 높이를 다 쓰며 스크롤된다.
+ * 입력 중인 칸을 버튼이 가리지 않게 하려는 것이다. 키보드를 내리면(완료 키, 뒤로 가기, 빈 곳 탭) 버튼이 다시 나온다.
  *
  * 가로 화면이나 분할 화면처럼 창 높이(키보드 제외)가 [CompactFormHeight]보다 낮으면 버튼 영역을 고정하지 않고
  * 본문 바로 아래에 붙여 함께 스크롤한다. 키보드 높이는 판단에 넣지 않는다. 키보드가 열릴 때 배치가 바뀌면
@@ -167,7 +170,8 @@ internal fun AuthFormScaffold(
             .fillMaxSize()
             .background(NyummyTheme.colors.bg.canvas)
             .statusBarsPadding()
-            .navigationBarsPadding(),
+            .navigationBarsPadding()
+            .nyummyClearFocusOnTap(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         NyummyTopBar(title = "", onBackClick = onBackClick)
@@ -199,15 +203,17 @@ internal fun AuthFormScaffold(
                             .verticalScroll(rememberScrollState()),
                         content = content,
                     )
-                    if (bottomDivider) {
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(NyummyTheme.borderWidth.hairline)
-                                .background(NyummyTheme.colors.border.subtle),
-                        )
+                    NyummyHiddenWhileTyping(modifier = Modifier.fillMaxWidth()) {
+                        if (bottomDivider) {
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(NyummyTheme.borderWidth.hairline)
+                                    .background(NyummyTheme.colors.border.subtle),
+                            )
+                        }
+                        AuthFormBottom(content = bottom)
                     }
-                    AuthFormBottom(content = bottom)
                 }
             }
         }

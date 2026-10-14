@@ -1,5 +1,11 @@
 package com.dandi.nyummy.meal.presentation
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -12,6 +18,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -42,13 +49,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.domain.helper.AppPermission
@@ -85,8 +96,24 @@ fun MealRecordPage(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    val activity = LocalActivity.current
+    val context = LocalContext.current
+    // 거부 직후 다시 물을 수 있는지(rationale)를 함께 본다. 두 번 거부해 "다시 묻지 않음"이 되면 false라 기기 설정으로 안내한다.
     val permissionRequester = rememberPermissionRequester { result ->
-        viewModel.onIntent(MealRecordIntent.PermissionResult(result[AppPermission.CAMERA] == true))
+        val granted = result[AppPermission.CAMERA] == true
+        val canAskAgain = activity?.let {
+            ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.CAMERA)
+        } ?: true
+        viewModel.onIntent(MealRecordIntent.PermissionResult(granted = granted, canAskAgain = canAskAgain))
+    }
+    // 기기 설정에서 카메라를 켜고 돌아오면 바로 촬영 화면으로 바꾼다.
+    LifecycleResumeEffect(uiState.cameraPermission) {
+        val isRejected = uiState.cameraPermission == MealCameraPermission.Denied ||
+            uiState.cameraPermission == MealCameraPermission.Blocked
+        val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+            PackageManager.PERMISSION_GRANTED
+        if (isRejected && granted) viewModel.onIntent(MealRecordIntent.PermissionResult(granted = true))
+        onPauseOrDispose { }
     }
     // 진입 직후(초기 상태 Requesting)와 거부 화면의 재요청 모두 이 한 곳에서 시스템 팝업을 띄운다.
     // 이미 허용된 상태면 팝업 없이 즉시 허용 콜백이 온다.
@@ -108,6 +135,7 @@ fun MealRecordPage(
     MealRecordScreen(
         uiState = uiState,
         onIntent = viewModel::onIntent,
+        onOpenAppSettings = { openAppSettings(context) },
         onGalleryClick = {
             if (!isGalleryPickerOpen) {
                 isGalleryPickerOpen = true
@@ -126,6 +154,7 @@ private fun MealRecordScreen(
     onIntent: (MealRecordIntent) -> Unit,
     onGalleryClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenAppSettings: () -> Unit = {},
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
     val spacing = DesignSystemThemeImpl.designSystemSpacing
@@ -216,7 +245,14 @@ private fun MealRecordScreen(
             when (val phase = uiState.phase) {
                 MealCameraPhase.Preview -> when (uiState.cameraPermission) {
                     MealCameraPermission.Denied -> PermissionDeniedContent(
-                        onRetryClick = { onIntent(MealRecordIntent.ClickRequestPermission) },
+                        isBlocked = false,
+                        onActionClick = { onIntent(MealRecordIntent.ClickRequestPermission) },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+
+                    MealCameraPermission.Blocked -> PermissionDeniedContent(
+                        isBlocked = true,
+                        onActionClick = onOpenAppSettings,
                         modifier = Modifier.fillMaxSize(),
                     )
 
@@ -254,6 +290,7 @@ private fun MealRecordScreen(
             }
             // 세리머니·완료 화면에서는 장식 오버레이(브래킷)가 연출과 겹치지 않게 숨긴다.
             if (uiState.cameraPermission != MealCameraPermission.Denied &&
+                uiState.cameraPermission != MealCameraPermission.Blocked &&
                 (
                     uiState.phase is MealCameraPhase.Preview ||
                         uiState.phase is MealCameraPhase.Captured
@@ -353,7 +390,8 @@ private fun MealRecordHeader(
 
 @Composable
 private fun PermissionDeniedContent(
-    onRetryClick: () -> Unit,
+    isBlocked: Boolean,
+    onActionClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = DesignSystemThemeImpl.designSystemColor
@@ -371,19 +409,31 @@ private fun PermissionDeniedContent(
         )
         Spacer(Modifier.height(spacing.space8))
         DandiText(
-            text = stringResource(R.string.meal_record_permission_denied_body),
+            text = stringResource(
+                if (isBlocked) R.string.meal_record_permission_blocked_body else R.string.meal_record_permission_denied_body,
+            ),
             color = colors.contentDefaultLevel1,
             textAlign = TextAlign.Center,
+            // 기기 설정에서 켜는 방법까지 담은 여러 줄 안내라 한 줄로 자르지 않는다.
+            maxLines = Int.MAX_VALUE,
             style = DesignSystemThemeImpl.typeScale.textRegularM,
         )
         Spacer(Modifier.height(spacing.space24))
         NyummyButton(
-            label = stringResource(R.string.meal_record_permission_retry),
+            label = stringResource(
+                if (isBlocked) R.string.meal_record_permission_open_settings else R.string.meal_record_permission_retry,
+            ),
             style = NyummyButtonStyle.Secondary,
             size = NyummyButtonSize.Medium,
-            onClick = onRetryClick,
+            onClick = onActionClick,
         )
     }
+}
+
+/** 이 앱의 상세 설정 화면을 연다. 권한 화면은 여기서 한 번 더 들어간다. */
+private fun openAppSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+    runCatching { context.startActivity(intent) }
 }
 
 /** 프리뷰 단계 하단 바: 갤러리 첨부 · 취소 · `담기`(촬영) 버튼. */

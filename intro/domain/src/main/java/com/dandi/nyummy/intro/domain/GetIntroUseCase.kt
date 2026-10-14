@@ -31,8 +31,8 @@ class GetIntroUseCase @Inject constructor(
      * 앱 시작 게이트 + 분기.
      *
      * 1. 권한 안내를 아직 노출하지 않았고 미허용 시작 권한이 있으면 [requestPermissions] 로
-     *    UI 게이트(안내 바텀시트 + 시스템 팝업)를 완료까지 suspend 한 뒤 노출 완료를 기록한다.
-     *    허용 여부와 무관하게 진행한다(비차단 — 거부된 권한은 각 기능 진입 시 재요청).
+     *    UI 게이트(접근권한 안내 바텀시트)를 확인까지 suspend 한 뒤 노출 완료를 기록한다.
+     *    시스템 권한 팝업은 여기서 띄우지 않는다 — 각 기능(식사 기록 카메라, 온보딩·설정 알림)을 쓸 때 그 화면이 요청한다.
      *    로딩(버전 체크)보다 먼저 두어 "권한부터 받고 로딩" 흐름을 만든다.
      * 2. RemoteConfig 를 sync(fetch/activate)한다 — 앱 전체에서 여기 1회뿐이며,
      *    이후 다른 기능의 flag 조회는 활성화된 스냅샷만 읽는다.
@@ -122,7 +122,7 @@ class GetIntroUseCase @Inject constructor(
         private const val INTRO_ERROR_MSG =
             "일시적인 오류가 발생했습니다.\n잠시 후 다시 시도해주세요."
 
-        /** 앱 시작 시 안내/요청할 권한. 하나라도 미허용이면 안내를 노출한다. */
+        /** 앱 시작 시 접근권한 안내에 올리는 권한. 하나라도 미허용이면 안내를 노출한다. */
         private val STARTUP_PERMISSIONS = listOf(AppPermission.CAMERA, AppPermission.NOTIFICATION)
     }
 }

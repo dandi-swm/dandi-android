@@ -10,6 +10,8 @@
     <string name="meal_record_permission_denied_title">Camera permission needed</string>
     <string name="meal_record_permission_denied_body">Allow camera access to record your meal.\nIf it stays off, enable it in Settings &gt; Apps &gt; Permissions.</string>
     <string name="meal_record_permission_retry">Allow camera</string>
+    <string name="meal_record_permission_blocked_body">Camera access is turned off.\nAllow the camera in Settings &gt; Permissions. You can also record with a photo from your gallery.</string>
+    <string name="meal_record_permission_open_settings">Open settings</string>
     <string name="meal_record_capture_failed">Couldn\'t take the photo. Please try again.</string>
     <string name="meal_record_captured_photo_content_description">Captured food photo</string>
     <string name="meal_record_wordmark" translatable="false">nyummy</string>

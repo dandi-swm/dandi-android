@@ -35,6 +35,8 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextArea
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextField
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
+import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyHiddenWhileTyping
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClearFocusOnTap
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.mailbox.entity.InquiryCategory
 import com.dandi.nyummy.mailbox.presentation.R
@@ -63,13 +65,15 @@ internal fun InquiryWriteScreen(
     onIntent: (InquiryWriteIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 시스템 바 인셋은 앱 Scaffold가 이미 밀어 두었다. 여기서는 키보드가 내비게이션 바보다 올라온 만큼만 버튼을 올린다.
+    // 시스템 바 인셋은 앱 Scaffold가 이미 밀어 두었다. 여기서는 키보드가 내비게이션 바보다 올라온 만큼만 본문을 줄인다.
+    // 입력하는 동안 보내기 버튼은 접어 두어 입력칸을 가리지 않게 하고, 키보드를 내리면 다시 보인다.
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(NyummyTheme.colors.bg.canvas)
             .consumeWindowInsets(WindowInsets.systemBars)
-            .imePadding(),
+            .imePadding()
+            .nyummyClearFocusOnTap(),
     ) {
         NyummyTopBar(
             title = stringResource(R.string.mailbox_write_title),
@@ -127,11 +131,13 @@ internal fun InquiryWriteScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-        NyummyBottomCta(
-            primaryText = stringResource(R.string.mailbox_write_send),
-            onPrimaryClick = { onIntent(InquiryWriteIntent.ClickSend) },
-            primaryEnabled = !uiState.isSending,
-        )
+        NyummyHiddenWhileTyping {
+            NyummyBottomCta(
+                primaryText = stringResource(R.string.mailbox_write_send),
+                onPrimaryClick = { onIntent(InquiryWriteIntent.ClickSend) },
+                primaryEnabled = !uiState.isSending,
+            )
+        }
     }
 
     if (uiState.isCategorySheetVisible) {

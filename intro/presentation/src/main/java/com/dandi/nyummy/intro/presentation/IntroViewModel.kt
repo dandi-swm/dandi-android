@@ -1,7 +1,6 @@
 package com.dandi.nyummy.intro.presentation
 
 import androidx.lifecycle.viewModelScope
-import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.intro.domain.GetIntroUseCase
 import com.dandi.nyummy.intro.domain.tti.IntroTTIPage
@@ -16,8 +15,8 @@ import javax.inject.Inject
  * 시작 분기 ViewModel.
  *
  * 생성 즉시 [GetIntroUseCase] 가 (최초 1회) 권한 안내 → 버전 체크 → 홈/로그인 루트 전환을
- * 수행한다. 다이얼로그/네비게이션은 UseCase(domain)에서 종결되고, 권한 안내 바텀시트와
- * 시스템 권한 팝업만 UI 게이트([awaitPermissionFlow])로 이 레이어가 담당한다.
+ * 수행한다. 다이얼로그/네비게이션은 UseCase(domain)에서 종결되고, 권한 안내 바텀시트만
+ * UI 게이트([awaitPermissionNotice])로 이 레이어가 담당한다. 시스템 권한 팝업은 여기서 띄우지 않는다.
  */
 @HiltViewModel
 class IntroViewModel @Inject constructor(
@@ -25,7 +24,7 @@ class IntroViewModel @Inject constructor(
     private val ttiHelper: TTIHelper,
 ) : MviViewModel<IntroIntent, IntroUIState, IntroReducerEvent>(IntroUIState.empty) {
 
-    private var permissionResult: CompletableDeferred<Unit>? = null
+    private var permissionNoticeConfirmed: CompletableDeferred<Unit>? = null
 
     init {
         ttiHelper.startTTITracking(IntroTTIPage)
@@ -34,20 +33,14 @@ class IntroViewModel @Inject constructor(
 
     override fun onIntent(intent: IntroIntent) {
         when (intent) {
-            IntroIntent.OnPermissionsResult -> permissionResult?.complete(Unit)
+            IntroIntent.ConfirmPermissionNotice -> permissionNoticeConfirmed?.complete(Unit)
         }
     }
 
     override fun reduce(state: IntroUIState, event: IntroReducerEvent): IntroUIState =
         when (event) {
-            is IntroReducerEvent.PermissionNoticeShown -> state.copy(
-                showPermissionNotice = true,
-                pendingPermissions = event.permissions,
-            )
-            IntroReducerEvent.PermissionNoticeFinished -> state.copy(
-                showPermissionNotice = false,
-                pendingPermissions = emptyList(),
-            )
+            IntroReducerEvent.PermissionNoticeShown -> state.copy(showPermissionNotice = true)
+            IntroReducerEvent.PermissionNoticeFinished -> state.copy(showPermissionNotice = false)
             IntroReducerEvent.SplashCompleted -> state.copy(isSplashComplete = true)
         }
 
@@ -56,7 +49,7 @@ class IntroViewModel @Inject constructor(
         viewModelScope.launch {
             useCase(
                 onRetry = ::start,
-            requestPermissions = ::awaitPermissionFlow,
+                requestPermissions = { awaitPermissionNotice() },
                 onBeforeNavigate = ::completeSplash,
             ).onSuccess {
                 // 끝 표시는 UseCase가 버전 확인 직후에 한다. 실패하면 재시도 결과까지 기다리도록 보내지 않는다.
@@ -71,11 +64,14 @@ class IntroViewModel @Inject constructor(
         delay(SPLASH_COMPLETE_ANIMATION_WAIT_MS)
     }
 
-    /** 권한 안내 게이트 — 바텀시트를 띄우고 시스템 요청 결과가 돌아올 때까지 suspend 한다. */
-    private suspend fun awaitPermissionFlow(permissions: List<AppPermission>) {
+    /**
+     * 권한 안내 게이트 — 바텀시트를 띄우고 사용자가 확인할 때까지 suspend 한다.
+     * 맥락 없이 미리 요청해 거부되면, 기능에서 다시 물을 때 한 번 더 거부해 "다시 묻지 않음"이 되기 쉬워 여기서는 요청하지 않는다.
+     */
+    private suspend fun awaitPermissionNotice() {
         val deferred = CompletableDeferred<Unit>()
-        permissionResult = deferred
-        dispatch(IntroReducerEvent.PermissionNoticeShown(permissions))
+        permissionNoticeConfirmed = deferred
+        dispatch(IntroReducerEvent.PermissionNoticeShown)
         deferred.await()
         dispatch(IntroReducerEvent.PermissionNoticeFinished)
     }
