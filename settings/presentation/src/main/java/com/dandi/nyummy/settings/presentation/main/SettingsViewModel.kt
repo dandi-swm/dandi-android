@@ -50,6 +50,11 @@ class SettingsViewModel @Inject constructor(
                 load()
             }
             SettingsIntent.ClickBack -> navigationHelper.navigateToBack()
+            SettingsIntent.EnableAppNotification ->
+                if (!currentState.isDeviceNotificationEnabled) dispatch(SettingsReducerEvent.DeviceNotificationRequestChanged(true))
+            is SettingsIntent.DeviceNotificationRequestFinished -> finishDeviceNotificationRequest(intent.isDeviceNotificationEnabled)
+            SettingsIntent.ConfirmDeviceSettings, SettingsIntent.DismissDeviceSettingsDialog ->
+                dispatch(SettingsReducerEvent.DeviceSettingsDialogVisibilityChanged(visible = false))
             is SettingsIntent.ToggleServicePush -> whenLoaded {
                 changeNotification(NotificationKind.SERVICE, NotificationSettingsChange(isServiceEnabled = intent.enabled))
             }
@@ -80,6 +85,8 @@ class SettingsViewModel @Inject constructor(
         )
         is SettingsReducerEvent.DeviceNotificationChecked -> state.copy(isDeviceNotificationEnabled = event.enabled)
         is SettingsReducerEvent.NotificationChanged -> state.copy(notification = event.notification)
+        is SettingsReducerEvent.DeviceNotificationRequestChanged -> state.copy(isDeviceNotificationRequested = event.requested)
+        is SettingsReducerEvent.DeviceSettingsDialogVisibilityChanged -> state.copy(isDeviceSettingsDialogVisible = event.visible)
         is SettingsReducerEvent.NotificationDetailChanged -> state.copy(notificationDetail = event.kind)
         is SettingsReducerEvent.LogoutDialogVisibilityChanged -> state.copy(isLogoutDialogVisible = event.visible)
         SettingsReducerEvent.LoggingOut -> state.copy(isLoggingOut = true)
@@ -109,6 +116,17 @@ class SettingsViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /**
+     * 시스템 알림 권한 팝업이 끝났다. 허용됐으면 앱 알림이 켜지고 서비스, 마케팅 알림은 서버에 저장된 값 그대로 보인다(서버 값은 바꾸지 않는다).
+     * 팝업을 띄울 수 없었거나(다시 묻지 않기, Android 12 이하) 거절했으면 기기 설정에서 켜도록 안내한다.
+     */
+    private fun finishDeviceNotificationRequest(isDeviceNotificationEnabled: Boolean) {
+        if (!currentState.isDeviceNotificationRequested) return
+        dispatch(SettingsReducerEvent.DeviceNotificationRequestChanged(false))
+        dispatch(SettingsReducerEvent.DeviceNotificationChecked(isDeviceNotificationEnabled))
+        if (!isDeviceNotificationEnabled) dispatch(SettingsReducerEvent.DeviceSettingsDialogVisibilityChanged(visible = true))
     }
 
     /** 설정 값을 처음 읽기 전에는 바꾸거나 식사 시간 화면으로 가지 않는다. 읽기 전 값으로 저장하지 않게 하려는 것이다. */

@@ -16,6 +16,8 @@ sealed interface SettingsReducerEvent : ReducerEvent {
     ) : SettingsReducerEvent
     data class DeviceNotificationChecked(val enabled: Boolean) : SettingsReducerEvent
     data class NotificationChanged(val notification: NotificationSettingsVO) : SettingsReducerEvent
+    data class DeviceNotificationRequestChanged(val requested: Boolean) : SettingsReducerEvent
+    data class DeviceSettingsDialogVisibilityChanged(val visible: Boolean) : SettingsReducerEvent
 
     data class NotificationDetailChanged(val kind: NotificationKind?) : SettingsReducerEvent
     data class LogoutDialogVisibilityChanged(val visible: Boolean) : SettingsReducerEvent
