@@ -81,7 +81,8 @@ fun NyummyMealTimeField(
 }
 
 /**
- * 한 끼의 시각을 고르는 시트. 오전/오후, 시(1~12) 두 휠과 "안 먹어요", "확인". 정시 단위만 고른다.
+ * 한 끼의 시각을 고르는 시트. 오전/오후, 시 두 휠과 "안 먹어요", "확인". 정시 단위만 고른다.
+ * 시 휠은 오전 4시부터 오후 11시까지 한 줄로 이어지고(양 끝에서 멈춘다), 11시와 12시 사이를 지나는 순간 오전/오후 휠이 함께 넘어간다.
  * 안 먹는다고 골라 둔 끼니를 다시 열면 남겨 둔 시각에서 시작한다.
  */
 @Composable
@@ -93,20 +94,22 @@ fun NyummyMealTimeSheet(
     modifier: Modifier = Modifier,
 ) {
     val mealLabel = stringResource(meal.nyummyLabelRes)
-    var periodIndex by rememberSaveable(meal) { mutableIntStateOf(if (initial.hour >= 12) 1 else 0) }
-    var hourIndex by rememberSaveable(meal) { mutableIntStateOf(hour12(initial.hour) - 1) }
+    // 시 휠은 4~23시를 12시간제로 적은 칸이다. 오전/오후는 시에서 정해지므로 11시와 12시 사이를 지나면 저절로 바뀐다.
+    var hour24 by rememberSaveable(meal) { mutableIntStateOf(initial.hour.coerceIn(FirstMealHour, LastMealHour)) }
     val periods = persistentListOf(stringResource(R.string.nyummy_meal_am), stringResource(R.string.nyummy_meal_pm))
-    val hours = remember { (1..12).map(Int::toString).toImmutableList() }
+    val hours = remember { (FirstMealHour..LastMealHour).map { hour12(it).toString() }.toImmutableList() }
 
     NyummyBottomSheet(onDismissRequest = onDismissRequest, modifier = modifier) {
         NyummySheetTitle(text = stringResource(R.string.nyummy_meal_sheet_title, mealLabel))
         TimeWheels(
             periods = periods,
             hours = hours,
-            periodIndex = periodIndex,
-            hourIndex = hourIndex,
-            onPeriodChange = { periodIndex = it },
-            onHourChange = { hourIndex = it },
+            periodIndex = if (hour24 >= 12) 1 else 0,
+            hourIndex = hour24 - FirstMealHour,
+            // 오전/오후를 직접 돌리면 같은 시에서 12시간만 옮긴다(오전 8시 ↔ 오후 8시). 시 휠은 굴리지 않고 바로 옮겨
+            // 숫자는 그대로 둔 채 오전/오후만 바뀌어 보이게 한다. 오전 4시보다 이르면 오전 4시로 맞춘다(오후 2시 → 오전 4시).
+            onPeriodChange = { period -> hour24 = (hour24 % 12 + period * 12).coerceIn(FirstMealHour, LastMealHour) },
+            onHourChange = { hour24 = it + FirstMealHour },
         )
         NyummyTextButton(
             text = stringResource(R.string.nyummy_meal_sheet_skip, mealLabel),
@@ -116,10 +119,7 @@ fun NyummyMealTimeSheet(
         )
         NyummyButton(
             text = stringResource(R.string.nyummy_meal_sheet_confirm),
-            onClick = {
-                val hour24 = (hourIndex + 1) % 12 + if (periodIndex == 1) 12 else 0
-                onSelect(MealTimeVO(hour = hour24))
-            },
+            onClick = { onSelect(MealTimeVO(hour = hour24)) },
             size = NyummyButtonSize.L,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -146,6 +146,7 @@ private fun TimeWheels(
             items = periods,
             selectedIndex = periodIndex,
             onSelectedIndexChange = onPeriodChange,
+            animateSelectionChange = true,
             contentDescription = stringResource(R.string.nyummy_meal_period_description),
             modifier = Modifier.weight(1f),
         )
@@ -153,6 +154,7 @@ private fun TimeWheels(
             items = hours,
             selectedIndex = hourIndex,
             onSelectedIndexChange = onHourChange,
+            notifyWhileScrolling = true,
             unit = stringResource(R.string.nyummy_meal_unit_hour),
             contentDescription = stringResource(R.string.nyummy_meal_hour_description),
             modifier = Modifier.weight(1f),
@@ -179,6 +181,9 @@ val Meal.nyummyLabelRes: Int
 /** 0~23시를 12시간제 1~12로 바꾼다(0시는 12, 13시는 1). */
 private fun hour12(hour24: Int): Int = (hour24 + 11) % 12 + 1
 
+/** 시간 시트에서 고를 수 있는 첫 시각(오전 4시)과 마지막 시각(오후 11시). */
+private const val FirstMealHour = 4
+private const val LastMealHour = 23
 private val MealRowHeight = 52.dp
 private val WheelsHorizontalInset = 10.dp
 
