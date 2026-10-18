@@ -19,6 +19,8 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSource
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
@@ -99,6 +101,10 @@ class HomeViewModelTest {
             ),
             catMotionPicker = CatMotionPicker(Random(seed = 1)),
             ttiHelper = tti,
+            remoteConfigHelper = object : RemoteConfigHelper {
+                override suspend fun sync() = Unit
+                override fun <T> get(key: RemoteConfigKey<T>): T = key.defaultValue
+            },
         )
     }
 

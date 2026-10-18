@@ -165,6 +165,7 @@ dependencies {
     implementation(project(":mailbox:data"))
     implementation(project(":mailbox:entity"))
 
+    implementation(project(":room:presentation"))
     implementation(project(":room:domain"))
     implementation(project(":room:data"))
     implementation(project(":room:entity"))

@@ -30,6 +30,8 @@ import com.dandi.nyummy.meal.domain.MealRecordPage
 import com.dandi.nyummy.meal.presentation.MealRecordPage
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.onboarding.presentation.OnboardingPage
+import com.dandi.nyummy.room.domain.MyRoomPage
+import com.dandi.nyummy.room.presentation.MyRoomPage
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
 import com.dandi.nyummy.settings.domain.SettingsPage
 import com.dandi.nyummy.settings.presentation.main.SettingsPage
@@ -159,6 +161,16 @@ val appRoutes: List<AppRoute> = listOf(
         render = { args ->
             InquiryDetailPage(inquiryId = args[InquiryDetailRoute.ARG_INQUIRY_ID]?.toLongOrNull() ?: 0L)
         },
+    ),
+    AppRoute(
+        path = MyRoomPage.PATH,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(HomePage.PATH),
+                GenericNavKey(MyRoomPage.PATH, args),
+            )
+        },
+        render = { MyRoomPage() },
     ),
     AppRoute(
         path = SettingsPage.PATH,
