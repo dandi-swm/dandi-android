@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.home.presentation.component.HomeHud
+import com.dandi.nyummy.common.presentation.room.limitRoomCardHeight
 import com.dandi.nyummy.home.presentation.component.HomeRoomCard
 import com.dandi.nyummy.home.presentation.component.HomeStreakBanner
 import com.dandi.nyummy.home.presentation.component.HomeTodayBar
@@ -108,7 +109,9 @@ internal fun HomeScreen(
                 onNyummyStatusClick = { onIntent(HomeIntent.ClickNyummyStatus) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    // 태블릿 세로처럼 아주 긴 자리에서는 방 그림 좌우가 너무 잘리지 않게 카드 높이를 묶는다.
+                    .limitRoomCardHeight(),
             ) {
                 HomeTodayBar(
                     recordedCount = uiState.summary.todayRecordedCount,
