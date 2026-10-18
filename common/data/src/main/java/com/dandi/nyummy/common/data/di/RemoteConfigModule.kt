@@ -1,9 +1,11 @@
 package com.dandi.nyummy.common.data.di
 
-import android.content.Context
-import android.content.pm.ApplicationInfo
-import com.dandi.nyummy.common.data.featureflag.FirebaseFeatureFlagHelper
-import com.dandi.nyummy.common.domain.featureflag.FeatureFlagHelper
+import com.dandi.nyummy.common.data.remoteconfig.FirebaseRemoteConfigHelper
+import com.dandi.nyummy.common.data.remoteconfig.RemoteConfigEnv
+import com.dandi.nyummy.common.domain.buildtype.ReleaseBuild
+import com.dandi.nyummy.common.domain.helper.DeviceHelper
+import com.dandi.nyummy.common.domain.remoteconfig.FeatureFlagHelper
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.google.firebase.Firebase
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.remoteConfig
@@ -11,13 +13,12 @@ import com.google.firebase.remoteconfig.remoteConfigSettings
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
- * Firebase 원격 구성과 기능 플래그 바인딩.
- * 값은 앱 시작 때 인트로가 한 번 받아 두고(`RemoteConfigHelper.sync`), 버전 확인과 기능 플래그가 같은 값을 읽는다.
+ * Firebase 원격 구성 바인딩. 값은 앱 시작 때 인트로가 한 번 받아 두고([RemoteConfigHelper.sync]),
+ * 버전 확인과 기능 플래그가 같은 값을 읽는다. 어느 키를 읽을지는 빌드 환경([RemoteConfigEnv])이 정한다.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -25,26 +26,33 @@ object RemoteConfigModule {
 
     @Provides
     @Singleton
-    fun provideFirebaseRemoteConfig(
-        @ApplicationContext context: Context,
-    ): FirebaseRemoteConfig = Firebase.remoteConfig.apply {
+    fun provideRemoteConfigEnv(@ReleaseBuild isReleaseBuild: Boolean): RemoteConfigEnv =
+        RemoteConfigEnv.of(isReleaseBuild)
+
+    @Provides
+    @Singleton
+    fun provideFirebaseRemoteConfig(env: RemoteConfigEnv): FirebaseRemoteConfig = Firebase.remoteConfig.apply {
         setConfigSettingsAsync(
             remoteConfigSettings {
-                // debug/QA 는 즉시 최신값을 확인, 릴리스는 1시간 캐시.
-                minimumFetchIntervalInSeconds = if (context.isDebuggable()) 0L else 3600L
+                // 개발 빌드는 바꾼 값을 바로 확인하고, release는 1시간 캐시한다.
+                minimumFetchIntervalInSeconds = if (env == RemoteConfigEnv.RELEASE) 3600L else 0L
             },
         )
     }
 
     @Provides
     @Singleton
-    fun provideFeatureFlagHelper(
+    fun provideFirebaseRemoteConfigHelper(
         remoteConfig: FirebaseRemoteConfig,
-        @ApplicationContext context: Context,
-    ): FeatureFlagHelper = FirebaseFeatureFlagHelper(
-        readBoolean = remoteConfig::getBoolean,
-        isDebuggable = context.isDebuggable(),
-    )
+        deviceHelper: DeviceHelper,
+        env: RemoteConfigEnv,
+    ): FirebaseRemoteConfigHelper = FirebaseRemoteConfigHelper(remoteConfig, deviceHelper, env)
 
-    private fun Context.isDebuggable(): Boolean = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    @Provides
+    @Singleton
+    fun provideRemoteConfigHelper(helper: FirebaseRemoteConfigHelper): RemoteConfigHelper = helper
+
+    @Provides
+    @Singleton
+    fun provideFeatureFlagHelper(helper: FirebaseRemoteConfigHelper): FeatureFlagHelper = helper
 }

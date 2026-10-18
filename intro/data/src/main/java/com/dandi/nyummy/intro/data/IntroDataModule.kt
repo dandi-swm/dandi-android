@@ -1,17 +1,12 @@
 package com.dandi.nyummy.intro.data
 
-import android.content.Context
 import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.domain.coroutine.IoDispatcher
-import com.dandi.nyummy.common.domain.helper.DeviceHelper
 import com.dandi.nyummy.intro.domain.IntroRepository
-import com.dandi.nyummy.intro.domain.RemoteConfigHelper
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import javax.inject.Singleton
@@ -19,14 +14,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object IntroDataModule {
-
-    @Provides
-    @Singleton
-    fun provideRemoteConfigHelper(
-        remoteConfig: FirebaseRemoteConfig,
-        deviceHelper: DeviceHelper,
-        @ApplicationContext context: Context,
-    ): RemoteConfigHelper = RemoteConfigHelperImpl(remoteConfig, deviceHelper, context)
 
     @Provides
     @Singleton

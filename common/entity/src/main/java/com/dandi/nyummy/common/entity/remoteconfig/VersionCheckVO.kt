@@ -1,4 +1,4 @@
-package com.dandi.nyummy.intro.entity
+package com.dandi.nyummy.common.entity.remoteconfig
 
 /**
  * RemoteConfig 기반 앱 버전 체크 결과.
