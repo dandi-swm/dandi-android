@@ -152,13 +152,27 @@ class MyRoomViewModelTest {
     }
 
     @Test
-    fun `제자리에 놓으면 고르기만 하고 바뀐 것으로 보지 않는다`() = runTest(testDispatcher) {
+    fun `옮기거나 크기를 바꾼 아이템은 맨 앞으로 오고 되돌리면 원래 층으로 간다`() = runTest(testDispatcher) {
+        val viewModel = loadedViewModel()
+        // 불러온 순서는 2(뒤), 1(앞)이다.
+
+        viewModel.onIntent(MyRoomIntent.MoveItem(2, x = 0.4f, y = 0.9f, scale = 2f))
+        assertEquals(listOf(1L, 2L), viewModel.uiState.value.room.items.map { it.roomItemId })
+
+        viewModel.onIntent(MyRoomIntent.Undo)
+        assertEquals(listOf(2L, 1L), viewModel.uiState.value.room.items.map { it.roomItemId })
+    }
+
+    @Test
+    fun `제자리에 놓으면 고르기만 하고 순서도 바뀐 것으로 보지 않는다`() = runTest(testDispatcher) {
         val viewModel = loadedViewModel()
 
-        viewModel.onIntent(MyRoomIntent.MoveItem(1, x = 0.5f, y = 0.8f, scale = 1f))
+        viewModel.onIntent(MyRoomIntent.MoveItem(2, x = 1f, y = 1f, scale = RoomGeometry.MAX_SCALE))
 
-        assertEquals(1L, viewModel.uiState.value.selectedItemId)
-        assertFalse(viewModel.uiState.value.canUndo)
+        val state = viewModel.uiState.value
+        assertEquals(2L, state.selectedItemId)
+        assertEquals(listOf(2L, 1L), state.room.items.map { it.roomItemId })
+        assertFalse(state.canUndo)
     }
 
     @Test
