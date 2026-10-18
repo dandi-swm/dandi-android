@@ -82,7 +82,7 @@ fun Modifier.limitRoomCardHeight(): Modifier = layout { measurable, constraints 
 }
 
 /**
- * 홈 고양이방 카드 크기. 홈이 카드를 그릴 때마다 적어 두고, 마이룸은 같은 크기로 방을 보여 준다.
+ * 홈 고양이방 카드 크기. 홈이 사용자가 보고 있는 화면일 때 카드를 그릴 때마다 적어 두고, 마이룸은 같은 크기로 방을 보여 준다.
  * 홈을 아직 그리지 않았으면(딥링크로 마이룸에 바로 들어옴) null이다.
  */
 @Stable

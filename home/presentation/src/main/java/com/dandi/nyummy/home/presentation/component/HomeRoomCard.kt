@@ -25,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -51,6 +52,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceBu
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
+import com.dandi.nyummy.common.presentation.helper.LocalIsTopScreen
 import com.dandi.nyummy.common.presentation.room.LocalRoomCardSize
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.home.presentation.HomeCatMotion
@@ -89,10 +91,13 @@ internal fun HomeRoomCard(
     val background = ImageBitmap.imageResource(R.drawable.home_room_background)
     val roomCardSize = LocalRoomCardSize.current
     val density = LocalDensity.current
+    // 다른 화면으로 넘어가는 순간 하단 탭이 먼저 사라져서, 나가는 홈이 하단 탭 높이만큼 더 길게 다시 그려진다.
+    // 그 크기를 적으면 마이룸이 사용자가 본 홈 카드보다 긴 카드를 그리므로, 홈이 맨 위 화면일 때만 적는다.
+    val isTopScreen by rememberUpdatedState(LocalIsTopScreen.current)
     BoxWithConstraints(
         modifier = modifier
             // 마이룸이 같은 크기로 방을 보여 줄 수 있게 카드 크기를 적어 둔다.
-            .onSizeChanged { roomCardSize.size = with(density) { it.toSize().toDpSize() } }
+            .onSizeChanged { if (isTopScreen) roomCardSize.size = with(density) { it.toSize().toDpSize() } }
             .clip(RoundedCornerShape(NyummyTheme.radius.l))
             .background(NyummyTheme.colors.bg.sceneRoomFloor),
     ) {

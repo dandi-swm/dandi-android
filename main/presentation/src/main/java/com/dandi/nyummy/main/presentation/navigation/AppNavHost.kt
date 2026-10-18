@@ -8,6 +8,7 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -20,6 +21,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.dandi.nyummy.auth.domain.LoginPage
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
+import com.dandi.nyummy.common.presentation.helper.LocalIsTopScreen
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.common.presentation.jank.JankPageEffect
 
@@ -65,7 +67,9 @@ fun AppNavHost(
                 }
                 // 페이지 식별자를 JankStats state 로 등록하고, 백스택 이탈 시 PAGE_EXIT flush.
                 JankPageEffect(navKey.path)
-                route.render(navKey.args)
+                CompositionLocalProvider(LocalIsTopScreen provides (backStack.lastOrNull() == navKey)) {
+                    route.render(navKey.args)
+                }
             }
         }
     )
