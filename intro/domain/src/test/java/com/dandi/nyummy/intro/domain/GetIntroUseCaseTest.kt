@@ -118,6 +118,40 @@ class GetIntroUseCaseTest {
         }
 
     @Test
+    fun `앱 버전 코드가 최소 버전 코드와 같으면 강제 업데이트를 걸지 않는다`() = runBlocking {
+        val version = versionCheck(minimumVersionCode = 4)
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = false),
+            remoteConfigHelper = FakeRemoteConfigHelper(version),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 4),
+        )
+
+        useCase()
+
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+        assertEquals(listOf<Page>(LoginPage), navigationHelper.rootPages)
+    }
+
+    @Test
+    fun `원격 구성 값을 받지 못해 기본값이면 강제 업데이트를 걸지 않는다`() = runBlocking {
+        // 기본값(최소 versionCode 0)으로 만든 버전 확인 값
+        val version = object : RemoteConfigHelper {
+            override suspend fun sync() = Unit
+            override fun <T> get(key: RemoteConfigKey<T>): T = key.defaultValue
+        }.getVersionCheck()
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = false),
+            remoteConfigHelper = FakeRemoteConfigHelper(version),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 1),
+        )
+
+        useCase()
+
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+        assertEquals(listOf<Page>(LoginPage), navigationHelper.rootPages)
+    }
+
+    @Test
     fun `최소 버전 코드가 0이면 강제 업데이트를 걸지 않는다`() = runBlocking {
         val version = versionCheck(minimumVersionCode = 0)
         val useCase = buildUseCase(

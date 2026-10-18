@@ -91,9 +91,9 @@ qa 환경은 따로 두지 않기로 했다. 앱은 빌드 타입이 release인�
 - [x] 환경값을 DI로 전달(`@ReleaseBuild` → `RemoteConfigEnv`)
 - [x] 키 선택을 환경별로 변경하되 기존 release 키 이름 유지
 - [x] benchmark 빌드는 `_debug` 키를 읽음
-- [ ] 환경별 키 선택 테스트
-- [ ] code 0이면 차단 없음, 최소 code 미만이면 차단, 같으면 허용하는 경계 테스트
-- [ ] 오프라인, 값 누락에서 앱이 불필요하게 차단되지 않는지 테스트
+- [x] 환경별 키 선택 테스트(`RemoteConfigEnvTest`)
+- [x] code 0이면 차단 없음, 최소 code 미만이면 차단, 같으면 허용하는 경계 테스트(`GetIntroUseCaseTest`)
+- [x] 오프라인, 값 누락에서 앱이 불필요하게 차단되지 않는지 테스트(기본값으로 만든 버전 확인 값, `DecodeRemoteConfigValueTest`의 형식 오류)
 - [ ] 콘솔 debug 그룹에 `_debug` 키 4개와 기능 플래그 `_debug` 키 게시
 
 ## 나중에 게시할 때
