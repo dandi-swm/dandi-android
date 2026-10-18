@@ -14,15 +14,20 @@ import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.history.entity.AnalysisFeedbackReason
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
+import com.dandi.nyummy.history.entity.HistoryDateVO
+import com.dandi.nyummy.history.entity.HistoryMonthWithDayVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
 import com.dandi.nyummy.tti.TimelineCategory
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -528,6 +533,96 @@ class HistoryUseCasesTest {
         assertEquals(SubmitAnalysisFeedbackUseCase.REASON_MAX_LENGTH, reason?.length)
     }
 
+    @Test
+    fun `월간과 일간을 동시에 요청하고 함께 돌려준다`() = runBlocking {
+        val calendar = HistoryCalendarVO(year = 2026, month = 8)
+        val daily = DailyMealHistoryVO(date = HistoryDateVO(2026, 8, 3))
+        // 두 요청이 모두 시작돼야 응답한다. 차례로 부르면 첫 요청이 끝나지 않아 시간 초과로 실패한다.
+        val bothStarted = CompletableDeferred<Unit>()
+        var started = 0
+        val markStarted = {
+            started++
+            if (started == 2) bothStarted.complete(Unit)
+        }
+        val repository = SuspendingHistoryRepository(
+            onMonthly = { markStarted(); bothStarted.await(); calendar },
+            onDaily = { markStarted(); bothStarted.await(); daily },
+        )
+
+        val result = withTimeout(1_000) { monthWithDayUseCase(repository)(2026, 8, HistoryDateVO(2026, 8, 3)) }
+
+        assertEquals(Result.success(HistoryMonthWithDayVO(calendar = calendar, dailyDetail = daily)), result)
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+    }
+
+    @Test
+    fun `두 요청이 함께 로그인 만료로 실패해도 세션 만료 안내는 한 번만 띄운다`() = runBlocking {
+        val bothStarted = CompletableDeferred<Unit>()
+        var started = 0
+        val failAfterBothStarted: suspend () -> Nothing = {
+            started++
+            if (started == 2) bothStarted.complete(Unit)
+            bothStarted.await()
+            throw httpException(401)
+        }
+        val repository = SuspendingHistoryRepository(onMonthly = failAfterBothStarted, onDaily = failAfterBothStarted)
+
+        val result = withTimeout(1_000) { monthWithDayUseCase(repository)(2026, 8, HistoryDateVO(2026, 8, 3)) }
+
+        assertEquals(2, started)
+        assertEquals(1, messageHelper.oneButtonDialogs.size)
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `한쪽이 실패하면 다른 쪽 요청은 취소하고 실패를 돌려준다`() = runBlocking {
+        // 일간 요청이 진행 중일 때 월간이 실패하게 한다.
+        val dailyStarted = CompletableDeferred<Unit>()
+        var dailyCancelled = false
+        val repository = SuspendingHistoryRepository(
+            onMonthly = {
+                dailyStarted.await()
+                throw httpException(401)
+            },
+            onDaily = {
+                dailyStarted.complete(Unit)
+                try {
+                    awaitCancellation()
+                } finally {
+                    dailyCancelled = true
+                }
+            },
+        )
+
+        val result = withTimeout(1_000) { monthWithDayUseCase(repository)(2026, 8, HistoryDateVO(2026, 8, 3)) }
+
+        assertTrue(dailyCancelled)
+        assertEquals(1, messageHelper.oneButtonDialogs.size)
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `월간과 일간 조회 중 네트워크 오류면 아무것도 띄우지 않고 실패를 돌려준다`() = runBlocking {
+        val result = monthWithDayUseCase(ThrowingHistoryRepository(IOException("offline")))(
+            2026, 8, HistoryDateVO(2026, 8, 3),
+        )
+
+        assertTrue(messageHelper.snackBars.isEmpty())
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `월간과 일간 조회가 취소되면 실패로 바꾸지 않고 그대로 던진다`() = runBlocking {
+        val useCase = monthWithDayUseCase(ThrowingHistoryRepository(CancellationException("left history")))
+
+        assertCancelledSilently { useCase(2026, 8, HistoryDateVO(2026, 8, 3)) }
+    }
+
+    private fun monthWithDayUseCase(repository: HistoryRepository) = GetMonthWithDayMealsUseCase(
+        repository, FakeResourceHelper(), messageHelper, navigationHelper, FakeTTIHelper(),
+    )
+
     private fun submitFeedbackUseCase(repository: HistoryRepository) = SubmitAnalysisFeedbackUseCase(
         repository, FakeResourceHelper(), messageHelper, navigationHelper, FakeTTIHelper(),
     )
@@ -580,6 +675,20 @@ class HistoryUseCasesTest {
         override suspend fun reanalyzeMeal(mealId: Long): MealAnalysisStatus = throw exception
         override suspend fun deleteMeal(mealId: Long) = throw exception
         override suspend fun submitAnalysisFeedback(mealId: Long, ratingHalfSteps: Int, reason: String?) = throw exception
+    }
+
+    /** 월간과 일간 응답을 테스트가 정한 suspend 블록으로 돌려준다. 나머지는 쓰지 않는다. */
+    private class SuspendingHistoryRepository(
+        private val onMonthly: suspend () -> HistoryCalendarVO,
+        private val onDaily: suspend () -> DailyMealHistoryVO,
+    ) : HistoryRepository {
+        override suspend fun getMonthlyCalendar(year: Int, month: Int) = onMonthly()
+        override suspend fun getDailyMeals(year: Int, month: Int, day: Int) = onDaily()
+        override suspend fun getMeal(mealId: Long): MealHistoryVO = error("not used")
+        override suspend fun updateMealName(mealId: Long, name: String): MealHistoryVO = error("not used")
+        override suspend fun reanalyzeMeal(mealId: Long): MealAnalysisStatus = error("not used")
+        override suspend fun deleteMeal(mealId: Long) = error("not used")
+        override suspend fun submitAnalysisFeedback(mealId: Long, ratingHalfSteps: Int, reason: String?) = error("not used")
     }
 
     private class RecordingNavigationHelper : NavigationHelper {

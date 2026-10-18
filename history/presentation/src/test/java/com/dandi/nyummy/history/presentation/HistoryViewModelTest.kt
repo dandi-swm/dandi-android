@@ -925,6 +925,149 @@ class HistoryViewModelTest {
         assertEquals(AnalysisFeedbackReason.MISSING_FOOD, viewModel.uiState.value.mealDetail?.feedback?.selectedReason)
     }
 
+    @Test
+    fun `만들기만 해서는 불러오지 않고 화면이 처음 보일 때 불러온다`() = runTest(testDispatcher) {
+        val today = todayDate()
+        val viewModel = createViewModel(resumed = false)
+        advanceUntilIdle()
+
+        assertTrue(repository.monthlyRequests.isEmpty())
+        assertTrue(repository.dailyRequests.isEmpty())
+
+        viewModel.onIntent(HistoryIntent.ScreenResumed)
+        advanceUntilIdle()
+
+        assertTrue((today.year to today.month) in repository.monthlyRequests)
+        assertEquals(listOf(Triple(today.year, today.month, today.day)), repository.dailyRequests)
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `다시 보이면 로딩 표시 없이 고른 날 기록을 새로 받는다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        val gate = CompletableDeferred<DailyMealHistoryVO>()
+        repository.dailyOverride = { _, _, _ -> gate.await() }
+
+        viewModel.onIntent(HistoryIntent.ScreenResumed)
+        runCurrent()
+
+        // 받는 동안에도 로딩 표시를 하지 않는다.
+        assertFalse(viewModel.uiState.value.isLoading)
+
+        gate.complete(dailyWithTwoMeals())
+        advanceUntilIdle()
+
+        assertEquals(setOf("1", "2"), viewModel.uiState.value.selectedDayMeals.map { it.id }.toSet())
+    }
+
+    @Test
+    fun `다시 보일 때 받아오지 못하면 보던 기록을 그대로 둔다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        repository.dailyOverride = { _, _, _ -> throw IOException("offline") }
+
+        viewModel.onIntent(HistoryIntent.ScreenResumed)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(setOf("1", "2"), state.selectedDayMeals.map { it.id }.toSet())
+        assertFalse(state.isLoadFailed)
+    }
+
+    @Test
+    fun `불러오지 못한 화면이면 다시 보일 때 다시 불러온다`() = runTest(testDispatcher) {
+        repository.monthlyOverride = { _, _ -> throw IOException("offline") }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.isLoadFailed)
+
+        repository.monthlyOverride = { year, month -> HistoryCalendarVO(year, month) }
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+        viewModel.onIntent(HistoryIntent.ScreenResumed)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoadFailed)
+        assertEquals(setOf("1", "2"), state.selectedDayMeals.map { it.id }.toSet())
+    }
+
+    @Test
+    fun `다시 받는 사이 다른 날로 옮기면 늦게 온 그날 기록은 버린다`() = runTest(testDispatcher) {
+        val today = todayDate()
+        val (prevYear, prevMonth) = previousMonthOf(today.year, today.month)
+        val target = HistoryDateVO(prevYear, prevMonth, 15)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        val gate = CompletableDeferred<DailyMealHistoryVO>()
+        repository.dailyOverride = { year, month, day ->
+            if (HistoryDateVO(year, month, day) == today) {
+                gate.await()
+            } else {
+                DailyMealHistoryVO(meals = listOf(MealHistoryVO(id = "15", name = "지난달 기록", orderIndex = 1)))
+            }
+        }
+
+        viewModel.onIntent(HistoryIntent.ScreenResumed)
+        runCurrent() // 오늘 기록을 다시 받는 중
+        viewModel.onIntent(HistoryIntent.SelectDate(target))
+        advanceUntilIdle()
+        gate.complete(dailyWithTwoMeals()) // 옮기기 전 날짜의 늦은 응답
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(target, state.selectedDate)
+        assertEquals(listOf("15"), state.selectedDayMeals.map { it.id })
+    }
+
+    @Test
+    fun `다시 받는 동안 열어 둔 식사 상세는 닫지 않는다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onIntent(HistoryIntent.ClickMeal("1"))
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ScreenResumed)
+        advanceUntilIdle()
+
+        assertEquals("1", viewModel.uiState.value.mealDetail?.meal?.id)
+    }
+
+    @Test
+    fun `조회가 진행 중일 때 다시 보이면 겹쳐 부르지 않는다`() = runTest(testDispatcher) {
+        val today = todayDate()
+        val gate = CompletableDeferred<HistoryCalendarVO>()
+        repository.monthlyOverride = { year, month ->
+            if (year == today.year && month == today.month) gate.await() else HistoryCalendarVO(year, month)
+        }
+        val viewModel = createViewModel()
+        runCurrent() // 첫 조회가 응답을 기다리는 중
+
+        viewModel.onIntent(HistoryIntent.ScreenResumed)
+        gate.complete(HistoryCalendarVO(today.year, today.month))
+        advanceUntilIdle()
+
+        assertEquals(1, repository.monthlyRequests.count { it == today.year to today.month })
+        assertEquals(1, repository.dailyRequests.size)
+    }
+
+    @Test
+    fun `화면이 처음 보이기 전에 링크가 와도 캘린더를 받은 뒤 그 식사 상세를 연다`() = runTest(testDispatcher) {
+        val today = todayDate()
+        repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
+        val viewModel = createViewModel(resumed = false)
+
+        viewModel.onIntent(HistoryIntent.OpenMealFromLink(2L, eventId = "n-1"))
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(HistoryMonth(today.year, today.month) in state.calendarMonths)
+        assertFalse(state.isLoading)
+        assertEquals("2", state.mealDetail?.meal?.id)
+    }
+
     /** 평가 대상인 식사 1 의 상세를 연다. 상세 응답까지만 받고 1.5초 타이머는 돌리지 않는다. */
     private fun kotlinx.coroutines.test.TestScope.openFeedbackTargetDetail(): HistoryViewModel {
         repository.dailyOverride = { _, _, _ -> dailyWithTwoMeals() }
@@ -938,7 +1081,8 @@ class HistoryViewModelTest {
         return viewModel
     }
 
-    private fun createViewModel(): HistoryViewModel {
+    /** [resumed]가 true 면 화면이 처음 보일 때처럼 첫 조회를 시작한다. */
+    private fun createViewModel(resumed: Boolean = true): HistoryViewModel {
         val resourceHelper = FakeResourceHelper()
         val messageHelper = FakeMessageHelper()
         val ttiHelper = FakeTTIHelper()
@@ -969,8 +1113,8 @@ class HistoryViewModelTest {
             ),
             navigationHelper = navigationHelper,
         ).also {
-            // 화면이 처음 보일 때처럼 첫 조회를 시작한다(ViewModel 생성만으로는 불러오지 않는다).
-            it.onIntent(HistoryIntent.ScreenResumed)
+            // ViewModel 생성만으로는 불러오지 않는다.
+            if (resumed) it.onIntent(HistoryIntent.ScreenResumed)
         }
     }
 
