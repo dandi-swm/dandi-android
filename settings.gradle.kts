@@ -64,6 +64,10 @@ include(":mailbox:domain")
 include(":mailbox:data")
 include(":mailbox:entity")
 
+include(":room:domain")
+include(":room:data")
+include(":room:entity")
+
 include(":settings:presentation")
 include(":settings:domain")
 include(":settings:data")
