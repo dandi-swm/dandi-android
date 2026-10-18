@@ -35,6 +35,7 @@ import com.dandi.nyummy.home.domain.HomeRepository
 import com.dandi.nyummy.home.domain.tti.HomeTTIPage
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.meal.domain.MealRecordPage
+import com.dandi.nyummy.room.domain.MyRoomPage
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -71,6 +72,9 @@ class HomeViewModelTest {
     private val tti = RecordingTTIHelper()
     private lateinit var viewModel: HomeViewModel
 
+    /** 원격 구성 마이룸 플래그. 읽을 때마다 이 값을 돌려준다. */
+    private var isMyRoomEnabled = false
+
     private val state get() = viewModel.uiState.value
 
     @Before
@@ -103,7 +107,10 @@ class HomeViewModelTest {
             ttiHelper = tti,
             remoteConfigHelper = object : RemoteConfigHelper {
                 override suspend fun sync() = Unit
-                override fun <T> get(key: RemoteConfigKey<T>): T = key.defaultValue
+
+                @Suppress("UNCHECKED_CAST")
+                override fun <T> get(key: RemoteConfigKey<T>): T =
+                    if (key == RemoteConfigKey.MyRoomEnabled) isMyRoomEnabled as T else key.defaultValue
             },
         )
     }
@@ -117,6 +124,22 @@ class HomeViewModelTest {
         homeRepository.next = { summary }
         viewModel.onIntent(HomeIntent.ScreenResumed)
         advanceUntilIdle()
+    }
+
+    @Test
+    fun `마이룸 플래그가 켜져 있으면 집 버튼으로 마이룸에 간다`() {
+        isMyRoomEnabled = true
+
+        viewModel.onIntent(HomeIntent.ClickMyRoom)
+
+        assertEquals(listOf<Page>(MyRoomPage), navigationHelper.pages)
+    }
+
+    @Test
+    fun `마이룸 플래그가 꺼져 있으면 집 버튼을 눌러도 아무 데도 가지 않는다`() {
+        viewModel.onIntent(HomeIntent.ClickMyRoom)
+
+        assertTrue(navigationHelper.pages.isEmpty())
     }
 
     @Test
