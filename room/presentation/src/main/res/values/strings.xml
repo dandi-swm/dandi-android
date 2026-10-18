@@ -16,4 +16,6 @@
     <string name="my_room_drag_hint">원하는 곳에 놓아주세요</string>
     <string name="my_room_bring_to_front">맨 앞으로</string>
     <string name="my_room_put_away">보관함에 넣기</string>
+    <string name="my_room_sheet_expand">보관함 펼치기</string>
+    <string name="my_room_sheet_collapse">보관함 접기</string>
 </resources>

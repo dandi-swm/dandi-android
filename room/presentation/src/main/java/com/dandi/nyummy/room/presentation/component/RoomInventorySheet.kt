@@ -1,7 +1,12 @@
 package com.dandi.nyummy.room.presentation.component
 
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,19 +28,29 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpinner
@@ -52,14 +67,73 @@ import com.dandi.nyummy.room.presentation.InventoryItemUiModel
 import com.dandi.nyummy.room.presentation.MyRoomLoadState
 import com.dandi.nyummy.room.presentation.MyRoomTab
 import com.dandi.nyummy.room.presentation.R
+import kotlin.math.roundToInt
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.launch
 import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
- * 마이룸 아래 보관함 시트. 인테리어와 배경 두 탭이고, 탭을 바꿔도 시트 높이가 같아 방이 흔들리지 않는다.
+ * 보관함 시트 펼침 상태. [expansion]이 1이면 칸까지 다 보이고, 0이면 손잡이와 탭만 보인다.
+ * 손잡이와 탭을 위아래로 끌어 바꾸고, 손을 떼면 가까운 쪽(빠르게 튕기면 튕긴 쪽)으로 붙는다.
+ */
+@Stable
+internal class RoomSheetState(expanded: Boolean) {
+
+    var expansion by mutableFloatStateOf(if (expanded) 1f else 0f)
+        private set
+
+    /** 시트 전체 높이(px). 방 무대가 시트에 가리는 높이를 계산하는 데 쓴다. 재기 전이면 0이다. */
+    var heightPx by mutableIntStateOf(0)
+        internal set
+
+    /** 펼쳤을 때만 보이는 칸 영역의 높이(px). */
+    var bodyHeightPx by mutableIntStateOf(0)
+        internal set
+
+    val isExpanded: Boolean
+        get() = expansion >= 0.5f
+
+    /** 다 접었을 때의 시트 높이(px). 재기 전이면 0이다. */
+    val collapsedHeightPx: Int
+        get() = if (heightPx == 0) 0 else heightPx - (bodyHeightPx * expansion).roundToInt()
+
+    fun dragBy(deltaPx: Float) {
+        if (bodyHeightPx > 0) expansion = (expansion - deltaPx / bodyHeightPx).coerceIn(0f, 1f)
+    }
+
+    /** 손을 뗀 뒤 붙는다. 위로 빠르게 튕기면 펼치고, 아래로 튕기면 접고, 아니면 가까운 쪽이다. */
+    suspend fun settle(velocity: Float) {
+        val target = when {
+            velocity < -FlingVelocity -> 1f
+            velocity > FlingVelocity -> 0f
+            isExpanded -> 1f
+            else -> 0f
+        }
+        animateTo(target)
+    }
+
+    suspend fun animateTo(target: Float) {
+        animate(initialValue = expansion, targetValue = target, animationSpec = tween(SettleMillis)) { value, _ ->
+            expansion = value
+        }
+    }
+
+    private companion object {
+        /** 이보다 빠르게 튕기면(px/s) 손을 뗀 자리와 상관없이 튕긴 쪽으로 붙는다. */
+        const val FlingVelocity = 800f
+        const val SettleMillis = 220
+    }
+}
+
+@Composable
+internal fun rememberRoomSheetState(expanded: Boolean = true): RoomSheetState = remember { RoomSheetState(expanded) }
+
+/**
+ * 마이룸 아래 보관함 시트. 손잡이와 탭을 끌어 올리고 내리며, 내리면 손잡이와 탭만 남아 방이 다 보인다.
+ * 손잡이를 누르거나 접힌 채 탭을 눌러도 펼친다. 탭을 바꿔도 칸 영역 높이가 같아 시트가 흔들리지 않는다.
  *
  * - 인테리어: 가진 아이템을 한 개씩 칸으로. 방에 놓인 칸은 그림을 흐리게 하고 "배치됨"을 붙인다.
  * - 배경: 방 그림 미리보기와 이름. 깔린 배경은 테두리와 "사용 중"을 붙인다.
@@ -67,6 +141,7 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  */
 @Composable
 internal fun RoomInventorySheet(
+    state: RoomSheetState,
     loadState: MyRoomLoadState,
     selectedTab: MyRoomTab,
     interiorItems: ImmutableList<InventoryItemUiModel>,
@@ -79,42 +154,87 @@ internal fun RoomInventorySheet(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val scope = rememberCoroutineScope()
     val shape = RoundedCornerShape(topStart = NyummyTheme.radius.l, topEnd = NyummyTheme.radius.l)
+    val dragState = rememberDraggableState { state.dragBy(it) }
+    val toggleDescription = stringResource(
+        if (state.isExpanded) R.string.my_room_sheet_collapse else R.string.my_room_sheet_expand,
+    )
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .onSizeChanged { state.heightPx = it.height }
             .nyummyShadow(shape, NyummyTheme.elevation.float)
             .background(NyummyTheme.colors.bg.surface, shape)
-            .navigationBarsPadding()
-            .padding(top = HandleTopPadding, bottom = SheetBottomPadding),
+            .navigationBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
-            modifier = Modifier
-                .size(width = HandleWidth, height = HandleHeight)
-                .background(NyummyTheme.colors.border.default, RoundedCornerShape(HandleHeight / 2)),
-        )
+        // 손잡이와 탭: 끌어서 시트를 올리고 내린다.
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .wrapContentWidth(Alignment.CenterHorizontally)
-                .widthIn(max = ContentMaxWidth)
-                .padding(horizontal = NyummyTheme.spacing.gutter),
+                .draggable(
+                    state = dragState,
+                    orientation = Orientation.Vertical,
+                    onDragStopped = { velocity -> state.settle(velocity) },
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(Modifier.height(NyummyTheme.spacing.s12))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(HandleTouchHeight)
+                    .nyummyClickable(onClick = { scope.launch { state.animateTo(if (state.isExpanded) 0f else 1f) } })
+                    .semantics { contentDescription = toggleDescription },
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = HandleWidth, height = HandleHeight)
+                        .background(NyummyTheme.colors.border.default, RoundedCornerShape(HandleHeight / 2)),
+                )
+            }
             NyummyTabs(
                 tabs = persistentListOf(
                     stringResource(R.string.my_room_tab_interior),
                     stringResource(R.string.my_room_tab_background),
                 ),
                 selectedIndex = selectedTab.ordinal,
-                onSelect = { onSelectTab(MyRoomTab.entries[it]) },
+                onSelect = {
+                    onSelectTab(MyRoomTab.entries[it])
+                    if (!state.isExpanded) scope.launch { state.animateTo(1f) }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentWidth(Alignment.CenterHorizontally)
+                    .widthIn(max = ContentMaxWidth)
+                    .padding(horizontal = NyummyTheme.spacing.gutter),
             )
-            Spacer(Modifier.height(NyummyTheme.spacing.s12))
+        }
+        // 칸 영역: 펼친 만큼만 보인다. 접혀도 크기는 그대로 재고 위에서부터 잘라 보여 준다.
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clipToBounds()
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
+                    val visibleHeight = (placeable.height * state.expansion).roundToInt()
+                    layout(placeable.width, visibleHeight) { placeable.place(0, 0) }
+                },
+        ) {
             val items = if (selectedTab == MyRoomTab.INTERIOR) interiorItems else backgrounds
             Box(
                 modifier = Modifier
+                    .onSizeChanged { state.bodyHeightPx = it.height }
                     .fillMaxWidth()
+                    .wrapContentWidth(Alignment.CenterHorizontally)
+                    .widthIn(max = ContentMaxWidth)
+                    .padding(
+                        start = NyummyTheme.spacing.gutter,
+                        end = NyummyTheme.spacing.gutter,
+                        top = NyummyTheme.spacing.s12,
+                        bottom = SheetBottomPadding,
+                    )
                     .height(ContentHeight),
             ) {
                 when {
@@ -380,7 +500,8 @@ private val ContentMaxWidth = 480.dp
 
 /** 보관함 칸 영역 높이. 인테리어 두 줄이 들어가고, 탭을 바꿔도 같다. 남는 칸은 스크롤한다. */
 private val ContentHeight = 206.dp
-private val HandleTopPadding = 10.dp
+/** 손잡이 영역 높이(위 여백 10 + 손잡이 4 + 탭까지 12). 누르면 시트를 펴고 접는다. */
+private val HandleTouchHeight = 26.dp
 private val SheetBottomPadding = 28.dp
 private val HandleWidth = 40.dp
 private val HandleHeight = 4.dp

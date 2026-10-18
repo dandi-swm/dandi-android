@@ -2,19 +2,24 @@ package com.dandi.nyummy.room.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.layout
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -23,14 +28,18 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconBut
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.room.LocalRoomCardSize
 import com.dandi.nyummy.room.entity.RoomItemCategory
+import com.dandi.nyummy.room.presentation.component.RoomFrame
 import com.dandi.nyummy.room.presentation.component.RoomInventorySheet
 import com.dandi.nyummy.room.presentation.component.RoomStage
+import com.dandi.nyummy.room.presentation.component.rememberRoomSheetState
 import kotlinx.collections.immutable.persistentListOf
 import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
- * 마이룸(방 꾸미기). 위는 방 무대, 아래는 보관함 시트다. 시트는 무대 아래쪽에 살짝 겹쳐 올라온다.
+ * 마이룸(방 꾸미기). 방은 홈 고양이방 카드와 같은 크기, 같은 잘림으로 보여 줘서 꾸민 모습이 홈과 같다.
+ * 아래 보관함 시트는 끌어 올리고 내린다. 올리면 방 아래쪽을 덮고, 내리면 방이 다 보인다.
  *
  * - 보관함 칸을 누르면 방 가운데에 놓고, 방에서 끌어 옮기고 두 손가락으로 크기를 바꾼다.
  * - 왼쪽 아래 버튼으로 한 단계씩 되돌린다.
@@ -58,6 +67,8 @@ internal fun MyRoomScreen(
     onIntent: (MyRoomIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val sheetState = rememberRoomSheetState()
+    val homeCardSize = LocalRoomCardSize.current.size
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -74,63 +85,98 @@ internal fun MyRoomScreen(
                 )
             },
         )
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
         ) {
+            val density = LocalDensity.current
+            val gutter = NyummyTheme.spacing.gutter
+            val collapsedSheet = with(density) { sheetState.collapsedHeightPx.toDp() }
+                .takeIf { it > 0.dp } ?: DefaultCollapsedSheetHeight
+            // 방은 홈 고양이방 카드와 같은 크기로 보여 준다. 시트를 다 내렸을 때 다 보이도록, 넘치면 같은 비율로 줄인다.
+            val card = fitRoomCard(
+                target = homeCardSize ?: fallbackRoomCard(maxWidth, gutter),
+                maxWidth = maxWidth - gutter * 2,
+                maxHeight = maxHeight - CardTopGap - CardBottomGap - collapsedSheet,
+            )
+            val cardLeft = (maxWidth - card.width) / 2
+            val cardBottom = CardTopGap + card.height
+            val sheetTop = maxHeight - with(density) { sheetState.heightPx.toDp() }
+            // 시트를 올리면 방 아래쪽을 덮는다. 덮인 곳에는 아이템을 끌어 놓지 않는다.
+            val covered = (cardBottom - sheetTop).coerceIn(0.dp, card.height)
+            val frame = remember(card, covered, density) { RoomFrame.of(card.width, card.height, covered, density) }
             RoomStage(
+                frame = frame,
                 background = uiState.room.background,
                 items = uiState.room.items,
                 selectedItemId = uiState.selectedItemId,
-                bottomInset = SheetOverlap,
                 onSelect = { onIntent(MyRoomIntent.SelectItem(it)) },
                 onMove = { id, x, y, scale -> onIntent(MyRoomIntent.MoveItem(id, x, y, scale)) },
                 onBringToFront = { onIntent(MyRoomIntent.BringSelectedToFront) },
                 onPutAway = { onIntent(MyRoomIntent.PutSelectedAway) },
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .offset(x = cardLeft, y = CardTopGap)
+                    .size(card)
+                    .clip(RoundedCornerShape(NyummyTheme.radius.l)),
             )
             // 빈 방에 처음 들어왔을 때(되돌릴 것도 놓인 것도 없을 때)는 되돌리기를 숨긴다.
             if (uiState.canUndo || uiState.room.items.isNotEmpty()) {
+                val undoBottom = minOf(cardBottom, sheetTop) - NyummyTheme.spacing.s12
                 NyummyIconButton(
                     icon = CommonR.drawable.nyummy_ic_undo_2,
                     contentDescription = stringResource(R.string.my_room_undo),
                     onClick = { onIntent(MyRoomIntent.Undo) },
                     style = NyummyIconButtonStyle.Filled,
                     enabled = uiState.canUndo,
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(start = NyummyTheme.spacing.s16, bottom = SheetOverlap + NyummyTheme.spacing.s12),
+                    modifier = Modifier.offset(
+                        x = cardLeft + NyummyTheme.spacing.s12,
+                        y = (undoBottom - NyummyTheme.size.touchTarget).coerceAtLeast(CardTopGap),
+                    ),
                 )
             }
+            RoomInventorySheet(
+                state = sheetState,
+                loadState = uiState.loadState,
+                selectedTab = uiState.selectedTab,
+                interiorItems = uiState.interiorItems,
+                backgrounds = uiState.backgrounds,
+                onSelectTab = { onIntent(MyRoomIntent.SelectTab(it)) },
+                onInteriorClick = { id ->
+                    val point = frame.newItemPoint()
+                    onIntent(MyRoomIntent.ClickInteriorItem(id, point.x, point.y))
+                },
+                onBackgroundClick = { onIntent(MyRoomIntent.ClickBackground(it)) },
+                onReachEnd = { onIntent(MyRoomIntent.ReachInventoryEnd) },
+                onShopClick = { onIntent(MyRoomIntent.ClickShop) },
+                onRetry = { onIntent(MyRoomIntent.RetryLoad) },
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
         }
-        RoomInventorySheet(
-            loadState = uiState.loadState,
-            selectedTab = uiState.selectedTab,
-            interiorItems = uiState.interiorItems,
-            backgrounds = uiState.backgrounds,
-            onSelectTab = { onIntent(MyRoomIntent.SelectTab(it)) },
-            onInteriorClick = { onIntent(MyRoomIntent.ClickInteriorItem(it)) },
-            onBackgroundClick = { onIntent(MyRoomIntent.ClickBackground(it)) },
-            onReachEnd = { onIntent(MyRoomIntent.ReachInventoryEnd) },
-            onShopClick = { onIntent(MyRoomIntent.ClickShop) },
-            onRetry = { onIntent(MyRoomIntent.RetryLoad) },
-            modifier = Modifier.overlapAbove(SheetOverlap),
-        )
     }
 }
 
-/**
- * 시트를 [overlap]만큼 위로 올려 바로 위 요소(방 무대)에 겹친다. 겹친 만큼 위 요소가 더 넓게 측정된다.
- */
-private fun Modifier.overlapAbove(overlap: Dp): Modifier = layout { measurable, constraints ->
-    val placeable = measurable.measure(constraints)
-    val overlapPx = overlap.roundToPx().coerceAtMost(placeable.height)
-    layout(placeable.width, placeable.height - overlapPx) { placeable.place(0, -overlapPx) }
+/** 홈을 아직 그리지 않아 카드 크기를 모를 때 쓰는 크기. 홈과 같은 폭에 디자인 카드 비율(350×567)이다. */
+private fun fallbackRoomCard(maxWidth: Dp, gutter: Dp): DpSize {
+    val width = minOf(maxWidth, ContentMaxWidth) - gutter * 2
+    return DpSize(width, width / FallbackCardAspect)
 }
 
-/** 보관함 시트가 방 무대 아래쪽에 겹치는 높이. */
-private val SheetOverlap = 24.dp
+/** [target] 크기를 그대로 쓰되, 자리보다 크면 가로세로 비율을 지키며 줄인다(잘리는 모양이 홈과 같도록). */
+private fun fitRoomCard(target: DpSize, maxWidth: Dp, maxHeight: Dp): DpSize {
+    val scale = minOf(1f, maxWidth / target.width, maxHeight / target.height).coerceAtLeast(0f)
+    return DpSize(target.width * scale, target.height * scale)
+}
+
+/** 홈 콘텐츠 최대 폭(홈 카드 폭을 모를 때 같은 폭을 쓰려고). */
+private val ContentMaxWidth = 480.dp
+
+private const val FallbackCardAspect = 350f / 567f
+private val CardTopGap = 12.dp
+private val CardBottomGap = 12.dp
+
+/** 시트를 재기 전 다 접은 높이 추정값(손잡이와 탭). */
+private val DefaultCollapsedSheetHeight = 96.dp
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 800)
 @Composable

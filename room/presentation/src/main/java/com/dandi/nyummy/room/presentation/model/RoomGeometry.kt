@@ -9,13 +9,10 @@ import androidx.compose.ui.geometry.Rect
  * - x, y: 아이템 바닥 가운데 점. 배경 그림 전체를 (0,0)~(1,1)로 본 비율이다.
  * - scale: 기본 크기 대비 배율. 기본 크기는 그림의 긴 변이 방 폭의 [ITEM_BASE_FRACTION]이 되는 크기다.
  *
- * 화면은 배경 그림을 폭에 맞춰 바닥 기준으로 그리므로(남는 위쪽은 바닥색, 모자라면 위쪽이 잘린다)
- * 같은 좌표가 어느 기기에서나 그림 위 같은 자리에 온다.
+ * 방 그림은 홈 고양이방 카드와 같은 규칙(RoomCardLayout)으로 그리므로 같은 좌표가 마이룸과 홈 카드에서
+ * 그림 위 같은 자리에 온다.
  */
 internal object RoomGeometry {
-
-    /** 배경 그림의 폭 / 높이. 배경들은 같은 구도(1095×1436)로 그려서 아이템 좌표를 함께 쓴다. */
-    const val BACKGROUND_ASPECT = 1095f / 1436f
 
     /** scale 1.0일 때 아이템 그림의 긴 변이 방 폭에서 차지하는 비율. */
     const val ITEM_BASE_FRACTION = 0.3f
@@ -23,8 +20,7 @@ internal object RoomGeometry {
     const val MIN_SCALE = 0.5f
     const val MAX_SCALE = 2f
 
-    /** 보관함에서 새로 꺼낸 아이템을 놓는 자리(방 가운데 바닥). */
-    const val NEW_ITEM_X = 0.5f
+    /** 보관함에서 새로 꺼낸 아이템 바닥 점의 높이(방 바닥 쪽). 시트에 가리면 시트 바로 위로 올린다. */
     const val NEW_ITEM_Y = 0.8f
 
     /** 그림 크기를 아직 모를 때 쓰는 폭 / 높이. 정사각형으로 보고 그림을 받으면 다시 잰다. */
@@ -65,12 +61,16 @@ internal object RoomGeometry {
     fun clampScale(scale: Float): Float = scale.coerceIn(MIN_SCALE, MAX_SCALE)
 
     /**
-     * 아이템 바닥 점이 방 그림의 보이는 영역([minY]~[maxY], 높이 대비 비율) 안에 머물게 한다.
-     * 좌우는 그림 폭 안(0~1)이다. 보이는 영역이 뒤집힌 아주 작은 화면이면 [maxY]를 쓴다.
+     * 아이템 바닥 점이 방 그림의 보이는 영역(가로 [minX]~[maxX], 세로 [minY]~[maxY], 그림 대비 비율) 안에 머물게 한다.
+     * 보이는 영역은 언제나 그림(0~1) 안으로 다시 자른다. 영역이 뒤집힌 아주 작은 화면이면 아래 끝([maxY])을 쓴다.
      */
-    fun clampPosition(x: Float, y: Float, minY: Float, maxY: Float): Offset =
-        Offset(
-            x = x.coerceIn(0f, 1f),
-            y = if (minY <= maxY) y.coerceIn(minY, maxY) else maxY,
+    fun clampPosition(x: Float, y: Float, minX: Float, maxX: Float, minY: Float, maxY: Float): Offset {
+        val left = minX.coerceIn(0f, 1f)
+        val right = maxX.coerceIn(left, 1f)
+        val bottom = maxY.coerceIn(0f, 1f)
+        return Offset(
+            x = x.coerceIn(left, right),
+            y = if (minY <= bottom) y.coerceIn(minY.coerceAtLeast(0f), bottom) else bottom,
         )
+    }
 }

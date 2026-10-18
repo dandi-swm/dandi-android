@@ -41,7 +41,7 @@ class MyRoomViewModel @Inject constructor(
             MyRoomIntent.ClickSave -> save()
             MyRoomIntent.RetryLoad -> load()
             is MyRoomIntent.SelectTab -> dispatch(MyRoomReducerEvent.TabSelected(intent.tab))
-            is MyRoomIntent.ClickInteriorItem -> clickInteriorItem(intent.roomItemId)
+            is MyRoomIntent.ClickInteriorItem -> clickInteriorItem(intent)
             is MyRoomIntent.ClickBackground -> changeBackground(intent.roomItemId)
             is MyRoomIntent.SelectItem -> dispatch(MyRoomReducerEvent.ItemSelected(intent.roomItemId))
             is MyRoomIntent.MoveItem -> moveItem(intent)
@@ -106,21 +106,21 @@ class MyRoomViewModel @Inject constructor(
         }
     }
 
-    private fun clickInteriorItem(roomItemId: Long) {
+    private fun clickInteriorItem(intent: MyRoomIntent.ClickInteriorItem) {
         val state = currentState
-        if (state.room.items.any { it.roomItemId == roomItemId }) {
-            dispatch(MyRoomReducerEvent.ItemSelected(roomItemId))
+        if (state.room.items.any { it.roomItemId == intent.roomItemId }) {
+            dispatch(MyRoomReducerEvent.ItemSelected(intent.roomItemId))
             return
         }
-        val item = state.interiorItems.firstOrNull { it.roomItemId == roomItemId } ?: return
+        val item = state.interiorItems.firstOrNull { it.roomItemId == intent.roomItemId } ?: return
         val placed = RoomPlacementUiModel(
             roomItemId = item.roomItemId,
             imageUrl = item.imageUrl,
-            x = RoomGeometry.NEW_ITEM_X,
-            y = RoomGeometry.NEW_ITEM_Y,
+            x = intent.x.coerceIn(0f, 1f),
+            y = intent.y.coerceIn(0f, 1f),
             scale = 1f,
         )
-        changeRoom(state.room.copy(items = (state.room.items + placed).toImmutableList()), selectedItemId = roomItemId)
+        changeRoom(state.room.copy(items = (state.room.items + placed).toImmutableList()), selectedItemId = item.roomItemId)
     }
 
     private fun changeBackground(roomItemId: Long) {

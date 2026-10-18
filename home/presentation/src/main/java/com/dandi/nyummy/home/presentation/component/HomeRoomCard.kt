@@ -25,8 +25,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -35,11 +33,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpritePrefetch
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSequenceView
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
@@ -48,9 +51,10 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceBu
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
+import com.dandi.nyummy.common.presentation.room.LocalRoomCardSize
+import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.home.presentation.HomeCatMotion
 import com.dandi.nyummy.home.presentation.R
-import kotlin.math.max
 
 /**
  * 냐미가 사는 고양이방 카드. 홈에서 남는 높이를 모두 차지한다.
@@ -58,6 +62,7 @@ import kotlin.math.max
  * - 픽셀 방 배경은 카드를 빈틈없이 덮도록 키우고 아래를 기준으로 넘치는 쪽을 자른다(Crop, 하단 정렬).
  *   카드가 세로로 길면 좌우가, 가로로 넓으면 위쪽이 잘린다.
  * - 냐미 크기와 위치는 배경이 커진 배율로 정해 화면 크기와 상관없이 늘 같은 러그 자리에 앉는다.
+ *   두 규칙은 마이룸과 함께 쓰는 [RoomCardLayout]에 있고, 카드 크기도 마이룸에 알려 같은 크기로 꾸미게 한다.
  * - 대사는 냐미 머리 위 말풍선, 오른쪽 위에는 방 메뉴, 아래에는 [bottom](오늘 바)을 둔다.
  *
  * @param catMotion 서버에서 받은 냐미 동작. 받는 중이면 null이다.
@@ -82,14 +87,18 @@ internal fun HomeRoomCard(
     bottom: @Composable () -> Unit,
 ) {
     val background = ImageBitmap.imageResource(R.drawable.home_room_background)
+    val roomCardSize = LocalRoomCardSize.current
+    val density = LocalDensity.current
     BoxWithConstraints(
         modifier = modifier
+            // 마이룸이 같은 크기로 방을 보여 줄 수 있게 카드 크기를 적어 둔다.
+            .onSizeChanged { roomCardSize.size = with(density) { it.toSize().toDpSize() } }
             .clip(RoundedCornerShape(NyummyTheme.radius.l))
             .background(NyummyTheme.colors.bg.sceneRoomFloor),
     ) {
-        val roomScale = max(maxWidth / RoomDesignWidth, maxHeight / RoomDesignHeight)
-        val nyummySize = (NyummyDesignSize * roomScale).coerceAtLeast(NyummyMinSize)
-        val nyummyTop = maxHeight - NyummyDesignBottom * roomScale - nyummySize
+        val nyummyRect = RoomCardLayout.nyummyRect(maxWidth, maxHeight)
+        val nyummySize = nyummyRect.right - nyummyRect.left
+        val nyummyTop = nyummyRect.top
         Image(
             bitmap = background,
             contentDescription = null,
@@ -276,16 +285,6 @@ private fun RoomMenuButton(
         )
     }
 }
-
-/**
- * 방 배경을 배율 1로 그렸을 때의 크기와, 그때 냐미 크기, 카드 바닥에서 냐미 발까지의 높이.
- * 셋 다 배경이 커진 배율만큼 함께 커져 냐미가 러그 위에 머문다. 아주 작은 화면에서도 냐미는 120 아래로 줄이지 않는다.
- */
-private val RoomDesignWidth = 430.dp
-private val RoomDesignHeight = 564.dp
-private val NyummyDesignSize = 155.dp
-private val NyummyDesignBottom = 116.dp
-private val NyummyMinSize = 120.dp
 
 /** 말풍선 꼬리 끝이 냐미 위쪽에서 이만큼(냐미 크기 대비) 내려와 머리에 닿는다. 스프라이트 위쪽 여백 때문이다. */
 private const val BubbleOverlapRatio = 0.267f

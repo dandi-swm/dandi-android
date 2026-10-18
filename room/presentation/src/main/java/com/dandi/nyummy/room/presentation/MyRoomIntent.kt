@@ -12,8 +12,11 @@ sealed interface MyRoomIntent : MviIntent {
 
     data class SelectTab(val tab: MyRoomTab) : MyRoomIntent
 
-    /** 인테리어 칸. 놓이지 않은 아이템이면 방 가운데에 놓고, 놓인 아이템이면 방에서 고른다. */
-    data class ClickInteriorItem(val roomItemId: Long) : MyRoomIntent
+    /**
+     * 인테리어 칸. 놓이지 않은 아이템이면 ([x], [y]) 바닥 점에 놓고, 놓인 아이템이면 방에서 고른다.
+     * 자리는 화면이 정한다(지금 보이는 방 가운데 바닥, 시트에 가리지 않는 곳).
+     */
+    data class ClickInteriorItem(val roomItemId: Long, val x: Float, val y: Float) : MyRoomIntent
 
     data class ClickBackground(val roomItemId: Long) : MyRoomIntent
 

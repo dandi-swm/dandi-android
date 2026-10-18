@@ -9,7 +9,6 @@ import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -44,6 +43,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -52,6 +52,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconBut
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
+import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.room.presentation.R
 import com.dandi.nyummy.room.presentation.RoomBackgroundUiModel
 import com.dandi.nyummy.room.presentation.RoomPlacementUiModel
@@ -63,8 +64,9 @@ import kotlin.math.roundToInt
 import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
- * 마이룸 무대. 배경 그림을 폭에 맞춰 바닥 기준으로 그리고(남는 위쪽은 바닥색, 모자라면 위쪽이 잘린다)
- * 그 위에 놓인 아이템을 뒤에서 앞 순서로 그린다. 픽셀 그림이라 확대할 때 번지지 않게 필터 없이 그린다.
+ * 마이룸 무대. 홈 고양이방 카드와 같은 크기, 같은 규칙([RoomFrame])으로 방 그림을 덮어 그리고
+ * 그 위에 놓인 아이템을 뒤에서 앞 순서로 그린다. 그래서 여기서 꾸민 모습이 홈 카드에서도 그대로 보인다.
+ * 픽셀 그림이라 확대할 때 번지지 않게 필터 없이 그린다.
  *
  * - 아이템을 누르면 고르고, 빈 곳을 누르면 고르기를 푼다.
  * - 아이템을 끌면 옮긴다. 끄는 동안 원래 자리는 흐리게 남기고 위에 안내를 띄운다.
@@ -74,33 +76,25 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  * 끌기와 확대, 축소는 손을 뗄 때 한 번만 [onMove]로 알려서 되돌리기 한 단계가 된다.
  * 끄는 동안 맨 위에 그린 아이템은 놓은 뒤에도 맨 앞에 남는다(옮긴 아이템은 맨 앞으로 온다).
  *
- * @param bottomInset 아래쪽에서 보관함 시트에 가려지는 높이. 아이템 바닥이 이 아래로 내려가지 않게 한다.
+ * @param frame 무대 크기와 그 안의 방 그림 자리, 보이는 영역. 무대 크기와 같게 [modifier]로 크기를 정해 넘긴다.
  */
 @Composable
 internal fun RoomStage(
+    frame: RoomFrame,
     background: RoomBackgroundUiModel?,
     items: ImmutableList<RoomPlacementUiModel>,
     selectedItemId: Long?,
-    bottomInset: Dp,
     onSelect: (Long?) -> Unit,
     onMove: (roomItemId: Long, x: Float, y: Float, scale: Float) -> Unit,
     onBringToFront: () -> Unit,
     onPutAway: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BoxWithConstraints(
+    Box(
         modifier = modifier
             .clipToBounds()
             .background(NyummyTheme.colors.bg.sceneRoomFloor),
     ) {
-        val density = LocalDensity.current
-        val frame = remember(constraints.maxWidth, constraints.maxHeight, bottomInset, density) {
-            RoomFrame.of(
-                stageWidth = constraints.maxWidth.toFloat(),
-                stageHeight = constraints.maxHeight.toFloat(),
-                bottomInset = with(density) { bottomInset.toPx() },
-            )
-        }
         // 그림 주소별 폭 / 높이와 받지 못한 그림. 같은 아이템을 여러 개 놓아도 한 번만 잰다.
         val aspects = remember { mutableStateMapOf<String, Float>() }
         val failedUrls = remember { mutableStateMapOf<String, Boolean>() }
@@ -189,15 +183,22 @@ internal fun RoomStage(
 }
 
 /**
- * 무대 위 방 그림의 자리(무대 좌표, px). 방 그림은 무대 폭에 맞추고 바닥을 무대 바닥에 붙인다.
+ * 무대 위 방 그림의 자리(무대 좌표, px). 홈 카드와 같은 규칙([RoomCardLayout])으로 무대를 빈틈없이 덮고
+ * 바닥을 무대 바닥에 맞춘다. 무대가 세로로 길면 좌우가, 가로로 넓으면 위쪽이 무대 밖으로 나가 잘린다.
  *
- * @property visibleTop 방 그림 중 보이는 맨 위(높이 대비 비율). 위쪽이 잘렸으면 0보다 크다.
- * @property visibleBottom 시트에 가리지 않는 맨 아래(높이 대비 비율)
+ * 보이는 영역은 방 그림 대비 비율이다. 아이템 바닥 점을 이 안에 두면 홈 카드에서도 보인다.
+ *
+ * @property visibleLeft 무대 왼쪽 끝(폭 대비 비율). 좌우가 잘렸으면 0보다 크다.
+ * @property visibleRight 무대 오른쪽 끝(폭 대비 비율)
+ * @property visibleTop 무대 위쪽 끝(높이 대비 비율). 위쪽이 잘렸으면 0보다 크다.
+ * @property visibleBottom 보관함 시트에 가리지 않는 맨 아래(높이 대비 비율)
  */
 @Immutable
 internal data class RoomFrame(
     val stageWidth: Float,
     val roomRect: Rect,
+    val visibleLeft: Float,
+    val visibleRight: Float,
     val visibleTop: Float,
     val visibleBottom: Float,
 ) {
@@ -212,15 +213,37 @@ internal data class RoomFrame(
             imageAspect = aspect ?: RoomGeometry.UNKNOWN_IMAGE_ASPECT,
         ).translate(roomRect.topLeft)
 
+    /**
+     * 보관함에서 새로 꺼낸 아이템을 놓을 바닥 점. 무대 가운데, 방 가운데 바닥(시트에 가리면 시트 바로 위)이다.
+     */
+    fun newItemPoint(): Offset = RoomGeometry.clampPosition(
+        x = (stageWidth / 2f - roomRect.left) / roomRect.width,
+        y = minOf(RoomGeometry.NEW_ITEM_Y, visibleBottom - NewItemBottomMargin),
+        minX = visibleLeft,
+        maxX = visibleRight,
+        minY = visibleTop + NewItemBottomMargin,
+        maxY = visibleBottom,
+    )
+
     companion object {
-        fun of(stageWidth: Float, stageHeight: Float, bottomInset: Float): RoomFrame {
-            val roomHeight = stageWidth / RoomGeometry.BACKGROUND_ASPECT
-            val roomTop = stageHeight - roomHeight
-            return RoomFrame(
+        /** 새 아이템 바닥 점을 보이는 영역 끝에서 띄우는 거리(방 높이 대비). */
+        private const val NewItemBottomMargin = 0.03f
+
+        /**
+         * [width]×[height] 무대에서 아래쪽 [coveredBottom]만큼이 보관함 시트에 가려진 상태의 자리.
+         */
+        fun of(width: Dp, height: Dp, coveredBottom: Dp, density: Density): RoomFrame = with(density) {
+            val room = RoomCardLayout.roomRect(width, height)
+            val roomRect = Rect(room.left.toPx(), room.top.toPx(), room.right.toPx(), room.bottom.toPx())
+            val stageWidth = width.toPx()
+            val stageHeight = height.toPx()
+            RoomFrame(
                 stageWidth = stageWidth,
-                roomRect = Rect(0f, roomTop, stageWidth, stageHeight),
-                visibleTop = max(0f, -roomTop) / roomHeight,
-                visibleBottom = (stageHeight - bottomInset - roomTop) / roomHeight,
+                roomRect = roomRect,
+                visibleLeft = max(0f, -roomRect.left) / roomRect.width,
+                visibleRight = (stageWidth - roomRect.left).coerceAtMost(roomRect.width) / roomRect.width,
+                visibleTop = max(0f, -roomRect.top) / roomRect.height,
+                visibleBottom = (stageHeight - coveredBottom.toPx() - roomRect.top) / roomRect.height,
             )
         }
     }
@@ -288,10 +311,12 @@ private suspend fun PointerInputScope.detectRoomGestures(
             val target = placements.first { it.roomItemId == current.roomItemId }
             val scale = RoomGeometry.clampScale(current.scale * zoom)
             val height = frame.itemRect(target.copy(scale = scale), aspectOf(target.imageUrl)).height / frame.roomRect.height
-            // 바닥 점이 보이는 영역 안에 있고, 아이템이 절반 넘게 위로 잘리지 않게 한다.
+            // 바닥 점이 보이는 영역(홈 카드에서도 보이는 곳) 안에 있고, 아이템이 절반 넘게 위로 잘리지 않게 한다.
             val position = RoomGeometry.clampPosition(
                 x = current.x + pan.x / frame.roomRect.width,
                 y = current.y + pan.y / frame.roomRect.height,
+                minX = frame.visibleLeft,
+                maxX = frame.visibleRight,
                 minY = frame.visibleTop + height / 2f,
                 maxY = frame.visibleBottom,
             )
