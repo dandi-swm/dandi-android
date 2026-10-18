@@ -26,6 +26,22 @@ class RoomFrameTest {
     }
 
     @Test
+    fun `아이템은 보이는 곳 중 그림 안전 영역 안에만 놓는다`() {
+        // 362×597은 좌우가 약 10%씩만 잘려서, 놓을 수 있는 곳은 안전 영역(가장자리 15% 안쪽)이 정한다.
+        val phone = RoomFrame.of(362.dp, 597.dp, coveredBottom = 100.dp, density = density)
+        assertEquals(RoomCardLayout.BleedFraction, phone.placeLeft, 0.001f)
+        assertEquals(1f - RoomCardLayout.BleedFraction, phone.placeRight, 0.001f)
+        assertEquals(RoomCardLayout.BleedFraction, phone.placeTop, 0.001f)
+        assertEquals(phone.visibleBottom, phone.placeBottom, 0.001f)
+
+        // 안전 영역보다 많이 잘리는 무대에서는 보이는 곳까지만 놓는다.
+        val tall = RoomFrame.of(300.dp, 800.dp, coveredBottom = 0.dp, density = density)
+        assertTrue("좌우가 15%보다 많이 잘리는 무대다", tall.visibleLeft > RoomCardLayout.BleedFraction)
+        assertEquals(tall.visibleLeft, tall.placeLeft, 0.001f)
+        assertEquals(tall.visibleRight, tall.placeRight, 0.001f)
+    }
+
+    @Test
     fun `시트가 덮은 만큼 보이는 아래 끝이 올라간다`() {
         val frame = RoomFrame.of(362.dp, 597.dp, coveredBottom = 200.dp, density = density)
 

@@ -37,6 +37,15 @@ class RoomCardLayoutTest {
     }
 
     @Test
+    fun `가장 긴 카드 비율에서는 방 그림 좌우가 잘려도 되는 몫만큼만 잘린다`() {
+        val width = 440.dp
+        val rect = RoomCardLayout.roomRect(width, width / RoomCardLayout.MinCardAspect)
+        val roomWidth = rect.right - rect.left
+
+        assertEquals(-RoomCardLayout.BleedFraction, rect.left / roomWidth, 0.001f)
+    }
+
+    @Test
     fun `아주 작은 칸에서도 냐미는 120 아래로 줄이지 않는다`() {
         val rect = RoomCardLayout.nyummyRect(200.dp, 260.dp)
 
