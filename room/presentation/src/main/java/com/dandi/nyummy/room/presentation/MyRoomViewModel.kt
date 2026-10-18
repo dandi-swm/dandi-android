@@ -133,17 +133,19 @@ class MyRoomViewModel @Inject constructor(
         )
     }
 
+    /** 옮기거나 크기를 바꾼 아이템은 맨 앞으로 온다(가장 최근에 만진 아이템이 위에 보인다). */
     private fun moveItem(intent: MyRoomIntent.MoveItem) {
         val state = currentState
-        val scale = RoomGeometry.clampScale(intent.scale)
-        val moved = state.room.items.map {
-            if (it.roomItemId == intent.roomItemId) it.copy(x = intent.x, y = intent.y, scale = scale) else it
-        }
-        if (moved == state.room.items) {
+        val target = state.room.items.firstOrNull { it.roomItemId == intent.roomItemId } ?: return
+        val moved = target.copy(x = intent.x, y = intent.y, scale = RoomGeometry.clampScale(intent.scale))
+        if (moved == target) {
             dispatch(MyRoomReducerEvent.ItemSelected(intent.roomItemId))
             return
         }
-        changeRoom(state.room.copy(items = moved.toImmutableList()), selectedItemId = intent.roomItemId)
+        changeRoom(
+            state.room.copy(items = (state.room.items - target + moved).toImmutableList()),
+            selectedItemId = intent.roomItemId,
+        )
     }
 
     private fun bringSelectedToFront() {

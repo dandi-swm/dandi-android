@@ -20,7 +20,7 @@ sealed interface MyRoomIntent : MviIntent {
     /** 방을 눌러 아이템을 고르거나(null이면 고르기 해제) 한다. */
     data class SelectItem(val roomItemId: Long?) : MyRoomIntent
 
-    /** 끌기나 두 손가락 확대, 축소가 끝났을 때 아이템의 새 자리와 크기. */
+    /** 끌기나 두 손가락 확대, 축소가 끝났을 때 아이템의 새 자리와 크기. 바뀌었으면 그 아이템은 맨 앞으로 온다. */
     data class MoveItem(val roomItemId: Long, val x: Float, val y: Float, val scale: Float) : MyRoomIntent
 
     /** 고른 아이템을 맨 앞으로. */
