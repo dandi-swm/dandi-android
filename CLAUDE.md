@@ -21,14 +21,14 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  
 ./gradlew test                  # 단위 테스트 (run-android-tests 스킬)
 ```
 
-코드를 수정한 턴은 반드시 빌드 검증 후 종료한다. API 키/BASE_URL은 `local.properties`(`API_KEY`, debug는 `API_BASE_URL_DEV`·release는 `API_BASE_URL_PROD`) → BuildConfig 주입(debug 전용 테스트 계정 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`, 카카오 네이티브 앱 키 `KAKAO_NATIVE_APP_KEY`, 구글 OAuth 웹 클라이언트 ID `GOOGLE_WEB_CLIENT_ID`도 동일 — 키가 없으면 해당 제공자 버튼은 "준비 중" 안내). 베이스 URL은 debug→개발 서버, release→운영 서버이며 값이 없으면 placeholder로 빌드만 된다(release는 운영 키만 읽는다). release 서명도 같은 방식으로 `RELEASE_STORE_FILE`/`RELEASE_STORE_PASSWORD`/`RELEASE_KEY_ALIAS`/`RELEASE_KEY_PASSWORD`(local.properties, 없으면 환경변수)에서 읽고, 하나라도 없으면 release는 서명하지 않는다(debug 키로 대신 서명하지 않음). 단위 테스트는 auth/history/intro/main/meal/onboarding 모듈에, 디자인 시스템 계약 테스트는 androidTest에 있다.
+코드를 수정한 턴은 반드시 빌드 검증 후 종료한다. API 키/BASE_URL은 `local.properties`(`API_KEY`, debug는 `API_BASE_URL_DEV`·release는 `API_BASE_URL_PROD`) → BuildConfig 주입(debug 전용 테스트 계정 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`, 카카오 네이티브 앱 키 `KAKAO_NATIVE_APP_KEY`, 구글 OAuth 웹 클라이언트 ID `GOOGLE_WEB_CLIENT_ID`도 동일 — 키가 없으면 해당 제공자 버튼은 "준비 중" 안내). 베이스 URL은 debug→개발 서버, release→운영 서버이며 값이 없으면 placeholder로 빌드만 된다(release는 운영 키만 읽는다). release 서명도 같은 방식으로 `RELEASE_STORE_FILE`/`RELEASE_STORE_PASSWORD`/`RELEASE_KEY_ALIAS`/`RELEASE_KEY_PASSWORD`(local.properties, 없으면 환경변수)에서 읽고, 하나라도 없으면 release는 서명하지 않는다(debug 키로 대신 서명하지 않음). 단위 테스트는 auth/history/intro/main/meal/onboarding 모듈에, 디자인 시스템 토큰 계약 테스트는 `common/presentation`의 단위 테스트에, 컴포넌트 UI 테스트는 androidTest에 있다.
 
 ## 불변 규칙 (위반 금지)
 
 1. **의존 방향**: `presentation → domain → entity`, `data → domain → entity`. presentation↔data 직접 의존 금지. entity/domain은 순수 Kotlin/JVM(Android 의존 금지).
 2. **feature = 4모듈**: `<feature>/{entity,domain,data,presentation}`. 생성은 `make-new-feature-module` 스킬로만.
 3. **MVI**: View→`onIntent(Intent)` 단일 진입, 상태 변이는 `dispatch(ReducerEvent)`→`reduce()` 한 곳에서만. UIState 컬렉션은 ImmutableList/ImmutableSet.
-4. **디자인 토큰**: 색은 `DesignSystemThemeImpl.designSystemColor.*`, 타이포는 `DesignSystemThemeImpl.typeScale.*`(`DandiText` 경유)만. raw hex / raw sp 금지. 토큰 기본값 수정은 `common/presentation/.../ui/token/DesignTokens.kt`의 FIGMA-TOKEN-INJECTION-POINT 구간만.
+4. **디자인 토큰**: 색, 글자, 간격, 모서리는 `NyummyTheme.colors/typography/spacing/radius/...`만 쓴다(텍스트는 `NyummyText` 경유). raw hex / raw sp 금지. 토큰 값 수정은 `common/presentation/.../designsystem/{token,theme}/`에서만 하고 계약 테스트 기대값도 함께 바꾼다. 자세한 규칙은 `docs/architecture/design-system.md`.
 5. **DTO/VO**: DTO는 `@Serializable`+전 필드 nullable, VO는 비-nullable+기본값. 변환은 data 레이어 `toVO()`에서만.
 6. **에러**: data는 `HttpResponseException` throw만, 처리(다이얼로그/네비게이션)는 domain UseCase에서 `isCommonErrorHandling()`/`handlingErrorOnUseCase<ErrorType>()`로.
 7. **네비게이션**: 화면 이동은 `navigationHelper.navigateTo(Page)`만. 새 화면은 `AppRouteRegistry.kt`에 등록.

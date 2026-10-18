@@ -57,7 +57,7 @@ presentation과 data는 서로 직접 의존하지 않습니다. entity와 domai
 - **인트로**: RemoteConfig 버전 체크, 권한 요청, refreshToken 자동 로그인.
 - **인증(auth)**: 이메일 로그인·회원가입 3단계 퍼널·이메일 인증코드. `AuthApiService` 5개 엔드포인트(login / signup / email-verification / email-verification/confirm / refresh). 단, signup·인증코드 confirm은 서버 쪽이 아직 스텁입니다(앱 연동 자체는 완료).
 - **히스토리(history)**: 월간 캘린더, 일별 영양 카드, 식사 상세·이름 수정·삭제. `HistoryApiService` 5개 엔드포인트(monthly / daily / 상세 GET / 이름 PUT / DELETE). 낙관적 갱신과 경쟁 조건 처리 포함.
-- **디자인 시스템**: [DesignTokens.kt](common/presentation/src/main/java/com/dandi/nyummy/common/presentation/ui/token/DesignTokens.kt) 607줄 + 공통 컴포넌트 14파일. Figma DS v1.0.0-rc.3과 대조 검증 완료.
+- **디자인 시스템**: [designsystem 패키지](common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/) 토큰(`NyummyTheme`)과 공통 컴포넌트. Figma 디자인 시스템 변수와 계약 테스트로 대조. 구조는 [design-system.md](docs/architecture/design-system.md).
 
 ### 목업 / 부분 동작
 
@@ -108,7 +108,7 @@ presentation과 data는 서로 직접 의존하지 않습니다. entity와 domai
 - 화면 이동은 NavigationHelper.navigateTo(Page)로 요청하고, 모든 렌더 라우트는 AppRouteRegistry에 등록합니다.
 - DTO는 @Serializable이며 모든 필드를 nullable로 둡니다. VO는 비-nullable 기본값을 가지며 변환은 data의 toVO()에서만 수행합니다.
 - HTTP 실패는 data에서 HttpResponseException으로 올리고, 공통/기능별 처리는 domain UseCase가 담당합니다.
-- 화면의 색상과 타이포는 DesignSystemThemeImpl 토큰과 DandiText를 사용합니다. raw hex와 raw sp를 화면 코드에 두지 않습니다.
+- 화면의 색상과 타이포는 NyummyTheme 토큰과 NyummyText를 사용합니다. raw hex와 raw sp를 화면 코드에 두지 않습니다.
 
 ## 로컬 설정
 
@@ -144,7 +144,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ./gradlew test
 ~~~
 
-단위 테스트는 auth(검증기·Repository·ApiService·소셜 로그인/가입 UseCase·로그인 ViewModel), history(ViewModel·캘린더 그리드·UseCase), intro(UseCase), main(라우트 매칭)에 있고, 디자인 시스템 계약 테스트(DesignSystemContractTest)는 androidTest에 있습니다.
+단위 테스트는 auth(검증기·Repository·ApiService·소셜 로그인/가입 UseCase·로그인 ViewModel), history(ViewModel·캘린더 그리드·UseCase), intro(UseCase), main(라우트 매칭)에 있고, 디자인 시스템 토큰 계약 테스트(NyummyTokenContractTest, NyummyTypographyContractTest)는 common:presentation 단위 테스트에, 컴포넌트 UI 테스트는 androidTest에 있습니다.
 
 Kotlin/Gradle 코드를 수정한 작업은 최소 :app:assembleDebug 성공 후 종료합니다. PR 전에는 다음 검증도 권장합니다.
 

@@ -1,32 +1,33 @@
 ---
 name: "design-token-sync"
-description: "Sync design tokens (colors / typography) from a Figma file (via Figma MCP) or a design-spec image/PDF into this project's single token file (common/presentation ui/token/DesignTokens.kt). Trigger when the user asks to \"sync tokens\", \"apply the Figma variables\", \"update the theme from the design\", provides a Figma link or design-spec image and asks to update colors/typography, or invokes the `design-token-sync` skill."
+description: "Sync design tokens (colors / typography / dimensions) from a Figma file (via Figma MCP) or a design-spec image/PDF into this project's Nyummy design system (common/presentation designsystem/token and designsystem/theme) and its contract tests. Trigger when the user asks to \"sync tokens\", \"apply the Figma variables\", \"update the theme from the design\", provides a Figma link or design-spec image and asks to update colors/typography, or invokes the `design-token-sync` skill."
 ---
 
-# Design token sync (Figma → DesignTokens.kt)
+# Design token sync (Figma → NyummyTheme)
 
-All default token values live in ONE file:
+Token values live in `common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/`:
 
-- [common/presentation/.../ui/token/DesignTokens.kt](common/presentation/src/main/java/com/jongchan/androidarchi/common/presentation/ui/token/DesignTokens.kt)
-
-It has three `FIGMA-TOKEN-INJECTION-POINT` markers — these are the ONLY edit targets of this skill:
-
-| Marker | What it defines | Kotlin symbol |
+| File | What it defines | Figma source |
 |---|---|---|
-| `palette` | Raw color palette | `ArchiPaletteColors` enum |
-| `semantic-colors` | Semantic slot → palette mapping | `DefaultArchiColor` |
-| `type-scale` | Text styles | `DefaultArchiStaticTypeScale` |
+| `token/NyummyPalette.kt` | Raw palette (`internal object NyummyPalette`) | Primitive (palette) variables |
+| `theme/NyummyColors.kt` | Role colors `DefaultNyummyColors` (`bg`, `content`, `border`, `data`, `external`) | `2 Semantic` variables |
+| `theme/NyummyTypography.kt` | Text roles `DefaultNyummyTypography`, font families `NyummyFontFamily` | Text styles |
+| `theme/NyummyDimensions.kt` | Spacing, radius, border width, sizes | `3 Dimension` variables |
+| `theme/NyummyElevation.kt` | Shadows `soft`, `float` | Effect styles |
 
-The slot *structure* (which slots exist) lives elsewhere and is NOT changed without explicit user confirmation:
-- Color slots: `ArchiSemanticColors` in [ui/color/ColorSemantic.kt](common/presentation/src/main/java/com/jongchan/androidarchi/common/presentation/ui/color/ColorSemantic.kt) (also update its `withStringKey`)
-- Type slots: `ArchiTypeScale` in [ui/typo/ArchiTypeScale.kt](common/presentation/src/main/java/com/jongchan/androidarchi/common/presentation/ui/typo/ArchiTypeScale.kt) (also update its `withStringKey`)
+Contract tests hold the expected Figma values and MUST change in the same edit:
+
+- `common/presentation/src/test/.../designsystem/theme/NyummyTokenContractTest.kt` (colors, dimensions, effects)
+- `common/presentation/src/test/.../designsystem/theme/NyummyTypographyContractTest.kt` (text styles)
+
+Architecture and rules: [docs/architecture/design-system.md](../../../docs/architecture/design-system.md).
 
 ## 0. Inputs — confirm before starting
 
 - **Design source** (required, one of):
   - Figma file/frame link + connected Figma MCP server → use MCP tools (`get_variable_defs` for variables, `get_design_context` / `get_screenshot` for context; discover exact tool names via the session's MCP tool list).
   - Design-spec image(s) or PDF → Read the file(s) and extract colors (hex) and text styles (weight/size/line-height) visually.
-- **Scope** (optional): colors only / typography only / both. Default: both.
+- **Scope** (optional): colors / typography / dimensions. Default: all.
 
 If the Figma MCP is not connected and no image/PDF is given, stop and ask for one of the two.
 
@@ -34,26 +35,32 @@ If the Figma MCP is not connected and no image/PDF is given, stop and ask for on
 
 | Figma | Code |
 |---|---|
-| Variable `palette/{name}/{step}` (e.g. `palette/gray/900`) | `ArchiPaletteColors.{Name}{Step}` (e.g. `Gray900`) |
-| Variable `{role}/{variant}/{level}` (e.g. `bg/default/level0`, `content/accent`) | `DefaultArchiColor.{role}{Variant}{Level}` (e.g. `bgDefaultLevel0`, `contentAccent`) |
-| Text Style `{group}/{weight}/{size}` (e.g. `title/strong/L`) | `DefaultArchiStaticTypeScale` slot `_{group}{Weight}{Size}` (e.g. `_titleStrongL`) |
+| `palette/{family}/{step}` (e.g. `palette/evergreen/600`) | `NyummyPalette.{Family}{Step}` (e.g. `Evergreen600`) |
+| `{group}/{role}` with kebab case (e.g. `bg/surface-sunken`, `content/on-action`) | `NyummyColors.{group}.{roleCamel}` (e.g. `bg.surfaceSunken`, `content.onAction`) |
+| Nested role (e.g. `bg/action/primary-pressed`, `bg/voice/coach`) | Joined camel case (e.g. `bg.actionPrimaryPressed`, `bg.voiceCoach`) |
+| Text style `{group}/{size}` (e.g. `title/m`, `label/m-strong`) | `NyummyTypography.{group}{Size}` (e.g. `titleM`, `labelMStrong`) |
+| `3 Dimension` spacing, radius, size | `NyummyTheme.spacing.s{n}`, `NyummyTheme.radius.{xs,s,m,l,full}`, `NyummyTheme.size.*` |
 
-When extracting from an image/PDF (no variable names available), map by ROLE: background colors → `bg*`, text colors → `content*`, dividers/strokes → `border*`, CTA/highlight → `contentAccent`, like/favorite → `contentFavorite`. State your role assignments in the report.
+The contract tests list every Figma color and text style name next to its code slot — use them as the mapping table.
+
+When extracting from an image/PDF (no variable names available), map by ROLE: backgrounds → `bg`, text → `content`, dividers/strokes → `border`, charts and progress → `data`. State your role assignments in the report.
 
 ## 2. Procedure
 
-1. Extract all color values and text styles from the design source.
-2. Diff against current `DesignTokens.kt` values.
-3. Apply changes **only inside the three marker sections**:
-   - New palette colors → add enum entries (keep naming convention).
-   - Changed slot values → repoint the slot to the right palette entry. Semantic slots MUST reference `ArchiPaletteColors` — never a raw `Color(0x...)` literal.
-   - Type scale → update fontSize / fontWeight / lineHeight / letterSpacing per slot. Font family changes (new font files in `res/font/`) need user confirmation.
-4. If the design needs a slot that doesn't exist (e.g. a third accent color), report it and ask before touching `ArchiSemanticColors` / `ArchiTypeScale`. If approved, update the data class, `withStringKey`, and the token file together.
-5. Remove nothing: unused palette entries stay (they're `@Suppress("Unused")`).
+1. Extract all color values, text styles, and dimensions from the design source.
+2. Diff against the current token files and contract test expectations.
+3. Apply changes:
+   - New palette colors → add to `NyummyPalette` (keep naming convention).
+   - Changed role values → repoint the role to the right palette entry. Role colors MUST reference `NyummyPalette` — never a raw `Color(0x...)` literal.
+   - Text styles → update size / weight / line height / letter spacing. New font files in `res/font/` need user confirmation.
+   - Update the contract test expectations with the same Figma values.
+4. If the design needs a role that doesn't exist, report it and ask before adding it. If approved, update the data class, the default value, the contract test, and consumers together.
+5. Do not delete palette entries or roles that the design no longer lists without asking — screens may still use them.
 
 ## 3. Verification — required
 
-Run the `gradle-build-check` skill (at minimum `:common:presentation:compileDebugKotlin` then `:app:assembleDebug`).
+- `./gradlew :common:presentation:testDebugUnitTest` (contract tests)
+- Run the `gradle-build-check` skill (at minimum `:app:assembleDebug`).
 
 ## 4. Report format
 
@@ -61,7 +68,7 @@ End with a table:
 
 | Design value | Mapped to | Status |
 |---|---|---|
-| `bg/default/level0` #F7F7F7 | `bgDefaultLevel0` ← `Gray900` | updated |
-| `content/warning` #FFAA00 | — | **unmapped: no slot** (needs user decision) |
+| `bg/surface-sunken` #F9FBF9 | `bg.surfaceSunken` ← `Gray50` | updated |
+| `content/warning-strong` #584600 | — | **unmapped: no role** (needs user decision) |
 
-Also list code slots that the design did NOT cover (kept at template defaults).
+Also list code roles that the design did NOT cover.
