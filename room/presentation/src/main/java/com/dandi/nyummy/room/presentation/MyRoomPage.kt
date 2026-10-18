@@ -35,6 +35,7 @@ import com.dandi.nyummy.room.presentation.component.RoomInventorySheet
 import com.dandi.nyummy.room.presentation.component.RoomStage
 import com.dandi.nyummy.room.presentation.component.rememberRoomSheetState
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
@@ -138,16 +139,15 @@ internal fun MyRoomScreen(
             RoomInventorySheet(
                 state = sheetState,
                 loadState = uiState.loadState,
-                selectedTab = uiState.selectedTab,
-                interiorItems = uiState.interiorItems,
-                backgrounds = uiState.backgrounds,
+                tabs = uiState.inventoryTabs,
+                selectedCategory = uiState.selectedCategory,
                 onSelectTab = { onIntent(MyRoomIntent.SelectTab(it)) },
                 onInteriorClick = { id ->
                     val point = frame.newItemPoint()
                     onIntent(MyRoomIntent.ClickInteriorItem(id, point.x, point.y))
                 },
                 onBackgroundClick = { onIntent(MyRoomIntent.ClickBackground(it)) },
-                onReachEnd = { onIntent(MyRoomIntent.ReachInventoryEnd) },
+                onReachEnd = { onIntent(MyRoomIntent.ReachInventoryEnd(it)) },
                 onShopClick = { onIntent(MyRoomIntent.ClickShop) },
                 onRetry = { onIntent(MyRoomIntent.RetryLoad) },
                 modifier = Modifier.align(Alignment.BottomCenter),
@@ -192,11 +192,17 @@ private fun MyRoomPreview() {
                     ),
                 ),
                 selectedItemId = 2,
-                interiorItems = persistentListOf(
-                    InventoryItemUiModel(1, RoomItemCategory.BED, "구름 방석", "", isPlaced = true),
-                    InventoryItemUiModel(2, RoomItemCategory.CAT_WHEEL, "캣타워", "", isPlaced = true),
-                    InventoryItemUiModel(3, RoomItemCategory.ETC, "털실 공", "", isPlaced = false),
-                ),
+                selectedCategory = RoomItemCategory.BED,
+                inventoryTabs = InventoryTabUiModel.emptyTabs().map { tab ->
+                    if (tab.category != RoomItemCategory.BED) return@map tab
+                    tab.copy(
+                        items = persistentListOf(
+                            InventoryItemUiModel(1, RoomItemCategory.BED, "구름 방석", "", isPlaced = true),
+                            InventoryItemUiModel(2, RoomItemCategory.BED, "나무 침대", "", isPlaced = true),
+                            InventoryItemUiModel(3, RoomItemCategory.BED, "바구니 침대", "", isPlaced = false),
+                        ),
+                    )
+                }.toImmutableList(),
             ),
             onIntent = {},
         )

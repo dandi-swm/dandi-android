@@ -2,6 +2,7 @@ package com.dandi.nyummy.room.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
 import com.dandi.nyummy.room.entity.OwnedRoomItemPageVO
+import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.entity.RoomVO
 
 sealed interface MyRoomReducerEvent : ReducerEvent {
@@ -11,7 +12,7 @@ sealed interface MyRoomReducerEvent : ReducerEvent {
 
     data object LoadFailed : MyRoomReducerEvent
 
-    data class TabSelected(val tab: MyRoomTab) : MyRoomReducerEvent
+    data class TabSelected(val category: RoomItemCategory) : MyRoomReducerEvent
 
     /** 방이 바뀌었다. 바뀌기 전 방은 되돌리기 목록에 쌓인다. */
     data class RoomChanged(val room: RoomDraft, val selectedItemId: Long?) : MyRoomReducerEvent
@@ -20,11 +21,11 @@ sealed interface MyRoomReducerEvent : ReducerEvent {
 
     data class ItemSelected(val roomItemId: Long?) : MyRoomReducerEvent
 
-    data object MoreItemsLoadStarted : MyRoomReducerEvent
+    data class MoreItemsLoadStarted(val category: RoomItemCategory) : MyRoomReducerEvent
 
     data class MoreItemsLoaded(val page: OwnedRoomItemPageVO) : MyRoomReducerEvent
 
-    data object MoreItemsLoadStopped : MyRoomReducerEvent
+    data class MoreItemsLoadStopped(val category: RoomItemCategory) : MyRoomReducerEvent
 
     data object SaveStarted : MyRoomReducerEvent
 

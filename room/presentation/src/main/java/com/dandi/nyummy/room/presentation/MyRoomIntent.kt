@@ -1,6 +1,7 @@
 package com.dandi.nyummy.room.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.MviIntent
+import com.dandi.nyummy.room.entity.RoomItemCategory
 
 sealed interface MyRoomIntent : MviIntent {
     /** 상단 뒤로가기나 시스템 뒤로가기. 저장하지 않은 변경이 있으면 저장할지 묻는다. */
@@ -10,7 +11,8 @@ sealed interface MyRoomIntent : MviIntent {
 
     data object RetryLoad : MyRoomIntent
 
-    data class SelectTab(val tab: MyRoomTab) : MyRoomIntent
+    /** 보관함 탭(아이템 종류)을 바꾼다. */
+    data class SelectTab(val category: RoomItemCategory) : MyRoomIntent
 
     /**
      * 인테리어 칸. 놓이지 않은 아이템이면 ([x], [y]) 바닥 점에 놓고, 놓인 아이템이면 방에서 고른다.
@@ -34,7 +36,8 @@ sealed interface MyRoomIntent : MviIntent {
 
     data object Undo : MyRoomIntent
 
-    data object ReachInventoryEnd : MyRoomIntent
+    /** 보관함 [category] 탭을 끝 가까이까지 넘겼다. 남은 묶음이 있으면 더 받는다. */
+    data class ReachInventoryEnd(val category: RoomItemCategory) : MyRoomIntent
 
     data object ClickShop : MyRoomIntent
 }

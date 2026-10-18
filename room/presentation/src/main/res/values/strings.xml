@@ -3,8 +3,11 @@
     <string name="my_room_title">마이룸</string>
     <string name="my_room_save">저장</string>
     <string name="my_room_undo">되돌리기</string>
-    <string name="my_room_tab_interior">인테리어</string>
-    <string name="my_room_tab_background">배경</string>
+    <string name="my_room_category_background">배경</string>
+    <string name="my_room_category_bed">침대</string>
+    <string name="my_room_category_cat_wheel">캣휠</string>
+    <string name="my_room_category_carpet">카펫</string>
+    <string name="my_room_category_etc">기타</string>
     <string name="my_room_item_placed">배치됨</string>
     <string name="my_room_background_in_use">사용 중</string>
     <string name="my_room_more_in_shop">상점에서 더 찾기</string>

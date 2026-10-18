@@ -18,7 +18,6 @@ import com.dandi.nyummy.room.presentation.model.RoomGeometry
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -40,7 +39,7 @@ class MyRoomViewModel @Inject constructor(
             MyRoomIntent.ClickBack -> clickBack()
             MyRoomIntent.ClickSave -> save()
             MyRoomIntent.RetryLoad -> load()
-            is MyRoomIntent.SelectTab -> dispatch(MyRoomReducerEvent.TabSelected(intent.tab))
+            is MyRoomIntent.SelectTab -> dispatch(MyRoomReducerEvent.TabSelected(intent.category))
             is MyRoomIntent.ClickInteriorItem -> clickInteriorItem(intent)
             is MyRoomIntent.ClickBackground -> changeBackground(intent.roomItemId)
             is MyRoomIntent.SelectItem -> dispatch(MyRoomReducerEvent.ItemSelected(intent.roomItemId))
@@ -48,7 +47,7 @@ class MyRoomViewModel @Inject constructor(
             MyRoomIntent.BringSelectedToFront -> bringSelectedToFront()
             MyRoomIntent.PutSelectedAway -> putSelectedAway()
             MyRoomIntent.Undo -> if (currentState.canUndo) dispatch(MyRoomReducerEvent.Undone)
-            MyRoomIntent.ReachInventoryEnd -> loadMoreItems()
+            is MyRoomIntent.ReachInventoryEnd -> loadMoreItems(intent.category)
             // TODO: 상점 화면이 생기면 ShopPage로 연결한다.
             MyRoomIntent.ClickShop -> messageHelper.showSnackBar(iconType = IconType.WARNING, messageText = NOT_READY_MESSAGE)
         }
@@ -59,7 +58,7 @@ class MyRoomViewModel @Inject constructor(
             MyRoomReducerEvent.LoadStarted -> state.copy(loadState = MyRoomLoadState.LOADING)
             is MyRoomReducerEvent.Loaded -> loadedState(state, event.room)
             MyRoomReducerEvent.LoadFailed -> state.copy(loadState = MyRoomLoadState.FAILED)
-            is MyRoomReducerEvent.TabSelected -> state.copy(selectedTab = event.tab)
+            is MyRoomReducerEvent.TabSelected -> state.copy(selectedCategory = event.category)
             is MyRoomReducerEvent.RoomChanged -> state.copy(
                 room = event.room,
                 undoStack = (state.undoStack + state.room).takeLast(MAX_UNDO).toImmutableList(),
@@ -74,9 +73,9 @@ class MyRoomViewModel @Inject constructor(
                 ).withPlacedMarks()
             }
             is MyRoomReducerEvent.ItemSelected -> state.copy(selectedItemId = event.roomItemId)
-            MyRoomReducerEvent.MoreItemsLoadStarted -> state.copy(isLoadingMore = true)
+            is MyRoomReducerEvent.MoreItemsLoadStarted -> state.updateTab(event.category) { it.copy(isLoadingMore = true) }
             is MyRoomReducerEvent.MoreItemsLoaded -> withMoreItems(state, event.page)
-            MyRoomReducerEvent.MoreItemsLoadStopped -> state.copy(isLoadingMore = false)
+            is MyRoomReducerEvent.MoreItemsLoadStopped -> state.updateTab(event.category) { it.copy(isLoadingMore = false) }
             MyRoomReducerEvent.SaveStarted -> state.copy(isSaving = true)
             is MyRoomReducerEvent.SaveFinished -> state.copy(
                 isSaving = false,
@@ -93,16 +92,21 @@ class MyRoomViewModel @Inject constructor(
         }
     }
 
-    /** 다음 묶음이 남은 종류를 하나씩 이어 읽는다. 실패하면 거기서 멈추고 다음에 끝에 닿을 때 다시 시도한다. */
-    private fun loadMoreItems() {
+    /**
+     * [category] 탭의 다음 묶음을 받는다. 첫 묶음은 방과 함께 받았으니 그 뒤 묶음만 종류별 목록으로 받는다.
+     * 실패하면 지금 칸은 그대로 두고, 다음에 끝에 닿을 때 다시 시도한다.
+     */
+    private fun loadMoreItems(category: RoomItemCategory) {
         val state = currentState
-        if (state.isLoadingMore || state.loadState != MyRoomLoadState.LOADED) return
-        val (category, cursor) = state.nextCursors.entries.firstOrNull()?.toPair() ?: return
-        dispatch(MyRoomReducerEvent.MoreItemsLoadStarted)
+        if (state.loadState != MyRoomLoadState.LOADED) return
+        val tab = state.tabOf(category) ?: return
+        val cursor = tab.nextCursor ?: return
+        if (tab.isLoadingMore) return
+        dispatch(MyRoomReducerEvent.MoreItemsLoadStarted(category))
         viewModelScope.launch {
             getOwnedRoomItems(category, cursor)
-                .onSuccess { dispatch(MyRoomReducerEvent.MoreItemsLoaded(it)) }
-            dispatch(MyRoomReducerEvent.MoreItemsLoadStopped)
+                .onSuccess { dispatch(MyRoomReducerEvent.MoreItemsLoaded(it.copy(category = category))) }
+            dispatch(MyRoomReducerEvent.MoreItemsLoadStopped(category))
         }
     }
 
@@ -112,7 +116,10 @@ class MyRoomViewModel @Inject constructor(
             dispatch(MyRoomReducerEvent.ItemSelected(intent.roomItemId))
             return
         }
-        val item = state.interiorItems.firstOrNull { it.roomItemId == intent.roomItemId } ?: return
+        val item = state.inventoryTabs
+            .filter { it.category != RoomItemCategory.BACKGROUND }
+            .firstNotNullOfOrNull { tab -> tab.items.firstOrNull { it.roomItemId == intent.roomItemId } }
+            ?: return
         val placed = RoomPlacementUiModel(
             roomItemId = item.roomItemId,
             imageUrl = item.imageUrl,
@@ -126,7 +133,7 @@ class MyRoomViewModel @Inject constructor(
     private fun changeBackground(roomItemId: Long) {
         val state = currentState
         if (state.room.background?.roomItemId == roomItemId) return
-        val background = state.backgrounds.firstOrNull { it.roomItemId == roomItemId } ?: return
+        val background = state.tabOf(RoomItemCategory.BACKGROUND)?.items?.firstOrNull { it.roomItemId == roomItemId } ?: return
         changeRoom(
             state.room.copy(background = RoomBackgroundUiModel(background.roomItemId, background.imageUrl)),
             selectedItemId = state.selectedItemId,
@@ -224,55 +231,65 @@ class MyRoomViewModel @Inject constructor(
     }
 }
 
-/** 서버에서 받은 방으로 화면 상태를 처음부터 만든다. 되돌리기 목록과 고른 아이템은 비운다. */
+/**
+ * 서버에서 받은 방으로 화면 상태를 처음부터 만든다. 되돌리기 목록과 고른 아이템은 비운다.
+ * 보관함 탭은 종류마다 하나씩 늘 다섯 개이고, 각 탭에는 방과 함께 받은 첫 묶음을 넣는다.
+ */
 private fun loadedState(state: MyRoomUIState, room: RoomVO): MyRoomUIState {
     val draft = room.placements.toDraft()
-    val categories = room.categories
     return state.copy(
         loadState = MyRoomLoadState.LOADED,
         room = draft,
         savedRoom = draft,
         undoStack = persistentListOf(),
         selectedItemId = null,
-        interiorItems = categories.filter { it.category != RoomItemCategory.BACKGROUND }
-            .flatMap { page -> page.items.map { it.toInventoryItem(page.category) } }
-            .toImmutableList(),
-        backgrounds = categories.filter { it.category == RoomItemCategory.BACKGROUND }
-            .flatMap { page -> page.items.map { it.toInventoryItem(page.category) } }
-            .toImmutableList(),
-        nextCursors = categories.mapNotNull { page -> page.nextCursor?.let { page.category to it } }
-            .toMap()
-            .toPersistentMap(),
-        isLoadingMore = false,
+        inventoryTabs = RoomItemCategory.entries.map { category ->
+            // 모르는 종류는 기타로 바뀌어 오므로 같은 종류 묶음이 여럿일 수 있다. 다음 묶음은 첫 묶음의 cursor로 받는다.
+            val pages = room.categories.filter { it.category == category }
+            InventoryTabUiModel(
+                category = category,
+                name = pages.firstOrNull()?.categoryName.orEmpty(),
+                items = pages.flatMap { page -> page.items.map { it.toInventoryItem(category) } }
+                    .distinctBy { it.roomItemId }
+                    .toImmutableList(),
+                nextCursor = pages.firstOrNull()?.nextCursor,
+            )
+        }.toImmutableList(),
     ).withPlacedMarks()
 }
 
-/** 다음 묶음을 같은 종류의 마지막 칸 뒤에 이어 붙인다(보관함은 종류 순서를 지킨다). */
-private fun withMoreItems(state: MyRoomUIState, page: OwnedRoomItemPageVO): MyRoomUIState {
-    val newItems = page.items.map { it.toInventoryItem(page.category) }
-    fun List<InventoryItemUiModel>.insert(): List<InventoryItemUiModel> {
-        val known = mapTo(HashSet()) { it.roomItemId }
-        val fresh = newItems.filterNot { it.roomItemId in known }
-        val at = indexOfLast { it.category == page.category } + 1
-        return if (at == 0) this + fresh else take(at) + fresh + drop(at)
-    }
-    val cursors = state.nextCursors.toMutableMap().apply {
-        page.nextCursor?.let { put(page.category, it) } ?: remove(page.category)
-    }
-    return state.copy(
-        interiorItems = if (page.category == RoomItemCategory.BACKGROUND) state.interiorItems else state.interiorItems.insert().toImmutableList(),
-        backgrounds = if (page.category == RoomItemCategory.BACKGROUND) state.backgrounds.insert().toImmutableList() else state.backgrounds,
-        nextCursors = cursors.toPersistentMap(),
-    ).withPlacedMarks()
-}
+/** 다음 묶음을 그 종류 탭의 끝에 이어 붙인다. 이미 있는 칸(묶음 사이에 겹친 칸)은 빼고 붙인다. */
+private fun withMoreItems(state: MyRoomUIState, page: OwnedRoomItemPageVO): MyRoomUIState =
+    state.updateTab(page.category) { tab ->
+        val known = tab.items.mapTo(HashSet()) { it.roomItemId }
+        val fresh = page.items.filterNot { it.roomItemId in known }.map { it.toInventoryItem(page.category) }
+        tab.copy(items = (tab.items + fresh).toImmutableList(), nextCursor = page.nextCursor)
+    }.withPlacedMarks()
 
-/** 보관함 칸의 놓임 표시를 지금 방에 맞춘다. */
+private fun MyRoomUIState.updateTab(
+    category: RoomItemCategory,
+    transform: (InventoryTabUiModel) -> InventoryTabUiModel,
+): MyRoomUIState = copy(
+    inventoryTabs = inventoryTabs.map { if (it.category == category) transform(it) else it }.toImmutableList(),
+)
+
+/** 보관함 칸의 놓임 표시를 지금 방에 맞춘다. 배경은 깔린 하나만, 인테리어는 방에 놓인 칸 모두. */
 private fun MyRoomUIState.withPlacedMarks(): MyRoomUIState {
     val placedIds = room.items.mapTo(HashSet()) { it.roomItemId }
     val backgroundId = room.background?.roomItemId
     return copy(
-        interiorItems = interiorItems.map { it.copy(isPlaced = it.roomItemId in placedIds) }.toImmutableList(),
-        backgrounds = backgrounds.map { it.copy(isPlaced = it.roomItemId == backgroundId) }.toImmutableList(),
+        inventoryTabs = inventoryTabs.map { tab ->
+            tab.copy(
+                items = tab.items.map { item ->
+                    val isPlaced = if (tab.category == RoomItemCategory.BACKGROUND) {
+                        item.roomItemId == backgroundId
+                    } else {
+                        item.roomItemId in placedIds
+                    }
+                    item.copy(isPlaced = isPlaced)
+                }.toImmutableList(),
+            )
+        }.toImmutableList(),
     )
 }
 

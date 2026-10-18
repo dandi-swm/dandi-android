@@ -1,5 +1,6 @@
 package com.dandi.nyummy.room.presentation.component
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -10,6 +11,7 @@ import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,16 +22,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -63,13 +65,15 @@ import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClicka
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import com.dandi.nyummy.common.presentation.jank.JankScrollWatcher
+import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.presentation.InventoryItemUiModel
+import com.dandi.nyummy.room.presentation.InventoryTabUiModel
 import com.dandi.nyummy.room.presentation.MyRoomLoadState
-import com.dandi.nyummy.room.presentation.MyRoomTab
 import com.dandi.nyummy.room.presentation.R
 import kotlin.math.roundToInt
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -146,21 +150,20 @@ internal fun rememberRoomSheetState(expanded: Boolean = true): RoomSheetState = 
  * 마이룸 아래 보관함 시트. 손잡이와 탭을 끌어 올리고 내리며, 내리면 손잡이와 탭만 남아 방이 다 보인다.
  * 손잡이를 누르거나 접힌 채 탭을 눌러도 펼친다. 탭을 바꿔도 칸 영역 높이가 같아 시트가 흔들리지 않는다.
  *
- * - 인테리어: 가진 아이템을 한 개씩 칸으로. 방에 놓인 칸은 그림을 흐리게 하고 "배치됨"을 붙인다.
- * - 배경: 방 그림 미리보기와 이름. 깔린 배경은 테두리와 "사용 중"을 붙인다.
- * - 가진 게 없으면 안내와 상점 구경하기, 있으면 맨 아래에 상점에서 더 찾기.
+ * - 탭은 아이템 종류마다 하나(배경, 침대, 캣휠, 카펫, 기타)이고, 칸은 가로 한 줄로 넘긴다. 끝에 가까워지면 그 종류만 더 받는다.
+ * - 칸은 그림과 이름. 방에 놓인 인테리어는 그림을 흐리게 하고 "배치됨", 깔린 배경은 테두리와 "사용 중"을 붙인다.
+ * - 가진 게 없으면 안내와 상점 구경하기, 있으면 줄 아래에 상점에서 더 찾기.
  */
 @Composable
 internal fun RoomInventorySheet(
     state: RoomSheetState,
     loadState: MyRoomLoadState,
-    selectedTab: MyRoomTab,
-    interiorItems: ImmutableList<InventoryItemUiModel>,
-    backgrounds: ImmutableList<InventoryItemUiModel>,
-    onSelectTab: (MyRoomTab) -> Unit,
+    tabs: ImmutableList<InventoryTabUiModel>,
+    selectedCategory: RoomItemCategory,
+    onSelectTab: (RoomItemCategory) -> Unit,
     onInteriorClick: (Long) -> Unit,
     onBackgroundClick: (Long) -> Unit,
-    onReachEnd: () -> Unit,
+    onReachEnd: (RoomItemCategory) -> Unit,
     onShopClick: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
@@ -206,13 +209,10 @@ internal fun RoomInventorySheet(
                 )
             }
             NyummyTabs(
-                tabs = persistentListOf(
-                    stringResource(R.string.my_room_tab_interior),
-                    stringResource(R.string.my_room_tab_background),
-                ),
-                selectedIndex = selectedTab.ordinal,
-                onSelect = {
-                    onSelectTab(MyRoomTab.entries[it])
+                tabs = tabs.map { tab -> tab.name.ifBlank { stringResource(tab.category.labelRes()) } }.toImmutableList(),
+                selectedIndex = tabs.indexOfFirst { it.category == selectedCategory }.coerceAtLeast(0),
+                onSelect = { index ->
+                    tabs.getOrNull(index)?.let { onSelectTab(it.category) }
                     if (!state.isExpanded) scope.launch { state.animateTo(1f) }
                 },
                 modifier = Modifier
@@ -233,19 +233,15 @@ internal fun RoomInventorySheet(
                     layout(placeable.width, visibleHeight) { placeable.place(0, 0) }
                 },
         ) {
-            val items = if (selectedTab == MyRoomTab.INTERIOR) interiorItems else backgrounds
+            val items = tabs.firstOrNull { it.category == selectedCategory }?.items ?: persistentListOf()
+            // 칸 줄은 화면 끝까지 넘어가게 좌우 여백 없이 두고, 줄 안쪽 여백으로 첫 칸을 맞춘다.
             Box(
                 modifier = Modifier
                     .onSizeChanged { state.bodyHeightPx = it.height }
                     .fillMaxWidth()
                     .wrapContentWidth(Alignment.CenterHorizontally)
                     .widthIn(max = ContentMaxWidth)
-                    .padding(
-                        start = NyummyTheme.spacing.gutter,
-                        end = NyummyTheme.spacing.gutter,
-                        top = NyummyTheme.spacing.s12,
-                        bottom = SheetBottomPadding,
-                    )
+                    .padding(top = NyummyTheme.spacing.s12, bottom = SheetBottomPadding)
                     .height(ContentHeight),
             ) {
                 when {
@@ -266,18 +262,14 @@ internal fun RoomInventorySheet(
                         modifier = Modifier.align(Alignment.Center),
                     )
                     else -> Column(modifier = Modifier.fillMaxSize()) {
-                        when (selectedTab) {
-                            MyRoomTab.INTERIOR -> InteriorGrid(
-                                items = interiorItems,
-                                onClick = onInteriorClick,
-                                onReachEnd = onReachEnd,
-                                modifier = Modifier.weight(1f),
-                            )
-                            MyRoomTab.BACKGROUND -> BackgroundGrid(
-                                items = backgrounds,
-                                onClick = onBackgroundClick,
-                                onReachEnd = onReachEnd,
-                                modifier = Modifier.weight(1f),
+                        val isBackground = selectedCategory == RoomItemCategory.BACKGROUND
+                        // 탭마다 따로 넘긴 자리를 갖는다(탭을 바꾸면 처음부터 보인다).
+                        key(selectedCategory) {
+                            InventoryRow(
+                                items = items,
+                                isBackground = isBackground,
+                                onClick = if (isBackground) onBackgroundClick else onInteriorClick,
+                                onReachEnd = { onReachEnd(selectedCategory) },
                             )
                         }
                         Spacer(Modifier.height(NyummyTheme.spacing.s12))
@@ -287,6 +279,7 @@ internal fun RoomInventorySheet(
                             tone = NyummyTextButtonTone.Neutral,
                             size = NyummyTextButtonSize.S,
                             trailingIcon = CommonR.drawable.nyummy_ic_chevron_right,
+                            modifier = Modifier.padding(start = NyummyTheme.spacing.gutter),
                         )
                     }
                 }
@@ -295,148 +288,113 @@ internal fun RoomInventorySheet(
     }
 }
 
+/** 한 종류의 칸을 가로 한 줄로. 끝에 가까워지면 [onReachEnd]로 다음 묶음을 부른다. */
 @Composable
-private fun InteriorGrid(
+private fun InventoryRow(
     items: ImmutableList<InventoryItemUiModel>,
+    isBackground: Boolean,
     onClick: (Long) -> Unit,
     onReachEnd: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val gridState = rememberLazyGridState()
-    JankScrollWatcher(gridState)
-    LoadMoreEffect(gridState = gridState, itemCount = items.size, onReachEnd = onReachEnd)
-    LazyVerticalGrid(
-        columns = GridCells.FixedSize(InteriorCellSize),
-        state = gridState,
+    val listState = rememberLazyListState()
+    JankScrollWatcher(listState)
+    LoadMoreEffect(listState = listState, itemCount = items.size, onReachEnd = onReachEnd)
+    LazyRow(
+        state = listState,
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(InteriorCellGap, Alignment.Start),
-        verticalArrangement = Arrangement.spacedBy(InteriorCellGap),
+        contentPadding = PaddingValues(horizontal = NyummyTheme.spacing.gutter),
+        horizontalArrangement = Arrangement.spacedBy(CellGap),
     ) {
         items(items, key = { it.roomItemId }) { item ->
-            InteriorCell(item = item, onClick = { onClick(item.roomItemId) })
-        }
-    }
-}
-
-/** 인테리어 칸. 방에 놓였으면 그림을 흐리게 하고 아래에 "배치됨"을 붙인다. */
-@Composable
-private fun InteriorCell(
-    item: InventoryItemUiModel,
-    onClick: () -> Unit,
-) {
-    val placedText = stringResource(R.string.my_room_item_placed)
-    val shape = RoundedCornerShape(NyummyTheme.radius.m)
-    Box(
-        modifier = Modifier
-            .size(InteriorCellSize)
-            .clip(shape)
-            .background(NyummyTheme.colors.bg.surfaceSunken, shape)
-            .nyummyClickable(onClick = onClick)
-            .semantics {
-                contentDescription = if (item.isPlaced) "${item.name}, $placedText" else item.name
-                selected = item.isPlaced
-            },
-    ) {
-        AsyncImage(
-            model = item.imageUrl,
-            contentDescription = null,
-            contentScale = ContentScale.Fit,
-            filterQuality = FilterQuality.None,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(InteriorImageSize)
-                .alpha(if (item.isPlaced) PlacedImageAlpha else 1f),
-        )
-        if (item.isPlaced) {
-            StateChip(
-                text = placedText,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = InteriorChipBottom),
-            )
-        }
-    }
-}
-
-@Composable
-private fun BackgroundGrid(
-    items: ImmutableList<InventoryItemUiModel>,
-    onClick: (Long) -> Unit,
-    onReachEnd: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val gridState = rememberLazyGridState()
-    JankScrollWatcher(gridState)
-    LoadMoreEffect(gridState = gridState, itemCount = items.size, onReachEnd = onReachEnd)
-    LazyVerticalGrid(
-        columns = GridCells.FixedSize(BackgroundThumbWidth),
-        state = gridState,
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(BackgroundCellGap, Alignment.Start),
-        verticalArrangement = Arrangement.spacedBy(BackgroundCellGap),
-    ) {
-        items(items, key = { it.roomItemId }) { item ->
-            BackgroundCell(item = item, onClick = { onClick(item.roomItemId) })
+            InventoryCell(item = item, isBackground = isBackground, onClick = { onClick(item.roomItemId) })
         }
     }
 }
 
 /**
- * 배경 칸. 방 그림을 칸 폭에 맞춰 바닥 기준으로 보여 주고 아래에 이름을 둔다.
- * 깔린 배경은 브랜드색 테두리와 "사용 중", 이름도 브랜드색으로 굵게.
+ * 보관함 칸. 위에 그림, 아래에 이름. 모든 종류가 같은 크기라 탭을 바꿔도 줄 높이가 같다.
+ * - 인테리어: 그림을 가운데에 맞춰 보여 주고, 방에 놓였으면 흐리게 하고 "배치됨"을 붙인다.
+ * - 배경: 방 그림을 칸에 꽉 채워 바닥 기준으로 보여 주고, 깔렸으면 브랜드색 테두리와 "사용 중", 이름도 브랜드색으로 굵게.
  */
 @Composable
-private fun BackgroundCell(
+private fun InventoryCell(
     item: InventoryItemUiModel,
+    isBackground: Boolean,
     onClick: () -> Unit,
 ) {
-    val inUseText = stringResource(R.string.my_room_background_in_use)
+    val stateText = stringResource(if (isBackground) R.string.my_room_background_in_use else R.string.my_room_item_placed)
     val shape = RoundedCornerShape(NyummyTheme.radius.m)
+    val isInUseBackground = isBackground && item.isPlaced
     Column(
         modifier = Modifier
-            .width(BackgroundThumbWidth)
+            .width(CellSize)
             .nyummyClickable(onClick = onClick)
+            // 이름과 "배치됨"/"사용 중" 글자를 한 칸으로 묶어 읽는다.
             .semantics(mergeDescendants = true) { selected = item.isPlaced },
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(BackgroundLabelGap),
+        verticalArrangement = Arrangement.spacedBy(CellLabelGap),
     ) {
         Box(
             modifier = Modifier
-                .size(width = BackgroundThumbWidth, height = BackgroundThumbHeight)
+                .size(CellSize)
                 .clip(shape)
                 .background(NyummyTheme.colors.bg.surfaceSunken, shape)
                 .then(
-                    if (item.isPlaced) {
+                    if (isInUseBackground) {
                         Modifier.border(BackgroundSelectedBorder, NyummyTheme.colors.bg.actionPrimary, shape)
                     } else {
                         Modifier
                     },
                 ),
         ) {
-            AsyncImage(
-                model = item.imageUrl,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                alignment = Alignment.BottomCenter,
-                filterQuality = FilterQuality.None,
-                modifier = Modifier.fillMaxSize(),
-            )
+            if (isBackground) {
+                AsyncImage(
+                    model = item.imageUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    alignment = Alignment.BottomCenter,
+                    filterQuality = FilterQuality.None,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                AsyncImage(
+                    model = item.imageUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    filterQuality = FilterQuality.None,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(InteriorImageSize)
+                        .alpha(if (item.isPlaced) PlacedImageAlpha else 1f),
+                )
+            }
             if (item.isPlaced) {
                 StateChip(
-                    text = inUseText,
+                    text = stateText,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(bottom = BackgroundChipBottom),
+                        .padding(bottom = CellChipBottom),
                 )
             }
         }
         NyummyText(
             text = item.name,
-            style = if (item.isPlaced) NyummyTheme.typography.labelMStrong else NyummyTheme.typography.labelM,
-            color = if (item.isPlaced) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.secondary,
+            style = if (isInUseBackground) NyummyTheme.typography.labelMStrong else NyummyTheme.typography.labelM,
+            color = if (isInUseBackground) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.secondary,
             maxLines = 1,
         )
     }
+}
+
+/** 탭 이름. 서버가 종류 이름을 주지 않았을 때만 쓴다. */
+@StringRes
+private fun RoomItemCategory.labelRes(): Int = when (this) {
+    RoomItemCategory.BACKGROUND -> R.string.my_room_category_background
+    RoomItemCategory.BED -> R.string.my_room_category_bed
+    RoomItemCategory.CAT_WHEEL -> R.string.my_room_category_cat_wheel
+    RoomItemCategory.CARPET -> R.string.my_room_category_carpet
+    RoomItemCategory.ETC -> R.string.my_room_category_etc
 }
 
 /** 칸 위 상태 표시(배치됨, 사용 중). 진한 바탕에 흰 글자. */
@@ -484,16 +442,16 @@ private fun InventoryMessage(
 /** 보관함 끝에서 [LOAD_MORE_THRESHOLD]칸 안쪽까지 보이면 다음 묶음을 부른다. */
 @Composable
 private fun LoadMoreEffect(
-    gridState: LazyGridState,
+    listState: LazyListState,
     itemCount: Int,
     onReachEnd: () -> Unit,
 ) {
     val currentItemCount by rememberUpdatedState(itemCount)
     val currentOnReachEnd by rememberUpdatedState(onReachEnd)
-    LaunchedEffect(gridState) {
+    LaunchedEffect(listState) {
         snapshotFlow {
             val count = currentItemCount
-            val lastVisible = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
             count to lastVisible.coerceAtMost(count - 1)
         }
             .distinctUntilChanged()
@@ -509,21 +467,17 @@ private const val PlacedImageAlpha = 0.35f
 
 private val ContentMaxWidth = 480.dp
 
-/** 보관함 칸 영역 높이. 인테리어 두 줄이 들어가고, 탭을 바꿔도 같다. 남는 칸은 스크롤한다. */
-private val ContentHeight = 206.dp
+/** 보관함 칸 영역 높이. 칸 한 줄과 상점 버튼이 들어가고, 탭을 바꾸거나 비어 있어도 같다. */
+private val ContentHeight = 150.dp
 /** 손잡이 영역 높이(위 여백 10 + 손잡이 4 + 탭까지 12). 누르면 시트를 펴고 접는다. */
 private val HandleTouchHeight = 26.dp
 private val SheetBottomPadding = 28.dp
 private val HandleWidth = 40.dp
 private val HandleHeight = 4.dp
-private val InteriorCellSize = 76.dp
-private val InteriorCellGap = 10.dp
+private val CellSize = 80.dp
+private val CellGap = 10.dp
+private val CellLabelGap = 6.dp
+private val CellChipBottom = 6.dp
 private val InteriorImageSize = 56.dp
-private val InteriorChipBottom = 6.dp
-private val BackgroundThumbWidth = 100.dp
-private val BackgroundThumbHeight = 120.dp
-private val BackgroundCellGap = 12.dp
-private val BackgroundLabelGap = 6.dp
 private val BackgroundSelectedBorder = 3.dp
-private val BackgroundChipBottom = 9.dp
 private val StateChipVerticalPadding = 3.dp
