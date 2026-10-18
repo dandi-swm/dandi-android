@@ -1,4 +1,4 @@
-package com.dandi.nyummy.common.data.tti
+package com.dandi.nyummy.common.data.di
 
 import com.dandi.nyummy.tti.NoOpTTIReporter
 import com.dandi.nyummy.tti.TTIReporter
