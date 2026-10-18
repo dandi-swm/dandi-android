@@ -86,6 +86,18 @@ sealed interface HistoryReducerEvent : ReducerEvent {
         val dailyDetail: DailyMealHistoryVO,
     ) : HistoryReducerEvent
 
+    /**
+     * 화면에 다시 들어와 보고 있던 달과 날짜를 조용히 다시 불러왔습니다.
+     * 사용자가 조작하지 않은 갱신이라 로딩 표시 없이 바꾸고, 열린 상세는 그대로 둡니다.
+     * 응답이 오는 사이 다른 날짜로 옮겼다면 그날 목록은 버리고 캘린더와 오늘만 반영합니다.
+     */
+    data class ScreenRefreshed(
+        val today: HistoryDateVO,
+        val calendar: HistoryCalendarVO,
+        val date: HistoryDateVO,
+        val dailyDetail: DailyMealHistoryVO,
+    ) : HistoryReducerEvent
+
     /** [mealId] 식사의 재분석 요청이 시작되었습니다(중복 요청 차단). */
     data class MealReanalyzeStarted(val mealId: String) : HistoryReducerEvent
 

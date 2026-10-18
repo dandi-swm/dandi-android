@@ -14,6 +14,7 @@ import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.history.domain.DeleteMealUseCase
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.history.domain.GetMealDetailUseCase
+import com.dandi.nyummy.history.domain.GetMonthWithDayMealsUseCase
 import com.dandi.nyummy.history.domain.GetMonthlyMealsUseCase
 import com.dandi.nyummy.history.domain.HistoryRepository
 import com.dandi.nyummy.history.domain.ReanalyzeMealUseCase
@@ -948,6 +949,9 @@ class HistoryViewModelTest {
             getDailyMeals = GetDailyMealsUseCase(
                 repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
             ),
+            getMonthWithDayMeals = GetMonthWithDayMealsUseCase(
+                repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
+            ),
             getMealDetail = GetMealDetailUseCase(
                 repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
             ),
@@ -964,7 +968,10 @@ class HistoryViewModelTest {
                 repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
             ),
             navigationHelper = navigationHelper,
-        )
+        ).also {
+            // 화면이 처음 보일 때처럼 첫 조회를 시작한다(ViewModel 생성만으로는 불러오지 않는다).
+            it.onIntent(HistoryIntent.ScreenResumed)
+        }
     }
 
     private fun dailyWithTwoMeals(): DailyMealHistoryVO = DailyMealHistoryVO(

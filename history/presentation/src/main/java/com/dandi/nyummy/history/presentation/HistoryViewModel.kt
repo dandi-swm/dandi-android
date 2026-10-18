@@ -6,6 +6,7 @@ import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.history.domain.DeleteMealUseCase
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.history.domain.GetMealDetailUseCase
+import com.dandi.nyummy.history.domain.GetMonthWithDayMealsUseCase
 import com.dandi.nyummy.history.domain.GetMonthlyMealsUseCase
 import com.dandi.nyummy.history.domain.OutdatedMealException
 import com.dandi.nyummy.history.domain.ReanalyzeMealUseCase
@@ -32,6 +33,7 @@ import javax.inject.Inject
 class HistoryViewModel @Inject constructor(
     private val getMonthlyMeals: GetMonthlyMealsUseCase,
     private val getDailyMeals: GetDailyMealsUseCase,
+    private val getMonthWithDayMeals: GetMonthWithDayMealsUseCase,
     private val getMealDetail: GetMealDetailUseCase,
     private val updateMealName: UpdateMealNameUseCase,
     private val deleteMeal: DeleteMealUseCase,
@@ -71,13 +73,13 @@ class HistoryViewModel @Inject constructor(
     /** 링크로 연 식사의 날짜를 찾는 job. 새 링크가 오면 이전 것을 취소한다. */
     private var linkJob: Job? = null
 
-    init {
-        val today = currentState.selectedDate
-        loadMonth(month = HistoryMonth.of(today), selectedDate = today)
-    }
+    /** 화면에 다시 들어왔을 때의 조용한 재조회 job. 링크 처리([refreshJob])를 취소하지 않게 따로 둔다. */
+    private var resumeRefreshJob: Job? = null
 
     override fun onIntent(intent: HistoryIntent) {
         when (intent) {
+            HistoryIntent.ScreenResumed -> onScreenResumed()
+
             is HistoryIntent.ChangeMonth -> changeMonth(intent.month)
 
             HistoryIntent.RetryLoad ->
@@ -230,6 +232,20 @@ class HistoryViewModel @Inject constructor(
                     )
                 }
 
+            is HistoryReducerEvent.ScreenRefreshed -> {
+                val refreshed = state.copy(today = event.today)
+                    .withCalendarMonth(monthOf(event.calendar), event.calendar.toCalendarDays())
+                // reanalyzingMealIds 는 DayRefreshed 와 같은 이유로 건드리지 않는다.
+                if (event.date != state.selectedDate) {
+                    refreshed
+                } else {
+                    refreshed.copy(
+                        selectedDayMeals = event.dailyDetail.meals.withCompletedMealOrder(),
+                        dailyNutrition = event.dailyDetail.nutrition,
+                    )
+                }
+            }
+
             is HistoryReducerEvent.MealReanalyzeStarted ->
                 state.withReanalyzing(mealId = event.mealId, inFlight = true)
 
@@ -350,25 +366,17 @@ class HistoryViewModel @Inject constructor(
         loadJob = viewModelScope.launch {
             dispatch(HistoryReducerEvent.LoadStarted)
             val today = todayDate()
-            // 월간 조회가 실패하면 일간 조회를 건너뛰고 화면에 오류를 보여 준다.
-            val calendar = getMonthlyMeals(year, monthValue).getOrNull() ?: run {
-                dispatch(HistoryReducerEvent.LoadFailed)
-                return@launch
-            }
-            val dailyDetail = getDailyMeals(
-                selectedDate.year,
-                selectedDate.month,
-                selectedDate.day,
-            ).getOrNull() ?: run {
+            // 월간과 일간을 함께 받는다. 하나라도 실패하면 화면에 오류를 보여 준다.
+            val loaded = getMonthWithDayMeals(year, monthValue, selectedDate).getOrNull() ?: run {
                 dispatch(HistoryReducerEvent.LoadFailed)
                 return@launch
             }
             dispatch(
                 HistoryReducerEvent.MonthLoaded(
                     today = today,
-                    calendar = calendar,
+                    calendar = loaded.calendar,
                     selectedDate = selectedDate,
-                    dailyDetail = dailyDetail,
+                    dailyDetail = loaded.dailyDetail,
                 ),
             )
             openPendingMealDetail()
@@ -459,6 +467,45 @@ class HistoryViewModel @Inject constructor(
         dispatch(HistoryReducerEvent.MealDetailDismissed)
     }
 
+    /**
+     * 화면이 보이게 됐다. 처음 열 때 기록을 불러오는 곳도 여기다.
+     * 탭을 오가거나 식사를 기록하고 돌아오는 사이 기록이 바뀌었을 수 있어 돌아올 때마다 다시 읽는다.
+     * - 조회가 진행 중이면 건너뛴다.
+     * - 오늘을 보고 있었는데 그 사이 날짜가 넘어갔으면 새 오늘로 옮긴다.
+     * - 처음 열었거나 불러오지 못한 화면이면 로딩을 보여 주며 불러온다. 그 밖에는 로딩 표시 없이 조용히 바꾼다.
+     */
+    private fun onScreenResumed() {
+        if (loadJob?.isActive == true) return
+        val state = currentState
+        val today = todayDate()
+        val dayPassed = today != state.today && state.selectedDate == state.today
+        when {
+            dayPassed -> showMonth(HistoryMonth.of(today), today)
+            // loadJob 이 없으면 아직 한 번도 불러오지 않은 첫 진입이다.
+            loadJob == null || state.isLoadFailed ->
+                loadMonth(month = state.displayedHistoryMonth, selectedDate = state.selectedDate)
+            else -> refreshScreenQuietly(today)
+        }
+    }
+
+    /** 로딩 표시 없이 보고 있는 달의 캘린더와 선택 날짜의 기록을 다시 불러온다. 실패하면 화면을 그대로 둔다. */
+    private fun refreshScreenQuietly(today: HistoryDateVO) {
+        val month = currentState.displayedHistoryMonth
+        val date = currentState.selectedDate
+        resumeRefreshJob?.cancel()
+        resumeRefreshJob = viewModelScope.launch {
+            val refreshed = getMonthWithDayMeals(month.year, month.month, date).getOrNull() ?: return@launch
+            dispatch(
+                HistoryReducerEvent.ScreenRefreshed(
+                    today = today,
+                    calendar = refreshed.calendar,
+                    date = date,
+                    dailyDetail = refreshed.dailyDetail,
+                ),
+            )
+        }
+    }
+
     /** 로딩 표시 없이 선택 날짜의 식사 목록만 다시 불러온다. 실패하면 화면을 그대로 둔다. */
     private fun refreshSelectedDayQuietly() {
         val date = currentState.selectedDate
@@ -482,6 +529,10 @@ class HistoryViewModel @Inject constructor(
         linkJob = viewModelScope.launch {
             val date = getMealDetail(mealId).getOrNull()?.date?.takeUnless { it.isEmpty } ?: todayDate()
             // 화면을 처음 열 때의 조회가 끝난 뒤에 날짜를 옮긴다. 중간에 끊으면 캘린더가 빈 채로 남는다.
+            // 첫 조회는 ScreenResumed 가 시작하지만, 링크 처리가 먼저 여기 닿았으면 직접 시작한다.
+            if (loadJob == null) {
+                loadMonth(month = currentState.displayedHistoryMonth, selectedDate = currentState.selectedDate)
+            }
             loadJob?.join()
             pendingMealId = mealId.toString()
             if (date != currentState.selectedDate) selectDate(date) else refreshSelectedDayQuietly()
