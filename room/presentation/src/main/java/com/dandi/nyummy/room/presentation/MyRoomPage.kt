@@ -4,10 +4,13 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -70,10 +73,12 @@ internal fun MyRoomScreen(
 ) {
     val sheetState = rememberRoomSheetState()
     val homeCardSize = LocalRoomCardSize.current.size
+    // 시스템 바 인셋은 앱 Scaffold가 이미 밀어 두었다. 시트가 내비게이션 바 여백을 한 번 더 넣지 않게 여기서 쓴 것으로 둔다.
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(NyummyTheme.colors.bg.canvas),
+            .background(NyummyTheme.colors.bg.canvas)
+            .consumeWindowInsets(WindowInsets.systemBars),
     ) {
         NyummyTopBar(
             title = stringResource(R.string.my_room_title),

@@ -41,11 +41,14 @@ import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.constrainHeight
+import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
@@ -108,7 +111,9 @@ internal fun RoomStage(
                 contentDescription = null,
                 contentScale = ContentScale.FillBounds,
                 filterQuality = FilterQuality.None,
-                modifier = Modifier.placeAt(frame.roomRect),
+                modifier = Modifier
+                    .placeAt(frame.roomRect)
+                    .testTag(RoomBackgroundTag),
             )
         }
 
@@ -462,15 +467,21 @@ private fun DragHint(modifier: Modifier = Modifier) {
     }
 }
 
-/** 무대 좌표 [rect] 자리에 그 크기로 둔다. */
+/**
+ * 무대 좌표 [rect] 자리에 그 크기로 둔다. 무대보다 큰 것(좌우가 잘리는 방 그림)도 왼쪽 위를 [rect]에 맞춘다.
+ * 무대보다 큰 크기를 그대로 알리면 Compose가 넘친 만큼 가운데로 옮겨 그려서, 알리는 크기만 무대 안으로 줄인다.
+ */
 private fun Modifier.placeAt(rect: Rect): Modifier = this
     .offset { IntOffset(rect.left.roundToInt(), rect.top.roundToInt()) }
-    .layout { measurable, _ ->
+    .layout { measurable, constraints ->
         val width = rect.width.roundToInt().coerceAtLeast(0)
         val height = rect.height.roundToInt().coerceAtLeast(0)
         val placeable = measurable.measure(Constraints.fixed(width, height))
-        layout(width, height) { placeable.place(0, 0) }
+        layout(constraints.constrainWidth(width), constraints.constrainHeight(height)) { placeable.place(0, 0) }
     }
+
+/** 방 그림(배경). 테스트에서 그려진 자리를 찾는 데 쓴다. */
+internal const val RoomBackgroundTag = "room_background"
 
 /** 끄는 동안 원래 자리에 남기는 그림의 불투명도. */
 private const val MovingOriginAlpha = 0.35f
