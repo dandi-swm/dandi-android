@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -56,6 +57,11 @@ fun HistoryPage(
     viewModel: HistoryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    // 탭을 오가도 화면 상태가 남으므로, 식사를 기록하고 돌아오면 바뀐 기록이 보이게 화면이 보일 때마다 다시 읽는다.
+    LifecycleResumeEffect(Unit) {
+        viewModel.onIntent(HistoryIntent.ScreenResumed)
+        onPauseOrDispose { }
+    }
     LaunchedEffect(openMealId, linkEventId) {
         openMealId?.let { mealId ->
             viewModel.onIntent(HistoryIntent.OpenMealFromLink(mealId, eventId = linkEventId ?: mealId.toString()))

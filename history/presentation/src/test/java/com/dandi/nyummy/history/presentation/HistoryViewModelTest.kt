@@ -964,7 +964,10 @@ class HistoryViewModelTest {
                 repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
             ),
             navigationHelper = navigationHelper,
-        )
+        ).also {
+            // 화면이 처음 보일 때처럼 첫 조회를 시작한다(ViewModel 생성만으로는 불러오지 않는다).
+            it.onIntent(HistoryIntent.ScreenResumed)
+        }
     }
 
     private fun dailyWithTwoMeals(): DailyMealHistoryVO = DailyMealHistoryVO(

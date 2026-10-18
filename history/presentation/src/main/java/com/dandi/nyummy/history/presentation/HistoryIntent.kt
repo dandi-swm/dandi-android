@@ -8,6 +8,12 @@ import com.dandi.nyummy.history.presentation.model.HistoryMonth
 /** 히스토리 화면에서 발생하는 사용자 입력입니다. */
 sealed interface HistoryIntent : MviIntent {
 
+    /**
+     * 히스토리가 화면에 보이게 됐습니다(첫 진입, 탭 전환·식사 기록 후 복귀).
+     * 탭을 오가도 화면 상태가 남아 있어, 그 사이 바뀐 기록을 다시 읽습니다.
+     */
+    data object ScreenResumed : HistoryIntent
+
     /** 캘린더를 좌우로 넘겨 [month]에서 멈췄습니다. */
     data class ChangeMonth(val month: HistoryMonth) : HistoryIntent
 
