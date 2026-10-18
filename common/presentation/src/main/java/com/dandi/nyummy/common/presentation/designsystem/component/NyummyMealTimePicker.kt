@@ -154,7 +154,6 @@ private fun TimeWheels(
             items = hours,
             selectedIndex = hourIndex,
             onSelectedIndexChange = onHourChange,
-            notifyWhileScrolling = true,
             unit = stringResource(R.string.nyummy_meal_unit_hour),
             contentDescription = stringResource(R.string.nyummy_meal_hour_description),
             modifier = Modifier.weight(1f),

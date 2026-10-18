@@ -100,12 +100,12 @@ fun NyummyWheelPickerFrame(
 }
 
 /**
- * 스냅 스크롤 휠 한 열. 가운데 행이 선택 값이고 스크롤이 멈추면 [onSelectedIndexChange]로 알린다.
+ * 스냅 스크롤 휠 한 열. 가운데 행이 선택 값이고, 굴리는 중에도 가운데 값이 바뀔 때마다 [onSelectedIndexChange]로 알린다.
+ * 멈출 때만 알리면 스냅이 끝나기 전에 확인·다음을 누른 경우 화면 가운데 값이 아니라 직전 값이 남는다.
+ * 묶인 다른 휠(시 → 오전/오후)도 손을 떼기 전에 함께 넘어간다.
  * 가운데 값은 number/m + 단위(label/m), 위아래 값은 number/s tertiary.
  * 바깥에서 [selectedIndex]가 바뀌면 그 값으로 바로 옮긴다.
  *
- * @param notifyWhileScrolling 굴리는 중에도 가운데 값이 바뀔 때마다 알린다.
- * 이 값에 묶인 다른 휠(시 → 오전/오후)이 손을 떼기 전에 함께 넘어가게 할 때 쓴다.
  * @param animateSelectionChange 바깥에서 [selectedIndex]가 바뀌면 바로 옮기지 않고 그 값까지 굴러간다.
  * 다른 휠을 따라 넘어가는 휠(오전/오후)에 쓴다.
  */
@@ -117,7 +117,6 @@ fun NyummyWheelColumn(
     modifier: Modifier = Modifier,
     unit: String? = null,
     contentDescription: String? = null,
-    notifyWhileScrolling: Boolean = false,
     animateSelectionChange: Boolean = false,
 ) {
     val rowHeight = NyummyComponentDimens.WheelPickerRowHeight
@@ -146,11 +145,10 @@ fun NyummyWheelColumn(
 
     // 코루틴이 처음 값을 붙잡지 않도록 최신 콜백을 참조한다.
     val latestOnChange by rememberUpdatedState(onSelectedIndexChange)
-    val latestNotifyWhileScrolling by rememberUpdatedState(notifyWhileScrolling)
     LaunchedEffect(listState, itemCount) {
-        snapshotFlow { Triple(centeredIndex, listState.isScrollInProgress, syncTarget == null) }
-            .filter { (_, scrolling, byUser) -> byUser && (latestNotifyWhileScrolling || !scrolling) }
-            .collect { (index, _, _) -> if (index != latestSelectedIndex) latestOnChange(index) }
+        snapshotFlow { centeredIndex to (syncTarget == null) }
+            .filter { (_, byUser) -> byUser }
+            .collect { (index, _) -> if (index != latestSelectedIndex) latestOnChange(index) }
     }
     LaunchedEffect(safeSelectedIndex, itemCount) {
         val userScrolling = listState.isScrollInProgress && syncTarget == null
