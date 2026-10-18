@@ -3,8 +3,8 @@ package com.dandi.nyummy.home.presentation
 import androidx.compose.runtime.Immutable
 import com.dandi.nyummy.cat.entity.CatAnimationVO
 import com.dandi.nyummy.cat.entity.CatState
-import com.dandi.nyummy.common.presentation.component.NyummySpriteClip
-import com.dandi.nyummy.common.presentation.component.NyummySpriteSheet
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 

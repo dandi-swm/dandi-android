@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteView
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.common.presentation.ui.theme.designSystemDropShadow

@@ -1,4 +1,4 @@
-package com.dandi.nyummy.common.presentation.component
+package com.dandi.nyummy.common.presentation.designsystem.component
 
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.Animatable
@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.R
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import kotlinx.collections.immutable.persistentListOf
 import kotlin.math.roundToInt
 

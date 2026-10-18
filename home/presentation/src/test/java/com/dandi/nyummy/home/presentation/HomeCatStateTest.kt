@@ -4,9 +4,9 @@ import com.dandi.nyummy.cat.entity.CatAnimationVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.cat.entity.SpriteClipVO
 import com.dandi.nyummy.cat.entity.SpriteFrameVO
-import com.dandi.nyummy.common.presentation.component.NyummySpriteClip
-import com.dandi.nyummy.common.presentation.component.NyummySpriteSheet
-import com.dandi.nyummy.common.presentation.component.NyummySpriteSource
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSource
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

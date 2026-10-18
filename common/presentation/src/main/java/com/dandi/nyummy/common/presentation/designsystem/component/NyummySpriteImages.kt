@@ -1,4 +1,4 @@
-package com.dandi.nyummy.common.presentation.component
+package com.dandi.nyummy.common.presentation.designsystem.component
 
 import android.content.Context
 import androidx.compose.runtime.Composable

@@ -51,8 +51,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.presentation.component.DandiText
-import com.dandi.nyummy.common.presentation.component.NyummySpriteSheet
-import com.dandi.nyummy.common.presentation.component.NyummySpriteView
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteView
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.meal.presentation.R
 import java.io.File
