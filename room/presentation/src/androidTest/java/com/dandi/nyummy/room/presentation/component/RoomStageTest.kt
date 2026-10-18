@@ -38,37 +38,39 @@ class RoomStageTest {
         RoomPlacementUiModel(roomItemId = 2, imageUrl = "", x = 0.75f, y = 0.8f, scale = 1f),
     )
 
+    /** 홈 카드처럼 세로로 조금 긴 무대(좌우가 살짝 잘린다). */
+    private val frame by lazy { RoomFrame.of(StageWidth, StageHeight, coveredBottom = 0.dp, density = composeRule.density) }
+
     private fun setStage(selectedItemId: Long? = null) {
         composeRule.setContent {
             NyummyTheme {
-                Box(Modifier.size(width = 360.dp, height = 480.dp)) {
+                Box(Modifier.size(width = StageWidth, height = StageHeight)) {
                     RoomStage(
+                        frame = frame,
                         background = null,
                         items = items,
                         selectedItemId = selectedItemId,
                         cat = null,
-                        bottomInset = 0.dp,
                         onCatMotionFinished = {},
                         onSelect = { selections += it },
                         onMove = { id, x, y, scale -> moves += Move(id, x, y, scale) },
                         onBringToFront = { frontCount++ },
                         onPutAway = { putAwayCount++ },
-                        modifier = Modifier.size(width = 360.dp, height = 480.dp),
+                        modifier = Modifier.size(width = StageWidth, height = StageHeight),
                     )
                 }
             }
         }
     }
 
-    /** 무대 크기(px)에서 [item]의 가운데. 무대와 같은 계산을 쓴다. */
-    private fun centerOf(item: RoomPlacementUiModel, width: Float, height: Float): Offset =
-        RoomFrame.of(stageWidth = width, stageHeight = height, bottomInset = 0f).itemRect(item, aspect = null).center
+    /** 무대에서 [item]의 가운데(px). 무대와 같은 계산을 쓴다. */
+    private fun centerOf(item: RoomPlacementUiModel): Offset = frame.itemRect(item, aspect = null).center
 
     @Test
     fun 아이템을_누르면_그_아이템을_고른다() {
         setStage()
 
-        composeRule.onRoot().performTouchInput { click(centerOf(items[1], width.toFloat(), height.toFloat())) }
+        composeRule.onRoot().performTouchInput { click(centerOf(items[1])) }
 
         assertEquals(listOf<Long?>(2L), selections)
         assertTrue(moves.isEmpty())
@@ -88,7 +90,7 @@ class RoomStageTest {
         setStage()
 
         composeRule.onRoot().performTouchInput {
-            val start = centerOf(items[0], width.toFloat(), height.toFloat())
+            val start = centerOf(items[0])
             down(start)
             moveBy(Offset(30f, 0f))
             moveBy(Offset(60f, -20f))
@@ -109,7 +111,7 @@ class RoomStageTest {
         setStage(selectedItemId = 2)
 
         composeRule.onRoot().performTouchInput {
-            val center = centerOf(items[1], width.toFloat(), height.toFloat())
+            val center = centerOf(items[1])
             pinch(
                 start0 = center - Offset(20f, 0f),
                 end0 = center - Offset(80f, 0f),
@@ -133,5 +135,10 @@ class RoomStageTest {
         assertEquals(1, frontCount)
         assertEquals(1, putAwayCount)
         assertTrue("도구 모음을 눌러도 방 고르기가 바뀌면 안 된다: $selections", selections.isEmpty())
+    }
+
+    private companion object {
+        val StageWidth = 360.dp
+        val StageHeight = 480.dp
     }
 }

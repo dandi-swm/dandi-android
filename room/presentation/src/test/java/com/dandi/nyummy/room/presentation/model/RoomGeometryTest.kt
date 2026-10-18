@@ -37,26 +37,33 @@ class RoomGeometryTest {
     }
 
     @Test
-    fun `배율과 자리는 허용 범위 안으로 자른다`() {
+    fun `배율과 자리는 보이는 영역 안으로 자른다`() {
         assertEquals(RoomGeometry.MIN_SCALE, RoomGeometry.clampScale(0.1f))
         assertEquals(RoomGeometry.MAX_SCALE, RoomGeometry.clampScale(9f))
-        assertEquals(Offset(1f, 0.3f), RoomGeometry.clampPosition(x = 1.4f, y = 0.1f, minY = 0.3f, maxY = 0.9f))
-        assertEquals(Offset(0f, 0.9f), RoomGeometry.clampPosition(x = -0.2f, y = 1.2f, minY = 0.3f, maxY = 0.9f))
+        assertEquals(
+            Offset(0.9f, 0.3f),
+            RoomGeometry.clampPosition(x = 1.4f, y = 0.1f, minX = 0.1f, maxX = 0.9f, minY = 0.3f, maxY = 0.9f),
+        )
+        assertEquals(
+            Offset(0.1f, 0.9f),
+            RoomGeometry.clampPosition(x = -0.2f, y = 1.2f, minX = 0.1f, maxX = 0.9f, minY = 0.3f, maxY = 0.9f),
+        )
+    }
+
+    @Test
+    fun `보이는 영역이 그림 밖까지 넓어도 그림 안으로 자른다`() {
+        assertEquals(
+            Offset(1f, 1f),
+            RoomGeometry.clampPosition(x = 2f, y = 2f, minX = -0.5f, maxX = 1.5f, minY = -0.5f, maxY = 1.5f),
+        )
     }
 
     @Test
     fun `보이는 영역이 뒤집힌 아주 작은 화면이면 아래 끝에 둔다`() {
-        assertEquals(Offset(0.5f, 0.6f), RoomGeometry.clampPosition(x = 0.5f, y = 0.2f, minY = 0.7f, maxY = 0.6f))
-    }
-
-    @Test
-    fun `냐미는 방 가운데 바닥에 정사각형으로 앉는다`() {
-        val rect = RoomGeometry.catRect(roomWidth = 400f, roomHeight = 500f)
-
-        assertEquals(200f, rect.center.x, 0.01f)
-        assertEquals(rect.width, rect.height, 0.01f)
-        assertEquals(400f * RoomGeometry.CAT_WIDTH_FRACTION, rect.width, 0.01f)
-        assertEquals(500f * RoomGeometry.CAT_BOTTOM_Y, rect.bottom, 0.01f)
+        assertEquals(
+            Offset(0.5f, 0.6f),
+            RoomGeometry.clampPosition(x = 0.5f, y = 0.2f, minX = 0f, maxX = 1f, minY = 0.7f, maxY = 0.6f),
+        )
     }
 
     private fun assertRect(expected: Rect, actual: Rect) {

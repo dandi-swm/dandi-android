@@ -105,16 +105,16 @@ class MyRoomViewModelTest {
     }
 
     @Test
-    fun `놓이지 않은 아이템 칸을 누르면 방 가운데에 놓고 고른다`() = runTest(testDispatcher) {
+    fun `놓이지 않은 아이템 칸을 누르면 화면이 정한 바닥 점에 놓고 고른다`() = runTest(testDispatcher) {
         val viewModel = loadedViewModel()
 
-        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3))
+        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3, x = 0.45f, y = 0.7f))
 
         val state = viewModel.uiState.value
         val added = state.room.items.last()
         assertEquals(3L, added.roomItemId)
-        assertEquals(RoomGeometry.NEW_ITEM_X, added.x)
-        assertEquals(RoomGeometry.NEW_ITEM_Y, added.y)
+        assertEquals(0.45f, added.x)
+        assertEquals(0.7f, added.y)
         assertEquals(1f, added.scale)
         assertEquals(3L, state.selectedItemId)
         assertTrue(state.interiorItems.first { it.roomItemId == 3L }.isPlaced)
@@ -126,7 +126,7 @@ class MyRoomViewModelTest {
     fun `놓인 아이템 칸을 누르면 방에서 고르기만 하고 되돌리기는 쌓지 않는다`() = runTest(testDispatcher) {
         val viewModel = loadedViewModel()
 
-        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(1))
+        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(1, x = 0.45f, y = 0.7f))
 
         val state = viewModel.uiState.value
         assertEquals(1L, state.selectedItemId)
@@ -206,7 +206,7 @@ class MyRoomViewModelTest {
     @Test
     fun `저장하면 배경을 맨 뒤로 두고 그리는 순서대로 zIndex 를 매겨 보낸 뒤 홈으로 돌아간다`() = runTest(testDispatcher) {
         val viewModel = loadedViewModel()
-        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3))
+        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3, x = 0.45f, y = 0.7f))
 
         viewModel.onIntent(MyRoomIntent.ClickSave)
         advanceUntilIdle()
@@ -223,7 +223,7 @@ class MyRoomViewModelTest {
     @Test
     fun `가지고 있지 않은 아이템이 섞여 저장에 실패하면 안내하고 방을 다시 불러온다`() = runTest(testDispatcher) {
         val viewModel = loadedViewModel()
-        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3))
+        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3, x = 0.45f, y = 0.7f))
         repository.saveError = httpException(404, "api.room.itemNotFound")
 
         viewModel.onIntent(MyRoomIntent.ClickSave)
@@ -238,7 +238,7 @@ class MyRoomViewModelTest {
     @Test
     fun `저장에 실패하면 꾸민 방을 그대로 두고 안내한다`() = runTest(testDispatcher) {
         val viewModel = loadedViewModel()
-        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3))
+        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3, x = 0.45f, y = 0.7f))
         repository.saveError = httpException(400)
 
         viewModel.onIntent(MyRoomIntent.ClickSave)
@@ -254,7 +254,7 @@ class MyRoomViewModelTest {
     @Test
     fun `저장하지 않은 변경이 있으면 나갈 때 저장할지 묻고 저장 안 함이면 그냥 나간다`() = runTest(testDispatcher) {
         val viewModel = loadedViewModel()
-        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3))
+        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3, x = 0.45f, y = 0.7f))
 
         viewModel.onIntent(MyRoomIntent.ClickBack)
 
@@ -269,7 +269,7 @@ class MyRoomViewModelTest {
     @Test
     fun `저장할지 묻는 창에서 저장하기를 누르면 저장하고 나간다`() = runTest(testDispatcher) {
         val viewModel = loadedViewModel()
-        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3))
+        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3, x = 0.45f, y = 0.7f))
         viewModel.onIntent(MyRoomIntent.ClickBack)
 
         messageHelper.twoButtonDialogs.single().onClickRight?.invoke()
