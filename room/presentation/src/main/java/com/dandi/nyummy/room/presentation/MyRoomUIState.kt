@@ -62,10 +62,10 @@ data class RoomBackgroundUiModel(
 )
 
 /**
- * 방에 놓인 인테리어 하나. 좌표 규칙은 RoomGeometry에 있다.
+ * 방에 놓인 인테리어 하나. 좌표 규칙은 RoomGeometry에 있다(저장값과 원점, 단위가 다르다).
  *
- * @property x 바닥 가운데 점의 가로 위치(배경 폭 대비 0~1)
- * @property y 바닥 가운데 점의 세로 위치(배경 높이 대비 0~1)
+ * @property x 바닥 가운데 점의 가로 위치(배경 왼쪽 끝 0, 오른쪽 끝 1)
+ * @property y 바닥 가운데 점의 세로 위치(배경 위 끝 0, 아래 끝 1)
  * @property scale 기본 크기 대비 배율
  */
 @Immutable

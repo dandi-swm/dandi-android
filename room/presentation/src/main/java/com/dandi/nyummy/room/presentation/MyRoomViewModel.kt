@@ -294,8 +294,8 @@ private fun MyRoomUIState.withPlacedMarks(): MyRoomUIState {
 }
 
 /**
- * 서버의 놓인 아이템을 꾸미는 방으로 바꾼다. 배경은 하나만 쓰고, 좌표와 크기는 허용 범위로 맞춘다
- * (고정 응답처럼 범위를 벗어난 값이 와도 방 안에 보이게).
+ * 서버의 놓인 아이템을 꾸미는 방으로 바꾼다. 배경은 하나만 쓴다. 좌표는 저장값(그림 왼쪽 아래 기준 퍼센트)을
+ * 그리는 좌표로 바꾸고, 좌표와 크기는 허용 범위로 맞춘다(범위를 벗어난 값이 와도 방 안에 보이게).
  */
 private fun List<RoomPlacementVO>.toDraft(): RoomDraft {
     val background = firstOrNull { it.category == RoomItemCategory.BACKGROUND }
@@ -304,11 +304,12 @@ private fun List<RoomPlacementVO>.toDraft(): RoomDraft {
         items = filter { it.category != RoomItemCategory.BACKGROUND }
             .sortedBy { it.zIndex }
             .map {
+                val position = RoomGeometry.fromSavedPosition(it.x, it.y)
                 RoomPlacementUiModel(
                     roomItemId = it.roomItemId,
                     imageUrl = it.imageUrl,
-                    x = it.x.coerceIn(0f, 1f),
-                    y = it.y.coerceIn(0f, 1f),
+                    x = position.x,
+                    y = position.y,
                     scale = RoomGeometry.clampScale(it.scale),
                 )
             }
@@ -316,18 +317,19 @@ private fun List<RoomPlacementVO>.toDraft(): RoomDraft {
     )
 }
 
-/** 저장할 놓인 아이템 전체. 배경이 맨 뒤(zIndex 0)이고 인테리어는 1부터 그리는 순서대로다. */
+/** 저장할 놓인 아이템 전체. 배경이 맨 뒤(zIndex 0)이고 인테리어는 1부터 그리는 순서대로다. 좌표는 저장 규칙으로 바꿔 보낸다. */
 internal fun RoomDraft.toPlacements(): List<RoomPlacementVO> = buildList {
     background?.let {
         add(RoomPlacementVO(roomItemId = it.roomItemId, category = RoomItemCategory.BACKGROUND, imageUrl = it.imageUrl))
     }
     items.forEachIndexed { index, item ->
+        val position = RoomGeometry.toSavedPosition(item.x, item.y)
         add(
             RoomPlacementVO(
                 roomItemId = item.roomItemId,
                 imageUrl = item.imageUrl,
-                x = item.x,
-                y = item.y,
+                x = position.x,
+                y = position.y,
                 zIndex = index + 1,
                 scale = item.scale,
             ),
