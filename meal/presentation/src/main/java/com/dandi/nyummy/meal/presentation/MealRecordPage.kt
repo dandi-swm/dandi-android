@@ -33,8 +33,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -63,17 +61,16 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.domain.helper.AppPermission
-import com.dandi.nyummy.common.presentation.component.DandiText
-import com.dandi.nyummy.common.presentation.component.NyummyButton
-import com.dandi.nyummy.common.presentation.component.NyummyButtonSize
-import com.dandi.nyummy.common.presentation.component.NyummyButtonStyle
-import com.dandi.nyummy.common.presentation.component.NyummyIconButton
-import com.dandi.nyummy.common.presentation.component.NyummyIconButtonStyle
-import com.dandi.nyummy.common.presentation.component.NyummyMascot
-import com.dandi.nyummy.common.presentation.component.NyummyMascotPose
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPose
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPoseImage
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.meal.presentation.component.MealCameraOverlay
@@ -156,8 +153,6 @@ private fun MealRecordScreen(
     modifier: Modifier = Modifier,
     onOpenAppSettings: () -> Unit = {},
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    val spacing = DesignSystemThemeImpl.designSystemSpacing
 
     // 확인 단계부터 픽셀 체인을 프리웜해 세리머니 시작 지연과 업로드 재작성 경합을 없앤다.
     val chainResult = rememberMealPixelChain(uiState.phase.photoPathOrNull)
@@ -183,7 +178,7 @@ private fun MealRecordScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(colors.bgSurfaceIvory),
+            .background(NyummyTheme.colors.bg.surface),
     ) {
         if (isCeremonyPhase) {
             Image(
@@ -203,30 +198,30 @@ private fun MealRecordScreen(
         )
         if (uiState.phase is MealCameraPhase.Feeding) {
             Spacer(Modifier.height(CeremonyHeadlineTopGap))
-            DandiText(
+            NyummyText(
                 text = stringResource(R.string.meal_record_ceremony_title_line1),
                 modifier = Modifier.fillMaxWidth(),
-                color = colors.contentDefaultLevel0,
+                color = NyummyTheme.colors.content.primary,
                 textAlign = TextAlign.Center,
-                style = DesignSystemThemeImpl.typeScale.displayRegularXXL,
+                style = NyummyTheme.typography.displayL,
             )
-            DandiText(
+            NyummyText(
                 text = stringResource(R.string.meal_record_ceremony_title_line2),
                 modifier = Modifier.fillMaxWidth(),
-                color = colors.contentDefaultLevel0,
+                color = NyummyTheme.colors.content.primary,
                 textAlign = TextAlign.Center,
-                style = DesignSystemThemeImpl.typeScale.displayRegularXXL,
+                style = NyummyTheme.typography.displayL,
             )
-            Spacer(Modifier.height(spacing.space12))
-            DandiText(
+            Spacer(Modifier.height(NyummyTheme.spacing.s12))
+            NyummyText(
                 text = stringResource(R.string.meal_record_ceremony_subtitle),
                 modifier = Modifier.fillMaxWidth(),
-                color = colors.contentDefaultLevel1,
+                color = NyummyTheme.colors.content.secondary,
                 textAlign = TextAlign.Center,
-                style = DesignSystemThemeImpl.typeScale.textRegularL,
+                style = NyummyTheme.typography.bodyL,
             )
         }
-        Spacer(Modifier.height(spacing.space16))
+        Spacer(Modifier.height(NyummyTheme.spacing.s16))
         Box(
             modifier = if (isCeremonyPhase) {
                 // 패턴 배경 위 풀블리드: 카드 프레임 없이 연출만 얹는다.
@@ -237,9 +232,9 @@ private fun MealRecordScreen(
                 Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .padding(horizontal = spacing.space20)
-                    .clip(RoundedCornerShape(DesignSystemThemeImpl.designSystemRadius.radius24))
-                    .background(colors.bgMealPhoto)
+                    .padding(horizontal = NyummyTheme.spacing.s20)
+                    .clip(RoundedCornerShape(NyummyTheme.radius.l))
+                    .background(NyummyTheme.colors.bg.surfaceSunken)
             },
         ) {
             when (val phase = uiState.phase) {
@@ -330,12 +325,12 @@ private fun MealRecordScreen(
                 )
 
                 MealCameraPhase.Done -> NyummyButton(
-                    label = stringResource(R.string.meal_record_done),
+                    text = stringResource(R.string.meal_record_done),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = spacing.space24),
+                        .padding(horizontal = NyummyTheme.spacing.s24),
                     style = NyummyButtonStyle.Primary,
-                    size = NyummyButtonSize.Large,
+                    size = NyummyButtonSize.L,
                     onClick = { onIntent(MealRecordIntent.ClickDone) },
                 )
             }
@@ -350,39 +345,33 @@ private fun MealRecordHeader(
     onCloseClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    val spacing = DesignSystemThemeImpl.designSystemSpacing
     Column(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = spacing.space16, vertical = spacing.space8),
+                .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s8),
         ) {
             NyummyIconButton(
+                icon = CommonR.drawable.nyummy_ic_x,
                 contentDescription = stringResource(R.string.meal_record_close_content_description),
+                onClick = onCloseClick,
                 modifier = Modifier.align(Alignment.CenterStart),
                 style = NyummyIconButtonStyle.Filled,
-                onClick = onCloseClick,
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Close,
-                    contentDescription = null,
-                )
-            }
-            DandiText(
+            )
+            NyummyText(
                 text = stringResource(R.string.meal_record_title),
                 modifier = Modifier.align(Alignment.Center),
-                color = colors.contentDefaultLevel0,
-                style = DesignSystemThemeImpl.typeScale.titleStrongL,
+                color = NyummyTheme.colors.content.primary,
+                style = NyummyTheme.typography.displayM,
             )
         }
         if (showSubtitle) {
-            DandiText(
+            NyummyText(
                 text = stringResource(R.string.meal_record_subtitle),
                 modifier = Modifier.fillMaxWidth(),
-                color = colors.contentDefaultLevel1,
+                color = NyummyTheme.colors.content.secondary,
                 textAlign = TextAlign.Center,
-                style = DesignSystemThemeImpl.typeScale.textRegularM,
+                style = NyummyTheme.typography.bodyM,
             )
         }
     }
@@ -394,37 +383,35 @@ private fun PermissionDeniedContent(
     onActionClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    val spacing = DesignSystemThemeImpl.designSystemSpacing
     Column(
-        modifier = modifier.padding(horizontal = spacing.space24),
+        modifier = modifier.padding(horizontal = NyummyTheme.spacing.s24),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        DandiText(
+        NyummyText(
             text = stringResource(R.string.meal_record_permission_denied_title),
-            color = colors.contentDefaultLevel0,
+            color = NyummyTheme.colors.content.primary,
             textAlign = TextAlign.Center,
-            style = DesignSystemThemeImpl.typeScale.textStrongL,
+            style = NyummyTheme.typography.titleS,
         )
-        Spacer(Modifier.height(spacing.space8))
-        DandiText(
+        Spacer(Modifier.height(NyummyTheme.spacing.s8))
+        NyummyText(
             text = stringResource(
                 if (isBlocked) R.string.meal_record_permission_blocked_body else R.string.meal_record_permission_denied_body,
             ),
-            color = colors.contentDefaultLevel1,
+            color = NyummyTheme.colors.content.secondary,
             textAlign = TextAlign.Center,
             // 기기 설정에서 켜는 방법까지 담은 여러 줄 안내라 한 줄로 자르지 않는다.
             maxLines = Int.MAX_VALUE,
-            style = DesignSystemThemeImpl.typeScale.textRegularM,
+            style = NyummyTheme.typography.bodyM,
         )
-        Spacer(Modifier.height(spacing.space24))
+        Spacer(Modifier.height(NyummyTheme.spacing.s24))
         NyummyButton(
-            label = stringResource(
+            text = stringResource(
                 if (isBlocked) R.string.meal_record_permission_open_settings else R.string.meal_record_permission_retry,
             ),
             style = NyummyButtonStyle.Secondary,
-            size = NyummyButtonSize.Medium,
+            size = NyummyButtonSize.M,
             onClick = onActionClick,
         )
     }
@@ -446,44 +433,31 @@ private fun PreviewActionBar(
     onCaptureClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    val spacing = DesignSystemThemeImpl.designSystemSpacing
     Row(
-        modifier = modifier.padding(horizontal = spacing.space20),
-        horizontalArrangement = Arrangement.spacedBy(spacing.space12),
+        modifier = modifier.padding(horizontal = NyummyTheme.spacing.s20),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NyummyIconButton(
+            icon = R.drawable.ic_meal_gallery,
             contentDescription = stringResource(R.string.meal_record_gallery_content_description),
+            onClick = onGalleryClick,
             style = NyummyIconButtonStyle.Filled,
             enabled = galleryEnabled,
-            onClick = onGalleryClick,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_meal_gallery),
-                contentDescription = null,
-            )
-        }
+        )
         NyummyButton(
-            label = stringResource(R.string.meal_record_cancel),
+            text = stringResource(R.string.meal_record_cancel),
             style = NyummyButtonStyle.Secondary,
-            size = NyummyButtonSize.Large,
+            size = NyummyButtonSize.L,
             onClick = onCancelClick,
         )
         NyummyButton(
-            label = stringResource(R.string.meal_record_capture),
+            text = stringResource(R.string.meal_record_capture),
             modifier = Modifier.weight(1f),
             style = NyummyButtonStyle.Primary,
-            size = NyummyButtonSize.Large,
+            size = NyummyButtonSize.L,
             enabled = captureEnabled,
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(R.drawable.ic_meal_camera),
-                    contentDescription = null,
-                    modifier = Modifier.size(CaptureIconSize),
-                    tint = colors.contentInverseDefault,
-                )
-            },
+            icon = R.drawable.ic_meal_camera,
             onClick = onCaptureClick,
         )
     }
@@ -496,23 +470,22 @@ private fun CapturedActionBar(
     onSubmitClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val spacing = DesignSystemThemeImpl.designSystemSpacing
     Row(
-        modifier = modifier.padding(horizontal = spacing.space20),
-        horizontalArrangement = Arrangement.spacedBy(spacing.space12),
+        modifier = modifier.padding(horizontal = NyummyTheme.spacing.s20),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NyummyButton(
-            label = stringResource(R.string.meal_record_retake),
+            text = stringResource(R.string.meal_record_retake),
             style = NyummyButtonStyle.Secondary,
-            size = NyummyButtonSize.Large,
+            size = NyummyButtonSize.L,
             onClick = onRetakeClick,
         )
         NyummyButton(
-            label = stringResource(R.string.meal_record_submit),
+            text = stringResource(R.string.meal_record_submit),
             modifier = Modifier.weight(1f),
             style = NyummyButtonStyle.Primary,
-            size = NyummyButtonSize.Large,
+            size = NyummyButtonSize.L,
             onClick = onSubmitClick,
         )
     }
@@ -523,32 +496,30 @@ private fun CapturedActionBar(
 private fun MealFeedDoneContent(
     modifier: Modifier = Modifier,
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    val spacing = DesignSystemThemeImpl.designSystemSpacing
     Column(
-        modifier = modifier.padding(horizontal = spacing.space24),
+        modifier = modifier.padding(horizontal = NyummyTheme.spacing.s24),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        NyummyMascot(
-            pose = NyummyMascotPose.Eating,
+        NyummyPoseImage(
+            pose = NyummyPose.Eating,
+            size = DoneMascotSize,
             contentDescription = stringResource(R.string.meal_record_done_mascot_content_description),
-            modifier = Modifier.size(DoneMascotSize),
         )
-        Spacer(Modifier.height(spacing.space16))
-        DandiText(
+        Spacer(Modifier.height(NyummyTheme.spacing.s16))
+        NyummyText(
             text = stringResource(R.string.meal_record_done_title),
-            color = colors.contentDefaultLevel0,
+            color = NyummyTheme.colors.content.primary,
             textAlign = TextAlign.Center,
-            style = DesignSystemThemeImpl.typeScale.titleStrongXL,
+            style = NyummyTheme.typography.displayM,
         )
-        Spacer(Modifier.height(spacing.space8))
-        DandiText(
+        Spacer(Modifier.height(NyummyTheme.spacing.s8))
+        NyummyText(
             text = stringResource(R.string.meal_record_done_body),
-            color = colors.contentDefaultLevel1,
+            color = NyummyTheme.colors.content.secondary,
             textAlign = TextAlign.Center,
             maxLines = 2,
-            style = DesignSystemThemeImpl.typeScale.textRegularM,
+            style = NyummyTheme.typography.bodyM,
         )
     }
 }
@@ -562,7 +533,6 @@ private fun FeedingBottomBar(
     showNext: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
     val haptic = LocalHapticFeedback.current
     LaunchedEffect(showNext) {
         if (showNext) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -593,34 +563,34 @@ private fun FeedingBottomBar(
                         Box(
                             modifier = Modifier
                                 .size(FeedingDotSize)
-                                .background(colors.dataCalendarRecorded, CircleShape),
+                                .background(NyummyTheme.colors.data.recordMarker, CircleShape),
                         )
                     }
                 }
-                Spacer(Modifier.height(DesignSystemThemeImpl.designSystemSpacing.space12))
-                DandiText(
+                Spacer(Modifier.height(NyummyTheme.spacing.s12))
+                NyummyText(
                     text = stringResource(R.string.meal_record_feeding_in_progress),
-                    color = colors.contentDefaultLevel0,
-                    style = DesignSystemThemeImpl.typeScale.titleStrongL,
+                    color = NyummyTheme.colors.content.primary,
+                    style = NyummyTheme.typography.displayM,
                 )
             }
         }
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = DesignSystemThemeImpl.designSystemSpacing.space8),
+                .padding(bottom = NyummyTheme.spacing.s8),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_meal_paw),
                 contentDescription = null,
                 modifier = Modifier.size(WordmarkPawSize),
-                tint = colors.contentBrandWordmark,
+                tint = NyummyTheme.colors.content.brand,
             )
-            DandiText(
+            NyummyText(
                 text = stringResource(R.string.meal_record_wordmark),
-                color = colors.contentBrandWordmark,
-                style = DesignSystemThemeImpl.typeScale.labelStrongS,
+                color = NyummyTheme.colors.content.brand,
+                style = NyummyTheme.typography.labelS,
             )
         }
     }
@@ -628,7 +598,6 @@ private fun FeedingBottomBar(
 
 private val BottomBarHeight = 120.dp
 private val CeremonyHeadlineTopGap = 48.dp
-private val CaptureIconSize = 24.dp
 private val DoneMascotSize = 180.dp
 private const val FeedingHintFadeOutMillis = 150
 private const val FeedingHintPulseMillis = 1100
@@ -641,7 +610,7 @@ private val WordmarkPawSize = 16.dp
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun MealRecordScreenPreviewPhase() {
-    DesignSystemTheme {
+    NyummyTheme {
         MealRecordScreen(
             uiState = MealRecordUIState(cameraPermission = MealCameraPermission.Granted),
             onIntent = {},
@@ -653,7 +622,7 @@ private fun MealRecordScreenPreviewPhase() {
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun MealRecordScreenCapturedPhase() {
-    DesignSystemTheme {
+    NyummyTheme {
         MealRecordScreen(
             uiState = MealRecordUIState(
                 phase = MealCameraPhase.Captured(
@@ -671,7 +640,7 @@ private fun MealRecordScreenCapturedPhase() {
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun MealRecordScreenFeedingPhase() {
-    DesignSystemTheme {
+    NyummyTheme {
         MealRecordScreen(
             uiState = MealRecordUIState(
                 phase = MealCameraPhase.Feeding(
@@ -690,7 +659,7 @@ private fun MealRecordScreenFeedingPhase() {
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun MealRecordScreenDonePhase() {
-    DesignSystemTheme {
+    NyummyTheme {
         MealRecordScreen(
             uiState = MealRecordUIState(
                 phase = MealCameraPhase.Done,
@@ -706,7 +675,7 @@ private fun MealRecordScreenDonePhase() {
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun MealRecordScreenPermissionDenied() {
-    DesignSystemTheme {
+    NyummyTheme {
         MealRecordScreen(
             uiState = MealRecordUIState(cameraPermission = MealCameraPermission.Denied),
             onIntent = {},

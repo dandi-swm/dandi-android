@@ -53,9 +53,10 @@ Follow `make-new-feature-module` exactly (conflict check → 4 modules → setti
 ## 4. Implement
 
 ### UI (presentation)
-- Colors: ONLY `ArchiThemeImpl.archiColor.*` — never raw `Color(0x...)` / hex.
-- Typography: ONLY `ArchiThemeImpl.typeScale.*` via `ArchiText` — never raw `fontSize = N.sp`.
-- Reuse common components before writing new ones: `ArchiText`, `BackArrowButton`, `FavoriteHeartButton`, `ContentsList`, `MediaSearchBar` ([common/presentation/component & searchList](common/presentation/src/main/java/com/jongchan/androidarchi/common/presentation/)).
+- Colors: ONLY `NyummyTheme.colors.*` — never raw `Color(0x...)` / hex.
+- Typography: ONLY `NyummyTheme.typography.*` via `NyummyText` — never raw `fontSize = N.sp`.
+- Spacing, radius, sizes: `NyummyTheme.spacing` / `radius` / `size` (see [docs/architecture/design-system.md](../../../docs/architecture/design-system.md)).
+- Reuse common components before writing new ones: `NyummyButton`, `NyummyCard`, `NyummyListRow`, `NyummyBottomSheet`, `NyummyDialog` and the rest of [designsystem/component](../../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/component/).
 - Spacing/sizes from the design context (Figma values take precedence over eyeballing the screenshot).
 - MVI set per naming table: `{Feature}Page` / `{Feature}UIState` (ImmutableList/ImmutableSet only) / `{Feature}Intent` / `{Feature}ReducerEvent` / `{Feature}ViewModel`.
 - Every state from §1.2 must render: content, loading, empty, error.

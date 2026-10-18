@@ -2,91 +2,75 @@
 
 ## 기준과 우선순위
 
-- Figma 파일: [Nyummy 냐미](https://www.figma.com/design/olJJrCuFYJypKJCR3RNSn9/Nyummy-%EB%83%90%EB%AF%B8?node-id=984-37241)
-- **유일한 Android 디자인 시스템 기준 페이지**: `984:37241` — `02 · LIVE Android Design System · v1.0.0-rc.3`
-- 화면 조합과 플로우는 Figma `10–50` 페이지를 따른다. 이 페이지들은 공통 컴포넌트의 토큰·크기·variant를 새로 정의하지 않는다.
-- `99` 페이지와 `Legacy`, `Archive`, `Exploration` 표시가 있는 프레임은 구현 기준이 아니다.
-- canonical 페이지에 없는 draft/example 프레임도 P0 계약으로 승격되기 전에는 공통 API를 만들 근거로 사용하지 않는다.
+- Figma 파일: [Nyummy 냐미](https://www.figma.com/design/olJJrCuFYJypKJCR3RNSn9/Nyummy-%EB%83%90%EB%AF%B8)
+- 디자인 시스템 기준 페이지는 `01 Foundations`(색, 글자, 간격, 모서리, 그림자)부터 `03 Components`(공통 컴포넌트)까지다.
+- 화면 조합과 플로우는 그 뒤 번호의 화면 페이지를 따른다. 화면 페이지는 공통 컴포넌트의 토큰, 크기, variant를 새로 정의하지 않는다.
+- `Legacy`, `Archive`, `Exploration` 표시가 있는 프레임은 구현 기준이 아니다.
 
-충돌 시 현재 사용자 지시 → 위 canonical 페이지 → `10–50` 화면/플로우 → 이 문서 순으로 적용한다. 제품 상태와 데이터 의미는 현재 SRS/API 계약이 우선하며, Figma의 예시 문구나 샘플 데이터로 도메인 enum을 만들지 않는다.
+충돌 시 현재 사용자 지시 → 위 디자인 시스템 페이지 → 화면 페이지 → 이 문서 순으로 적용한다. 제품 상태와 데이터 의미는 현재 SRS/API 계약이 우선하며, Figma의 예시 문구나 샘플 데이터로 도메인 enum을 만들지 않는다.
 
 ## 계층과 소비 API
 
 ```text
-Figma primitives / dimensions / text & effect styles
+Figma variables (palette / 2 Semantic / 3 Dimension) + text & effect styles
                     ↓
-ArchiPaletteColors + DefaultDesignSystemColor + DefaultDesignSystemStaticTypeScale
+NyummyPalette (internal) → NyummyColors, NyummyTypography, NyummyDimensions, NyummyElevation
                     ↓ CompositionLocal
-DesignSystemThemeImpl.designSystemColor / typeScale / radius / spacing / size / layout
+NyummyTheme.colors / typography / spacing / radius / borderWidth / size / elevation
                     ↓
-DandiText + Nyummy P0 Compose components
+Nyummy* 공통 컴포넌트 (designsystem/component)
                     ↓
 Feature screen (presentation)
 ```
 
-| 파일 | 책임 |
-|---|---|
-| [`ui/token/DesignTokens.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/ui/token/DesignTokens.kt) | palette, semantic color, type-scale 기본값. `FIGMA-TOKEN-INJECTION-POINT` 3개만 `design-token-sync` 자동 동기화 대상으로 삼는다. |
-| [`ui/color/ColorSemantic.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/ui/color/ColorSemantic.kt) | Figma semantic color 이름과 1:1인 슬롯 구조. |
-| [`ui/typo/DesignSystemTypeScale.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/ui/typo/DesignSystemTypeScale.kt) | 21개 text-style 슬롯 + Android 확장 슬롯(`titleStrongXL`) 구조. |
-| [`ui/theme/DesignSystemTheme.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/ui/theme/DesignSystemTheme.kt) | CompositionLocal 주입, shape/effect 접근, Material3 fallback projection. |
-| [`ui/theme/DesignSystemDimensions.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/ui/theme/DesignSystemDimensions.kt) | radius, spacing, size, layout, shadow/effect 값. 자동 token injection 범위 밖이므로 별도 검증한다. |
-| [`component/`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/component/) | canonical P0의 stateless Compose API와 preview/catalog sample. |
+코드는 모두 `common/presentation/.../designsystem/` 아래에 있다.
 
-제품 UI가 직접 소비할 수 있는 값은 `DesignSystemThemeImpl.*`뿐이다.
+| 경로 | 책임 |
+|---|---|
+| [`token/NyummyPalette.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/token/NyummyPalette.kt) | 원색 팔레트(Gray, Evergreen, Gold, Berry, Sky × 10단계, 외부 브랜드 색). `internal`이라 화면에서 직접 못 쓴다. |
+| [`theme/NyummyColors.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyColors.kt) | 역할 색. `bg`, `content`, `border`, `data`, `external` 그룹. Figma `2 Semantic`과 1:1. |
+| [`theme/NyummyTypography.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyTypography.kt) | 글자 역할 20종(display, title, body, label, voice, number)과 글꼴 4종. |
+| [`theme/NyummyDimensions.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyDimensions.kt) | 간격(`s2`~`s48`, `gutter`), 모서리(`xs`~`l`, `full`), 선 두께, 크기(터치 영역, 아이콘, 캐릭터, 버튼, 하단 내비). Figma `3 Dimension`과 1:1. |
+| [`theme/NyummyElevation.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyElevation.kt) | 그림자 `soft`(일러스트 위 카드), `float`(시트, 떠 있는 요소). 버튼과 카드는 그림자를 쓰지 않는다. |
+| [`theme/NyummyTheme.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyTheme.kt) | 진입점. CompositionLocal 주입과, Material3 기본값이 냐미 토큰을 따르도록 하는 `MaterialTheme` 대응. |
+| [`foundation/`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/foundation/) | 컴포넌트 내부 전용 고정 치수(`NyummyComponentDimens`), 누름 효과(`nyummyClickable`), 키보드 처리. |
+| [`component/`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/component/) | 공통 컴포넌트(`NyummyButton`, `NyummyText`, `NyummySheet`, `NyummyPoseImage`, 스프라이트 재생 등). |
+
+`NyummyTheme { }`은 `MainActivity`에서 한 번 감싼다. 화면은 별칭 없이 `NyummyTheme.colors.x`처럼 직접 읽는다.
 
 ```kotlin
-DandiText(
+NyummyText(
     text = label,
-    style = DesignSystemThemeImpl.typeScale.textStrongM,
-    color = DesignSystemThemeImpl.designSystemColor.contentDefaultLevel1,
+    style = NyummyTheme.typography.labelM,
+    color = NyummyTheme.colors.content.secondary,
 )
 
-Modifier.background(
-    color = DesignSystemThemeImpl.designSystemColor.bgDefaultLevel1,
-    shape = DesignSystemThemeImpl.designSystemShape.cardDefault,
-)
+Modifier
+    .background(NyummyTheme.colors.bg.surface, RoundedCornerShape(NyummyTheme.radius.m))
+    .padding(horizontal = NyummyTheme.spacing.gutter)
 ```
 
-- `Color(0x...)`는 palette 정의 외 사용 금지다.
-- raw `sp`는 type-scale 정의 외 사용 금지다. 텍스트는 `DandiText`로 그린다.
-- product component는 palette가 아니라 semantic color를 참조한다.
-- Figma drop shadow는 `radius`, `spread`, `offset`, `color`를 모두 보존한다. blur 반경을 Compose elevation으로 임의 환산하지 않는다.
+- `Color(0x...)`는 `NyummyPalette` 밖에서 쓰지 않는다. 화면과 컴포넌트는 역할 색만 쓴다.
+- raw `sp`는 `NyummyTypography` 밖에서 쓰지 않는다. 텍스트는 `NyummyText`로 그린다.
+- 그림자는 `NyummyTheme.elevation`의 blur, offset, 색을 그대로 쓴다. Compose elevation으로 임의 환산하지 않는다.
+- 컴포넌트에만 필요한 고정 치수는 토큰에 넣지 않고 `NyummyComponentDimens`에 둔다.
 - 48dp 최소 터치 영역과 disabled/loading semantics는 시각 상태와 별도로 보장한다.
+- 그리기 블록(`Canvas`, `drawBehind`) 안에서는 `NyummyTheme`을 읽을 수 없으니 블록 밖에서 값을 꺼내 둔다.
 
-## Figma provenance
+### 글꼴
 
-### 토큰과 스타일
-
-| 구분 | Figma ID | canonical 계약 |
+| 역할 | 글꼴 | 쓰는 곳 |
 |---|---|---|
-| Color Primitives | `VariableCollectionId:8:2` | 515개 원색 변수. Android semantic/effect가 실제 참조하는 값만 매핑하되 기존 템플릿 palette 항목은 삭제하지 않는다. |
-| Semantic Color | `VariableCollectionId:8:3` | 141개 역할 토큰. alias chain을 최종 색으로 평탄화하더라도 슬롯 이름과 역할은 1:1로 보존한다. `bg/scrim/default` 포함. |
-| Dimensions | `VariableCollectionId:8:4` | 29개 radius/spacing/size/layout 변수. |
-| Typography | canonical local text styles | 21개. style key와 수치는 [구현 명세](../design-system-implementation.md#typography)를 따른다. |
-| Effects | canonical local effect styles | 6개. style key와 수치는 [구현 명세](../design-system-implementation.md#effects)를 따른다. |
+| Ui | Asta Sans | title, body, label |
+| Display | Jua | display(큰 제목) |
+| Voice | Gowun Dodum | 냐미 말풍선 |
+| Number | Nunito | 숫자 |
 
-이름 매핑은 다음 규칙을 사용한다.
+### 캐릭터와 아이콘
 
-| Figma | Kotlin | 예 |
-|---|---|---|
-| `palette/{family}/{tone}` | `ArchiPaletteColors.{Family}{Tone}` | `palette/forest/600` → `Forest600` |
-| `{role}/{variant}/{level}` | `DesignSystemSemanticColors.{role}{Variant}{Level}` | `bg/default/level0` → `bgDefaultLevel0` |
-| `{group}/{weight}/{size}` | `DesignSystemTypeScale.{group}{Weight}{Size}` | `text/strong/M` → `textStrongM` |
-
-### Published P0 canonical component roots
-
-아래 노드만 Android 공통 디자인 시스템 v1 P0의 published contract다.
-
-| 영역 | Figma component root |
-|---|---|
-| Common | Button `990:1052`, IconButton `990:1079`, Input `992:765`, TopAppBar `993:681`, Snackbar `993:690`, Card `993:695`, ListRow `993:699`, Chip `993:728`, Badge `993:739`, LinearProgress `993:753`, Loading Indicator `993:762`, Modal Scrim `993:764` |
-| Overlay / state | Dialog `956:563`, Bottom Sheet `956:645`, State Surface `475:62` |
-| Navigation | Bottom Navigation `634:11768`, Bottom Navigation Item `619:44573`; icons Home `619:44557`, History `619:44559`, Quest `619:44562`, Collection `619:44565`, Shop `619:44570` |
-| Meal / history | Floating Today Meals `884:554`, Meal Row `800:13506`, Calendar Header Action `800:13515`, Calendar Day Cell `844:12774`, Analysis Banner `1042:11`, Daily Nutrition Summary `1043:64`, Meal Detail Card `481:87`, Meal Nutrition Indicator `1044:66`, Photo Picker `1046:588` |
-| Assets | Salad `125:44`, Pasta `125:42`, Rice `125:50`, Chevron Left `22:54`, Chevron Right `22:58` |
-
-노드별 variant, 상태, geometry는 [Nyummy Android Design System 구현 명세](../design-system-implementation.md)에 고정한다. P1 또는 향후 컴포넌트는 canonical 페이지에 root와 상태 계약이 추가된 뒤 별도 작업으로 승격한다.
+- 아이콘은 Lucide 벡터(`nyummy_ic_*`)만 쓴다. 이모지나 직접 그린 도형으로 대신하지 않는다.
+- 냐미 정지 일러스트는 `NyummyPose` + `NyummyPoseImage`(밀도별 WebP)로 그린다. 포즈별 쓰임은 `NyummyPose` 문서 주석을 따른다.
+- 픽셀 스프라이트 애니메이션은 `NyummySpriteView`, `NyummySpriteSequenceView`로 재생한다. 스프라이트 시트만 프레임 계산을 위해 `drawable-nodpi`에 둔다.
 
 ## 제품 상태와 디자인 variant의 경계
 
@@ -99,12 +83,17 @@ Modifier.background(
 
 ## 변경 절차
 
-1. canonical page와 component root ID를 확인한다.
-2. color/type 변경은 `design-token-sync`로 variable/style을 추출하고, injection marker 안만 갱신한다.
-3. 새 semantic/type 슬롯이 필요하면 인터페이스, `withStringKey`, 기본값, consumer를 한 변경으로 맞춘다.
-4. dimensions/effects/components는 canonical node의 bound variable, geometry, variant 전체를 별도로 추출한다.
-5. public Compose API는 stateless를 기본으로 하고, interaction은 callback으로 노출한다. 임의 product behavior를 공통 컴포넌트에 넣지 않는다.
-6. [검증 게이트](../design-system-implementation.md#verification-gates)를 전부 통과한 뒤 계약 버전을 올린다.
+1. Figma 디자인 시스템 페이지에서 바뀐 변수, 글자 스타일, 컴포넌트를 확인한다.
+2. 색, 글자, 간격 값이 바뀌면 `token/`, `theme/` 파일을 고치고, 같은 변경에서 계약 테스트(`NyummyTokenContractTest`, `NyummyTypographyContractTest`)의 기대값도 Figma 값으로 맞춘다.
+3. 새 역할 색이나 글자 역할이 필요하면 데이터 클래스, 기본값, 사용처를 한 변경으로 맞춘다.
+4. 컴포넌트는 Figma 컴포넌트의 variant와 상태를 모두 옮기고, 공개 API는 stateless를 기본으로 한다. interaction은 callback으로 노출하고 화면 고유 동작은 공통 컴포넌트에 넣지 않는다.
+5. 디버그 카탈로그(`NyummyDsCatalogActivity`)에 섹션을 추가하고, Compose UI 테스트(`common/presentation/src/androidTest/.../designsystem/component/`)를 함께 둔다.
+
+디버그 카탈로그 실행:
+
+```bash
+adb shell am start -n com.dandi.nyummy/com.dandi.nyummy.main.presentation.catalog.NyummyDsCatalogActivity --es section "Bottom Nav"
+```
 
 ## 안정성
 

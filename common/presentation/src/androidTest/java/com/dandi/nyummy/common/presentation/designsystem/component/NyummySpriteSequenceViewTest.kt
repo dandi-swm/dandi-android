@@ -1,4 +1,4 @@
-package com.dandi.nyummy.common.presentation.component
+package com.dandi.nyummy.common.presentation.designsystem.component
 
 import android.graphics.Bitmap
 import android.net.Uri

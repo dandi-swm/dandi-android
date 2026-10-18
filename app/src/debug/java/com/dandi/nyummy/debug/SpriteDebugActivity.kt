@@ -21,12 +21,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.R
-import com.dandi.nyummy.common.presentation.component.DandiText
-import com.dandi.nyummy.common.presentation.component.NyummyButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteView
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
  * 냐미 스프라이트 시트 연속 재생 확인용 디버그 액티비티 (debug 빌드에만 포함).
@@ -40,7 +39,7 @@ class SpriteDebugActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            DesignSystemTheme {
+            NyummyTheme {
                 SpriteDebugScreen()
             }
         }
@@ -118,10 +117,10 @@ private fun SpriteDebugScreen() {
             )
         }
 
-        DandiText(
+        NyummyText(
             text = segment.label,
+            style = NyummyTheme.typography.labelM,
             modifier = Modifier.padding(top = 24.dp),
-            style = DesignSystemThemeImpl.typeScale.textStrongM,
         )
 
         Row(
@@ -129,15 +128,16 @@ private fun SpriteDebugScreen() {
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             segments.forEachIndexed { index, item ->
-                DandiText(
+                NyummyText(
                     text = item.label,
+                    style = NyummyTheme.typography.bodyM,
                     modifier = Modifier
                         .clickable { segmentIndex = index }
                         .padding(8.dp),
                     color = if (index == segmentIndex) {
-                        DesignSystemThemeImpl.designSystemColor.contentDefaultLevel0
+                        NyummyTheme.colors.content.primary
                     } else {
-                        DesignSystemThemeImpl.designSystemColor.contentDefaultLevel1
+                        NyummyTheme.colors.content.secondary
                     },
                 )
             }
@@ -146,7 +146,7 @@ private fun SpriteDebugScreen() {
         // 재생이 끝나기를 기다리지 않고 다음 구간으로 바로 넘기는 버튼.
         // key(segmentIndex)가 바뀌며 진행 중이던 애니메이션은 버려지고 새 구간이 0번 프레임부터 돈다.
         NyummyButton(
-            label = "다음 구간 ▶",
+            text = "다음 구간 ▶",
             modifier = Modifier.padding(top = 24.dp),
             onClick = { segmentIndex = (segmentIndex + 1) % segments.size },
         )

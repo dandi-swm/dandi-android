@@ -64,9 +64,9 @@ claude mcp add --transport http figma-desktop http://127.0.0.1:3845/mcp
 
 ### Step 1 — 토큰 동기화: `/design-token-sync`
 
-새 디자인 시스템을 적용할 때 **가장 먼저 1회** 실행합니다. 모든 색/타이포 기본값은
-[DesignTokens.kt](../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/ui/token/DesignTokens.kt)
-한 파일에 모여 있고, 스킬은 이 파일의 `FIGMA-TOKEN-INJECTION-POINT` 마커 구간만 수정합니다.
+새 디자인 시스템을 적용할 때 **가장 먼저 1회** 실행합니다. 색, 글자, 간격 값은
+[designsystem/token, theme](../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/)
+아래 파일(`NyummyPalette`, `NyummyColors`, `NyummyTypography`, `NyummyDimensions`)에 있고, 스킬은 이 값과 계약 테스트 기대값을 함께 고칩니다.
 
 ```text
 /design-token-sync https://www.figma.com/design/abc123/MyApp?node-id=1-2
@@ -149,7 +149,7 @@ adb shell 'am start -W -a android.intent.action.VIEW -d "https://link.nyummy.co.
 
 스킬들이 강제하는 핵심 규칙입니다. 결과물 리뷰 시 이 기준으로 보면 됩니다.
 
-1. **색/타이포 하드코딩 금지** — `DesignSystemThemeImpl.designSystemColor.*` / `typeScale.*` 만 사용. raw hex/sp 가 보이면 버그입니다.
+1. **색/타이포 하드코딩 금지** — `NyummyTheme.colors.*` / `NyummyTheme.typography.*` 만 사용. raw hex/sp 가 보이면 버그입니다.
 2. **의존 방향** — `presentation → domain → entity`, `data → domain → entity`. presentation↔data 직접 의존 금지.
 3. **4-모듈 세트** — feature = entity/domain/data/presentation. 골든 예제(intro/search/favorite/fullScreenMedia) 중 하나를 베이스로 복제.
 4. **MVI 네이밍** — `{Feature}Page / UIState / Intent / ReducerEvent / ViewModel`, UIState 컬렉션은 ImmutableList/Set.
