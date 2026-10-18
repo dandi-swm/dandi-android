@@ -40,4 +40,7 @@ sealed interface MyRoomIntent : MviIntent {
     data class ReachInventoryEnd(val category: RoomItemCategory) : MyRoomIntent
 
     data object ClickShop : MyRoomIntent
+
+    /** 냐미 동작 하나가 끝났다. 같은 상태의 다른 동작을 이어 간다. */
+    data class CatMotionFinished(val playId: Int) : MyRoomIntent
 }

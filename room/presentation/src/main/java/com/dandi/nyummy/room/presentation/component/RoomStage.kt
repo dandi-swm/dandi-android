@@ -52,6 +52,8 @@ import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpritePrefetch
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSequenceView
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
@@ -59,6 +61,7 @@ import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.room.presentation.R
 import com.dandi.nyummy.room.presentation.RoomBackgroundUiModel
 import com.dandi.nyummy.room.presentation.RoomPlacementUiModel
+import com.dandi.nyummy.room.presentation.model.RoomCatMotion
 import com.dandi.nyummy.room.presentation.model.RoomGeometry
 import kotlinx.collections.immutable.ImmutableList
 import kotlin.math.abs
@@ -76,11 +79,14 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  * - 아이템을 끌면 옮긴다. 끄는 동안 원래 자리는 흐리게 남기고 위에 안내를 띄운다.
  * - 두 손가락으로 벌리거나 오므리면 손가락 아래 아이템(없으면 고른 아이템)을 키우거나 줄인다.
  * - 고른 아이템에는 테두리와 도구 모음(맨 앞으로, 보관함에 넣기)을 붙인다.
+ * - 냐미는 홈 카드와 같은 자리(방 가운데 바닥)에 앉아 아이템보다 위에 그린다. 누를 수 없어서 손가락은 그 아래 아이템에 닿는다.
  *
  * 끌기와 확대, 축소는 손을 뗄 때 한 번만 [onMove]로 알려서 되돌리기 한 단계가 된다.
  * 끄는 동안 맨 위에 그린 아이템은 놓은 뒤에도 맨 앞에 남는다(옮긴 아이템은 맨 앞으로 온다).
  *
  * @param frame 무대 크기와 그 안의 방 그림 자리, 보이는 영역. 무대 크기와 같게 [modifier]로 크기를 정해 넘긴다.
+ * @param cat 냐미가 지금 하는 동작. null이면 냐미를 그리지 않는다.
+ * @param onCatMotionFinished 냐미 동작 하나가 끝났다(재생 번호를 넘긴다).
  */
 @Composable
 internal fun RoomStage(
@@ -88,6 +94,8 @@ internal fun RoomStage(
     background: RoomBackgroundUiModel?,
     items: ImmutableList<RoomPlacementUiModel>,
     selectedItemId: Long?,
+    cat: RoomCatMotion?,
+    onCatMotionFinished: (playId: Int) -> Unit,
     onSelect: (Long?) -> Unit,
     onMove: (roomItemId: Long, x: Float, y: Float, scale: Float) -> Unit,
     onBringToFront: () -> Unit,
@@ -162,6 +170,13 @@ internal fun RoomStage(
                     onFailed = {},
                 )
             }
+            if (cat != null) {
+                RoomCat(
+                    motion = cat,
+                    rect = frame.catRect,
+                    onMotionFinished = { onCatMotionFinished(cat.playId) },
+                )
+            }
         }
 
         val selected = items.firstOrNull { it.roomItemId == selectedItemId }
@@ -200,11 +215,13 @@ internal fun RoomStage(
  * @property visibleRight 무대 오른쪽 끝(폭 대비 비율)
  * @property visibleTop 무대 위쪽 끝(높이 대비 비율). 위쪽이 잘렸으면 0보다 크다.
  * @property visibleBottom 보관함 시트에 가리지 않는 맨 아래(높이 대비 비율)
+ * @property catRect 냐미가 앉는 자리(무대 좌표, px). 홈 카드와 같은 자리다.
  */
 @Immutable
 internal data class RoomFrame(
     val stageWidth: Float,
     val roomRect: Rect,
+    val catRect: Rect,
     val visibleLeft: Float,
     val visibleRight: Float,
     val visibleTop: Float,
@@ -256,11 +273,13 @@ internal data class RoomFrame(
         fun of(width: Dp, height: Dp, coveredBottom: Dp, density: Density): RoomFrame = with(density) {
             val room = RoomCardLayout.roomRect(width, height)
             val roomRect = Rect(room.left.toPx(), room.top.toPx(), room.right.toPx(), room.bottom.toPx())
+            val cat = RoomCardLayout.nyummyRect(width, height)
             val stageWidth = width.toPx()
             val stageHeight = height.toPx()
             RoomFrame(
                 stageWidth = stageWidth,
                 roomRect = roomRect,
+                catRect = Rect(cat.left.toPx(), cat.top.toPx(), cat.right.toPx(), cat.bottom.toPx()),
                 visibleLeft = max(0f, -roomRect.left) / roomRect.width,
                 visibleRight = (stageWidth - roomRect.left).coerceAtMost(roomRect.width) / roomRect.width,
                 visibleTop = max(0f, -roomRect.top) / roomRect.height,
@@ -354,6 +373,28 @@ private suspend fun PointerInputScope.detectRoomGestures(
         finished != null -> onMove(finished.roomItemId, finished.x, finished.y, finished.scale)
         !pastSlop -> onSelect(touchedId)
     }
+}
+
+/** 방 가운데 바닥에 앉은 냐미. 홈과 같은 픽셀 스프라이트를 정수배로 그린다. */
+@Composable
+private fun RoomCat(
+    motion: RoomCatMotion,
+    rect: Rect,
+    onMotionFinished: () -> Unit,
+) {
+    // 같은 상태의 다른 동작으로 넘어갈 때 시트를 받느라 멈칫하지 않게 상태의 모든 시트를 미리 받아 둔다.
+    NyummySpritePrefetch(urls = motion.sheetUrls)
+    val width = with(LocalDensity.current) { rect.width.toDp() }
+    NyummySpriteSequenceView(
+        clips = motion.clips,
+        restMillis = motion.restMillis,
+        onFinished = onMotionFinished,
+        displayWidth = width,
+        playId = motion.playId,
+        integerScale = true,
+        contentDescription = stringResource(R.string.my_room_character_description),
+        modifier = Modifier.placeAt(rect),
+    )
 }
 
 /** 놓인 아이템 그림 하나. 그림을 받으면 실제 폭 / 높이를 [onAspect]로 알리고, 받지 못하면 빈 자리를 흐리게 보여 준다. */

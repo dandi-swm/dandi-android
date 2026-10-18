@@ -1,6 +1,10 @@
 package com.dandi.nyummy.room.presentation
 
 import androidx.lifecycle.viewModelScope
+import com.dandi.nyummy.cat.domain.CatMotionPicker
+import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
+import com.dandi.nyummy.cat.entity.CatAnimationVO
+import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
@@ -16,6 +20,7 @@ import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.entity.RoomPlacementVO
 import com.dandi.nyummy.room.entity.RoomVO
 import com.dandi.nyummy.room.presentation.model.RoomGeometry
+import com.dandi.nyummy.room.presentation.model.toRoomCatMotion
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -27,12 +32,18 @@ class MyRoomViewModel @Inject constructor(
     private val getRoom: GetRoomUseCase,
     private val getOwnedRoomItems: GetOwnedRoomItemsUseCase,
     private val saveRoom: SaveRoomUseCase,
+    private val getCatAnimations: GetCatAnimationsUseCase,
+    private val catMotionPicker: CatMotionPicker,
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
 ) : MviViewModel<MyRoomIntent, MyRoomUIState, MyRoomReducerEvent>(MyRoomUIState()) {
 
+    /** 방에서 쓰는 냐미 애니메이션(마이룸 꾸미기 상태). 받지 못했으면 null이고 냐미를 그리지 않는다. */
+    private var catAnimation: CatAnimationVO? = null
+
     init {
         load()
+        loadCat()
     }
 
     override fun onIntent(intent: MyRoomIntent) {
@@ -51,6 +62,7 @@ class MyRoomViewModel @Inject constructor(
             is MyRoomIntent.ReachInventoryEnd -> loadMoreItems(intent.category)
             // TODO: 상점 화면이 생기면 ShopPage로 연결한다.
             MyRoomIntent.ClickShop -> messageHelper.showSnackBar(iconType = IconType.WARNING, messageText = NOT_READY_MESSAGE)
+            is MyRoomIntent.CatMotionFinished -> if (intent.playId == currentState.catMotion?.playId) startCatMotion()
         }
     }
 
@@ -82,6 +94,7 @@ class MyRoomViewModel @Inject constructor(
                 isSaving = false,
                 savedRoom = if (event.isSaved) state.room else state.savedRoom,
             )
+            is MyRoomReducerEvent.CatMotionChanged -> state.copy(catMotion = event.motion)
         }
 
     private fun load() {
@@ -91,6 +104,28 @@ class MyRoomViewModel @Inject constructor(
                 .onSuccess { dispatch(MyRoomReducerEvent.Loaded(it)) }
                 .onFailure { dispatch(MyRoomReducerEvent.LoadFailed) }
         }
+    }
+
+    /**
+     * 방에 앉힐 냐미 애니메이션을 받는다. 홈과 같은 내 고양이 애니메이션에서 마이룸 꾸미기 상태(PLAYFUL)를 쓴다.
+     * 실패하면 냐미 없이 꾸미기만 한다(안내는 UseCase가 필요할 때만 한다).
+     */
+    private fun loadCat() {
+        viewModelScope.launch {
+            getCatAnimations().onSuccess { set ->
+                catAnimation = set.animationFor(CatState.PLAYFUL)
+                startCatMotion()
+            }
+        }
+    }
+
+    /** 같은 상태 안에서 바로 전과 다른 동작 묶음을 골라 처음부터 재생한다. */
+    private fun startCatMotion() {
+        val animation = catAnimation ?: return
+        val previous = currentState.catMotion
+        val group = catMotionPicker.nextGroup(animation.groups.size, previous?.group)
+        val playId = (previous?.playId ?: 0) + 1
+        dispatch(MyRoomReducerEvent.CatMotionChanged(animation.toRoomCatMotion(group, playId, catMotionPicker.restMillis())))
     }
 
     /**

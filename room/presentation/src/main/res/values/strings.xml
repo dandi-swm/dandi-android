@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="my_room_title">마이룸</string>
+    <string name="my_room_character_description">방에 있는 냐미</string>
     <string name="my_room_save">저장</string>
     <string name="my_room_undo">되돌리기</string>
     <string name="my_room_category_background">배경</string>

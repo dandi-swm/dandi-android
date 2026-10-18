@@ -118,6 +118,8 @@ internal fun MyRoomScreen(
                 background = uiState.room.background,
                 items = uiState.room.items,
                 selectedItemId = uiState.selectedItemId,
+                cat = uiState.catMotion,
+                onCatMotionFinished = { onIntent(MyRoomIntent.CatMotionFinished(it)) },
                 onSelect = { onIntent(MyRoomIntent.SelectItem(it)) },
                 onMove = { id, x, y, scale -> onIntent(MyRoomIntent.MoveItem(id, x, y, scale)) },
                 onBringToFront = { onIntent(MyRoomIntent.BringSelectedToFront) },

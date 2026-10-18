@@ -4,6 +4,7 @@ import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
 import com.dandi.nyummy.room.entity.OwnedRoomItemPageVO
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.entity.RoomVO
+import com.dandi.nyummy.room.presentation.model.RoomCatMotion
 
 sealed interface MyRoomReducerEvent : ReducerEvent {
     data object LoadStarted : MyRoomReducerEvent
@@ -31,4 +32,6 @@ sealed interface MyRoomReducerEvent : ReducerEvent {
 
     /** 저장이 끝났다. 성공하면 지금 방이 저장된 방이 된다. */
     data class SaveFinished(val isSaved: Boolean) : MyRoomReducerEvent
+
+    data class CatMotionChanged(val motion: RoomCatMotion) : MyRoomReducerEvent
 }
