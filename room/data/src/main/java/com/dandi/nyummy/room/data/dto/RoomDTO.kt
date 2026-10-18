@@ -86,6 +86,7 @@ data class OwnedRoomItemDTO(
 
 /**
  * 방에 놓인 아이템 하나. 좌표와 크기 규칙은 [RoomPlacementVO]에 있다.
+ * 좌표가 0~100을 벗어나 오면 그 안으로 맞춘다(그림 밖에 놓인 아이템이 없게).
  *
  * 서버 응답은 `zIndex`로 오지만 Swagger 스키마에는 `zindex`도 함께 적혀 있어서 둘 다 받는다.
  */
@@ -104,8 +105,8 @@ data class EquippedRoomItemDTO(
         roomItemId = roomItemId ?: 0L,
         category = RoomItemCategory.from(category),
         imageUrl = imageUrl.orEmpty(),
-        x = x ?: 0f,
-        y = y ?: 0f,
+        x = (x ?: 0f).toPosition(),
+        y = (y ?: 0f).toPosition(),
         zIndex = zIndex ?: lowercaseZIndex ?: 0,
         scale = scale?.takeIf { it > 0f } ?: 1f,
     )
@@ -123,6 +124,8 @@ data class UpdateEquippedRoomItemsRequestDTO(
 /**
  * 놓인 아이템 하나의 자리. Swagger 요청 스키마에 `zIndex`와 `zindex`가 함께 있는데, 응답과 같은 `zIndex`로 보낸다.
  *
+ * @property x 바닥 가운데 점의 가로 위치(그림 왼쪽 아래 기준 퍼센트, 0~100). 넘치면 그 안으로 맞춰 보낸다.
+ * @property y 바닥 가운데 점의 세로 위치(그림 왼쪽 아래 기준 퍼센트, 0~100). 넘치면 그 안으로 맞춰 보낸다.
  * @property scale 기본 크기 대비 배율. 0보다 커야 한다.
  */
 @Serializable
@@ -136,10 +139,13 @@ data class EquippedRoomItemRequestDTO(
     companion object {
         fun from(placement: RoomPlacementVO) = EquippedRoomItemRequestDTO(
             roomItemId = placement.roomItemId,
-            x = placement.x,
-            y = placement.y,
+            x = placement.x.toPosition(),
+            y = placement.y.toPosition(),
             zIndex = placement.zIndex,
             scale = placement.scale,
         )
     }
 }
+
+/** 좌표를 0~100 퍼센트 안으로 맞춘다. */
+private fun Float.toPosition(): Float = coerceIn(0f, RoomPlacementVO.MAX_POSITION)
