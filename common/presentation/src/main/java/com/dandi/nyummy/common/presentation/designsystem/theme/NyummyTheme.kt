@@ -1,5 +1,8 @@
 package com.dandi.nyummy.common.presentation.designsystem.theme
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
@@ -44,7 +47,62 @@ fun NyummyTheme(content: @Composable () -> Unit) {
         LocalNyummyBorderWidth provides DefaultNyummyBorderWidth,
         LocalNyummySize provides DefaultNyummySize,
         LocalNyummyElevation provides DefaultNyummyElevation,
-        content = content,
+    ) {
+        // Material3 컴포넌트(시트, 스낵바, 아이콘, 글자 선택 색 등)의 기본값도 냐미 토큰을 따르게 한다.
+        MaterialTheme(
+            colorScheme = NyummyMaterialColorScheme,
+            typography = NyummyMaterialTypography,
+            content = content,
+        )
+    }
+}
+
+private val NyummyMaterialColorScheme = with(DefaultNyummyColors) {
+    lightColorScheme(
+        primary = bg.actionPrimary,
+        onPrimary = content.onAction,
+        primaryContainer = bg.selected,
+        onPrimaryContainer = content.brand,
+        secondary = bg.actionSecondary,
+        onSecondary = content.primary,
+        error = bg.actionDanger,
+        onError = content.onAction,
+        errorContainer = bg.dangerSubtle,
+        onErrorContainer = content.danger,
+        background = bg.canvas,
+        onBackground = content.primary,
+        surface = bg.surface,
+        onSurface = content.primary,
+        surfaceVariant = bg.surfaceSunken,
+        onSurfaceVariant = content.secondary,
+        surfaceContainerLowest = bg.surface,
+        surfaceContainerLow = bg.surface,
+        surfaceContainer = bg.surface,
+        surfaceContainerHigh = bg.surfaceSunken,
+        surfaceContainerHighest = bg.surfaceSunken,
+        surfaceBright = bg.surface,
+        surfaceDim = bg.surfaceSunken,
+        inverseSurface = bg.surfaceInverse,
+        inverseOnSurface = content.onInverse,
+        outline = border.default,
+        outlineVariant = border.subtle,
+        scrim = bg.scrim,
+    )
+}
+
+private val NyummyMaterialTypography = with(DefaultNyummyTypography) {
+    Typography(
+        displayLarge = displayL,
+        displayMedium = displayM,
+        titleLarge = titleL,
+        titleMedium = titleM,
+        titleSmall = titleS,
+        bodyLarge = bodyL,
+        bodyMedium = bodyM,
+        bodySmall = bodyS,
+        labelLarge = labelL,
+        labelMedium = labelM,
+        labelSmall = labelS,
     )
 }
 

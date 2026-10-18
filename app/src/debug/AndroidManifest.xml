@@ -7,12 +7,6 @@
         android:label="@string/debug_app_name"
         tools:replace="android:label">
         <activity
-            android:name="com.dandi.nyummy.main.presentation.catalog.DesignSystemCatalogActivity"
-            android:exported="true"
-            android:label="Nyummy Design System Catalog"
-            android:theme="@style/Theme.Dandi" />
-
-        <activity
             android:name="com.dandi.nyummy.main.presentation.catalog.NyummyDsCatalogActivity"
             android:exported="true"
             android:label="Nyummy DS Catalog"

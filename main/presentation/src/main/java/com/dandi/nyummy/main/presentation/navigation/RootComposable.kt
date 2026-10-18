@@ -34,7 +34,6 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackba
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.home.domain.HomePage
 import kotlinx.coroutines.flow.Flow
@@ -52,100 +51,98 @@ fun RootComposable(
         mutableStateOf<MessageEffect.ShowTwoButtonDialog?>(null)
     }
 
-    DesignSystemTheme {
-        val backStack = rememberNavBackStack(*startStack.toTypedArray())
-        val navigationHelper = LocalNavigationHelper.current
-        val currentKey = backStack.lastOrNull() as? GenericNavKey
-        val currentRoute = currentKey?.let { appRouteByPath[it.path] }
-        SystemBarIconsEffect(lightIcons = currentRoute?.usesLightSystemBarIcons == true)
-        val currentTabIndex = mainTabIndexOf(currentKey?.path)
+    val backStack = rememberNavBackStack(*startStack.toTypedArray())
+    val navigationHelper = LocalNavigationHelper.current
+    val currentKey = backStack.lastOrNull() as? GenericNavKey
+    val currentRoute = currentKey?.let { appRouteByPath[it.path] }
+    SystemBarIconsEffect(lightIcons = currentRoute?.usesLightSystemBarIcons == true)
+    val currentTabIndex = mainTabIndexOf(currentKey?.path)
 
-        val messageHelper = LocalMessageHelper.current
+    val messageHelper = LocalMessageHelper.current
 
-        val onShowOneButtonDialog = remember<(MessageEffect.ShowOneButtonDialog) -> Unit> {
-            { oneButtonDialogEffect = it }
-        }
-        val onShowTwoButtonDialog = remember<(MessageEffect.ShowTwoButtonDialog) -> Unit> {
-            { twoButtonDialogEffect = it }
-        }
-        MessageEffect(
-            messageEffectFlow = messageHelper.effect,
-            snackBarHostState = snackBarHostState,
-            onShowOneButtonDialog = onShowOneButtonDialog,
-            onShowTwoButtonDialog = onShowTwoButtonDialog,
+    val onShowOneButtonDialog = remember<(MessageEffect.ShowOneButtonDialog) -> Unit> {
+        { oneButtonDialogEffect = it }
+    }
+    val onShowTwoButtonDialog = remember<(MessageEffect.ShowTwoButtonDialog) -> Unit> {
+        { twoButtonDialogEffect = it }
+    }
+    MessageEffect(
+        messageEffectFlow = messageHelper.effect,
+        snackBarHostState = snackBarHostState,
+        onShowOneButtonDialog = onShowOneButtonDialog,
+        onShowTwoButtonDialog = onShowTwoButtonDialog,
+    )
+
+    // 서버와 UseCase가 띄우는 공통 다이얼로그. 제목이 없으면 본문을 제목 자리에 둔다.
+    oneButtonDialogEffect?.let { dialog ->
+        val close = { oneButtonDialogEffect = null }
+        NyummyDialog(
+            title = dialog.titleText ?: dialog.descText,
+            body = dialog.titleText?.let { dialog.descText },
+            confirmText = dialog.buttonText,
+            onConfirm = {
+                dialog.onClickButton?.invoke()
+                close()
+            },
+            onDismissRequest = close,
+            type = NyummyDialogType.Alert,
+            dismissible = !dialog.cantIgnore,
         )
+    }
 
-        // 서버와 UseCase가 띄우는 공통 다이얼로그. 제목이 없으면 본문을 제목 자리에 둔다.
-        oneButtonDialogEffect?.let { dialog ->
-            val close = { oneButtonDialogEffect = null }
-            NyummyDialog(
-                title = dialog.titleText ?: dialog.descText,
-                body = dialog.titleText?.let { dialog.descText },
-                confirmText = dialog.buttonText,
-                onConfirm = {
-                    dialog.onClickButton?.invoke()
-                    close()
-                },
-                onDismissRequest = close,
-                type = NyummyDialogType.Alert,
-                dismissible = !dialog.cantIgnore,
+    twoButtonDialogEffect?.let { dialog ->
+        val close = { twoButtonDialogEffect = null }
+        NyummyDialog(
+            title = dialog.titleText ?: dialog.descText,
+            body = dialog.titleText?.let { dialog.descText },
+            confirmText = dialog.rightButtonText,
+            onConfirm = {
+                dialog.onClickRightButton?.invoke()
+                close()
+            },
+            dismissText = dialog.leftButtonText,
+            onDismissClick = {
+                dialog.onClickLeftButton?.invoke()
+                close()
+            },
+            onDismissRequest = close,
+            dismissible = !dialog.cantIgnore,
+        )
+    }
+
+    val drawsBehindSystemBars = currentRoute?.drawsBehindSystemBars == true
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = NyummyTheme.colors.bg.canvas,
+        snackbarHost = {
+            // Scaffold는 스낵바를 하단 탭 위나 contentWindowInsets의 하단 인셋만큼 올린다. 전체 화면 라우트는 인셋을 0으로
+            // 두고 하단 탭도 없어, 직접 올리지 않으면 스낵바가 시스템 내비게이션 바(3버튼) 뒤에 깔린다.
+            NyummySnackbarHost(
+                hostState = snackBarHostState,
+                modifier = if (drawsBehindSystemBars) Modifier.navigationBarsPadding() else Modifier,
             )
-        }
-
-        twoButtonDialogEffect?.let { dialog ->
-            val close = { twoButtonDialogEffect = null }
-            NyummyDialog(
-                title = dialog.titleText ?: dialog.descText,
-                body = dialog.titleText?.let { dialog.descText },
-                confirmText = dialog.rightButtonText,
-                onConfirm = {
-                    dialog.onClickRightButton?.invoke()
-                    close()
-                },
-                dismissText = dialog.leftButtonText,
-                onDismissClick = {
-                    dialog.onClickLeftButton?.invoke()
-                    close()
-                },
-                onDismissRequest = close,
-                dismissible = !dialog.cantIgnore,
-            )
-        }
-
-        val drawsBehindSystemBars = currentRoute?.drawsBehindSystemBars == true
-        Scaffold(
-            modifier = modifier.fillMaxSize(),
-            containerColor = NyummyTheme.colors.bg.canvas,
-            snackbarHost = {
-                // Scaffold는 스낵바를 하단 탭 위나 contentWindowInsets의 하단 인셋만큼 올린다. 전체 화면 라우트는 인셋을 0으로
-                // 두고 하단 탭도 없어, 직접 올리지 않으면 스낵바가 시스템 내비게이션 바(3버튼) 뒤에 깔린다.
-                NyummySnackbarHost(
-                    hostState = snackBarHostState,
-                    modifier = if (drawsBehindSystemBars) Modifier.navigationBarsPadding() else Modifier,
+        },
+        // 전체 화면 라우트는 시스템 바 뒤까지 그리고 인셋을 스스로 처리한다. 나머지는 Scaffold가 민다.
+        contentWindowInsets = if (drawsBehindSystemBars) {
+            WindowInsets(0, 0, 0, 0)
+        } else {
+            ScaffoldDefaults.contentWindowInsets
+        },
+        bottomBar = {
+            if (currentRoute?.isBottomTab == true && currentTabIndex >= 0) {
+                // 내비가 시스템 내비게이션 바 영역까지 흰 바탕을 이어 그린다.
+                NyummyBottomNav(
+                    items = NyummyMainTabs,
+                    selectedIndex = currentTabIndex,
+                    onSelect = { index -> navigationHelper.navigateTo(mainTabPages[index]) },
                 )
-            },
-            // 전체 화면 라우트는 시스템 바 뒤까지 그리고 인셋을 스스로 처리한다. 나머지는 Scaffold가 민다.
-            contentWindowInsets = if (drawsBehindSystemBars) {
-                WindowInsets(0, 0, 0, 0)
-            } else {
-                ScaffoldDefaults.contentWindowInsets
-            },
-            bottomBar = {
-                if (currentRoute?.isBottomTab == true && currentTabIndex >= 0) {
-                    // 내비가 시스템 내비게이션 바 영역까지 흰 바탕을 이어 그린다.
-                    NyummyBottomNav(
-                        items = NyummyMainTabs,
-                        selectedIndex = currentTabIndex,
-                        onSelect = { index -> navigationHelper.navigateTo(mainTabPages[index]) },
-                    )
-                }
             }
-        ) { innerPadding ->
-            AppNavHost(
-                backStack = backStack,
-                modifier = Modifier.padding(innerPadding)
-            )
         }
+    ) { innerPadding ->
+        AppNavHost(
+            backStack = backStack,
+            modifier = Modifier.padding(innerPadding)
+        )
     }
 }
 
