@@ -7,12 +7,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.room.presentation.RoomBackgroundUiModel
 import com.dandi.nyummy.room.presentation.RoomPlacementUiModel
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.Assert.assertEquals
@@ -137,8 +139,40 @@ class RoomStageTest {
         assertTrue("도구 모음을 눌러도 방 고르기가 바뀌면 안 된다: $selections", selections.isEmpty())
     }
 
+    @Test
+    fun 좌우가_잘리는_세로로_긴_무대에서도_방_그림을_정한_자리에_그린다() {
+        // 폰 홈 카드처럼 세로로 길어 방 그림 좌우가 많이 잘리는 무대.
+        val tallFrame = RoomFrame.of(TallStageWidth, TallStageHeight, coveredBottom = 0.dp, density = composeRule.density)
+        composeRule.setContent {
+            NyummyTheme {
+                RoomStage(
+                    frame = tallFrame,
+                    background = RoomBackgroundUiModel(roomItemId = 100, imageUrl = ""),
+                    items = persistentListOf(),
+                    selectedItemId = null,
+                    cat = null,
+                    onCatMotionFinished = {},
+                    onSelect = {},
+                    onMove = { _, _, _, _ -> },
+                    onBringToFront = {},
+                    onPutAway = {},
+                    modifier = Modifier.size(width = TallStageWidth, height = TallStageHeight),
+                )
+            }
+        }
+
+        val background = composeRule.onNodeWithTag(RoomBackgroundTag).fetchSemanticsNode()
+        assertTrue("좌우가 잘려야 하는 무대다", tallFrame.roomRect.left < -1f)
+        // 고치기 전에는 무대보다 넓은 그림을 Compose가 가운데로 한 번 더 옮겨, 잘린 폭만큼 왼쪽으로 밀렸다.
+        assertEquals(tallFrame.roomRect.left, background.positionInRoot.x, 1f)
+        assertEquals(tallFrame.roomRect.top, background.positionInRoot.y, 1f)
+        assertEquals(tallFrame.roomRect.width, background.size.width.toFloat(), 1f)
+    }
+
     private companion object {
         val StageWidth = 360.dp
         val StageHeight = 480.dp
+        val TallStageWidth = 300.dp
+        val TallStageHeight = 520.dp
     }
 }

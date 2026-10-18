@@ -67,9 +67,9 @@ class MyRoomViewModelTest {
         Dispatchers.setMain(testDispatcher)
         repository.room = RoomVO(
             categories = listOf(
-                page(RoomItemCategory.BACKGROUND, owned(100, "햇살 방"), owned(101, "민트 방")),
-                page(RoomItemCategory.BED, owned(1, "구름 방석"), nextCursor = 1),
-                page(RoomItemCategory.ETC, owned(2, "털실 공"), owned(3, "털실 공")),
+                page(RoomItemCategory.BACKGROUND, owned(100, "햇살 방"), owned(101, "민트 방"), name = "배경"),
+                page(RoomItemCategory.BED, owned(1, "구름 방석"), nextCursor = 1, name = "침대"),
+                page(RoomItemCategory.ETC, owned(2, "털실 공"), owned(3, "털실 공"), name = "기타"),
             ),
             placements = listOf(
                 placed(1, zIndex = 2, x = 0.5f, y = 0.8f),
@@ -86,7 +86,7 @@ class MyRoomViewModelTest {
     }
 
     @Test
-    fun `방을 불러오면 배경과 인테리어를 나누고 그리는 순서와 놓임 표시를 맞춘다`() = runTest(testDispatcher) {
+    fun `방을 불러오면 종류마다 탭을 만들고 그리는 순서와 놓임 표시를 맞춘다`() = runTest(testDispatcher) {
         val state = loadedViewModel().uiState.value
 
         assertEquals(MyRoomLoadState.LOADED, state.loadState)
@@ -96,10 +96,16 @@ class MyRoomViewModelTest {
         assertEquals(1f, outOfRange.x)
         assertEquals(1f, outOfRange.y)
         assertEquals(RoomGeometry.MAX_SCALE, outOfRange.scale)
+        // 탭은 서버가 주지 않은 종류까지 늘 다섯 개이고, 각 탭에는 방과 함께 받은 첫 묶음이 들어간다.
+        assertEquals(RoomItemCategory.entries, state.inventoryTabs.map { it.category })
+        assertEquals(listOf("배경", "침대", "", "", "기타"), state.inventoryTabs.map { it.name })
+        assertEquals(listOf(null, 1L, null, null, null), state.inventoryTabs.map { it.nextCursor })
+        assertEquals(listOf(true, false), state.itemsOf(RoomItemCategory.BACKGROUND).map { it.isPlaced })
+        assertEquals(listOf(true), state.itemsOf(RoomItemCategory.BED).map { it.isPlaced })
+        assertTrue(state.itemsOf(RoomItemCategory.CAT_WHEEL).isEmpty())
         // 같은 아이템을 두 개 가지면 칸도 두 개다.
-        assertEquals(listOf(1L, 2L, 3L), state.interiorItems.map { it.roomItemId })
-        assertEquals(listOf(true, true, false), state.interiorItems.map { it.isPlaced })
-        assertEquals(listOf(true, false), state.backgrounds.map { it.isPlaced })
+        assertEquals(listOf(2L, 3L), state.itemsOf(RoomItemCategory.ETC).map { it.roomItemId })
+        assertEquals(listOf(true, false), state.itemsOf(RoomItemCategory.ETC).map { it.isPlaced })
         assertFalse(state.hasChanges)
         assertFalse(state.canSave)
     }
@@ -117,7 +123,7 @@ class MyRoomViewModelTest {
         assertEquals(0.7f, added.y)
         assertEquals(1f, added.scale)
         assertEquals(3L, state.selectedItemId)
-        assertTrue(state.interiorItems.first { it.roomItemId == 3L }.isPlaced)
+        assertTrue(state.itemsOf(RoomItemCategory.ETC).first { it.roomItemId == 3L }.isPlaced)
         assertTrue(state.canUndo)
         assertTrue(state.canSave)
     }
@@ -187,7 +193,7 @@ class MyRoomViewModelTest {
         val state = viewModel.uiState.value
         assertEquals(listOf(1L), state.room.items.map { it.roomItemId })
         assertNull(state.selectedItemId)
-        assertFalse(state.interiorItems.first { it.roomItemId == 2L }.isPlaced)
+        assertFalse(state.itemsOf(RoomItemCategory.ETC).first { it.roomItemId == 2L }.isPlaced)
     }
 
     @Test
@@ -200,7 +206,7 @@ class MyRoomViewModelTest {
         viewModel.onIntent(MyRoomIntent.ClickBackground(101))
         val state = viewModel.uiState.value
         assertEquals(101L, state.room.background?.roomItemId)
-        assertEquals(listOf(false, true), state.backgrounds.map { it.isPlaced })
+        assertEquals(listOf(false, true), state.itemsOf(RoomItemCategory.BACKGROUND).map { it.isPlaced })
     }
 
     @Test
@@ -290,22 +296,70 @@ class MyRoomViewModelTest {
     }
 
     @Test
-    fun `보관함 끝에 닿으면 남은 종류의 다음 묶음을 같은 종류 뒤에 붙인다`() = runTest(testDispatcher) {
+    fun `처음에는 첫 탭인 배경을 보고 탭을 누르면 그 종류로 바꾼다`() = runTest(testDispatcher) {
         val viewModel = loadedViewModel()
-        repository.ownedPage = page(RoomItemCategory.BED, owned(4, "바구니 침대"))
+        assertEquals(RoomItemCategory.BACKGROUND, viewModel.uiState.value.selectedCategory)
 
-        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd)
+        viewModel.onIntent(MyRoomIntent.SelectTab(RoomItemCategory.CARPET))
+
+        assertEquals(RoomItemCategory.CARPET, viewModel.uiState.value.selectedCategory)
+    }
+
+    @Test
+    fun `탭 끝에 닿으면 그 종류의 다음 묶음만 받아 그 탭 끝에 붙인다`() = runTest(testDispatcher) {
+        val viewModel = loadedViewModel()
+        // 묶음 사이에 겹친 칸(1)은 한 번만 둔다.
+        repository.ownedPage = page(RoomItemCategory.BED, owned(4, "바구니 침대"), owned(1, "구름 방석"), nextCursor = 9)
+
+        // 다음 묶음이 없는 종류는 요청하지 않는다.
+        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory.ETC))
+        // 받는 중에 또 끝에 닿아도 한 번만 요청한다.
+        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory.BED))
+        assertTrue(viewModel.uiState.value.tabOf(RoomItemCategory.BED)!!.isLoadingMore)
+        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory.BED))
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertEquals(listOf(Triple(RoomItemCategory.BED, 1L, GetRoomUseCase.PAGE_SIZE)), repository.ownedRequests)
-        assertEquals(listOf(1L, 4L, 2L, 3L), state.interiorItems.map { it.roomItemId })
-        assertTrue(state.nextCursors.isEmpty())
-        assertFalse(state.isLoadingMore)
+        val bed = state.tabOf(RoomItemCategory.BED)!!
+        assertEquals(listOf(1L, 4L), bed.items.map { it.roomItemId })
+        assertEquals(listOf(true, false), bed.items.map { it.isPlaced })
+        assertEquals(9L, bed.nextCursor)
+        assertFalse(bed.isLoadingMore)
+        assertEquals(listOf(2L, 3L), state.itemsOf(RoomItemCategory.ETC).map { it.roomItemId })
 
-        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd)
+        // 마지막 묶음을 받으면 더 요청하지 않는다.
+        repository.ownedPage = page(RoomItemCategory.BED, owned(5, "해먹"))
+        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory.BED))
         advanceUntilIdle()
-        assertEquals(1, repository.ownedRequests.size)
+        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory.BED))
+        advanceUntilIdle()
+
+        assertEquals(listOf(1L, 9L), repository.ownedRequests.map { it.second })
+        assertEquals(listOf(1L, 4L, 5L), viewModel.uiState.value.itemsOf(RoomItemCategory.BED).map { it.roomItemId })
+        assertNull(viewModel.uiState.value.tabOf(RoomItemCategory.BED)!!.nextCursor)
+    }
+
+    @Test
+    fun `다음 묶음을 받지 못하면 칸과 cursor 를 그대로 두고 다음에 다시 받는다`() = runTest(testDispatcher) {
+        val viewModel = loadedViewModel()
+        repository.ownedError = httpException(500)
+
+        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory.BED))
+        advanceUntilIdle()
+
+        val bed = viewModel.uiState.value.tabOf(RoomItemCategory.BED)!!
+        assertEquals(listOf(1L), bed.items.map { it.roomItemId })
+        assertEquals(1L, bed.nextCursor)
+        assertFalse(bed.isLoadingMore)
+
+        repository.ownedError = null
+        repository.ownedPage = page(RoomItemCategory.BED, owned(4, "바구니 침대"))
+        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory.BED))
+        advanceUntilIdle()
+
+        assertEquals(listOf(1L, 1L), repository.ownedRequests.map { it.second })
+        assertEquals(listOf(1L, 4L), viewModel.uiState.value.itemsOf(RoomItemCategory.BED).map { it.roomItemId })
     }
 
     @Test
@@ -371,8 +425,10 @@ class MyRoomViewModelTest {
 
     private fun owned(id: Long, name: String) = OwnedRoomItemVO(roomItemId = id, name = name, imageUrl = "img$id")
 
-    private fun page(category: RoomItemCategory, vararg items: OwnedRoomItemVO, nextCursor: Long? = null) =
-        OwnedRoomItemPageVO(category = category, items = items.toList(), nextCursor = nextCursor)
+    private fun page(category: RoomItemCategory, vararg items: OwnedRoomItemVO, nextCursor: Long? = null, name: String = "") =
+        OwnedRoomItemPageVO(category = category, categoryName = name, items = items.toList(), nextCursor = nextCursor)
+
+    private fun MyRoomUIState.itemsOf(category: RoomItemCategory): List<InventoryItemUiModel> = tabOf(category)!!.items
 
     private fun placed(id: Long, zIndex: Int, x: Float, y: Float, scale: Float = 1f) =
         RoomPlacementVO(roomItemId = id, imageUrl = "img$id", x = x, y = y, zIndex = zIndex, scale = scale)
@@ -382,6 +438,7 @@ class MyRoomViewModelTest {
 private class FakeRoomRepository : RoomRepository {
     var room = RoomVO()
     var ownedPage = OwnedRoomItemPageVO()
+    var ownedError: Exception? = null
     var loadError: Exception? = null
     var saveError: Exception? = null
     var roomRequests = 0
@@ -396,6 +453,7 @@ private class FakeRoomRepository : RoomRepository {
 
     override suspend fun getOwnedItems(category: RoomItemCategory, cursor: Long?, size: Int): OwnedRoomItemPageVO {
         ownedRequests += Triple(category, cursor, size)
+        ownedError?.let { throw it }
         return ownedPage
     }
 
