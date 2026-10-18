@@ -8,9 +8,10 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.PermissionHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
+import com.dandi.nyummy.common.entity.remoteconfig.VersionCheckVO
 import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
-import com.dandi.nyummy.intro.entity.VersionCheckVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TimelineCategory

@@ -17,10 +17,10 @@ val InquiryCategory.labelRes: Int
     }
 
 /**
- * 목록 행의 시각. 오늘 보낸 문의는 "오후 3:20", 올해의 다른 날은 "10월 4일", 지난해는 "2025년 10월 4일".
+ * 우편함 목록 행(아이템, 문의)의 시각. 오늘은 "오후 3:20", 어제는 "어제", 올해의 다른 날은 "10월 4일", 지난해는 "2025년 10월 4일".
  * 모든 날짜는 기기 타임존 기준이다.
  */
-fun inquiryListTimeLabel(
+fun mailboxListTimeLabel(
     epochMillis: Long,
     nowMillis: Long = System.currentTimeMillis(),
     zone: ZoneId = DeviceTime.zone(),
@@ -29,10 +29,25 @@ fun inquiryListTimeLabel(
     val now = DeviceTime.atZone(nowMillis, zone)
     return when {
         time.toLocalDate() == now.toLocalDate() -> time.meridiemLabel()
+        time.toLocalDate() == now.toLocalDate().minusDays(1) -> "어제"
         time.year == now.year -> "${time.monthValue}월 ${time.dayOfMonth}일"
         else -> "${time.year}년 ${time.monthValue}월 ${time.dayOfMonth}일"
     }
 }
+
+/**
+ * 받지 않으면 우편이 사라질 때까지 남은 날. 하루가 안 남았어도 1로 올려 "1일 남았어요"로 보인다. 이미 지났으면 0.
+ */
+fun mailRemainingDays(expiresAtMillis: Long, nowMillis: Long = System.currentTimeMillis()): Int {
+    val remainingMillis = expiresAtMillis - nowMillis
+    if (remainingMillis <= 0L) return 0
+    return ((remainingMillis + DAY_MILLIS - 1) / DAY_MILLIS).toInt()
+}
+
+/** 남은 날이 이만큼 이하이면 빨갛게 보여 준다. */
+const val MAIL_EXPIRING_DAYS = 1
+
+private const val DAY_MILLIS = 24 * 60 * 60 * 1000L
 
 /** 상세 화면의 시각. "10월 5일 오후 12:42"(기기 타임존). */
 fun inquiryDetailTimeLabel(epochMillis: Long, zone: ZoneId = DeviceTime.zone()): String {

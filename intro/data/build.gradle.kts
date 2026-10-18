@@ -46,11 +46,6 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.android)
 
-    // Firebase RemoteConfig — 앱 시작 버전 체크
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.config)
-    implementation(libs.kotlinx.coroutines.play.services) // Task.await()
-
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 }

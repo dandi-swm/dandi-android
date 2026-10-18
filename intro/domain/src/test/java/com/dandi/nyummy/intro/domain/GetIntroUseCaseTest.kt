@@ -13,9 +13,11 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
+import com.dandi.nyummy.common.entity.remoteconfig.VersionCheckVO
 import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
-import com.dandi.nyummy.intro.entity.VersionCheckVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -114,6 +116,40 @@ class GetIntroUseCaseTest {
             assertEquals(listOf(version.latestVersionUpdateLink), navigationHelper.openedUrls)
             assertEquals(Result.success(version), result)
         }
+
+    @Test
+    fun `앱 버전 코드가 최소 버전 코드와 같으면 강제 업데이트를 걸지 않는다`() = runBlocking {
+        val version = versionCheck(minimumVersionCode = 4)
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = false),
+            remoteConfigHelper = FakeRemoteConfigHelper(version),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 4),
+        )
+
+        useCase()
+
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+        assertEquals(listOf<Page>(LoginPage), navigationHelper.rootPages)
+    }
+
+    @Test
+    fun `원격 구성 값을 받지 못해 기본값이면 강제 업데이트를 걸지 않는다`() = runBlocking {
+        // 기본값(최소 versionCode 0)으로 만든 버전 확인 값
+        val version = object : RemoteConfigHelper {
+            override suspend fun sync() = Unit
+            override fun <T> get(key: RemoteConfigKey<T>): T = key.defaultValue
+        }.getVersionCheck()
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = false),
+            remoteConfigHelper = FakeRemoteConfigHelper(version),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 1),
+        )
+
+        useCase()
+
+        assertTrue(messageHelper.oneButtonDialogs.isEmpty())
+        assertEquals(listOf<Page>(LoginPage), navigationHelper.rootPages)
+    }
 
     @Test
     fun `최소 버전 코드가 0이면 강제 업데이트를 걸지 않는다`() = runBlocking {
@@ -393,6 +429,7 @@ class GetIntroUseCaseTest {
         private val version: VersionCheckVO,
     ) : RemoteConfigHelper {
         override suspend fun sync() = Unit
+        override fun <T> get(key: RemoteConfigKey<T>): T = key.defaultValue
         override fun getVersionCheck(): VersionCheckVO = version
     }
 
@@ -401,6 +438,7 @@ class GetIntroUseCaseTest {
     ) : RemoteConfigHelper {
         private var failed = false
         override suspend fun sync() = Unit
+        override fun <T> get(key: RemoteConfigKey<T>): T = key.defaultValue
         override fun getVersionCheck(): VersionCheckVO {
             if (!failed) {
                 failed = true
@@ -412,6 +450,7 @@ class GetIntroUseCaseTest {
 
     private class ThrowingRemoteConfigHelper : RemoteConfigHelper {
         override suspend fun sync() = Unit
+        override fun <T> get(key: RemoteConfigKey<T>): T = key.defaultValue
         override fun getVersionCheck(): VersionCheckVO =
             throw IllegalStateException("remote config failed")
     }

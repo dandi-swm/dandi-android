@@ -33,6 +33,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.R
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRewardRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSequenceView
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
@@ -140,6 +141,7 @@ private val CatalogEntries = listOf(
     CatalogEntry("Card") { CardSection() },
     CatalogEntry("List Row") { ListRowSection() },
     CatalogEntry("Mail Row") { MailRowSection() },
+    CatalogEntry("Reward Row") { RewardRowSection() },
     CatalogEntry("Swipe To Delete") { SwipeToDeleteSection() },
     CatalogEntry("Badge, HUD Pill") { BadgeHudSection() },
     CatalogEntry("Progress") { ProgressSection() },
@@ -367,6 +369,57 @@ private fun MailRowSection() {
             status = "답장을 기다리는 중",
             isStatusEmphasized = false,
             onClick = {},
+        )
+    }
+}
+
+@Composable
+private fun RewardRowSection() {
+    Column {
+        NyummyRewardRow(
+            title = "코인 100개",
+            source = "첫 기록 보상",
+            time = "오후 1:05",
+            imageModel = R.drawable.nyummy_asset_coin,
+            isClaimed = false,
+            actionText = "받기",
+            claimedText = "받았어요",
+            onActionClick = {},
+            remaining = "6일 남았어요",
+        )
+        NyummyRewardRow(
+            title = "코인 50개",
+            source = "출석 보상",
+            time = "어제",
+            imageModel = R.drawable.nyummy_asset_coin,
+            isClaimed = false,
+            actionText = "받기",
+            claimedText = "받았어요",
+            onActionClick = {},
+            remaining = "1일 남았어요",
+            isExpiring = true,
+        )
+        NyummyRewardRow(
+            title = "코인 20개",
+            source = "받는 중",
+            time = "어제",
+            imageModel = R.drawable.nyummy_asset_coin,
+            isClaimed = false,
+            actionText = "받기",
+            claimedText = "받았어요",
+            onActionClick = {},
+            remaining = "3일 남았어요",
+            actionEnabled = false,
+        )
+        NyummyRewardRow(
+            title = "코인 300개",
+            source = "7일 연속 기록 보상",
+            time = "9월 28일",
+            imageModel = R.drawable.nyummy_asset_coin,
+            isClaimed = true,
+            actionText = "받기",
+            claimedText = "받았어요",
+            onActionClick = {},
         )
     }
 }

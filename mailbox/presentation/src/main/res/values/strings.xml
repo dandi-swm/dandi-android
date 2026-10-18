@@ -27,4 +27,15 @@
     <string name="mailbox_write_send_failed">문의를 보내지 못했어요. 잠시 후 다시 시도해 주세요.</string>
 
     <string name="mailbox_detail_reply_from">냐미 팀 답장</string>
+
+    <string name="mailbox_tab_item">아이템</string>
+    <string name="mailbox_tab_inquiry">문의</string>
+    <string name="mailbox_item_claim">받기</string>
+    <string name="mailbox_item_open">열기</string>
+    <string name="mailbox_item_claimed">받았어요</string>
+    <string name="mailbox_item_remaining_days">%1$d일 남았어요</string>
+    <string name="mailbox_item_retention_notice">아이템은 도착하고 30일 동안 보관돼요</string>
+    <string name="mailbox_item_claim_all">보상 모두 받기</string>
+    <string name="mailbox_item_empty_title">도착한 아이템이 없어요</string>
+    <string name="mailbox_item_empty_body">보상이나 답장이 오면 여기로 와요</string>
 </resources>
