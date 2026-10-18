@@ -475,6 +475,7 @@ class HomeViewModelTest {
         override suspend fun getMeal(mealId: Long) = MealHistoryVO.empty
         override suspend fun updateMealName(mealId: Long, name: String) = MealHistoryVO.empty
         override suspend fun reanalyzeMeal(mealId: Long) = MealAnalysisStatus.UNKNOWN
+        override suspend fun submitAnalysisFeedback(mealId: Long, ratingHalfSteps: Int, reason: String?) = Unit
         override suspend fun deleteMeal(mealId: Long) = Unit
     }
 
