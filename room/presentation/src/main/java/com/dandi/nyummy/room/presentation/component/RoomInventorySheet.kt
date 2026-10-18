@@ -85,20 +85,31 @@ internal class RoomSheetState(expanded: Boolean) {
     var expansion by mutableFloatStateOf(if (expanded) 1f else 0f)
         private set
 
-    /** 시트 전체 높이(px). 방 무대가 시트에 가리는 높이를 계산하는 데 쓴다. 재기 전이면 0이다. */
-    var heightPx by mutableIntStateOf(0)
-        internal set
-
     /** 펼쳤을 때만 보이는 칸 영역의 높이(px). */
     var bodyHeightPx by mutableIntStateOf(0)
         internal set
 
+    /** 다 접었을 때의 시트 높이(px). 손잡이와 탭, 아래 시스템 바 여백이라 펼친 정도와 상관없이 같다. 재기 전이면 0이다. */
+    var collapsedHeightPx by mutableIntStateOf(0)
+        private set
+
+    /**
+     * 지금 펼친 정도에서의 시트 전체 높이(px). 방 무대가 시트에 가리는 높이를 계산하는 데 쓴다. 재기 전이면 0이다.
+     * 잰 높이는 한 프레임 늦게 들어와서 끄는 동안 쓰면 방이 흔들리므로, 펼친 정도로 바로 계산한다.
+     */
+    val heightPx: Int
+        get() = if (collapsedHeightPx == 0) 0 else collapsedHeightPx + visibleBodyHeightPx(bodyHeightPx)
+
     val isExpanded: Boolean
         get() = expansion >= 0.5f
 
-    /** 다 접었을 때의 시트 높이(px). 재기 전이면 0이다. */
-    val collapsedHeightPx: Int
-        get() = if (heightPx == 0) 0 else heightPx - (bodyHeightPx * expansion).roundToInt()
+    /** 칸 영역 [bodyHeight] 중 지금 보이는 높이(px). 시트를 그릴 때도 같은 값을 쓴다. */
+    internal fun visibleBodyHeightPx(bodyHeight: Int): Int = (bodyHeight * expansion).roundToInt()
+
+    /** 시트를 잰 뒤 부른다. 같은 측정에서 보이던 칸 영역을 빼서 다 접은 높이를 얻는다. */
+    internal fun onMeasured(heightPx: Int) {
+        collapsedHeightPx = heightPx - visibleBodyHeightPx(bodyHeightPx)
+    }
 
     fun dragBy(deltaPx: Float) {
         if (bodyHeightPx > 0) expansion = (expansion - deltaPx / bodyHeightPx).coerceIn(0f, 1f)
@@ -163,7 +174,7 @@ internal fun RoomInventorySheet(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .onSizeChanged { state.heightPx = it.height }
+            .onSizeChanged { state.onMeasured(it.height) }
             .nyummyShadow(shape, NyummyTheme.elevation.float)
             .background(NyummyTheme.colors.bg.surface, shape)
             .navigationBarsPadding(),
@@ -218,7 +229,7 @@ internal fun RoomInventorySheet(
                 .clipToBounds()
                 .layout { measurable, constraints ->
                     val placeable = measurable.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
-                    val visibleHeight = (placeable.height * state.expansion).roundToInt()
+                    val visibleHeight = state.visibleBodyHeightPx(placeable.height)
                     layout(placeable.width, visibleHeight) { placeable.place(0, 0) }
                 },
         ) {
