@@ -15,8 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.dandi.nyummy.cat.entity.CatState
-import com.dandi.nyummy.common.presentation.component.NyummySpriteClip
-import com.dandi.nyummy.common.presentation.component.NyummySpriteSheet
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus

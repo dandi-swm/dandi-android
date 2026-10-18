@@ -20,7 +20,7 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.time.DeviceTime
-import com.dandi.nyummy.common.presentation.component.NyummySpriteSource
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSource
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.history.domain.HistoryRepository
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO

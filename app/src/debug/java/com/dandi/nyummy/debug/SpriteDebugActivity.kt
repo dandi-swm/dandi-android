@@ -23,8 +23,8 @@ import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.R
 import com.dandi.nyummy.common.presentation.component.DandiText
 import com.dandi.nyummy.common.presentation.component.NyummyButton
-import com.dandi.nyummy.common.presentation.component.NyummySpriteSheet
-import com.dandi.nyummy.common.presentation.component.NyummySpriteView
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteView
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
 import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 

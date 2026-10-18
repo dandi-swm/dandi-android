@@ -40,10 +40,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.dandi.nyummy.common.presentation.component.NyummySpritePrefetch
-import com.dandi.nyummy.common.presentation.component.NyummySpriteSequenceView
-import com.dandi.nyummy.common.presentation.component.NyummySpriteSheet
-import com.dandi.nyummy.common.presentation.component.NyummySpriteView
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpritePrefetch
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSequenceView
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteView
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceBubble
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme

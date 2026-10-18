@@ -33,9 +33,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.R
-import com.dandi.nyummy.common.presentation.component.NyummySpriteClip
-import com.dandi.nyummy.common.presentation.component.NyummySpriteSequenceView
-import com.dandi.nyummy.common.presentation.component.NyummySpriteSheet
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSequenceView
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadge
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadgeTone
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomCta
