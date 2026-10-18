@@ -11,8 +11,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
+import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
  * 카메라 프리뷰/촬영본 위에 얹는 장식 오버레이입니다.
@@ -24,10 +23,9 @@ import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
 fun MealCameraOverlay(
     modifier: Modifier = Modifier,
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
     Box(modifier = modifier.fillMaxSize()) {
         CornerBrackets(
-            color = colors.contentInverseDefault,
+            color = NyummyTheme.colors.content.onAction,
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -75,7 +73,7 @@ private val BracketStrokeWidth = 3.dp
 @Preview(showBackground = true, backgroundColor = 0xFF444444, widthDp = 350, heightDp = 520)
 @Composable
 private fun MealCameraOverlayPreview() {
-    DesignSystemTheme {
+    NyummyTheme {
         MealCameraOverlay()
     }
 }

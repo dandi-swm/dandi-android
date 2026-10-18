@@ -45,8 +45,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemTheme
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
+import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.meal.presentation.R
 import kotlinx.coroutines.launch
 
@@ -70,8 +69,6 @@ internal fun MealFeedItemCard(
     onFed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    val radius = DesignSystemThemeImpl.designSystemRadius
     val haptic = LocalHapticFeedback.current
     val density = LocalDensity.current
     val itemDescription = stringResource(R.string.meal_record_feed_item_content_description)
@@ -113,7 +110,7 @@ internal fun MealFeedItemCard(
     var inFeedZone by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    val cardCornerPx = with(density) { radius.radius16.toPx() }
+    val cardCornerPx = with(density) { NyummyTheme.radius.m.toPx() }
     val proximityRangePx = with(density) { ProximityShrinkRange.toPx() }
     val tiltReferencePx = with(density) { TiltReference.toPx() }
 
@@ -226,7 +223,7 @@ internal fun MealFeedItemCard(
                     }
                 }
             }
-            .background(colors.bgSurfaceIvory),
+            .background(NyummyTheme.colors.bg.surface),
     ) {
         Canvas(Modifier.size(FeedItemCardSize)) {
             val srcSide = minOf(image.width, image.height)
@@ -284,7 +281,7 @@ private val WobbleSpring = spring<Offset>(dampingRatio = 0.45f, stiffness = 300f
 @Preview(showBackground = true)
 @Composable
 private fun MealFeedItemCardPreview() {
-    DesignSystemTheme {
+    NyummyTheme {
         MealFeedItemCard(
             image = rememberPreviewPixelImage(),
             dragBounds = Rect(-400f, -900f, 400f, 300f),
@@ -297,11 +294,10 @@ private fun MealFeedItemCardPreview() {
 
 @Composable
 private fun rememberPreviewPixelImage(): ImageBitmap {
-    val colors = DesignSystemThemeImpl.designSystemColor
     val palette = intArrayOf(
-        colors.bgActionRewardDefault.toArgb(),
-        colors.bgSurfaceIvory.toArgb(),
-        colors.bgActionPrimaryDefault.toArgb(),
+        NyummyTheme.colors.data.coin.toArgb(),
+        NyummyTheme.colors.bg.surface.toArgb(),
+        NyummyTheme.colors.bg.actionPrimary.toArgb(),
     )
     return remember {
         val side = 12

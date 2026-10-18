@@ -50,10 +50,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import coil3.compose.AsyncImage
-import com.dandi.nyummy.common.presentation.component.DandiText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteView
-import com.dandi.nyummy.common.presentation.ui.theme.DesignSystemThemeImpl
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.meal.presentation.R
 import java.io.File
 import kotlin.math.PI
@@ -82,10 +82,10 @@ internal fun MealFeedCeremony(
     onFedToCat: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = DesignSystemThemeImpl.designSystemColor
-    val radius = DesignSystemThemeImpl.designSystemRadius
     val haptic = LocalHapticFeedback.current
     val density = LocalDensity.current
+    // 그리기 블록 안에서는 테마를 읽을 수 없어 미리 꺼내 둔다.
+    val radius = NyummyTheme.radius
     val photoDescription =
         stringResource(R.string.meal_record_captured_photo_content_description)
 
@@ -179,7 +179,7 @@ internal fun MealFeedCeremony(
                 val chain = (chainResult as? MealPixelChainResult.Ready)?.chain
                 // 배달 중(응답 대기)에는 냐미와 카드 사이를 점선 트레일로 이어 준다.
                 if (stageSize != IntSize.Zero && !feedReady && !fedToCat) {
-                    val trailColor = colors.dataCalendarRecorded
+                    val trailColor = NyummyTheme.colors.data.recordMarker
                     Canvas(Modifier.fillMaxSize()) {
                         val catBottom = CatTopPadding.toPx() + CatDisplayWidth.toPx()
                         val itemTop = itemRestCenterY(size.height) -
@@ -272,8 +272,8 @@ internal fun MealFeedCeremony(
                             chain = chain,
                             level = crunchLevel.intValue,
                             shrinkValue = shrink.value,
-                            cornerFromPx = radius.radius24.toPx(),
-                            cornerToPx = radius.radius16.toPx(),
+                            cornerFromPx = radius.l.toPx(),
+                            cornerToPx = radius.m.toPx(),
                         )
                     }
                 }
@@ -342,13 +342,13 @@ internal fun MealFeedCeremony(
                     )
                 },
         ) {
-            DandiText(
+            NyummyText(
                 text = stringResource(R.string.meal_record_feed_to_cat_hint),
                 // 밝은 bgMealPhoto 배경 위이므로 기본 전경색으로 대비를 확보하고,
                 // 먹이기 가능 시점을 접근성으로도 고지한다.
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                color = colors.contentDefaultLevel0,
-                style = DesignSystemThemeImpl.typeScale.textStrongL,
+                color = NyummyTheme.colors.content.primary,
+                style = NyummyTheme.typography.titleS,
             )
         }
     }
