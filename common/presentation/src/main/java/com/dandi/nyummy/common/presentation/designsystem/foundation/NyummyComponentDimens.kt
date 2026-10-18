@@ -75,6 +75,13 @@ internal object NyummyComponentDimens {
     /** Mail Row 유형과 시각 사이. */
     val MailRowMetaGap = 6.dp
 
+    /** Reward Row 앞 칸 안 그림. 코인, 아이템은 36, 보상 상자는 48. */
+    val RewardRowImageSize = 36.dp
+    val RewardRowLargeImageSize = 48.dp
+
+    /** Reward Row 오른쪽 시각과 받기 버튼 사이. */
+    val RewardRowTrailingGap = 6.dp
+
     /** HUD Pill 높이와 아이콘, 숫자 사이 간격. */
     val HudPillHeight = 40.dp
     val HudPillGap = 6.dp
