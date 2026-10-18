@@ -13,15 +13,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -99,8 +100,14 @@ fun NyummyWheelPickerFrame(
 }
 
 /**
- * 스냅 스크롤 휠 한 열. 가운데 행이 선택 값이고 스크롤이 멈추면 [onSelectedIndexChange]로 알린다.
+ * 스냅 스크롤 휠 한 열. 가운데 행이 선택 값이고, 굴리는 중에도 가운데 값이 바뀔 때마다 [onSelectedIndexChange]로 알린다.
+ * 멈출 때만 알리면 스냅이 끝나기 전에 확인·다음을 누른 경우 화면 가운데 값이 아니라 직전 값이 남는다.
+ * 묶인 다른 휠(시 → 오전/오후)도 손을 떼기 전에 함께 넘어간다.
  * 가운데 값은 number/m + 단위(label/m), 위아래 값은 number/s tertiary.
+ * 바깥에서 [selectedIndex]가 바뀌면 그 값으로 바로 옮긴다.
+ *
+ * @param animateSelectionChange 바깥에서 [selectedIndex]가 바뀌면 바로 옮기지 않고 그 값까지 굴러간다.
+ * 다른 휠을 따라 넘어가는 휠(오전/오후)에 쓴다.
  */
 @Composable
 fun NyummyWheelColumn(
@@ -110,35 +117,52 @@ fun NyummyWheelColumn(
     modifier: Modifier = Modifier,
     unit: String? = null,
     contentDescription: String? = null,
+    animateSelectionChange: Boolean = false,
 ) {
     val rowHeight = NyummyComponentDimens.WheelPickerRowHeight
-    val lastIndex = items.lastIndex.coerceAtLeast(0)
+    val itemCount = items.size
+    val safeSelectedIndex = selectedIndex.coerceIn(0, items.lastIndex.coerceAtLeast(0))
     // 위아래 빈 행을 실제 아이템으로 넣어 "첫 보이는 아이템 인덱스 == 가운데 데이터 인덱스"를 유지한다.
     // contentPadding 방식은 초기 스크롤 위치와 겹치면 한 칸 어긋날 수 있다.
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = selectedIndex.coerceIn(0, lastIndex))
-    val centeredIndex by remember(listState, items) {
+    val rowCount = itemCount + 2
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = safeSelectedIndex)
+    val centeredRow by remember(listState, itemCount) {
         derivedStateOf {
             val layoutInfo = listState.layoutInfo
             val viewportCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
             layoutInfo.visibleItemsInfo
-                .filter { it.index in 1..items.size }
+                .filter { rowToItemIndex(it.index, itemCount) != null }
                 .minByOrNull { abs(it.offset + it.size / 2 - viewportCenter) }
-                ?.let { (it.index - 1).coerceIn(0, lastIndex) }
-                ?: selectedIndex.coerceIn(0, lastIndex)
+                ?.index
         }
     }
-
-    // 코루틴이 처음 값을 붙잡지 않도록 최신 선택값과 콜백을 참조한다.
-    val latestSelectedIndex by rememberUpdatedState(selectedIndex)
-    val latestOnChange by rememberUpdatedState(onSelectedIndexChange)
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.isScrollInProgress }
-            .filter { scrolling -> !scrolling }
-            .collect { if (centeredIndex != latestSelectedIndex) latestOnChange(centeredIndex) }
+    val latestSelectedIndex by rememberUpdatedState(safeSelectedIndex)
+    val centeredIndex by remember(itemCount) {
+        derivedStateOf { centeredRow?.let { rowToItemIndex(it, itemCount) } ?: latestSelectedIndex }
     }
-    LaunchedEffect(selectedIndex, items.size) {
-        if (!listState.isScrollInProgress && centeredIndex != selectedIndex) {
-            listState.scrollToItem(selectedIndex.coerceIn(0, lastIndex))
+    // 바깥에서 값이 바뀌어 옮기는 중인 목표 값. 이 동안 지나치는 값은 사용자가 고른 게 아니므로 알리지 않는다.
+    var syncTarget by remember { mutableStateOf<Int?>(null) }
+
+    // 코루틴이 처음 값을 붙잡지 않도록 최신 콜백을 참조한다.
+    val latestOnChange by rememberUpdatedState(onSelectedIndexChange)
+    LaunchedEffect(listState, itemCount) {
+        snapshotFlow { centeredIndex to (syncTarget == null) }
+            .filter { (_, byUser) -> byUser }
+            .collect { (index, _) -> if (index != latestSelectedIndex) latestOnChange(index) }
+    }
+    LaunchedEffect(safeSelectedIndex, itemCount) {
+        val userScrolling = listState.isScrollInProgress && syncTarget == null
+        if (userScrolling || centeredIndex == safeSelectedIndex) return@LaunchedEffect
+        syncTarget = safeSelectedIndex
+        try {
+            // 첫 보이는 행(가운데 바로 위 행)의 번호가 곧 데이터 인덱스다.
+            if (animateSelectionChange) {
+                listState.animateScrollToItem(safeSelectedIndex)
+            } else {
+                listState.scrollToItem(safeSelectedIndex)
+            }
+        } finally {
+            if (syncTarget == safeSelectedIndex) syncTarget = null
         }
     }
 
@@ -153,9 +177,13 @@ fun NyummyWheelColumn(
         state = listState,
         flingBehavior = rememberSnapFlingBehavior(lazyListState = listState),
     ) {
-        item { Spacer(Modifier.height(rowHeight)) }
-        itemsIndexed(items) { index, item ->
-            val centered = index == centeredIndex
+        items(rowCount) { row ->
+            val item = rowToItemIndex(row, itemCount)?.let(items::get)
+            if (item == null) {
+                Spacer(Modifier.height(rowHeight))
+                return@items
+            }
+            val centered = row == centeredRow
             // alignByBaseline을 쓰면 Row의 세로 정렬이 무시되므로, 기준선 정렬 Row를 가운데 정렬 Box로 감싼다.
             Box(
                 modifier = Modifier.fillParentMaxWidth().height(rowHeight),
@@ -185,9 +213,11 @@ fun NyummyWheelColumn(
                 }
             }
         }
-        item { Spacer(Modifier.height(rowHeight)) }
     }
 }
+
+/** 목록 행 번호를 데이터 인덱스로 바꾼다. 위아래 빈 행은 null이다. */
+private fun rowToItemIndex(row: Int, itemCount: Int): Int? = (row - 1).takeIf { it in 0 until itemCount }
 
 @Preview(showBackground = true, widthDp = 360)
 @Composable

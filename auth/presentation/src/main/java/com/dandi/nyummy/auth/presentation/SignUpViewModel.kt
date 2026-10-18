@@ -231,13 +231,16 @@ class SignUpViewModel @AssistedInject constructor(
         }
     }
 
+    /**
+     * 고른 일은 그 달에 없어도 깎지 않고 둔다. 휠은 굴리는 중에도 값을 알리므로, 여기서 깎으면
+     * 3월 30일에서 월을 1월로 굴리는 동안 2월을 지나며 28일로 바뀐 채 남는다. 실제 일은 [SignUpUIState.birthDayOfMonth].
+     */
     private fun changeBirth(
         year: Int = currentState.birthYear,
         month: Int = currentState.birthMonth,
         day: Int = currentState.birthDay,
     ) {
-        val clampedDay = day.coerceAtMost(lengthOfMonth(year, month))
-        dispatch(SignUpReducerEvent.BirthChanged(year = year, month = month, day = clampedDay))
+        dispatch(SignUpReducerEvent.BirthChanged(year = year, month = month, day = day))
     }
 
     private fun submit() {
@@ -255,7 +258,7 @@ class SignUpViewModel @AssistedInject constructor(
                 "%04d-%02d-%02d",
                 state.birthYear,
                 state.birthMonth,
-                state.birthDay,
+                state.birthDayOfMonth,
             )
             if (state.isSocialSignUp) {
                 signUpUseCase.signUpWithSocial(

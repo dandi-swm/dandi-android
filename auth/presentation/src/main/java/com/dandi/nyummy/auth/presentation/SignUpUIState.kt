@@ -44,6 +44,10 @@ data class SignUpUIState(
     val isVerifyEnabled: Boolean
         get() = code.length == CODE_LENGTH && !isLoading
 
+    /** 고른 일을 그 연·월의 마지막 날로 맞춘 값. 화면과 가입 요청은 이 값을 쓴다. */
+    val birthDayOfMonth: Int
+        get() = birthDay.coerceAtMost(lengthOfMonth(birthYear, birthMonth))
+
     companion object {
         val empty = SignUpUIState()
 

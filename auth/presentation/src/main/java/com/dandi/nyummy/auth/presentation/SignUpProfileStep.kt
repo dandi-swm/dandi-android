@@ -153,7 +153,7 @@ private fun BirthWheelPickers(
         )
         NyummyWheelPicker(
             items = days,
-            selectedIndex = uiState.birthDay - 1,
+            selectedIndex = uiState.birthDayOfMonth - 1,
             onSelectedIndexChange = { onIntent(SignUpIntent.SelectBirthDay(it + 1)) },
             unit = stringResource(R.string.auth_signup_unit_day),
             contentDescription = stringResource(R.string.auth_signup_birth_day_description),
