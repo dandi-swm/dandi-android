@@ -72,7 +72,8 @@ class MyRoomViewModelTest {
                 page(RoomItemCategory.ETC, owned(2, "털실 공"), owned(3, "털실 공"), name = "기타"),
             ),
             placements = listOf(
-                placed(1, zIndex = 2, x = 0.5f, y = 0.8f),
+                // 저장 좌표는 그림 왼쪽 아래 기준 퍼센트다. (50, 20)은 그리는 좌표로 (0.5, 0.8)이다.
+                placed(1, zIndex = 2, x = 50f, y = 20f),
                 RoomPlacementVO(roomItemId = 100, category = RoomItemCategory.BACKGROUND, imageUrl = "bg100"),
                 // 범위를 벗어난 좌표와 배율은 방 안으로 맞춘다.
                 placed(2, zIndex = 1, x = 120f, y = 480f, scale = 9f),
@@ -93,8 +94,12 @@ class MyRoomViewModelTest {
         assertEquals(100L, state.room.background?.roomItemId)
         assertEquals(listOf(2L, 1L), state.room.items.map { it.roomItemId })
         val outOfRange = state.room.items.first()
+        // 100을 넘는 x는 오른쪽 끝, y는 위 끝이다.
         assertEquals(1f, outOfRange.x)
-        assertEquals(1f, outOfRange.y)
+        assertEquals(0f, outOfRange.y)
+        val inRange = state.room.items.last()
+        assertEquals(0.5f, inRange.x, 0.001f)
+        assertEquals(0.8f, inRange.y, 0.001f)
         assertEquals(RoomGeometry.MAX_SCALE, outOfRange.scale)
         // 탭은 서버가 주지 않은 종류까지 늘 다섯 개이고, 각 탭에는 방과 함께 받은 첫 묶음이 들어간다.
         assertEquals(RoomItemCategory.entries, state.inventoryTabs.map { it.category })
@@ -152,7 +157,7 @@ class MyRoomViewModelTest {
         viewModel.onIntent(MyRoomIntent.Undo)
 
         val state = viewModel.uiState.value
-        assertEquals(0.5f, state.room.items.first { it.roomItemId == 1L }.x)
+        assertEquals(0.5f, state.room.items.first { it.roomItemId == 1L }.x, 0.001f)
         assertFalse(state.canUndo)
         assertFalse(state.hasChanges)
     }
@@ -173,7 +178,7 @@ class MyRoomViewModelTest {
     fun `제자리에 놓으면 고르기만 하고 순서도 바뀐 것으로 보지 않는다`() = runTest(testDispatcher) {
         val viewModel = loadedViewModel()
 
-        viewModel.onIntent(MyRoomIntent.MoveItem(2, x = 1f, y = 1f, scale = RoomGeometry.MAX_SCALE))
+        viewModel.onIntent(MyRoomIntent.MoveItem(2, x = 1f, y = 0f, scale = RoomGeometry.MAX_SCALE))
 
         val state = viewModel.uiState.value
         assertEquals(2L, state.selectedItemId)
@@ -220,6 +225,12 @@ class MyRoomViewModelTest {
         val saved = repository.saved.single()
         assertEquals(listOf(100L, 2L, 1L, 3L), saved.map { it.roomItemId })
         assertEquals(listOf(0, 1, 2, 3), saved.map { it.zIndex })
+        // 그리는 좌표 (0.45, 0.7)은 그림 왼쪽 아래 기준 퍼센트 (45, 30)으로 보낸다.
+        val added = saved.last()
+        assertEquals(45f, added.x, 0.01f)
+        assertEquals(30f, added.y, 0.01f)
+        assertEquals(50f, saved[2].x, 0.01f)
+        assertEquals(20f, saved[2].y, 0.01f)
         assertEquals(RoomItemCategory.BACKGROUND, saved.first().category)
         assertEquals(1, navigationHelper.backCount)
         assertEquals("방을 저장했어요", messageHelper.snackBars.single().messageText)

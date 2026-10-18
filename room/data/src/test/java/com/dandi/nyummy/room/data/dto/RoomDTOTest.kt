@@ -30,7 +30,7 @@ class RoomDTOTest {
                 {"category":"BED","categoryName":"침대","ownedRoomItems":[{"roomItemId":101,"name":"구름 방석","imageUrl":"bed.png","isEquipped":true}],"nextCursor":101,"hasNext":true}
               ],
               "equippedRoomItems": [
-                {"roomItemId":101,"category":"BED","imageUrl":"bed.png","x":0.5,"y":0.8,"zIndex":2,"scale":1.2},
+                {"roomItemId":101,"category":"BED","imageUrl":"bed.png","x":50.0,"y":20.0,"zIndex":2,"scale":1.2},
                 {"roomItemId":108,"category":"BACKGROUND","imageUrl":"bg.png","x":0.0,"y":0.0,"zIndex":0,"scale":1.0}
               ]
             }
@@ -43,7 +43,7 @@ class RoomDTOTest {
         assertEquals("침대", room.categories[1].categoryName)
         // zIndex 오름차순으로 정렬한다.
         assertEquals(listOf(108L, 101L), room.placements.map { it.roomItemId })
-        assertEquals(RoomPlacementVO(101, RoomItemCategory.BED, "bed.png", 0.5f, 0.8f, 2, 1.2f), room.placements[1])
+        assertEquals(RoomPlacementVO(101, RoomItemCategory.BED, "bed.png", 50f, 20f, 2, 1.2f), room.placements[1])
     }
 
     @Test
@@ -51,6 +51,17 @@ class RoomDTOTest {
         val placement = json.decodeFromString<EquippedRoomItemDTO>("""{"roomItemId":1,"zindex":3}""").toVO()
 
         assertEquals(3, placement.zIndex)
+    }
+
+    @Test
+    fun `좌표가 0에서 100을 벗어나 오면 그 안으로 맞춘다`() {
+        val over = json.decodeFromString<EquippedRoomItemDTO>("""{"roomItemId":1,"x":120.0,"y":480.0}""").toVO()
+        val under = json.decodeFromString<EquippedRoomItemDTO>("""{"roomItemId":2,"x":-5.0,"y":-0.5}""").toVO()
+
+        assertEquals(100f, over.x)
+        assertEquals(100f, over.y)
+        assertEquals(0f, under.x)
+        assertEquals(0f, under.y)
     }
 
     @Test
@@ -78,7 +89,7 @@ class RoomDTOTest {
             UpdateEquippedRoomItemsRequestDTO.serializer(),
             UpdateEquippedRoomItemsRequestDTO(
                 equippedRoomItems = listOf(
-                    EquippedRoomItemRequestDTO.from(RoomPlacementVO(roomItemId = 7, x = 0.25f, y = 0.9f, zIndex = 0, scale = 1.5f)),
+                    EquippedRoomItemRequestDTO.from(RoomPlacementVO(roomItemId = 7, x = 25f, y = 10f, zIndex = 0, scale = 1.5f)),
                 ),
             ),
         )
@@ -88,5 +99,15 @@ class RoomDTOTest {
         // 0도 기본값으로 빠지지 않고 보낸다.
         assertEquals("0", item["zIndex"].toString())
         assertTrue(item["scale"].toString().startsWith("1.5"))
+        assertEquals("25.0", item["x"].toString())
+        assertEquals("10.0", item["y"].toString())
+    }
+
+    @Test
+    fun `저장 요청 좌표도 0에서 100 안으로 맞춰 보낸다`() {
+        val request = EquippedRoomItemRequestDTO.from(RoomPlacementVO(roomItemId = 7, x = 130f, y = -3f))
+
+        assertEquals(100f, request.x)
+        assertEquals(0f, request.y)
     }
 }

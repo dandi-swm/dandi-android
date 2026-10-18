@@ -66,6 +66,27 @@ class RoomGeometryTest {
         )
     }
 
+    @Test
+    fun `저장 좌표는 그림 왼쪽 아래 기준 퍼센트라서 그리는 좌표로 바꾸면 위아래가 뒤집힌다`() {
+        assertOffset(Offset(0.25f, 0.9f), RoomGeometry.fromSavedPosition(x = 25f, y = 10f))
+        assertOffset(Offset(25f, 10f), RoomGeometry.toSavedPosition(x = 0.25f, y = 0.9f))
+        // 그림 왼쪽 아래 끝과 오른쪽 위 끝
+        assertOffset(Offset(0f, 1f), RoomGeometry.fromSavedPosition(x = 0f, y = 0f))
+        assertOffset(Offset(1f, 0f), RoomGeometry.fromSavedPosition(x = 100f, y = 100f))
+    }
+
+    @Test
+    fun `저장 좌표가 0에서 100을 벗어나면 그 안으로 맞춘다`() {
+        assertOffset(Offset(1f, 0f), RoomGeometry.fromSavedPosition(x = 120f, y = 480f))
+        assertOffset(Offset(0f, 1f), RoomGeometry.fromSavedPosition(x = -5f, y = -1f))
+        assertOffset(Offset(100f, 0f), RoomGeometry.toSavedPosition(x = 1.2f, y = 1.5f))
+    }
+
+    private fun assertOffset(expected: Offset, actual: Offset) {
+        assertEquals(expected.x, actual.x, 0.001f)
+        assertEquals(expected.y, actual.y, 0.001f)
+    }
+
     private fun assertRect(expected: Rect, actual: Rect) {
         assertEquals(expected.left, actual.left, 0.01f)
         assertEquals(expected.top, actual.top, 0.01f)
