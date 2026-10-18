@@ -70,16 +70,18 @@ qa 환경은 따로 두지 않기로 했다. 앱은 빌드 타입이 release인�
 | release | RELEASE | 접미사 없음 |
 | debug, benchmark, 베이스라인 프로파일 수집용 | DEBUG | `_debug` |
 
-- 구현: `common/data/.../remoteconfig/FirebaseRemoteConfigHelper.kt`, `RemoteConfigEnv.kt`, `common/data/.../di/RemoteConfigModule.kt`
-- 원격 구성은 `intro`에서 `common`으로 옮겼다. 버전 확인(`RemoteConfigHelper`)과 기능 플래그(`FeatureFlagHelper`)를 같은 구현이 맡고, 인트로가 앱 시작 때 한 번 받아 둔 값을 같이 읽는다.
+- 구현: `common/domain/.../remoteconfig/RemoteConfigKey.kt`(키 정의), `common/data/.../remoteconfig/FirebaseRemoteConfigHelper.kt`, `RemoteConfigEnv.kt`, `common/data/.../di/RemoteConfigModule.kt`
+- 원격 구성은 `intro`에서 `common`으로 옮겼다. 인트로가 앱 시작 때 한 번 받아 두고, 강제 업데이트와 기능 플래그가 같은 값을 읽는다.
+- 키는 `RemoteConfigKey<T>`(이름, 직렬화기, 기본값)로 정의한다. 원시 타입은 Firebase 타입별 조회로, 목록과 VO는 문자열을 JSON으로 읽는다. 콘솔에 값이 없거나 형식이 맞지 않으면 기본값을 쓴다. 새 키는 `data object`를 하나 추가한다.
 - 콘솔의 기존 `_qa` 키는 앱이 더 읽지 않는다. 운영 키 이름과 값은 그대로 두는 규칙에 따라 지우지 않았다.
-- debug 빌드는 이제 `_debug` 키를 읽는다. debug 그룹을 게시하지 않으면 debug 빌드는 기본값(최소 버전 = 현재 앱 버전, 기능 플래그 꺼짐)으로 동작해 강제 업데이트가 걸리지 않는다.
+- debug 빌드는 이제 `_debug` 키를 읽는다. debug 그룹을 게시하지 않으면 debug 빌드는 기본값(최소 versionCode 0, 기능 플래그 꺼짐)으로 동작해 강제 업데이트가 걸리지 않는다.
+- 이전에는 받아 오기 전 기본값으로 현재 앱 버전을 깔았다. 지금은 키마다 정적 기본값을 두고, 최소 versionCode 기본값 0이 같은 역할(강제 업데이트 안 함)을 한다.
 
 ### 기능 플래그 키
 
-| 키 | 타입 | release | debug |
-|---|---|---|---|
-| `android_mail_item_tab_enabled` | bool | false(우편함 아이템 탭 숨김) | `_debug`: true |
+| 키 | `RemoteConfigKey` | 타입 | 기본값 | release | debug |
+|---|---|---|---|---|---|
+| `android_mail_item_tab_enabled` | `MailItemTabEnabled` | Boolean | false | false(우편함 아이템 탭 숨김) | `_debug`: true |
 
 키가 없거나 값을 받지 못하면 꺼진 것으로 본다.
 

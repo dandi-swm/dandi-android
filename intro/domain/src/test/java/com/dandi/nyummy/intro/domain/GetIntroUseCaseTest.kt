@@ -14,6 +14,7 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.remoteconfig.VersionCheckVO
 import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
@@ -394,6 +395,7 @@ class GetIntroUseCaseTest {
         private val version: VersionCheckVO,
     ) : RemoteConfigHelper {
         override suspend fun sync() = Unit
+        override fun <T> get(key: RemoteConfigKey<T>): T = key.defaultValue
         override fun getVersionCheck(): VersionCheckVO = version
     }
 
@@ -402,6 +404,7 @@ class GetIntroUseCaseTest {
     ) : RemoteConfigHelper {
         private var failed = false
         override suspend fun sync() = Unit
+        override fun <T> get(key: RemoteConfigKey<T>): T = key.defaultValue
         override fun getVersionCheck(): VersionCheckVO {
             if (!failed) {
                 failed = true
@@ -413,6 +416,7 @@ class GetIntroUseCaseTest {
 
     private class ThrowingRemoteConfigHelper : RemoteConfigHelper {
         override suspend fun sync() = Unit
+        override fun <T> get(key: RemoteConfigKey<T>): T = key.defaultValue
         override fun getVersionCheck(): VersionCheckVO =
             throw IllegalStateException("remote config failed")
     }
