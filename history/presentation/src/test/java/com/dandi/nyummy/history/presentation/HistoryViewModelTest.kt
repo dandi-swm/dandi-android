@@ -14,6 +14,7 @@ import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.history.domain.DeleteMealUseCase
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.history.domain.GetMealDetailUseCase
+import com.dandi.nyummy.history.domain.GetMonthWithDayMealsUseCase
 import com.dandi.nyummy.history.domain.GetMonthlyMealsUseCase
 import com.dandi.nyummy.history.domain.HistoryRepository
 import com.dandi.nyummy.history.domain.ReanalyzeMealUseCase
@@ -946,6 +947,9 @@ class HistoryViewModelTest {
                 repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
             ),
             getDailyMeals = GetDailyMealsUseCase(
+                repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
+            ),
+            getMonthWithDayMeals = GetMonthWithDayMealsUseCase(
                 repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
             ),
             getMealDetail = GetMealDetailUseCase(

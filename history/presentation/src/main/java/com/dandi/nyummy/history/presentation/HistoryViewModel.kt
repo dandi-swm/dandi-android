@@ -6,6 +6,7 @@ import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.history.domain.DeleteMealUseCase
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.history.domain.GetMealDetailUseCase
+import com.dandi.nyummy.history.domain.GetMonthWithDayMealsUseCase
 import com.dandi.nyummy.history.domain.GetMonthlyMealsUseCase
 import com.dandi.nyummy.history.domain.OutdatedMealException
 import com.dandi.nyummy.history.domain.ReanalyzeMealUseCase
@@ -32,6 +33,7 @@ import javax.inject.Inject
 class HistoryViewModel @Inject constructor(
     private val getMonthlyMeals: GetMonthlyMealsUseCase,
     private val getDailyMeals: GetDailyMealsUseCase,
+    private val getMonthWithDayMeals: GetMonthWithDayMealsUseCase,
     private val getMealDetail: GetMealDetailUseCase,
     private val updateMealName: UpdateMealNameUseCase,
     private val deleteMeal: DeleteMealUseCase,
@@ -364,25 +366,17 @@ class HistoryViewModel @Inject constructor(
         loadJob = viewModelScope.launch {
             dispatch(HistoryReducerEvent.LoadStarted)
             val today = todayDate()
-            // 월간 조회가 실패하면 일간 조회를 건너뛰고 화면에 오류를 보여 준다.
-            val calendar = getMonthlyMeals(year, monthValue).getOrNull() ?: run {
-                dispatch(HistoryReducerEvent.LoadFailed)
-                return@launch
-            }
-            val dailyDetail = getDailyMeals(
-                selectedDate.year,
-                selectedDate.month,
-                selectedDate.day,
-            ).getOrNull() ?: run {
+            // 월간과 일간을 함께 받는다. 하나라도 실패하면 화면에 오류를 보여 준다.
+            val loaded = getMonthWithDayMeals(year, monthValue, selectedDate).getOrNull() ?: run {
                 dispatch(HistoryReducerEvent.LoadFailed)
                 return@launch
             }
             dispatch(
                 HistoryReducerEvent.MonthLoaded(
                     today = today,
-                    calendar = calendar,
+                    calendar = loaded.calendar,
                     selectedDate = selectedDate,
-                    dailyDetail = dailyDetail,
+                    dailyDetail = loaded.dailyDetail,
                 ),
             )
             openPendingMealDetail()
@@ -500,14 +494,13 @@ class HistoryViewModel @Inject constructor(
         val date = currentState.selectedDate
         resumeRefreshJob?.cancel()
         resumeRefreshJob = viewModelScope.launch {
-            val calendar = getMonthlyMeals(month.year, month.month).getOrNull() ?: return@launch
-            val dailyDetail = getDailyMeals(date.year, date.month, date.day).getOrNull() ?: return@launch
+            val refreshed = getMonthWithDayMeals(month.year, month.month, date).getOrNull() ?: return@launch
             dispatch(
                 HistoryReducerEvent.ScreenRefreshed(
                     today = today,
-                    calendar = calendar,
+                    calendar = refreshed.calendar,
                     date = date,
-                    dailyDetail = dailyDetail,
+                    dailyDetail = refreshed.dailyDetail,
                 ),
             )
         }
