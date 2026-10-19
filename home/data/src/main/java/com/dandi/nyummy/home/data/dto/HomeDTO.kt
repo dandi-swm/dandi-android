@@ -71,11 +71,12 @@ data class TodayMealSummaryDTO(
  *
  * 서버 응답은 `zIndex`로 오지만 Swagger 스키마에는 `zindex`도 함께 적혀 있어서 둘 다 받는다.
  *
+ * @property ownedRoomItemId 산 아이템 한 개의 id. 같은 아이템을 여러 개 사도 개마다 다르다. 앱은 roomItemId로 부른다.
  * @property itemId 아이템 종류 id. 그림은 주소 대신 이 id로 받는다(`items/{itemId}.png`).
  */
 @Serializable
 data class HomeEquippedRoomItemDTO(
-    val roomItemId: Long? = null,
+    val ownedRoomItemId: Long? = null,
     val category: String? = null,
     val itemId: Long? = null,
     val x: Float? = null,
@@ -85,7 +86,7 @@ data class HomeEquippedRoomItemDTO(
     val scale: Float? = null,
 ) {
     fun toVO(): RoomPlacementVO = RoomPlacementVO(
-        roomItemId = roomItemId ?: 0L,
+        roomItemId = ownedRoomItemId ?: 0L,
         category = RoomItemCategory.from(category),
         itemId = itemId,
         x = (x ?: 0f).coerceIn(0f, RoomPlacementVO.MAX_POSITION),
