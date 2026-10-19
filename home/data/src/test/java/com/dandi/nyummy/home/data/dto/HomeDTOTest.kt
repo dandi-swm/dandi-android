@@ -58,9 +58,9 @@ class HomeDTOTest {
         val body = """
             {
               "equippedRoomItems": [
-                {"roomItemId": 101, "category": "BED", "itemId": 2, "x": 50.0, "y": 20.0, "zIndex": 2, "scale": 1.2},
-                {"roomItemId": 108, "category": "BACKGROUND", "itemId": 1, "x": 0.0, "y": 0.0, "zIndex": 0, "scale": 1.0},
-                {"roomItemId": 104, "category": "CARPET", "itemId": 3, "x": 120.0, "y": -4.0, "zindex": 1}
+                {"ownedRoomItemId": 101, "category": "BED", "itemId": 2, "x": 50.0, "y": 20.0, "zIndex": 2, "scale": 1.2},
+                {"ownedRoomItemId": 108, "category": "BACKGROUND", "itemId": 1, "x": 0.0, "y": 0.0, "zIndex": 0, "scale": 1.0},
+                {"ownedRoomItemId": 104, "category": "CARPET", "itemId": 3, "x": 120.0, "y": -4.0, "zindex": 1}
               ]
             }
         """.trimIndent()

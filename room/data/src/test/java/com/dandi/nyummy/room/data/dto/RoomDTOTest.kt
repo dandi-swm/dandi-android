@@ -26,12 +26,12 @@ class RoomDTOTest {
             """
             {
               "categories": [
-                {"category":"BACKGROUND","categoryName":"배경","ownedRoomItems":[{"roomItemId":108,"name":"햇살 방","itemId":1,"isEquipped":true}],"nextCursor":null,"hasNext":false},
-                {"category":"BED","categoryName":"침대","ownedRoomItems":[{"roomItemId":101,"name":"구름 방석","itemId":2,"isEquipped":true}],"nextCursor":101,"hasNext":true}
+                {"category":"BACKGROUND","categoryName":"배경","ownedRoomItems":[{"ownedRoomItemId":108,"name":"햇살 방","itemId":1,"isEquipped":true}],"nextCursor":null,"hasNext":false},
+                {"category":"BED","categoryName":"침대","ownedRoomItems":[{"ownedRoomItemId":101,"name":"구름 방석","itemId":2,"isEquipped":true}],"nextCursor":101,"hasNext":true}
               ],
               "equippedRoomItems": [
-                {"roomItemId":101,"category":"BED","itemId":2,"x":50.0,"y":20.0,"zIndex":2,"scale":1.2},
-                {"roomItemId":108,"category":"BACKGROUND","itemId":1,"x":0.0,"y":0.0,"zIndex":0,"scale":1.0}
+                {"ownedRoomItemId":101,"category":"BED","itemId":2,"x":50.0,"y":20.0,"zIndex":2,"scale":1.2},
+                {"ownedRoomItemId":108,"category":"BACKGROUND","itemId":1,"x":0.0,"y":0.0,"zIndex":0,"scale":1.0}
               ]
             }
             """.trimIndent(),
@@ -50,15 +50,15 @@ class RoomDTOTest {
 
     @Test
     fun `zIndex가 소문자 zindex로 와도 읽는다`() {
-        val placement = json.decodeFromString<EquippedRoomItemDTO>("""{"roomItemId":1,"zindex":3}""").toVO()
+        val placement = json.decodeFromString<EquippedRoomItemDTO>("""{"ownedRoomItemId":1,"zindex":3}""").toVO()
 
         assertEquals(3, placement.zIndex)
     }
 
     @Test
     fun `좌표가 0에서 100을 벗어나 오면 그 안으로 맞춘다`() {
-        val over = json.decodeFromString<EquippedRoomItemDTO>("""{"roomItemId":1,"x":120.0,"y":480.0}""").toVO()
-        val under = json.decodeFromString<EquippedRoomItemDTO>("""{"roomItemId":2,"x":-5.0,"y":-0.5}""").toVO()
+        val over = json.decodeFromString<EquippedRoomItemDTO>("""{"ownedRoomItemId":1,"x":120.0,"y":480.0}""").toVO()
+        val under = json.decodeFromString<EquippedRoomItemDTO>("""{"ownedRoomItemId":2,"x":-5.0,"y":-0.5}""").toVO()
 
         assertEquals(100f, over.x)
         assertEquals(100f, over.y)
@@ -68,7 +68,7 @@ class RoomDTOTest {
 
     @Test
     fun `모르는 종류는 기타로, 0 이하 배율은 1로 본다`() {
-        val placement = json.decodeFromString<EquippedRoomItemDTO>("""{"roomItemId":1,"category":"SOFA","scale":0}""").toVO()
+        val placement = json.decodeFromString<EquippedRoomItemDTO>("""{"ownedRoomItemId":1,"category":"SOFA","scale":0}""").toVO()
 
         assertEquals(RoomItemCategory.ETC, placement.category)
         assertEquals(1f, placement.scale)
@@ -77,7 +77,7 @@ class RoomDTOTest {
     @Test
     fun `다음 묶음이 없다고 하면 cursor를 버린다`() {
         val page = json.decodeFromString<OwnedRoomItemsResponseDTO>(
-            """{"ownedRoomItems":[{"roomItemId":5,"name":"털실 공","itemId":3,"isEquipped":false}],"nextCursor":5,"hasNext":false}""",
+            """{"ownedRoomItems":[{"ownedRoomItemId":5,"name":"털실 공","itemId":3,"isEquipped":false}],"nextCursor":5,"hasNext":false}""",
         ).toVO(RoomItemCategory.ETC)
 
         assertFalse(page.hasNext)
@@ -97,7 +97,7 @@ class RoomDTOTest {
         )
 
         val item = Json.parseToJsonElement(body).jsonObject["equippedRoomItems"]!!.jsonArray.single().jsonObject
-        assertEquals(setOf("roomItemId", "x", "y", "zIndex", "scale"), item.keys)
+        assertEquals(setOf("ownedRoomItemId", "x", "y", "zIndex", "scale"), item.keys)
         // 0도 기본값으로 빠지지 않고 보낸다.
         assertEquals("0", item["zIndex"].toString())
         assertTrue(item["scale"].toString().startsWith("1.5"))
