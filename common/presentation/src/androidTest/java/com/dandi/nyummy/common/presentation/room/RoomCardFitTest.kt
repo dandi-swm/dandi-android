@@ -37,24 +37,35 @@ class RoomCardFitTest {
     }
 
     @Test
-    fun 세로로_긴_자리에서는_폭을_채운_2대3_카드를_맨_위에_붙인다() {
-        setSlot(width = 300, height = 600)
+    fun 보통_자리는_카드가_꽉_채운다() {
+        setSlot(width = 344, height = 520)
 
         composeRule.onNodeWithTag(CardTag)
-            .assertWidthIsEqualTo(300.dp)
-            .assertHeightIsEqualTo(450.dp)
+            .assertWidthIsEqualTo(344.dp)
+            .assertHeightIsEqualTo(520.dp)
             .assertLeftPositionInRootIsEqualTo(0.dp)
             .assertTopPositionInRootIsEqualTo(0.dp)
     }
 
     @Test
-    fun 높이가_모자란_자리에서는_같은_비율로_줄여_좌우_가운데에_둔다() {
-        setSlot(width = 344, height = 480)
+    fun 너무_긴_자리에서는_높이를_줄여_맨_위에_붙인다() {
+        setSlot(width = 300, height = 700)
 
         composeRule.onNodeWithTag(CardTag)
-            .assertWidthIsEqualTo(320.dp)
-            .assertHeightIsEqualTo(480.dp)
-            .assertLeftPositionInRootIsEqualTo(12.dp)
+            .assertWidthIsEqualTo(300.dp)
+            .assertHeightIsEqualTo((300f / RoomCardLayout.MinCardAspect).dp)
+            .assertTopPositionInRootIsEqualTo(0.dp)
+    }
+
+    @Test
+    fun 너무_넓은_자리에서는_폭을_줄여_좌우_가운데에_둔다() {
+        setSlot(width = 400, height = 450)
+
+        val width = 450f * RoomCardLayout.MaxCardAspect
+        composeRule.onNodeWithTag(CardTag)
+            .assertWidthIsEqualTo(width.dp)
+            .assertHeightIsEqualTo(450.dp)
+            .assertLeftPositionInRootIsEqualTo(((400f - width) / 2f).dp)
             .assertTopPositionInRootIsEqualTo(0.dp)
     }
 
