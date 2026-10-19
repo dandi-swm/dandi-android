@@ -16,8 +16,7 @@ import kotlin.math.roundToInt
  *
  * - 카드는 늘 방 그림(배경)과 같은 2:3 비율이다. 주어진 자리의 폭을 먼저 채우고, 높이가 모자라면 같은 비율로 줄인다.
  *   그래서 방 그림은 어느 기기에서도 잘리지 않고, 홈과 마이룸이 각자 계산해도 같은 모습으로 보인다.
- * - 냐미는 카드 크기에 비례해 크기와 자리를 정해 늘 같은 바닥 자리에 앉는다.
- *   아주 작은 카드에서도 냐미는 [NyummyMinSize] 아래로 줄이지 않는다.
+ * - 냐미는 카드 크기에 비례해 크기와 자리를 정해 늘 같은 바닥 자리에 앉는다. 카드가 작아지면 냐미도 같은 비율로 작아진다.
  */
 object RoomCardLayout {
 
@@ -30,7 +29,6 @@ object RoomCardLayout {
 
     private val NyummyDesignSize = 155.dp
     private val NyummyDesignBottom = 133.dp
-    private val NyummyMinSize = 120.dp
 
     /** [maxWidth]×[maxHeight] 자리에 들어가는 가장 큰 2:3 카드. */
     fun cardSize(maxWidth: Dp, maxHeight: Dp): DpSize {
@@ -54,7 +52,7 @@ object RoomCardLayout {
     /** 칸 안에서 냐미(정사각 스프라이트)가 앉는 자리. 가운데, 칸 바닥에서 일정 높이 위다. */
     fun nyummyRect(width: Dp, height: Dp): DpRect {
         val scale = roomScale(width, height)
-        val size = (NyummyDesignSize * scale).coerceAtLeast(NyummyMinSize)
+        val size = NyummyDesignSize * scale
         val top = height - NyummyDesignBottom * scale - size
         val left = (width - size) / 2
         return DpRect(left = left, top = top, right = left + size, bottom = top + size)

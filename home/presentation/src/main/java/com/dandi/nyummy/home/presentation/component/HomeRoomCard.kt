@@ -178,7 +178,8 @@ private fun HomeNyummy(
         onFinished = onMotionFinished,
         displayWidth = displayWidth,
         playId = motion.playId,
-        integerScale = true,
+        // 카드 크기에 비례한 자리 크기 그대로 그린다(정수배로 반올림하면 자리보다 커져 방에 비해 커 보인다).
+        integerScale = false,
         error = fallback,
         onShown = onShown,
         modifier = modifier
@@ -209,8 +210,8 @@ private fun HomeFallbackNyummy(
             displayWidth = maxWidth,
             iterations = if (sheet == SleepLoopSheet) null else 1,
             onAnimationEnd = { if (sheet == DozeSheet) lyingDown = false },
-            // 서버 냐미와 같은 자리에 같은 크기로 보이도록 같은 정수배로 그린다.
-            integerScale = true,
+            // 서버 냐미와 같이 카드 크기에 비례한 자리 크기 그대로 그린다.
+            integerScale = false,
             contentDescription = if (describe) stringResource(R.string.home_character_description) else null,
         )
     }
