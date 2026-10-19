@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.room.domain.GetOwnedRoomItemsUseCase
 import com.dandi.nyummy.room.domain.GetRoomUseCase
@@ -300,14 +301,14 @@ private fun MyRoomUIState.withPlacedMarks(): MyRoomUIState {
 private fun List<RoomPlacementVO>.toDraft(): RoomDraft {
     val background = firstOrNull { it.category == RoomItemCategory.BACKGROUND }
     return RoomDraft(
-        background = background?.let { RoomBackgroundUiModel(it.roomItemId, it.imageUrl) },
+        background = background?.let { RoomBackgroundUiModel(it.roomItemId, it.itemId.toItemImageUrl()) },
         items = filter { it.category != RoomItemCategory.BACKGROUND }
             .sortedBy { it.zIndex }
             .map {
                 val position = RoomGeometry.fromSavedPosition(it.x, it.y)
                 RoomPlacementUiModel(
                     roomItemId = it.roomItemId,
-                    imageUrl = it.imageUrl,
+                    imageUrl = it.itemId.toItemImageUrl(),
                     x = position.x,
                     y = position.y,
                     scale = RoomGeometry.clampScale(it.scale),
@@ -317,17 +318,19 @@ private fun List<RoomPlacementVO>.toDraft(): RoomDraft {
     )
 }
 
-/** 저장할 놓인 아이템 전체. 배경이 맨 뒤(zIndex 0)이고 인테리어는 1부터 그리는 순서대로다. 좌표는 저장 규칙으로 바꿔 보낸다. */
+/**
+ * 저장할 놓인 아이템 전체. 배경이 맨 뒤(zIndex 0)이고 인테리어는 1부터 그리는 순서대로다. 좌표는 저장 규칙으로 바꿔 보낸다.
+ * 저장 요청에는 그림이 필요 없어서 아이템 id는 넣지 않는다.
+ */
 internal fun RoomDraft.toPlacements(): List<RoomPlacementVO> = buildList {
     background?.let {
-        add(RoomPlacementVO(roomItemId = it.roomItemId, category = RoomItemCategory.BACKGROUND, imageUrl = it.imageUrl))
+        add(RoomPlacementVO(roomItemId = it.roomItemId, category = RoomItemCategory.BACKGROUND))
     }
     items.forEachIndexed { index, item ->
         val position = RoomGeometry.toSavedPosition(item.x, item.y)
         add(
             RoomPlacementVO(
                 roomItemId = item.roomItemId,
-                imageUrl = item.imageUrl,
                 x = position.x,
                 y = position.y,
                 zIndex = index + 1,
@@ -341,6 +344,9 @@ private fun OwnedRoomItemVO.toInventoryItem(category: RoomItemCategory) = Invent
     roomItemId = roomItemId,
     category = category,
     name = name,
-    imageUrl = imageUrl,
+    imageUrl = itemId.toItemImageUrl(),
     isPlaced = false,
 )
+
+/** 아이템 그림 주소. 아이템 id를 CDN 아이템 경로에 붙인다. id가 없으면 빈 값(받지 못한 그림처럼 보인다). */
+private fun Long?.toItemImageUrl(): String = this?.let(NyummyCdn::itemUrl).orEmpty()
