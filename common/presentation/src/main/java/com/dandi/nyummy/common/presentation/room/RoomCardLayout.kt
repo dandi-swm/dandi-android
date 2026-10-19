@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -23,6 +25,8 @@ import kotlin.math.roundToInt
  * - 그래서 방 그림의 좌우 각각과 위쪽 [BleedFraction]은 잘려도 티가 안 나는 벽으로 그리고,
  *   냐미와 아이템은 그 안쪽(안전 지대)에만 둔다. 카드 비율이 너무 길거나 넓어 이보다 많이 잘릴 자리에서는 카드를 줄인다.
  * - 냐미는 방 그림이 커진 배율로 크기와 자리를 정해, 화면 크기와 상관없이 그림 위 같은 바닥 자리에 같은 비율로 앉는다.
+ * - 아이템은 저장 좌표(그림 왼쪽 아래 기준 퍼센트)와 배율로 자리와 크기를 정한다. 그래서 홈과 마이룸, 어느 기기에서나
+ *   그림 위 같은 자리에 같은 비율로 놓인다.
  */
 object RoomCardLayout {
 
@@ -80,6 +84,61 @@ object RoomCardLayout {
         val left = (width - size) / 2
         return DpRect(left = left, top = top, right = left + size, bottom = top + size)
     }
+
+    /** scale 1.0일 때 아이템 그림의 긴 변이 방 그림 폭에서 차지하는 비율. */
+    const val ItemBaseFraction = 0.3f
+
+    const val MinItemScale = 0.5f
+    const val MaxItemScale = 2f
+
+    /** 아이템 그림 크기를 아직 모를 때 쓰는 폭 / 높이. 정사각형으로 보고 그림을 받으면 다시 잰다. */
+    const val UnknownItemAspect = 1f
+
+    /** 저장 좌표의 최댓값(그림 오른쪽 끝, 위 끝). 최솟값은 0이다. 서버, iOS와 같은 퍼센트 규칙이다. */
+    private const val SavedPositionMax = 100f
+
+    /**
+     * 방 그림 좌표계(그림 왼쪽 위가 0, 픽셀 단위)에서 아이템이 차지하는 사각형.
+     * 아이템은 바닥 가운데 점([x], [y], 그림 대비 0~1)에 서고, 긴 변이 방 그림 폭의 [ItemBaseFraction] × [scale]이다.
+     *
+     * @param roomWidth 방 그림을 그린 폭(px)
+     * @param roomHeight 방 그림을 그린 높이(px)
+     * @param imageAspect 아이템 그림의 폭 / 높이
+     */
+    fun itemRect(
+        roomWidth: Float,
+        roomHeight: Float,
+        x: Float,
+        y: Float,
+        scale: Float,
+        imageAspect: Float,
+    ): Rect {
+        val longSide = roomWidth * ItemBaseFraction * scale
+        val width = if (imageAspect >= 1f) longSide else longSide * imageAspect
+        val height = if (imageAspect >= 1f) longSide / imageAspect else longSide
+        val bottomCenterX = x * roomWidth
+        val bottom = y * roomHeight
+        return Rect(
+            left = bottomCenterX - width / 2f,
+            top = bottom - height,
+            right = bottomCenterX + width / 2f,
+            bottom = bottom,
+        )
+    }
+
+    fun clampItemScale(scale: Float): Float = scale.coerceIn(MinItemScale, MaxItemScale)
+
+    /** 저장된 좌표(그림 왼쪽 아래 기준 퍼센트 0~100)를 그리는 좌표(왼쪽 위 기준 0~1)로. 범위를 넘으면 그 안으로 맞춘다. */
+    fun fromSavedPosition(x: Float, y: Float): Offset = Offset(
+        x = (x / SavedPositionMax).coerceIn(0f, 1f),
+        y = (1f - y / SavedPositionMax).coerceIn(0f, 1f),
+    )
+
+    /** 그리는 좌표(왼쪽 위 기준 0~1)를 저장할 좌표(그림 왼쪽 아래 기준 퍼센트 0~100)로. 범위를 넘으면 그 안으로 맞춘다. */
+    fun toSavedPosition(x: Float, y: Float): Offset = Offset(
+        x = (x * SavedPositionMax).coerceIn(0f, SavedPositionMax),
+        y = ((1f - y) * SavedPositionMax).coerceIn(0f, SavedPositionMax),
+    )
 }
 
 /**

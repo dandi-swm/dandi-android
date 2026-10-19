@@ -10,6 +10,7 @@ import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
+import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.room.domain.GetOwnedRoomItemsUseCase
 import com.dandi.nyummy.room.domain.GetRoomUseCase
 import com.dandi.nyummy.room.domain.RoomItemGoneException
@@ -19,7 +20,6 @@ import com.dandi.nyummy.room.entity.OwnedRoomItemVO
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.entity.RoomPlacementVO
 import com.dandi.nyummy.room.entity.RoomVO
-import com.dandi.nyummy.room.presentation.model.RoomGeometry
 import com.dandi.nyummy.room.presentation.model.toRoomCatMotion
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.persistentListOf
@@ -180,7 +180,7 @@ class MyRoomViewModel @Inject constructor(
     private fun moveItem(intent: MyRoomIntent.MoveItem) {
         val state = currentState
         val target = state.room.items.firstOrNull { it.roomItemId == intent.roomItemId } ?: return
-        val moved = target.copy(x = intent.x, y = intent.y, scale = RoomGeometry.clampScale(intent.scale))
+        val moved = target.copy(x = intent.x, y = intent.y, scale = RoomCardLayout.clampItemScale(intent.scale))
         if (moved == target) {
             dispatch(MyRoomReducerEvent.ItemSelected(intent.roomItemId))
             return
@@ -340,13 +340,13 @@ private fun List<RoomPlacementVO>.toDraft(): RoomDraft {
         items = filter { it.category != RoomItemCategory.BACKGROUND }
             .sortedBy { it.zIndex }
             .map {
-                val position = RoomGeometry.fromSavedPosition(it.x, it.y)
+                val position = RoomCardLayout.fromSavedPosition(it.x, it.y)
                 RoomPlacementUiModel(
                     roomItemId = it.roomItemId,
                     imageUrl = it.itemId.toItemImageUrl(),
                     x = position.x,
                     y = position.y,
-                    scale = RoomGeometry.clampScale(it.scale),
+                    scale = RoomCardLayout.clampItemScale(it.scale),
                 )
             }
             .toImmutableList(),
@@ -362,7 +362,7 @@ internal fun RoomDraft.toPlacements(): List<RoomPlacementVO> = buildList {
         add(RoomPlacementVO(roomItemId = it.roomItemId, category = RoomItemCategory.BACKGROUND))
     }
     items.forEachIndexed { index, item ->
-        val position = RoomGeometry.toSavedPosition(item.x, item.y)
+        val position = RoomCardLayout.toSavedPosition(item.x, item.y)
         add(
             RoomPlacementVO(
                 roomItemId = item.roomItemId,

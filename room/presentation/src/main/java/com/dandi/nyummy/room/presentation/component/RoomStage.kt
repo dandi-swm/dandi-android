@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,27 +29,19 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.constrainHeight
-import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpritePrefetch
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSequenceView
@@ -58,6 +49,9 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
+import com.dandi.nyummy.common.presentation.room.placeAt
+import com.dandi.nyummy.common.presentation.room.RoomItemImage
+import com.dandi.nyummy.common.presentation.room.RoomBackgroundImage
 import com.dandi.nyummy.room.presentation.R
 import com.dandi.nyummy.room.presentation.RoomBackgroundUiModel
 import com.dandi.nyummy.room.presentation.RoomPlacementUiModel
@@ -115,14 +109,10 @@ internal fun RoomStage(
         fun rectOf(item: RoomPlacementUiModel): Rect = frame.itemRect(item, aspects[item.imageUrl])
 
         if (background != null) {
-            AsyncImage(
-                model = background.imageUrl,
-                contentDescription = null,
-                contentScale = ContentScale.FillBounds,
-                filterQuality = FilterQuality.None,
-                modifier = Modifier
-                    .placeAt(frame.roomRect)
-                    .testTag(RoomBackgroundTag),
+            RoomBackgroundImage(
+                imageUrl = background.imageUrl,
+                roomRect = frame.roomRect,
+                modifier = Modifier.testTag(RoomBackgroundTag),
             )
         }
 
@@ -148,14 +138,15 @@ internal fun RoomStage(
             val lifted = moving?.takeIf { it.hasMoved }
             items.forEach { item ->
                 key(item.roomItemId) {
+                    // 끄는 동안 원래 자리는 흐리게 남긴다.
+                    val alpha = if (lifted?.roomItemId == item.roomItemId) MovingOriginAlpha else 1f
                     RoomItemImage(
                         imageUrl = item.imageUrl,
                         rect = rectOf(item),
-                        // 끄는 동안 원래 자리는 흐리게 남긴다.
-                        alpha = if (lifted?.roomItemId == item.roomItemId) MovingOriginAlpha else 1f,
                         isFailed = failedUrls[item.imageUrl] == true,
                         onAspect = { aspects[item.imageUrl] = it },
                         onFailed = { failedUrls[item.imageUrl] = true },
+                        modifier = Modifier.graphicsLayer { this.alpha = alpha },
                     )
                 }
             }
@@ -164,10 +155,7 @@ internal fun RoomStage(
                 RoomItemImage(
                     imageUrl = liftedItem.imageUrl,
                     rect = rectOf(liftedItem),
-                    alpha = 1f,
                     isFailed = failedUrls[liftedItem.imageUrl] == true,
-                    onAspect = {},
-                    onFailed = {},
                 )
             }
             if (cat != null) {
@@ -229,13 +217,13 @@ internal data class RoomFrame(
 ) {
     /** 아이템이 무대에서 차지하는 사각형(px). 그림 크기를 아직 모르면 정사각형으로 본다. */
     fun itemRect(item: RoomPlacementUiModel, aspect: Float?): Rect =
-        RoomGeometry.itemRect(
+        RoomCardLayout.itemRect(
             roomWidth = roomRect.width,
             roomHeight = roomRect.height,
             x = item.x,
             y = item.y,
             scale = item.scale,
-            imageAspect = aspect ?: RoomGeometry.UNKNOWN_IMAGE_ASPECT,
+            imageAspect = aspect ?: RoomCardLayout.UnknownItemAspect,
         ).translate(roomRect.topLeft)
 
     val placeLeft: Float
@@ -349,7 +337,7 @@ private suspend fun PointerInputScope.detectRoomGestures(
         val current = moving
         if (pastSlop && current != null) {
             val target = placements.first { it.roomItemId == current.roomItemId }
-            val scale = RoomGeometry.clampScale(current.scale * zoom)
+            val scale = RoomCardLayout.clampItemScale(current.scale * zoom)
             val height = frame.itemRect(target.copy(scale = scale), aspectOf(target.imageUrl)).height / frame.roomRect.height
             // 바닥 점이 놓을 수 있는 영역(어느 기기에서나 보이는 안전 지대, 시트에 가리지 않는 곳) 안에 있고,
             // 아이템이 절반 넘게 위로 잘리지 않게 한다.
@@ -396,43 +384,6 @@ private fun RoomCat(
         contentDescription = stringResource(R.string.my_room_character_description),
         modifier = Modifier.placeAt(rect),
     )
-}
-
-/** 놓인 아이템 그림 하나. 그림을 받으면 실제 폭 / 높이를 [onAspect]로 알리고, 받지 못하면 빈 자리를 흐리게 보여 준다. */
-@Composable
-private fun RoomItemImage(
-    imageUrl: String,
-    rect: Rect,
-    alpha: Float,
-    isFailed: Boolean,
-    onAspect: (Float) -> Unit,
-    onFailed: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .placeAt(rect)
-            .graphicsLayer { this.alpha = alpha },
-    ) {
-        if (isFailed) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(NyummyTheme.colors.bg.surfaceSunken, RoundedCornerShape(NyummyTheme.radius.s)),
-            )
-        }
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = null,
-            contentScale = ContentScale.FillBounds,
-            filterQuality = FilterQuality.None,
-            onSuccess = { state ->
-                val size = state.painter.intrinsicSize
-                if (size.isSpecified && size.height > 0f) onAspect(size.width / size.height)
-            },
-            onError = { onFailed() },
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
 }
 
 /** 고른 아이템 테두리. 브랜드색 굵은 선 위에 흰 점선을 겹친다. 아이템보다 조금 넓게 두른다. */
@@ -525,19 +476,6 @@ private fun DragHint(modifier: Modifier = Modifier) {
         )
     }
 }
-
-/**
- * 무대 좌표 [rect] 자리에 그 크기로 둔다. 무대보다 큰 것(좌우가 잘리는 방 그림)도 왼쪽 위를 [rect]에 맞춘다.
- * 무대보다 큰 크기를 그대로 알리면 Compose가 넘친 만큼 가운데로 옮겨 그려서, 알리는 크기만 무대 안으로 줄인다.
- */
-private fun Modifier.placeAt(rect: Rect): Modifier = this
-    .offset { IntOffset(rect.left.roundToInt(), rect.top.roundToInt()) }
-    .layout { measurable, constraints ->
-        val width = rect.width.roundToInt().coerceAtLeast(0)
-        val height = rect.height.roundToInt().coerceAtLeast(0)
-        val placeable = measurable.measure(Constraints.fixed(width, height))
-        layout(constraints.constrainWidth(width), constraints.constrainHeight(height)) { placeable.place(0, 0) }
-    }
 
 /** 방 그림(배경). 테스트에서 그려진 자리를 찾는 데 쓴다. */
 internal const val RoomBackgroundTag = "room_background"
