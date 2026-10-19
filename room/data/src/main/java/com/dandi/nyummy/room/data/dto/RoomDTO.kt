@@ -67,18 +67,19 @@ data class OwnedRoomItemsResponseDTO(
 /**
  * 가진 아이템 하나. 같은 아이템을 여러 개 샀으면 한 개씩 따로 온다.
  *
+ * @property ownedRoomItemId 산 아이템 한 개의 id. 같은 아이템을 여러 개 사도 개마다 다르다. 앱은 roomItemId로 부른다.
  * @property itemId 아이템 종류 id. 그림은 주소 대신 이 id로 받는다(`items/{itemId}.png`).
  * @property isEquipped 지금 방에 놓여 있다.
  */
 @Serializable
 data class OwnedRoomItemDTO(
-    val roomItemId: Long? = null,
+    val ownedRoomItemId: Long? = null,
     val itemId: Long? = null,
     val name: String? = null,
     val isEquipped: Boolean? = null,
 ) {
     fun toVO(): OwnedRoomItemVO = OwnedRoomItemVO(
-        roomItemId = roomItemId ?: 0L,
+        roomItemId = ownedRoomItemId ?: 0L,
         itemId = itemId,
         name = name?.trim().orEmpty(),
         isEquipped = isEquipped == true,
@@ -91,11 +92,12 @@ data class OwnedRoomItemDTO(
  *
  * 서버 응답은 `zIndex`로 오지만 Swagger 스키마에는 `zindex`도 함께 적혀 있어서 둘 다 받는다.
  *
+ * @property ownedRoomItemId 산 아이템 한 개의 id([OwnedRoomItemDTO.ownedRoomItemId]와 같다). 앱은 roomItemId로 부른다.
  * @property itemId 아이템 종류 id. 그림은 주소 대신 이 id로 받는다(`items/{itemId}.png`).
  */
 @Serializable
 data class EquippedRoomItemDTO(
-    val roomItemId: Long? = null,
+    val ownedRoomItemId: Long? = null,
     val category: String? = null,
     val itemId: Long? = null,
     val x: Float? = null,
@@ -105,7 +107,7 @@ data class EquippedRoomItemDTO(
     val scale: Float? = null,
 ) {
     fun toVO(): RoomPlacementVO = RoomPlacementVO(
-        roomItemId = roomItemId ?: 0L,
+        roomItemId = ownedRoomItemId ?: 0L,
         category = RoomItemCategory.from(category),
         itemId = itemId,
         x = (x ?: 0f).toPosition(),
@@ -127,13 +129,14 @@ data class UpdateEquippedRoomItemsRequestDTO(
 /**
  * 놓인 아이템 하나의 자리. Swagger 요청 스키마에 `zIndex`와 `zindex`가 함께 있는데, 응답과 같은 `zIndex`로 보낸다.
  *
+ * @property ownedRoomItemId 놓을 산 아이템 한 개의 id.
  * @property x 바닥 가운데 점의 가로 위치(그림 왼쪽 아래 기준 퍼센트, 0~100). 넘치면 그 안으로 맞춰 보낸다.
  * @property y 바닥 가운데 점의 세로 위치(그림 왼쪽 아래 기준 퍼센트, 0~100). 넘치면 그 안으로 맞춰 보낸다.
  * @property scale 기본 크기 대비 배율. 0보다 커야 한다.
  */
 @Serializable
 data class EquippedRoomItemRequestDTO(
-    val roomItemId: Long? = null,
+    val ownedRoomItemId: Long? = null,
     val x: Float? = null,
     val y: Float? = null,
     val zIndex: Int? = null,
@@ -141,7 +144,7 @@ data class EquippedRoomItemRequestDTO(
 ) {
     companion object {
         fun from(placement: RoomPlacementVO) = EquippedRoomItemRequestDTO(
-            roomItemId = placement.roomItemId,
+            ownedRoomItemId = placement.roomItemId,
             x = placement.x.toPosition(),
             y = placement.y.toPosition(),
             zIndex = placement.zIndex,
