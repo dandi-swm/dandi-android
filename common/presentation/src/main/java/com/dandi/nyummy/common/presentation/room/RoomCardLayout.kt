@@ -1,5 +1,6 @@
 package com.dandi.nyummy.common.presentation.room
 
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -156,3 +157,9 @@ fun Modifier.fitRoomCard(): Modifier = layout { measurable, constraints ->
     val placeable = measurable.measure(Constraints.fixed(width, height))
     layout(maxWidth, maxHeight) { placeable.place((maxWidth - width) / 2, 0) }
 }
+
+/**
+ * 홈 고양이방 카드 크기. 앱 루트가 창 크기에서 홈이 받는 자리를 셈해 늘 공급하고, 마이룸은 이 크기로 방을 보여 준다.
+ * 그래서 홈을 거치지 않고 딥링크로 마이룸에 바로 들어와도 홈과 같은 크기, 같은 잘림이다.
+ */
+val LocalRoomCardSize = compositionLocalOf<DpSize> { error("앱 루트에서 홈 고양이방 카드 크기를 공급해야 한다.") }

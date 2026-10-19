@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -88,6 +89,7 @@ internal fun HomeRoomCard(
 ) {
     BoxWithConstraints(
         modifier = modifier
+            .testTag(RoomCardTag)
             .clip(RoundedCornerShape(NyummyTheme.radius.l))
             .background(NyummyTheme.colors.bg.sceneRoomFloor),
     ) {
@@ -279,6 +281,9 @@ private fun RoomMenuButton(
         )
     }
 }
+
+/** 고양이방 카드. 테스트가 카드 크기를 잴 때 찾는다. */
+internal const val RoomCardTag = "home_room_card"
 
 private val BubbleMaxWidth = 276.dp
 private val MenuButtonSize = 44.dp
