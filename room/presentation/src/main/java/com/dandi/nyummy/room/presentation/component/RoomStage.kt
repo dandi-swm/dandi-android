@@ -391,7 +391,8 @@ private fun RoomCat(
         onFinished = onMotionFinished,
         displayWidth = width,
         playId = motion.playId,
-        integerScale = true,
+        // 홈 냐미와 같이 카드 크기에 비례한 자리 크기 그대로 그린다(정수배로 반올림하면 자리보다 커진다).
+        integerScale = false,
         contentDescription = stringResource(R.string.my_room_character_description),
         modifier = Modifier.placeAt(rect),
     )
