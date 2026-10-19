@@ -171,7 +171,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `마이룸 플래그가 꺼져 있으면 꾸민 방 없이 앱에 든 방 그림을 그린다`() = runTest(testDispatcher) {
+    fun `마이룸 플래그가 꺼져 있으면 꾸민 방 없이 기본 빈 방만 그린다`() = runTest(testDispatcher) {
         resumeWith(HomeSummaryVO(roomPlacements = decoratedRoom))
 
         assertNull(viewModel.uiState.value.room)
