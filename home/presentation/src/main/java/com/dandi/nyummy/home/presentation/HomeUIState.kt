@@ -27,7 +27,7 @@ import kotlinx.collections.immutable.persistentListOf
  * @property catPlayId 동작을 새로 고를 때마다 바뀐다
  * @property catLine 말풍선 대사. 애니메이션이 없으면 null이고, 화면은 기본 대사를 쓴다.
  * @property catMotion 지금 재생할 냐미 동작. 애니메이션이나 상태가 아직 없으면 null이다.
- * @property room 고양이방 카드에 그릴 꾸민 방. 마이룸이 꺼져 있으면 null이고, 카드는 앱에 든 방 그림을 그린다.
+ * @property room 고양이방 카드에 그릴 꾸민 방. 마이룸이 꺼져 있으면 null이고, 카드는 기본 빈 방만 그린다.
  */
 data class HomeUIState(
     val summary: HomeSummaryVO = HomeSummaryVO.empty,
@@ -67,7 +67,7 @@ data class HomeUIState(
 /**
  * 홈 고양이방 카드에 그릴 꾸민 방. 마이룸에서 꾸민 그대로다.
  *
- * @property backgroundUrl 깔린 배경 그림. 없으면 바닥색만 보인다.
+ * @property backgroundUrl 깔린 배경 그림. 없으면 기본 빈 방을 깐다.
  * @property items 놓인 인테리어. 뒤에서 앞 순서다.
  */
 @Immutable

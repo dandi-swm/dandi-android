@@ -130,7 +130,7 @@ class HomeViewModel @Inject constructor(
                 val recordedJustNow = hasLoadedSummary &&
                     summary.todayRecordedCount > currentState.summary.todayRecordedCount
                 hasLoadedSummary = true
-                // 마이룸이 켜져 있으면 고양이방 카드에 꾸민 방을 그린다. 꺼져 있으면 앱에 든 방 그림 그대로다.
+                // 마이룸이 켜져 있으면 고양이방 카드에 꾸민 방을 그린다. 꺼져 있으면 기본 빈 방만 그린다.
                 val room = summary.roomPlacements.toHomeRoom()
                     .takeIf { remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled) }
                 dispatch(HomeReducerEvent.SummaryLoaded(summary, room))

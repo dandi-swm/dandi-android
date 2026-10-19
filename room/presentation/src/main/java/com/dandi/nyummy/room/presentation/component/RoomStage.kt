@@ -51,6 +51,7 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.common.presentation.room.placeAt
 import com.dandi.nyummy.common.presentation.room.RoomItemImage
+import com.dandi.nyummy.common.presentation.room.DefaultRoomBackgroundUrl
 import com.dandi.nyummy.common.presentation.room.RoomBackgroundImage
 import com.dandi.nyummy.room.presentation.R
 import com.dandi.nyummy.room.presentation.RoomBackgroundUiModel
@@ -108,13 +109,12 @@ internal fun RoomStage(
 
         fun rectOf(item: RoomPlacementUiModel): Rect = frame.itemRect(item, aspects[item.imageUrl])
 
-        if (background != null) {
-            RoomBackgroundImage(
-                imageUrl = background.imageUrl,
-                roomRect = frame.roomRect,
-                modifier = Modifier.testTag(RoomBackgroundTag),
-            )
-        }
+        // 배경이 깔리지 않았으면 홈 카드와 같이 기본 빈 방을 깐다.
+        RoomBackgroundImage(
+            imageUrl = background?.imageUrl ?: DefaultRoomBackgroundUrl,
+            roomRect = frame.roomRect,
+            modifier = Modifier.testTag(RoomBackgroundTag),
+        )
 
         val currentItems by rememberUpdatedState(items)
         val currentSelectedId by rememberUpdatedState(selectedItemId)

@@ -49,7 +49,7 @@ enum class MyRoomLoadState { LOADING, LOADED, FAILED }
 /**
  * 꾸미는 중인 방 한 장면. 되돌리기와 저장 여부 비교에 그대로 쓴다.
  *
- * @property background 깔린 배경. 없으면 바닥색만 보인다.
+ * @property background 깔린 배경. 없으면 기본 빈 방을 깐다.
  * @property items 놓인 인테리어. 뒤에서 앞 순서(나중 것이 위에 그려진다).
  */
 @Immutable
