@@ -60,8 +60,8 @@ object RoomCardLayout {
 }
 
 /**
- * 주어진 자리 가운데에 2:3 고양이방 카드를 둔다. 자리 크기는 그대로 차지하고, 카드는 [RoomCardLayout.cardSize] 크기다.
- * 남는 쪽(폭이 넓으면 좌우, 높이가 길면 위아래)은 비워 둔다.
+ * 주어진 자리 맨 위에 2:3 고양이방 카드를 붙여 둔다. 자리 크기는 그대로 차지하고, 카드는 [RoomCardLayout.cardSize] 크기다.
+ * 높이가 남으면 카드 아래로 비우고, 폭이 남으면 좌우 가운데에 둔다.
  */
 fun Modifier.fitRoomCard(): Modifier = layout { measurable, constraints ->
     if (!constraints.hasBoundedWidth || !constraints.hasBoundedHeight) {
@@ -72,6 +72,6 @@ fun Modifier.fitRoomCard(): Modifier = layout { measurable, constraints ->
     val height = (width / RoomCardLayout.Aspect).roundToInt().coerceAtMost(constraints.maxHeight)
     val placeable = measurable.measure(Constraints.fixed(width, height))
     layout(constraints.maxWidth, constraints.maxHeight) {
-        placeable.place((constraints.maxWidth - width) / 2, (constraints.maxHeight - height) / 2)
+        placeable.place((constraints.maxWidth - width) / 2, 0)
     }
 }

@@ -110,7 +110,7 @@ internal fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    // 남는 자리 가운데에 방 그림과 같은 2:3 카드로 둔다(어느 기기에서도 방 그림이 잘리지 않게).
+                    // 남는 자리 맨 위에 방 그림과 같은 2:3 카드로 붙여 둔다(어느 기기에서도 방 그림이 잘리지 않게).
                     .fitRoomCard(),
             ) {
                 HomeTodayBar(
