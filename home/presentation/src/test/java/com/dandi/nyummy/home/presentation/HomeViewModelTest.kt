@@ -23,6 +23,7 @@ import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSource
+import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.history.domain.HistoryRepository
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
@@ -35,6 +36,9 @@ import com.dandi.nyummy.home.domain.HomeRepository
 import com.dandi.nyummy.home.domain.tti.HomeTTIPage
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.meal.domain.MealRecordPage
+import com.dandi.nyummy.room.domain.MyRoomPage
+import com.dandi.nyummy.room.entity.RoomItemCategory
+import com.dandi.nyummy.room.entity.RoomPlacementVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -71,6 +75,9 @@ class HomeViewModelTest {
     private val tti = RecordingTTIHelper()
     private lateinit var viewModel: HomeViewModel
 
+    /** 원격 구성 마이룸 플래그. 읽을 때마다 이 값을 돌려준다. */
+    private var isMyRoomEnabled = false
+
     private val state get() = viewModel.uiState.value
 
     @Before
@@ -103,7 +110,10 @@ class HomeViewModelTest {
             ttiHelper = tti,
             remoteConfigHelper = object : RemoteConfigHelper {
                 override suspend fun sync() = Unit
-                override fun <T> get(key: RemoteConfigKey<T>): T = key.defaultValue
+
+                @Suppress("UNCHECKED_CAST")
+                override fun <T> get(key: RemoteConfigKey<T>): T =
+                    if (key == RemoteConfigKey.MyRoomEnabled) isMyRoomEnabled as T else key.defaultValue
             },
         )
     }
@@ -113,10 +123,58 @@ class HomeViewModelTest {
         Dispatchers.resetMain()
     }
 
+    /** 배경 하나와 아이템 셋(그중 하나는 아이템 id가 없다)이 놓인 방. */
+    private val decoratedRoom = listOf(
+        RoomPlacementVO(roomItemId = 101, category = RoomItemCategory.BED, itemId = 2, x = 50f, y = 20f, zIndex = 3, scale = 9f),
+        RoomPlacementVO(roomItemId = 108, category = RoomItemCategory.BACKGROUND, itemId = 1),
+        RoomPlacementVO(roomItemId = 104, category = RoomItemCategory.CARPET, itemId = 3, x = 30f, y = 10f, zIndex = 1),
+        RoomPlacementVO(roomItemId = 105, category = RoomItemCategory.ETC, itemId = null, x = 60f, y = 10f, zIndex = 2),
+    )
+
     private fun TestScope.resumeWith(summary: HomeSummaryVO) {
         homeRepository.next = { summary }
         viewModel.onIntent(HomeIntent.ScreenResumed)
         advanceUntilIdle()
+    }
+
+    @Test
+    fun `마이룸 플래그가 켜져 있으면 집 버튼으로 마이룸에 간다`() {
+        isMyRoomEnabled = true
+
+        viewModel.onIntent(HomeIntent.ClickMyRoom)
+
+        assertEquals(listOf<Page>(MyRoomPage), navigationHelper.pages)
+    }
+
+    @Test
+    fun `마이룸 플래그가 꺼져 있으면 집 버튼을 눌러도 아무 데도 가지 않는다`() {
+        viewModel.onIntent(HomeIntent.ClickMyRoom)
+
+        assertTrue(navigationHelper.pages.isEmpty())
+    }
+
+    @Test
+    fun `마이룸 플래그가 켜져 있으면 홈 요약의 놓인 아이템으로 고양이방 카드에 꾸민 방을 그린다`() = runTest(testDispatcher) {
+        isMyRoomEnabled = true
+
+        resumeWith(HomeSummaryVO(roomPlacements = decoratedRoom))
+
+        val room = viewModel.uiState.value.room!!
+        assertEquals("https://cdn.nyummy.co.kr/items/1.png", room.backgroundUrl)
+        // 배경을 뺀 아이템을 zIndex 순서로, 저장 좌표를 그리는 좌표로 바꿔 그린다. id가 없는 아이템은 그릴 수 없어서 뺀다.
+        assertEquals(listOf(104L, 101L), room.items.map { it.roomItemId })
+        val bed = room.items.last()
+        assertEquals("https://cdn.nyummy.co.kr/items/2.png", bed.imageUrl)
+        assertEquals(0.5f, bed.x, 0.001f)
+        assertEquals(0.8f, bed.y, 0.001f)
+        assertEquals(RoomCardLayout.MaxItemScale, bed.scale)
+    }
+
+    @Test
+    fun `마이룸 플래그가 꺼져 있으면 꾸민 방 없이 기본 빈 방만 그린다`() = runTest(testDispatcher) {
+        resumeWith(HomeSummaryVO(roomPlacements = decoratedRoom))
+
+        assertNull(viewModel.uiState.value.room)
     }
 
     @Test
