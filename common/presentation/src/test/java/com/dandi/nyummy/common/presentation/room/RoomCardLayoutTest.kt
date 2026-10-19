@@ -48,9 +48,10 @@ class RoomCardLayoutTest {
     }
 
     @Test
-    fun `아주 작은 카드에서도 냐미는 120 아래로 줄이지 않는다`() {
+    fun `카드가 작아지면 냐미도 같은 비율로 작아진다`() {
+        // 200×300 카드는 344×516 카드의 0.58배라서 냐미도 카드 폭의 36%(72)다. 최소 크기로 버티지 않는다.
         val rect = RoomCardLayout.nyummyRect(200.dp, 300.dp)
 
-        assertEquals(120f, (rect.right - rect.left).value, 0.01f)
+        assertEquals(200f * 155f / 430f, (rect.right - rect.left).value, 0.01f)
     }
 }
