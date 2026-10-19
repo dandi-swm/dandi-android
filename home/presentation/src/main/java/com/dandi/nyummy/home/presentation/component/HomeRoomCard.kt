@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpritePrefetch
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSequenceView
@@ -48,16 +49,17 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceBu
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
+import com.dandi.nyummy.common.presentation.room.LocalRoomCardSize
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.home.presentation.HomeCatMotion
 import com.dandi.nyummy.home.presentation.R
 
 /**
- * 냐미가 사는 고양이방 카드. 크기는 부르는 쪽이 정한다(홈은 남는 자리에 2:3으로 맞춘다).
+ * 냐미가 사는 고양이방 카드. 크기는 부르는 쪽이 정한다(홈은 남는 자리를 채운다).
  *
- * - 픽셀 방 배경은 카드를 빈틈없이 덮고 아래를 기준으로 맞춘다(Crop, 하단 정렬). 2:3 배경이면 잘리는 곳이 없다.
- * - 냐미 크기와 위치는 카드 크기에 비례해 화면 크기와 상관없이 늘 같은 바닥 자리에 앉는다.
- *   이 규칙은 마이룸과 함께 쓰는 [RoomCardLayout]에 있어서, 마이룸에서 꾸민 방이 홈에서도 같은 모습이다.
+ * - 픽셀 방 배경은 카드를 빈틈없이 덮고 아래를 기준으로 맞춘다(Crop, 하단 정렬). 카드가 세로로 길면 좌우가, 넓으면 위쪽이 잘린다.
+ * - 냐미 크기와 위치는 방 그림이 커진 배율로 정해 화면 크기와 상관없이 늘 같은 바닥 자리에 앉는다.
+ *   이 규칙은 마이룸과 함께 쓰는 [RoomCardLayout]에 있고, 마이룸으로 갈 때 카드 크기도 넘겨 같은 크기로 꾸미게 한다.
  * - 대사는 냐미 머리 위 말풍선, 오른쪽 위에는 방 메뉴, 아래에는 [bottom](오늘 바)을 둔다.
  *
  * @param catMotion 서버에서 받은 냐미 동작. 받는 중이면 null이다.
@@ -82,6 +84,7 @@ internal fun HomeRoomCard(
     bottom: @Composable () -> Unit,
 ) {
     val background = ImageBitmap.imageResource(R.drawable.home_room_background)
+    val roomCardSize = LocalRoomCardSize.current
     BoxWithConstraints(
         modifier = modifier
             .clip(RoundedCornerShape(NyummyTheme.radius.l))
@@ -137,7 +140,12 @@ internal fun HomeRoomCard(
         HomeRoomMenu(
             isExpanded = isMenuExpanded,
             onToggle = onToggleMenu,
-            onMyRoomClick = onMyRoomClick,
+            onMyRoomClick = {
+                // 마이룸이 홈과 같은 크기로 방을 보여 주도록, 누르는 순간의 카드 크기를 넘긴다.
+                // 계속 적어 두면 다른 화면으로 넘어가며 하단 탭이 사라질 때 길게 다시 그려진 크기가 남는다.
+                roomCardSize.size = DpSize(maxWidth, maxHeight)
+                onMyRoomClick()
+            },
             onShareFriendClick = onShareFriendClick,
             onNyummyStatusClick = onNyummyStatusClick,
             modifier = Modifier

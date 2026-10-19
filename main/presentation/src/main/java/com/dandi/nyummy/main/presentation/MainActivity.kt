@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.metrics.performance.JankStats
@@ -16,6 +17,8 @@ import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.common.presentation.jank.JankReporter
 import com.dandi.nyummy.common.presentation.jank.LocalJankReporter
+import com.dandi.nyummy.common.presentation.room.LocalRoomCardSize
+import com.dandi.nyummy.common.presentation.room.RoomCardSizeHolder
 import com.dandi.nyummy.main.presentation.deeplink.appLinkUri
 import com.dandi.nyummy.main.presentation.deeplink.pushNotificationId
 import com.dandi.nyummy.main.presentation.deeplink.resolveNewIntentRoute
@@ -73,6 +76,8 @@ class MainActivity : ComponentActivity() {
                 LocalNavigationHelper provides navigationHelper,
                 LocalMessageHelper provides messageHelper,
                 LocalJankReporter provides jankReporter,
+                // 홈에서 마이룸으로 갈 때 고양이방 카드 크기를 넘긴다(마이룸 방을 홈과 같은 크기로 보여 주려고).
+                LocalRoomCardSize provides remember { RoomCardSizeHolder() },
             ) {
                 // 새 디자인 시스템 값(색, 글자, 간격 등)은 여기서 한 번만 공급하고, 화면은 NyummyTheme.colors처럼 읽기만 한다.
                 NyummyTheme {
