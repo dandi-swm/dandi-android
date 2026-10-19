@@ -20,6 +20,7 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSource
+import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.room.domain.GetOwnedRoomItemsUseCase
 import com.dandi.nyummy.room.domain.GetRoomUseCase
 import com.dandi.nyummy.room.domain.RoomRepository
@@ -29,7 +30,6 @@ import com.dandi.nyummy.room.entity.OwnedRoomItemVO
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.entity.RoomPlacementVO
 import com.dandi.nyummy.room.entity.RoomVO
-import com.dandi.nyummy.room.presentation.model.RoomGeometry
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -74,7 +74,7 @@ class MyRoomViewModelTest {
             placements = listOf(
                 // 저장 좌표는 그림 왼쪽 아래 기준 퍼센트다. (50, 20)은 그리는 좌표로 (0.5, 0.8)이다.
                 placed(1, zIndex = 2, x = 50f, y = 20f),
-                RoomPlacementVO(roomItemId = 100, category = RoomItemCategory.BACKGROUND, imageUrl = "bg100"),
+                RoomPlacementVO(roomItemId = 100, category = RoomItemCategory.BACKGROUND, itemId = 100),
                 // 범위를 벗어난 좌표와 배율은 방 안으로 맞춘다.
                 placed(2, zIndex = 1, x = 120f, y = 480f, scale = 9f),
             ),
@@ -100,7 +100,10 @@ class MyRoomViewModelTest {
         val inRange = state.room.items.last()
         assertEquals(0.5f, inRange.x, 0.001f)
         assertEquals(0.8f, inRange.y, 0.001f)
-        assertEquals(RoomGeometry.MAX_SCALE, outOfRange.scale)
+        assertEquals(RoomCardLayout.MaxItemScale, outOfRange.scale)
+        // 그림은 아이템 id를 CDN 아이템 경로에 붙인 주소다.
+        assertEquals("https://cdn.nyummy.co.kr/items/100.png", state.room.background?.imageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/items/1.png", inRange.imageUrl)
         // 탭은 서버가 주지 않은 종류까지 늘 다섯 개이고, 각 탭에는 방과 함께 받은 첫 묶음이 들어간다.
         assertEquals(RoomItemCategory.entries, state.inventoryTabs.map { it.category })
         assertEquals(listOf("배경", "침대", "", "", "기타"), state.inventoryTabs.map { it.name })
@@ -152,7 +155,7 @@ class MyRoomViewModelTest {
         viewModel.onIntent(MyRoomIntent.MoveItem(1, x = 0.2f, y = 0.7f, scale = 5f))
         val moved = viewModel.uiState.value.room.items.first { it.roomItemId == 1L }
         assertEquals(0.2f, moved.x)
-        assertEquals(RoomGeometry.MAX_SCALE, moved.scale)
+        assertEquals(RoomCardLayout.MaxItemScale, moved.scale)
 
         viewModel.onIntent(MyRoomIntent.Undo)
 
@@ -178,7 +181,7 @@ class MyRoomViewModelTest {
     fun `제자리에 놓으면 고르기만 하고 순서도 바뀐 것으로 보지 않는다`() = runTest(testDispatcher) {
         val viewModel = loadedViewModel()
 
-        viewModel.onIntent(MyRoomIntent.MoveItem(2, x = 1f, y = 0f, scale = RoomGeometry.MAX_SCALE))
+        viewModel.onIntent(MyRoomIntent.MoveItem(2, x = 1f, y = 0f, scale = RoomCardLayout.MaxItemScale))
 
         val state = viewModel.uiState.value
         assertEquals(2L, state.selectedItemId)
@@ -434,7 +437,7 @@ class MyRoomViewModelTest {
         )
     }
 
-    private fun owned(id: Long, name: String) = OwnedRoomItemVO(roomItemId = id, name = name, imageUrl = "img$id")
+    private fun owned(id: Long, name: String) = OwnedRoomItemVO(roomItemId = id, itemId = id, name = name)
 
     private fun page(category: RoomItemCategory, vararg items: OwnedRoomItemVO, nextCursor: Long? = null, name: String = "") =
         OwnedRoomItemPageVO(category = category, categoryName = name, items = items.toList(), nextCursor = nextCursor)
@@ -442,7 +445,7 @@ class MyRoomViewModelTest {
     private fun MyRoomUIState.itemsOf(category: RoomItemCategory): List<InventoryItemUiModel> = tabOf(category)!!.items
 
     private fun placed(id: Long, zIndex: Int, x: Float, y: Float, scale: Float = 1f) =
-        RoomPlacementVO(roomItemId = id, imageUrl = "img$id", x = x, y = y, zIndex = zIndex, scale = scale)
+        RoomPlacementVO(roomItemId = id, itemId = id, x = x, y = y, zIndex = zIndex, scale = scale)
 }
 
 /** 마이룸 API를 흉내 내는 저장소. 불러오기와 저장 실패를 따로 정할 수 있다. */

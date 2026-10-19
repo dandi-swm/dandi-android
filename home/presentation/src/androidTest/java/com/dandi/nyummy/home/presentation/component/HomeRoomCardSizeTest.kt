@@ -42,6 +42,7 @@ class HomeRoomCardSizeTest {
                 NyummyTheme {
                     Box(Modifier.size(344.dp, cardHeight)) {
                         HomeRoomCard(
+                            room = null,
                             hasRecordedToday = false,
                             catMotion = null,
                             useFallbackCat = false,

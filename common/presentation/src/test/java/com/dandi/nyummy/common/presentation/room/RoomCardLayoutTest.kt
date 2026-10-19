@@ -1,5 +1,7 @@
 package com.dandi.nyummy.common.presentation.room
 
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
@@ -73,5 +75,56 @@ class RoomCardLayoutTest {
         val rect = RoomCardLayout.nyummyRect(200.dp, 300.dp)
 
         assertEquals(200f * 155f / 430f, (rect.right - rect.left).value, 0.01f)
+    }
+
+    @Test
+    fun `가로로 긴 아이템 그림은 폭이 기본 크기이고 바닥 가운데가 좌표에 닿는다`() {
+        val rect = RoomCardLayout.itemRect(roomWidth = 400f, roomHeight = 500f, x = 0.5f, y = 0.8f, scale = 1f, imageAspect = 2f)
+
+        // 긴 변 = 400 * 0.3 = 120, 높이 = 120 / 2 = 60
+        assertRect(Rect(left = 140f, top = 340f, right = 260f, bottom = 400f), rect)
+    }
+
+    @Test
+    fun `세로로 긴 아이템 그림은 높이가 기본 크기이고 배율만큼 커진다`() {
+        val rect = RoomCardLayout.itemRect(roomWidth = 400f, roomHeight = 500f, x = 0.25f, y = 1f, scale = 2f, imageAspect = 0.5f)
+
+        // 긴 변 = 400 * 0.3 * 2 = 240, 폭 = 120
+        assertRect(Rect(left = 40f, top = 260f, right = 160f, bottom = 500f), rect)
+    }
+
+    @Test
+    fun `아이템 배율은 정한 범위로 맞춘다`() {
+        assertEquals(RoomCardLayout.MinItemScale, RoomCardLayout.clampItemScale(0.1f))
+        assertEquals(RoomCardLayout.MaxItemScale, RoomCardLayout.clampItemScale(9f))
+        assertEquals(1.3f, RoomCardLayout.clampItemScale(1.3f))
+    }
+
+    @Test
+    fun `저장 좌표는 그림 왼쪽 아래 기준 퍼센트라서 그리는 좌표로 바꾸면 위아래가 뒤집힌다`() {
+        assertOffset(Offset(0.25f, 0.9f), RoomCardLayout.fromSavedPosition(x = 25f, y = 10f))
+        assertOffset(Offset(25f, 10f), RoomCardLayout.toSavedPosition(x = 0.25f, y = 0.9f))
+        // 그림 왼쪽 아래 끝과 오른쪽 위 끝
+        assertOffset(Offset(0f, 1f), RoomCardLayout.fromSavedPosition(x = 0f, y = 0f))
+        assertOffset(Offset(1f, 0f), RoomCardLayout.fromSavedPosition(x = 100f, y = 100f))
+    }
+
+    @Test
+    fun `저장 좌표가 0에서 100을 벗어나면 그 안으로 맞춘다`() {
+        assertOffset(Offset(1f, 0f), RoomCardLayout.fromSavedPosition(x = 120f, y = 480f))
+        assertOffset(Offset(0f, 1f), RoomCardLayout.fromSavedPosition(x = -5f, y = -1f))
+        assertOffset(Offset(100f, 0f), RoomCardLayout.toSavedPosition(x = 1.2f, y = 1.5f))
+    }
+
+    private fun assertOffset(expected: Offset, actual: Offset) {
+        assertEquals(expected.x, actual.x, 0.001f)
+        assertEquals(expected.y, actual.y, 0.001f)
+    }
+
+    private fun assertRect(expected: Rect, actual: Rect) {
+        assertEquals(expected.left, actual.left, 0.01f)
+        assertEquals(expected.top, actual.top, 0.01f)
+        assertEquals(expected.right, actual.right, 0.01f)
+        assertEquals(expected.bottom, actual.bottom, 0.01f)
     }
 }

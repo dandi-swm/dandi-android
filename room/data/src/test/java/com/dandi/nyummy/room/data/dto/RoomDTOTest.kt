@@ -26,12 +26,12 @@ class RoomDTOTest {
             """
             {
               "categories": [
-                {"category":"BACKGROUND","categoryName":"배경","ownedRoomItems":[{"roomItemId":108,"name":"햇살 방","imageUrl":"bg.png","isEquipped":true}],"nextCursor":null,"hasNext":false},
-                {"category":"BED","categoryName":"침대","ownedRoomItems":[{"roomItemId":101,"name":"구름 방석","imageUrl":"bed.png","isEquipped":true}],"nextCursor":101,"hasNext":true}
+                {"category":"BACKGROUND","categoryName":"배경","ownedRoomItems":[{"roomItemId":108,"name":"햇살 방","itemId":1,"isEquipped":true}],"nextCursor":null,"hasNext":false},
+                {"category":"BED","categoryName":"침대","ownedRoomItems":[{"roomItemId":101,"name":"구름 방석","itemId":2,"isEquipped":true}],"nextCursor":101,"hasNext":true}
               ],
               "equippedRoomItems": [
-                {"roomItemId":101,"category":"BED","imageUrl":"bed.png","x":50.0,"y":20.0,"zIndex":2,"scale":1.2},
-                {"roomItemId":108,"category":"BACKGROUND","imageUrl":"bg.png","x":0.0,"y":0.0,"zIndex":0,"scale":1.0}
+                {"roomItemId":101,"category":"BED","itemId":2,"x":50.0,"y":20.0,"zIndex":2,"scale":1.2},
+                {"roomItemId":108,"category":"BACKGROUND","itemId":1,"x":0.0,"y":0.0,"zIndex":0,"scale":1.0}
               ]
             }
             """.trimIndent(),
@@ -41,9 +41,11 @@ class RoomDTOTest {
         assertNull(room.categories[0].nextCursor)
         assertEquals(101L, room.categories[1].nextCursor)
         assertEquals("침대", room.categories[1].categoryName)
+        // 그림은 주소 대신 아이템 id로 받는다.
+        assertEquals(2L, room.categories[1].items.single().itemId)
         // zIndex 오름차순으로 정렬한다.
         assertEquals(listOf(108L, 101L), room.placements.map { it.roomItemId })
-        assertEquals(RoomPlacementVO(101, RoomItemCategory.BED, "bed.png", 50f, 20f, 2, 1.2f), room.placements[1])
+        assertEquals(RoomPlacementVO(101, RoomItemCategory.BED, itemId = 2, x = 50f, y = 20f, zIndex = 2, scale = 1.2f), room.placements[1])
     }
 
     @Test
@@ -75,7 +77,7 @@ class RoomDTOTest {
     @Test
     fun `다음 묶음이 없다고 하면 cursor를 버린다`() {
         val page = json.decodeFromString<OwnedRoomItemsResponseDTO>(
-            """{"ownedRoomItems":[{"roomItemId":5,"name":"털실 공","imageUrl":"yarn.png","isEquipped":false}],"nextCursor":5,"hasNext":false}""",
+            """{"ownedRoomItems":[{"roomItemId":5,"name":"털실 공","itemId":3,"isEquipped":false}],"nextCursor":5,"hasNext":false}""",
         ).toVO(RoomItemCategory.ETC)
 
         assertFalse(page.hasNext)
