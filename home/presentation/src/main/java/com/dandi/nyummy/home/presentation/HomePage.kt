@@ -22,9 +22,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.room.fitRoomCard
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.home.presentation.component.HomeHud
-import com.dandi.nyummy.common.presentation.room.limitRoomCardHeight
 import com.dandi.nyummy.home.presentation.component.HomeRoomCard
 import com.dandi.nyummy.home.presentation.component.HomeStreakBanner
 import com.dandi.nyummy.home.presentation.component.HomeTodayBar
@@ -110,8 +110,8 @@ internal fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    // 태블릿 세로처럼 아주 긴 자리에서는 방 그림 좌우가 너무 잘리지 않게 카드 높이를 묶는다.
-                    .limitRoomCardHeight(),
+                    // 남는 자리 가운데에 방 그림과 같은 2:3 카드로 둔다(어느 기기에서도 방 그림이 잘리지 않게).
+                    .fitRoomCard(),
             ) {
                 HomeTodayBar(
                     recordedCount = uiState.summary.todayRecordedCount,

@@ -50,10 +50,3 @@ class NavigationHelperImpl : NavigationHelper {
 }
 
 val LocalNavigationHelper = compositionLocalOf<NavigationHelper> { error("No user found!") }
-
-/**
- * 이 화면이 지금 사용자가 보고 있는 맨 위 화면인지. 다른 화면으로 넘어가는 순간 false가 된다.
- * 넘어가는 동안 나가는 화면이 한 번 더 다시 그려질 수 있어서, 그때 잰 값을 버려야 할 때 쓴다.
- * 내비게이션 밖(미리보기, 테스트)에서는 true다.
- */
-val LocalIsTopScreen = compositionLocalOf { true }

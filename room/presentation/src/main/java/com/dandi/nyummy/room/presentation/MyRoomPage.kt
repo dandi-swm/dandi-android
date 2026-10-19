@@ -21,8 +21,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,7 +29,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconBut
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
-import com.dandi.nyummy.common.presentation.room.LocalRoomCardSize
+import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.presentation.component.RoomFrame
 import com.dandi.nyummy.room.presentation.component.RoomInventorySheet
@@ -42,7 +40,7 @@ import kotlinx.collections.immutable.toImmutableList
 import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
- * 마이룸(방 꾸미기). 방은 홈 고양이방 카드와 같은 크기, 같은 잘림으로 보여 줘서 꾸민 모습이 홈과 같다.
+ * 마이룸(방 꾸미기). 방은 홈 고양이방 카드와 같은 2:3 카드로 보여 줘서(방 그림이 잘리지 않음) 꾸민 모습이 홈과 같다.
  * 아래 보관함 시트는 끌어 올리고 내린다. 올리면 방 아래쪽을 덮고, 내리면 방이 다 보인다.
  *
  * - 보관함 칸을 누르면 방 가운데에 놓고, 방에서 끌어 옮기고 두 손가락으로 크기를 바꾼다.
@@ -72,7 +70,6 @@ internal fun MyRoomScreen(
     modifier: Modifier = Modifier,
 ) {
     val sheetState = rememberRoomSheetState()
-    val homeCardSize = LocalRoomCardSize.current.size
     // 시스템 바 인셋은 앱 Scaffold가 이미 밀어 두었다. 시트가 내비게이션 바 여백을 한 번 더 넣지 않게 여기서 쓴 것으로 둔다.
     Column(
         modifier = modifier
@@ -100,10 +97,9 @@ internal fun MyRoomScreen(
             val gutter = NyummyTheme.spacing.gutter
             val collapsedSheet = with(density) { sheetState.collapsedHeightPx.toDp() }
                 .takeIf { it > 0.dp } ?: DefaultCollapsedSheetHeight
-            // 방은 홈 고양이방 카드와 같은 크기로 보여 준다. 시트를 다 내렸을 때 다 보이도록, 넘치면 같은 비율로 줄인다.
-            val card = fitRoomCard(
-                target = homeCardSize ?: fallbackRoomCard(maxWidth, gutter),
-                maxWidth = maxWidth - gutter * 2,
+            // 방은 홈 고양이방 카드와 같은 2:3 카드로 보여 준다. 폭은 홈과 같고, 시트를 다 내렸을 때 다 보이도록 넘치면 같은 비율로 줄인다.
+            val card = RoomCardLayout.cardSize(
+                maxWidth = minOf(maxWidth, ContentMaxWidth) - gutter * 2,
                 maxHeight = maxHeight - CardTopGap - CardBottomGap - collapsedSheet,
             )
             val cardLeft = (maxWidth - card.width) / 2
@@ -161,22 +157,8 @@ internal fun MyRoomScreen(
     }
 }
 
-/** 홈을 아직 그리지 않아 카드 크기를 모를 때 쓰는 크기. 홈과 같은 폭에 디자인 카드 비율(350×567)이다. */
-private fun fallbackRoomCard(maxWidth: Dp, gutter: Dp): DpSize {
-    val width = minOf(maxWidth, ContentMaxWidth) - gutter * 2
-    return DpSize(width, width / FallbackCardAspect)
-}
-
-/** [target] 크기를 그대로 쓰되, 자리보다 크면 가로세로 비율을 지키며 줄인다(잘리는 모양이 홈과 같도록). */
-private fun fitRoomCard(target: DpSize, maxWidth: Dp, maxHeight: Dp): DpSize {
-    val scale = minOf(1f, maxWidth / target.width, maxHeight / target.height).coerceAtLeast(0f)
-    return DpSize(target.width * scale, target.height * scale)
-}
-
-/** 홈 콘텐츠 최대 폭(홈 카드 폭을 모를 때 같은 폭을 쓰려고). */
+/** 홈 콘텐츠 최대 폭. 마이룸 카드 폭도 홈과 같게 이 안에서 정한다. */
 private val ContentMaxWidth = 480.dp
-
-private const val FallbackCardAspect = 350f / 567f
 private val CardTopGap = 12.dp
 private val CardBottomGap = 12.dp
 
