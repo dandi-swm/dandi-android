@@ -64,6 +64,7 @@ include(":mailbox:domain")
 include(":mailbox:data")
 include(":mailbox:entity")
 
+include(":room:presentation")
 include(":room:domain")
 include(":room:data")
 include(":room:entity")
