@@ -12,4 +12,5 @@ kotlin {
 
 dependencies {
     api(project(":common:entity"))
+    api(project(":room:entity"))
 }
