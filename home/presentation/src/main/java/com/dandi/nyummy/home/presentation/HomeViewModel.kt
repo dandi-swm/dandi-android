@@ -15,6 +15,7 @@ import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.home.domain.tti.HomeTTIPage
 import com.dandi.nyummy.mailbox.domain.MailboxPage
 import com.dandi.nyummy.meal.domain.MealRecordPage
+import com.dandi.nyummy.room.domain.MyRoomPage
 import com.dandi.nyummy.settings.domain.SettingsPage
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TimelineCategory
@@ -70,8 +71,11 @@ class HomeViewModel @Inject constructor(
             HomeIntent.ClickNotice -> Unit
             HomeIntent.ClickSettings -> navigationHelper.navigateTo(SettingsPage)
             HomeIntent.ClickStreak -> Unit
-            // TODO: 마이룸, 친구에게 공유, 냐미 상태 화면이 생기면 연결한다.
-            HomeIntent.ClickMyRoom -> Unit
+            // 마이룸은 백엔드가 완성될 때까지 원격 구성으로 막아 둔다(꺼져 있으면 아무 일도 없다).
+            HomeIntent.ClickMyRoom -> if (remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled)) {
+                navigationHelper.navigateTo(MyRoomPage)
+            }
+            // TODO: 친구에게 공유, 냐미 상태 화면이 생기면 연결한다.
             HomeIntent.ClickShareFriend -> Unit
             HomeIntent.ClickNyummyStatus -> Unit
             HomeIntent.ToggleRoomMenu ->
