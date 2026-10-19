@@ -20,6 +20,7 @@ import com.dandi.nyummy.mailbox.domain.RestoreInquiryUseCase
 import com.dandi.nyummy.mailbox.domain.RestoreMailUseCase
 import com.dandi.nyummy.mailbox.entity.InquiryVO
 import com.dandi.nyummy.mailbox.entity.MailVO
+import com.dandi.nyummy.mailbox.presentation.model.mailImageUrl
 import com.dandi.nyummy.mailbox.presentation.model.mailRemainingDays
 import com.dandi.nyummy.mailbox.presentation.model.mailboxListTimeLabel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -368,7 +369,7 @@ private fun MailVO.toRowUiModel(nowMillis: Long) = MailRowUiModel(
     category = category,
     title = title,
     content = content,
-    imageUrl = imageUrl,
+    imageUrl = mailImageUrl(category, imageId),
     timeLabel = mailboxListTimeLabel(createdAtMillis, nowMillis),
     remainingDays = expiresAtMillis?.takeUnless { isClaimed }?.let { mailRemainingDays(it, nowMillis) },
     isClaimed = isClaimed,

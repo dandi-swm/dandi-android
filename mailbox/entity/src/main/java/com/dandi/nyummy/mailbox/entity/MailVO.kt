@@ -12,7 +12,8 @@ enum class MailCategory {
  *
  * @property title 우편 제목(예 "코인 100개", "퀘스트 상자").
  * @property content 보낸 이유나 받은 내용(예 "첫 기록 보상", "상점에서 샀어요").
- * @property imageUrl 우편 그림 URL.
+ * @property imageId 우편 그림 번호. 종류마다 가리키는 것이 다르다(아이템은 대표 아이템 id, 보상 상자는 상자 번호,
+ *   코인은 코인 그림 번호). 화면이 종류에 맞는 CDN 경로에 붙여 그림 주소를 만든다. 없으면 null.
  * @property isClaimed 이미 받았다.
  * @property expiresAtMillis 받지 않으면 사라지는 시각(epoch millis). null 이면 사라지지 않는다.
  * @property createdAtMillis 도착 시각(epoch millis). 화면은 기기 타임존으로 바꿔 보여 준다.
@@ -22,7 +23,7 @@ data class MailVO(
     val category: MailCategory = MailCategory.ITEM,
     val title: String = "",
     val content: String = "",
-    val imageUrl: String = "",
+    val imageId: Long? = null,
     val isClaimed: Boolean = false,
     val expiresAtMillis: Long? = null,
     val createdAtMillis: Long = 0L,
