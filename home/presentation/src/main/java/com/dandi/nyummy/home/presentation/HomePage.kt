@@ -22,6 +22,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.room.fitRoomCard
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.home.presentation.component.HomeHud
 import com.dandi.nyummy.home.presentation.component.HomeRoomCard
@@ -94,6 +95,7 @@ internal fun HomeScreen(
                 if (uiState.hasRecordedToday) R.string.home_speech_recorded else R.string.home_speech_waiting,
             )
             HomeRoomCard(
+                room = uiState.room,
                 hasRecordedToday = uiState.hasRecordedToday,
                 catMotion = uiState.catMotion,
                 useFallbackCat = uiState.isCatAnimationFailed,
@@ -108,7 +110,9 @@ internal fun HomeScreen(
                 onNyummyStatusClick = { onIntent(HomeIntent.ClickNyummyStatus) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    // 남는 자리를 채운다. 태블릿 세로처럼 너무 길거나 아주 작은 폰처럼 너무 넓으면 방 그림이 안전 지대까지 잘리지 않게 줄인다.
+                    .fitRoomCard(),
             ) {
                 HomeTodayBar(
                     recordedCount = uiState.summary.todayRecordedCount,

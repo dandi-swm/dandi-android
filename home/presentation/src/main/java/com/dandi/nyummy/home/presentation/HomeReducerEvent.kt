@@ -8,8 +8,8 @@ import com.dandi.nyummy.home.entity.HomeSummaryVO
 /** 홈 화면 상태를 변이시키는 내부 이벤트. */
 sealed interface HomeReducerEvent : ReducerEvent {
 
-    /** 홈 요약 정보 로딩이 끝났다. */
-    data class SummaryLoaded(val summary: HomeSummaryVO) : HomeReducerEvent
+    /** 홈 요약 정보 로딩이 끝났다. [room]은 고양이방 카드에 그릴 꾸민 방이고, 마이룸이 꺼져 있으면 null이다. */
+    data class SummaryLoaded(val summary: HomeSummaryVO, val room: HomeRoomUiModel?) : HomeReducerEvent
 
     /** 오늘 식사 시트 표시 여부가 바뀌었다. */
     data class TodaySheetVisibilityChanged(val visible: Boolean) : HomeReducerEvent

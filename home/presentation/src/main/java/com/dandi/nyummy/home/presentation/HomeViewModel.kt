@@ -6,6 +6,8 @@ import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
@@ -30,6 +32,7 @@ class HomeViewModel @Inject constructor(
     private val getCatAnimations: GetCatAnimationsUseCase,
     private val catMotionPicker: CatMotionPicker,
     private val ttiHelper: TTIHelper,
+    private val remoteConfigHelper: RemoteConfigHelper,
 ) : MviViewModel<HomeIntent, HomeUIState, HomeReducerEvent>(HomeUIState.empty) {
 
     init {
@@ -90,7 +93,7 @@ class HomeViewModel @Inject constructor(
 
     override fun reduce(state: HomeUIState, event: HomeReducerEvent): HomeUIState =
         when (event) {
-            is HomeReducerEvent.SummaryLoaded -> state.copy(summary = event.summary, isSummaryLoaded = true)
+            is HomeReducerEvent.SummaryLoaded -> state.copy(summary = event.summary, room = event.room, isSummaryLoaded = true)
             is HomeReducerEvent.TodaySheetVisibilityChanged -> state.copy(isTodaySheetVisible = event.visible)
             HomeReducerEvent.TodayMealsLoadStarted -> state.copy(isTodayMealsLoading = true, isTodayMealsFailed = false)
             is HomeReducerEvent.TodayMealsLoaded -> state.copy(
@@ -123,7 +126,10 @@ class HomeViewModel @Inject constructor(
                 val recordedJustNow = hasLoadedSummary &&
                     summary.todayRecordedCount > currentState.summary.todayRecordedCount
                 hasLoadedSummary = true
-                dispatch(HomeReducerEvent.SummaryLoaded(summary))
+                // 마이룸이 켜져 있으면 고양이방 카드에 꾸민 방을 그린다. 꺼져 있으면 기본 빈 방만 그린다.
+                val room = summary.roomPlacements.toHomeRoom()
+                    .takeIf { remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled) }
+                dispatch(HomeReducerEvent.SummaryLoaded(summary, room))
                 updateCatState(recordedJustNow)
             }
         }
