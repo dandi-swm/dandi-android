@@ -67,19 +67,20 @@ data class OwnedRoomItemsResponseDTO(
 /**
  * 가진 아이템 하나. 같은 아이템을 여러 개 샀으면 한 개씩 따로 온다.
  *
+ * @property itemId 아이템 종류 id. 그림은 주소 대신 이 id로 받는다(`items/{itemId}.png`).
  * @property isEquipped 지금 방에 놓여 있다.
  */
 @Serializable
 data class OwnedRoomItemDTO(
     val roomItemId: Long? = null,
+    val itemId: Long? = null,
     val name: String? = null,
-    val imageUrl: String? = null,
     val isEquipped: Boolean? = null,
 ) {
     fun toVO(): OwnedRoomItemVO = OwnedRoomItemVO(
         roomItemId = roomItemId ?: 0L,
+        itemId = itemId,
         name = name?.trim().orEmpty(),
-        imageUrl = imageUrl.orEmpty(),
         isEquipped = isEquipped == true,
     )
 }
@@ -89,12 +90,14 @@ data class OwnedRoomItemDTO(
  * 좌표가 0~100을 벗어나 오면 그 안으로 맞춘다(그림 밖에 놓인 아이템이 없게).
  *
  * 서버 응답은 `zIndex`로 오지만 Swagger 스키마에는 `zindex`도 함께 적혀 있어서 둘 다 받는다.
+ *
+ * @property itemId 아이템 종류 id. 그림은 주소 대신 이 id로 받는다(`items/{itemId}.png`).
  */
 @Serializable
 data class EquippedRoomItemDTO(
     val roomItemId: Long? = null,
     val category: String? = null,
-    val imageUrl: String? = null,
+    val itemId: Long? = null,
     val x: Float? = null,
     val y: Float? = null,
     val zIndex: Int? = null,
@@ -104,7 +107,7 @@ data class EquippedRoomItemDTO(
     fun toVO(): RoomPlacementVO = RoomPlacementVO(
         roomItemId = roomItemId ?: 0L,
         category = RoomItemCategory.from(category),
-        imageUrl = imageUrl.orEmpty(),
+        itemId = itemId,
         x = (x ?: 0f).toPosition(),
         y = (y ?: 0f).toPosition(),
         zIndex = zIndex ?: lowercaseZIndex ?: 0,

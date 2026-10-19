@@ -18,12 +18,13 @@ enum class RoomItemCategory {
 /**
  * 가진 아이템 하나. 같은 아이템을 여러 개 샀으면 한 개씩 따로 온다([roomItemId]가 산 아이템 한 개를 가리킨다).
  *
+ * @property itemId 아이템 종류 id. 화면이 CDN 아이템 경로에 붙여 그림 주소를 만든다. 없으면 null.
  * @property isEquipped 지금 방에 놓여 있다(배경이면 깔려 있다).
  */
 data class OwnedRoomItemVO(
     val roomItemId: Long = 0L,
+    val itemId: Long? = null,
     val name: String = "",
-    val imageUrl: String = "",
     val isEquipped: Boolean = false,
 )
 
@@ -52,11 +53,12 @@ data class OwnedRoomItemPageVO(
  *   화면마다 방이 잘리는 모양이 달라도 그림 위 같은 자리에 놓인다. 배경은 (0, 0)으로 둔다.
  * - [scale]: 기본 크기 대비 배율(1.0이 기본). 기본 크기는 아이템 그림의 긴 변이 방 폭의 일정 비율이 되는 크기다.
  * - [zIndex]: 작을수록 뒤에 그린다. 배경이 0이고 인테리어는 1부터 놓은 순서대로다.
+ * - [itemId]: 아이템 종류 id. 화면이 CDN 아이템 경로에 붙여 그림 주소를 만든다. 없으면 null.
  */
 data class RoomPlacementVO(
     val roomItemId: Long = 0L,
     val category: RoomItemCategory = RoomItemCategory.ETC,
-    val imageUrl: String = "",
+    val itemId: Long? = null,
     val x: Float = 0f,
     val y: Float = 0f,
     val zIndex: Int = 0,
