@@ -37,14 +37,14 @@ class RoomCardFitTest {
     }
 
     @Test
-    fun 세로로_긴_자리에서는_폭을_채운_2대3_카드를_위아래_가운데에_둔다() {
+    fun 세로로_긴_자리에서는_폭을_채운_2대3_카드를_맨_위에_붙인다() {
         setSlot(width = 300, height = 600)
 
         composeRule.onNodeWithTag(CardTag)
             .assertWidthIsEqualTo(300.dp)
             .assertHeightIsEqualTo(450.dp)
             .assertLeftPositionInRootIsEqualTo(0.dp)
-            .assertTopPositionInRootIsEqualTo(75.dp)
+            .assertTopPositionInRootIsEqualTo(0.dp)
     }
 
     @Test
