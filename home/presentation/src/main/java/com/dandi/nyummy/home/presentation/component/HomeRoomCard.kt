@@ -287,7 +287,6 @@ private fun RoomMenuButton(
     }
 }
 
-/** 말풍선 꼬리 끝이 냐미 위쪽에서 이만큼(냐미 크기 대비) 내려와 머리에 닿는다. 스프라이트 위쪽 여백 때문이다. */
 private val BubbleMaxWidth = 276.dp
 private val MenuButtonSize = 44.dp
 /** 픽셀 아이콘은 밀도 버킷을 32dp로 만들어 두었다. 같은 크기로 그려야 기기에서 다시 줄이며 픽셀이 뭉개지지 않는다. */
