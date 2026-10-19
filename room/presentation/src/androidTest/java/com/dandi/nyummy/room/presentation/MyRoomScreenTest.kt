@@ -1,18 +1,13 @@
 package com.dandi.nyummy.room.presentation
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.jank.DebugJankReport
 import com.dandi.nyummy.common.presentation.jank.JankReporter
 import com.dandi.nyummy.common.presentation.jank.LocalJankReporter
-import com.dandi.nyummy.common.presentation.room.LocalRoomCardSize
-import com.dandi.nyummy.common.presentation.room.RoomCardSizeHolder
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.presentation.MyRoomLoadState.LOADED
 import kotlinx.collections.immutable.persistentListOf
@@ -26,12 +21,11 @@ class MyRoomScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    /** 홈 카드가 화면보다 길어서 방을 다 접은 시트 위에 맞게 줄여 보여 주는 경우. */
+    /** 방 하나와 보관함 시트. 방 카드는 시트를 다 접었을 때 남는 자리에 2:3으로 맞춘다. */
     private fun setScreen() {
         composeRule.setContent {
             CompositionLocalProvider(
                 LocalJankReporter provides JankReporter(DebugJankReport()),
-                LocalRoomCardSize provides remember { RoomCardSizeHolder().apply { size = DpSize(360.dp, 2000.dp) } },
             ) {
                 NyummyTheme {
                     MyRoomScreen(
