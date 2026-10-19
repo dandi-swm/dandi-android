@@ -48,7 +48,7 @@ data class RoomSceneItem(
  * 꾸민 방. 배경과 놓인 아이템을 [RoomCardLayout] 규칙으로 그려서 마이룸에서 꾸민 모습과 같다. 누를 수 없다.
  * 픽셀 그림이라 필터 없이 그리고, 받지 못한 아이템 그림은 그리지 않는다.
  *
- * @param backgroundUrl 깔린 배경 그림. 없으면 기본 빈 방([DefaultRoomBackgroundUrl])을 깐다.
+ * @param backgroundUrl 깔린 배경 그림. 없거나 받지 못하면 기본 빈 방([DefaultRoomBackgroundUrl])을 깐다.
  * @param items 놓인 아이템. 뒤에서 앞 순서다.
  */
 @Composable
@@ -63,7 +63,7 @@ fun RoomScene(
         val roomRect = with(density) { Rect(room.left.toPx(), room.top.toPx(), room.right.toPx(), room.bottom.toPx()) }
         // 그림 주소별 폭 / 높이. 같은 아이템을 여러 개 놓아도 한 번만 잰다.
         val aspects = remember { mutableStateMapOf<String, Float>() }
-        RoomBackgroundImage(imageUrl = backgroundUrl ?: DefaultRoomBackgroundUrl, roomRect = roomRect)
+        RoomBackgroundImage(imageUrl = backgroundUrl, roomRect = roomRect)
         items.forEach { item ->
             key(item.roomItemId) {
                 RoomItemImage(
@@ -87,27 +87,42 @@ fun RoomScene(
  * 배경이 깔리지 않았을 때 대신 까는 기본 빈 방(줄무늬 벽과 원목 바닥)의 아이템 id.
  * 서버가 모든 사용자에게 주는 기본 배경과 같은 그림이다.
  */
-const val DefaultRoomBackgroundItemId = 1L
+private const val DefaultRoomBackgroundItemId = 1L
 
 /** 기본 빈 방 그림 주소. */
-val DefaultRoomBackgroundUrl: String
+private val DefaultRoomBackgroundUrl: String
     get() = NyummyCdn.itemUrl(DefaultRoomBackgroundItemId)
 
-/** 방 그림(배경)을 [roomRect] 자리에 그린다. 자리가 그리는 곳보다 크면 넘친 쪽은 잘린다. */
+/**
+ * 방 그림(배경)을 [roomRect] 자리에 그린다. 자리가 그리는 곳보다 크면 넘친 쪽은 잘린다.
+ * 기본 빈 방을 늘 밑에 깔아 두고 그 위에 [imageUrl]을 그려서, 배경이 없거나 받는 중이거나 받지 못해도 기본 빈 방이 보인다.
+ */
 @Composable
 fun RoomBackgroundImage(
-    imageUrl: String,
+    imageUrl: String?,
     roomRect: Rect,
     modifier: Modifier = Modifier,
 ) {
+    Box(
+        modifier = Modifier
+            .placeAt(roomRect)
+            .then(modifier),
+    ) {
+        RoomPixelImage(imageUrl = DefaultRoomBackgroundUrl)
+        val background = imageUrl?.takeIf { it.isNotBlank() && it != DefaultRoomBackgroundUrl }
+        if (background != null) RoomPixelImage(imageUrl = background)
+    }
+}
+
+/** 픽셀 그림을 놓인 자리 크기 그대로, 필터 없이 그린다. */
+@Composable
+private fun RoomPixelImage(imageUrl: String) {
     AsyncImage(
         model = imageUrl,
         contentDescription = null,
         contentScale = ContentScale.FillBounds,
         filterQuality = FilterQuality.None,
-        modifier = Modifier
-            .placeAt(roomRect)
-            .then(modifier),
+        modifier = Modifier.fillMaxSize(),
     )
 }
 

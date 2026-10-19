@@ -51,7 +51,6 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.common.presentation.room.placeAt
 import com.dandi.nyummy.common.presentation.room.RoomItemImage
-import com.dandi.nyummy.common.presentation.room.DefaultRoomBackgroundUrl
 import com.dandi.nyummy.common.presentation.room.RoomBackgroundImage
 import com.dandi.nyummy.room.presentation.R
 import com.dandi.nyummy.room.presentation.RoomBackgroundUiModel
@@ -109,9 +108,9 @@ internal fun RoomStage(
 
         fun rectOf(item: RoomPlacementUiModel): Rect = frame.itemRect(item, aspects[item.imageUrl])
 
-        // 배경이 깔리지 않았으면 홈 카드와 같이 기본 빈 방을 깐다.
+        // 배경이 없거나 받지 못하면 홈 카드와 같이 기본 빈 방이 보인다.
         RoomBackgroundImage(
-            imageUrl = background?.imageUrl ?: DefaultRoomBackgroundUrl,
+            imageUrl = background?.imageUrl,
             roomRect = frame.roomRect,
             modifier = Modifier.testTag(RoomBackgroundTag),
         )
