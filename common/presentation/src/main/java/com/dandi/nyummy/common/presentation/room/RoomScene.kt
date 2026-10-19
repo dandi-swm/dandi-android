@@ -1,5 +1,6 @@
 package com.dandi.nyummy.common.presentation.room
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -15,16 +16,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
 import coil3.compose.AsyncImage
+import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
-import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import kotlinx.collections.immutable.ImmutableList
 import kotlin.math.roundToInt
 
@@ -48,7 +51,7 @@ data class RoomSceneItem(
  * 꾸민 방. 배경과 놓인 아이템을 [RoomCardLayout] 규칙으로 그려서 마이룸에서 꾸민 모습과 같다. 누를 수 없다.
  * 픽셀 그림이라 필터 없이 그리고, 받지 못한 아이템 그림은 그리지 않는다.
  *
- * @param backgroundUrl 깔린 배경 그림. 없거나 받지 못하면 기본 빈 방([DefaultRoomBackgroundUrl])을 깐다.
+ * @param backgroundUrl 깔린 배경 그림. 없거나 받지 못하면 앱에 든 기본 빈 방이 보인다.
  * @param items 놓인 아이템. 뒤에서 앞 순서다.
  */
 @Composable
@@ -84,18 +87,9 @@ fun RoomScene(
 }
 
 /**
- * 배경이 깔리지 않았을 때 대신 까는 기본 빈 방(줄무늬 벽과 원목 바닥)의 아이템 id.
- * 서버가 모든 사용자에게 주는 기본 배경과 같은 그림이다.
- */
-private const val DefaultRoomBackgroundItemId = 1L
-
-/** 기본 빈 방 그림 주소. */
-private val DefaultRoomBackgroundUrl: String
-    get() = NyummyCdn.itemUrl(DefaultRoomBackgroundItemId)
-
-/**
  * 방 그림(배경)을 [roomRect] 자리에 그린다. 자리가 그리는 곳보다 크면 넘친 쪽은 잘린다.
- * 기본 빈 방을 늘 밑에 깔아 두고 그 위에 [imageUrl]을 그려서, 배경이 없거나 받는 중이거나 받지 못해도 기본 빈 방이 보인다.
+ * 앱에 든 기본 빈 방(줄무늬 벽과 원목 바닥, CDN 아이템 1번과 같은 그림)을 늘 밑에 깔고 그 위에 [imageUrl]을 그린다.
+ * 그래서 배경이 없거나, 받는 중이거나, 받지 못하거나, 인터넷이 끊겨도 기본 빈 방이 보인다.
  */
 @Composable
 fun RoomBackgroundImage(
@@ -108,22 +102,23 @@ fun RoomBackgroundImage(
             .placeAt(roomRect)
             .then(modifier),
     ) {
-        RoomPixelImage(imageUrl = DefaultRoomBackgroundUrl)
-        val background = imageUrl?.takeIf { it.isNotBlank() && it != DefaultRoomBackgroundUrl }
-        if (background != null) RoomPixelImage(imageUrl = background)
+        Image(
+            bitmap = ImageBitmap.imageResource(R.drawable.nyummy_room_default_background),
+            contentDescription = null,
+            contentScale = ContentScale.FillBounds,
+            filterQuality = FilterQuality.None,
+            modifier = Modifier.fillMaxSize(),
+        )
+        if (!imageUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = null,
+                contentScale = ContentScale.FillBounds,
+                filterQuality = FilterQuality.None,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
-}
-
-/** 픽셀 그림을 놓인 자리 크기 그대로, 필터 없이 그린다. */
-@Composable
-private fun RoomPixelImage(imageUrl: String) {
-    AsyncImage(
-        model = imageUrl,
-        contentDescription = null,
-        contentScale = ContentScale.FillBounds,
-        filterQuality = FilterQuality.None,
-        modifier = Modifier.fillMaxSize(),
-    )
 }
 
 /**
