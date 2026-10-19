@@ -51,23 +51,28 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import com.dandi.nyummy.common.presentation.room.LocalRoomCardSize
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
+import com.dandi.nyummy.common.presentation.room.RoomScene
 import com.dandi.nyummy.home.presentation.HomeCatMotion
+import com.dandi.nyummy.home.presentation.HomeRoomUiModel
 import com.dandi.nyummy.home.presentation.R
 
 /**
  * 냐미가 사는 고양이방 카드. 크기는 부르는 쪽이 정한다(홈은 남는 자리를 채운다).
  *
- * - 픽셀 방 배경은 카드를 빈틈없이 덮고 아래를 기준으로 맞춘다(Crop, 하단 정렬). 카드가 세로로 길면 좌우가, 넓으면 위쪽이 잘린다.
+ * - 방은 마이룸에서 꾸민 그대로([room], 배경과 아이템) 그린다. 마이룸이 꺼져 있으면 앱에 든 방 그림을 그린다.
+ *   방 그림은 카드를 빈틈없이 덮고 아래를 기준으로 맞춘다. 카드가 세로로 길면 좌우가, 넓으면 위쪽이 잘린다.
  * - 냐미 크기와 위치는 방 그림이 커진 배율로 정해 화면 크기와 상관없이 늘 같은 바닥 자리에 앉는다.
  *   이 규칙은 마이룸과 함께 쓰는 [RoomCardLayout]에 있고, 마이룸으로 갈 때 카드 크기도 넘겨 같은 크기로 꾸미게 한다.
  * - 대사는 냐미 머리 위 말풍선, 오른쪽 위에는 방 메뉴, 아래에는 [bottom](오늘 바)을 둔다.
  *
+ * @param room 꾸민 방. null이면 앱에 든 방 그림을 그린다.
  * @param catMotion 서버에서 받은 냐미 동작. 받는 중이면 null이다.
  * @param useFallbackCat 냐미 애니메이션을 받지 못해 기본 냐미(앱에 든 스프라이트)로 대신한다.
  * @param onCatShown 냐미가 처음 화면에 보인 순간(시트를 받아 그렸거나 기본 냐미를 그렸을 때). 홈 TTI 에 쓴다.
  */
 @Composable
 internal fun HomeRoomCard(
+    room: HomeRoomUiModel?,
     hasRecordedToday: Boolean,
     catMotion: HomeCatMotion?,
     useFallbackCat: Boolean,
@@ -83,7 +88,6 @@ internal fun HomeRoomCard(
     modifier: Modifier = Modifier,
     bottom: @Composable () -> Unit,
 ) {
-    val background = ImageBitmap.imageResource(R.drawable.home_room_background)
     val roomCardSize = LocalRoomCardSize.current
     BoxWithConstraints(
         modifier = modifier
@@ -93,14 +97,18 @@ internal fun HomeRoomCard(
         val nyummyRect = RoomCardLayout.nyummyRect(maxWidth, maxHeight)
         val nyummySize = nyummyRect.right - nyummyRect.left
         val nyummyTop = nyummyRect.top
-        Image(
-            bitmap = background,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            alignment = Alignment.BottomCenter,
-            filterQuality = FilterQuality.None,
-            modifier = Modifier.fillMaxSize(),
-        )
+        if (room != null) {
+            RoomScene(backgroundUrl = room.backgroundUrl, items = room.items, modifier = Modifier.fillMaxSize())
+        } else {
+            Image(
+                bitmap = ImageBitmap.imageResource(R.drawable.home_room_background),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                alignment = Alignment.BottomCenter,
+                filterQuality = FilterQuality.None,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
         val nyummyModifier = Modifier
             .align(Alignment.TopCenter)
             .offset(y = nyummyTop)
@@ -327,6 +335,7 @@ private val DozeSheet = NyummySpriteSheet(
 private fun HomeRoomCardPreview() {
     NyummyTheme {
         HomeRoomCard(
+            room = null,
             hasRecordedToday = true,
             catMotion = null,
             useFallbackCat = true,

@@ -97,7 +97,7 @@ class HomeViewModel @Inject constructor(
 
     override fun reduce(state: HomeUIState, event: HomeReducerEvent): HomeUIState =
         when (event) {
-            is HomeReducerEvent.SummaryLoaded -> state.copy(summary = event.summary, isSummaryLoaded = true)
+            is HomeReducerEvent.SummaryLoaded -> state.copy(summary = event.summary, room = event.room, isSummaryLoaded = true)
             is HomeReducerEvent.TodaySheetVisibilityChanged -> state.copy(isTodaySheetVisible = event.visible)
             HomeReducerEvent.TodayMealsLoadStarted -> state.copy(isTodayMealsLoading = true, isTodayMealsFailed = false)
             is HomeReducerEvent.TodayMealsLoaded -> state.copy(
@@ -130,7 +130,10 @@ class HomeViewModel @Inject constructor(
                 val recordedJustNow = hasLoadedSummary &&
                     summary.todayRecordedCount > currentState.summary.todayRecordedCount
                 hasLoadedSummary = true
-                dispatch(HomeReducerEvent.SummaryLoaded(summary))
+                // 마이룸이 켜져 있으면 고양이방 카드에 꾸민 방을 그린다. 꺼져 있으면 앱에 든 방 그림 그대로다.
+                val room = summary.roomPlacements.toHomeRoom()
+                    .takeIf { remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled) }
+                dispatch(HomeReducerEvent.SummaryLoaded(summary, room))
                 updateCatState(recordedJustNow)
             }
         }

@@ -1,5 +1,7 @@
 package com.dandi.nyummy.room.entity
 
+import kotlinx.serialization.Serializable
+
 /** 마이룸 아이템 종류. 배경은 방에 하나만 깔고, 나머지(인테리어)는 자유롭게 여러 개 놓는다. */
 enum class RoomItemCategory {
     BACKGROUND,
@@ -55,6 +57,7 @@ data class OwnedRoomItemPageVO(
  * - [zIndex]: 작을수록 뒤에 그린다. 배경이 0이고 인테리어는 1부터 놓은 순서대로다.
  * - [itemId]: 아이템 종류 id. 화면이 CDN 아이템 경로에 붙여 그림 주소를 만든다. 없으면 null.
  */
+@Serializable
 data class RoomPlacementVO(
     val roomItemId: Long = 0L,
     val category: RoomItemCategory = RoomItemCategory.ETC,

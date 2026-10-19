@@ -95,6 +95,7 @@ internal fun HomeScreen(
                 if (uiState.hasRecordedToday) R.string.home_speech_recorded else R.string.home_speech_waiting,
             )
             HomeRoomCard(
+                room = uiState.room,
                 hasRecordedToday = uiState.hasRecordedToday,
                 catMotion = uiState.catMotion,
                 useFallbackCat = uiState.isCatAnimationFailed,
