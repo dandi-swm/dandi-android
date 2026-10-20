@@ -55,7 +55,7 @@ data class SignUpUIState(
         fun initial(isSocialSignUp: Boolean): SignUpUIState =
             if (isSocialSignUp) SignUpUIState(isSocialSignUp = true, step = SignUpStep.PROFILE) else empty
 
-        const val CODE_LENGTH = 6
+        const val CODE_LENGTH = AuthCodeLength
         const val DEFAULT_BIRTH_YEAR = 2000
         const val DEFAULT_BIRTH_MONTH = 3
         const val DEFAULT_BIRTH_DAY = 30
