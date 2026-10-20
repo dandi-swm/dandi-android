@@ -175,6 +175,8 @@ val appRoutes: List<AppRoute> = listOf(
     ),
     AppRoute(
         path = MyRoomPage.PATH,
+        // 방이 상태 표시줄 뒤까지 화면 전체를 채운다(홈과 같다).
+        drawsBehindSystemBars = true,
         syntheticStack = { args ->
             listOf(
                 GenericNavKey(HomePage.PATH),

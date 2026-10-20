@@ -20,8 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -31,7 +29,6 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconBut
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.helper.HideBottomBarEffect
-import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.common.presentation.room.fitRoomCard
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.home.presentation.component.HomeHud
@@ -141,12 +138,6 @@ internal fun HomeScreen(
         }
     }
 }
-
-/**
- * 홈이 [width]×[height] 자리를 받을 때 고양이방 크기. 홈은 방이 화면 전체를 채우므로 창 크기 그대로이고,
- * 너무 넓거나 긴 화면에서만 줄인다. 앱 루트가 이 값을 마이룸에 넘겨, 마이룸도 홈과 같은 곳이 잘린 방을 보여 준다.
- */
-fun homeRoomCardSize(width: Dp, height: Dp): DpSize = RoomCardLayout.cardSize(maxWidth = width, maxHeight = height)
 
 private val ContentMaxWidth = 480.dp
 
