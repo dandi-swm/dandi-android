@@ -3,6 +3,7 @@ package com.dandi.nyummy.auth.presentation
 import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.auth.domain.EmailLoginValidator
 import com.dandi.nyummy.auth.domain.LoginUseCase
+import com.dandi.nyummy.auth.domain.PasswordResetPage
 import com.dandi.nyummy.auth.domain.SignUpPage
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
@@ -51,7 +52,7 @@ class EmailLoginViewModel @Inject constructor(
     }
 
     private fun forgotPassword() {
-        // TODO: 비밀번호 찾기 화면 미구현 — Page 추가 후 navigationHelper.navigateTo(...)
+        navigationHelper.navigateTo(PasswordResetPage)
     }
 
     private fun signUp() {

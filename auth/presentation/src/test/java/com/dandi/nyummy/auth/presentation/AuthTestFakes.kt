@@ -10,6 +10,8 @@ import com.dandi.nyummy.auth.entity.SocialCredentialVO
 import com.dandi.nyummy.auth.entity.SocialLoginVO
 import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
+import com.dandi.nyummy.common.domain.error.HttpResponseException
+import com.dandi.nyummy.common.domain.error.HttpResponseStatus
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -28,9 +30,26 @@ import kotlinx.coroutines.flow.emptyFlow
 
 // auth ViewModel 테스트들이 함께 쓰는 가짜 구현.
 
+/** 서버 에러 바디의 `code` 를 cause 로 담는 실제 변환(BaseRemoteDataSource)과 같은 형태로 만든다. */
+internal fun httpException(code: Int, errorCode: String? = null): HttpResponseException =
+    HttpResponseException(
+        status = HttpResponseStatus.create(code),
+        rawCode = code,
+        errorRequestUrl = "https://test/api/v1/auth",
+        msg = "Http Request Failed ($code)",
+        cause = errorCode?.let(::Throwable),
+    )
+
 internal class FakeAuthRepository : AuthRepository {
     var socialLoginResult: SocialLoginVO = SocialLoginVO.empty
     val socialLoginCalls = mutableListOf<SocialCredentialVO>()
+    var emailChallengeToken = ""
+    var emailVerifiedToken = ""
+    var confirmEmailVerificationError: Exception? = null
+    var resetPasswordError: Exception? = null
+    val requestEmailVerificationCalls = mutableListOf<Pair<String, EmailVerificationPurpose>>()
+    val confirmEmailVerificationCalls = mutableListOf<String>()
+    val resetPasswordCalls = mutableListOf<String>()
 
     override suspend fun setOnboardingIncomplete(incomplete: Boolean) = Unit
 
@@ -51,11 +70,21 @@ internal class FakeAuthRepository : AuthRepository {
         weight: Int?,
     ) = Unit
 
-    override suspend fun requestEmailVerification(email: String, purpose: EmailVerificationPurpose) =
-        EmailChallengeVO()
+    override suspend fun requestEmailVerification(email: String, purpose: EmailVerificationPurpose): EmailChallengeVO {
+        requestEmailVerificationCalls += email to purpose
+        return EmailChallengeVO(emailChallengeToken)
+    }
 
-    override suspend fun confirmEmailVerification(authCode: String, emailChallengeToken: String) =
-        EmailVerifiedVO()
+    override suspend fun confirmEmailVerification(authCode: String, emailChallengeToken: String): EmailVerifiedVO {
+        confirmEmailVerificationCalls += authCode
+        confirmEmailVerificationError?.let { throw it }
+        return EmailVerifiedVO(emailVerifiedToken)
+    }
+
+    override suspend fun resetPassword(verifiedToken: String) {
+        resetPasswordCalls += verifiedToken
+        resetPasswordError?.let { throw it }
+    }
 
     override suspend fun logout() = Unit
 }
@@ -124,7 +153,12 @@ internal class RecordingMessageHelper : MessageHelper {
         onClickLeftButton: (() -> Unit)?,
         rightButtonText: String,
         onClickRightButton: (() -> Unit)?,
-    ) = Unit
+    ) {
+        lastTwoButtonConfirm = onClickRightButton
+    }
+
+    /** 마지막 두 버튼 다이얼로그의 오른쪽(확인) 버튼. 테스트가 직접 눌러 본다. */
+    var lastTwoButtonConfirm: (() -> Unit)? = null
 }
 
 internal object FakeResourceHelper : ResourceHelper {

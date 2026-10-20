@@ -68,6 +68,16 @@ data class EmailVerificationRequestDTO(
 )
 
 /**
+ * 비밀번호 재설정 요청 바디입니다.
+ *
+ * @property verifiedToken 비밀번호 찾기(`RESET_PASSWORD`)로 받은 이메일 인증 완료 토큰
+ */
+@Serializable
+data class ResetPasswordRequestDTO(
+    val verifiedToken: String,
+)
+
+/**
  * 이메일 인증 코드 확인 요청 바디입니다.
  *
  * @property authCode 이메일로 받은 6자리 인증 코드

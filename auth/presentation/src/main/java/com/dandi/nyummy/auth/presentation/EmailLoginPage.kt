@@ -53,7 +53,7 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
  *
  * 이메일과 비밀번호를 입력해 로그인한다. 로그인 중에는 입력과 버튼을 막고 버튼 문구를 "로그인 중…"으로 바꾼다.
  * 서버 오류(이메일 또는 비밀번호 불일치 등)는 UseCase가 공통 다이얼로그로 띄운다.
- * 비밀번호 찾기는 화면이 아직 없어 진입만 예약되어 있다.
+ * "비밀번호를 잊었나요?"는 비밀번호 찾기 화면으로 간다.
  */
 @Composable
 fun EmailLoginPage(
@@ -258,7 +258,7 @@ internal fun AuthFormHeader(title: String, subtitle: String) {
     Spacer(Modifier.height(HeaderBottomGap))
 }
 
-private fun EmailLoginFieldError.messageRes(): Int = when (this) {
+internal fun EmailLoginFieldError.messageRes(): Int = when (this) {
     EmailLoginFieldError.EMAIL_FORMAT -> R.string.auth_email_error_format
 }
 

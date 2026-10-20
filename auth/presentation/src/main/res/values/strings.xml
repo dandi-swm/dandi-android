@@ -70,4 +70,10 @@
     <string name="auth_signup_birth_year_description">Birth year</string>
     <string name="auth_signup_birth_month_description">Birth month</string>
     <string name="auth_signup_birth_day_description">Birth day</string>
+    <string name="auth_password_reset_title">Reset password</string>
+    <string name="auth_password_reset_subtitle">Enter the email you signed up with.</string>
+    <string name="auth_password_reset_cta">Get verification code</string>
+    <string name="auth_password_reset_done_title">We sent a temporary password</string>
+    <string name="auth_password_reset_done_subtitle">Log in with the temporary password we sent to %1$s.</string>
+    <string name="auth_password_reset_done_cta">Log in</string>
 </resources>

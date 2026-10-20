@@ -180,6 +180,8 @@ internal object FakeAuthRepository : AuthRepository {
     override suspend fun confirmEmailVerification(authCode: String, emailChallengeToken: String): EmailVerifiedVO =
         error("not used")
 
+    override suspend fun resetPassword(verifiedToken: String) = Unit
+
     override suspend fun logout() = Unit
 }
 

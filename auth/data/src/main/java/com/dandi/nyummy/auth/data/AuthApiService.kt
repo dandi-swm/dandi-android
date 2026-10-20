@@ -9,6 +9,7 @@ import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
 import com.dandi.nyummy.auth.data.dto.OAuthLoginDTO
 import com.dandi.nyummy.auth.data.dto.OAuthLoginRequestDTO
 import com.dandi.nyummy.auth.data.dto.RefreshTokenRequestDTO
+import com.dandi.nyummy.auth.data.dto.ResetPasswordRequestDTO
 import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
 import com.dandi.nyummy.common.data.token.TokenAuthenticator
 import retrofit2.Response
@@ -39,6 +40,10 @@ interface AuthApiService {
     /** 이메일 인증 코드 확인 */
     @POST("${AUTH_PATH}/email-verification/confirm")
     suspend fun confirmEmailVerification(@Body request: EmailVerificationConfirmRequestDTO): Response<EmailVerifiedDTO>
+
+    /** 비밀번호 재설정. 임시 비밀번호로 바꾸고 가입한 이메일로 보낸다(204). */
+    @POST("${AUTH_PATH}/password/reset")
+    suspend fun resetPassword(@Body request: ResetPasswordRequestDTO): Response<Unit>
 
     /** 토큰 재발급 */
     @POST("${AUTH_PATH}/refresh")
