@@ -38,18 +38,18 @@ class RoomCardFitTest {
 
     @Test
     fun 보통_자리는_카드가_꽉_채운다() {
-        setSlot(width = 344, height = 520)
+        setSlot(width = 344, height = 600)
 
         composeRule.onNodeWithTag(CardTag)
             .assertWidthIsEqualTo(344.dp)
-            .assertHeightIsEqualTo(520.dp)
+            .assertHeightIsEqualTo(600.dp)
             .assertLeftPositionInRootIsEqualTo(0.dp)
             .assertTopPositionInRootIsEqualTo(0.dp)
     }
 
     @Test
     fun 너무_긴_자리에서는_높이를_줄여_맨_위에_붙인다() {
-        setSlot(width = 300, height = 700)
+        setSlot(width = 300, height = 760)
 
         composeRule.onNodeWithTag(CardTag)
             .assertWidthIsEqualTo(300.dp)

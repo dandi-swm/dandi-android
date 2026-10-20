@@ -196,7 +196,7 @@ internal fun RoomStage(
  *
  * 보이는 영역과 놓을 수 있는 영역은 방 그림 대비 비율(왼쪽 위 0, 오른쪽 아래 1)이다.
  * 아이템 바닥 점은 놓을 수 있는 영역([placeLeft]~[placeRight], [placeTop]~[placeBottom]) 안에만 둔다.
- * 이 기기에서 보이는 곳이면서 그림의 안전 지대(가장자리 [RoomCardLayout.BleedFraction] 안쪽)라서, 어느 기기에서나 보인다.
+ * 이 기기에서 보이는 곳이면서 홈 화면 요소에 가리지 않는 곳([RoomCardLayout.PlaceMinX] 등)이라서, 어느 기기에서나 보인다.
  *
  * @property visibleLeft 무대 왼쪽 끝(폭 대비 비율). 좌우가 잘렸으면 0보다 크다.
  * @property visibleRight 무대 오른쪽 끝(폭 대비 비율)
@@ -226,17 +226,17 @@ internal data class RoomFrame(
         ).translate(roomRect.topLeft)
 
     val placeLeft: Float
-        get() = max(visibleLeft, RoomCardLayout.BleedFraction)
+        get() = max(visibleLeft, RoomCardLayout.PlaceMinX)
 
     val placeRight: Float
-        get() = min(visibleRight, 1f - RoomCardLayout.BleedFraction)
+        get() = min(visibleRight, RoomCardLayout.PlaceMaxX)
 
     val placeTop: Float
-        get() = max(visibleTop, RoomCardLayout.BleedFraction)
+        get() = max(visibleTop, RoomCardLayout.PlaceMinY)
 
-    /** 바닥 쪽은 그림이 잘리지 않으므로 시트에 가리지 않는 맨 아래까지다. */
+    /** 하단 내비가 덮는 곳 위까지이고, 시트가 그보다 높이 올라오면 시트에 가리지 않는 맨 아래까지다. */
     val placeBottom: Float
-        get() = visibleBottom
+        get() = min(visibleBottom, RoomCardLayout.PlaceMaxY)
 
     /**
      * 보관함에서 새로 꺼낸 아이템을 놓을 바닥 점. 무대 가운데, 방 가운데 바닥(시트에 가리면 시트 바로 위)이다.

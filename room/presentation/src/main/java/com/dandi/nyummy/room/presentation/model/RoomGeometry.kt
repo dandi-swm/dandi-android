@@ -10,8 +10,8 @@ import androidx.compose.ui.geometry.Rect
  */
 internal object RoomGeometry {
 
-    /** 보관함에서 새로 꺼낸 아이템 바닥 점의 높이(방 바닥 쪽). 시트에 가리면 시트 바로 위로 올린다. */
-    const val NEW_ITEM_Y = 0.8f
+    /** 보관함에서 새로 꺼낸 아이템 바닥 점의 높이(방 바닥 쪽, 놓을 수 있는 곳 안). 시트에 가리면 시트 바로 위로 올린다. */
+    const val NEW_ITEM_Y = 0.75f
 
     /** [point]에 닿은 아이템 중 맨 앞(나중에 그린) 아이템. [rects]는 뒤에서 앞 순서다. 없으면 null. */
     fun <T> topmostAt(rects: List<Pair<T, Rect>>, point: Offset): T? =
