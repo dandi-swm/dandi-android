@@ -84,7 +84,12 @@ class HomeViewModel @Inject constructor(
 
     override fun reduce(state: HomeUIState, event: HomeReducerEvent): HomeUIState =
         when (event) {
-            is HomeReducerEvent.SummaryLoaded -> state.copy(summary = event.summary, room = event.room, isSummaryLoaded = true)
+            is HomeReducerEvent.SummaryLoaded -> state.copy(
+                summary = event.summary,
+                room = event.room,
+                showsMailBadge = event.showsMailBadge,
+                isSummaryLoaded = true,
+            )
             is HomeReducerEvent.UiHiddenChanged -> state.copy(isUiHidden = event.hidden)
             HomeReducerEvent.CatAnimationsLoaded -> state.copy(isCatAnimationFailed = false)
             HomeReducerEvent.CatAnimationsLoadFailed -> state.copy(isCatAnimationFailed = true)
@@ -111,7 +116,8 @@ class HomeViewModel @Inject constructor(
                 // 마이룸이 켜져 있으면 고양이방에 꾸민 방을 그린다. 꺼져 있으면 기본 빈 방만 그린다.
                 val room = summary.roomPlacements.toHomeRoom()
                     .takeIf { remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled) }
-                dispatch(HomeReducerEvent.SummaryLoaded(summary, room))
+                val showsMailBadge = summary.hasMailboxBadge && remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)
+                dispatch(HomeReducerEvent.SummaryLoaded(summary, room, showsMailBadge))
                 updateCatState(recordedJustNow)
             }
         }

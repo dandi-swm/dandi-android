@@ -37,7 +37,7 @@ import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
  * 홈 상단. 왼쪽 지갑 카드(보유 코인)가 남는 폭을 차지하고, 오른쪽에 우편, 공지, 설정 버튼이 붙는다.
- * 읽지 않은 문의 답장([hasUnreadMail])이나 공지([hasUnreadNotice])가 있으면 그 버튼에 빨간 점을 단다.
+ * 받을 우편([hasUnreadMail])이나 읽지 않은 공지([hasUnreadNotice])가 있으면 그 버튼에 빨간 점을 단다.
  */
 @Composable
 internal fun HomeHud(

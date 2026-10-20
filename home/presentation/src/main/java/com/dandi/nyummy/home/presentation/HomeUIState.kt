@@ -20,6 +20,7 @@ import kotlinx.collections.immutable.ImmutableList
  * @property catLine 말풍선 대사. 애니메이션이 없으면 null이고, 화면은 기본 대사를 쓴다.
  * @property catMotion 지금 재생할 냐미 동작. 애니메이션이나 상태가 아직 없으면 null이다.
  * @property room 고양이방에 그릴 꾸민 방. 마이룸이 꺼져 있으면 null이고, 기본 빈 방만 그린다.
+ * @property showsMailBadge 우편 버튼에 빨간 점을 단다. 받을 우편이 있어도 우편함 아이템 기능이 꺼져 있으면(준비 중) 달지 않는다.
  */
 data class HomeUIState(
     val summary: HomeSummaryVO = HomeSummaryVO.empty,
@@ -32,6 +33,7 @@ data class HomeUIState(
     val catLine: String? = null,
     val catMotion: HomeCatMotion? = null,
     val room: HomeRoomUiModel? = null,
+    val showsMailBadge: Boolean = false,
 ) : UiState {
 
     /** 오늘 한 끼라도 기록했는지. 냐미 상태와 대사가 이 값으로 갈린다. */
