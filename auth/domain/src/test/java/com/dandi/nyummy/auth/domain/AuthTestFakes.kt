@@ -45,6 +45,7 @@ internal class FakeAuthRepository(
     var signUpError: Exception? = null,
     var requestEmailVerificationError: Exception? = null,
     var confirmEmailVerificationError: Exception? = null,
+    var resetPasswordError: Exception? = null,
 ) : AuthRepository {
 
     data class SignUpCall(
@@ -104,7 +105,12 @@ internal class FakeAuthRepository(
         return EmailVerifiedVO()
     }
 
-    override suspend fun resetPassword(verifiedToken: String) = Unit
+    val resetPasswordCalls = mutableListOf<String>()
+
+    override suspend fun resetPassword(verifiedToken: String) {
+        resetPasswordCalls += verifiedToken
+        resetPasswordError?.let { throw it }
+    }
 
     override suspend fun logout() = Unit
 }
