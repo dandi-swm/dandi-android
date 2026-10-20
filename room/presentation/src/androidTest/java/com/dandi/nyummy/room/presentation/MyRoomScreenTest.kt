@@ -4,8 +4,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.jank.DebugJankReport
 import com.dandi.nyummy.common.presentation.jank.JankReporter
@@ -44,7 +42,6 @@ class MyRoomScreenTest {
                                 tab.copy(items = persistentListOf(InventoryItemUiModel(1, RoomItemCategory.ETC, "털실 공", "", isPlaced = true)))
                             }.toImmutableList(),
                         ),
-                        homeCardSize = DpSize(344.dp, 700.dp),
                         onIntent = {},
                     )
                 }

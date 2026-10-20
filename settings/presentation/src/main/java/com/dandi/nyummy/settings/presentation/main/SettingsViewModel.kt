@@ -10,6 +10,7 @@ import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.legal.domain.LegalPage
+import com.dandi.nyummy.mailbox.domain.InquiryListPage
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
 import com.dandi.nyummy.settings.domain.UpdateNotificationSettingsUseCase
@@ -64,6 +65,7 @@ class SettingsViewModel @Inject constructor(
             is SettingsIntent.ClickNotificationDetail -> dispatch(SettingsReducerEvent.NotificationDetailChanged(intent.kind))
             SettingsIntent.DismissNotificationDetail -> dispatch(SettingsReducerEvent.NotificationDetailChanged(null))
             SettingsIntent.ClickMealTime -> whenLoaded { navigationHelper.navigateTo(MealTimeSettingPage) }
+            SettingsIntent.ClickInquiry -> navigationHelper.navigateTo(InquiryListPage)
             is SettingsIntent.ClickLegal -> navigationHelper.navigateTo(LegalPage(intent.document))
             SettingsIntent.ClickLogout -> dispatch(SettingsReducerEvent.LogoutDialogVisibilityChanged(visible = true))
             SettingsIntent.DismissLogoutDialog ->

@@ -21,22 +21,12 @@ import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
-import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSource
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
-import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
-import com.dandi.nyummy.history.domain.HistoryRepository
-import com.dandi.nyummy.history.entity.DailyMealHistoryVO
-import com.dandi.nyummy.history.entity.DailyNutritionVO
-import com.dandi.nyummy.history.entity.HistoryCalendarVO
-import com.dandi.nyummy.history.entity.MealAnalysisStatus
-import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.home.domain.HomeRepository
 import com.dandi.nyummy.home.domain.tti.HomeTTIPage
 import com.dandi.nyummy.home.entity.HomeSummaryVO
-import com.dandi.nyummy.meal.domain.MealRecordPage
-import com.dandi.nyummy.room.domain.MyRoomPage
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.entity.RoomPlacementVO
 import com.dandi.nyummy.tti.TTIHelper
@@ -69,7 +59,6 @@ class HomeViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val homeRepository = FakeHomeRepository()
-    private val historyRepository = FakeHistoryRepository()
     private val catRepository = FakeCatRepository()
     private val navigationHelper = RecordingNavigationHelper()
     private val tti = RecordingTTIHelper()
@@ -85,15 +74,9 @@ class HomeViewModelTest {
         Dispatchers.setMain(testDispatcher)
         viewModel = HomeViewModel(
             navigationHelper = navigationHelper,
+            messageHelper = SilentMessageHelper,
             getHomeSummary = GetHomeSummaryUseCase(
                 repository = homeRepository,
-                resourceHelper = FakeResourceHelper,
-                messageHelper = SilentMessageHelper,
-                navigationHelper = navigationHelper,
-                ttiHelper = FakeTTIHelper,
-            ),
-            getDailyMeals = GetDailyMealsUseCase(
-                repository = historyRepository,
                 resourceHelper = FakeResourceHelper,
                 messageHelper = SilentMessageHelper,
                 navigationHelper = navigationHelper,
@@ -127,7 +110,7 @@ class HomeViewModelTest {
     private val decoratedRoom = listOf(
         RoomPlacementVO(roomItemId = 101, category = RoomItemCategory.BED, itemId = 2, x = 50f, y = 20f, zIndex = 3, scale = 9f),
         RoomPlacementVO(roomItemId = 108, category = RoomItemCategory.BACKGROUND, itemId = 1),
-        RoomPlacementVO(roomItemId = 104, category = RoomItemCategory.CARPET, itemId = 3, x = 30f, y = 10f, zIndex = 1),
+        RoomPlacementVO(roomItemId = 104, category = RoomItemCategory.ETC, itemId = 3, x = 30f, y = 10f, zIndex = 1),
         RoomPlacementVO(roomItemId = 105, category = RoomItemCategory.ETC, itemId = null, x = 60f, y = 10f, zIndex = 2),
     )
 
@@ -135,22 +118,6 @@ class HomeViewModelTest {
         homeRepository.next = { summary }
         viewModel.onIntent(HomeIntent.ScreenResumed)
         advanceUntilIdle()
-    }
-
-    @Test
-    fun `마이룸 플래그가 켜져 있으면 집 버튼으로 마이룸에 간다`() {
-        isMyRoomEnabled = true
-
-        viewModel.onIntent(HomeIntent.ClickMyRoom)
-
-        assertEquals(listOf<Page>(MyRoomPage), navigationHelper.pages)
-    }
-
-    @Test
-    fun `마이룸 플래그가 꺼져 있으면 집 버튼을 눌러도 아무 데도 가지 않는다`() {
-        viewModel.onIntent(HomeIntent.ClickMyRoom)
-
-        assertTrue(navigationHelper.pages.isEmpty())
     }
 
     @Test
@@ -244,124 +211,6 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertEquals(100, state.summary.coinBalance)
-    }
-
-    @Test
-    fun `오늘 기록이 없으면 오늘 바는 식사 기록으로 보내고 시트를 열지 않는다`() = runTest(testDispatcher) {
-        resumeWith(HomeSummaryVO(todayRecordedCount = 0))
-
-        viewModel.onIntent(HomeIntent.ClickTodayBar)
-        advanceUntilIdle()
-
-        assertEquals(listOf<Page>(MealRecordPage), navigationHelper.pages)
-        assertFalse(state.isTodaySheetVisible)
-        assertEquals(0, historyRepository.dailyCalls.size)
-    }
-
-    @Test
-    fun `오늘 기록이 있으면 시트를 열고 기기 타임존 기준 오늘 식사를 읽는다`() = runTest(testDispatcher) {
-        val meal = MealHistoryVO(id = "1", name = "닭가슴살 샐러드")
-        val nutrition = DailyNutritionVO(currentCalorieKcal = 420)
-        historyRepository.next = { DailyMealHistoryVO(meals = listOf(meal), nutrition = nutrition) }
-        resumeWith(HomeSummaryVO(todayRecordedCount = 1))
-
-        // 요청 사이에 기기 타임존 자정이 지나도 실패하지 않도록 전후 날짜를 모두 허용한다.
-        val before = DeviceTime.today().let { Triple(it.year, it.monthValue, it.dayOfMonth) }
-        viewModel.onIntent(HomeIntent.ClickTodayBar)
-        assertTrue(state.isTodaySheetVisible)
-        assertTrue(state.isTodayMealsLoading)
-        advanceUntilIdle()
-        val after = DeviceTime.today().let { Triple(it.year, it.monthValue, it.dayOfMonth) }
-
-        assertTrue(historyRepository.dailyCalls.single() in setOf(before, after))
-        assertEquals(nutrition, state.todayNutrition)
-        assertEquals(listOf(meal), state.todayMeals)
-        assertFalse(state.isTodayMealsLoading)
-        assertTrue(navigationHelper.pages.isEmpty())
-    }
-
-    @Test
-    fun `오늘 식사를 읽지 못하면 실패 상태가 되고 다시 시도하면 다시 읽는다`() = runTest(testDispatcher) {
-        resumeWith(HomeSummaryVO(todayRecordedCount = 2))
-        historyRepository.next = { throw IOException("offline") }
-
-        viewModel.onIntent(HomeIntent.ClickTodayBar)
-        advanceUntilIdle()
-        assertTrue(state.isTodayMealsFailed)
-        assertNull(state.todayNutrition)
-
-        historyRepository.next = { DailyMealHistoryVO.empty }
-        viewModel.onIntent(HomeIntent.RetryTodayMeals)
-        advanceUntilIdle()
-
-        assertFalse(state.isTodayMealsFailed)
-        assertEquals(DailyNutritionVO.empty, state.todayNutrition)
-        assertTrue(state.todayMeals.isEmpty())
-        assertEquals(2, historyRepository.dailyCalls.size)
-    }
-
-    @Test
-    fun `한 번 읽은 뒤 다시 열 때 실패하면 실패 상태가 된다`() = runTest(testDispatcher) {
-        resumeWith(HomeSummaryVO(todayRecordedCount = 1))
-        viewModel.onIntent(HomeIntent.ClickTodayBar)
-        advanceUntilIdle()
-        viewModel.onIntent(HomeIntent.DismissTodaySheet)
-
-        historyRepository.next = { throw IOException("offline") }
-        viewModel.onIntent(HomeIntent.ClickTodayBar)
-        advanceUntilIdle()
-
-        // 화면은 실패를 먼저 보고 다시 시도를 띄운다(HomeScreenTest 참고).
-        assertTrue(state.isTodayMealsFailed)
-        assertFalse(state.isTodayMealsLoading)
-    }
-
-    @Test
-    fun `시트를 닫았다 다시 열면 방금 기록한 식사가 보이도록 새로 읽는다`() = runTest(testDispatcher) {
-        resumeWith(HomeSummaryVO(todayRecordedCount = 1))
-        viewModel.onIntent(HomeIntent.ClickTodayBar)
-        advanceUntilIdle()
-
-        viewModel.onIntent(HomeIntent.DismissTodaySheet)
-        assertFalse(state.isTodaySheetVisible)
-        viewModel.onIntent(HomeIntent.ClickTodayBar)
-        advanceUntilIdle()
-
-        assertTrue(state.isTodaySheetVisible)
-        assertEquals(2, historyRepository.dailyCalls.size)
-    }
-
-    @Test
-    fun `식사 추가하기는 시트를 닫고 식사 기록으로 보낸다`() = runTest(testDispatcher) {
-        resumeWith(HomeSummaryVO(todayRecordedCount = 1))
-        viewModel.onIntent(HomeIntent.ClickTodayBar)
-        advanceUntilIdle()
-
-        viewModel.onIntent(HomeIntent.ClickAddMeal)
-
-        assertFalse(state.isTodaySheetVisible)
-        assertEquals(listOf<Page>(MealRecordPage), navigationHelper.pages)
-    }
-
-    @Test
-    fun `방 메뉴 버튼은 펼침과 접힘을 오간다`() {
-        assertFalse(state.isRoomMenuExpanded)
-
-        viewModel.onIntent(HomeIntent.ToggleRoomMenu)
-        assertTrue(state.isRoomMenuExpanded)
-
-        viewModel.onIntent(HomeIntent.ToggleRoomMenu)
-        assertFalse(state.isRoomMenuExpanded)
-    }
-
-    @Test
-    fun `kcal 막대는 목표 대비 비율이고 0에서 1 사이로 자르며 목표가 없으면 0이다`() {
-        fun progress(today: Int, goal: Int) =
-            HomeUIState(summary = HomeSummaryVO(todayCalorieKcal = today, goalCalorieKcal = goal)).calorieProgress
-
-        assertEquals(0.75f, progress(1350, 1800), 0.0001f)
-        assertEquals(1f, progress(2500, 1800), 0f)
-        assertEquals(0f, progress(500, 0), 0f)
     }
 
     @Test
@@ -524,23 +373,6 @@ class HomeViewModelTest {
             callCount++
             return next()
         }
-    }
-
-    private class FakeHistoryRepository : HistoryRepository {
-        var next: () -> DailyMealHistoryVO = { DailyMealHistoryVO.empty }
-        val dailyCalls = mutableListOf<Triple<Int, Int, Int>>()
-
-        override suspend fun getDailyMeals(year: Int, month: Int, day: Int): DailyMealHistoryVO {
-            dailyCalls += Triple(year, month, day)
-            return next()
-        }
-
-        override suspend fun getMonthlyCalendar(year: Int, month: Int) = HistoryCalendarVO.empty
-        override suspend fun getMeal(mealId: Long) = MealHistoryVO.empty
-        override suspend fun updateMealName(mealId: Long, name: String) = MealHistoryVO.empty
-        override suspend fun reanalyzeMeal(mealId: Long) = MealAnalysisStatus.UNKNOWN
-        override suspend fun submitAnalysisFeedback(mealId: Long, ratingHalfSteps: Int, reason: String?) = Unit
-        override suspend fun deleteMeal(mealId: Long) = Unit
     }
 
     private class RecordingNavigationHelper : NavigationHelper {

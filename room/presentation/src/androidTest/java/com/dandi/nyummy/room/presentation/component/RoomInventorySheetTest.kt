@@ -131,10 +131,10 @@ class RoomInventorySheetTest {
     }
 
     @Test
-    fun 탭은_종류마다_다섯_개이고_서버_이름이_없으면_앱_이름을_쓴다() {
+    fun 탭은_종류마다_세_개이고_서버_이름이_없으면_앱_이름을_쓴다() {
         setSheet()
 
-        listOf("배경", "침대", "캣휠", "카펫", "기타").forEach { composeRule.onNodeWithText(it).assertExists() }
+        listOf("배경", "침대", "기타").forEach { composeRule.onNodeWithText(it).assertExists() }
     }
 
     @Test

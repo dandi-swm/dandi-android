@@ -56,12 +56,12 @@ class NyummyNavigationTest {
     }
 
     @Test
-    fun 하단_내비는_2탭을_순서대로_보여준다() {
+    fun 하단_내비는_탭을_순서대로_보여준다() {
         composeRule.setContent {
             NyummyTheme { NyummyBottomNav(items = NyummyMainTabs, selectedIndex = 0, onSelect = {}) }
         }
 
-        listOf("홈", "기록").forEach { label ->
+        listOf("홈", "마이룸", "기록", "상점").forEach { label ->
             composeRule.onNodeWithText(label).assertIsDisplayed()
         }
         composeRule.onAllNodesWithText("홈").assertCountEquals(1)
@@ -82,7 +82,7 @@ class NyummyNavigationTest {
 
         composeRule.onNodeWithText("기록").assertIsSelected()
         composeRule.onNodeWithText("홈").assertIsNotSelected()
-        assertEquals(1, selected)
+        assertEquals(2, selected)
     }
 
     @Test

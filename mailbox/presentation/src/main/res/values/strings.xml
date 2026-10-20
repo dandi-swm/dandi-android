@@ -2,6 +2,7 @@
 <resources>
     <string name="mailbox_title">우편함</string>
     <string name="mailbox_write_action">문의하기</string>
+    <string name="inquiry_list_title">문의 내역</string>
 
     <string name="mailbox_category_bug_report">버그 제보</string>
     <string name="mailbox_category_question">단순 문의</string>
@@ -14,7 +15,7 @@
     <string name="mailbox_empty_body">궁금한 점이나 불편한 점을 알려 주세요</string>
 
     <string name="mailbox_write_title">문의하기</string>
-    <string name="mailbox_write_reply_notice">답장은 우편함으로 보내 드려요</string>
+    <string name="mailbox_write_reply_notice">답장은 설정의 문의하기에서 볼 수 있어요</string>
     <string name="mailbox_write_category_label">문의 유형</string>
     <string name="mailbox_write_title_label">제목</string>
     <string name="mailbox_write_title_placeholder">문의 제목을 적어 주세요</string>
@@ -27,9 +28,6 @@
     <string name="mailbox_write_send_failed">문의를 보내지 못했어요. 잠시 후 다시 시도해 주세요.</string>
 
     <string name="mailbox_detail_reply_from">냐미 팀 답장</string>
-
-    <string name="mailbox_tab_item">아이템</string>
-    <string name="mailbox_tab_inquiry">문의</string>
     <string name="mailbox_item_claim">받기</string>
     <string name="mailbox_item_open">열기</string>
     <string name="mailbox_item_claimed">받았어요</string>

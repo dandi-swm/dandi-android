@@ -120,6 +120,7 @@ internal fun SettingsScreen(
                 .padding(bottom = NyummyTheme.spacing.s24),
         ) {
             NotificationSection(uiState, onIntent, onOpenDeviceSettings)
+            SupportSection(onIntent)
             LegalSection(onIntent)
             Spacer(Modifier.height(NyummyTheme.spacing.s24))
             Row(
@@ -363,6 +364,16 @@ private fun DisclosureRow(@StringRes label: Int, value: @Composable () -> Unit) 
 @Composable
 private fun DisclosureValue(text: String) {
     NyummyText(text = text, style = NyummyTheme.typography.bodyM)
+}
+
+/** 고객 지원. 문의하기에서 보낸 문의와 답장을 보고 새 문의를 쓴다. */
+@Composable
+private fun SupportSection(onIntent: (SettingsIntent) -> Unit) {
+    NyummySectionCaption(title = stringResource(R.string.settings_section_support))
+    NyummyListRow(
+        title = stringResource(R.string.settings_inquiry),
+        onClick = { onIntent(SettingsIntent.ClickInquiry) },
+    )
 }
 
 @Composable

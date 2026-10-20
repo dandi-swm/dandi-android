@@ -1,39 +1,22 @@
 package com.dandi.nyummy.home.presentation.component
 
-import androidx.annotation.DrawableRes
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -47,7 +30,6 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteV
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceBubble
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
-import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.common.presentation.room.RoomScene
 import com.dandi.nyummy.home.presentation.HomeCatMotion
@@ -56,13 +38,13 @@ import com.dandi.nyummy.home.presentation.R
 import kotlinx.collections.immutable.persistentListOf
 
 /**
- * 냐미가 사는 고양이방 카드. 크기는 부르는 쪽이 정한다(홈은 남는 자리를 채운다).
+ * 냐미가 사는 고양이방. 홈에서는 화면 전체를 채우고, 크기는 부르는 쪽이 정한다.
  *
  * - 방은 마이룸에서 꾸민 그대로([room], 배경과 아이템) 그린다. 마이룸이 꺼져 있거나 배경이 없으면 기본 빈 방을 깐다.
- *   방 그림은 카드를 빈틈없이 덮고 아래를 기준으로 맞춘다. 카드가 세로로 길면 좌우가, 넓으면 위쪽이 잘린다.
+ *   방 그림은 자리를 빈틈없이 덮고 아래를 기준으로 맞춘다. 자리가 세로로 길면 좌우가, 넓으면 위쪽이 잘린다.
  * - 냐미 크기와 위치는 방 그림이 커진 배율로 정해 화면 크기와 상관없이 늘 같은 바닥 자리에 앉는다.
  *   이 규칙은 마이룸과 함께 쓰는 [RoomCardLayout]에 있다.
- * - 대사는 냐미 머리 위 말풍선, 오른쪽 위에는 방 메뉴, 아래에는 [bottom](오늘 바)을 둔다.
+ * - 대사는 냐미 머리 위 말풍선이다. [showSpeech]가 꺼지면(눈 버튼으로 화면 요소를 숨겼을 때) 감춘다.
  *
  * @param room 꾸민 방. null이면 아이템 없이 기본 빈 방만 그린다.
  * @param catMotion 서버에서 받은 냐미 동작. 받는 중이면 null이다.
@@ -70,7 +52,7 @@ import kotlinx.collections.immutable.persistentListOf
  * @param onCatShown 냐미가 처음 화면에 보인 순간(시트를 받아 그렸거나 기본 냐미를 그렸을 때). 홈 TTI 에 쓴다.
  */
 @Composable
-internal fun HomeRoomCard(
+internal fun HomeRoom(
     room: HomeRoomUiModel?,
     hasRecordedToday: Boolean,
     catMotion: HomeCatMotion?,
@@ -79,18 +61,12 @@ internal fun HomeRoomCard(
     onCatMotionFinished: (playId: Int) -> Unit,
     onCatShown: () -> Unit,
     speech: String,
-    isMenuExpanded: Boolean,
-    onToggleMenu: () -> Unit,
-    onMyRoomClick: () -> Unit,
-    onShareFriendClick: () -> Unit,
-    onNyummyStatusClick: () -> Unit,
+    showSpeech: Boolean,
     modifier: Modifier = Modifier,
-    bottom: @Composable () -> Unit,
 ) {
     BoxWithConstraints(
         modifier = modifier
             .testTag(RoomCardTag)
-            .clip(RoundedCornerShape(NyummyTheme.radius.l))
             .background(NyummyTheme.colors.bg.sceneRoomFloor),
     ) {
         val nyummyRect = RoomCardLayout.nyummyRect(maxWidth, maxHeight)
@@ -127,33 +103,17 @@ internal fun HomeRoomCard(
                 }
             }
         }
-        NyummyVoiceBubble(
-            text = speech,
-            typing = true,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = NyummyTheme.spacing.gutter)
-                .widthIn(max = BubbleMaxWidth)
-                // 말풍선 아래 끝을 냐미 그림 칸의 위 끝에 맞춘다. 동작마다 머리 높이가 달라도 냐미를 가리지 않는다.
-                .offset(y = -(maxHeight - nyummyTop)),
-        )
-        HomeRoomMenu(
-            isExpanded = isMenuExpanded,
-            onToggle = onToggleMenu,
-            onMyRoomClick = onMyRoomClick,
-            onShareFriendClick = onShareFriendClick,
-            onNyummyStatusClick = onNyummyStatusClick,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(NyummyTheme.spacing.s12),
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(NyummyTheme.spacing.s16),
-        ) {
-            bottom()
+        if (showSpeech) {
+            NyummyVoiceBubble(
+                text = speech,
+                typing = true,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = NyummyTheme.spacing.gutter)
+                    .widthIn(max = BubbleMaxWidth)
+                    // 말풍선 아래 끝을 냐미 그림 칸의 위 끝에 맞춘다. 동작마다 머리 높이가 달라도 냐미를 가리지 않는다.
+                    .offset(y = -(maxHeight - nyummyTop)),
+            )
         }
     }
 }
@@ -220,78 +180,10 @@ private fun HomeFallbackNyummy(
     }
 }
 
-/**
- * 방 메뉴. 접혀 있으면 발바닥 버튼 하나, 펼치면 마이룸, 친구에게 공유, 냐미 상태, 닫기가 한 줄로 나온다.
- * 흰 알약 바탕, 버튼 44, 픽셀 아이콘 32.
- */
-@Composable
-private fun HomeRoomMenu(
-    isExpanded: Boolean,
-    onToggle: () -> Unit,
-    onMyRoomClick: () -> Unit,
-    onShareFriendClick: () -> Unit,
-    onNyummyStatusClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val shape = RoundedCornerShape(NyummyTheme.radius.full)
-    Row(
-        modifier = modifier
-            .nyummyShadow(shape, NyummyTheme.elevation.soft)
-            .background(NyummyTheme.colors.bg.surface, shape)
-            .padding(MenuPadding),
-        horizontalArrangement = Arrangement.spacedBy(MenuGap),
-    ) {
-        AnimatedVisibility(
-            visible = isExpanded,
-            enter = fadeIn(tween(MenuAnimationMillis)) + expandHorizontally(tween(MenuAnimationMillis), expandFrom = Alignment.End),
-            exit = fadeOut(tween(MenuAnimationMillis)) + shrinkHorizontally(tween(MenuAnimationMillis), shrinkTowards = Alignment.End),
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(MenuGap)) {
-                RoomMenuButton(R.drawable.home_ic_my_room, stringResource(R.string.home_menu_my_room), onMyRoomClick)
-                RoomMenuButton(R.drawable.home_ic_share_friend, stringResource(R.string.home_menu_share_friend), onShareFriendClick)
-                RoomMenuButton(R.drawable.home_ic_nyummy_status, stringResource(R.string.home_menu_nyummy_status), onNyummyStatusClick)
-            }
-        }
-        RoomMenuButton(
-            icon = if (isExpanded) R.drawable.home_ic_menu_close else R.drawable.home_ic_menu_open,
-            description = stringResource(if (isExpanded) R.string.home_menu_collapse else R.string.home_menu_expand),
-            onClick = onToggle,
-        )
-    }
-}
-
-/** 픽셀 아이콘 버튼. 픽셀이 번지지 않게 필터 없이 그린다. */
-@Composable
-private fun RoomMenuButton(
-    @DrawableRes icon: Int,
-    description: String,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .size(MenuButtonSize)
-            .nyummyClickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Image(
-            bitmap = ImageBitmap.imageResource(icon),
-            contentDescription = description,
-            filterQuality = FilterQuality.None,
-            modifier = Modifier.size(MenuIconSize),
-        )
-    }
-}
-
-/** 고양이방 카드. 테스트가 카드 크기를 잴 때 찾는다. */
+/** 고양이방. 테스트가 방 크기를 잴 때 찾는다. */
 internal const val RoomCardTag = "home_room_card"
 
 private val BubbleMaxWidth = 276.dp
-private val MenuButtonSize = 44.dp
-/** 픽셀 아이콘은 밀도 버킷을 32dp로 만들어 두었다. 같은 크기로 그려야 기기에서 다시 줄이며 픽셀이 뭉개지지 않는다. */
-private val MenuIconSize = 32.dp
-private val MenuPadding = 6.dp
-private val MenuGap = 6.dp
-private const val MenuAnimationMillis = 180
 
 private val SleepLoopSheet = NyummySpriteSheet(
     imageRes = R.drawable.nyummy_sleep_loop_grid_136,
@@ -320,11 +212,11 @@ private val DozeSheet = NyummySpriteSheet(
     frameDurationMillis = 100,
 )
 
-@Preview(showBackground = true, widthDp = 350, heightDp = 567)
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
-private fun HomeRoomCardPreview() {
+private fun HomeRoomPreview() {
     NyummyTheme {
-        HomeRoomCard(
+        HomeRoom(
             room = null,
             hasRecordedToday = true,
             catMotion = null,
@@ -333,12 +225,7 @@ private fun HomeRoomCardPreview() {
             onCatMotionFinished = {},
             onCatShown = {},
             speech = "냠냠! 오늘도 챙겨줘서 고마워",
-            isMenuExpanded = true,
-            onToggleMenu = {},
-            onMyRoomClick = {},
-            onShareFriendClick = {},
-            onNyummyStatusClick = {},
-            bottom = {},
+            showSpeech = true,
         )
     }
 }

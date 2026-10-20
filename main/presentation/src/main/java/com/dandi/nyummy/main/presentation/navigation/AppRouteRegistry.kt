@@ -19,9 +19,11 @@ import com.dandi.nyummy.legal.domain.LegalPage as LegalRoute
 import com.dandi.nyummy.legal.entity.LegalDocument
 import com.dandi.nyummy.legal.presentation.LegalPage
 import com.dandi.nyummy.mailbox.domain.InquiryDetailPage as InquiryDetailRoute
+import com.dandi.nyummy.mailbox.domain.InquiryListPage as InquiryListRoute
 import com.dandi.nyummy.mailbox.domain.InquiryWritePage
 import com.dandi.nyummy.mailbox.domain.MailboxPage
 import com.dandi.nyummy.mailbox.presentation.detail.InquiryDetailPage
+import com.dandi.nyummy.mailbox.presentation.inquiry.InquiryListPage
 import com.dandi.nyummy.mailbox.presentation.list.MailboxPage
 import com.dandi.nyummy.mailbox.presentation.write.InquiryWritePage
 import com.dandi.nyummy.main.domain.deeplink.LinkAlias
@@ -36,6 +38,8 @@ import com.dandi.nyummy.settings.domain.MealTimeSettingPage
 import com.dandi.nyummy.settings.domain.SettingsPage
 import com.dandi.nyummy.settings.presentation.main.SettingsPage
 import com.dandi.nyummy.settings.presentation.mealtime.MealTimeSettingPage
+import com.dandi.nyummy.shop.domain.ShopPage
+import com.dandi.nyummy.shop.presentation.ShopPage
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
@@ -103,6 +107,9 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = HomePage.PATH,
         isBottomTab = true,
+        // 방이 상태 표시줄과 하단 내비 뒤까지 화면 전체를 채운다.
+        drawsBehindSystemBars = true,
+        drawsBehindBottomBar = true,
         render = {
             HomePage()
         },
@@ -110,6 +117,8 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = MealRecordPage.PATH,
         isBottomTab = false,
+        // 식사 기록 연출은 홈처럼 방이 시스템 바 뒤까지 화면 전체를 채운다. 촬영과 확인 단계는 화면이 시스템 바를 피한다.
+        drawsBehindSystemBars = true,
         syntheticStack = { args ->
             listOf(
                 GenericNavKey(HomePage.PATH),
@@ -129,6 +138,12 @@ val appRoutes: List<AppRoute> = listOf(
         },
     ),
     AppRoute(
+        // 상점 탭. 기능이 꺼져 있으면 하단 내비에 탭이 없고, 링크로 들어오면 내비 없이 이 화면만 보인다.
+        path = ShopPage.PATH,
+        isBottomTab = true,
+        render = { ShopPage() },
+    ),
+    AppRoute(
         path = MailboxPage.PATH,
         syntheticStack = { args ->
             listOf(
@@ -139,22 +154,38 @@ val appRoutes: List<AppRoute> = listOf(
         render = { MailboxPage() },
     ),
     AppRoute(
+        // 설정의 문의하기에서 들어오는 내가 보낸 문의 목록.
+        path = InquiryListRoute.PATH,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(HomePage.PATH),
+                GenericNavKey(SettingsPage.PATH),
+                GenericNavKey(InquiryListRoute.PATH, args),
+            )
+        },
+        render = { InquiryListPage() },
+    ),
+    AppRoute(
+        // 경로는 서버 푸시 링크와 맞춰 둔 우편함 아래 그대로이고, 뒤로 가면 설정의 문의 목록으로 간다.
         path = InquiryWritePage.PATH,
         syntheticStack = { args ->
             listOf(
                 GenericNavKey(HomePage.PATH),
-                GenericNavKey(MailboxPage.PATH),
+                GenericNavKey(SettingsPage.PATH),
+                GenericNavKey(InquiryListRoute.PATH),
                 GenericNavKey(InquiryWritePage.PATH, args),
             )
         },
         render = { InquiryWritePage() },
     ),
     AppRoute(
+        // 답장 알림 링크로 바로 들어와도 뒤로 가면 설정의 문의 목록으로 간다.
         path = InquiryDetailRoute.PATH,
         syntheticStack = { args ->
             listOf(
                 GenericNavKey(HomePage.PATH),
-                GenericNavKey(MailboxPage.PATH),
+                GenericNavKey(SettingsPage.PATH),
+                GenericNavKey(InquiryListRoute.PATH),
                 GenericNavKey(InquiryDetailRoute.PATH, args),
             )
         },
@@ -164,6 +195,8 @@ val appRoutes: List<AppRoute> = listOf(
     ),
     AppRoute(
         path = MyRoomPage.PATH,
+        // 방이 상태 표시줄 뒤까지 화면 전체를 채운다(홈과 같다).
+        drawsBehindSystemBars = true,
         syntheticStack = { args ->
             listOf(
                 GenericNavKey(HomePage.PATH),

@@ -5,22 +5,20 @@ import com.dandi.nyummy.cat.domain.CatMotionPicker
 import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatState
+import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
-import com.dandi.nyummy.common.entity.time.DeviceTime
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
-import com.dandi.nyummy.history.domain.GetDailyMealsUseCase
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.home.domain.tti.HomeTTIPage
 import com.dandi.nyummy.mailbox.domain.MailboxPage
-import com.dandi.nyummy.meal.domain.MealRecordPage
-import com.dandi.nyummy.room.domain.MyRoomPage
 import com.dandi.nyummy.settings.domain.SettingsPage
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TimelineCategory
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,8 +26,8 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val navigationHelper: NavigationHelper,
+    private val messageHelper: MessageHelper,
     private val getHomeSummary: GetHomeSummaryUseCase,
-    private val getDailyMeals: GetDailyMealsUseCase,
     private val getCatAnimations: GetCatAnimationsUseCase,
     private val catMotionPicker: CatMotionPicker,
     private val ttiHelper: TTIHelper,
@@ -42,7 +40,6 @@ class HomeViewModel @Inject constructor(
     }
 
     private var summaryJob: Job? = null
-    private var todayMealsJob: Job? = null
     private var catAnimationsJob: Job? = null
 
     /** 홈 요약을 한 번이라도 읽었는지. 첫 진입을 "방금 기록하고 돌아옴"으로 착각하지 않게 한다. */
@@ -67,27 +64,17 @@ class HomeViewModel @Inject constructor(
             }
             // TODO: 지갑, 공지, 설정, 스트릭 화면이 생기면 각 목적지로 연결한다.
             HomeIntent.ClickWallet -> Unit
-            HomeIntent.ClickMail -> navigationHelper.navigateTo(MailboxPage)
+            // 우편함은 받을 아이템만 있는 곳이라, 아이템 기능이 꺼져 있으면 들어가지 않고 준비 중이라고 알린다.
+            HomeIntent.ClickMail -> if (remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)) {
+                navigationHelper.navigateTo(MailboxPage)
+            } else {
+                messageHelper.showSnackBar(iconType = IconType.WARNING, messageRes = CommonR.string.nyummy_not_ready)
+            }
             HomeIntent.ClickNotice -> Unit
             HomeIntent.ClickSettings -> navigationHelper.navigateTo(SettingsPage)
             HomeIntent.ClickStreak -> Unit
-            // 마이룸은 백엔드가 완성될 때까지 원격 구성으로 막아 둔다(꺼져 있으면 아무 일도 없다).
-            HomeIntent.ClickMyRoom -> if (remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled)) {
-                navigationHelper.navigateTo(MyRoomPage)
-            }
-            // TODO: 친구에게 공유, 냐미 상태 화면이 생기면 연결한다.
-            HomeIntent.ClickShareFriend -> Unit
-            HomeIntent.ClickNyummyStatus -> Unit
-            HomeIntent.ToggleRoomMenu ->
-                dispatch(HomeReducerEvent.RoomMenuExpansionChanged(expanded = !currentState.isRoomMenuExpanded))
-            HomeIntent.ClickTodayBar -> clickTodayBar()
-            HomeIntent.DismissTodaySheet ->
-                dispatch(HomeReducerEvent.TodaySheetVisibilityChanged(visible = false))
-            HomeIntent.RetryTodayMeals -> loadTodayMeals()
-            HomeIntent.ClickAddMeal -> {
-                dispatch(HomeReducerEvent.TodaySheetVisibilityChanged(visible = false))
-                navigationHelper.navigateTo(MealRecordPage)
-            }
+            HomeIntent.ToggleUiHidden ->
+                dispatch(HomeReducerEvent.UiHiddenChanged(hidden = !currentState.isUiHidden))
             HomeIntent.ClickCat -> currentState.catState?.let { startCatMotion(it, newLine = true) }
             is HomeIntent.CatMotionFinished -> if (intent.playId == currentState.catPlayId) finishCatMotion()
             HomeIntent.CatShown -> onCatShown()
@@ -97,17 +84,13 @@ class HomeViewModel @Inject constructor(
 
     override fun reduce(state: HomeUIState, event: HomeReducerEvent): HomeUIState =
         when (event) {
-            is HomeReducerEvent.SummaryLoaded -> state.copy(summary = event.summary, room = event.room, isSummaryLoaded = true)
-            is HomeReducerEvent.TodaySheetVisibilityChanged -> state.copy(isTodaySheetVisible = event.visible)
-            HomeReducerEvent.TodayMealsLoadStarted -> state.copy(isTodayMealsLoading = true, isTodayMealsFailed = false)
-            is HomeReducerEvent.TodayMealsLoaded -> state.copy(
-                todayNutrition = event.meals.nutrition,
-                todayMeals = event.meals.meals.toImmutableList(),
-                isTodayMealsLoading = false,
-                isTodayMealsFailed = false,
+            is HomeReducerEvent.SummaryLoaded -> state.copy(
+                summary = event.summary,
+                room = event.room,
+                showsMailBadge = event.showsMailBadge,
+                isSummaryLoaded = true,
             )
-            HomeReducerEvent.TodayMealsLoadFailed -> state.copy(isTodayMealsLoading = false, isTodayMealsFailed = true)
-            is HomeReducerEvent.RoomMenuExpansionChanged -> state.copy(isRoomMenuExpanded = event.expanded)
+            is HomeReducerEvent.UiHiddenChanged -> state.copy(isUiHidden = event.hidden)
             HomeReducerEvent.CatAnimationsLoaded -> state.copy(isCatAnimationFailed = false)
             HomeReducerEvent.CatAnimationsLoadFailed -> state.copy(isCatAnimationFailed = true)
             is HomeReducerEvent.CatMotionChanged -> state.copy(
@@ -130,10 +113,11 @@ class HomeViewModel @Inject constructor(
                 val recordedJustNow = hasLoadedSummary &&
                     summary.todayRecordedCount > currentState.summary.todayRecordedCount
                 hasLoadedSummary = true
-                // 마이룸이 켜져 있으면 고양이방 카드에 꾸민 방을 그린다. 꺼져 있으면 기본 빈 방만 그린다.
+                // 마이룸이 켜져 있으면 고양이방에 꾸민 방을 그린다. 꺼져 있으면 기본 빈 방만 그린다.
                 val room = summary.roomPlacements.toHomeRoom()
                     .takeIf { remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled) }
-                dispatch(HomeReducerEvent.SummaryLoaded(summary, room))
+                val showsMailBadge = summary.hasMailboxBadge && remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)
+                dispatch(HomeReducerEvent.SummaryLoaded(summary, room, showsMailBadge))
                 updateCatState(recordedJustNow)
             }
         }
@@ -224,27 +208,5 @@ class HomeViewModel @Inject constructor(
         isTTIFinished = true
         ttiHelper.endTTITracking()
         ttiHelper.shotTTILogging()
-    }
-
-    /** 오늘 기록이 없으면 바로 식사 기록으로, 있으면 오늘 식사 시트를 열고 내용을 읽는다. */
-    private fun clickTodayBar() {
-        if (!currentState.hasRecordedToday) {
-            navigationHelper.navigateTo(MealRecordPage)
-            return
-        }
-        dispatch(HomeReducerEvent.TodaySheetVisibilityChanged(visible = true))
-        loadTodayMeals()
-    }
-
-    /** 오늘(기기 타임존) 식사 목록과 탄단지 합계를 읽는다. 시트를 열 때마다 새로 읽어 방금 기록한 식사도 보이게 한다. */
-    private fun loadTodayMeals() {
-        todayMealsJob?.cancel()
-        dispatch(HomeReducerEvent.TodayMealsLoadStarted)
-        val today = DeviceTime.today()
-        todayMealsJob = viewModelScope.launch {
-            getDailyMeals(today.year, today.monthValue, today.dayOfMonth)
-                .onSuccess { dispatch(HomeReducerEvent.TodayMealsLoaded(it)) }
-                .onFailure { dispatch(HomeReducerEvent.TodayMealsLoadFailed) }
-        }
     }
 }

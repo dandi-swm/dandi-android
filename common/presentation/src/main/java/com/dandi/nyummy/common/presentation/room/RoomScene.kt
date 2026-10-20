@@ -11,6 +11,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.isSpecified
@@ -90,6 +91,7 @@ fun RoomScene(
  * 방 그림(배경)을 [roomRect] 자리에 그린다. 자리가 그리는 곳보다 크면 넘친 쪽은 잘린다.
  * 배경이 없거나, 받는 중이거나, 받지 못하면(인터넷이 끊겼을 때도) 앱에 든 기본 빈 방(줄무늬 벽과 원목 바닥,
  * CDN 아이템 1번과 같은 그림)을 대신 그린다. 대신 그리는 그림도 픽셀 그림이라 필터 없이 그린다.
+ * 서버에 9:16이 아닌 예전 배경(2:3)이 남아 있어도 늘어나 보이지 않게, 자리를 덮도록 키우고 바닥에 맞춰 넘친 쪽을 자른다.
  */
 @Composable
 fun RoomBackgroundImage(
@@ -105,7 +107,8 @@ fun RoomBackgroundImage(
         placeholder = defaultRoom,
         error = defaultRoom,
         fallback = defaultRoom,
-        contentScale = ContentScale.FillBounds,
+        contentScale = ContentScale.Crop,
+        alignment = Alignment.BottomCenter,
         filterQuality = FilterQuality.None,
         modifier = Modifier
             .placeAt(roomRect)

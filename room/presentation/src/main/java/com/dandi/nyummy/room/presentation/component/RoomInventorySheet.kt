@@ -150,7 +150,7 @@ internal fun rememberRoomSheetState(expanded: Boolean = true): RoomSheetState = 
  * 마이룸 아래 보관함 시트. 손잡이와 탭을 끌어 올리고 내리며, 내리면 손잡이와 탭만 남아 방이 다 보인다.
  * 손잡이를 누르거나 접힌 채 탭을 눌러도 펼친다. 탭을 바꿔도 칸 영역 높이가 같아 시트가 흔들리지 않는다.
  *
- * - 탭은 아이템 종류마다 하나(배경, 침대, 캣휠, 카펫, 기타)이고, 칸은 가로 한 줄로 넘긴다. 끝에 가까워지면 그 종류만 더 받는다.
+ * - 탭은 아이템 종류마다 하나(배경, 침대, 기타)이고, 칸은 가로 한 줄로 넘긴다. 끝에 가까워지면 그 종류만 더 받는다.
  * - 칸은 그림과 이름. 방에 놓인 인테리어는 그림을 흐리게 하고 "배치됨", 깔린 배경은 테두리와 "사용 중"을 붙인다.
  * - 가진 게 없으면 안내와 상점 구경하기, 있으면 줄 아래에 상점에서 더 찾기.
  */
@@ -392,8 +392,6 @@ private fun InventoryCell(
 private fun RoomItemCategory.labelRes(): Int = when (this) {
     RoomItemCategory.BACKGROUND -> R.string.my_room_category_background
     RoomItemCategory.BED -> R.string.my_room_category_bed
-    RoomItemCategory.CAT_WHEEL -> R.string.my_room_category_cat_wheel
-    RoomItemCategory.CARPET -> R.string.my_room_category_carpet
     RoomItemCategory.ETC -> R.string.my_room_category_etc
 }
 

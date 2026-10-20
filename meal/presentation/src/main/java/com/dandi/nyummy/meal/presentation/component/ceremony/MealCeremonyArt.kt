@@ -90,9 +90,14 @@ internal object MealCeremonyArt {
      */
     val worried: CeremonyArt = CeremonyArt.Still(R.drawable.meal_ceremony_nyummy_worry)
 
-    /** 기다리는 냐미 앞을 가리는 나무 식탁 앞면. */
-    @DrawableRes
-    val tableFront: Int = R.drawable.meal_ceremony_table_front
+        /**
+     * 기다리는 냐미 앞을 가리는 나무 식탁 앞면. 윗판 아래로 판자가 길게 이어져, 윗선부터 화면 아래 끝까지 덮는다.
+     * 냐미가 앉는 높이는 윗판과 첫 판자까지의 높이([TableFrontAspect])로 정한다.
+     */
+    val tableFront: Int = R.drawable.meal_ceremony_table_front_tall
+
+    /** 윗판과 첫 판자까지(냐미 몸 아래쪽을 가리는 높이)의 폭 / 높이. */
+    const val TableFrontAspect = 1401f / 389f
 }
 
 /**

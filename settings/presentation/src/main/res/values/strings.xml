@@ -32,6 +32,8 @@
     <string name="settings_push_analysis_desc">사진 분석이 끝나면 알려요</string>
     <string name="settings_push_retention">기록을 쉴 때 알림</string>
     <string name="settings_push_retention_desc">하루 이상 기록이 없으면 다시 기록하도록 알려요</string>
+    <string name="settings_section_support">고객 지원</string>
+    <string name="settings_inquiry">문의하기</string>
     <string name="settings_section_legal">약관</string>
     <string name="settings_terms">이용약관</string>
     <string name="settings_privacy">개인정보처리방침</string>

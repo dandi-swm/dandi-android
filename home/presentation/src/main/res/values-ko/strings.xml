@@ -9,26 +9,7 @@
     <string name="home_character_description">냐미</string>
     <string name="home_speech_waiting">쿨쿨… 첫 끼를 기다리는 중이야</string>
     <string name="home_speech_recorded">냠냠! 오늘도 챙겨줘서 고마워</string>
-    <string name="home_menu_expand">방 메뉴 펼치기</string>
-    <string name="home_menu_collapse">방 메뉴 접기</string>
-    <string name="home_menu_my_room">마이룸 꾸미기</string>
-    <string name="home_menu_share_friend">친구에게 공유</string>
-    <string name="home_menu_nyummy_status">냐미 상태</string>
-    <string name="home_today_empty_title">첫 끼 기록하기</string>
-    <string name="home_today_empty_body">아직 오늘 기록이 없어요</string>
-    <string name="home_today_record_count">오늘 %1$d개 기록</string>
-    <string name="home_sheet_title">오늘 식사</string>
-    <string name="home_sheet_recorded">%1$d번 기록했어요</string>
-    <string name="home_sheet_section_title">오늘의 식사</string>
-    <string name="home_sheet_add_meal">식사 추가하기</string>
-    <string name="home_sheet_load_failed">오늘 식사를 불러오지 못했어요</string>
-    <string name="home_sheet_retry">다시 시도</string>
-    <string name="home_meal_analyzing_title">분석 중이에요</string>
-    <string name="home_meal_analyzing_badge">분석 중</string>
-    <string name="home_meal_failed_title">분석하지 못했어요</string>
-    <string name="home_meal_failed_badge">실패</string>
-    <string name="home_meal_am">오전</string>
-    <string name="home_meal_pm">오후</string>
     <!-- %1$s: 오전/오후, %2$d: 시(1~12), %3$02d: 분 -->
-    <string name="home_meal_time">%1$s %2$d:%3$02d</string>
+    <string name="home_hide_ui">냐미만 보기</string>
+    <string name="home_show_ui">화면 다시 보기</string>
 </resources>

@@ -12,7 +12,7 @@ import kotlinx.serialization.Serializable
  * @property user 사용자 지갑 정보
  * @property streak 연속 기록 현황
  * @property todayMealSummary 오늘의 식사 현황
- * @property hasUnreadInquiryAnswer 문의에 답장이 왔는데 아직 열어 보지 않은 것이 있다
+ * @property hasMailboxBadge 받을 수 있는 우편(받지 않았고 기한이 지나지 않은)이 하나라도 있다
  * @property equippedRoomItems 마이룸에 놓인 아이템(배경 포함). 마이룸 조회의 놓인 아이템과 같다.
  */
 @Serializable
@@ -20,7 +20,7 @@ data class HomeDTO(
     val user: HomeUserDTO? = null,
     val streak: HomeStreakDTO? = null,
     val todayMealSummary: TodayMealSummaryDTO? = null,
-    val hasUnreadInquiryAnswer: Boolean? = null,
+    val hasMailboxBadge: Boolean? = null,
     val equippedRoomItems: List<HomeEquippedRoomItemDTO>? = null,
 ) {
     fun toVO(): HomeSummaryVO = HomeSummaryVO(
@@ -30,7 +30,9 @@ data class HomeDTO(
         todayRecordedCount = todayMealSummary?.todayRecordedCount ?: 0,
         todayCalorieKcal = todayMealSummary?.todayCurrentCalory ?: 0,
         goalCalorieKcal = todayMealSummary?.todayTargetCalory ?: 0,
-        hasUnreadInquiryAnswer = hasUnreadInquiryAnswer == true,
+        todayAttemptCount = todayMealSummary?.todayAttemptCount ?: 0,
+        todayMaxAttemptCount = todayMealSummary?.todayMaxAttemptCount ?: 0,
+        hasMailboxBadge = hasMailboxBadge == true,
         roomPlacements = equippedRoomItems.orEmpty().map { it.toVO() }.sortedBy { it.zIndex },
     )
 }
@@ -57,12 +59,16 @@ data class HomeStreakDTO(
  * @property todayRecordedCount 오늘 기록한 끼니 수
  * @property todayCurrentCalory 오늘 섭취 열량(kcal)
  * @property todayTargetCalory 하루 목표 열량(kcal)
+ * @property todayAttemptCount 오늘 식사 기록을 시도한 횟수(하루 한도에 세는 횟수)
+ * @property todayMaxAttemptCount 하루에 시도할 수 있는 최대 횟수
  */
 @Serializable
 data class TodayMealSummaryDTO(
     val todayRecordedCount: Int? = null,
     val todayCurrentCalory: Int? = null,
     val todayTargetCalory: Int? = null,
+    val todayAttemptCount: Int? = null,
+    val todayMaxAttemptCount: Int? = null,
 )
 
 /**

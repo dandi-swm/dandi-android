@@ -104,13 +104,12 @@ class MyRoomViewModelTest {
         // 그림은 아이템 id를 CDN 아이템 경로에 붙인 주소다.
         assertEquals("https://cdn.nyummy.co.kr/items/100.png", state.room.background?.imageUrl)
         assertEquals("https://cdn.nyummy.co.kr/items/1.png", inRange.imageUrl)
-        // 탭은 서버가 주지 않은 종류까지 늘 다섯 개이고, 각 탭에는 방과 함께 받은 첫 묶음이 들어간다.
+        // 탭은 서버가 주지 않은 종류까지 늘 세 개이고, 각 탭에는 방과 함께 받은 첫 묶음이 들어간다.
         assertEquals(RoomItemCategory.entries, state.inventoryTabs.map { it.category })
-        assertEquals(listOf("배경", "침대", "", "", "기타"), state.inventoryTabs.map { it.name })
-        assertEquals(listOf(null, 1L, null, null, null), state.inventoryTabs.map { it.nextCursor })
+        assertEquals(listOf("배경", "침대", "기타"), state.inventoryTabs.map { it.name })
+        assertEquals(listOf(null, 1L, null), state.inventoryTabs.map { it.nextCursor })
         assertEquals(listOf(true, false), state.itemsOf(RoomItemCategory.BACKGROUND).map { it.isPlaced })
         assertEquals(listOf(true), state.itemsOf(RoomItemCategory.BED).map { it.isPlaced })
-        assertTrue(state.itemsOf(RoomItemCategory.CAT_WHEEL).isEmpty())
         // 같은 아이템을 두 개 가지면 칸도 두 개다.
         assertEquals(listOf(2L, 3L), state.itemsOf(RoomItemCategory.ETC).map { it.roomItemId })
         assertEquals(listOf(true, false), state.itemsOf(RoomItemCategory.ETC).map { it.isPlaced })
@@ -314,9 +313,9 @@ class MyRoomViewModelTest {
         val viewModel = loadedViewModel()
         assertEquals(RoomItemCategory.BACKGROUND, viewModel.uiState.value.selectedCategory)
 
-        viewModel.onIntent(MyRoomIntent.SelectTab(RoomItemCategory.CARPET))
+        viewModel.onIntent(MyRoomIntent.SelectTab(RoomItemCategory.ETC))
 
-        assertEquals(RoomItemCategory.CARPET, viewModel.uiState.value.selectedCategory)
+        assertEquals(RoomItemCategory.ETC, viewModel.uiState.value.selectedCategory)
     }
 
     @Test

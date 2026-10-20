@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -66,6 +67,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRowTrailing
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMailRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMainTabs
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMealRecordAction
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPasswordVisibilityToggle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPose
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPoseImage
@@ -533,7 +535,15 @@ private fun NavigationSection() {
 @Composable
 private fun BottomNavSection() {
     var selected by remember { mutableIntStateOf(0) }
-    NyummyBottomNav(items = NyummyMainTabs, selectedIndex = selected, onSelect = { selected = it })
+    // 가운데 버튼이 내비 위로 솟으므로 위에 자리를 비워 둔다.
+    Spacer(Modifier.height(NyummyTheme.spacing.s32))
+    NyummyBottomNav(
+        items = NyummyMainTabs,
+        selectedIndex = selected,
+        onSelect = { selected = it },
+        centerAction = NyummyMealRecordAction,
+        centerActionIndex = 2,
+    )
 }
 
 @Composable

@@ -88,25 +88,33 @@ data class TotalRewardDTO(
     )
 }
 
+/**
+ * 받은 코인.
+ *
+ * @property imageId 코인 그림 번호. 목록과 같이 앱이 CDN 코인 경로에 붙인다(`coins/{imageId}.png`).
+ */
 @Serializable
 data class RewardCoinDTO(
     val quantity: Int? = null,
-    val imageUrl: String? = null,
+    val imageId: Long? = null,
 ) {
-    fun toVO(): RewardCoinVO = RewardCoinVO(quantity = quantity ?: 0, imageUrl = imageUrl.orEmpty())
+    fun toVO(): RewardCoinVO = RewardCoinVO(quantity = quantity ?: 0, imageId = imageId)
 }
 
+/**
+ * 받은 아이템 하나.
+ *
+ * @property imageId 아이템 그림 번호. 목록과 같이 앱이 CDN 아이템 경로에 붙인다(`items/{imageId}.png`).
+ */
 @Serializable
 data class RewardItemDTO(
-    val itemId: Long? = null,
+    val imageId: Long? = null,
     val name: String? = null,
-    val imageUrl: String? = null,
     val quantity: Int? = null,
 ) {
     fun toVO(): RewardItemVO = RewardItemVO(
-        itemId = itemId ?: 0L,
+        imageId = imageId,
         name = name?.trim().orEmpty(),
-        imageUrl = imageUrl.orEmpty(),
         quantity = quantity ?: 0,
     )
 }
@@ -114,12 +122,13 @@ data class RewardItemDTO(
 /**
  * 보상 상자 그림과 열기 연출.
  *
- * @property animationUrl 열기 연출 파일 URL. 지금 서버 고정 응답은 null이다.
+ * @property imageId 상자 그림 번호. 목록과 같이 앱이 CDN 상자 경로에 붙인다(`reward-boxes/{imageId}.png`).
+ * @property animationUrl 열기 연출 파일 URL. 지금 서버 응답은 null이다.
  */
 @Serializable
 data class RewardBoxDTO(
-    val imageUrl: String? = null,
+    val imageId: Long? = null,
     val animationUrl: String? = null,
 ) {
-    fun toVO(): RewardBoxVO = RewardBoxVO(imageUrl = imageUrl.orEmpty(), animationUrl = animationUrl)
+    fun toVO(): RewardBoxVO = RewardBoxVO(imageId = imageId, animationUrl = animationUrl)
 }

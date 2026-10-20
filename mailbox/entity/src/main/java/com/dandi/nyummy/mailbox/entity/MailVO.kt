@@ -63,26 +63,34 @@ data class RewardVO(
     }
 }
 
-/** 받은 코인. */
+/**
+ * 받은 코인.
+ *
+ * @property imageId 코인 그림 번호. 화면이 CDN 코인 경로에 붙여 그림 주소를 만든다(`coins/{imageId}.png`). 없으면 null.
+ */
 data class RewardCoinVO(
     val quantity: Int = 0,
-    val imageUrl: String = "",
+    val imageId: Long? = null,
 )
 
-/** 받은 아이템 하나. */
+/**
+ * 받은 아이템 하나.
+ *
+ * @property imageId 아이템 그림 번호. 화면이 CDN 아이템 경로에 붙여 그림 주소를 만든다(`items/{imageId}.png`). 없으면 null.
+ */
 data class RewardItemVO(
-    val itemId: Long = 0L,
+    val imageId: Long? = null,
     val name: String = "",
-    val imageUrl: String = "",
     val quantity: Int = 0,
 )
 
 /**
  * 보상 상자 그림과 열기 연출.
  *
+ * @property imageId 상자 그림 번호. 화면이 CDN 상자 경로에 붙여 그림 주소를 만든다(`reward-boxes/{imageId}.png`). 없으면 null.
  * @property animationUrl 열기 연출 파일 URL. 서버가 아직 주지 않으면 null.
  */
 data class RewardBoxVO(
-    val imageUrl: String = "",
+    val imageId: Long? = null,
     val animationUrl: String? = null,
 )

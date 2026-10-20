@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -182,7 +183,9 @@ private fun MealRecordScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(NyummyTheme.colors.bg.surface),
+            .background(NyummyTheme.colors.bg.surface)
+            // 식사 기록 화면은 연출을 위해 시스템 바 뒤까지 그린다. 촬영과 확인 단계는 시스템 바를 피한다.
+            .systemBarsPadding(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
         MealRecordHeader(

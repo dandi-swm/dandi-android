@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -23,40 +22,45 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.unit.DpSize
 import androidx.core.view.WindowCompat
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomNav
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomNavActionRise
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialog
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialogType
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMainTabs
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMealRecordAction
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackbarHost
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.helper.BottomBarVisibility
+import com.dandi.nyummy.common.presentation.helper.LocalBottomBarVisibility
 import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
-import com.dandi.nyummy.common.presentation.room.LocalRoomCardSize
 import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.home.domain.HomePage
-import com.dandi.nyummy.home.presentation.homeRoomCardSize
+import com.dandi.nyummy.meal.domain.MealRecordPage
+import com.dandi.nyummy.room.domain.MyRoomPage
+import com.dandi.nyummy.shop.domain.ShopPage
 import kotlinx.coroutines.flow.Flow
 
 /**
  * 앱 뼈대(Scaffold, 하단 탭, 공통 다이얼로그와 스낵바, 화면 전환).
  *
  * @param onScreenShown 맨 위 화면의 경로가 바뀔 때마다 그 경로로 부른다. 사용 분석의 화면 조회 기록에 쓴다.
+ * @param mainTabFlags 기능 플래그로 켜고 끄는 하단 탭. 원격 구성은 인트로에서 받아 오므로 탭을 누를 때마다 읽는다.
  */
 @Composable
 fun RootComposable(
     modifier: Modifier = Modifier,
     startStack: List<NavKey>,
     onScreenShown: (path: String) -> Unit = {},
+    mainTabFlags: () -> MainTabFlags = { MainTabFlags() },
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
     var oneButtonDialogEffect by remember {
@@ -131,15 +135,23 @@ fun RootComposable(
     }
 
     val drawsBehindSystemBars = currentRoute?.drawsBehindSystemBars == true
+    // 홈 눈 버튼처럼 화면이 잠시 하단 내비를 숨길 수 있다.
+    val bottomBarVisibility = remember { BottomBarVisibility() }
+    val showsBottomBar = currentRoute?.isBottomTab == true && currentTabIndex >= 0 && !bottomBarVisibility.isHidden
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = NyummyTheme.colors.bg.canvas,
         snackbarHost = {
-            // Scaffold는 스낵바를 하단 탭 위나 contentWindowInsets의 하단 인셋만큼 올린다. 전체 화면 라우트는 인셋을 0으로
-            // 두고 하단 탭도 없어, 직접 올리지 않으면 스낵바가 시스템 내비게이션 바(3버튼) 뒤에 깔린다.
+            // Scaffold는 스낵바를 하단 탭 위나 contentWindowInsets의 하단 인셋만큼 올린다. 하단 탭이 있으면 가운데 버튼이
+            // 솟은 만큼 더 올린다. 전체 화면 라우트는 인셋을 0으로 두고 하단 탭도 없어, 직접 올리지 않으면 스낵바가
+            // 시스템 내비게이션 바(3버튼) 뒤에 깔린다.
             NyummySnackbarHost(
                 hostState = snackBarHostState,
-                modifier = if (drawsBehindSystemBars) Modifier.navigationBarsPadding() else Modifier,
+                modifier = when {
+                    showsBottomBar -> Modifier.padding(bottom = NyummyBottomNavActionRise)
+                    drawsBehindSystemBars -> Modifier.navigationBarsPadding()
+                    else -> Modifier
+                },
             )
         },
         // 전체 화면 라우트는 시스템 바 뒤까지 그리고 인셋을 스스로 처리한다. 나머지는 Scaffold가 민다.
@@ -149,52 +161,60 @@ fun RootComposable(
             ScaffoldDefaults.contentWindowInsets
         },
         bottomBar = {
-            if (currentRoute?.isBottomTab == true && currentTabIndex >= 0) {
+            if (showsBottomBar) {
                 // 내비가 시스템 내비게이션 바 영역까지 흰 바탕을 이어 그린다.
                 NyummyBottomNav(
                     items = NyummyMainTabs,
                     selectedIndex = currentTabIndex,
-                    onSelect = { index -> navigationHelper.navigateTo(mainTabPages[index]) },
+                    onSelect = { index ->
+                        val page = mainTabPages[index]
+                        if (isMainTabReady(page, mainTabFlags())) {
+                            navigationHelper.navigateTo(page)
+                        } else {
+                            messageHelper.showSnackBar(iconType = IconType.WARNING, messageRes = CommonR.string.nyummy_not_ready)
+                        }
+                    },
+                    centerAction = NyummyMealRecordAction,
+                    centerActionIndex = MealRecordActionIndex,
+                    onCenterActionClick = { navigationHelper.navigateTo(MealRecordPage) },
                 )
             }
         }
     ) { innerPadding ->
-        // 마이룸은 홈 고양이방 카드와 같은 크기로 방을 보여 준다. 딥링크로 홈을 거치지 않고 들어와도 같도록 창 크기로 늘 셈해 둔다.
-        CompositionLocalProvider(LocalRoomCardSize provides homeRoomCardSizeInWindow()) {
+        CompositionLocalProvider(LocalBottomBarVisibility provides bottomBarVisibility) {
             AppNavHost(
                 backStack = backStack,
-                modifier = Modifier.padding(innerPadding)
+                modifier = if (currentRoute?.drawsBehindBottomBar == true) Modifier else Modifier.padding(innerPadding),
             )
         }
     }
 }
 
+/** 기능 플래그로 켜고 끄는 하단 탭. 꺼져 있어도 탭은 보이고, 누르면 준비 중이라고 알린다. */
+data class MainTabFlags(
+    val isMyRoomEnabled: Boolean = false,
+    val isShopEnabled: Boolean = false,
+)
+
 /**
- * 홈이 받는 자리로 셈한 고양이방 카드 크기. 홈은 Scaffold 안에서 시스템 바와 하단 내비(내비게이션 바 영역까지)를 뺀
- * 자리를 받는다. 지금 어느 화면이든 창 크기로 세므로 홈을 한 번도 그리지 않았어도 같은 값이다.
+ * 하단 내비 탭 순서대로 이동할 화면. [NyummyMainTabs]의 순서(홈, 마이룸, 기록, 상점)와 같다.
+ * 마이룸 탭은 하단 내비 없는 마이룸 화면으로 가는 지름길이라 탭 루트가 아니다(뒤로 가면 보던 탭으로 돌아온다).
  */
-@Composable
-private fun homeRoomCardSizeInWindow(): DpSize {
-    val density = LocalDensity.current
-    val layoutDirection = LocalLayoutDirection.current
-    val window = LocalWindowInfo.current.containerSize
-    val systemBars = ScaffoldDefaults.contentWindowInsets
-    val navigationBars = WindowInsets.navigationBars
-    val width = with(density) {
-        (window.width - systemBars.getLeft(density, layoutDirection) - systemBars.getRight(density, layoutDirection)).toDp()
-    }
-    val height = with(density) {
-        (window.height - systemBars.getTop(density) - navigationBars.getBottom(density)).toDp()
-    } - NyummyTheme.size.bottomNav
-    return homeRoomCardSize(width, height)
-}
+internal val mainTabPages: List<Page> = listOf(HomePage, MyRoomPage, HistoryPage, ShopPage)
 
-/** 하단 내비 탭 순서대로 이동할 화면. [NyummyMainTabs]의 순서(홈, 기록)와 같다. */
-internal val mainTabPages: List<Page> = listOf(HomePage, HistoryPage)
+/** 가운데 식사 기록 버튼 앞에 올 탭 수. 탭 네 개 가운데(마이룸과 기록 사이)에 둔다. */
+internal const val MealRecordActionIndex = 2
 
-/** [path] 화면이 몇 번째 탭인지. 탭 화면이 아니면 -1이다. */
+/** [path] 화면이 [mainTabPages]에서 몇 번째인지. 탭 화면이 아니면 -1이다. */
 internal fun mainTabIndexOf(path: String?): Int =
     mainTabPages.indexOfFirst { it.toRoute().path == path }
+
+/** [page] 탭으로 갈 수 있는지. 기능 플래그가 꺼진 탭은 아직 준비 중이다. 홈과 기록은 늘 갈 수 있다. */
+internal fun isMainTabReady(page: Page, flags: MainTabFlags): Boolean = when (page) {
+    MyRoomPage -> flags.isMyRoomEnabled
+    ShopPage -> flags.isShopEnabled
+    else -> true
+}
 
 @Composable
 private fun MessageEffect(

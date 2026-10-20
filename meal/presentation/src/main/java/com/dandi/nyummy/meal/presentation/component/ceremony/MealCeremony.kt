@@ -22,6 +22,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +36,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -240,24 +247,22 @@ internal fun MealCeremony(
             .background(NyummyTheme.colors.bg.surface)
             .graphicsLayer { translationX = shake.value * shakePx },
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            CeremonyHeader(onCloseClick = onCloseClick)
-            when (stage) {
-                CeremonyStage.Serving, CeremonyStage.Waiting, CeremonyStage.Failed, CeremonyStage.Reaction ->
-                    WaitingScene(
-                        photoPath = photoPath,
-                        roomBackgroundUrl = roomBackgroundUrl,
-                        serveProgress = serve.value,
-                        isFailed = stage == CeremonyStage.Failed,
-                        animate = !reducedMotion,
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth(),
-                    )
-
-                // 먹었어요부터는 화면 전체를 덮는 장면이 그린다.
-                else -> Unit
+        when (stage) {
+            CeremonyStage.Serving, CeremonyStage.Waiting, CeremonyStage.Failed, CeremonyStage.Reaction -> {
+                // 홈처럼 방이 화면 전체(시스템 바 뒤까지)를 채우고, 닫기와 제목은 방 위에 뜬다.
+                WaitingScene(
+                    photoPath = photoPath,
+                    roomBackgroundUrl = roomBackgroundUrl,
+                    serveProgress = serve.value,
+                    isFailed = stage == CeremonyStage.Failed,
+                    animate = !reducedMotion,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                CeremonyHeader(onCloseClick = onCloseClick, modifier = Modifier.statusBarsPadding())
             }
+
+            // 먹었어요부터는 화면 전체를 덮는 장면이 그린다.
+            else -> Unit
         }
 
         // 먹었어요: 띠욧 배경이 차분해지며 이어진다. 상자를 보낼 때는 상자 무대가 이 위를 덮고,
@@ -276,6 +281,12 @@ internal fun MealCeremony(
         }
 
         if (stage == CeremonyStage.Reaction) {
+            // 만화 페이지 바탕은 시스템 바 뒤까지 깔고, 컷은 시스템 바를 피해 놓는다.
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(NyummyTheme.colors.bg.surfaceInverse),
+            )
             TasteReactionCutIn(
                 art = MealCeremonyArt.tasting,
                 onPop = {
@@ -287,7 +298,9 @@ internal fun MealCeremony(
                     }
                     scope.launch { shake.animateTo(0f, shakeSpec()) }
                 },
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .systemBarsPadding(),
             )
         }
 
@@ -309,6 +322,7 @@ internal fun MealCeremony(
                 onPositioned = { mailCenter = it },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
+                    .statusBarsPadding()
                     .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s8),
             )
         }
@@ -329,6 +343,7 @@ internal fun MealCeremony(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
+                    .statusBarsPadding()
                     .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s8)
                     .height(NyummyTheme.size.touchTarget),
                 contentAlignment = Alignment.Center,
@@ -424,8 +439,8 @@ private fun MailTarget(
 }
 
 /**
- * 기다리는 장면: 고양이방 카드 안에서 숟가락을 든 냐미가 식탁 뒤에 앉아 있고, 원본 사진 카드가 식탁 위로
- * 비스듬히 올라옵니다. 냐미 머리 위 말풍선이 "맛보는 중이야"라고 말합니다.
+ * 기다리는 장면: 지금 마이룸에 깔린 방이 홈처럼 화면 전체를 채우고, 숟가락을 든 냐미가 식탁 뒤에 앉아 있으며,
+ * 원본 사진 카드가 식탁 위로 비스듬히 올라옵니다. 냐미 머리 위 말풍선이 "맛보는 중이야"라고 말합니다.
  * 기록하지 못하면 냐미가 걱정하는 얼굴로 바뀌어 고개를 젓고, 말풍선이 기록하지 못했다고 알립니다.
  */
 @Composable
@@ -458,128 +473,140 @@ private fun WaitingScene(
     }
     val bobs = animate && !isFailed
 
-    BoxWithConstraints(
-        modifier = modifier.padding(
-            start = NyummyTheme.spacing.s20,
-            end = NyummyTheme.spacing.s20,
-            top = NyummyTheme.spacing.s8,
-            bottom = NyummyTheme.spacing.s24,
-        ),
-    ) {
-        val cardWidth = maxWidth
-        val cardHeight = maxHeight * CardHeightFraction
-        val photoWidth = maxWidth * PhotoWidthFraction
-        val catWidth = cardWidth * CatWidthFraction
-        val catBottom = cardHeight * CatBottomFraction
-        val waitingArt = MealCeremonyArt.waiting
-        val catHeight = catWidth * (waitingArt.cellHeight.toFloat() / waitingArt.cellWidth)
-        val cardShape = RoundedCornerShape(NyummyTheme.radius.l)
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .height(cardHeight)
-                .clip(cardShape),
-        ) {
-            // 지금 마이룸에 깔린 배경을 홈 고양이방 카드와 같은 규칙(바닥을 맞추고 넘치는 벽은 자름)으로 깐다.
-            // 배경이 없거나, 받는 중이거나, 받지 못하면 앱에 든 기본 빈 방이 보인다.
-            val room = RoomCardLayout.roomRect(cardWidth, cardHeight)
-            RoomBackgroundImage(
-                imageUrl = roomBackgroundUrl,
-                roomRect = with(density) { Rect(room.left.toPx(), room.top.toPx(), room.right.toPx(), room.bottom.toPx()) },
-            )
-            // 걱정하는 냐미는 기다리는 냐미 첫 칸과 같은 자리, 같은 크기로 그려져 있어 그대로 바꿔 끼운다.
-            CeremonyArtView(
-                art = if (isFailed) MealCeremonyArt.worried else waitingArt,
-                width = catWidth,
-                contentDescription = stringResource(R.string.meal_record_cat_content_description),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = catBottom)
-                    .graphicsLayer {
-                        translationY = if (bobs) -BobLift.toPx() * bob else 0f
-                        rotationZ = headShake.value
-                        transformOrigin = TransformOrigin(0.5f, 1f)
-                    },
-            )
-            if (animate && !isFailed) {
-                val sparkle = painterResource(R.drawable.ic_meal_sparkle)
-                val tint = NyummyTheme.colors.data.coin
-                Icon(
-                    painter = sparkle,
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .offset(x = -SparkleSpread, y = -SparkleRise)
-                        .size(SparkleSize)
-                        .graphicsLayer {
-                            alpha = twinkle
-                            scaleX = 0.6f + 0.4f * twinkle
-                            scaleY = 0.6f + 0.4f * twinkle
-                        },
-                )
-                Icon(
-                    painter = sparkle,
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .offset(x = SparkleSpread, y = -SparkleRise / 2)
-                        .size(SparkleSize)
-                        .graphicsLayer {
-                            alpha = 1f - twinkle
-                            scaleX = 1f - 0.4f * twinkle
-                            scaleY = 1f - 0.4f * twinkle
-                        },
-                )
-            }
-            Image(
-                painter = painterResource(MealCeremonyArt.tableFront),
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth(),
-                contentScale = ContentScale.FillWidth,
-            )
-            // 말풍선은 꼬리가 냐미 머리 바로 위에 오게 놓고, 냐미와 함께 들썩인다.
-            androidx.compose.animation.AnimatedContent(
-                targetState = isFailed,
-                transitionSpec = { (fadeIn() + scaleIn(initialScale = PopInScale)) togetherWith fadeOut() },
-                label = "waitingBubble",
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = catBottom + catHeight * (1f - WaitingHeadTop) + BubbleGap)
-                    .graphicsLayer { translationY = if (bobs) -BobLift.toPx() * bob else 0f }
-                    .semantics { liveRegion = LiveRegionMode.Polite },
-            ) { failed ->
-                NyummyVoiceBubble(
-                    text = stringResource(if (failed) R.string.meal_ceremony_failed_line else R.string.meal_ceremony_waiting),
-                    tail = NyummyBubbleTail.Bottom,
-                )
-            }
-        }
-        // 원본 사진 카드. 카드 아래 끝에 걸쳐 비스듬히 놓인다. 사진은 그대로 보여 준다.
-        val serveDistancePx = with(density) { ServeDistance.toPx() }
-        val photoShape = RoundedCornerShape(NyummyTheme.radius.m)
-        AsyncImage(
-            model = File(photoPath),
-            contentDescription = stringResource(R.string.meal_record_captured_photo_content_description),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .width(photoWidth)
-                .aspectRatio(PhotoAspect)
-                .graphicsLayer {
-                    rotationZ = PhotoTiltDegrees
-                    translationY = (1f - serveProgress) * serveDistancePx
-                    alpha = serveProgress.coerceIn(0f, 1f)
-                }
-                .background(NyummyTheme.colors.bg.surface, photoShape)
-                .border(PhotoFrame, NyummyTheme.colors.bg.surface, photoShape)
-                .padding(PhotoFrame)
-                .clip(RoundedCornerShape(NyummyTheme.radius.s)),
+    BoxWithConstraints(modifier = modifier) {
+        // 지금 마이룸에 깔린 배경을 홈과 같은 규칙(화면을 덮고 바닥을 맞춤)으로 화면 전체에 깐다.
+        // 배경이 없거나, 받는 중이거나, 받지 못하면 앱에 든 기본 빈 방이 보인다.
+        val room = RoomCardLayout.roomRect(maxWidth, maxHeight)
+        RoomBackgroundImage(
+            imageUrl = roomBackgroundUrl,
+            roomRect = with(density) { Rect(room.left.toPx(), room.top.toPx(), room.right.toPx(), room.bottom.toPx()) },
         )
+        val tablePainter = painterResource(MealCeremonyArt.tableFront)
+        val tableImageAspect = tablePainter.intrinsicSize.width / tablePainter.intrinsicSize.height
+        // 냐미, 식탁, 사진은 시스템 바와 위에 뜬 닫기 줄을 피한 자리에 놓는다. 식탁은 화면 폭을 다 쓴다.
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .padding(
+                    top = NyummyTheme.size.touchTarget + NyummyTheme.spacing.s8 * 3,
+                    bottom = NyummyTheme.spacing.s24,
+                ),
+        ) {
+            val sceneWidth = maxWidth
+            val contentWidth = maxWidth - NyummyTheme.spacing.s20 * 2
+            val cardHeight = maxHeight * CardHeightFraction
+            val photoWidth = contentWidth * PhotoWidthFraction
+            val catWidth = contentWidth * CatWidthFraction
+            // 냐미는 식탁 뒤에 앉아 몸 아래쪽이 식탁에 가린다.
+            val tableFrontHeight = sceneWidth / MealCeremonyArt.TableFrontAspect
+            val catBottom = tableFrontHeight * CatBottomOnTable
+            val waitingArt = MealCeremonyArt.waiting
+            val catHeight = catWidth * (waitingArt.cellHeight.toFloat() / waitingArt.cellWidth)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .height(cardHeight),
+            ) {
+                // 걱정하는 냐미는 기다리는 냐미 첫 칸과 같은 자리, 같은 크기로 그려져 있어 그대로 바꿔 끼운다.
+                CeremonyArtView(
+                    art = if (isFailed) MealCeremonyArt.worried else waitingArt,
+                    width = catWidth,
+                    contentDescription = stringResource(R.string.meal_record_cat_content_description),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = catBottom)
+                        .graphicsLayer {
+                            translationY = if (bobs) -BobLift.toPx() * bob else 0f
+                            rotationZ = headShake.value
+                            transformOrigin = TransformOrigin(0.5f, 1f)
+                        },
+                )
+                if (animate && !isFailed) {
+                    val sparkle = painterResource(R.drawable.ic_meal_sparkle)
+                    val tint = NyummyTheme.colors.data.coin
+                    Icon(
+                        painter = sparkle,
+                        contentDescription = null,
+                        tint = tint,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .offset(x = -SparkleSpread, y = -SparkleRise)
+                            .size(SparkleSize)
+                            .graphicsLayer {
+                                alpha = twinkle
+                                scaleX = 0.6f + 0.4f * twinkle
+                                scaleY = 0.6f + 0.4f * twinkle
+                            },
+                    )
+                    Icon(
+                        painter = sparkle,
+                        contentDescription = null,
+                        tint = tint,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .offset(x = SparkleSpread, y = -SparkleRise / 2)
+                            .size(SparkleSize)
+                            .graphicsLayer {
+                                alpha = 1f - twinkle
+                                scaleX = 1f - 0.4f * twinkle
+                                scaleY = 1f - 0.4f * twinkle
+                            },
+                    )
+                }
+                // 식탁은 윗선부터 화면 아래 끝까지 덮어서, 아래로 방 바닥이 보이며 떠 보이지 않게 한다.
+                Image(
+                    painter = tablePainter,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .offset(y = cardHeight - tableFrontHeight * (1f + TableLiftOverCat))
+                        .fillMaxWidth()
+                        .wrapContentHeight(align = Alignment.Top, unbounded = true)
+                        .height(sceneWidth / tableImageAspect),
+                    contentScale = ContentScale.FillWidth,
+                    alignment = Alignment.TopCenter,
+                )
+                // 말풍선은 꼬리가 냐미 머리 바로 위에 오게 놓고, 냐미와 함께 들썩인다.
+                androidx.compose.animation.AnimatedContent(
+                    targetState = isFailed,
+                    transitionSpec = { (fadeIn() + scaleIn(initialScale = PopInScale)) togetherWith fadeOut() },
+                    label = "waitingBubble",
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = catBottom + catHeight * (1f - WaitingHeadTop) + BubbleGap)
+                        .graphicsLayer { translationY = if (bobs) -BobLift.toPx() * bob else 0f }
+                        .semantics { liveRegion = LiveRegionMode.Polite },
+                ) { failed ->
+                    NyummyVoiceBubble(
+                        text = stringResource(if (failed) R.string.meal_ceremony_failed_line else R.string.meal_ceremony_waiting),
+                        tail = NyummyBubbleTail.Bottom,
+                    )
+                }
+            }
+            // 원본 사진 카드. 식탁 아래 끝에 걸쳐 비스듬히 놓인다. 사진은 그대로 보여 준다.
+            val serveDistancePx = with(density) { ServeDistance.toPx() }
+            val photoShape = RoundedCornerShape(NyummyTheme.radius.m)
+            AsyncImage(
+                model = File(photoPath),
+                contentDescription = stringResource(R.string.meal_record_captured_photo_content_description),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .width(photoWidth)
+                    .aspectRatio(PhotoAspect)
+                    .graphicsLayer {
+                        rotationZ = PhotoTiltDegrees
+                        translationY = (1f - serveProgress) * serveDistancePx
+                        alpha = serveProgress.coerceIn(0f, 1f)
+                    }
+                    .background(NyummyTheme.colors.bg.surface, photoShape)
+                    .border(PhotoFrame, NyummyTheme.colors.bg.surface, photoShape)
+                    .padding(PhotoFrame)
+                    .clip(RoundedCornerShape(NyummyTheme.radius.s)),
+            )
+        }
     }
 }
 
@@ -665,6 +692,7 @@ private fun AteCelebration(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .navigationBarsPadding()
                     .height(ButtonAreaHeight),
                 contentAlignment = Alignment.Center,
             ) {
@@ -775,7 +803,11 @@ private val MailDotInset = 8.dp
 
 private const val CardHeightFraction = 0.86f
 private const val CatWidthFraction = 0.66f
-private const val CatBottomFraction = 0.16f
+/** 냐미 발이 식탁 앞면 높이의 몇 배 위에 오는지. 1이면 식탁 윗선이다. */
+private const val CatBottomOnTable = 0.98f
+
+/** 식탁 윗선을 냐미 발보다 얼마나 더 올릴지(식탁 앞면 높이 대비). 냐미 아래쪽이 식탁에 가려 식탁 뒤에 앉아 보인다. */
+private const val TableLiftOverCat = 0.3f
 private const val PhotoWidthFraction = 0.78f
 private const val PhotoAspect = 4f / 3f
 private const val PhotoTiltDegrees = -4f
