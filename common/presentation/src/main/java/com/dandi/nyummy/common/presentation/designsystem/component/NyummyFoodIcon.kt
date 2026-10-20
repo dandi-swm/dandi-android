@@ -15,6 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.image.NyummyCdn
 
 /**
  * 음식 픽셀 아이콘. 식별자에 해당하는 CDN 이미지를 놓인 자리 안에 그린다.
@@ -36,7 +37,7 @@ fun NyummyFoodIcon(
     if (!loaded) placeholder?.invoke()
     if (foodIconId.isBlank() || loadFailed) return
     AsyncImage(
-        model = FOOD_ICON_URL_FORMAT.format(foodIconId),
+        model = NyummyCdn.foodIconUrl(foodIconId),
         contentDescription = null,
         modifier = modifier.fillMaxSize(sizeFraction),
         contentScale = ContentScale.Fit,
@@ -46,8 +47,6 @@ fun NyummyFoodIcon(
         },
     )
 }
-
-private const val FOOD_ICON_URL_FORMAT = "https://cdn.nyummy.co.kr/icons/%s.png"
 
 @Preview(showBackground = true)
 @Composable

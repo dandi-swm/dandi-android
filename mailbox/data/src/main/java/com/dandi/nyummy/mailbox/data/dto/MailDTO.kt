@@ -32,6 +32,7 @@ data class MailListResponseDTO(
  * 목록의 우편 하나.
  *
  * @property category REWARD_BOX / COIN / ITEM. 모르는 값은 ITEM으로 본다.
+ * @property imageId 그림 번호. 앱이 [category]로 CDN 경로를 고르고 붙인다(아이템 id, 상자 번호, 코인 그림 번호).
  * @property expiresAt 받지 않으면 사라지는 시각(ISO date-time). null이면 사라지지 않는다.
  * @property createdAt 도착 시각(ISO date-time).
  */
@@ -41,7 +42,7 @@ data class MailSummaryDTO(
     val category: String? = null,
     val title: String? = null,
     val content: String? = null,
-    val imageUrl: String? = null,
+    val imageId: Long? = null,
     val isClaimed: Boolean? = null,
     val expiresAt: String? = null,
     val createdAt: String? = null,
@@ -51,7 +52,7 @@ data class MailSummaryDTO(
         category = MailCategory.entries.firstOrNull { it.name == category } ?: MailCategory.ITEM,
         title = title?.trim().orEmpty(),
         content = content?.trim().orEmpty(),
-        imageUrl = imageUrl.orEmpty(),
+        imageId = imageId,
         isClaimed = isClaimed == true,
         expiresAtMillis = DeviceTime.parseIsoToEpochMillisOrNull(expiresAt),
         createdAtMillis = DeviceTime.parseIsoToEpochMillisOrNull(createdAt) ?: 0L,

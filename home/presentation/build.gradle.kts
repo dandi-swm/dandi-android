@@ -65,6 +65,7 @@ dependencies {
     implementation(project(":history:domain"))
     implementation(project(":history:entity"))
     implementation(project(":mailbox:domain"))
+    implementation(project(":room:domain"))
     implementation(project(":settings:domain"))
     implementation(project(":common:presentation"))
 

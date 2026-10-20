@@ -56,4 +56,11 @@ sealed class RemoteConfigKey<T>(
         serializer = Boolean.serializer(),
         defaultValue = false,
     )
+
+    /** 마이룸(방 꾸미기). 백엔드가 완성될 때까지 운영에서는 끄고, 홈의 마이룸 버튼을 눌러도 아무 일도 없다. */
+    data object MyRoomEnabled : RemoteConfigKey<Boolean>(
+        key = "android_my_room_enabled",
+        serializer = Boolean.serializer(),
+        defaultValue = false,
+    )
 }

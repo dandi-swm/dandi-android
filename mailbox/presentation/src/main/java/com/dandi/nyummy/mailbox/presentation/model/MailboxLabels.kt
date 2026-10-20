@@ -2,7 +2,9 @@ package com.dandi.nyummy.mailbox.presentation.model
 
 import androidx.annotation.StringRes
 import com.dandi.nyummy.common.entity.time.DeviceTime
+import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import com.dandi.nyummy.mailbox.entity.InquiryCategory
+import com.dandi.nyummy.mailbox.entity.MailCategory
 import com.dandi.nyummy.mailbox.presentation.R
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -42,6 +44,16 @@ fun mailRemainingDays(expiresAtMillis: Long, nowMillis: Long = System.currentTim
     val remainingMillis = expiresAtMillis - nowMillis
     if (remainingMillis <= 0L) return 0
     return ((remainingMillis + DAY_MILLIS - 1) / DAY_MILLIS).toInt()
+}
+
+/** 우편 그림 주소. 종류에 맞는 CDN 경로에 그림 번호를 붙인다. 번호가 없으면 빈 값(그림 자리만 보인다). */
+fun mailImageUrl(category: MailCategory, imageId: Long?): String {
+    if (imageId == null) return ""
+    return when (category) {
+        MailCategory.REWARD_BOX -> NyummyCdn.rewardBoxUrl(imageId)
+        MailCategory.COIN -> NyummyCdn.coinUrl(imageId)
+        MailCategory.ITEM -> NyummyCdn.itemUrl(imageId)
+    }
 }
 
 /** 남은 날이 이만큼 이하이면 빨갛게 보여 준다. */

@@ -11,23 +11,30 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.room.RoomCardLayout
+import com.dandi.nyummy.common.presentation.room.fitRoomCard
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.home.presentation.component.HomeHud
 import com.dandi.nyummy.home.presentation.component.HomeRoomCard
 import com.dandi.nyummy.home.presentation.component.HomeStreakBanner
 import com.dandi.nyummy.home.presentation.component.HomeTodayBar
 import com.dandi.nyummy.home.presentation.component.HomeTodaySheet
+import com.dandi.nyummy.home.presentation.component.HudHeight
+import com.dandi.nyummy.home.presentation.component.StreakHeight
 
 /**
  * 홈. 위에서부터 지갑과 우편, 공지, 설정 → 연속 기록 배너 → 고양이방 카드(남는 높이 전부) 순서로 쌓는다.
@@ -73,6 +80,7 @@ internal fun HomeScreen(
                 .fillMaxWidth()
                 .padding(horizontal = NyummyTheme.spacing.gutter),
         ) {
+            // 카드 위아래 줄의 높이를 바꾸면 마이룸 방 크기를 정하는 [homeRoomCardSize]도 같이 바꾼다.
             Spacer(Modifier.height(NyummyTheme.spacing.s8))
             HomeHud(
                 coinBalance = uiState.summary.coinBalance,
@@ -94,6 +102,7 @@ internal fun HomeScreen(
                 if (uiState.hasRecordedToday) R.string.home_speech_recorded else R.string.home_speech_waiting,
             )
             HomeRoomCard(
+                room = uiState.room,
                 hasRecordedToday = uiState.hasRecordedToday,
                 catMotion = uiState.catMotion,
                 useFallbackCat = uiState.isCatAnimationFailed,
@@ -108,7 +117,9 @@ internal fun HomeScreen(
                 onNyummyStatusClick = { onIntent(HomeIntent.ClickNyummyStatus) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    // 남는 자리를 채운다. 태블릿 세로처럼 너무 길거나 아주 작은 폰처럼 너무 넓으면 방 그림이 안전 지대까지 잘리지 않게 줄인다.
+                    .fitRoomCard(),
             ) {
                 HomeTodayBar(
                     recordedCount = uiState.summary.todayRecordedCount,
@@ -131,6 +142,21 @@ internal fun HomeScreen(
             )
         }
     }
+}
+
+/**
+ * 홈이 [width]×[height] 자리를 받을 때 고양이방 카드 크기. 카드 위 줄(지갑과 우편, 연속 기록 배너)과 아래 여백은 높이가
+ * 정해져 있어 홈을 그리지 않고도 셀 수 있다. 앱 루트가 이 값을 마이룸에 넘기므로, [HomeScreen]의 줄을 바꾸면 여기도 같이 바꾼다.
+ */
+@Composable
+@ReadOnlyComposable
+fun homeRoomCardSize(width: Dp, height: Dp): DpSize {
+    val spacing = NyummyTheme.spacing
+    val aboveCard = spacing.s8 + HudHeight + spacing.s12 + StreakHeight + spacing.s12
+    return RoomCardLayout.cardSize(
+        maxWidth = minOf(width, ContentMaxWidth) - spacing.gutter * 2,
+        maxHeight = height - aboveCard - spacing.s16,
+    )
 }
 
 private val ContentMaxWidth = 480.dp

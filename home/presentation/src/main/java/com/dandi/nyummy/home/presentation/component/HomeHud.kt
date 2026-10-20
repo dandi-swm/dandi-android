@@ -220,7 +220,7 @@ internal fun HomeStreakBanner(
     }
 }
 
-private val HudHeight = 64.dp
+internal val HudHeight = 64.dp
 private val HudActionWidth = 52.dp
 private val WalletStartPadding = 10.dp
 
@@ -229,7 +229,7 @@ private val WalletChevronMinWidth = 160.dp
 private val CoinSize = 32.dp
 private val DotSize = 9.dp
 private val DotInset = 10.dp
-private val StreakHeight = 44.dp
+internal val StreakHeight = 44.dp
 private val StreakStartPadding = 14.dp
 
 @Preview(showBackground = true, widthDp = 390)

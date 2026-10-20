@@ -1,7 +1,9 @@
 package com.dandi.nyummy.home.presentation
 
+import androidx.compose.runtime.Immutable
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.presentation.mvi.UiState
+import com.dandi.nyummy.common.presentation.room.RoomSceneItem
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.home.entity.HomeSummaryVO
@@ -25,6 +27,7 @@ import kotlinx.collections.immutable.persistentListOf
  * @property catPlayId 동작을 새로 고를 때마다 바뀐다
  * @property catLine 말풍선 대사. 애니메이션이 없으면 null이고, 화면은 기본 대사를 쓴다.
  * @property catMotion 지금 재생할 냐미 동작. 애니메이션이나 상태가 아직 없으면 null이다.
+ * @property room 고양이방 카드에 그릴 꾸민 방. 마이룸이 꺼져 있으면 null이고, 카드는 기본 빈 방만 그린다.
  */
 data class HomeUIState(
     val summary: HomeSummaryVO = HomeSummaryVO.empty,
@@ -41,6 +44,7 @@ data class HomeUIState(
     val catPlayId: Int = 0,
     val catLine: String? = null,
     val catMotion: HomeCatMotion? = null,
+    val room: HomeRoomUiModel? = null,
 ) : UiState {
 
     /** 오늘 한 끼라도 기록했는지. 오늘 바와 냐미 대사가 이 값으로 갈린다. */
@@ -59,3 +63,15 @@ data class HomeUIState(
         val empty = HomeUIState()
     }
 }
+
+/**
+ * 홈 고양이방 카드에 그릴 꾸민 방. 마이룸에서 꾸민 그대로다.
+ *
+ * @property backgroundUrl 깔린 배경 그림. 없으면 기본 빈 방을 깐다.
+ * @property items 놓인 인테리어. 뒤에서 앞 순서다.
+ */
+@Immutable
+data class HomeRoomUiModel(
+    val backgroundUrl: String?,
+    val items: ImmutableList<RoomSceneItem>,
+)
