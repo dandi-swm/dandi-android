@@ -36,6 +36,8 @@ import com.dandi.nyummy.settings.domain.MealTimeSettingPage
 import com.dandi.nyummy.settings.domain.SettingsPage
 import com.dandi.nyummy.settings.presentation.main.SettingsPage
 import com.dandi.nyummy.settings.presentation.mealtime.MealTimeSettingPage
+import com.dandi.nyummy.shop.domain.ShopPage
+import com.dandi.nyummy.shop.presentation.ShopPage
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
@@ -127,6 +129,12 @@ val appRoutes: List<AppRoute> = listOf(
                 linkEventId = args[LinkArgs.NOTIFICATION_ID],
             )
         },
+    ),
+    AppRoute(
+        // 상점 탭. 기능이 꺼져 있으면 하단 내비에 탭이 없고, 링크로 들어오면 내비 없이 이 화면만 보인다.
+        path = ShopPage.PATH,
+        isBottomTab = true,
+        render = { ShopPage() },
     ),
     AppRoute(
         path = MailboxPage.PATH,
