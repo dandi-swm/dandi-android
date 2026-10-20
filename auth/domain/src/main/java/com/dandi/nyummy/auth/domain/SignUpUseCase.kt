@@ -1,6 +1,8 @@
 package com.dandi.nyummy.auth.domain
 
 import com.dandi.nyummy.auth.entity.Gender
+import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.handlingErrorOnUseCase
@@ -17,6 +19,7 @@ import javax.inject.Inject
 class SignUpUseCase @Inject constructor(
     private val repository: AuthRepository,
     private val socialSignUpSession: SocialSignUpSession,
+    private val analyticsHelper: AnalyticsHelper,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -54,6 +57,7 @@ class SignUpUseCase @Inject constructor(
             weight = weight,
         )
         repository.setOnboardingIncomplete(incomplete = true)
+        analyticsHelper.logEvent(AnalyticsEvent.SignUp(method = "email"))
         navigationHelper.navigateToAsRoot(OnboardingPage)
         Result.success(Unit)
     } catch (e: HttpResponseException) {
@@ -94,6 +98,7 @@ class SignUpUseCase @Inject constructor(
             )
             repository.setOnboardingIncomplete(incomplete = true)
             socialSignUpSession.clear()
+            analyticsHelper.logEvent(AnalyticsEvent.SignUp(method = "social"))
             navigationHelper.navigateToAsRoot(OnboardingPage)
             Result.success(Unit)
         } catch (e: HttpResponseException) {

@@ -7,6 +7,8 @@ import com.dandi.nyummy.auth.domain.EmailVerificationUseCase
 import com.dandi.nyummy.auth.domain.SignUpUseCase
 import com.dandi.nyummy.auth.domain.SignUpValidator
 import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
+import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
@@ -17,6 +19,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -30,6 +34,7 @@ class SignUpViewModel @AssistedInject constructor(
     private val signUpUseCase: SignUpUseCase,
     private val messageHelper: MessageHelper,
     private val navigationHelper: NavigationHelper,
+    private val analyticsHelper: AnalyticsHelper,
 ) : MviViewModel<SignUpIntent, SignUpUIState, SignUpReducerEvent>(SignUpUIState.initial(isSocialSignUp)) {
 
     @AssistedFactory
@@ -43,6 +48,13 @@ class SignUpViewModel @AssistedInject constructor(
         // 프로세스 종료 후 복원됐거나 외부 링크로 들어오면 가입에 쓸 토큰이 없다 — 다시 로그인하도록 돌려보낸다.
         if (isSocialSignUp && !signUpUseCase.hasPendingSocialSignUp()) {
             signUpUseCase.leaveSocialSignUpWithoutSession()
+        }
+        // 가입 단계에 도착할 때마다 남긴다. 단계별 도착 수를 차례로 놓으면 어디서 이탈했는지 보인다.
+        val method = if (isSocialSignUp) "social" else "email"
+        viewModelScope.launch {
+            uiState.map { it.step }.distinctUntilChanged().collect { step ->
+                analyticsHelper.logEvent(AnalyticsEvent.SignUpStep(step = step.name.lowercase(), method = method))
+            }
         }
     }
 

@@ -1,5 +1,7 @@
 package com.dandi.nyummy.auth.domain
 
+import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
@@ -13,6 +15,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 class LoginUseCase @Inject constructor(
     private val repository: AuthRepository,
+    private val analyticsHelper: AnalyticsHelper,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -28,6 +31,7 @@ class LoginUseCase @Inject constructor(
         val token = repository.login(email = email, password = password)
         val destination = PostLoginDestination.from(token.redirectUrl)
         repository.setOnboardingIncomplete(destination == OnboardingPage)
+        analyticsHelper.logEvent(AnalyticsEvent.Login(method = "email"))
         navigationHelper.navigateToAsRoot(destination)
         Result.success(Unit)
     } catch (e: HttpResponseException) {
