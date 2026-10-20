@@ -153,8 +153,8 @@ object RoomCardLayout {
 }
 
 /**
- * 주어진 자리에 고양이방 카드를 둔다. 자리 크기는 그대로 차지하고, 카드는 [RoomCardLayout.cardSize] 크기다.
- * 보통은 자리를 꽉 채운다. 줄인 경우에만 남는 쪽이 생기는데, 높이가 남으면 카드를 맨 위에, 폭이 남으면 좌우 가운데에 둔다.
+ * 주어진 자리에 고양이방을 둔다. 자리 크기는 그대로 차지하고, 방은 [RoomCardLayout.cardSize] 크기다.
+ * 보통은 자리를 꽉 채운다. 줄인 경우에만 남는 쪽이 생기는데, 방은 좌우 가운데, 바닥에 붙인다(바닥은 잘리지 않는다).
  */
 fun Modifier.fitRoomCard(): Modifier = layout { measurable, constraints ->
     if (!constraints.hasBoundedWidth || !constraints.hasBoundedHeight) {
@@ -170,11 +170,11 @@ fun Modifier.fitRoomCard(): Modifier = layout { measurable, constraints ->
         else -> maxWidth to maxHeight
     }
     val placeable = measurable.measure(Constraints.fixed(width, height))
-    layout(maxWidth, maxHeight) { placeable.place((maxWidth - width) / 2, 0) }
+    layout(maxWidth, maxHeight) { placeable.place((maxWidth - width) / 2, maxHeight - height) }
 }
 
 /**
- * 홈 고양이방 카드 크기. 앱 루트가 창 크기에서 홈이 받는 자리를 셈해 늘 공급하고, 마이룸은 이 크기로 방을 보여 준다.
- * 그래서 홈을 거치지 않고 딥링크로 마이룸에 바로 들어와도 홈과 같은 크기, 같은 잘림이다.
+ * 홈 고양이방 크기. 앱 루트가 창 크기로 셈해 늘 공급하고, 마이룸은 이 크기를 같은 비율로 줄여 방을 보여 준다.
+ * 그래서 홈을 거치지 않고 딥링크로 마이룸에 바로 들어와도 홈과 같은 곳이 잘린 방이다.
  */
 val LocalRoomCardSize = compositionLocalOf<DpSize> { error("앱 루트에서 홈 고양이방 카드 크기를 공급해야 한다.") }

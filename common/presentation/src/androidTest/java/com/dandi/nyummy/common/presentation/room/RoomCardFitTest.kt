@@ -48,13 +48,14 @@ class RoomCardFitTest {
     }
 
     @Test
-    fun 너무_긴_자리에서는_높이를_줄여_맨_위에_붙인다() {
+    fun 너무_긴_자리에서는_높이를_줄여_바닥에_붙인다() {
         setSlot(width = 300, height = 760)
 
+        val height = 300f / RoomCardLayout.MinCardAspect
         composeRule.onNodeWithTag(CardTag)
             .assertWidthIsEqualTo(300.dp)
-            .assertHeightIsEqualTo((300f / RoomCardLayout.MinCardAspect).dp)
-            .assertTopPositionInRootIsEqualTo(0.dp)
+            .assertHeightIsEqualTo(height.dp)
+            .assertTopPositionInRootIsEqualTo((760f - height).dp)
     }
 
     @Test

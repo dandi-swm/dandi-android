@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -24,7 +23,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.DpSize
@@ -43,6 +41,8 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackba
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.helper.BottomBarVisibility
+import com.dandi.nyummy.common.presentation.helper.LocalBottomBarVisibility
 import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.common.presentation.room.LocalRoomCardSize
@@ -140,7 +140,9 @@ fun RootComposable(
     }
 
     val drawsBehindSystemBars = currentRoute?.drawsBehindSystemBars == true
-    val showsBottomBar = currentRoute?.isBottomTab == true && currentTabIndex >= 0
+    // 홈 눈 버튼처럼 화면이 잠시 하단 내비를 숨길 수 있다.
+    val bottomBarVisibility = remember { BottomBarVisibility() }
+    val showsBottomBar = currentRoute?.isBottomTab == true && currentTabIndex >= 0 && !bottomBarVisibility.isHidden
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = NyummyTheme.colors.bg.canvas,
@@ -184,34 +186,28 @@ fun RootComposable(
             }
         }
     ) { innerPadding ->
-        // 마이룸은 홈 고양이방 카드와 같은 크기로 방을 보여 준다. 딥링크로 홈을 거치지 않고 들어와도 같도록 창 크기로 늘 셈해 둔다.
-        CompositionLocalProvider(LocalRoomCardSize provides homeRoomCardSizeInWindow()) {
+        // 마이룸은 홈 고양이방과 같은 곳이 잘린 방을 보여 준다. 딥링크로 홈을 거치지 않고 들어와도 같도록 창 크기로 늘 셈해 둔다.
+        CompositionLocalProvider(
+            LocalRoomCardSize provides homeRoomCardSizeInWindow(),
+            LocalBottomBarVisibility provides bottomBarVisibility,
+        ) {
             AppNavHost(
                 backStack = backStack,
-                modifier = Modifier.padding(innerPadding)
+                modifier = if (currentRoute?.drawsBehindBottomBar == true) Modifier else Modifier.padding(innerPadding),
             )
         }
     }
 }
 
 /**
- * 홈이 받는 자리로 셈한 고양이방 카드 크기. 홈은 Scaffold 안에서 시스템 바와 하단 내비(내비게이션 바 영역까지)를 뺀
- * 자리를 받는다. 지금 어느 화면이든 창 크기로 세므로 홈을 한 번도 그리지 않았어도 같은 값이다.
+ * 홈 고양이방 크기. 홈은 방이 창 전체(시스템 바와 하단 내비 뒤까지)를 채우므로 창 크기로 센다.
+ * 지금 어느 화면이든 창 크기로 세므로 홈을 한 번도 그리지 않았어도 같은 값이다.
  */
 @Composable
 private fun homeRoomCardSizeInWindow(): DpSize {
     val density = LocalDensity.current
-    val layoutDirection = LocalLayoutDirection.current
     val window = LocalWindowInfo.current.containerSize
-    val systemBars = ScaffoldDefaults.contentWindowInsets
-    val navigationBars = WindowInsets.navigationBars
-    val width = with(density) {
-        (window.width - systemBars.getLeft(density, layoutDirection) - systemBars.getRight(density, layoutDirection)).toDp()
-    }
-    val height = with(density) {
-        (window.height - systemBars.getTop(density) - navigationBars.getBottom(density)).toDp()
-    } - NyummyTheme.size.bottomNav
-    return homeRoomCardSize(width, height)
+    return with(density) { homeRoomCardSize(window.width.toDp(), window.height.toDp()) }
 }
 
 /** 기능 플래그로 켜고 끄는 하단 탭. 꺼져 있어도 탭은 보이고, 누르면 준비 중이라고 알린다. */

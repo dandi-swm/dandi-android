@@ -105,6 +105,9 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = HomePage.PATH,
         isBottomTab = true,
+        // 방이 상태 표시줄과 하단 내비 뒤까지 화면 전체를 채운다.
+        drawsBehindSystemBars = true,
+        drawsBehindBottomBar = true,
         render = {
             HomePage()
         },

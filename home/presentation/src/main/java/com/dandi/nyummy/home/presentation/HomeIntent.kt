@@ -23,29 +23,8 @@ sealed interface HomeIntent : MviIntent {
     /** 연속 기록 배너. */
     data object ClickStreak : HomeIntent
 
-    /** 오늘 바. 오늘 기록이 없으면 식사 기록으로, 있으면 오늘 식사 시트로 간다. */
-    data object ClickTodayBar : HomeIntent
-
-    /** 고양이방 메뉴 펼치기, 접기. */
-    data object ToggleRoomMenu : HomeIntent
-
-    /** 방 메뉴: 마이룸 꾸미기. */
-    data object ClickMyRoom : HomeIntent
-
-    /** 방 메뉴: 친구에게 공유. */
-    data object ClickShareFriend : HomeIntent
-
-    /** 방 메뉴: 냐미 상태. */
-    data object ClickNyummyStatus : HomeIntent
-
-    /** 오늘 식사 시트를 닫았다. */
-    data object DismissTodaySheet : HomeIntent
-
-    /** 오늘 식사 시트를 다시 읽는다(불러오기 실패 후). */
-    data object RetryTodayMeals : HomeIntent
-
-    /** 식사 추가하기(시트 안 버튼). */
-    data object ClickAddMeal : HomeIntent
+    /** 눈 버튼. 코인, 연속 기록, 말풍선, 하단 내비를 숨기고 냐미와 방만 보여 준다. 다시 누르면 돌아온다. */
+    data object ToggleUiHidden : HomeIntent
 
     /** 냐미를 눌렀다. 같은 상태의 다른 동작과 새 대사를 보여 준다. */
     data object ClickCat : HomeIntent

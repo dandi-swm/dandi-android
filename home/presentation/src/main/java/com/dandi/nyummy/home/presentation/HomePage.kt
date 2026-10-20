@@ -1,5 +1,7 @@
 package com.dandi.nyummy.home.presentation
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,10 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -24,22 +26,25 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.helper.HideBottomBarEffect
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.common.presentation.room.fitRoomCard
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.home.presentation.component.HomeHud
-import com.dandi.nyummy.home.presentation.component.HomeRoomCard
+import com.dandi.nyummy.home.presentation.component.HomeRoom
 import com.dandi.nyummy.home.presentation.component.HomeStreakBanner
-import com.dandi.nyummy.home.presentation.component.HomeTodayBar
-import com.dandi.nyummy.home.presentation.component.HomeTodaySheet
 import com.dandi.nyummy.home.presentation.component.HudHeight
 import com.dandi.nyummy.home.presentation.component.StreakHeight
 
 /**
- * 홈. 위에서부터 지갑과 우편, 공지, 설정 → 연속 기록 배너 → 고양이방 카드(남는 높이 전부) 순서로 쌓는다.
- * 식사 기록은 하단 내비 카메라나 오늘 바(오늘 기록이 없을 때)로 들어간다.
- * 넓은 화면에서는 콘텐츠 폭을 480으로 묶어 가운데 둔다.
+ * 홈. 냐미가 사는 방이 화면 전체(시스템 바와 하단 내비 뒤까지)를 채우고, 그 위에 지갑과 우편, 설정 → 연속 기록 배너 →
+ * 눈 버튼이 뜬다. 식사 기록은 하단 내비 가운데 카메라로 들어간다.
+ * 눈 버튼을 누르면 위 화면 요소, 말풍선, 하단 내비를 숨겨 냐미와 방만 보여 준다. 방과 냐미 자리는 그대로다.
+ * 넓은 화면에서는 위 화면 요소의 폭을 480으로 묶어 가운데 둔다.
  */
 @Composable
 fun HomePage(
@@ -68,96 +73,80 @@ internal fun HomeScreen(
             onIntent(HomeIntent.SummaryShown)
         }
     }
+    HideBottomBarEffect(hidden = uiState.isUiHidden)
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(NyummyTheme.colors.bg.canvas),
         contentAlignment = Alignment.TopCenter,
     ) {
+        val fallbackSpeech = stringResource(
+            if (uiState.hasRecordedToday) R.string.home_speech_recorded else R.string.home_speech_waiting,
+        )
+        HomeRoom(
+            room = uiState.room,
+            hasRecordedToday = uiState.hasRecordedToday,
+            catMotion = uiState.catMotion,
+            useFallbackCat = uiState.isCatAnimationFailed,
+            onCatClick = { onIntent(HomeIntent.ClickCat) },
+            onCatMotionFinished = { playId -> onIntent(HomeIntent.CatMotionFinished(playId)) },
+            onCatShown = { onIntent(HomeIntent.CatShown) },
+            speech = uiState.catLine ?: fallbackSpeech,
+            showSpeech = !uiState.isUiHidden,
+            modifier = Modifier
+                .fillMaxSize()
+                // 화면 전체를 채운다. 접는 폰처럼 너무 넓거나 아주 긴 화면이면 방 그림이 많이 잘리지 않게 줄여 바닥에 붙인다.
+                .fitRoomCard(),
+        )
         Column(
             modifier = Modifier
                 .widthIn(max = ContentMaxWidth)
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .padding(horizontal = NyummyTheme.spacing.gutter),
         ) {
-            // 카드 위아래 줄의 높이를 바꾸면 마이룸 방 크기를 정하는 [homeRoomCardSize]도 같이 바꾼다.
             Spacer(Modifier.height(NyummyTheme.spacing.s8))
-            HomeHud(
-                coinBalance = uiState.summary.coinBalance,
-                // 공지 API가 아직 없어 읽지 않은 공지 점은 띄우지 않는다.
-                hasUnreadNotice = false,
-                onWalletClick = { onIntent(HomeIntent.ClickWallet) },
-                onMailClick = { onIntent(HomeIntent.ClickMail) },
-                onNoticeClick = { onIntent(HomeIntent.ClickNotice) },
-                onSettingsClick = { onIntent(HomeIntent.ClickSettings) },
-                hasUnreadMail = uiState.summary.hasUnreadInquiryAnswer,
-            )
-            Spacer(Modifier.height(NyummyTheme.spacing.s12))
-            HomeStreakBanner(
-                streakDays = uiState.summary.streakDays,
-                onClick = { onIntent(HomeIntent.ClickStreak) },
-            )
-            Spacer(Modifier.height(NyummyTheme.spacing.s12))
-            val fallbackSpeech = stringResource(
-                if (uiState.hasRecordedToday) R.string.home_speech_recorded else R.string.home_speech_waiting,
-            )
-            HomeRoomCard(
-                room = uiState.room,
-                hasRecordedToday = uiState.hasRecordedToday,
-                catMotion = uiState.catMotion,
-                useFallbackCat = uiState.isCatAnimationFailed,
-                onCatClick = { onIntent(HomeIntent.ClickCat) },
-                onCatMotionFinished = { playId -> onIntent(HomeIntent.CatMotionFinished(playId)) },
-                onCatShown = { onIntent(HomeIntent.CatShown) },
-                speech = uiState.catLine ?: fallbackSpeech,
-                isMenuExpanded = uiState.isRoomMenuExpanded,
-                onToggleMenu = { onIntent(HomeIntent.ToggleRoomMenu) },
-                onMyRoomClick = { onIntent(HomeIntent.ClickMyRoom) },
-                onShareFriendClick = { onIntent(HomeIntent.ClickShareFriend) },
-                onNyummyStatusClick = { onIntent(HomeIntent.ClickNyummyStatus) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    // 남는 자리를 채운다. 태블릿 세로처럼 너무 길거나 아주 작은 폰처럼 너무 넓으면 방 그림이 안전 지대까지 잘리지 않게 줄인다.
-                    .fitRoomCard(),
-            ) {
-                HomeTodayBar(
-                    recordedCount = uiState.summary.todayRecordedCount,
-                    calorieProgress = uiState.calorieProgress,
-                    onClick = { onIntent(HomeIntent.ClickTodayBar) },
-                )
+            // 숨겨도 자리는 그대로 두어 눈 버튼이 움직이지 않게 한다.
+            Box(Modifier.height(HudHeight + NyummyTheme.spacing.s12 + StreakHeight)) {
+                androidx.compose.animation.AnimatedVisibility(visible = !uiState.isUiHidden, enter = fadeIn(), exit = fadeOut()) {
+                    Column {
+                        HomeHud(
+                            coinBalance = uiState.summary.coinBalance,
+                            // 공지 API가 아직 없어 읽지 않은 공지 점은 띄우지 않는다.
+                            hasUnreadNotice = false,
+                            onWalletClick = { onIntent(HomeIntent.ClickWallet) },
+                            onMailClick = { onIntent(HomeIntent.ClickMail) },
+                            onNoticeClick = { onIntent(HomeIntent.ClickNotice) },
+                            onSettingsClick = { onIntent(HomeIntent.ClickSettings) },
+                            hasUnreadMail = uiState.summary.hasUnreadInquiryAnswer,
+                        )
+                        Spacer(Modifier.height(NyummyTheme.spacing.s12))
+                        HomeStreakBanner(
+                            streakDays = uiState.summary.streakDays,
+                            onClick = { onIntent(HomeIntent.ClickStreak) },
+                        )
+                    }
+                }
             }
-            Spacer(Modifier.height(NyummyTheme.spacing.s16))
-        }
-        if (uiState.isTodaySheetVisible) {
-            HomeTodaySheet(
-                recordedCount = uiState.summary.todayRecordedCount,
-                nutrition = uiState.todayNutrition,
-                meals = uiState.todayMeals,
-                isLoading = uiState.isTodayMealsLoading,
-                isFailed = uiState.isTodayMealsFailed,
-                onRetry = { onIntent(HomeIntent.RetryTodayMeals) },
-                onAddMeal = { onIntent(HomeIntent.ClickAddMeal) },
-                onDismiss = { onIntent(HomeIntent.DismissTodaySheet) },
+            Spacer(Modifier.height(NyummyTheme.spacing.s12))
+            NyummyIconButton(
+                icon = if (uiState.isUiHidden) CommonR.drawable.nyummy_ic_eye_off else CommonR.drawable.nyummy_ic_eye,
+                contentDescription = stringResource(
+                    if (uiState.isUiHidden) R.string.home_show_ui else R.string.home_hide_ui,
+                ),
+                onClick = { onIntent(HomeIntent.ToggleUiHidden) },
+                style = NyummyIconButtonStyle.Filled,
+                modifier = Modifier.align(Alignment.End),
             )
         }
     }
 }
 
 /**
- * 홈이 [width]×[height] 자리를 받을 때 고양이방 카드 크기. 카드 위 줄(지갑과 우편, 연속 기록 배너)과 아래 여백은 높이가
- * 정해져 있어 홈을 그리지 않고도 셀 수 있다. 앱 루트가 이 값을 마이룸에 넘기므로, [HomeScreen]의 줄을 바꾸면 여기도 같이 바꾼다.
+ * 홈이 [width]×[height] 자리를 받을 때 고양이방 크기. 홈은 방이 화면 전체를 채우므로 창 크기 그대로이고,
+ * 너무 넓거나 긴 화면에서만 줄인다. 앱 루트가 이 값을 마이룸에 넘겨, 마이룸도 홈과 같은 곳이 잘린 방을 보여 준다.
  */
-@Composable
-@ReadOnlyComposable
-fun homeRoomCardSize(width: Dp, height: Dp): DpSize {
-    val spacing = NyummyTheme.spacing
-    val aboveCard = spacing.s8 + HudHeight + spacing.s12 + StreakHeight + spacing.s12
-    return RoomCardLayout.cardSize(
-        maxWidth = minOf(width, ContentMaxWidth) - spacing.gutter * 2,
-        maxHeight = height - aboveCard - spacing.s16,
-    )
-}
+fun homeRoomCardSize(width: Dp, height: Dp): DpSize = RoomCardLayout.cardSize(maxWidth = width, maxHeight = height)
 
 private val ContentMaxWidth = 480.dp
 
@@ -169,7 +158,7 @@ private val PreviewSummary = HomeSummaryVO(
     goalCalorieKcal = 1800,
 )
 
-@Preview(showBackground = true, widthDp = 390, heightDp = 767)
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun HomeBeforeRecordPreview() {
     NyummyTheme {
@@ -177,10 +166,10 @@ private fun HomeBeforeRecordPreview() {
     }
 }
 
-@Preview(showBackground = true, widthDp = 390, heightDp = 767)
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
-private fun HomeAfterRecordPreview() {
+private fun HomeUiHiddenPreview() {
     NyummyTheme {
-        HomeScreen(uiState = HomeUIState(summary = PreviewSummary, isRoomMenuExpanded = true), onIntent = {})
+        HomeScreen(uiState = HomeUIState(summary = PreviewSummary, isUiHidden = true), onIntent = {})
     }
 }

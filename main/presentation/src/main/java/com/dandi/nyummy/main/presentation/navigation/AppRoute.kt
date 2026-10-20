@@ -17,6 +17,11 @@ data class AppRoute(
      */
     val drawsBehindSystemBars: Boolean = false,
     /**
+     * true면 하단 내비가 보여도 Scaffold가 그 높이만큼 화면을 밀지 않아, 화면이 하단 내비 뒤까지 그린다.
+     * 방이 화면 전체를 채우는 홈에 쓴다. 이때 화면이 하단 내비에 가리는 곳을 직접 피한다.
+     */
+    val drawsBehindBottomBar: Boolean = false,
+    /**
      * true면 이 화면에 있는 동안 상태 바와 내비게이션 바 아이콘을 밝은 색으로 그린다.
      * 어두운 배경을 시스템 바 뒤까지 그리는 화면(온보딩의 밤 골목 등)에 쓴다. 다른 화면으로 나가면 어두운 아이콘으로 돌아온다.
      */
