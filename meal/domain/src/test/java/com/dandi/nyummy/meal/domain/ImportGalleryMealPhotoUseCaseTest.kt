@@ -117,6 +117,7 @@ class ImportGalleryMealPhotoUseCaseTest {
 
     private fun useCase(repository: MealRecordRepository) = ImportGalleryMealPhotoUseCase(
         repository = repository,
+        analyticsHelper = RecordingAnalyticsHelper(),
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = FakeNavigationHelper(),

@@ -1,5 +1,7 @@
 package com.dandi.nyummy.meal.presentation
 
+import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -204,6 +206,7 @@ class MealRecordViewModelTest {
         return MealRecordViewModel(
             submitMeal = SubmitMealUseCase(
                 repository = mealRepository,
+                analyticsHelper = RecordingAnalyticsHelper(),
                 resourceHelper = FakeResourceHelper(),
                 messageHelper = messageHelper,
                 navigationHelper = navigationHelper,
@@ -211,6 +214,7 @@ class MealRecordViewModelTest {
             ),
             importGalleryMealPhoto = ImportGalleryMealPhotoUseCase(
                 repository = mealRepository,
+                analyticsHelper = RecordingAnalyticsHelper(),
                 resourceHelper = FakeResourceHelper(),
                 messageHelper = messageHelper,
                 navigationHelper = navigationHelper,
@@ -218,6 +222,7 @@ class MealRecordViewModelTest {
             ),
             navigationHelper = navigationHelper,
             messageHelper = messageHelper,
+            analyticsHelper = RecordingAnalyticsHelper(),
             remoteConfigHelper = FakeRemoteConfigHelper(isMailGiftEnabled),
             getRoomBackground = GetRoomBackgroundUseCase(roomRepository),
         )
@@ -325,5 +330,16 @@ class MealRecordViewModelTest {
 
     private companion object {
         const val PHOTO_PATH = "/cache/meal_ceremony_test.jpg"
+    }
+}
+
+/** 남긴 분석 기록을 모아 둔다. */
+private class RecordingAnalyticsHelper : AnalyticsHelper {
+    val events = mutableListOf<AnalyticsEvent>()
+
+    override fun logScreenView(screenName: String) = Unit
+
+    override fun logEvent(event: AnalyticsEvent) {
+        events += event
     }
 }
