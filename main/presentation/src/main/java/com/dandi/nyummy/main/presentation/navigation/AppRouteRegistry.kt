@@ -115,6 +115,8 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = MealRecordPage.PATH,
         isBottomTab = false,
+        // 식사 기록 연출은 홈처럼 방이 시스템 바 뒤까지 화면 전체를 채운다. 촬영과 확인 단계는 화면이 시스템 바를 피한다.
+        drawsBehindSystemBars = true,
         syntheticStack = { args ->
             listOf(
                 GenericNavKey(HomePage.PATH),
