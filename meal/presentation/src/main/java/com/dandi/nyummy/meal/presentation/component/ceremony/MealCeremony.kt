@@ -18,8 +18,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -85,6 +83,7 @@ import com.dandi.nyummy.meal.entity.RewardBoxGrade
 import com.dandi.nyummy.meal.presentation.MealCeremonyResult
 import com.dandi.nyummy.meal.presentation.R
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyChip
 import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -127,7 +126,7 @@ internal enum class CeremonyStage {
  * 3. "냐미가 맛있게 먹었어요!". [isMailGiftEnabled] 가 꺼져 있거나 상자가 없으면 여기서 끝납니다.
  * 4. 켜져 있으면 진한 그린 무대 위에 상자가 등장해 등급만큼 승급하고, 무대가 걷히며 오른쪽 위 우편 아이콘으로 날아갑니다.
  *
- * 띠욧부터는 화면을 누르면 끝 장면으로 건너뜁니다. 기기에서 애니메이션을 끄면 섬광, 흔들림, 컷인 없이
+ * 띠욧부터는 오른쪽 위 건너뛰기 칩으로 끝 장면으로 건너뜁니다. 기기에서 애니메이션을 끄면 섬광, 흔들림, 컷인 없이
  * 장면만 바꿉니다.
  */
 @Composable
@@ -239,18 +238,7 @@ internal fun MealCeremony(
             // 빛줄기, 상자 무대의 빛, 색종이처럼 자기 영역보다 크게 그리는 효과가 상태 바와 내비게이션 바 위로 새지 않게 자른다.
             .clipToBounds()
             .background(NyummyTheme.colors.bg.surface)
-            .graphicsLayer { translationX = shake.value * shakePx }
-            .then(
-                if (canSkip) {
-                    Modifier.clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClickLabel = stringResource(R.string.meal_ceremony_skip_label),
-                    ) { skipped = true }
-                } else {
-                    Modifier
-                },
-            ),
+            .graphicsLayer { translationX = shake.value * shakePx },
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             CeremonyHeader(onCloseClick = onCloseClick)
@@ -334,6 +322,23 @@ internal fun MealCeremony(
                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 },
             )
+        }
+
+        // 건너뛰기: 상단 바 오른쪽에 둔다. 상자가 우편함으로 날아갈 때는 그 자리에 우편 아이콘이 떠서 숨긴다(곧 홈으로 간다).
+        if (canSkip && stage != CeremonyStage.BoxSend) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s8)
+                    .height(NyummyTheme.size.touchTarget),
+                contentAlignment = Alignment.Center,
+            ) {
+                NyummyChip(
+                    text = stringResource(R.string.meal_ceremony_skip_label),
+                    selected = false,
+                    onClick = { skipped = true },
+                )
+            }
         }
 
         val flashColor = NyummyTheme.colors.bg.surface
@@ -736,7 +741,7 @@ private fun jumpSpec() = keyframes {
     0f at JumpMillis
 }
 
-/** 띠욧부터는 화면을 누르면 끝 장면으로 건너뛴다. 응답이 오기 전에는 건너뛸 수 없다. */
+/** 띠욧부터는 건너뛰기 칩으로 끝 장면으로 건너뛴다. 응답이 오기 전에는 건너뛸 수 없다. */
 private val SkippableStages = setOf(
     CeremonyStage.Reaction,
     CeremonyStage.Ate,
