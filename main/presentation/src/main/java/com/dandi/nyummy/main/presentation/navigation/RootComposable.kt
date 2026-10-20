@@ -19,6 +19,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -46,10 +47,16 @@ import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.home.presentation.homeRoomCardSize
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * 앱 뼈대(Scaffold, 하단 탭, 공통 다이얼로그와 스낵바, 화면 전환).
+ *
+ * @param onScreenShown 맨 위 화면의 경로가 바뀔 때마다 그 경로로 부른다. 사용 분석의 화면 조회 기록에 쓴다.
+ */
 @Composable
 fun RootComposable(
     modifier: Modifier = Modifier,
     startStack: List<NavKey>,
+    onScreenShown: (path: String) -> Unit = {},
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
     var oneButtonDialogEffect by remember {
@@ -65,6 +72,11 @@ fun RootComposable(
     val currentRoute = currentKey?.let { appRouteByPath[it.path] }
     SystemBarIconsEffect(lightIcons = currentRoute?.usesLightSystemBarIcons == true)
     val currentTabIndex = mainTabIndexOf(currentKey?.path)
+    val latestOnScreenShown by rememberUpdatedState(onScreenShown)
+    // 경로는 라우트 패턴이라 식사 id 같은 값이 들어가지 않는다.
+    LaunchedEffect(currentKey?.path) {
+        currentKey?.path?.let(latestOnScreenShown)
+    }
 
     val messageHelper = LocalMessageHelper.current
 

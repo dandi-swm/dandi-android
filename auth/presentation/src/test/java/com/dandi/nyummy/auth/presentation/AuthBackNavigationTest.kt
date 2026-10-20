@@ -38,7 +38,7 @@ class AuthBackNavigationTest {
     fun `이메일 로그인의 뒤로 가기는 화면을 닫는다`() {
         val viewModel = EmailLoginViewModel(
             navigationHelper = navigationHelper,
-            loginUseCase = LoginUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
+            loginUseCase = LoginUseCase(repository, RecordingAnalyticsHelper(), FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
         )
 
         viewModel.onIntent(EmailLoginIntent.ClickBack)
@@ -96,6 +96,7 @@ class AuthBackNavigationTest {
         signUpUseCase = SignUpUseCase(
             repository,
             socialSignUpSession,
+            RecordingAnalyticsHelper(),
             FakeResourceHelper,
             messageHelper,
             navigationHelper,
@@ -103,5 +104,6 @@ class AuthBackNavigationTest {
         ),
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
+        analyticsHelper = RecordingAnalyticsHelper(),
     )
 }

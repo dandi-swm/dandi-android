@@ -7,6 +7,8 @@ import com.dandi.nyummy.auth.entity.EmailVerifiedVO
 import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.auth.entity.SocialCredentialVO
 import com.dandi.nyummy.auth.entity.SocialLoginVO
+import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.HttpResponseStatus
 import com.dandi.nyummy.common.domain.helper.MessageHelper
@@ -195,4 +197,18 @@ internal class FakeTTIHelper : TTIHelper {
     override fun endTTITracking() = Unit
     override fun shotTTILogging() = Unit
     override fun addTTIMetaData(metadata: TTIMetaData, value: Any?) = Unit
+}
+
+/** 남긴 분석 기록을 모아 둔다. */
+internal class RecordingAnalyticsHelper : AnalyticsHelper {
+    val screens = mutableListOf<String>()
+    val events = mutableListOf<AnalyticsEvent>()
+
+    override fun logScreenView(screenName: String) {
+        screens += screenName
+    }
+
+    override fun logEvent(event: AnalyticsEvent) {
+        events += event
+    }
 }

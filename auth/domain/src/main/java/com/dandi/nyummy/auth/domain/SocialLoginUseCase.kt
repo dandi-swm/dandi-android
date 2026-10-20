@@ -2,6 +2,8 @@ package com.dandi.nyummy.auth.domain
 
 import com.dandi.nyummy.auth.entity.SocialCredentialVO
 import com.dandi.nyummy.auth.entity.SocialLoginType
+import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.handlingErrorOnUseCase
@@ -25,6 +27,7 @@ import javax.inject.Inject
 class SocialLoginUseCase @Inject constructor(
     private val repository: AuthRepository,
     private val socialSignUpSession: SocialSignUpSession,
+    private val analyticsHelper: AnalyticsHelper,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -46,6 +49,7 @@ class SocialLoginUseCase @Inject constructor(
                     repository.setOnboardingIncomplete(
                         destination == OnboardingPage,
                     )
+                    analyticsHelper.logEvent(AnalyticsEvent.Login(method = credential.type.name.lowercase()))
                     navigationHelper.navigateToAsRoot(destination)
                 }
                 result.isSignUpRequired -> {

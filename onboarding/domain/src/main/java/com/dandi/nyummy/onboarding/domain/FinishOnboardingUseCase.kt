@@ -1,5 +1,7 @@
 package com.dandi.nyummy.onboarding.domain
 
+import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
@@ -23,6 +25,7 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 class FinishOnboardingUseCase @Inject constructor(
     private val repository: OnboardingRepository,
+    private val analyticsHelper: AnalyticsHelper,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -39,6 +42,7 @@ class FinishOnboardingUseCase @Inject constructor(
 
         // 기기 저장이 실패해도 홈으로 간다. 고양이는 이미 만들었다. 식사 시각은 고양이와 함께 서버에 저장했다.
         runIgnoringFailure { repository.markOnboardingComplete() }
+        analyticsHelper.logEvent(AnalyticsEvent.OnboardingComplete)
         navigationHelper.navigateToAsRoot(HomePage)
         return Result.success(Unit)
     }

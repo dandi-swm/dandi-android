@@ -1,17 +1,33 @@
 package com.dandi.nyummy.onboarding.presentation
 
 import androidx.lifecycle.viewModelScope
+import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.onboarding.domain.CatNameValidator
 import com.dandi.nyummy.onboarding.domain.FinishOnboardingUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
     private val finishOnboardingUseCase: FinishOnboardingUseCase,
+    private val analyticsHelper: AnalyticsHelper,
 ) : MviViewModel<OnboardingIntent, OnboardingUIState, OnboardingReducerEvent>(OnboardingUIState.empty) {
+
+    init {
+        // 장면에 도착할 때마다 남긴다. 장면별 도착 수를 차례로 놓으면 어디서 이탈했는지 보인다.
+        viewModelScope.launch {
+            uiState.map { it.sceneIndex }.distinctUntilChanged().collect {
+                analyticsHelper.logEvent(
+                    AnalyticsEvent.OnboardingStep(scene = it + 1, kind = currentState.currentScene.action.analyticsKind),
+                )
+            }
+        }
+    }
 
     override fun onIntent(intent: OnboardingIntent) {
         when (intent) {
@@ -112,3 +128,13 @@ class OnboardingViewModel @Inject constructor(
         dispatch(OnboardingReducerEvent.CatNamed(state.catNameInput.trim()))
     }
 }
+
+/** 분석에 남기는 장면 종류. */
+private val OnboardingSceneAction.analyticsKind: String
+    get() = when (this) {
+        OnboardingSceneAction.None -> "story"
+        is OnboardingSceneAction.Choice -> "choice"
+        OnboardingSceneAction.NameInput -> "name_input"
+        OnboardingSceneAction.Start -> "start"
+        OnboardingSceneAction.MealTime -> "meal_time"
+    }

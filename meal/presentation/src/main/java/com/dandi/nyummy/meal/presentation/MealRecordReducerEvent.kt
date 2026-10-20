@@ -29,18 +29,18 @@ sealed interface MealRecordReducerEvent : ReducerEvent {
     /** 촬영본을 버리고 프리뷰 단계로 돌아갑니다. */
     data object ReturnedToPreview : MealRecordReducerEvent
 
-    /** 먹이기 제출이 시작되어 세리머니 단계로 전환합니다. */
+    /** 제출이 시작되어 연출 단계로 전환합니다. */
     data object SubmitStarted : MealRecordReducerEvent
 
-    /** 먹이기 제출이 성공해 `다음` 으로 나갈 수 있습니다. */
-    data object SubmitSucceeded : MealRecordReducerEvent
+    /** 기록이 접수되어 연출이 맛 리액션으로 넘어갑니다. */
+    data class SubmitSucceeded(val result: MealCeremonyResult) : MealRecordReducerEvent
 
-    /** 먹이기 제출이 실패해 확인 단계로 되돌립니다. */
+    /** 제출이 실패했습니다. 연출 화면에서 냐미의 아쉬운 동작을 보여 줍니다. */
     data object SubmitFailed : MealRecordReducerEvent
-
-    /** 세리머니가 끝나 기록 완료 화면으로 전환합니다. */
-    data object FeedingCompleted : MealRecordReducerEvent
 
     /** 세리머니 마무리가 시작되어 추가 이탈 입력을 래치합니다. */
     data object FinishStarted : MealRecordReducerEvent
+
+    /** 지금 마이룸에 깔린 배경을 읽었습니다. 연출의 고양이방을 이 배경으로 그립니다. */
+    data class RoomBackgroundLoaded(val itemId: Long) : MealRecordReducerEvent
 }

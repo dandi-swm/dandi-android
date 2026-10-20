@@ -102,6 +102,7 @@ dependencies {
 
     // 원격 구성(버전 확인, 기능 플래그). 인트로가 앱 시작 때 한 번 받아 둔다.
     implementation(libs.firebase.config)
+    implementation(libs.firebase.analytics)
     implementation(libs.kotlinx.coroutines.play.services)
 
     testImplementation(libs.junit)

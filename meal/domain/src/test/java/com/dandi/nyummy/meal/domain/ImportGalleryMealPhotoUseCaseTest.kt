@@ -29,10 +29,21 @@ import java.time.ZoneId
 class ImportGalleryMealPhotoUseCaseTest {
 
     private val messageHelper = RecordingMessageHelper()
+    private val analytics = RecordingAnalyticsHelper()
 
     /** 테스트 기준 "지금": 2026-09-30 13:00 서울. 기기 타임존은 [zone] 으로 고정한다. */
     private val nowMillis = DeviceTime.parseIsoToEpochMillisOrNull("2026-09-30T13:00:00+09:00")!!
     private val zone = ZoneId.of("Asia/Seoul")
+
+    @Test
+    fun `오늘 찍지 않은 갤러리 사진은 막힌 사유를 남기고, 오늘 사진은 남기지 않는다`() = runBlocking {
+        useCase(FakeMealRecordRepository(takenAt = LocalDateTime.of(2026, 9, 29, 23, 59, 59)))(PHOTO_URI, nowMillis, zone)
+        useCase(FakeMealRecordRepository(takenAt = null))(PHOTO_URI, nowMillis, zone)
+
+        val event = analytics.events.single()
+        assertEquals("meal_record_blocked", event.name)
+        assertEquals(mapOf("stage" to "gallery", "reason" to "gallery_not_today"), event.params)
+    }
 
     @Test
     fun `오늘 찍은 사진이면 캐시로 가져온 파일 경로를 돌려준다`() = runBlocking {
@@ -117,6 +128,7 @@ class ImportGalleryMealPhotoUseCaseTest {
 
     private fun useCase(repository: MealRecordRepository) = ImportGalleryMealPhotoUseCase(
         repository = repository,
+        analyticsHelper = analytics,
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = FakeNavigationHelper(),
