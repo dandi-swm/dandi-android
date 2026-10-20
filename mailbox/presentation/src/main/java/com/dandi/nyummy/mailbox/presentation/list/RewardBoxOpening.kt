@@ -50,7 +50,6 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
@@ -66,13 +65,12 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import coil3.compose.AsyncImage
-import coil3.compose.rememberAsyncImagePainter
-import coil3.request.ImageRequest
 import coil3.size.Size
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.image.rememberPreloadedImagePainter
 import com.dandi.nyummy.common.presentation.reward.RewardBurstFlash
 import com.dandi.nyummy.common.presentation.reward.RewardConfetti
 import com.dandi.nyummy.common.presentation.reward.RewardGlow
@@ -189,8 +187,8 @@ internal fun RewardBoxOpening(
     val latestOnFailureShown by rememberUpdatedState(onFailureShown)
     val latestOnClosed by rememberUpdatedState(onClosed)
 
-    val closedPainter = rememberAsyncImagePainter(rememberBoxRequest(opening.closedImageUrl))
-    val openedPainter = rememberAsyncImagePainter(rememberBoxRequest(opening.openedImageUrl))
+    val closedPainter = rememberPreloadedImagePainter(opening.closedImageUrl)
+    val openedPainter = rememberPreloadedImagePainter(opening.openedImageUrl)
 
     val stage = remember { Animatable(0f) }
     val appear = remember { Animatable(if (reducedMotion) 1f else 0f) }
@@ -525,18 +523,6 @@ private fun staggered(progress: Float, index: Int, count: Int): Float {
     if (count <= 1) return progress
     val span = 1f - RewardStagger * (count - 1)
     return ((progress - RewardStagger * index) / span).coerceIn(0f, 1f)
-}
-
-/** 상자 그림 요청. 그려지기 전에도 바로 불러오도록 원본 크기로 요청한다. 주소가 없으면 아무것도 불러오지 않는다. */
-@Composable
-private fun rememberBoxRequest(url: String): ImageRequest {
-    val context = LocalContext.current
-    return remember(context, url) {
-        ImageRequest.Builder(context)
-            .data(url.ifEmpty { null })
-            .size(Size.ORIGINAL)
-            .build()
-    }
 }
 
 /** 좌우로 한 번 흔들고 제자리로 온다. */
