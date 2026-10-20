@@ -50,7 +50,7 @@ fun mailRemainingDays(expiresAtMillis: Long, nowMillis: Long = System.currentTim
 fun mailImageUrl(category: MailCategory, imageId: Long?): String {
     if (imageId == null) return ""
     return when (category) {
-        MailCategory.REWARD_BOX -> NyummyCdn.rewardBoxUrl(imageId)
+        MailCategory.REWARD_BOX -> NyummyCdn.rewardBoxClosedUrl(imageId)
         MailCategory.COIN -> NyummyCdn.coinUrl(imageId)
         MailCategory.ITEM -> NyummyCdn.itemUrl(imageId)
     }
