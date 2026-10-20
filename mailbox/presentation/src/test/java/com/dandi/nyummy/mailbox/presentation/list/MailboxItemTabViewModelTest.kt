@@ -101,6 +101,26 @@ class MailboxItemTabViewModelTest {
     }
 
     @Test
+    fun `행 그림은 우편 종류의 CDN 경로에 그림 번호를 붙인 주소다`() = runTest(testDispatcher) {
+        repository.mailPage = MailPageVO(
+            mails = listOf(
+                mail(1).copy(category = MailCategory.REWARD_BOX, imageId = 3L),
+                mail(2).copy(category = MailCategory.ITEM, imageId = 12L),
+                mail(3).copy(imageId = null),
+            ),
+        )
+        val viewModel = createViewModel()
+
+        viewModel.onIntent(MailboxIntent.ScreenResumed)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf("https://cdn.nyummy.co.kr/reward-boxes/3.png", "https://cdn.nyummy.co.kr/items/12.png", ""),
+            viewModel.uiState.value.items.mails.map { it.imageUrl },
+        )
+    }
+
+    @Test
     fun `남은 기간은 올림한 날 수이고 받은 우편이면 없다`() = runTest(testDispatcher) {
         val now = System.currentTimeMillis()
         repository.mailPage = MailPageVO(
