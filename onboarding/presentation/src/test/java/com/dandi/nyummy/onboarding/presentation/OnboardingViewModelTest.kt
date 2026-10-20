@@ -46,6 +46,7 @@ class OnboardingViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val repository = FakeOnboardingRepository()
     private val navigationHelper = RecordingNavigationHelper()
+    private val analytics = RecordingAnalyticsHelper()
     private lateinit var viewModel: OnboardingViewModel
 
     private val state get() = viewModel.uiState.value
@@ -62,13 +63,38 @@ class OnboardingViewModelTest {
                 navigationHelper = navigationHelper,
                 ttiHelper = FakeTTIHelper,
             ),
-            analyticsHelper = RecordingAnalyticsHelper(),
+            analyticsHelper = analytics,
         )
     }
 
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `장면에 도착할 때마다 장면 번호와 종류를 남긴다`() {
+        testDispatcher.scheduler.runCurrent()
+        repeat(OnboardingScript.scenes[0].lines.size) { revealAndAdvance() }
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(
+            listOf("1" to "story", "2" to "choice"),
+            analytics.events.filter { it.name == "onboarding_step" }.map { it.params.getValue("scene") to it.params.getValue("kind") },
+        )
+    }
+
+    @Test
+    fun `건너뛰면 이름 짓기 장면 도착을 남긴다`() {
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.onIntent(OnboardingIntent.Skip)
+        testDispatcher.scheduler.runCurrent()
+
+        val last = analytics.events.last()
+        assertEquals("onboarding_step", last.name)
+        assertEquals((OnboardingScript.namingSceneIndex + 1).toString(), last.params["scene"])
+        assertEquals("name_input", last.params["kind"])
     }
 
     /** 현재 대사를 다 보여준 뒤 다음으로 넘기는 탭 두 번. */
