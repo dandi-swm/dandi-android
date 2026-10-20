@@ -6,7 +6,7 @@ package com.dandi.nyummy.common.domain.analytics
  * GA4 규칙: 이름과 매개변수 키는 영문 소문자와 밑줄로 40자 안, 값은 100자 안이다. 개인 정보(이메일, 닉네임 등)는 넣지 않는다.
  * 로그인과 회원가입은 GA4 권장 이벤트 이름(login, sign_up, method)을 그대로 써서 기본 보고서에 잡히게 한다.
  *
- * 단계 이벤트(가입 단계)는 그 단계에 도착할 때 남긴다. GA4 퍼널 탐색에서 단계를 차례로 놓으면
+ * 단계 이벤트(가입 단계, 온보딩 장면)는 그 단계에 도착할 때 남긴다. GA4 퍼널 탐색에서 단계를 차례로 놓으면
  * 어느 단계에서 다음 단계로 못 넘어갔는지(이탈)가 보인다.
  */
 sealed class AnalyticsEvent(
@@ -28,6 +28,18 @@ sealed class AnalyticsEvent(
 
     /** 회원가입 성공. [method]는 email 또는 social이다. */
     class SignUp(method: String) : AnalyticsEvent("sign_up", mapOf(PARAM_METHOD to method))
+
+    /**
+     * 온보딩 장면에 도착했다. [scene]은 몇 번째 장면인지(1부터), [kind]는 장면 종류(story, choice, name_input, start, meal_time)다.
+     * 장면 번호는 온보딩 대본 순서라, 대본을 바꾸면 번호가 가리키는 장면도 바뀐다.
+     */
+    class OnboardingStep(scene: Int, kind: String) : AnalyticsEvent(
+        "onboarding_step",
+        mapOf("scene" to scene.toString(), "kind" to kind),
+    )
+
+    /** 온보딩을 마치고 고양이를 만들었다. */
+    data object OnboardingComplete : AnalyticsEvent("onboarding_complete")
 
     private companion object {
         const val PARAM_METHOD = "method"
