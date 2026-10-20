@@ -34,4 +34,23 @@ sealed interface MailboxReducerEvent : ReducerEvent {
 
     /** 되돌리기나 삭제 실패로 [row]를 원래 자리([index])에 다시 넣는다. */
     data class MailRestored(val row: MailRowUiModel, val index: Int) : MailboxReducerEvent
+
+    /** 상자 열기 연출의 변화. 우편 목록은 바꾸지 않는다. */
+    sealed interface BoxOpeningEvent : MailboxReducerEvent
+
+    /** 상자를 열기 시작했다. 닫힌 상자가 무대에 나와 응답을 기다린다. */
+    data class BoxOpeningStarted(val opening: BoxOpeningUiState) : BoxOpeningEvent
+
+    /** 받은 보상이 왔다. 응답의 상자 번호로 그림을 다시 정한다. */
+    data class BoxOpeningOpened(
+        val closedImageUrl: String,
+        val openedImageUrl: String,
+        val rewards: ImmutableList<BoxRewardUiModel>,
+    ) : BoxOpeningEvent
+
+    data object BoxOpeningRevealed : BoxOpeningEvent
+
+    data class BoxOpeningFailed(val failure: BoxOpeningFailure) : BoxOpeningEvent
+
+    data object BoxOpeningEnded : BoxOpeningEvent
 }

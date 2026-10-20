@@ -5,6 +5,7 @@ import com.dandi.nyummy.common.domain.coroutine.IoScope
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.mailbox.domain.ClaimAllMailsUseCase
 import com.dandi.nyummy.mailbox.domain.ClaimMailUseCase
@@ -13,6 +14,7 @@ import com.dandi.nyummy.mailbox.domain.GetMailsUseCase
 import com.dandi.nyummy.mailbox.domain.RestoreMailUseCase
 import com.dandi.nyummy.mailbox.entity.MailCategory
 import com.dandi.nyummy.mailbox.entity.MailVO
+import com.dandi.nyummy.mailbox.entity.RewardVO
 import com.dandi.nyummy.mailbox.presentation.model.mailImageUrl
 import com.dandi.nyummy.mailbox.presentation.model.mailRemainingDays
 import com.dandi.nyummy.mailbox.presentation.model.mailboxListTimeLabel
@@ -50,11 +52,39 @@ class MailboxViewModel @Inject constructor(
             MailboxIntent.ClaimAllMails -> claimAll()
             is MailboxIntent.DeleteMail -> deleteMailRow(intent.mailId)
             is MailboxIntent.UndoDeleteMail -> undoDeleteMail(intent.row, intent.index)
+            MailboxIntent.SkipBoxOpening,
+            MailboxIntent.BoxOpeningBurstFinished,
+            -> if (currentState.boxOpening?.phase == BoxOpeningPhase.Opening) {
+                dispatch(MailboxReducerEvent.BoxOpeningRevealed)
+            }
+            MailboxIntent.BoxOpeningFailureShown -> finishFailedBoxOpening()
+            MailboxIntent.CloseBoxOpening -> if (currentState.boxOpening?.phase == BoxOpeningPhase.Revealed) {
+                dispatch(MailboxReducerEvent.BoxOpeningEnded)
+            }
         }
     }
 
     override fun reduce(state: MailboxUIState, event: MailboxReducerEvent): MailboxUIState =
-        state.copy(items = reduceItems(state.items, event))
+        when (event) {
+            is MailboxReducerEvent.BoxOpeningEvent -> state.copy(boxOpening = reduceBoxOpening(state.boxOpening, event))
+            else -> state.copy(items = reduceItems(state.items, event))
+        }
+
+    private fun reduceBoxOpening(
+        opening: BoxOpeningUiState?,
+        event: MailboxReducerEvent.BoxOpeningEvent,
+    ): BoxOpeningUiState? = when (event) {
+        is MailboxReducerEvent.BoxOpeningStarted -> event.opening
+        is MailboxReducerEvent.BoxOpeningOpened -> opening?.copy(
+            phase = BoxOpeningPhase.Opening,
+            closedImageUrl = event.closedImageUrl,
+            openedImageUrl = event.openedImageUrl,
+            rewards = event.rewards,
+        )
+        MailboxReducerEvent.BoxOpeningRevealed -> opening?.copy(phase = BoxOpeningPhase.Revealed)
+        is MailboxReducerEvent.BoxOpeningFailed -> opening?.copy(phase = BoxOpeningPhase.Failed, failure = event.failure)
+        MailboxReducerEvent.BoxOpeningEnded -> null
+    }
 
     private fun reduceItems(items: MailItemsUiState, event: MailboxReducerEvent): MailItemsUiState =
         when (event) {
@@ -92,6 +122,7 @@ class MailboxViewModel @Inject constructor(
                 val rows = items.mails.filterNot { it.mailId == event.row.mailId }.toPersistentList()
                 items.copy(mails = rows.add(event.index.coerceIn(0, rows.size), event.row))
             }
+            is MailboxReducerEvent.BoxOpeningEvent -> items
         }
 
     /** 우편 첫 묶음부터 다시 읽는다. 이미 받아 둔 만큼(서버 최대치까지)을 한 번에 읽어 스크롤 위치를 지킨다. */
@@ -125,29 +156,78 @@ class MailboxViewModel @Inject constructor(
         }
     }
 
-    /** 우편 하나를 받는다(보상 상자는 연다). 받는 동안 버튼을 막고, 끝나면 그 행을 받았어요로 바꾼다. */
+    /**
+     * 우편 하나를 받는다. 받는 동안 버튼을 막고, 끝나면 그 행을 받았어요로 바꾼다.
+     * 보상 상자는 누르는 즉시 상자 열기 연출을 띄우고, 응답을 기다리는 동안 상자가 무대에서 기다린다.
+     */
     private fun claim(mailId: Long) {
         val items = currentState.items
         val row = items.mails.firstOrNull { it.mailId == mailId } ?: return
-        if (row.isClaimed || items.isClaiming(mailId)) return
+        if (row.isClaimed || items.isClaiming(mailId) || currentState.boxOpening != null) return
+        val opensBox = row.category == MailCategory.REWARD_BOX
         dispatch(MailboxReducerEvent.MailClaimStarted(mailId))
+        if (opensBox) {
+            dispatch(
+                MailboxReducerEvent.BoxOpeningStarted(
+                    BoxOpeningUiState(
+                        mailId = mailId,
+                        closedImageUrl = boxImageUrl(row.imageId, opened = false),
+                        openedImageUrl = boxImageUrl(row.imageId, opened = true),
+                        mailTitle = row.title,
+                    ),
+                ),
+            )
+        }
         viewModelScope.launch {
             claimMail(mailId)
                 .onSuccess { reward ->
                     if (reward == null) {
                         // 이미 받았거나 없거나 기한이 지난 우편이다. 지금 상태를 다시 받아 보여 준다.
                         dispatch(MailboxReducerEvent.MailClaimFinished(mailId, isClaimed = false))
-                        messageHelper.showSnackBar(messageText = ALREADY_GONE_MESSAGE)
-                        loadMails()
+                        if (opensBox) {
+                            dispatch(MailboxReducerEvent.BoxOpeningFailed(BoxOpeningFailure.AlreadyGone))
+                        } else {
+                            messageHelper.showSnackBar(messageText = ALREADY_GONE_MESSAGE)
+                            loadMails()
+                        }
                     } else {
                         dispatch(MailboxReducerEvent.MailClaimFinished(mailId, isClaimed = true))
-                        // TODO: 보상 연출. reward(코인, 아이템, 보상 상자 그림과 열기 연출 URL)로 띄운다. 방식은 따로 정한다.
+                        if (opensBox) {
+                            // 응답의 상자 번호가 우선이다. 없으면 목록의 번호를 그대로 쓴다.
+                            val boxImageId = reward.rewardBox?.imageId ?: row.imageId
+                            dispatch(
+                                MailboxReducerEvent.BoxOpeningOpened(
+                                    closedImageUrl = boxImageUrl(boxImageId, opened = false),
+                                    openedImageUrl = boxImageUrl(boxImageId, opened = true),
+                                    rewards = reward.toBoxRewards(),
+                                ),
+                            )
+                        }
+                        // TODO: 코인, 아이템 우편의 보상 연출. 방식은 따로 정한다.
                     }
                 }
                 .onFailure {
                     dispatch(MailboxReducerEvent.MailClaimFinished(mailId, isClaimed = false))
-                    messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = CLAIM_FAILED_MESSAGE)
+                    if (opensBox) {
+                        dispatch(MailboxReducerEvent.BoxOpeningFailed(BoxOpeningFailure.Error))
+                    } else {
+                        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = CLAIM_FAILED_MESSAGE)
+                    }
                 }
+        }
+    }
+
+    /** 받지 못한 상자가 무대에서 걷혔다. 연출을 닫고, 받지 못한 까닭에 맞는 안내를 띄운다. */
+    private fun finishFailedBoxOpening() {
+        val opening = currentState.boxOpening ?: return
+        if (opening.phase != BoxOpeningPhase.Failed) return
+        dispatch(MailboxReducerEvent.BoxOpeningEnded)
+        when (opening.failure) {
+            BoxOpeningFailure.AlreadyGone -> {
+                messageHelper.showSnackBar(messageText = ALREADY_GONE_MESSAGE)
+                loadMails()
+            }
+            else -> messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = CLAIM_FAILED_MESSAGE)
         }
     }
 
@@ -229,6 +309,29 @@ private fun MailRowUiModel.claimed(): MailRowUiModel = copy(
         imageUrl
     },
 )
+
+/** 상자 그림 주소. 상자 번호가 없으면 빈 값(그림 없이 빛과 효과만 보인다). */
+private fun boxImageUrl(imageId: Long?, opened: Boolean): String = when {
+    imageId == null -> ""
+    opened -> NyummyCdn.rewardBoxOpenedUrl(imageId)
+    else -> NyummyCdn.rewardBoxClosedUrl(imageId)
+}
+
+/** 상자에서 나온 보상. 코인을 먼저, 아이템은 받은 순서대로 둔다. */
+private fun RewardVO.toBoxRewards(): ImmutableList<BoxRewardUiModel> = buildList {
+    coin?.takeIf { it.quantity > 0 }?.let { coin ->
+        add(BoxRewardUiModel.Coin(imageUrl = coin.imageId?.let(NyummyCdn::coinUrl).orEmpty(), quantity = coin.quantity))
+    }
+    items.forEach { item ->
+        add(
+            BoxRewardUiModel.Item(
+                imageUrl = item.imageId?.let(NyummyCdn::itemUrl).orEmpty(),
+                name = item.name,
+                quantity = item.quantity,
+            ),
+        )
+    }
+}.toImmutableList()
 
 private fun List<MailVO>.toMailRowUiModels(): ImmutableList<MailRowUiModel> {
     val now = System.currentTimeMillis()
