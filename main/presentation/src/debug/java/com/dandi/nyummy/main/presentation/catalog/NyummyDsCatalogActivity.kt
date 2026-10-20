@@ -82,6 +82,9 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeleto
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeletonShape
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackbar
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackbarHost
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyToast
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyToastHost
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyToastHostState
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateAction
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateSurface
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStepIndicator
@@ -646,6 +649,15 @@ private fun OverlaySection() {
         size = NyummyButtonSize.M,
     )
     NyummySnackbarHost(hostState = hostState)
+    NyummyToast(message = "준비 중인 기능이에요.")
+    val toastHostState = remember { NyummyToastHostState() }
+    NyummyButton(
+        text = "토스트 띄우기",
+        onClick = { toastHostState.show("준비 중인 기능이에요.") },
+        style = NyummyButtonStyle.Secondary,
+        size = NyummyButtonSize.M,
+    )
+    NyummyToastHost(hostState = toastHostState)
 
     when (open) {
         CatalogOverlay.Confirm -> NyummyDialog(

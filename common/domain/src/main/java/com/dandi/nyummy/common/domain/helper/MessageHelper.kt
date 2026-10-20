@@ -6,7 +6,9 @@ import kotlinx.coroutines.flow.Flow
 
 interface MessageHelper {
     val effect: Flow<MessageEffect>
+    /** 누를 것 없는 짧은 안내. 화면 하단에 잠깐 떴다 사라진다. 버튼이 필요하면 [showSnackBar]를 쓴다. */
     fun showToast(toastMsg: String)
+    fun showToast(messageRes: Int)
     fun showSnackBar(
         iconType: IconType = IconType.SUCCESS,
         messageText: String,

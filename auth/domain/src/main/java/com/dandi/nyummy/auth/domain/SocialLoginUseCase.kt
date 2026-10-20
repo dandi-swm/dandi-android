@@ -10,7 +10,6 @@ import com.dandi.nyummy.common.domain.error.handlingErrorOnUseCase
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
-import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.tti.TTIHelper
 import java.io.IOException
@@ -81,10 +80,7 @@ class SocialLoginUseCase @Inject constructor(
 
     /** 아직 연동되지 않았거나 앱 키 없이 빌드돼 쓸 수 없는 제공자를 눌렀을 때 안내한다. */
     fun onProviderUnavailable(type: SocialLoginType) {
-        messageHelper.showSnackBar(
-            iconType = IconType.WARNING,
-            messageText = "${type.displayName} 로그인은 준비 중이에요.",
-        )
+        messageHelper.showToast("${type.displayName} 로그인은 준비 중이에요.")
     }
 
     /** 서버 code로 먼저 구분하고, code가 없을 때만 상태 코드로 판단한다. 문구에 제공자 이름을 넣는다. */

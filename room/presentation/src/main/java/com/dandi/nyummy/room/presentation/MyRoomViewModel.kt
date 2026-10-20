@@ -8,6 +8,7 @@ import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
@@ -61,7 +62,7 @@ class MyRoomViewModel @Inject constructor(
             MyRoomIntent.Undo -> if (currentState.canUndo) dispatch(MyRoomReducerEvent.Undone)
             is MyRoomIntent.ReachInventoryEnd -> loadMoreItems(intent.category)
             // TODO: 상점 화면이 생기면 ShopPage로 연결한다.
-            MyRoomIntent.ClickShop -> messageHelper.showSnackBar(iconType = IconType.WARNING, messageText = NOT_READY_MESSAGE)
+            MyRoomIntent.ClickShop -> messageHelper.showToast(CommonR.string.nyummy_not_ready)
             is MyRoomIntent.CatMotionFinished -> if (intent.playId == currentState.catMotion?.playId) startCatMotion()
         }
     }
@@ -263,7 +264,6 @@ class MyRoomViewModel @Inject constructor(
         const val SAVED_MESSAGE = "방을 저장했어요"
         const val SAVE_FAILED_MESSAGE = "방을 저장하지 못했어요. 잠시 후 다시 시도해 주세요."
         const val ITEM_GONE_MESSAGE = "가지고 있지 않은 아이템이 있어 방을 다시 불러왔어요"
-        const val NOT_READY_MESSAGE = "준비 중인 기능이에요."
     }
 }
 

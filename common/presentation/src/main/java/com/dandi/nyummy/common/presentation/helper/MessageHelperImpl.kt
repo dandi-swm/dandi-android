@@ -18,6 +18,10 @@ class MessageHelperImpl(val context: Context) : MessageHelper {
         emit(MessageEffect.ShowToastMsg(toastMsg))
     }
 
+    override fun showToast(messageRes: Int) {
+        emit(MessageEffect.ShowToastMsg(context.getString(messageRes)))
+    }
+
     override fun showSnackBar(
         iconType: IconType,
         messageText: String,
