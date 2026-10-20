@@ -26,6 +26,7 @@ class SocialLoginUseCaseTest {
     private val useCase = SocialLoginUseCase(
         repository = repository,
         socialSignUpSession = session,
+        analyticsHelper = RecordingAnalyticsHelper(),
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,

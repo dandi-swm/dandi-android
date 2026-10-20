@@ -252,6 +252,7 @@ class LoginViewModelTest {
         navigationHelper = navigationHelper,
         loginUseCase = LoginUseCase(
             repository = repository,
+            analyticsHelper = RecordingAnalyticsHelper(),
             resourceHelper = FakeResourceHelper,
             messageHelper = messageHelper,
             navigationHelper = navigationHelper,
@@ -260,6 +261,7 @@ class LoginViewModelTest {
         socialLoginUseCase = SocialLoginUseCase(
             repository = repository,
             socialSignUpSession = SocialSignUpSession(),
+            analyticsHelper = RecordingAnalyticsHelper(),
             resourceHelper = FakeResourceHelper,
             messageHelper = messageHelper,
             navigationHelper = navigationHelper,

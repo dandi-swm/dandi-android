@@ -20,6 +20,7 @@ class SignUpUseCaseSocialTest {
     private val useCase = SignUpUseCase(
         repository = repository,
         socialSignUpSession = session,
+        analyticsHelper = RecordingAnalyticsHelper(),
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,

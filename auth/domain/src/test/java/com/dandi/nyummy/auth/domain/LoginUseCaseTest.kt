@@ -17,6 +17,7 @@ class LoginUseCaseTest {
     private val messageHelper = RecordingMessageHelper()
     private val useCase = LoginUseCase(
         repository = repository,
+        analyticsHelper = RecordingAnalyticsHelper(),
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
