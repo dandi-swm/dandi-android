@@ -99,6 +99,7 @@ leakcanary = { group = "com.android.tools.studio.leakcanary", name = "leakcanary
 
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-config = { group = "com.google.firebase", name = "firebase-config" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 firebase-perf = { group = "com.google.firebase", name = "firebase-perf" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }

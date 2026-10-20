@@ -9,6 +9,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.metrics.performance.JankStats
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -35,6 +36,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var jankReporter: JankReporter
+
+    @Inject
+    lateinit var analyticsHelper: AnalyticsHelper
 
     private var jankStats: JankStats? = null
 
@@ -76,7 +80,7 @@ class MainActivity : ComponentActivity() {
             ) {
                 // 새 디자인 시스템 값(색, 글자, 간격 등)은 여기서 한 번만 공급하고, 화면은 NyummyTheme.colors처럼 읽기만 한다.
                 NyummyTheme {
-                    RootComposable(startStack = startStack)
+                    RootComposable(startStack = startStack, onScreenShown = analyticsHelper::logScreenView)
                 }
             }
         }
