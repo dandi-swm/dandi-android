@@ -23,6 +23,9 @@ import com.dandi.nyummy.mailbox.entity.InquiryVO
 import com.dandi.nyummy.mailbox.entity.MailCategory
 import com.dandi.nyummy.mailbox.entity.MailPageVO
 import com.dandi.nyummy.mailbox.entity.MailVO
+import com.dandi.nyummy.mailbox.entity.RewardBoxVO
+import com.dandi.nyummy.mailbox.entity.RewardCoinVO
+import com.dandi.nyummy.mailbox.entity.RewardItemVO
 import com.dandi.nyummy.mailbox.entity.RewardVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
@@ -93,7 +96,7 @@ class MailboxItemTabViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            listOf("https://cdn.nyummy.co.kr/reward-boxes/3.png", "https://cdn.nyummy.co.kr/items/12.png", ""),
+            listOf("https://cdn.nyummy.co.kr/reward-boxes/closed/3.png", "https://cdn.nyummy.co.kr/items/12.png", ""),
             viewModel.uiState.value.items.mails.map { it.imageUrl },
         )
     }
@@ -240,6 +243,138 @@ class MailboxItemTabViewModelTest {
         assertEquals(listOf(1L), repository.restoredMailIds)
     }
 
+    @Test
+    fun `보상 상자를 열면 바로 그 상자로 연출을 시작하고 응답이 오면 받은 보상으로 열린다`() = runTest(testDispatcher) {
+        repository.mailPage = MailPageVO(mails = listOf(box(1, imageId = 2L)))
+        val gate = CompletableDeferred<RewardVO>()
+        repository.claimOverride = { gate.await() }
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MailboxIntent.ClaimMail(1))
+        runCurrent()
+
+        val waiting = viewModel.uiState.value.boxOpening!!
+        assertEquals(BoxOpeningPhase.Waiting, waiting.phase)
+        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/closed/2.png", waiting.closedImageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/opened/2.png", waiting.openedImageUrl)
+        assertEquals("상자 1", waiting.mailTitle)
+
+        gate.complete(
+            RewardVO(
+                coin = RewardCoinVO(quantity = 100, imageId = 1L),
+                items = listOf(RewardItemVO(imageId = 5L, name = "가을 담요", quantity = 2)),
+                rewardBox = RewardBoxVO(imageId = 3L),
+            ),
+        )
+        advanceUntilIdle()
+
+        val opening = viewModel.uiState.value.boxOpening!!
+        assertEquals(BoxOpeningPhase.Opening, opening.phase)
+        // 응답의 상자 번호가 목록의 번호보다 우선이다.
+        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/closed/3.png", opening.closedImageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/opened/3.png", opening.openedImageUrl)
+        assertEquals(
+            listOf(
+                BoxRewardUiModel.Coin(imageUrl = "https://cdn.nyummy.co.kr/coins/1.png", quantity = 100),
+                BoxRewardUiModel.Item(imageUrl = "https://cdn.nyummy.co.kr/items/5.png", name = "가을 담요", quantity = 2),
+            ),
+            opening.rewards,
+        )
+        val row = viewModel.uiState.value.items.mails.single()
+        assertTrue(row.isClaimed)
+        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/opened/2.png", row.imageUrl)
+        assertTrue(messageHelper.snackBars.isEmpty())
+    }
+
+    @Test
+    fun `열리는 연출이 끝나거나 건너뛰면 보상을 보여 주고 계속하기로 닫는다`() = runTest(testDispatcher) {
+        repository.mailPage = MailPageVO(mails = listOf(box(1), box(2)))
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MailboxIntent.ClaimMail(1))
+        advanceUntilIdle()
+        viewModel.onIntent(MailboxIntent.CloseBoxOpening)
+        assertEquals(BoxOpeningPhase.Opening, viewModel.uiState.value.boxOpening?.phase)
+
+        viewModel.onIntent(MailboxIntent.BoxOpeningBurstFinished)
+        assertEquals(BoxOpeningPhase.Revealed, viewModel.uiState.value.boxOpening?.phase)
+        viewModel.onIntent(MailboxIntent.CloseBoxOpening)
+        assertNull(viewModel.uiState.value.boxOpening)
+
+        viewModel.onIntent(MailboxIntent.ClaimMail(2))
+        advanceUntilIdle()
+        viewModel.onIntent(MailboxIntent.SkipBoxOpening)
+        assertEquals(BoxOpeningPhase.Revealed, viewModel.uiState.value.boxOpening?.phase)
+    }
+
+    @Test
+    fun `연출 중에는 다른 상자를 열지 않는다`() = runTest(testDispatcher) {
+        repository.mailPage = MailPageVO(mails = listOf(box(1), box(2)))
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MailboxIntent.ClaimMail(1))
+        advanceUntilIdle()
+        viewModel.onIntent(MailboxIntent.ClaimMail(2))
+        advanceUntilIdle()
+
+        assertEquals(listOf(1L), repository.claimedMailIds)
+        assertEquals(1L, viewModel.uiState.value.boxOpening?.mailId)
+    }
+
+    @Test
+    fun `이미 받았거나 사라진 상자면 무대가 걷힌 뒤 안내하고 목록을 다시 받는다`() = runTest(testDispatcher) {
+        repository.mailPage = MailPageVO(mails = listOf(box(1)))
+        val viewModel = loadedViewModel()
+        val requestsBefore = repository.mailRequests.size
+        repository.claimOverride = { throw httpException(409, "api.mail.alreadyClaimed") }
+
+        viewModel.onIntent(MailboxIntent.ClaimMail(1))
+        advanceUntilIdle()
+
+        val failed = viewModel.uiState.value.boxOpening!!
+        assertEquals(BoxOpeningPhase.Failed, failed.phase)
+        assertEquals(BoxOpeningFailure.AlreadyGone, failed.failure)
+        assertTrue(messageHelper.snackBars.isEmpty())
+        assertEquals(requestsBefore, repository.mailRequests.size)
+
+        viewModel.onIntent(MailboxIntent.BoxOpeningFailureShown)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.boxOpening)
+        assertEquals("이미 받았거나 기한이 지난 우편이에요", messageHelper.snackBars.single().messageText)
+        assertEquals(requestsBefore + 1, repository.mailRequests.size)
+        assertFalse(viewModel.uiState.value.items.mails.single().isClaimed)
+    }
+
+    @Test
+    fun `상자를 받지 못하면 무대가 걷힌 뒤 오류를 안내한다`() = runTest(testDispatcher) {
+        repository.mailPage = MailPageVO(mails = listOf(box(1)))
+        val viewModel = loadedViewModel()
+        repository.claimOverride = { throw httpException(400) }
+
+        viewModel.onIntent(MailboxIntent.ClaimMail(1))
+        advanceUntilIdle()
+        assertEquals(BoxOpeningFailure.Error, viewModel.uiState.value.boxOpening?.failure)
+
+        viewModel.onIntent(MailboxIntent.BoxOpeningFailureShown)
+
+        assertNull(viewModel.uiState.value.boxOpening)
+        assertEquals(IconType.ERROR, messageHelper.snackBars.single().iconType)
+        assertTrue(viewModel.uiState.value.items.claimingMailIds.isEmpty())
+    }
+
+    @Test
+    fun `코인과 아이템 우편은 상자 연출 없이 받는다`() = runTest(testDispatcher) {
+        repository.mailPage = MailPageVO(mails = listOf(mail(1)))
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MailboxIntent.ClaimMail(1))
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.boxOpening)
+        assertTrue(viewModel.uiState.value.items.mails.single().isClaimed)
+    }
+
     private fun TestScope.loadedViewModel(): MailboxViewModel {
         val viewModel = createViewModel()
         viewModel.onIntent(MailboxIntent.ScreenResumed)
@@ -270,6 +405,12 @@ class MailboxItemTabViewModelTest {
         isClaimed = isClaimed,
         expiresAtMillis = expiresAtMillis,
         createdAtMillis = System.currentTimeMillis(),
+    )
+
+    private fun box(id: Long, imageId: Long = 1L) = mail(id).copy(
+        category = MailCategory.REWARD_BOX,
+        title = "상자 $id",
+        imageId = imageId,
     )
 
     private companion object {

@@ -59,6 +59,7 @@ internal fun GiftFlight(
 
     val trail = NyummyTheme.colors.data.coin
     val sparkle = painterResource(R.drawable.ic_meal_sparkle)
+    val boxPainter = rememberRewardBoxPainter(grade)
     val startSidePx = with(density) { RewardBoxSize.toPx() }
     val endSidePx = with(density) { EndSize.toPx() }
 
@@ -89,7 +90,7 @@ internal fun GiftFlight(
             val side = startSidePx + (endSidePx - startSidePx) * t
             val center = pointAt(t)
             Image(
-                painter = painterResource(grade.boxRes),
+                painter = boxPainter,
                 contentDescription = null,
                 modifier = Modifier
                     .offset { IntOffset((center.x - side / 2f).roundToInt(), (center.y - side / 2f).roundToInt()) }

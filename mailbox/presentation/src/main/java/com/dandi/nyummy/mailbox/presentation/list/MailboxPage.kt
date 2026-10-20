@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
@@ -90,6 +91,12 @@ internal fun MailboxScreen(
                 .fillMaxWidth()
                 .weight(1f),
         )
+    }
+    uiState.boxOpening?.let { opening ->
+        // 상자마다 새 장면으로 시작한다(닫히는 중 상태가 다음 상자로 넘어가지 않게).
+        key(opening.mailId) {
+            RewardBoxOpeningDialog(opening = opening, onIntent = onIntent)
+        }
     }
 }
 

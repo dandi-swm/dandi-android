@@ -62,6 +62,8 @@ dependencies {
     implementation(project(":common:presentation"))
 
     implementation(libs.androidx.lifecycle.runtime.compose)
+    // 서버 없이 상자 열기 연출을 재생하는 디버그 화면(setContent) 용
+    debugImplementation(libs.androidx.activity.compose)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

@@ -36,4 +36,10 @@
     <string name="mailbox_item_claim_all">보상 모두 받기</string>
     <string name="mailbox_item_empty_title">도착한 아이템이 없어요</string>
     <string name="mailbox_item_empty_body">보상이나 답장이 오면 여기로 와요</string>
+
+    <string name="mailbox_box_open_title">보상을 받았어요!</string>
+    <string name="mailbox_box_open_continue">계속하기</string>
+    <string name="mailbox_box_content_description">보상 상자</string>
+    <string name="mailbox_box_reward_coin">+%1$,d</string>
+    <string name="mailbox_box_reward_item_count">%1$s %2$d개</string>
 </resources>

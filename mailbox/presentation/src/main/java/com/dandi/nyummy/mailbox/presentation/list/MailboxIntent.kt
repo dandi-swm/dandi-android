@@ -24,4 +24,16 @@ sealed interface MailboxIntent : MviIntent {
 
     /** 우편을 지운 뒤 스낵바의 되돌리기. [row]를 원래 자리([index])에 되살린다. */
     data class UndoDeleteMail(val row: MailRowUiModel, val index: Int) : MailboxIntent
+
+    /** 상자가 열리는 중에 화면을 누르거나 뒤로 갔다. 받은 보상을 바로 보여 준다. */
+    data object SkipBoxOpening : MailboxIntent
+
+    /** 상자가 열리는 연출이 끝났다. 받은 보상을 보여 준다. */
+    data object BoxOpeningBurstFinished : MailboxIntent
+
+    /** 받지 못한 상자가 무대에서 걷혔다. 안내를 띄운다. */
+    data object BoxOpeningFailureShown : MailboxIntent
+
+    /** 받은 보상을 본 뒤 계속하기(또는 뒤로 가기). 연출을 닫는다. */
+    data object CloseBoxOpening : MailboxIntent
 }

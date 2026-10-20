@@ -1,6 +1,5 @@
 package com.dandi.nyummy.meal.presentation.component.ceremony
 
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -39,6 +38,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -48,8 +48,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.image.NyummyCdn
+import com.dandi.nyummy.common.presentation.image.rememberPreloadedImagePainter
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
 import com.dandi.nyummy.meal.presentation.R
 import kotlinx.coroutines.delay
@@ -73,6 +76,12 @@ internal fun RewardBoxStage(
     modifier: Modifier = Modifier,
 ) {
     val haptic = LocalHapticFeedback.current
+    // 승급하며 그림이 바뀌는 순간 비지 않게 세 등급 그림을 처음부터 불러 둔다.
+    val boxPainters = mapOf(
+        RewardBoxGrade.BRONZE to rememberRewardBoxPainter(RewardBoxGrade.BRONZE),
+        RewardBoxGrade.SILVER to rememberRewardBoxPainter(RewardBoxGrade.SILVER),
+        RewardBoxGrade.GOLD to rememberRewardBoxPainter(RewardBoxGrade.GOLD),
+    )
     val latestOnBoxPositioned by rememberUpdatedState(onBoxPositioned)
 
     val dim = remember { Animatable(0f) }
@@ -147,7 +156,7 @@ internal fun RewardBoxStage(
                 .graphicsLayer { alpha = dim.value },
         ) {
             Image(
-                painter = painterResource(R.drawable.meal_vfx_light_rays),
+                painter = painterResource(CommonR.drawable.nyummy_vfx_light_rays),
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -160,7 +169,7 @@ internal fun RewardBoxStage(
             )
             if (confetti.value > 0f && confetti.value < 1f) {
                 Image(
-                    painter = painterResource(R.drawable.meal_vfx_confetti),
+                    painter = painterResource(CommonR.drawable.nyummy_vfx_confetti),
                     contentDescription = null,
                     modifier = Modifier
                         .align(Alignment.Center)
@@ -211,7 +220,7 @@ internal fun RewardBoxStage(
                 },
         ) {
             Image(
-                painter = painterResource(shownGrade.boxRes),
+                painter = boxPainters.getValue(shownGrade),
                 contentDescription = stringResource(R.string.meal_ceremony_box_content_description),
                 modifier = Modifier.fillMaxSize(),
             )
@@ -269,13 +278,18 @@ private fun RewardBoxGrade.next(): RewardBoxGrade = when (this) {
     else -> RewardBoxGrade.GOLD
 }
 
-@get:DrawableRes
-internal val RewardBoxGrade.boxRes: Int
+/** 서버 상자 번호(CDN 그림 번호). 1 브론즈, 2 실버, 3 골드다. */
+internal val RewardBoxGrade.rewardBoxId: Long
     get() = when (this) {
-        RewardBoxGrade.SILVER -> R.drawable.meal_reward_box_silver
-        RewardBoxGrade.GOLD -> R.drawable.meal_reward_box_gold
-        else -> R.drawable.meal_reward_box_bronze
+        RewardBoxGrade.SILVER -> 2L
+        RewardBoxGrade.GOLD -> 3L
+        else -> 1L
     }
+
+/** 이 등급의 닫힌 상자 그림(CDN). */
+@Composable
+internal fun rememberRewardBoxPainter(grade: RewardBoxGrade): Painter =
+    rememberPreloadedImagePainter(NyummyCdn.rewardBoxClosedUrl(grade.rewardBoxId))
 
 @get:StringRes
 private val RewardBoxGrade.labelRes: Int
