@@ -54,6 +54,7 @@ data class MailItemsUiState(
  *
  * @property content 보낸 이유나 받은 내용(예 "첫 기록 보상", "상점에서 샀어요").
  * @property remainingDays 받지 않으면 사라질 때까지 남은 날. 받은 우편이거나 사라지지 않는 우편이면 null.
+ * @property imageId 우편 그림 번호(보상 상자는 상자 번호). 받은 뒤 그림을 바꾸거나 상자 열기 연출에 쓴다.
  */
 @Immutable
 data class MailRowUiModel(
@@ -65,4 +66,5 @@ data class MailRowUiModel(
     val timeLabel: String,
     val remainingDays: Int?,
     val isClaimed: Boolean,
+    val imageId: Long? = null,
 )

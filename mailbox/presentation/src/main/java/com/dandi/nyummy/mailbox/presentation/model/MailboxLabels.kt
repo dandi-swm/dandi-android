@@ -46,11 +46,15 @@ fun mailRemainingDays(expiresAtMillis: Long, nowMillis: Long = System.currentTim
     return ((remainingMillis + DAY_MILLIS - 1) / DAY_MILLIS).toInt()
 }
 
-/** 우편 그림 주소. 종류에 맞는 CDN 경로에 그림 번호를 붙인다. 번호가 없으면 빈 값(그림 자리만 보인다). */
-fun mailImageUrl(category: MailCategory, imageId: Long?): String {
+/**
+ * 우편 그림 주소. 종류에 맞는 CDN 경로에 그림 번호를 붙인다. 번호가 없으면 빈 값(그림 자리만 보인다).
+ * 보상 상자는 받기 전이면 닫힌 상자, 받았으면([isClaimed]) 열린 상자다.
+ */
+fun mailImageUrl(category: MailCategory, imageId: Long?, isClaimed: Boolean = false): String {
     if (imageId == null) return ""
     return when (category) {
-        MailCategory.REWARD_BOX -> NyummyCdn.rewardBoxClosedUrl(imageId)
+        MailCategory.REWARD_BOX ->
+            if (isClaimed) NyummyCdn.rewardBoxOpenedUrl(imageId) else NyummyCdn.rewardBoxClosedUrl(imageId)
         MailCategory.COIN -> NyummyCdn.coinUrl(imageId)
         MailCategory.ITEM -> NyummyCdn.itemUrl(imageId)
     }

@@ -11,6 +11,7 @@ import com.dandi.nyummy.mailbox.domain.ClaimMailUseCase
 import com.dandi.nyummy.mailbox.domain.DeleteMailUseCase
 import com.dandi.nyummy.mailbox.domain.GetMailsUseCase
 import com.dandi.nyummy.mailbox.domain.RestoreMailUseCase
+import com.dandi.nyummy.mailbox.entity.MailCategory
 import com.dandi.nyummy.mailbox.entity.MailVO
 import com.dandi.nyummy.mailbox.presentation.model.mailImageUrl
 import com.dandi.nyummy.mailbox.presentation.model.mailRemainingDays
@@ -215,8 +216,19 @@ class MailboxViewModel @Inject constructor(
     }
 }
 
+/** 받은 우편으로 바꾼다. 보상 상자는 열린 상자 그림으로 바뀐다. */
 private fun ImmutableList<MailRowUiModel>.markClaimed(predicate: (MailRowUiModel) -> Boolean): ImmutableList<MailRowUiModel> =
-    map { if (predicate(it)) it.copy(isClaimed = true, remainingDays = null) else it }.toImmutableList()
+    map { if (predicate(it)) it.claimed() else it }.toImmutableList()
+
+private fun MailRowUiModel.claimed(): MailRowUiModel = copy(
+    isClaimed = true,
+    remainingDays = null,
+    imageUrl = if (category == MailCategory.REWARD_BOX && imageId != null) {
+        mailImageUrl(category, imageId, isClaimed = true)
+    } else {
+        imageUrl
+    },
+)
 
 private fun List<MailVO>.toMailRowUiModels(): ImmutableList<MailRowUiModel> {
     val now = System.currentTimeMillis()
@@ -228,8 +240,9 @@ private fun MailVO.toRowUiModel(nowMillis: Long) = MailRowUiModel(
     category = category,
     title = title,
     content = content,
-    imageUrl = mailImageUrl(category, imageId),
+    imageUrl = mailImageUrl(category, imageId, isClaimed),
     timeLabel = mailboxListTimeLabel(createdAtMillis, nowMillis),
     remainingDays = expiresAtMillis?.takeUnless { isClaimed }?.let { mailRemainingDays(it, nowMillis) },
     isClaimed = isClaimed,
+    imageId = imageId,
 )
