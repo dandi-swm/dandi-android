@@ -1,5 +1,7 @@
 package com.dandi.nyummy.meal.domain
 
+import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
@@ -20,6 +22,7 @@ import javax.inject.Inject
  */
 class ImportGalleryMealPhotoUseCase @Inject constructor(
     private val repository: MealRecordRepository,
+    private val analyticsHelper: AnalyticsHelper,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -35,19 +38,20 @@ class ImportGalleryMealPhotoUseCase @Inject constructor(
         val takenAt = repository.readGalleryPhotoTakenAt(photoUri)
         when {
             takenAt != null && takenAt.toLocalDate() != DeviceTime.today(nowMillis, zone) ->
-                reject(StringResource.MEAL_GALLERY_NOT_TAKEN_TODAY)
+                reject(StringResource.MEAL_GALLERY_NOT_TAKEN_TODAY, reason = "gallery_not_today")
             else -> Result.success(repository.importGalleryPhoto(photoUri))
         }
     } catch (e: MealGalleryPhotoLoadException) {
-        reject(StringResource.MEAL_GALLERY_LOAD_FAILED, e)
+        reject(StringResource.MEAL_GALLERY_LOAD_FAILED, reason = "gallery_load_failed", cause = e)
     } catch (e: java.util.concurrent.CancellationException) {
         throw e
     } catch (e: Exception) {
-        reject(StringResource.MEAL_GALLERY_IMPORT_FAILED, e)
+        reject(StringResource.MEAL_GALLERY_IMPORT_FAILED, reason = "gallery_import_failed", cause = e)
     }
 
-    /** 현재 로케일의 안내 문구를 스낵바로 띄우고 실패로 돌려준다. */
-    private fun reject(resource: StringResource, cause: Exception? = null): Result<String> {
+    /** 현재 로케일의 안내 문구를 스낵바로 띄우고 실패로 돌려준다. 막힌 사유([reason])는 사용 분석에 남긴다. */
+    private fun reject(resource: StringResource, reason: String, cause: Exception? = null): Result<String> {
+        analyticsHelper.logEvent(AnalyticsEvent.MealRecordBlocked(stage = "gallery", reason = reason))
         val message = resourceHelper.getString(resource)
         messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = message)
         return Result.failure(cause ?: MealPhotoInvalidException(message))

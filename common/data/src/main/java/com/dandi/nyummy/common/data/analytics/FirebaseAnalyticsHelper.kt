@@ -27,7 +27,10 @@ class FirebaseAnalyticsHelper(
     override fun logEvent(event: AnalyticsEvent) {
         analytics.logEvent(
             event.name,
-            Bundle().apply { event.params.forEach { (key, value) -> putString(key, value) } },
+            Bundle().apply {
+                event.params.forEach { (key, value) -> putString(key, value) }
+                event.numberParams.forEach { (key, value) -> putLong(key, value) }
+            },
         )
     }
 }

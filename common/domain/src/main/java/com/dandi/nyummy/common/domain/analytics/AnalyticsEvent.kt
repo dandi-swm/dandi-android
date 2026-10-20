@@ -12,6 +12,8 @@ package com.dandi.nyummy.common.domain.analytics
 sealed class AnalyticsEvent(
     val name: String,
     val params: Map<String, String> = emptyMap(),
+    /** 숫자 매개변수. GA4 맞춤 측정항목(평균, 합계)으로 쓰려면 숫자로 보내야 한다. */
+    val numberParams: Map<String, Long> = emptyMap(),
 ) {
 
     /** 로그인 성공. [method]는 email, kakao, google 같은 로그인 수단이다. 소셜 신규 회원은 가입이 끝날 때 [SignUp]으로 남는다. */
@@ -41,8 +43,42 @@ sealed class AnalyticsEvent(
     /** 온보딩을 마치고 고양이를 만들었다. */
     data object OnboardingComplete : AnalyticsEvent("onboarding_complete")
 
+    /** 식사 기록 화면(카메라)에 들어왔다. 기록 퍼널의 시작이다. */
+    data object MealRecordOpen : AnalyticsEvent("meal_record_open")
+
+    /** 기록할 식사 사진이 준비됐다(촬영했거나 갤러리에서 가져왔다). [source]는 camera 또는 gallery. */
+    class MealPhotoReady(source: String) : AnalyticsEvent("meal_photo_ready", mapOf(PARAM_SOURCE to source))
+
+    /** 확인 단계에서 다시 찍기를 눌렀다. */
+    class MealRetake(source: String) : AnalyticsEvent("meal_retake", mapOf(PARAM_SOURCE to source))
+
+    /** 사진을 냈다(업로드 시작). */
+    class MealSubmit(source: String) : AnalyticsEvent("meal_submit", mapOf(PARAM_SOURCE to source))
+
+    /** 서버가 기록을 받았다(저장 완료). [durationSec]는 식사 기록 화면에 들어와서 저장될 때까지 걸린 초다. */
+    class MealSubmitSuccess(source: String, durationSec: Long) : AnalyticsEvent(
+        "meal_submit_success",
+        params = mapOf(PARAM_SOURCE to source),
+        numberParams = mapOf("duration_sec" to durationSec),
+    )
+
+    /**
+     * 기록이 막혔다. [stage]는 gallery(갤러리 사진 가져오기) 또는 submit(제출)이고, [reason]은 막힌 사유다.
+     * gallery: gallery_not_today, gallery_load_failed, gallery_import_failed
+     * submit: daily_limit, stale_image, duplicate_image, unsupported_type, file_too_large, invalid_photo, server_error, network_or_unknown
+     */
+    class MealRecordBlocked(stage: String, reason: String) : AnalyticsEvent(
+        "meal_record_blocked",
+        mapOf(PARAM_STAGE to stage, "reason" to reason),
+    )
+
+    /** 저장하지 않고 식사 기록 화면을 떠났다. [stage]는 떠난 단계(camera, confirm, uploading, failed)다. */
+    class MealRecordExit(stage: String) : AnalyticsEvent("meal_record_exit", mapOf(PARAM_STAGE to stage))
+
     private companion object {
         const val PARAM_METHOD = "method"
         const val PARAM_STEP = "step"
+        const val PARAM_SOURCE = "source"
+        const val PARAM_STAGE = "stage"
     }
 }

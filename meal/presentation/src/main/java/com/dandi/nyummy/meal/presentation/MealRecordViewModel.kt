@@ -1,6 +1,8 @@
 package com.dandi.nyummy.meal.presentation
 
 import androidx.lifecycle.viewModelScope
+import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
@@ -12,6 +14,7 @@ import com.dandi.nyummy.meal.domain.SubmitMealUseCase
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.room.domain.GetRoomBackgroundUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlin.time.TimeSource
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -22,6 +25,7 @@ class MealRecordViewModel @Inject constructor(
     private val importGalleryMealPhoto: ImportGalleryMealPhotoUseCase,
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
+    private val analyticsHelper: AnalyticsHelper,
     remoteConfigHelper: RemoteConfigHelper,
     getRoomBackground: GetRoomBackgroundUseCase,
 ) : MviViewModel<MealRecordIntent, MealRecordUIState, MealRecordReducerEvent>(
@@ -29,7 +33,11 @@ class MealRecordViewModel @Inject constructor(
     MealRecordUIState(isMailGiftEnabled = remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)),
 ) {
 
+    /** 화면에 들어온 순간. 저장까지 걸린 시간을 잰다. */
+    private val openedAt = TimeSource.Monotonic.markNow()
+
     init {
+        analyticsHelper.logEvent(AnalyticsEvent.MealRecordOpen)
         // 연출의 고양이방은 지금 마이룸에 깔린 배경으로 그린다. 촬영하는 동안 미리 읽어 두고, 못 읽으면 기본 빈 방이다.
         viewModelScope.launch {
             getRoomBackground()?.let { dispatch(MealRecordReducerEvent.RoomBackgroundLoaded(it)) }
@@ -60,8 +68,10 @@ class MealRecordViewModel @Inject constructor(
                 if (canCapture) dispatch(MealRecordReducerEvent.CaptureStarted)
             }
 
-            is MealRecordIntent.PhotoCaptured ->
+            is MealRecordIntent.PhotoCaptured -> {
                 dispatch(MealRecordReducerEvent.CaptureSucceeded(intent.photoPath))
+                analyticsHelper.logEvent(AnalyticsEvent.MealPhotoReady(MealPhotoSource.CAMERA.analyticsName))
+            }
 
             MealRecordIntent.CaptureFailed -> {
                 dispatch(MealRecordReducerEvent.CaptureEnded)
@@ -76,6 +86,7 @@ class MealRecordViewModel @Inject constructor(
             MealRecordIntent.ClickRetake -> {
                 // 연출(업로드) 중에는 업로드 대상 파일을 지우면 안 되므로 재촬영을 막는다.
                 val phase = currentState.phase as? MealCameraPhase.Captured ?: return
+                analyticsHelper.logEvent(AnalyticsEvent.MealRetake(phase.source.analyticsName))
                 deletePhotoFile(phase.photoPath)
                 dispatch(MealRecordReducerEvent.ReturnedToPreview)
             }
@@ -164,7 +175,10 @@ class MealRecordViewModel @Inject constructor(
         viewModelScope.launch {
             importGalleryMealPhoto(photoUri)
                 // 실패 스낵바는 UseCase 가 이미 띄우므로 여기서는 상태 복귀만 한다.
-                .onSuccess { dispatch(MealRecordReducerEvent.GalleryImportSucceeded(it)) }
+                .onSuccess {
+                    dispatch(MealRecordReducerEvent.GalleryImportSucceeded(it))
+                    analyticsHelper.logEvent(AnalyticsEvent.MealPhotoReady(MealPhotoSource.GALLERY.analyticsName))
+                }
                 .onFailure { dispatch(MealRecordReducerEvent.GalleryImportFailed) }
         }
     }
@@ -178,6 +192,8 @@ class MealRecordViewModel @Inject constructor(
     private fun submitCapturedMeal() {
         val phase = currentState.phase as? MealCameraPhase.Captured ?: return
         dispatch(MealRecordReducerEvent.SubmitStarted)
+        val source = phase.source.analyticsName
+        analyticsHelper.logEvent(AnalyticsEvent.MealSubmit(source))
         viewModelScope.launch {
             submitMeal(phase.photoPath, phase.source)
                 .onSuccess { created ->
@@ -186,6 +202,9 @@ class MealRecordViewModel @Inject constructor(
                         isAnalysisPending = created.isAnalysisPending,
                     )
                     dispatch(MealRecordReducerEvent.SubmitSucceeded(result))
+                    analyticsHelper.logEvent(
+                        AnalyticsEvent.MealSubmitSuccess(source = source, durationSec = openedAt.elapsedNow().inWholeSeconds),
+                    )
                 }
                 // 실패 스낵바는 UseCase 가 이미 띄우므로 여기서는 상태 복귀만 한다.
                 .onFailure { dispatch(MealRecordReducerEvent.SubmitFailed) }
@@ -214,4 +233,24 @@ class MealRecordViewModel @Inject constructor(
     private fun deletePhotoFile(photoPath: String) {
         runCatching { File(photoPath).delete() }
     }
+
+    override fun onCleared() {
+        // 닫기, 시스템 뒤로가기, 실패 뒤 홈으로 가기 모두 여기를 지난다. 저장하지 못하고 떠났으면 떠난 단계를 남긴다.
+        if (!currentState.isSubmitSucceeded) {
+            analyticsHelper.logEvent(AnalyticsEvent.MealRecordExit(currentState.analyticsStage))
+        }
+        super.onCleared()
+    }
 }
+
+/** 분석에 남기는 사진 출처 이름(camera, gallery). */
+private val MealPhotoSource.analyticsName: String
+    get() = name.lowercase()
+
+/** 분석에 남기는 지금 단계(camera, confirm, uploading, failed). */
+private val MealRecordUIState.analyticsStage: String
+    get() = when (phase) {
+        MealCameraPhase.Preview -> "camera"
+        is MealCameraPhase.Captured -> "confirm"
+        is MealCameraPhase.Ceremony -> if (isSubmitFailed) "failed" else "uploading"
+    }
