@@ -182,11 +182,10 @@ private fun HomeHudAction(
     }
 }
 
-/** 연속 기록 배너. 새싹 일러스트 + "N일째"(number/s) + "냐미에게 밥을 챙겼어요!"(label/m), 브랜드색. */
+/** 연속 기록 배너. 새싹 일러스트 + "N일째"(number/s) + "냐미에게 밥을 챙겼어요!"(label/m), 브랜드색. 보여 주기만 하고 누를 수 없다. */
 @Composable
 internal fun HomeStreakBanner(
     streakDays: Int,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -194,7 +193,6 @@ internal fun HomeStreakBanner(
             .fillMaxWidth()
             .height(StreakHeight)
             .semantics(mergeDescendants = true) {}
-            .nyummyClickable(onClick = onClick)
             .background(NyummyTheme.colors.bg.selected, RoundedCornerShape(NyummyTheme.radius.full))
             .padding(start = StreakStartPadding, end = NyummyTheme.spacing.s16),
         horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
@@ -249,7 +247,7 @@ private fun HomeHudPreview() {
                 onNoticeClick = {},
                 onSettingsClick = {},
             )
-            HomeStreakBanner(streakDays = 7, onClick = {})
+            HomeStreakBanner(streakDays = 7)
         }
     }
 }

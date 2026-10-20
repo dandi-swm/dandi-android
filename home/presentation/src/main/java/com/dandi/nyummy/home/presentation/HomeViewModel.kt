@@ -61,8 +61,8 @@ class HomeViewModel @Inject constructor(
                 loadSummary()
                 loadCatAnimationsIfNeeded()
             }
-            // TODO: 지갑, 공지, 설정, 스트릭 화면이 생기면 각 목적지로 연결한다.
-            HomeIntent.ClickWallet -> Unit
+            // 지갑 화면이 생기기 전까지는 눌러도 반응이 있게 준비 중이라고 알린다.
+            HomeIntent.ClickWallet -> messageHelper.showToast(CommonR.string.nyummy_not_ready)
             // 우편함은 받을 아이템만 있는 곳이라, 아이템 기능이 꺼져 있으면 들어가지 않고 준비 중이라고 알린다.
             HomeIntent.ClickMail -> if (remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)) {
                 navigationHelper.navigateTo(MailboxPage)
@@ -71,7 +71,6 @@ class HomeViewModel @Inject constructor(
             }
             HomeIntent.ClickNotice -> Unit
             HomeIntent.ClickSettings -> navigationHelper.navigateTo(SettingsPage)
-            HomeIntent.ClickStreak -> Unit
             HomeIntent.ToggleUiHidden ->
                 dispatch(HomeReducerEvent.UiHiddenChanged(hidden = !currentState.isUiHidden))
             HomeIntent.ClickCat -> currentState.catState?.let { startCatMotion(it, newLine = true) }

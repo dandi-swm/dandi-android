@@ -20,9 +20,6 @@ sealed interface HomeIntent : MviIntent {
     /** 설정. */
     data object ClickSettings : HomeIntent
 
-    /** 연속 기록 배너. */
-    data object ClickStreak : HomeIntent
-
     /** 눈 버튼. 코인, 연속 기록, 말풍선, 하단 내비를 숨기고 냐미와 방만 보여 준다. 다시 누르면 돌아온다. */
     data object ToggleUiHidden : HomeIntent
 
