@@ -394,6 +394,7 @@ class HomeViewModelTest {
     private object SilentMessageHelper : MessageHelper {
         override val effect: Flow<MessageEffect> = emptyFlow()
         override fun showToast(toastMsg: String) = Unit
+        override fun showToast(messageRes: Int) = Unit
         override fun showSnackBar(
             iconType: IconType,
             messageText: String,

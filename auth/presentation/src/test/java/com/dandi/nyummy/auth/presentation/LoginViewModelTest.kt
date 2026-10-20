@@ -214,7 +214,7 @@ class LoginViewModelTest {
         viewModel.onIntent(LoginIntent.SocialLoginResultReceived(viewModel.awaiting(), SocialLoginResult.Unavailable))
 
         assertIdle(viewModel)
-        assertEquals(listOf(IconType.WARNING to "구글 로그인은 준비 중이에요."), messageHelper.snackBars)
+        assertEquals(listOf("구글 로그인은 준비 중이에요."), messageHelper.toasts)
     }
 
     private fun launchedKakao(): LoginViewModel = createViewModel().apply {
