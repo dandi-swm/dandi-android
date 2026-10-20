@@ -48,6 +48,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
@@ -147,7 +148,7 @@ internal fun RewardBoxStage(
                 .graphicsLayer { alpha = dim.value },
         ) {
             Image(
-                painter = painterResource(R.drawable.meal_vfx_light_rays),
+                painter = painterResource(CommonR.drawable.nyummy_vfx_light_rays),
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -160,7 +161,7 @@ internal fun RewardBoxStage(
             )
             if (confetti.value > 0f && confetti.value < 1f) {
                 Image(
-                    painter = painterResource(R.drawable.meal_vfx_confetti),
+                    painter = painterResource(CommonR.drawable.nyummy_vfx_confetti),
                     contentDescription = null,
                     modifier = Modifier
                         .align(Alignment.Center)
