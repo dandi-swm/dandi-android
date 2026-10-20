@@ -42,6 +42,7 @@ class NyummyTokenContractTest {
             "bg/info-subtle" to (colors.bg.infoSubtle to "#FFF3F5F3"),
             "bg/promo-subtle" to (colors.bg.promoSubtle to "#FFFFF5F5"),
             "bg/scene/room-floor" to (colors.bg.sceneRoomFloor to "#FFC57D33"),
+            "bg/scene/reward-stage" to (colors.bg.sceneRewardStage to "#FF173221"),
             "content/primary" to (colors.content.primary to "#FF1C1F1D"),
             "content/secondary" to (colors.content.secondary to "#FF535654"),
             "content/tertiary" to (colors.content.tertiary to "#FF6F7370"),
@@ -71,7 +72,7 @@ class NyummyTokenContractTest {
             "data/nutrient-fat" to (colors.data.nutrientFat to "#FFEB616D"),
         )
 
-        assertEquals("Figma Semantic 50개를 모두 대조한다", 50, expected.size)
+        assertEquals("Figma Semantic 51개를 모두 대조한다", 51, expected.size)
         expected.forEach { (name, pair) ->
             val (actual, hex) = pair
             assertEquals(name, hex, actual.toHex())
