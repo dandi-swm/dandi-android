@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -321,7 +322,9 @@ internal fun RewardBoxOpening(
                 .graphicsLayer { alpha = 1f - leave.value },
         ) {
             RewardLightRays(
+                // 빛줄기는 화면 폭보다 클 수 있다. 화면 폭으로 줄어들면 크기를 기준으로 잡은 자리에서 왼쪽으로 밀리므로 그대로 둔다.
                 modifier = Modifier
+                    .wrapContentSize(Alignment.TopStart, unbounded = true)
                     .size(RaysBaseSize)
                     .offset {
                         val y = lerp(layout.waitBoxCenterY, layout.raysRevealCenterY, reveal.value)
@@ -335,6 +338,7 @@ internal fun RewardBoxOpening(
             // 상자: 빛무리 위에 그리고, 공개 때 작아지며 보상 아래 자리로 내려간다.
             Box(
                 modifier = Modifier
+                    .wrapContentSize(Alignment.TopStart, unbounded = true)
                     .size(GlowSize)
                     .offset {
                         val y = lerp(layout.waitBoxCenterY, layout.revealBoxCenterY, reveal.value)
