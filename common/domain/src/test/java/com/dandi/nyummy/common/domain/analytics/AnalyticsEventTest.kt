@@ -13,13 +13,20 @@ class AnalyticsEventTest {
         AnalyticsEvent.SignUp(method = "email"),
         AnalyticsEvent.OnboardingStep(scene = 6, kind = "name_input"),
         AnalyticsEvent.OnboardingComplete,
+        AnalyticsEvent.MealRecordOpen,
+        AnalyticsEvent.MealPhotoReady(source = "gallery"),
+        AnalyticsEvent.MealRetake(source = "camera"),
+        AnalyticsEvent.MealSubmit(source = "camera"),
+        AnalyticsEvent.MealSubmitSuccess(source = "camera", durationSec = 42),
+        AnalyticsEvent.MealRecordBlocked(stage = "submit", reason = "network_or_unknown"),
+        AnalyticsEvent.MealRecordExit(stage = "confirm"),
     )
 
     @Test
     fun `이벤트 이름과 매개변수 키는 GA4 규칙(영문 소문자로 시작, 소문자 숫자 밑줄, 40자 안)을 지킨다`() {
         allEvents.forEach { event ->
             assertTrue(event.name, GaName.matches(event.name))
-            event.params.keys.forEach { key -> assertTrue("${event.name}.$key", GaName.matches(key)) }
+            (event.params.keys + event.numberParams.keys).forEach { key -> assertTrue("${event.name}.$key", GaName.matches(key)) }
         }
     }
 

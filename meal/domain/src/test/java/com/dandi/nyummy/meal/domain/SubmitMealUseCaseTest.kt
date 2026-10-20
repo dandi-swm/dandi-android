@@ -29,15 +29,33 @@ import java.time.LocalDateTime
 class SubmitMealUseCaseTest {
 
     private val messageHelper = RecordingMessageHelper()
+    private val analytics = RecordingAnalyticsHelper()
 
     private fun useCase(createMealError: Exception, issueUrlError: Exception? = null) = SubmitMealUseCase(
         repository = FakeMealRecordRepository(createMealError, issueUrlError),
-        analyticsHelper = RecordingAnalyticsHelper(),
+        analyticsHelper = analytics,
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = FakeNavigationHelper(),
         ttiHelper = FakeTTIHelper(),
     )
+
+    @Test
+    fun `막힌 사유를 meal_record_blocked로 남긴다`() = runBlocking {
+        useCase(httpException(409, MealErrorType.DAILY_COUNT_EXCEEDED.type))(PHOTO_PATH, MealPhotoSource.CAMERA)
+        useCase(httpException(400, MealErrorType.STALE_IMAGE.type))(PHOTO_PATH, MealPhotoSource.CAMERA)
+        useCase(httpException(400, "api.s3.invalidKey"))(PHOTO_PATH, MealPhotoSource.CAMERA)
+        useCase(java.io.IOException("network"))(PHOTO_PATH, MealPhotoSource.CAMERA)
+
+        assertEquals(
+            listOf("daily_limit", "stale_image", "server_error", "network_or_unknown"),
+            analytics.events.map {
+                assertEquals("meal_record_blocked", it.name)
+                assertEquals("submit", it.params["stage"])
+                it.params.getValue("reason")
+            },
+        )
+    }
 
     @Test
     fun `오래된 사진 code 는 사진에 맞는 문구로 안내한다`() = runBlocking {

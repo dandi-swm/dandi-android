@@ -1,5 +1,9 @@
 package com.dandi.nyummy.meal.presentation
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
@@ -30,6 +34,7 @@ import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
 import com.dandi.nyummy.tti.TimelineCategory
+import kotlin.reflect.KClass
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -57,6 +62,7 @@ class MealRecordViewModelTest {
     private val mealRepository = FakeMealRecordRepository()
     private val navigationHelper = RecordingNavigationHelper()
     private val roomRepository = FakeRoomRepository()
+    private val analytics = RecordingAnalyticsHelper()
 
     @Before
     fun setUp() {
@@ -191,6 +197,66 @@ class MealRecordViewModelTest {
         assertTrue(navigationHelper.calls.isEmpty())
     }
 
+    @Test
+    fun `들어와서 찍고 내서 저장되면 퍼널을 차례로 남기고 걸린 초를 붙인다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+
+        submit(viewModel)
+        clear(viewModel)
+
+        assertEquals(
+            listOf("meal_record_open", "meal_photo_ready", "meal_submit", "meal_submit_success"),
+            mealEvents().map { it.name },
+        )
+        assertEquals("camera", mealEvents()[1].params["source"])
+        val success = mealEvents().last()
+        assertEquals("camera", success.params["source"])
+        assertTrue(success.numberParams.getValue("duration_sec") >= 0)
+    }
+
+    @Test
+    fun `저장하지 않고 떠나면 떠난 단계를 남긴다`() = runTest(testDispatcher) {
+        val atCamera = createViewModel()
+        clear(atCamera)
+        val atConfirm = createViewModel()
+        capture(atConfirm)
+        clear(atConfirm)
+        mealRepository.createError = IOException("network")
+        val afterFailure = createViewModel()
+        submit(afterFailure)
+        clear(afterFailure)
+
+        assertEquals(
+            listOf("camera", "confirm", "failed"),
+            mealEvents().filter { it.name == "meal_record_exit" }.map { it.params.getValue("stage") },
+        )
+    }
+
+    @Test
+    fun `다시 찍기를 남긴다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+
+        capture(viewModel)
+        viewModel.onIntent(MealRecordIntent.ClickRetake)
+
+        assertEquals(mapOf("source" to "camera"), mealEvents().single { it.name == "meal_retake" }.params)
+    }
+
+    private fun mealEvents(): List<AnalyticsEvent> = analytics.events.filter { it.name.startsWith("meal_") }
+
+    /** 화면을 떠날 때처럼 ViewModel을 정리한다. */
+    private fun clear(viewModel: MealRecordViewModel) {
+        val store = ViewModelStore()
+        ViewModelProvider.create(
+            store,
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T = viewModel as T
+            },
+        )[MealRecordViewModel::class]
+        store.clear()
+    }
+
     private fun capture(viewModel: MealRecordViewModel) {
         viewModel.onIntent(MealRecordIntent.PhotoCaptured(PHOTO_PATH))
     }
@@ -222,7 +288,7 @@ class MealRecordViewModelTest {
             ),
             navigationHelper = navigationHelper,
             messageHelper = messageHelper,
-            analyticsHelper = RecordingAnalyticsHelper(),
+            analyticsHelper = analytics,
             remoteConfigHelper = FakeRemoteConfigHelper(isMailGiftEnabled),
             getRoomBackground = GetRoomBackgroundUseCase(roomRepository),
         )
