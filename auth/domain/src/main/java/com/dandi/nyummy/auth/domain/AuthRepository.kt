@@ -46,8 +46,15 @@ interface AuthRepository {
     /** 이메일 인증 코드 발송. 코드 확인에 쓸 챌린지 토큰을 반환한다. */
     suspend fun requestEmailVerification(email: String, purpose: EmailVerificationPurpose): EmailChallengeVO
 
-    /** 이메일 인증 코드 확인. 회원가입에 쓸 인증 완료 토큰을 반환한다. */
+    /** 이메일 인증 코드 확인. 회원가입이나 비밀번호 재설정에 쓸 인증 완료 토큰을 반환한다. */
     suspend fun confirmEmailVerification(authCode: String, emailChallengeToken: String): EmailVerifiedVO
+
+    /**
+     * 비밀번호 재설정. 서버가 임시 비밀번호로 바꾸고 가입한 이메일로 보낸다.
+     *
+     * @param verifiedToken 비밀번호 찾기(`RESET_PASSWORD`) 용도로 받은 이메일 인증 완료 토큰
+     */
+    suspend fun resetPassword(verifiedToken: String)
 
     /** 로그아웃. 서버의 RefreshToken을 지우고, 서버가 실패해도 이 기기의 토큰은 지운다. */
     suspend fun logout()

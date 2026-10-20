@@ -104,6 +104,8 @@ internal class FakeAuthRepository(
         return EmailVerifiedVO()
     }
 
+    override suspend fun resetPassword(verifiedToken: String) = Unit
+
     override suspend fun logout() = Unit
 }
 

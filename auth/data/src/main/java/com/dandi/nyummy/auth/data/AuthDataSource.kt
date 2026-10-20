@@ -8,6 +8,7 @@ import com.dandi.nyummy.auth.data.dto.EmailVerificationRequestDTO
 import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
 import com.dandi.nyummy.auth.data.dto.OAuthLoginDTO
 import com.dandi.nyummy.auth.data.dto.OAuthLoginRequestDTO
+import com.dandi.nyummy.auth.data.dto.ResetPasswordRequestDTO
 import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
 import com.dandi.nyummy.common.data.BaseRemoteDataSource
 import com.dandi.nyummy.common.data.token.TokenAuthenticator
@@ -31,6 +32,9 @@ class AuthDataSource(
 
     suspend fun confirmEmailVerification(request: EmailVerificationConfirmRequestDTO): EmailVerifiedDTO =
         checkResponse(apiService.confirmEmailVerification(request))
+
+    suspend fun resetPassword(request: ResetPasswordRequestDTO) =
+        checkResponse(apiService.resetPassword(request))
 
     suspend fun logout(accessToken: String) =
         checkResponse(apiService.logout("${TokenAuthenticator.BEARER_PREFIX}$accessToken"))

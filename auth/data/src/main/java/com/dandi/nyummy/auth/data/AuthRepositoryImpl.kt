@@ -4,6 +4,7 @@ import com.dandi.nyummy.auth.data.dto.EmailVerificationConfirmRequestDTO
 import com.dandi.nyummy.auth.data.dto.EmailVerificationRequestDTO
 import com.dandi.nyummy.auth.data.dto.LoginRequestDTO
 import com.dandi.nyummy.auth.data.dto.OAuthLoginRequestDTO
+import com.dandi.nyummy.auth.data.dto.ResetPasswordRequestDTO
 import com.dandi.nyummy.auth.data.dto.SignUpRequestDTO
 import com.dandi.nyummy.auth.domain.AuthRepository
 import com.dandi.nyummy.auth.entity.AuthTokenVO
@@ -90,6 +91,10 @@ class AuthRepositoryImpl(
                 emailChallengeToken = emailChallengeToken,
             ),
         ).toVO()
+
+    override suspend fun resetPassword(verifiedToken: String) {
+        dataSource.resetPassword(ResetPasswordRequestDTO(verifiedToken = verifiedToken))
+    }
 
     override suspend fun logout() {
         // 서버가 실패해도 이 기기의 토큰은 꼭 지운다. 지우지 않으면 로그아웃했는데도 로그인된 채로 남는다.
