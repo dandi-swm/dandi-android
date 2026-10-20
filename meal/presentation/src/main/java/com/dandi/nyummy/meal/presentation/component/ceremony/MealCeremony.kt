@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -481,7 +482,7 @@ private fun WaitingScene(
             roomRect = with(density) { Rect(room.left.toPx(), room.top.toPx(), room.right.toPx(), room.bottom.toPx()) },
         )
         val tablePainter = painterResource(MealCeremonyArt.tableFront)
-        val tableAspect = tablePainter.intrinsicSize.width / tablePainter.intrinsicSize.height
+        val tableImageAspect = tablePainter.intrinsicSize.width / tablePainter.intrinsicSize.height
         // 냐미, 식탁, 사진은 시스템 바와 위에 뜬 닫기 줄을 피한 자리에 놓는다. 식탁은 화면 폭을 다 쓴다.
         BoxWithConstraints(
             modifier = Modifier
@@ -498,7 +499,8 @@ private fun WaitingScene(
             val photoWidth = contentWidth * PhotoWidthFraction
             val catWidth = contentWidth * CatWidthFraction
             // 냐미는 식탁 뒤에 앉아 몸 아래쪽이 식탁에 가린다.
-            val catBottom = sceneWidth / tableAspect * CatBottomOnTable
+            val tableFrontHeight = sceneWidth / MealCeremonyArt.TableFrontAspect
+            val catBottom = tableFrontHeight * CatBottomOnTable
             val waitingArt = MealCeremonyArt.waiting
             val catHeight = catWidth * (waitingArt.cellHeight.toFloat() / waitingArt.cellWidth)
             Box(
@@ -553,13 +555,18 @@ private fun WaitingScene(
                             },
                     )
                 }
+                // 식탁은 윗선부터 화면 아래 끝까지 덮어서, 아래로 방 바닥이 보이며 떠 보이지 않게 한다.
                 Image(
                     painter = tablePainter,
                     contentDescription = null,
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth(),
+                        .align(Alignment.TopCenter)
+                        .offset(y = cardHeight - tableFrontHeight)
+                        .fillMaxWidth()
+                        .wrapContentHeight(align = Alignment.Top, unbounded = true)
+                        .height(sceneWidth / tableImageAspect),
                     contentScale = ContentScale.FillWidth,
+                    alignment = Alignment.TopCenter,
                 )
                 // 말풍선은 꼬리가 냐미 머리 바로 위에 오게 놓고, 냐미와 함께 들썩인다.
                 androidx.compose.animation.AnimatedContent(
