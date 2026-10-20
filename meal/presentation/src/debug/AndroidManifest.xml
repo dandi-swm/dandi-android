@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 서버 없이 식사 기록 연출만 재생해 보는 디버그 화면. debug 빌드에만 들어간다. -->
+    <application>
+        <activity
+            android:name="com.dandi.nyummy.meal.presentation.debug.MealCeremonyDebugActivity"
+            android:exported="true"
+            android:label="Nyummy Meal Ceremony Debug" />
+    </application>
+
+</manifest>
