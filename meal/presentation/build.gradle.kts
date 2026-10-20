@@ -58,6 +58,7 @@ dependencies {
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
     implementation(project(":meal:domain"))
     implementation(project(":meal:entity"))
+    implementation(project(":room:domain"))
     implementation(project(":common:presentation"))
 
     implementation(libs.androidx.lifecycle.runtime.compose)

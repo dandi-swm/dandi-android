@@ -70,13 +70,13 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPose
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPoseImage
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.meal.presentation.component.MealCameraOverlay
 import com.dandi.nyummy.meal.presentation.component.MealCameraPreview
-import com.dandi.nyummy.meal.presentation.component.MealFeedCeremony
-import com.dandi.nyummy.meal.presentation.component.rememberMealPixelChain
+import com.dandi.nyummy.meal.presentation.component.ceremony.MealCeremony
 import java.io.File
 
 /**
@@ -153,91 +153,52 @@ private fun MealRecordScreen(
     modifier: Modifier = Modifier,
     onOpenAppSettings: () -> Unit = {},
 ) {
-
-    // 확인 단계부터 픽셀 체인을 프리웜해 세리머니 시작 지연과 업로드 재작성 경합을 없앤다.
-    val chainResult = rememberMealPixelChain(uiState.phase.photoPathOrNull)
-    // phase 타입을 키로 써서 제출 성공 copy 로는 유지되고, 세리머니 이탈 시에만 리셋된다.
-    var ceremonyIdle by remember(uiState.phase::class) { mutableStateOf(false) }
-    val showNext = uiState.isSubmitSucceeded && ceremonyIdle
-
-    // 촬영본 확인 중의 시스템 백은 이탈 대신 재촬영 복귀로, 세리머니 중에는 `다음` 과,
-    // 완료 화면에서는 `완료` 와 동일하게 처리한다(업로드 진행 중에는 ViewModel 이 무시).
+    // 촬영본 확인 중의 시스템 백은 이탈 대신 재촬영 복귀로, 연출 중에는 닫기와 같게 처리한다
+    // (접수되기 전에는 ViewModel 이 무시한다).
     BackHandler(enabled = uiState.phase !is MealCameraPhase.Preview) {
         when (uiState.phase) {
             is MealCameraPhase.Captured -> onIntent(MealRecordIntent.ClickRetake)
-            is MealCameraPhase.Feeding -> onIntent(MealRecordIntent.ClickNext)
-            MealCameraPhase.Done -> onIntent(MealRecordIntent.ClickDone)
+            is MealCameraPhase.Ceremony -> onIntent(MealRecordIntent.ClickClose)
             MealCameraPhase.Preview -> Unit
         }
     }
 
-    // 세리머니·완료 단계는 카드 박스 대신 패턴 배경 위 풀블리드 연출로 전환된다.
-    val isCeremonyPhase = uiState.phase is MealCameraPhase.Feeding ||
-        uiState.phase is MealCameraPhase.Done
+    val phase = uiState.phase
+    if (phase is MealCameraPhase.Ceremony) {
+        MealCeremony(
+            photoPath = phase.photoPath,
+            result = uiState.ceremonyResult,
+            isFailed = uiState.isSubmitFailed,
+            isMailGiftEnabled = uiState.isMailGiftEnabled,
+            roomBackgroundUrl = uiState.roomBackgroundItemId?.let(NyummyCdn::itemUrl),
+            onCloseClick = { onIntent(MealRecordIntent.ClickClose) },
+            onFailureShown = { onIntent(MealRecordIntent.CeremonyFailureShown) },
+            onDoneClick = { onIntent(MealRecordIntent.ClickDone) },
+            modifier = modifier,
+        )
+        return
+    }
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(NyummyTheme.colors.bg.surface),
     ) {
-        if (isCeremonyPhase) {
-            Image(
-                painter = painterResource(CommonR.drawable.nyummy_pattern_bg),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-                alignment = Alignment.TopCenter,
-            )
-        }
         Column(modifier = Modifier.fillMaxSize()) {
         MealRecordHeader(
-            // 촬영 안내 문구는 촬영·확인 단계에서만 의미가 있다.
-            showSubtitle = uiState.phase is MealCameraPhase.Preview ||
-                uiState.phase is MealCameraPhase.Captured,
+            showSubtitle = true,
             onCloseClick = { onIntent(MealRecordIntent.ClickClose) },
         )
-        if (uiState.phase is MealCameraPhase.Feeding) {
-            Spacer(Modifier.height(CeremonyHeadlineTopGap))
-            NyummyText(
-                text = stringResource(R.string.meal_record_ceremony_title_line1),
-                modifier = Modifier.fillMaxWidth(),
-                color = NyummyTheme.colors.content.primary,
-                textAlign = TextAlign.Center,
-                style = NyummyTheme.typography.displayL,
-            )
-            NyummyText(
-                text = stringResource(R.string.meal_record_ceremony_title_line2),
-                modifier = Modifier.fillMaxWidth(),
-                color = NyummyTheme.colors.content.primary,
-                textAlign = TextAlign.Center,
-                style = NyummyTheme.typography.displayL,
-            )
-            Spacer(Modifier.height(NyummyTheme.spacing.s12))
-            NyummyText(
-                text = stringResource(R.string.meal_record_ceremony_subtitle),
-                modifier = Modifier.fillMaxWidth(),
-                color = NyummyTheme.colors.content.secondary,
-                textAlign = TextAlign.Center,
-                style = NyummyTheme.typography.bodyL,
-            )
-        }
         Spacer(Modifier.height(NyummyTheme.spacing.s16))
         Box(
-            modifier = if (isCeremonyPhase) {
-                // 패턴 배경 위 풀블리드: 카드 프레임 없이 연출만 얹는다.
-                Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            } else {
-                Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = NyummyTheme.spacing.s20)
-                    .clip(RoundedCornerShape(NyummyTheme.radius.l))
-                    .background(NyummyTheme.colors.bg.surfaceSunken)
-            },
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = NyummyTheme.spacing.s20)
+                .clip(RoundedCornerShape(NyummyTheme.radius.l))
+                .background(NyummyTheme.colors.bg.surfaceSunken),
         ) {
-            when (val phase = uiState.phase) {
+            when (phase) {
                 MealCameraPhase.Preview -> when (uiState.cameraPermission) {
                     MealCameraPermission.Denied -> PermissionDeniedContent(
                         isBlocked = false,
@@ -270,26 +231,11 @@ private fun MealRecordScreen(
                     contentScale = ContentScale.Crop,
                 )
 
-                is MealCameraPhase.Feeding -> MealFeedCeremony(
-                    photoPath = phase.photoPath,
-                    chainResult = chainResult,
-                    feedReady = showNext,
-                    onIdleChanged = { ceremonyIdle = it },
-                    onFedToCat = { onIntent(MealRecordIntent.ClickNext) },
-                    modifier = Modifier.fillMaxSize(),
-                )
-
-                MealCameraPhase.Done -> MealFeedDoneContent(
-                    modifier = Modifier.fillMaxSize(),
-                )
+                is MealCameraPhase.Ceremony -> Unit
             }
-            // 세리머니·완료 화면에서는 장식 오버레이(브래킷)가 연출과 겹치지 않게 숨긴다.
+            // 권한이 거부된 안내 화면에서는 장식 오버레이(브래킷)를 숨긴다.
             if (uiState.cameraPermission != MealCameraPermission.Denied &&
-                uiState.cameraPermission != MealCameraPermission.Blocked &&
-                (
-                    uiState.phase is MealCameraPhase.Preview ||
-                        uiState.phase is MealCameraPhase.Captured
-                    )
+                uiState.cameraPermission != MealCameraPermission.Blocked
             ) {
                 MealCameraOverlay()
             }
@@ -319,20 +265,7 @@ private fun MealRecordScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                is MealCameraPhase.Feeding -> FeedingBottomBar(
-                    showNext = showNext,
-                    modifier = Modifier.fillMaxSize(),
-                )
-
-                MealCameraPhase.Done -> NyummyButton(
-                    text = stringResource(R.string.meal_record_done),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = NyummyTheme.spacing.s24),
-                    style = NyummyButtonStyle.Primary,
-                    size = NyummyButtonSize.L,
-                    onClick = { onIntent(MealRecordIntent.ClickDone) },
-                )
+                is MealCameraPhase.Ceremony -> Unit
             }
         }
         }
@@ -491,121 +424,7 @@ private fun CapturedActionBar(
     }
 }
 
-/** 완료 단계: 맛있게 먹은 냐미와 완료 카피. */
-@Composable
-private fun MealFeedDoneContent(
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.padding(horizontal = NyummyTheme.spacing.s24),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        NyummyPoseImage(
-            pose = NyummyPose.Eating,
-            size = DoneMascotSize,
-            contentDescription = stringResource(R.string.meal_record_done_mascot_content_description),
-        )
-        Spacer(Modifier.height(NyummyTheme.spacing.s16))
-        NyummyText(
-            text = stringResource(R.string.meal_record_done_title),
-            color = NyummyTheme.colors.content.primary,
-            textAlign = TextAlign.Center,
-            style = NyummyTheme.typography.displayM,
-        )
-        Spacer(Modifier.height(NyummyTheme.spacing.s8))
-        NyummyText(
-            text = stringResource(R.string.meal_record_done_body),
-            color = NyummyTheme.colors.content.secondary,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            style = NyummyTheme.typography.bodyM,
-        )
-    }
-}
-
-/**
- * 세리머니 중의 하단 영역. 배달 대기 동안 도트와 힌트 텍스트가 맥박치고,
- * 준비가 끝나면(먹이기 가능) 조용히 사라진다. 맨 아래에는 nyummy 워드마크를 둔다.
- */
-@Composable
-private fun FeedingBottomBar(
-    showNext: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val haptic = LocalHapticFeedback.current
-    LaunchedEffect(showNext) {
-        if (showNext) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-    }
-    Box(modifier = modifier) {
-        AnimatedVisibility(
-            visible = !showNext,
-            enter = fadeIn(),
-            exit = fadeOut(tween(FeedingHintFadeOutMillis)),
-            modifier = Modifier.align(Alignment.Center),
-        ) {
-            val pulse = rememberInfiniteTransition(label = "FeedingHintPulse")
-            val hintAlpha by pulse.animateFloat(
-                initialValue = FeedingHintMinAlpha,
-                targetValue = 1f,
-                animationSpec = infiniteRepeatable(
-                    tween(FeedingHintPulseMillis),
-                    RepeatMode.Reverse,
-                ),
-                label = "hintAlpha",
-            )
-            Column(
-                modifier = Modifier.graphicsLayer { alpha = hintAlpha },
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(FeedingDotGap)) {
-                    repeat(FeedingDotCount) {
-                        Box(
-                            modifier = Modifier
-                                .size(FeedingDotSize)
-                                .background(NyummyTheme.colors.data.recordMarker, CircleShape),
-                        )
-                    }
-                }
-                Spacer(Modifier.height(NyummyTheme.spacing.s12))
-                NyummyText(
-                    text = stringResource(R.string.meal_record_feeding_in_progress),
-                    color = NyummyTheme.colors.content.primary,
-                    style = NyummyTheme.typography.displayM,
-                )
-            }
-        }
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = NyummyTheme.spacing.s8),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_meal_paw),
-                contentDescription = null,
-                modifier = Modifier.size(WordmarkPawSize),
-                tint = NyummyTheme.colors.content.brand,
-            )
-            NyummyText(
-                text = stringResource(R.string.meal_record_wordmark),
-                color = NyummyTheme.colors.content.brand,
-                style = NyummyTheme.typography.labelS,
-            )
-        }
-    }
-}
-
 private val BottomBarHeight = 120.dp
-private val CeremonyHeadlineTopGap = 48.dp
-private val DoneMascotSize = 180.dp
-private const val FeedingHintFadeOutMillis = 150
-private const val FeedingHintPulseMillis = 1100
-private const val FeedingHintMinAlpha = 0.55f
-private const val FeedingDotCount = 3
-private val FeedingDotSize = 8.dp
-private val FeedingDotGap = 10.dp
-private val WordmarkPawSize = 16.dp
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
@@ -639,32 +458,15 @@ private fun MealRecordScreenCapturedPhase() {
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
-private fun MealRecordScreenFeedingPhase() {
+private fun MealRecordScreenCeremonyWaiting() {
     NyummyTheme {
         MealRecordScreen(
             uiState = MealRecordUIState(
-                phase = MealCameraPhase.Feeding(
+                phase = MealCameraPhase.Ceremony(
                     photoPath = "/cache/meal_capture_preview.jpg",
                     source = MealPhotoSource.CAMERA,
                 ),
                 cameraPermission = MealCameraPermission.Granted,
-                isSubmitSucceeded = true,
-            ),
-            onIntent = {},
-            onGalleryClick = {},
-        )
-    }
-}
-
-@Preview(showBackground = true, widthDp = 390, heightDp = 844)
-@Composable
-private fun MealRecordScreenDonePhase() {
-    NyummyTheme {
-        MealRecordScreen(
-            uiState = MealRecordUIState(
-                phase = MealCameraPhase.Done,
-                cameraPermission = MealCameraPermission.Granted,
-                isSubmitSucceeded = true,
             ),
             onIntent = {},
             onGalleryClick = {},

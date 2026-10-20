@@ -33,11 +33,11 @@ sealed interface MealRecordIntent : MviIntent {
     /** 촬영본 확인 중 `냐미에게 주기` 버튼을 눌렀습니다. */
     data object ClickSubmit : MealRecordIntent
 
-    /** 업로드 성공 후 `다음` 버튼(또는 백)을 눌러 세리머니를 마치고 완료 화면으로 넘어갑니다. */
-    data object ClickNext : MealRecordIntent
-
-    /** 완료 화면에서 `완료` 버튼(또는 백·닫기)을 눌러 화면을 마무리합니다. */
+    /** 연출이 끝난 뒤 `완료` 버튼을 눌러 화면을 마무리합니다. */
     data object ClickDone : MealRecordIntent
+
+    /** 기록 접수에 실패해 냐미가 걱정하며 기록하지 못했다고 다 알렸습니다. 홈으로 돌아갑니다. */
+    data object CeremonyFailureShown : MealRecordIntent
 
     /** 닫기(X) 버튼을 눌렀습니다. */
     data object ClickClose : MealRecordIntent

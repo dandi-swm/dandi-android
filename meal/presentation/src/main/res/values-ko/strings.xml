@@ -14,17 +14,21 @@
     <string name="meal_record_permission_open_settings">기기 설정 열기</string>
     <string name="meal_record_capture_failed">사진을 찍지 못했어요. 다시 시도해주세요.</string>
     <string name="meal_record_captured_photo_content_description">촬영한 음식 사진</string>
-    <string name="meal_record_wordmark" translatable="false">nyummy</string>
-    <string name="meal_record_feeding_in_progress">냐미에게 배달 중…</string>
-    <string name="meal_record_ceremony_title_line1">냐미에게</string>
-    <string name="meal_record_ceremony_title_line2">한 끼를 전하고 있어요</string>
-    <string name="meal_record_ceremony_subtitle">맛있는 기록을 준비하고 있어요</string>
-    <string name="meal_record_feed_item_content_description">픽셀 아이템으로 변한 음식</string>
-    <string name="meal_record_feed_to_cat_hint">이제 냐미에게 먹여주세요!</string>
-    <string name="meal_record_feed_action">냐미에게 먹이기</string>
     <string name="meal_record_cat_content_description">냐미</string>
     <string name="meal_record_done_title">냐미가 맛있게 먹었어요!</string>
-    <string name="meal_record_done_body">오늘도 냐미와 함께\n건강한 하루를 만들어가요</string>
     <string name="meal_record_done">완료</string>
-    <string name="meal_record_done_mascot_content_description">맛있게 먹은 냐미</string>
+    <string name="meal_ceremony_waiting">냐미가 맛보는 중이야…!!</string>
+    <string name="meal_ceremony_reaction_word">띠욧!!</string>
+    <string name="meal_ceremony_reaction_line">으음~ 이 맛이야!</string>
+    <string name="meal_ceremony_analysis_pending">꼼꼼히 맛보고 알려 줄게!</string>
+    <string name="meal_ceremony_box_bronze">선물 상자!</string>
+    <string name="meal_ceremony_box_silver">반짝 상자!</string>
+    <string name="meal_ceremony_box_gold">금빛 상자!</string>
+    <string name="meal_ceremony_box_sent">우편함에 쏙!</string>
+    <string name="meal_ceremony_box_content_description">보상 상자</string>
+    <string name="meal_ceremony_mailbox_content_description">우편함</string>
+    <string name="meal_ceremony_skip_label">건너뛰기</string>
+    <string name="meal_ceremony_failed_line">음식 기록이 제대로 되지 않았어</string>
+    <string name="meal_ceremony_box_badge">식사 기록 보상</string>
+    <string name="meal_ceremony_bite_word">앙!</string>
 </resources>
