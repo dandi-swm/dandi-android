@@ -11,16 +11,11 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.mailbox.domain.ClaimAllMailsUseCase
 import com.dandi.nyummy.mailbox.domain.ClaimMailUseCase
-import com.dandi.nyummy.mailbox.domain.DeleteInquiryUseCase
 import com.dandi.nyummy.mailbox.domain.DeleteMailUseCase
-import com.dandi.nyummy.mailbox.domain.GetInquiriesUseCase
 import com.dandi.nyummy.mailbox.domain.GetMailsUseCase
 import com.dandi.nyummy.mailbox.domain.MailboxRepository
-import com.dandi.nyummy.mailbox.domain.RestoreInquiryUseCase
 import com.dandi.nyummy.mailbox.domain.RestoreMailUseCase
 import com.dandi.nyummy.mailbox.entity.InquiryCategory
 import com.dandi.nyummy.mailbox.entity.InquiryPageVO
@@ -71,23 +66,7 @@ class MailboxItemTabViewModelTest {
     }
 
     @Test
-    fun `아이템 탭 플래그가 꺼져 있으면 문의 탭만 보이고 우편을 부르지 않는다`() = runTest(testDispatcher) {
-        val viewModel = createViewModel(isItemTabEnabled = false)
-
-        viewModel.onIntent(MailboxIntent.ScreenResumed)
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertFalse(state.isItemTabEnabled)
-        assertEquals(MailboxTab.INQUIRY, state.selectedTab)
-        assertTrue(repository.mailRequests.isEmpty())
-        // 꺼져 있으면 아이템 탭으로 바꿀 수도 없다.
-        viewModel.onIntent(MailboxIntent.SelectTab(MailboxTab.ITEM))
-        assertEquals(MailboxTab.INQUIRY, viewModel.uiState.value.selectedTab)
-    }
-
-    @Test
-    fun `아이템 탭 플래그가 켜져 있으면 아이템 탭부터 보이고 화면이 보일 때 우편을 받는다`() = runTest(testDispatcher) {
+    fun `화면이 보일 때 우편을 받는다`() = runTest(testDispatcher) {
         repository.mailPage = MailPageVO(mails = listOf(mail(1), mail(2, isClaimed = true)))
         val viewModel = createViewModel()
 
@@ -95,7 +74,6 @@ class MailboxItemTabViewModelTest {
         advanceUntilIdle()
 
         val items = viewModel.uiState.value.items
-        assertEquals(MailboxTab.ITEM, viewModel.uiState.value.selectedTab)
         assertEquals(listOf(1L, 2L), items.mails.map { it.mailId })
         assertTrue(items.hasUnclaimed)
     }
@@ -269,14 +247,11 @@ class MailboxItemTabViewModelTest {
         return viewModel
     }
 
-    private fun TestScope.createViewModel(isItemTabEnabled: Boolean = true): MailboxViewModel {
+    private fun TestScope.createViewModel(): MailboxViewModel {
         val navigationHelper = RecordingNavigationHelper()
         fun <T : Any> deps(build: (MailboxRepository, ResourceHelper, MessageHelper, NavigationHelper, TTIHelper) -> T) =
             build(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper)
         return MailboxViewModel(
-            getInquiries = deps(::GetInquiriesUseCase),
-            deleteInquiry = deps(::DeleteInquiryUseCase),
-            restoreInquiry = deps(::RestoreInquiryUseCase),
             getMails = deps(::GetMailsUseCase),
             claimMail = deps(::ClaimMailUseCase),
             claimAllMails = deps(::ClaimAllMailsUseCase),
@@ -285,7 +260,6 @@ class MailboxItemTabViewModelTest {
             navigationHelper = navigationHelper,
             messageHelper = messageHelper,
             ioScope = this,
-            remoteConfigHelper = FakeRemoteConfigHelper(isItemTabEnabled),
         )
     }
 
@@ -301,14 +275,6 @@ class MailboxItemTabViewModelTest {
     private companion object {
         const val DAY_MILLIS = 24 * 60 * 60 * 1000L
     }
-}
-
-private class FakeRemoteConfigHelper(private val isItemTabEnabled: Boolean) : RemoteConfigHelper {
-    override suspend fun sync() = Unit
-
-    @Suppress("UNCHECKED_CAST")
-    override fun <T> get(key: RemoteConfigKey<T>): T =
-        if (key == RemoteConfigKey.MailItemTabEnabled) isItemTabEnabled as T else key.defaultValue
 }
 
 /** 우편 API를 흉내 내는 저장소. 응답을 멈추거나 실패시키려면 override를 바꾼다. */

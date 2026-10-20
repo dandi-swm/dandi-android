@@ -115,7 +115,6 @@ internal fun HomeScreen(
                             onMailClick = { onIntent(HomeIntent.ClickMail) },
                             onNoticeClick = { onIntent(HomeIntent.ClickNotice) },
                             onSettingsClick = { onIntent(HomeIntent.ClickSettings) },
-                            hasUnreadMail = uiState.summary.hasUnreadInquiryAnswer,
                         )
                         Spacer(Modifier.height(NyummyTheme.spacing.s12))
                         HomeStreakBanner(

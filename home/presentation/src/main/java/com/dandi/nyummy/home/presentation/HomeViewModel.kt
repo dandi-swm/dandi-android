@@ -5,9 +5,12 @@ import com.dandi.nyummy.cat.domain.CatMotionPicker
 import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatState
+import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.home.domain.tti.HomeTTIPage
@@ -23,6 +26,7 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val navigationHelper: NavigationHelper,
+    private val messageHelper: MessageHelper,
     private val getHomeSummary: GetHomeSummaryUseCase,
     private val getCatAnimations: GetCatAnimationsUseCase,
     private val catMotionPicker: CatMotionPicker,
@@ -60,7 +64,12 @@ class HomeViewModel @Inject constructor(
             }
             // TODO: 지갑, 공지, 설정, 스트릭 화면이 생기면 각 목적지로 연결한다.
             HomeIntent.ClickWallet -> Unit
-            HomeIntent.ClickMail -> navigationHelper.navigateTo(MailboxPage)
+            // 우편함은 받을 아이템만 있는 곳이라, 아이템 기능이 꺼져 있으면 들어가지 않고 준비 중이라고 알린다.
+            HomeIntent.ClickMail -> if (remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)) {
+                navigationHelper.navigateTo(MailboxPage)
+            } else {
+                messageHelper.showSnackBar(iconType = IconType.WARNING, messageRes = CommonR.string.nyummy_not_ready)
+            }
             HomeIntent.ClickNotice -> Unit
             HomeIntent.ClickSettings -> navigationHelper.navigateTo(SettingsPage)
             HomeIntent.ClickStreak -> Unit

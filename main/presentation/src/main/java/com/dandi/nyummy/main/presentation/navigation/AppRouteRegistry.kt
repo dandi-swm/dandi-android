@@ -19,9 +19,11 @@ import com.dandi.nyummy.legal.domain.LegalPage as LegalRoute
 import com.dandi.nyummy.legal.entity.LegalDocument
 import com.dandi.nyummy.legal.presentation.LegalPage
 import com.dandi.nyummy.mailbox.domain.InquiryDetailPage as InquiryDetailRoute
+import com.dandi.nyummy.mailbox.domain.InquiryListPage as InquiryListRoute
 import com.dandi.nyummy.mailbox.domain.InquiryWritePage
 import com.dandi.nyummy.mailbox.domain.MailboxPage
 import com.dandi.nyummy.mailbox.presentation.detail.InquiryDetailPage
+import com.dandi.nyummy.mailbox.presentation.inquiry.InquiryListPage
 import com.dandi.nyummy.mailbox.presentation.list.MailboxPage
 import com.dandi.nyummy.mailbox.presentation.write.InquiryWritePage
 import com.dandi.nyummy.main.domain.deeplink.LinkAlias
@@ -152,22 +154,38 @@ val appRoutes: List<AppRoute> = listOf(
         render = { MailboxPage() },
     ),
     AppRoute(
+        // 설정의 문의하기에서 들어오는 내가 보낸 문의 목록.
+        path = InquiryListRoute.PATH,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(HomePage.PATH),
+                GenericNavKey(SettingsPage.PATH),
+                GenericNavKey(InquiryListRoute.PATH, args),
+            )
+        },
+        render = { InquiryListPage() },
+    ),
+    AppRoute(
+        // 경로는 서버 푸시 링크와 맞춰 둔 우편함 아래 그대로이고, 뒤로 가면 설정의 문의 목록으로 간다.
         path = InquiryWritePage.PATH,
         syntheticStack = { args ->
             listOf(
                 GenericNavKey(HomePage.PATH),
-                GenericNavKey(MailboxPage.PATH),
+                GenericNavKey(SettingsPage.PATH),
+                GenericNavKey(InquiryListRoute.PATH),
                 GenericNavKey(InquiryWritePage.PATH, args),
             )
         },
         render = { InquiryWritePage() },
     ),
     AppRoute(
+        // 답장 알림 링크로 바로 들어와도 뒤로 가면 설정의 문의 목록으로 간다.
         path = InquiryDetailRoute.PATH,
         syntheticStack = { args ->
             listOf(
                 GenericNavKey(HomePage.PATH),
-                GenericNavKey(MailboxPage.PATH),
+                GenericNavKey(SettingsPage.PATH),
+                GenericNavKey(InquiryListRoute.PATH),
                 GenericNavKey(InquiryDetailRoute.PATH, args),
             )
         },

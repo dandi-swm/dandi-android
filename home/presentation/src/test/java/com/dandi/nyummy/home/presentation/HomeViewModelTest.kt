@@ -74,6 +74,7 @@ class HomeViewModelTest {
         Dispatchers.setMain(testDispatcher)
         viewModel = HomeViewModel(
             navigationHelper = navigationHelper,
+            messageHelper = SilentMessageHelper,
             getHomeSummary = GetHomeSummaryUseCase(
                 repository = homeRepository,
                 resourceHelper = FakeResourceHelper,

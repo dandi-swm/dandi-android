@@ -46,6 +46,9 @@ sealed interface SettingsIntent : MviIntent {
 
     data object ClickMealTime : SettingsIntent
 
+    /** "문의하기"를 눌렀다. 내가 보낸 문의 목록으로 간다(새 문의도 거기서 쓴다). */
+    data object ClickInquiry : SettingsIntent
+
     /** 약관 행을 눌렀다. 앱 안의 약관 화면으로 간다. */
     data class ClickLegal(val document: LegalDocument) : SettingsIntent
 
