@@ -1,6 +1,7 @@
 package com.dandi.nyummy.common.domain.message
 
 sealed interface MessageEffect {
+    /** 앱 안 토스트. 누를 것 없는 짧은 안내를 화면 하단에 잠깐 띄운다. */
     data class ShowToastMsg(val message: String) : MessageEffect
     /**
      * 스낵바. [actionLabel]이 있으면 오른쪽에 글자 버튼(예: 되돌리기)을 두고, 누르면 [onAction]을 부른다.

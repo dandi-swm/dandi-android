@@ -83,8 +83,13 @@ internal class RecordingMessageHelper : MessageHelper {
     val dialogs = mutableListOf<String>()
     val snackBars = mutableListOf<Pair<IconType, String>>()
 
+    val toasts = mutableListOf<String>()
+
     override val effect: Flow<MessageEffect> = emptyFlow()
-    override fun showToast(toastMsg: String) = Unit
+    override fun showToast(toastMsg: String) {
+        toasts += toastMsg
+    }
+    override fun showToast(messageRes: Int) = Unit
     override fun showSnackBar(
         iconType: IconType,
         messageText: String,

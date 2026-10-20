@@ -1,7 +1,7 @@
 package com.dandi.nyummy.main.presentation.navigation
 
-import android.widget.Toast
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -20,8 +20,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.navigation3.runtime.NavKey
@@ -35,8 +35,9 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialogT
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMainTabs
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMealRecordAction
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackbarHost
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyToastHost
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyToastHostState
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
-import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.helper.BottomBarVisibility
 import com.dandi.nyummy.common.presentation.helper.LocalBottomBarVisibility
@@ -63,6 +64,7 @@ fun RootComposable(
     mainTabFlags: () -> MainTabFlags = { MainTabFlags() },
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
+    val toastHostState = remember { NyummyToastHostState() }
     var oneButtonDialogEffect by remember {
         mutableStateOf<MessageEffect.ShowOneButtonDialog?>(null)
     }
@@ -93,6 +95,7 @@ fun RootComposable(
     MessageEffect(
         messageEffectFlow = messageHelper.effect,
         snackBarHostState = snackBarHostState,
+        toastHostState = toastHostState,
         onShowOneButtonDialog = onShowOneButtonDialog,
         onShowTwoButtonDialog = onShowTwoButtonDialog,
     )
@@ -145,14 +148,18 @@ fun RootComposable(
             // Scaffold는 스낵바를 하단 탭 위나 contentWindowInsets의 하단 인셋만큼 올린다. 하단 탭이 있으면 가운데 버튼이
             // 솟은 만큼 더 올린다. 전체 화면 라우트는 인셋을 0으로 두고 하단 탭도 없어, 직접 올리지 않으면 스낵바가
             // 시스템 내비게이션 바(3버튼) 뒤에 깔린다.
-            NyummySnackbarHost(
-                hostState = snackBarHostState,
+            // 토스트도 같은 자리에 띄운다.
+            Box(
                 modifier = when {
                     showsBottomBar -> Modifier.padding(bottom = NyummyBottomNavActionRise)
                     drawsBehindSystemBars -> Modifier.navigationBarsPadding()
                     else -> Modifier
                 },
-            )
+                contentAlignment = Alignment.BottomCenter,
+            ) {
+                NyummySnackbarHost(hostState = snackBarHostState)
+                NyummyToastHost(hostState = toastHostState)
+            }
         },
         // 전체 화면 라우트는 시스템 바 뒤까지 그리고 인셋을 스스로 처리한다. 나머지는 Scaffold가 민다.
         contentWindowInsets = if (drawsBehindSystemBars) {
@@ -171,7 +178,7 @@ fun RootComposable(
                         if (isMainTabReady(page, mainTabFlags())) {
                             navigationHelper.navigateTo(page)
                         } else {
-                            messageHelper.showSnackBar(iconType = IconType.WARNING, messageRes = CommonR.string.nyummy_not_ready)
+                            messageHelper.showToast(CommonR.string.nyummy_not_ready)
                         }
                     },
                     centerAction = NyummyMealRecordAction,
@@ -220,19 +227,14 @@ internal fun isMainTabReady(page: Page, flags: MainTabFlags): Boolean = when (pa
 private fun MessageEffect(
     messageEffectFlow: Flow<MessageEffect>,
     snackBarHostState: SnackbarHostState,
+    toastHostState: NyummyToastHostState,
     onShowOneButtonDialog: (MessageEffect.ShowOneButtonDialog) -> Unit,
     onShowTwoButtonDialog: (MessageEffect.ShowTwoButtonDialog) -> Unit,
 ) {
-    val appContext = LocalContext.current.applicationContext
-
     LaunchedEffect(Unit) {
         messageEffectFlow.collect { effect ->
             when (effect) {
-                is MessageEffect.ShowToastMsg -> Toast.makeText(
-                    appContext,
-                    effect.message,
-                    Toast.LENGTH_LONG
-                ).show()
+                is MessageEffect.ShowToastMsg -> toastHostState.show(effect.message)
 
                 is MessageEffect.ShowSnackBarError -> {
                     // 버튼이 있으면 Material 기본값이 계속 띄워 두기라, 짧게(약 4초) 띄우도록 명시한다.

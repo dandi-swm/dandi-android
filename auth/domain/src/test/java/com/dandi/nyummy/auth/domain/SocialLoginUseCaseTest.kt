@@ -152,13 +152,11 @@ class SocialLoginUseCaseTest {
     }
 
     @Test
-    fun `SDK 로그인 실패와 미연동 제공자는 각각 다이얼로그와 경고 스낵바로 안내한다`() {
+    fun `SDK 로그인 실패와 미연동 제공자는 각각 다이얼로그와 토스트로 안내한다`() {
         useCase.onProviderFailed(SocialLoginType.KAKAO)
         useCase.onProviderUnavailable(SocialLoginType.NAVER)
 
         assertEquals("카카오 로그인에 실패했어요. 다시 시도해주세요.", messageHelper.dialogs.single().descText)
-        val snackBar = messageHelper.snackBars.single()
-        assertEquals(IconType.WARNING, snackBar.iconType)
-        assertEquals("네이버 로그인은 준비 중이에요.", snackBar.messageText)
+        assertEquals(listOf("네이버 로그인은 준비 중이에요."), messageHelper.toasts)
     }
 }

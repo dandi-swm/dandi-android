@@ -118,10 +118,7 @@ internal fun HomeScreen(
                             hasUnreadMail = uiState.showsMailBadge,
                         )
                         Spacer(Modifier.height(NyummyTheme.spacing.s12))
-                        HomeStreakBanner(
-                            streakDays = uiState.summary.streakDays,
-                            onClick = { onIntent(HomeIntent.ClickStreak) },
-                        )
+                        HomeStreakBanner(streakDays = uiState.summary.streakDays)
                     }
                 }
             }
