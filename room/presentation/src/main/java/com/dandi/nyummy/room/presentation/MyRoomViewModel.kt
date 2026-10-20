@@ -269,7 +269,7 @@ class MyRoomViewModel @Inject constructor(
 
 /**
  * 서버에서 받은 방으로 화면 상태를 처음부터 만든다. 되돌리기 목록과 고른 아이템은 비운다.
- * 보관함 탭은 종류마다 하나씩 늘 다섯 개이고, 각 탭에는 방과 함께 받은 첫 묶음을 넣는다.
+ * 보관함 탭은 종류마다 하나씩 늘 세 개이고, 각 탭에는 방과 함께 받은 첫 묶음을 넣는다.
  */
 private fun loadedState(state: MyRoomUIState, room: RoomVO): MyRoomUIState {
     val draft = room.placements.toDraft()

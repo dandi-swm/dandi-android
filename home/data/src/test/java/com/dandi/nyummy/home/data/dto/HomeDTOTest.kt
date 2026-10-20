@@ -72,8 +72,8 @@ class HomeDTOTest {
             RoomPlacementVO(101, RoomItemCategory.BED, itemId = 2, x = 50f, y = 20f, zIndex = 2, scale = 1.2f),
             placements[2],
         )
-        // 소문자 zindex도 읽고, 0~100을 벗어난 좌표는 그 안으로 맞춘다.
-        assertEquals(RoomPlacementVO(104, RoomItemCategory.CARPET, itemId = 3, x = 100f, y = 0f, zIndex = 1), placements[1])
+        // 소문자 zindex도 읽고, 0~100을 벗어난 좌표는 그 안으로 맞춘다. 없어진 종류(CARPET)는 기타로 본다.
+        assertEquals(RoomPlacementVO(104, RoomItemCategory.ETC, itemId = 3, x = 100f, y = 0f, zIndex = 1), placements[1])
     }
 
     @Test

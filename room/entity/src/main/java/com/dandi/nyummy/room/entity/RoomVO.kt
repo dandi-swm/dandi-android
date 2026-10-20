@@ -6,8 +6,6 @@ import kotlinx.serialization.Serializable
 enum class RoomItemCategory {
     BACKGROUND,
     BED,
-    CAT_WHEEL,
-    CARPET,
     ETC,
     ;
 

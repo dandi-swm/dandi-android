@@ -110,7 +110,7 @@ class HomeViewModelTest {
     private val decoratedRoom = listOf(
         RoomPlacementVO(roomItemId = 101, category = RoomItemCategory.BED, itemId = 2, x = 50f, y = 20f, zIndex = 3, scale = 9f),
         RoomPlacementVO(roomItemId = 108, category = RoomItemCategory.BACKGROUND, itemId = 1),
-        RoomPlacementVO(roomItemId = 104, category = RoomItemCategory.CARPET, itemId = 3, x = 30f, y = 10f, zIndex = 1),
+        RoomPlacementVO(roomItemId = 104, category = RoomItemCategory.ETC, itemId = 3, x = 30f, y = 10f, zIndex = 1),
         RoomPlacementVO(roomItemId = 105, category = RoomItemCategory.ETC, itemId = null, x = 60f, y = 10f, zIndex = 2),
     )
 

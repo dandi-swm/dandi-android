@@ -17,7 +17,7 @@ import kotlinx.collections.immutable.toImmutableList
  * @property undoStack 되돌리기용 이전 방들. 마지막이 바로 전 상태다.
  * @property selectedItemId 방에서 고른 아이템(테두리와 도구 모음을 보여 준다)
  * @property selectedCategory 보관함에서 보고 있는 탭(아이템 종류)
- * @property inventoryTabs 보관함 탭. 아이템 종류마다 하나씩, [RoomItemCategory] 순서로 늘 다섯 개다.
+ * @property inventoryTabs 보관함 탭. 아이템 종류마다 하나씩, [RoomItemCategory] 순서로 늘 세 개다.
  * @property catMotion 방에 앉은 냐미가 지금 하는 동작. 애니메이션을 받지 못했으면 null이고 냐미를 그리지 않는다.
  */
 @Immutable
