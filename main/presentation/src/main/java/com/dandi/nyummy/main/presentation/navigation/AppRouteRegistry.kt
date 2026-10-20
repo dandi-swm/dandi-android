@@ -2,10 +2,12 @@ package com.dandi.nyummy.main.presentation.navigation
 
 import com.dandi.nyummy.auth.domain.EmailLoginPage
 import com.dandi.nyummy.auth.domain.LoginPage
+import com.dandi.nyummy.auth.domain.PasswordResetPage
 import com.dandi.nyummy.auth.domain.SignUpPage
 import com.dandi.nyummy.auth.domain.SocialSignUpPage
 import com.dandi.nyummy.auth.presentation.EmailLoginPage
 import com.dandi.nyummy.auth.presentation.LoginPage
+import com.dandi.nyummy.auth.presentation.PasswordResetPage
 import com.dandi.nyummy.auth.presentation.SignUpPage
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.common.domain.navigation.LinkArgs
@@ -89,6 +91,19 @@ val appRoutes: List<AppRoute> = listOf(
             )
         },
         render = { SignUpPage() },
+    ),
+    AppRoute(
+        path = PasswordResetPage.PATH,
+        isBottomTab = false,
+        drawsBehindSystemBars = true,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(LoginPage.PATH),
+                GenericNavKey(EmailLoginPage.PATH),
+                GenericNavKey(PasswordResetPage.PATH, args),
+            )
+        },
+        render = { PasswordResetPage() },
     ),
     AppRoute(
         // 소셜 로그인 신규 회원의 프로필 입력. 가입 토큰은 메모리 세션으로만 전달되므로
