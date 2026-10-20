@@ -561,7 +561,7 @@ private fun WaitingScene(
                     contentDescription = null,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .offset(y = cardHeight - tableFrontHeight)
+                        .offset(y = cardHeight - tableFrontHeight * (1f + TableLiftOverCat))
                         .fillMaxWidth()
                         .wrapContentHeight(align = Alignment.Top, unbounded = true)
                         .height(sceneWidth / tableImageAspect),
@@ -805,6 +805,9 @@ private const val CardHeightFraction = 0.86f
 private const val CatWidthFraction = 0.66f
 /** 냐미 발이 식탁 앞면 높이의 몇 배 위에 오는지. 1이면 식탁 윗선이다. */
 private const val CatBottomOnTable = 0.98f
+
+/** 식탁 윗선을 냐미 발보다 얼마나 더 올릴지(식탁 앞면 높이 대비). 냐미 아래쪽이 식탁에 가려 식탁 뒤에 앉아 보인다. */
+private const val TableLiftOverCat = 0.3f
 private const val PhotoWidthFraction = 0.78f
 private const val PhotoAspect = 4f / 3f
 private const val PhotoTiltDegrees = -4f
