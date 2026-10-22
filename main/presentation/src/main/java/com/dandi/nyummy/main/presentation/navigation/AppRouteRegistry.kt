@@ -262,6 +262,8 @@ val appRouteByPath: Map<String, AppRoute> = appRoutes.associateBy { it.path }
 val appLinkAliases: List<LinkAlias> = listOf(
     // 분석 결과 푸시의 식사 상세 링크(서버 app-link meal-detail-url) → 기록 탭에서 그 식사 상세 열기
     LinkAlias("/meals/{${HistoryPage.ARG_MEAL_ID}}", targetPath = HistoryPage.PATH),
+    // 문의 답장 푸시의 문의 링크 → 그 문의 상세(뒤로 가면 설정의 문의 목록)
+    LinkAlias("/inquiries/{${InquiryDetailRoute.ARG_INQUIRY_ID}}", targetPath = InquiryDetailRoute.PATH),
 )
 
 /**
