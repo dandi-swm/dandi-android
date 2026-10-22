@@ -2,12 +2,11 @@ package com.dandi.nyummy.settings.data.image
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Matrix
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
+import com.dandi.nyummy.common.data.image.decodeSampledBitmap
+import com.dandi.nyummy.common.data.image.onWhiteBackground
+import com.dandi.nyummy.common.data.image.transformed
 import com.dandi.nyummy.settings.domain.InquiryImageLoadException
 import java.io.File
 import java.io.InputStream
@@ -44,37 +43,11 @@ class InquiryImageDataSource(
 
     /** 긴 변을 [INQUIRY_IMAGE_MAX_LONG_SIDE_PX] 이하로 줄이고 바로 세운 비트맵. 투명한 곳은 흰 바탕으로 채운다. */
     private fun decode(uri: Uri): Bitmap {
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        // 이미지를 decode할 때 전부다 해버리면 OOM이 생길 수 도 있으니 bounds로 크기, 용량만 확인
-        open(uri).use { BitmapFactory.decodeStream(it, null, bounds) }
-        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw InquiryImageLoadException()
-
-        val options = BitmapFactory.Options().apply {
-            inSampleSize = inquiryImageSampleSize(bounds.outWidth, bounds.outHeight)
-        }
-        val decoded = open(uri).use { BitmapFactory.decodeStream(it, null, options) }
+        val decoded = decodeSampledBitmap(open = { open(uri) }, sampleSizeOf = ::inquiryImageSampleSize)
             ?: throw InquiryImageLoadException()
         val rotationDegrees = runCatching { open(uri).use { ExifInterface(it).rotationDegrees } }.getOrDefault(0)
-
         val (targetWidth, targetHeight) = inquiryImageTargetSize(decoded.width, decoded.height)
-        val matrix = Matrix().apply {
-            postScale(targetWidth.toFloat() / decoded.width, targetHeight.toFloat() / decoded.height)
-            postRotate(rotationDegrees.toFloat())
-        }
-        val transformed = Bitmap.createBitmap(decoded, 0, 0, decoded.width, decoded.height, matrix, true)
-        if (transformed !== decoded) decoded.recycle()
-        return transformed.onWhite()
-    }
-
-    private fun Bitmap.onWhite(): Bitmap {
-        if (!hasAlpha()) return this
-        val opaque = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        Canvas(opaque).apply {
-            drawColor(Color.WHITE)
-            drawBitmap(this@onWhite, 0f, 0f, null)
-        }
-        recycle()
-        return opaque
+        return decoded.transformed(targetWidth, targetHeight, rotationDegrees).onWhiteBackground()
     }
 
     private fun open(uri: Uri): InputStream =

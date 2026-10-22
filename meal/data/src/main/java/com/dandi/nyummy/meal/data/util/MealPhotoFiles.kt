@@ -2,10 +2,12 @@ package com.dandi.nyummy.meal.data.util
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Matrix
 import android.os.Build
 import android.util.Log
 import androidx.exifinterface.media.ExifInterface
+import com.dandi.nyummy.common.data.image.decodeSampledBitmap
+import com.dandi.nyummy.common.data.image.onWhiteBackground
+import com.dandi.nyummy.common.data.image.transformed
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.meal.domain.MealPhotoInvalidException
 import com.dandi.nyummy.meal.entity.MealPhotoSource
@@ -226,7 +228,7 @@ private fun compressIntoLimit(file: File, maxBytes: Long) {
 }
 
 private fun compressKeepingExifSegment(file: File, maxBytes: Long, exifSegment: ByteArray) {
-    val bitmap = decodeSampledBitmap(file)
+    val bitmap = decodeMealPhoto(file)
         ?: throw MealPhotoInvalidException("사진을 읽지 못했어요. 다시 촬영해주세요")
     val original = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         .also { BitmapFactory.decodeFile(file.absolutePath, it) }
@@ -249,10 +251,9 @@ private fun compressCopyingExifTags(file: File, maxBytes: Long) {
         EXIF_TAGS_TO_PRESERVE.mapNotNull { tag -> exif.getAttribute(tag)?.let { tag to it } }
     }.orEmpty()
 
-    val decoded = decodeSampledBitmap(file)
+    val decoded = decodeMealPhoto(file)
         ?: throw MealPhotoInvalidException("사진을 읽지 못했어요. 다시 촬영해주세요")
-    val rotated = decoded.rotatedBy(rotationDegrees)
-    if (rotated !== decoded) decoded.recycle()
+    val rotated = decoded.transformed(rotationDegrees = rotationDegrees).onWhiteBackground()
 
     // EXIF 복원분이 더해져도 상한을 넘지 않도록 여유분을 뺀 크기를 목표로 압축한다.
     val (bytes, encoded) = encodeIntoLimit(rotated, maxBytes - EXIF_SIZE_MARGIN_BYTES)
@@ -306,30 +307,17 @@ private fun updateExifDimensions(file: File, width: Int, height: Int) {
     }.onFailure { Log.w(TAG, "EXIF size update failed: ${file.name}", it) }
 }
 
-private fun decodeSampledBitmap(
-    file: File,
-    decodeBudgetBytes: Long = DEFAULT_DECODE_BUDGET_BYTES,
-): Bitmap? {
-    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    BitmapFactory.decodeFile(file.absolutePath, bounds)
+private fun decodeMealPhoto(file: File): Bitmap? =
+    decodeSampledBitmap(open = { file.inputStream() }, sampleSizeOf = ::mealPhotoSampleSize)
 
-    val width = bounds.outWidth
-    val height = bounds.outHeight
-    if (width <= 0 || height <= 0) return null
-
-    val maxPixels = (decodeBudgetBytes / 4L).coerceAtLeast(1L)
+/** 푼 비트맵(픽셀당 4바이트)이 [DEFAULT_DECODE_BUDGET_BYTES] 안에 들어가는 가장 작은 2의 거듭제곱 배율. */
+private fun mealPhotoSampleSize(width: Int, height: Int): Int {
+    val maxPixels = (DEFAULT_DECODE_BUDGET_BYTES / 4L).coerceAtLeast(1L)
     var sampleSize = 1
     while ((width.toLong() / sampleSize) * (height.toLong() / sampleSize) > maxPixels) {
         sampleSize *= 2
     }
-
-    while (true) {
-        val options = BitmapFactory.Options().apply { inSampleSize = sampleSize }
-        val bitmap = runCatching { BitmapFactory.decodeFile(file.absolutePath, options) }.getOrNull()
-        if (bitmap != null) return bitmap
-        if (sampleSize >= Int.MAX_VALUE / 2) return null
-        sampleSize *= 2
-    }
+    return sampleSize
 }
 
 /**
@@ -346,12 +334,6 @@ private fun restoreExifMetadata(file: File, attributes: List<Pair<String, String
         exif.saveAttributes()
         Log.d(TAG, "EXIF restored (${attributes.size} tags): ${file.name}")
     }.onFailure { Log.w(TAG, "EXIF restore failed: ${file.name}", it) }
-}
-
-private fun Bitmap.rotatedBy(degrees: Int): Bitmap {
-    if (degrees == 0) return this
-    val matrix = Matrix().apply { postRotate(degrees.toFloat()) }
-    return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
 }
 
 private fun Bitmap.toJpegBytes(quality: Int): ByteArray =
