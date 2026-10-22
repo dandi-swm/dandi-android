@@ -37,9 +37,9 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRewardR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySwipeToDelete
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
+import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyLoadMoreEffect
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.jank.JankScrollWatcher
-import com.dandi.nyummy.mailbox.presentation.component.LoadMoreEffect
 import com.dandi.nyummy.mailbox.entity.MailCategory
 import com.dandi.nyummy.mailbox.presentation.R
 import com.dandi.nyummy.mailbox.presentation.model.MAIL_EXPIRING_DAYS
@@ -121,7 +121,7 @@ private fun MailItemsContent(
             } else if (items.isLoaded) {
                 val listState = rememberLazyListState()
                 JankScrollWatcher(listState)
-                LoadMoreEffect(
+                NyummyLoadMoreEffect(
                     listState = listState,
                     itemCount = items.mails.size,
                     onReachEnd = { onIntent(MailboxIntent.ReachMailListEnd) },

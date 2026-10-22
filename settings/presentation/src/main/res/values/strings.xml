@@ -47,4 +47,33 @@
     <string name="settings_withdraw_dialog_confirm">탈퇴하기</string>
     <string name="settings_meal_time_title">식사 시간</string>
     <string name="settings_meal_time_save">저장</string>
+    <!-- 문의하기(문의 내역, 문의 쓰기, 문의 상세) -->
+    <string name="inquiry_write_action">문의하기</string>
+    <string name="inquiry_list_title">문의 내역</string>
+    <string name="inquiry_category_bug_report">버그 제보</string>
+    <string name="inquiry_category_question">단순 문의</string>
+    <string name="inquiry_category_suggestion">건의</string>
+    <string name="inquiry_status_answered">답장이 왔어요</string>
+    <string name="inquiry_status_waiting">답장을 기다리는 중</string>
+    <string name="inquiry_empty_title">보낸 문의가 없어요</string>
+    <string name="inquiry_empty_body">궁금한 점이나 불편한 점을 알려 주세요</string>
+    <string name="inquiry_write_title">문의하기</string>
+    <string name="inquiry_write_reply_notice">답장은 설정의 문의하기에서 볼 수 있어요</string>
+    <string name="inquiry_write_category_label">문의 유형</string>
+    <string name="inquiry_write_title_label">제목</string>
+    <string name="inquiry_write_title_placeholder">문의 제목을 적어 주세요</string>
+    <string name="inquiry_write_title_empty_error">제목을 입력해 주세요</string>
+    <string name="inquiry_write_content_label">문의 내용</string>
+    <string name="inquiry_write_content_placeholder">어떤 점이 궁금하거나 불편했는지 알려 주세요</string>
+    <string name="inquiry_write_content_empty_error">내용을 입력해 주세요</string>
+    <string name="inquiry_write_image_label">사진 (선택)</string>
+    <string name="inquiry_write_image_add">사진 추가</string>
+    <string name="inquiry_write_image_remove">사진 빼기</string>
+    <string name="inquiry_write_image_loading">사진을 준비하는 중</string>
+    <string name="inquiry_write_image_load_failed">사진을 불러오지 못했어요. 다시 골라 주세요.</string>
+    <string name="inquiry_write_send">보내기</string>
+    <string name="inquiry_write_sent">문의를 보냈어요</string>
+    <string name="inquiry_write_send_failed">문의를 보내지 못했어요. 잠시 후 다시 시도해 주세요.</string>
+    <string name="inquiry_detail_reply_from">냐미 팀 답장</string>
+    <string name="inquiry_attached_image">첨부한 사진</string>
 </resources>

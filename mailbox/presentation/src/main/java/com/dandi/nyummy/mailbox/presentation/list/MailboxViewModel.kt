@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
+import com.dandi.nyummy.common.presentation.time.listTimeLabel
 import com.dandi.nyummy.mailbox.domain.ClaimAllMailsUseCase
 import com.dandi.nyummy.mailbox.domain.ClaimMailUseCase
 import com.dandi.nyummy.mailbox.domain.DeleteMailUseCase
@@ -17,7 +18,6 @@ import com.dandi.nyummy.mailbox.entity.MailVO
 import com.dandi.nyummy.mailbox.entity.RewardVO
 import com.dandi.nyummy.mailbox.presentation.model.mailImageUrl
 import com.dandi.nyummy.mailbox.presentation.model.mailRemainingDays
-import com.dandi.nyummy.mailbox.presentation.model.mailboxListTimeLabel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -344,7 +344,7 @@ private fun MailVO.toRowUiModel(nowMillis: Long) = MailRowUiModel(
     title = title,
     content = content,
     imageUrl = mailImageUrl(category, imageId, isClaimed),
-    timeLabel = mailboxListTimeLabel(createdAtMillis, nowMillis),
+    timeLabel = listTimeLabel(createdAtMillis, nowMillis),
     remainingDays = expiresAtMillis?.takeUnless { isClaimed }?.let { mailRemainingDays(it, nowMillis) },
     isClaimed = isClaimed,
     imageId = imageId,

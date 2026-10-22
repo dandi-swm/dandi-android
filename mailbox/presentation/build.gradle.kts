@@ -62,7 +62,7 @@ dependencies {
     implementation(project(":common:presentation"))
 
     implementation(libs.androidx.lifecycle.runtime.compose)
-    // 문의 사진 선택기(rememberLauncherForActivityResult)와 상자 열기 디버그 화면(setContent) 용
+    // 상자 열기 디버그 화면(setContent) 용
     implementation(libs.androidx.activity.compose)
 
     implementation(libs.hilt.android)
