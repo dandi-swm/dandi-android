@@ -40,6 +40,7 @@ firebaseBom = "33.7.0"
 googleServices = "4.4.2"
 firebaseCrashlyticsGradle = "3.0.8"
 kakao = "2.25.0"
+facebookCore = "19.0.0"
 credentials = "1.5.0"
 googleid = "1.1.1"
 
@@ -105,6 +106,7 @@ firebase-perf = { group = "com.google.firebase", name = "firebase-perf" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
 kakao-user = { group = "com.kakao.sdk", name = "v2-user", version.ref = "kakao" }
+facebook-core = { group = "com.facebook.android", name = "facebook-core", version.ref = "facebookCore" }
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentials" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }

@@ -70,6 +70,28 @@
             android:name="google_analytics_automatic_screen_reporting_enabled"
             android:value="false" />
 
+        <!-- Meta 광고 설치 측정. 앱 ID와 토큰은 app/build.gradle.kts 가 local.properties 에서 넣는다. -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="@string/facebook_client_token" />
+        <!-- 설치, 실행 자동 기록과 광고 ID 수집은 release 빌드에서만 true -->
+        <meta-data
+            android:name="com.facebook.sdk.AutoLogAppEventsEnabled"
+            android:value="${metaAppEventsEnabled}" />
+        <meta-data
+            android:name="com.facebook.sdk.AdvertiserIDCollectionEnabled"
+            android:value="${metaAppEventsEnabled}" />
+        <!-- 설치 측정에 필요 없는 화면 제목, 화면 구성 수집은 끈다 -->
+        <meta-data
+            android:name="com.facebook.sdk.AutoLogMetaDataEnabled"
+            android:value="false" />
+        <meta-data
+            android:name="com.facebook.sdk.AutoLogProductImprovementEnabled"
+            android:value="false" />
+
         <!-- 앱이 백그라운드일 때 OS가 서버 푸시를 띄우는 기본 아이콘, 색, 채널 -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
