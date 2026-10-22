@@ -12,4 +12,7 @@ sealed interface InquiryWriteReducerEvent : ReducerEvent {
     /** 빈 칸이 있어 보내지 않았다. 빈 칸마다 오류를 띄운다. */
     data class EmptyInputRejected(val isTitleEmpty: Boolean, val isContentEmpty: Boolean) : InquiryWriteReducerEvent
     data class SendingChanged(val sending: Boolean) : InquiryWriteReducerEvent
+    data class ImageLoadingChanged(val loading: Boolean) : InquiryWriteReducerEvent
+    data class ImageAttached(val imagePath: String) : InquiryWriteReducerEvent
+    data object ImageRemoved : InquiryWriteReducerEvent
 }

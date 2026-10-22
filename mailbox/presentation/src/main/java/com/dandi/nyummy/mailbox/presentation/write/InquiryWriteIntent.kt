@@ -20,5 +20,10 @@ sealed interface InquiryWriteIntent : MviIntent {
 
     data class ChangeContent(val content: String) : InquiryWriteIntent
 
+    /** 사진 선택기가 닫혔다. 고르지 않고 닫았으면 [photoUri]는 null. */
+    data class ImagePicked(val photoUri: String?) : InquiryWriteIntent
+
+    data object ClickRemoveImage : InquiryWriteIntent
+
     data object ClickSend : InquiryWriteIntent
 }

@@ -23,11 +23,17 @@
     <string name="mailbox_write_content_label">문의 내용</string>
     <string name="mailbox_write_content_placeholder">어떤 점이 궁금하거나 불편했는지 알려 주세요</string>
     <string name="mailbox_write_content_empty_error">내용을 입력해 주세요</string>
+    <string name="mailbox_write_image_label">사진 (선택)</string>
+    <string name="mailbox_write_image_add">사진 추가</string>
+    <string name="mailbox_write_image_remove">사진 빼기</string>
+    <string name="mailbox_write_image_loading">사진을 준비하는 중</string>
+    <string name="mailbox_write_image_load_failed">사진을 불러오지 못했어요. 다시 골라 주세요.</string>
     <string name="mailbox_write_send">보내기</string>
     <string name="mailbox_write_sent">문의를 보냈어요</string>
     <string name="mailbox_write_send_failed">문의를 보내지 못했어요. 잠시 후 다시 시도해 주세요.</string>
 
     <string name="mailbox_detail_reply_from">냐미 팀 답장</string>
+    <string name="mailbox_attached_image">첨부한 사진</string>
     <string name="mailbox_item_claim">받기</string>
     <string name="mailbox_item_open">열기</string>
     <string name="mailbox_item_claimed">받았어요</string>

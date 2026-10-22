@@ -55,6 +55,7 @@ private fun InquiryVO.toDetailUiModel() = InquiryDetailUiModel(
     category = category,
     title = title,
     content = content,
+    imageUrl = imageUrl.ifBlank { null },
     createdAtLabel = inquiryDetailTimeLabel(createdAtMillis),
     answer = if (isAnswered) {
         InquiryAnswerUiModel(

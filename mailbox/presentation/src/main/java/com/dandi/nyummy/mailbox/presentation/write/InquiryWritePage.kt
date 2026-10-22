@@ -1,6 +1,12 @@
 package com.dandi.nyummy.mailbox.presentation.write
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -10,40 +16,55 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomCta
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRowTrailing
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySelectField
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpinner
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextArea
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextField
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyHiddenWhileTyping
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClearFocusOnTap
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.mailbox.entity.InquiryCategory
 import com.dandi.nyummy.mailbox.presentation.R
 import com.dandi.nyummy.mailbox.presentation.model.labelRes
+import java.io.File
+import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
- * 문의하기. 유형을 고르고 내용을 써서 보낸다. 답장은 우편함으로 온다.
+ * 문의하기. 유형을 고르고 내용을 써서 보낸다. 사진은 한 장까지 붙일 수 있다. 답장은 우편함으로 온다.
  * 빈 내용으로 보내면 입력칸 아래에 오류를 띄우고, 보내면 스낵바와 함께 우편함으로 돌아간다.
  */
 @Composable
@@ -52,9 +73,25 @@ fun InquiryWritePage(
     viewModel: InquiryWriteViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // 연타로 선택기가 겹쳐 뜨지 않도록 열려 있는 동안을 기억한다(선택기 뒤에서 재생성돼도 유지).
+    var isImagePickerOpen by rememberSaveable { mutableStateOf(false) }
+    val imagePicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        isImagePickerOpen = false
+        viewModel.onIntent(InquiryWriteIntent.ImagePicked(uri?.toString()))
+    }
+
     InquiryWriteScreen(
         uiState = uiState,
         onIntent = viewModel::onIntent,
+        onAddImageClick = {
+            if (!isImagePickerOpen) {
+                isImagePickerOpen = true
+                imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+        },
         modifier = modifier,
     )
 }
@@ -63,6 +100,7 @@ fun InquiryWritePage(
 internal fun InquiryWriteScreen(
     uiState: InquiryWriteUIState,
     onIntent: (InquiryWriteIntent) -> Unit,
+    onAddImageClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // 시스템 바 인셋은 앱 Scaffold가 이미 밀어 두었다. 여기서는 키보드가 내비게이션 바보다 올라온 만큼만 본문을 줄인다.
@@ -130,12 +168,19 @@ internal fun InquiryWriteScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
+            Spacer(Modifier.height(NyummyTheme.spacing.s20))
+            InquiryImageField(
+                imagePath = uiState.imagePath,
+                isLoading = uiState.isImageLoading,
+                onAddClick = onAddImageClick,
+                onRemoveClick = { onIntent(InquiryWriteIntent.ClickRemoveImage) },
+            )
         }
         NyummyHiddenWhileTyping {
             NyummyBottomCta(
                 primaryText = stringResource(R.string.mailbox_write_send),
                 onPrimaryClick = { onIntent(InquiryWriteIntent.ClickSend) },
-                primaryEnabled = !uiState.isSending,
+                primaryEnabled = !uiState.isSending && !uiState.isImageLoading,
             )
         }
     }
@@ -146,6 +191,91 @@ internal fun InquiryWriteScreen(
             onSelect = { onIntent(InquiryWriteIntent.SelectCategory(it)) },
             onDismiss = { onIntent(InquiryWriteIntent.DismissCategorySheet) },
         )
+    }
+}
+
+/**
+ * 사진 첨부 칸. 비어 있으면 누르면 사진 선택기가 열리는 칸이고, 붙이면 그 칸이 썸네일이 된다.
+ * 한 장만 붙일 수 있어서 바꾸려면 썸네일 오른쪽 위 버튼으로 빼고 다시 고른다.
+ */
+@Composable
+private fun InquiryImageField(
+    imagePath: String?,
+    isLoading: Boolean,
+    onAddClick: () -> Unit,
+    onRemoveClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val shape = RoundedCornerShape(NyummyTheme.radius.s)
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(FieldLabelGap),
+    ) {
+        NyummyText(
+            text = stringResource(R.string.mailbox_write_image_label),
+            style = NyummyTheme.typography.labelM,
+            color = NyummyTheme.colors.content.secondary,
+        )
+        when {
+            isLoading -> Box(
+                modifier = Modifier
+                    .size(ImageTileSize)
+                    .background(NyummyTheme.colors.bg.surface, shape)
+                    .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.border.default, shape),
+                contentAlignment = Alignment.Center,
+            ) {
+                NyummySpinner(contentDescription = stringResource(R.string.mailbox_write_image_loading))
+            }
+            imagePath != null -> Box(modifier = Modifier.size(ImageTileSize)) {
+                AsyncImage(
+                    model = File(imagePath),
+                    contentDescription = stringResource(R.string.mailbox_attached_image),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clip(shape)
+                        .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.border.subtle, shape),
+                )
+                // 보이는 버튼은 작아도 누르는 범위는 썸네일 오른쪽 위 48dp다.
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(NyummyTheme.size.touchTarget)
+                        .nyummyClickable(onClick = onRemoveClick),
+                    contentAlignment = Alignment.TopEnd,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .padding(RemoveButtonInset)
+                            .size(RemoveButtonSize)
+                            .background(NyummyTheme.colors.bg.scrimStrong, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            painter = painterResource(CommonR.drawable.nyummy_ic_x),
+                            contentDescription = stringResource(R.string.mailbox_write_image_remove),
+                            tint = NyummyTheme.colors.content.onInverse,
+                            modifier = Modifier.size(NyummyTheme.size.iconXs),
+                        )
+                    }
+                }
+            }
+            else -> Box(
+                modifier = Modifier
+                    .nyummyClickable(onClick = onAddClick)
+                    .size(ImageTileSize)
+                    .background(NyummyTheme.colors.bg.surface, shape)
+                    .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.border.default, shape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(CommonR.drawable.nyummy_ic_image_plus),
+                    contentDescription = stringResource(R.string.mailbox_write_image_add),
+                    tint = NyummyTheme.colors.content.tertiary,
+                    modifier = Modifier.size(NyummyTheme.size.iconL),
+                )
+            }
+        }
     }
 }
 
@@ -189,6 +319,16 @@ private val ContentTopGap = 8.dp
 
 private val ContentMaxWidth = 480.dp
 
+/** 입력칸 라벨과 칸 사이. 공통 입력칸과 같다. */
+private val FieldLabelGap = 6.dp
+
+private val ImageTileSize = 80.dp
+
+private val RemoveButtonSize = 22.dp
+
+/** 썸네일 모서리에서 빼기 버튼까지. */
+private val RemoveButtonInset = 4.dp
+
 /** 서버가 받는 문의 제목 최대 길이. */
 private const val TITLE_MAX_LENGTH = 100
 
@@ -205,6 +345,7 @@ private fun InquiryWriteScreenPreview() {
                 content = "다시 찍어도 같은 문제가 있어요.",
             ),
             onIntent = {},
+            onAddImageClick = {},
         )
     }
 }
@@ -216,6 +357,7 @@ private fun InquiryWriteScreenErrorPreview() {
         InquiryWriteScreen(
             uiState = InquiryWriteUIState(isTitleEmptyError = true, isContentEmptyError = true),
             onIntent = {},
+            onAddImageClick = {},
         )
     }
 }

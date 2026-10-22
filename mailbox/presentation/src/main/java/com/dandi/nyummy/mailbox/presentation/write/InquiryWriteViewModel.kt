@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
+import com.dandi.nyummy.mailbox.domain.AttachInquiryImageUseCase
 import com.dandi.nyummy.mailbox.domain.SendInquiryUseCase
 import com.dandi.nyummy.mailbox.presentation.R
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,6 +17,7 @@ import javax.inject.Inject
 @HiltViewModel
 class InquiryWriteViewModel @Inject constructor(
     private val sendInquiry: SendInquiryUseCase,
+    private val attachInquiryImage: AttachInquiryImageUseCase,
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
 ) : MviViewModel<InquiryWriteIntent, InquiryWriteUIState, InquiryWriteReducerEvent>(
@@ -35,6 +37,8 @@ class InquiryWriteViewModel @Inject constructor(
                 dispatch(InquiryWriteReducerEvent.TitleChanged(intent.title))
             is InquiryWriteIntent.ChangeContent ->
                 dispatch(InquiryWriteReducerEvent.ContentChanged(intent.content))
+            is InquiryWriteIntent.ImagePicked -> intent.photoUri?.let(::attachImage)
+            InquiryWriteIntent.ClickRemoveImage -> dispatch(InquiryWriteReducerEvent.ImageRemoved)
             InquiryWriteIntent.ClickSend -> send()
         }
     }
@@ -52,11 +56,28 @@ class InquiryWriteViewModel @Inject constructor(
             is InquiryWriteReducerEvent.EmptyInputRejected ->
                 state.copy(isTitleEmptyError = event.isTitleEmpty, isContentEmptyError = event.isContentEmpty)
             is InquiryWriteReducerEvent.SendingChanged -> state.copy(isSending = event.sending)
+            is InquiryWriteReducerEvent.ImageLoadingChanged -> state.copy(isImageLoading = event.loading)
+            is InquiryWriteReducerEvent.ImageAttached ->
+                state.copy(imagePath = event.imagePath, isImageLoading = false)
+            InquiryWriteReducerEvent.ImageRemoved -> state.copy(imagePath = null)
         }
+
+    private fun attachImage(photoUri: String) {
+        if (currentState.isImageLoading) return
+        dispatch(InquiryWriteReducerEvent.ImageLoadingChanged(loading = true))
+        viewModelScope.launch {
+            attachInquiryImage(photoUri)
+                .onSuccess { dispatch(InquiryWriteReducerEvent.ImageAttached(it)) }
+                .onFailure {
+                    dispatch(InquiryWriteReducerEvent.ImageLoadingChanged(loading = false))
+                    messageHelper.showToast(R.string.mailbox_write_image_load_failed)
+                }
+        }
+    }
 
     private fun send() {
         val state = currentState
-        if (state.isSending) return
+        if (state.isSending || state.isImageLoading) return
         val isTitleEmpty = state.title.isBlank()
         val isContentEmpty = state.content.isBlank()
         if (isTitleEmpty || isContentEmpty) {
@@ -65,7 +86,7 @@ class InquiryWriteViewModel @Inject constructor(
         }
         dispatch(InquiryWriteReducerEvent.SendingChanged(sending = true))
         viewModelScope.launch {
-            sendInquiry(state.category, state.title, state.content)
+            sendInquiry(state.category, state.title, state.content, state.imagePath)
                 .onSuccess {
                     messageHelper.showSnackBar(messageRes = R.string.mailbox_write_sent)
                     navigationHelper.navigateToBack()

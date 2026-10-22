@@ -1,11 +1,13 @@
 package com.dandi.nyummy.mailbox.presentation.detail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -17,11 +19,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -85,7 +90,7 @@ internal fun InquiryDetailScreen(
     }
 }
 
-/** 내가 보낸 문의. 목록 행처럼 위에 유형과 보낸 시각을 두고 아래에 제목과 전문을 쓴다. */
+/** 내가 보낸 문의. 목록 행처럼 위에 유형과 보낸 시각을 두고 아래에 제목과 전문, 첨부한 사진을 둔다. */
 @Composable
 private fun MyInquiry(inquiry: InquiryDetailUiModel) {
     Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
@@ -104,6 +109,20 @@ private fun MyInquiry(inquiry: InquiryDetailUiModel) {
             text = inquiry.content,
             style = NyummyTheme.typography.bodyL,
         )
+        if (inquiry.imageUrl != null) {
+            val shape = RoundedCornerShape(NyummyTheme.radius.s)
+            // 사진 비율 그대로, 높이만 제한해 왼쪽에 둔다. 세로 스크린샷도 한눈에 들어온다.
+            AsyncImage(
+                model = inquiry.imageUrl,
+                contentDescription = stringResource(R.string.mailbox_attached_image),
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .padding(top = NyummyTheme.spacing.s8)
+                    .heightIn(max = AttachedImageMaxHeight)
+                    .clip(shape)
+                    .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.border.subtle, shape),
+            )
+        }
     }
 }
 
@@ -171,6 +190,8 @@ private val MetaGap = 6.dp
 
 private val ContentMaxWidth = 480.dp
 
+private val AttachedImageMaxHeight = 240.dp
+
 @Preview(showBackground = true, widthDp = 390, heightDp = 800)
 @Composable
 private fun InquiryDetailAnsweredPreview() {
@@ -181,6 +202,7 @@ private fun InquiryDetailAnsweredPreview() {
                     category = InquiryCategory.BUG_REPORT,
                     title = "사진을 찍은 뒤 기록이 사라졌어요",
                     content = "사진을 찍은 뒤 기록이 사라졌어요. 다시 찍어도 같은 문제가 있어요.",
+                    imageUrl = null,
                     createdAtLabel = "10월 4일 오후 9:12",
                     answer = InquiryAnswerUiModel(
                         content = "안녕하세요, 냐미 팀이에요.\n\n사진을 찍은 뒤 기록이 사라지는 문제를 확인했어요.\n\n알려 줘서 정말 고마워요.",
@@ -203,6 +225,7 @@ private fun InquiryDetailWaitingPreview() {
                     category = InquiryCategory.SUGGESTION,
                     title = "히스토리에서 사진을 크게 보고 싶어요",
                     content = "히스토리에서 사진을 크게 보고 싶어요. 식사 사진을 눌렀을 때 화면 가득 보여 주면 좋겠어요.",
+                    imageUrl = null,
                     createdAtLabel = "9월 28일 오후 7:05",
                     answer = null,
                 ),
