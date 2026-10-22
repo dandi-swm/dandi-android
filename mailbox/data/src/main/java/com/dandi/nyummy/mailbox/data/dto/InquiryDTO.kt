@@ -60,7 +60,7 @@ data class InquirySummaryDTO(
  * GET /api/v1/inquiries/{inquiryId} 응답(문의 하나와 답장).
  *
  * @property questionContent 문의 내용.
- * @property imageUrl 첨부 이미지 조회 URL(일정 시간만 유효). 앱은 아직 첨부를 쓰지 않는다.
+ * @property imageUrl 첨부 이미지 조회 URL(일정 시간만 유효). 첨부가 없으면 null.
  * @property createdAt 보낸 시각(ISO date-time).
  * @property isAnswered 답장이 달렸다. 답장 필드는 이 값이 true일 때만 채워진다.
  * @property answerTitle 답장 제목. 앱은 아직 보여 주지 않는다.
@@ -86,6 +86,7 @@ data class InquiryDTO(
             category = category.toInquiryCategory(),
             title = questionTitle?.trim().orEmpty(),
             content = questionContent?.trim().orEmpty(),
+            imageUrl = imageUrl.orEmpty(),
             createdAtMillis = DeviceTime.parseIsoToEpochMillisOrNull(createdAt) ?: 0L,
             isAnswered = answered,
             answer = if (answered) {
@@ -104,7 +105,7 @@ data class InquiryDTO(
  * POST /api/v1/inquiries 요청. 성공은 본문 없는 201이다.
  *
  * @property questionTitle 제목(서버 필수, 100자까지).
- * @property imageKey 이미지 업로드 URL 발급(purpose=INQUIRY)으로 받은 키. 앱은 아직 첨부를 쓰지 않는다.
+ * @property imageKey 이미지 업로드 URL 발급(purpose=INQUIRY)으로 받아 사진을 올린 키. 사진을 붙이지 않으면 null.
  */
 @Serializable
 data class CreateInquiryRequestDTO(

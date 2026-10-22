@@ -13,6 +13,7 @@ enum class InquiryCategory {
  * 목록 조회에서는 [content]와 [answer]가 비어 있고, 상세 조회에서 채워진다.
  *
  * @property title 문의 제목.
+ * @property imageUrl 첨부한 사진의 조회 URL(일정 시간만 유효). 사진이 없거나 목록 조회면 빈 문자열.
  * @property createdAtMillis 보낸 시각(epoch millis). 화면은 기기 타임존으로 바꿔 보여 준다.
  * @property isAnswered 운영팀 답장이 달렸다.
  * @property hasUnreadAnswer 답장이 달렸는데 아직 상세를 열어 보지 않았다. 목록 조회에서만 채워진다.
@@ -23,6 +24,7 @@ data class InquiryVO(
     val category: InquiryCategory = InquiryCategory.QUESTION,
     val title: String = "",
     val content: String = "",
+    val imageUrl: String = "",
     val createdAtMillis: Long = 0L,
     val isAnswered: Boolean = false,
     val hasUnreadAnswer: Boolean = false,
