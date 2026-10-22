@@ -10,8 +10,8 @@ import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.legal.domain.LegalPage
-import com.dandi.nyummy.mailbox.domain.InquiryListPage
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
+import com.dandi.nyummy.settings.domain.InquiryListPage
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
 import com.dandi.nyummy.settings.domain.UpdateNotificationSettingsUseCase
 import com.dandi.nyummy.settings.domain.WithdrawUseCase

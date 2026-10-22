@@ -11,9 +11,6 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
-import com.dandi.nyummy.mailbox.entity.InquiryCategory
-import com.dandi.nyummy.mailbox.entity.InquiryPageVO
-import com.dandi.nyummy.mailbox.entity.InquiryVO
 import com.dandi.nyummy.mailbox.entity.MailPageVO
 import com.dandi.nyummy.mailbox.entity.RewardVO
 import com.dandi.nyummy.tti.TTIHelper
@@ -23,7 +20,7 @@ import com.dandi.nyummy.tti.TimelineCategory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
-/** 우편 API만 흉내 내는 저장소. [error]가 있으면 우편 요청이 그 예외를 던진다. 문의 API는 쓰지 않는다. */
+/** 우편 API를 흉내 내는 저장소. [error]가 있으면 우편 요청이 그 예외를 던진다. */
 internal class FakeMailboxRepository(
     var mailPage: MailPageVO = MailPageVO.empty,
     var reward: RewardVO = RewardVO.empty,
@@ -62,12 +59,6 @@ internal class FakeMailboxRepository(
         restoredMailIds += mailId
         error?.let { throw it }
     }
-
-    override suspend fun getInquiries(cursor: Long?, size: Int): InquiryPageVO = InquiryPageVO.empty
-    override suspend fun getInquiry(inquiryId: Long): InquiryVO? = null
-    override suspend fun sendInquiry(category: InquiryCategory, title: String, content: String) = Unit
-    override suspend fun deleteInquiry(inquiryId: Long) = Unit
-    override suspend fun restoreInquiry(inquiryId: Long) = Unit
 }
 
 internal class RecordingMessageHelper : MessageHelper {

@@ -63,9 +63,10 @@ dependencies {
     implementation(project(":common:presentation"))
     // 약관 화면으로 이동(LegalPage)
     implementation(project(":legal:domain"))
-    implementation(project(":mailbox:domain"))
 
     implementation(libs.androidx.lifecycle.runtime.compose)
+    // 문의 사진 선택기(rememberLauncherForActivityResult)
+    implementation(libs.androidx.activity.compose)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

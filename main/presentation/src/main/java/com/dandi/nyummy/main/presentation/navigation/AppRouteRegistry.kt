@@ -20,14 +20,8 @@ import com.dandi.nyummy.intro.presentation.IntroPage
 import com.dandi.nyummy.legal.domain.LegalPage as LegalRoute
 import com.dandi.nyummy.legal.entity.LegalDocument
 import com.dandi.nyummy.legal.presentation.LegalPage
-import com.dandi.nyummy.mailbox.domain.InquiryDetailPage as InquiryDetailRoute
-import com.dandi.nyummy.mailbox.domain.InquiryListPage as InquiryListRoute
-import com.dandi.nyummy.mailbox.domain.InquiryWritePage
 import com.dandi.nyummy.mailbox.domain.MailboxPage
-import com.dandi.nyummy.mailbox.presentation.detail.InquiryDetailPage
-import com.dandi.nyummy.mailbox.presentation.inquiry.InquiryListPage
 import com.dandi.nyummy.mailbox.presentation.list.MailboxPage
-import com.dandi.nyummy.mailbox.presentation.write.InquiryWritePage
 import com.dandi.nyummy.main.domain.deeplink.LinkAlias
 import com.dandi.nyummy.main.domain.deeplink.RoutePattern
 import com.dandi.nyummy.meal.domain.MealRecordPage
@@ -36,8 +30,14 @@ import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.onboarding.presentation.OnboardingPage
 import com.dandi.nyummy.room.domain.MyRoomPage
 import com.dandi.nyummy.room.presentation.MyRoomPage
+import com.dandi.nyummy.settings.domain.InquiryDetailPage as InquiryDetailRoute
+import com.dandi.nyummy.settings.domain.InquiryListPage as InquiryListRoute
+import com.dandi.nyummy.settings.domain.InquiryWritePage
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
 import com.dandi.nyummy.settings.domain.SettingsPage
+import com.dandi.nyummy.settings.presentation.inquiry.detail.InquiryDetailPage
+import com.dandi.nyummy.settings.presentation.inquiry.list.InquiryListPage
+import com.dandi.nyummy.settings.presentation.inquiry.write.InquiryWritePage
 import com.dandi.nyummy.settings.presentation.main.SettingsPage
 import com.dandi.nyummy.settings.presentation.mealtime.MealTimeSettingPage
 import com.dandi.nyummy.shop.domain.ShopPage

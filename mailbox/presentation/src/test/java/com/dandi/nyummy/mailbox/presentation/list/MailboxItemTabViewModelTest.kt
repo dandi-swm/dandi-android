@@ -17,9 +17,6 @@ import com.dandi.nyummy.mailbox.domain.DeleteMailUseCase
 import com.dandi.nyummy.mailbox.domain.GetMailsUseCase
 import com.dandi.nyummy.mailbox.domain.MailboxRepository
 import com.dandi.nyummy.mailbox.domain.RestoreMailUseCase
-import com.dandi.nyummy.mailbox.entity.InquiryCategory
-import com.dandi.nyummy.mailbox.entity.InquiryPageVO
-import com.dandi.nyummy.mailbox.entity.InquiryVO
 import com.dandi.nyummy.mailbox.entity.MailCategory
 import com.dandi.nyummy.mailbox.entity.MailPageVO
 import com.dandi.nyummy.mailbox.entity.MailVO
@@ -451,12 +448,6 @@ private class FakeMailboxRepository : MailboxRepository {
     override suspend fun restoreMail(mailId: Long) {
         restoredMailIds += mailId
     }
-
-    override suspend fun getInquiries(cursor: Long?, size: Int): InquiryPageVO = InquiryPageVO.empty
-    override suspend fun getInquiry(inquiryId: Long): InquiryVO? = null
-    override suspend fun sendInquiry(category: InquiryCategory, title: String, content: String) = Unit
-    override suspend fun deleteInquiry(inquiryId: Long) = Unit
-    override suspend fun restoreInquiry(inquiryId: Long) = Unit
 }
 
 private fun httpException(code: Int, errorCode: String? = null): HttpResponseException = HttpResponseException(
