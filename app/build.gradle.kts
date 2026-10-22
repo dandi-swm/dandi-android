@@ -20,13 +20,19 @@ val localProperties = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 
-fun signingValue(key: String): String? =
+fun localValue(key: String): String? =
     localProperties.getProperty(key)?.takeIf { it.isNotBlank() } ?: System.getenv(key)?.takeIf { it.isNotBlank() }
 
 val releaseSigning = listOf("RELEASE_STORE_FILE", "RELEASE_STORE_PASSWORD", "RELEASE_KEY_ALIAS", "RELEASE_KEY_PASSWORD")
-    .associateWith(::signingValue)
+    .associateWith(::localValue)
     .takeIf { values -> values.values.all { it != null } }
     ?.mapValues { it.value!! }
+
+// Meta 앱 이벤트(광고로 들어온 앱 설치 측정)의 앱 ID와 클라이언트 토큰. 서명 정보와 같은 방식으로 읽는다.
+//   META_APP_ID, META_CLIENT_TOKEN
+// 없으면 SDK 자동 초기화가 실패만 기록하고 넘어간다(앱은 정상 동작). release 빌드는 측정 없이 나가지 않게 막는다.
+val metaAppId = localValue("META_APP_ID")
+val metaClientToken = localValue("META_CLIENT_TOKEN")
 
 android {
     namespace = "com.dandi.nyummy"
@@ -40,6 +46,10 @@ android {
         versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Meta SDK 는 앱 ID 를 문자열 리소스로 받아야 한다. 매니페스트 값에 숫자를 바로 쓰면 정수로 읽혀 거부된다.
+        resValue("string", "facebook_app_id", metaAppId.orEmpty())
+        resValue("string", "facebook_client_token", metaClientToken.orEmpty())
     }
 
     signingConfigs {
@@ -80,6 +90,8 @@ android {
     buildFeatures {
         buildConfig = true
         compose = true
+        // Meta 앱 ID, 토큰 문자열 리소스(defaultConfig 의 resValue)
+        resValues = true
     }
 }
 
@@ -100,6 +112,8 @@ androidComponents {
         variant.manifestPlaceholders.put("firebaseCrashlyticsCollectionEnabled", isReleaseBuild.toString())
         // 사용 분석(Firebase Analytics, GA4)도 release 에서만 모은다. 개발 중 기록이 실사용자 퍼널에 섞이지 않게 한다.
         variant.manifestPlaceholders.put("firebaseAnalyticsCollectionEnabled", isReleaseBuild.toString())
+        // Meta 앱 이벤트(설치, 실행 자동 기록)와 광고 ID 수집도 release 에서만 켠다. 개발 중 설치가 광고 성과에 섞이지 않게 한다.
+        variant.manifestPlaceholders.put("metaAppEventsEnabled", isReleaseBuild.toString())
         // 평문 HTTP는 debug 에서만 허용한다(로컬 서버 등). 개발·운영 서버는 모두 HTTPS 라 그 밖의 빌드는 막는다.
         variant.manifestPlaceholders.put("usesCleartextTraffic", (variant.buildType == "debug").toString())
     }
@@ -110,6 +124,17 @@ androidComponents {
 tasks.configureEach {
     if (name.startsWith("uploadCrashlyticsMappingFile") && name != "uploadCrashlyticsMappingFileRelease") {
         enabled = false
+    }
+    // 키 없이 만든 release 는 광고로 들어온 설치를 셀 수 없으니 빌드를 멈춘다. 설정 단계가 아니라 release 빌드를 할 때만 확인해
+    // 키가 없는 PC 와 CI 의 debug 빌드는 그대로 된다.
+    if (name == "preReleaseBuild") {
+        val missingMetaKeys = mapOf("META_APP_ID" to metaAppId, "META_CLIENT_TOKEN" to metaClientToken)
+            .filterValues { it == null }.keys
+        doFirst {
+            if (missingMetaKeys.isNotEmpty()) {
+                throw GradleException("release 빌드에 Meta 앱 이벤트 키가 없습니다: ${missingMetaKeys.joinToString()} (local.properties 또는 환경변수)")
+            }
+        }
     }
 }
 
@@ -219,6 +244,8 @@ dependencies {
     implementation(libs.firebase.messaging)
     // 비정상 종료 보고. 수집은 release 에서만 켠다(androidComponents 의 manifestPlaceholders).
     implementation(libs.firebase.crashlytics)
+    // Meta 광고 설치 측정. 코드에서 부르지 않고 SDK 자동 초기화와 매니페스트 설정만 쓴다(로그인, 공유 모듈 없이 core 만).
+    implementation(libs.facebook.core)
 
     implementation(libs.hilt.android)
     debugImplementation(libs.leakcanary)

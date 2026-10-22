@@ -132,6 +132,13 @@ KAKAO_NATIVE_APP_KEY=
 keytool -exportcert -alias androiddebugkey -keystore ~/.android/debug.keystore -storepass android | openssl sha1 -binary | openssl base64
 ~~~
 
+[app/build.gradle.kts](app/build.gradle.kts)는 Meta 광고 설치 측정(facebook-core 앱 이벤트)의 앱 ID와 클라이언트 토큰을 문자열 리소스로 주입합니다. 앱 ID는 Meta 개발자 콘솔의 앱 설정 > 기본 설정, 클라이언트 토큰은 고급 설정 > 보안에 있습니다. 설치, 실행 자동 기록과 광고 ID 수집은 release 빌드에서만 켜지고, release 빌드는 두 값이 없으면 실패합니다. debug는 값이 없어도 빌드되고 SDK 초기화만 건너뜁니다.
+
+~~~properties
+META_APP_ID=
+META_CLIENT_TOKEN=
+~~~
+
 debug 빌드는 `API_BASE_URL_DEV`(개발 서버), release 빌드는 `API_BASE_URL_PROD`(운영 서버)를 씁니다. local.properties에 없으면 같은 이름의 환경변수를 읽습니다. debug는 예전 키 `API_BASE_URL`도 받지만, release가 개발 서버에 붙지 않도록 운영 값은 다른 키로 대신하지 않습니다. 저장소에는 실제 키·주소를 기록하지 않습니다. 값이 없으면 빌드 가능한 placeholder(`https://example.com/`)가 사용되므로, 네트워크 기능 검증 전에는 환경별 값을 주입해야 합니다.
 
 ## 빌드와 테스트

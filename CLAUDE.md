@@ -21,7 +21,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  
 ./gradlew test                  # 단위 테스트 (run-android-tests 스킬)
 ```
 
-코드를 수정한 턴은 반드시 빌드 검증 후 종료한다. API 키/BASE_URL은 `local.properties`(`API_KEY`, debug는 `API_BASE_URL_DEV`·release는 `API_BASE_URL_PROD`) → BuildConfig 주입(debug 전용 테스트 계정 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`, 카카오 네이티브 앱 키 `KAKAO_NATIVE_APP_KEY`, 구글 OAuth 웹 클라이언트 ID `GOOGLE_WEB_CLIENT_ID`도 동일 — 키가 없으면 해당 제공자 버튼은 "준비 중" 안내). 베이스 URL은 debug→개발 서버, release→운영 서버이며 값이 없으면 placeholder로 빌드만 된다(release는 운영 키만 읽는다). release 서명도 같은 방식으로 `RELEASE_STORE_FILE`/`RELEASE_STORE_PASSWORD`/`RELEASE_KEY_ALIAS`/`RELEASE_KEY_PASSWORD`(local.properties, 없으면 환경변수)에서 읽고, 하나라도 없으면 release는 서명하지 않는다(debug 키로 대신 서명하지 않음). 단위 테스트는 auth/history/intro/main/meal/onboarding 모듈에, 디자인 시스템 토큰 계약 테스트는 `common/presentation`의 단위 테스트에, 컴포넌트 UI 테스트는 androidTest에 있다.
+코드를 수정한 턴은 반드시 빌드 검증 후 종료한다. API 키/BASE_URL은 `local.properties`(`API_KEY`, debug는 `API_BASE_URL_DEV`·release는 `API_BASE_URL_PROD`) → BuildConfig 주입(debug 전용 테스트 계정 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`, 카카오 네이티브 앱 키 `KAKAO_NATIVE_APP_KEY`, 구글 OAuth 웹 클라이언트 ID `GOOGLE_WEB_CLIENT_ID`도 동일 — 키가 없으면 해당 제공자 버튼은 "준비 중" 안내). 베이스 URL은 debug→개발 서버, release→운영 서버이며 값이 없으면 placeholder로 빌드만 된다(release는 운영 키만 읽는다). release 서명도 같은 방식으로 `RELEASE_STORE_FILE`/`RELEASE_STORE_PASSWORD`/`RELEASE_KEY_ALIAS`/`RELEASE_KEY_PASSWORD`(local.properties, 없으면 환경변수)에서 읽고, 하나라도 없으면 release는 서명하지 않는다(debug 키로 대신 서명하지 않음). Meta 광고 설치 측정 키 `META_APP_ID`/`META_CLIENT_TOKEN`도 같은 곳에서 읽고, release는 없으면 빌드가 실패한다(자동 기록은 release만). 단위 테스트는 auth/history/intro/main/meal/onboarding 모듈에, 디자인 시스템 토큰 계약 테스트는 `common/presentation`의 단위 테스트에, 컴포넌트 UI 테스트는 androidTest에 있다.
 
 ## 불변 규칙 (위반 금지)
 
