@@ -1,6 +1,6 @@
-package com.dandi.nyummy.mailbox.domain
+package com.dandi.nyummy.settings.domain
 
-import com.dandi.nyummy.mailbox.entity.InquiryCategory
+import com.dandi.nyummy.settings.entity.InquiryCategory
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -10,7 +10,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 class InquiryUseCasesTest {
 
-    private val repository = FakeMailboxRepository()
+    private val repository = FakeInquiryRepository()
     private val messageHelper = RecordingMessageHelper()
     private val navigationHelper = RecordingNavigationHelper()
 
@@ -21,7 +21,7 @@ class InquiryUseCasesTest {
         assertTrue(result.isSuccess)
         assertTrue(repository.uploadedImagePaths.isEmpty())
         assertEquals(
-            listOf(FakeMailboxRepository.SentInquiry(InquiryCategory.QUESTION, "제목", "내용", null)),
+            listOf(FakeInquiryRepository.SentInquiry(InquiryCategory.QUESTION, "제목", "내용", null)),
             repository.sentInquiries,
         )
     }

@@ -12,6 +12,9 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
+import com.dandi.nyummy.settings.entity.InquiryCategory
+import com.dandi.nyummy.settings.entity.InquiryPageVO
+import com.dandi.nyummy.settings.entity.InquiryVO
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import com.dandi.nyummy.tti.TTIHelper
@@ -59,6 +62,39 @@ internal class FakeSettingsRepository : SettingsRepository {
         withdrawCount++
         withdrawError?.let { throw it }
     }
+}
+
+/** 문의 API를 흉내 내는 저장소. [imageError]가 있으면 문의 사진 준비와 업로드가 그 예외를 던진다. */
+internal class FakeInquiryRepository : InquiryRepository {
+    var preparedImagePath = "/cache/inquiry_image_1.jpg"
+    var uploadedImageKey = "inquiries/1/2026/10/22/a.jpg"
+    var imageError: Exception? = null
+    val preparedPhotoUris = mutableListOf<String>()
+    val uploadedImagePaths = mutableListOf<String>()
+    val sentInquiries = mutableListOf<SentInquiry>()
+
+    data class SentInquiry(val category: InquiryCategory, val title: String, val content: String, val imageKey: String?)
+
+    override suspend fun getInquiries(cursor: Long?, size: Int): InquiryPageVO = InquiryPageVO.empty
+    override suspend fun getInquiry(inquiryId: Long): InquiryVO? = null
+    override suspend fun prepareInquiryImage(photoUri: String): String {
+        preparedPhotoUris += photoUri
+        imageError?.let { throw it }
+        return preparedImagePath
+    }
+
+    override suspend fun uploadInquiryImage(imagePath: String): String {
+        uploadedImagePaths += imagePath
+        imageError?.let { throw it }
+        return uploadedImageKey
+    }
+
+    override suspend fun sendInquiry(category: InquiryCategory, title: String, content: String, imageKey: String?) {
+        sentInquiries += SentInquiry(category, title, content, imageKey)
+    }
+
+    override suspend fun deleteInquiry(inquiryId: Long) = Unit
+    override suspend fun restoreInquiry(inquiryId: Long) = Unit
 }
 
 internal class RecordingMessageHelper : MessageHelper {

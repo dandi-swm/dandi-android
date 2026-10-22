@@ -1,4 +1,4 @@
-package com.dandi.nyummy.mailbox.presentation.write
+package com.dandi.nyummy.settings.presentation.inquiry.write
 
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
@@ -9,15 +9,13 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
-import com.dandi.nyummy.mailbox.domain.AttachInquiryImageUseCase
-import com.dandi.nyummy.mailbox.domain.MailboxRepository
-import com.dandi.nyummy.mailbox.domain.SendInquiryUseCase
-import com.dandi.nyummy.mailbox.entity.InquiryCategory
-import com.dandi.nyummy.mailbox.entity.InquiryPageVO
-import com.dandi.nyummy.mailbox.entity.InquiryVO
-import com.dandi.nyummy.mailbox.entity.MailPageVO
-import com.dandi.nyummy.mailbox.entity.RewardVO
-import com.dandi.nyummy.mailbox.presentation.R
+import com.dandi.nyummy.settings.domain.AttachInquiryImageUseCase
+import com.dandi.nyummy.settings.domain.InquiryRepository
+import com.dandi.nyummy.settings.domain.SendInquiryUseCase
+import com.dandi.nyummy.settings.entity.InquiryCategory
+import com.dandi.nyummy.settings.entity.InquiryPageVO
+import com.dandi.nyummy.settings.entity.InquiryVO
+import com.dandi.nyummy.settings.presentation.R
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -98,7 +96,7 @@ class InquiryWriteViewModelTest {
 
         assertFalse(viewModel.uiState.value.isImageLoading)
         assertNull(viewModel.uiState.value.imagePath)
-        assertEquals(listOf(R.string.mailbox_write_image_load_failed), messageHelper.toastRes)
+        assertEquals(listOf(R.string.inquiry_write_image_load_failed), messageHelper.toastRes)
     }
 
     @Test
@@ -156,7 +154,7 @@ class InquiryWriteViewModelTest {
         assertTrue(repository.sentImageKeys.isEmpty())
         assertFalse(viewModel.uiState.value.isSending)
         assertEquals("/cache/inquiry_image_1.jpg", viewModel.uiState.value.imagePath)
-        assertEquals(listOf(R.string.mailbox_write_send_failed), messageHelper.snackBarRes)
+        assertEquals(listOf(R.string.inquiry_write_send_failed), messageHelper.snackBarRes)
         assertEquals(0, navigationHelper.backCount)
     }
 
@@ -181,7 +179,7 @@ class InquiryWriteViewModelTest {
 }
 
 /** 문의 사진 준비, 업로드, 보내기만 흉내 내는 저장소. 사진 준비를 멈추거나 실패시키려면 [prepare]를 바꾼다. */
-private class FakeInquiryRepository : MailboxRepository {
+private class FakeInquiryRepository : InquiryRepository {
     var prepare: suspend (String) -> String = { "/cache/inquiry_image_1.jpg" }
     var uploadError: Exception? = null
     val preparedPhotoUris = mutableListOf<String>()
@@ -207,11 +205,6 @@ private class FakeInquiryRepository : MailboxRepository {
     override suspend fun getInquiry(inquiryId: Long): InquiryVO? = null
     override suspend fun deleteInquiry(inquiryId: Long) = Unit
     override suspend fun restoreInquiry(inquiryId: Long) = Unit
-    override suspend fun getMails(cursor: Long?, size: Int): MailPageVO = MailPageVO.empty
-    override suspend fun claimMail(mailId: Long): RewardVO = RewardVO.empty
-    override suspend fun claimAllMails(): RewardVO = RewardVO.empty
-    override suspend fun deleteMail(mailId: Long) = Unit
-    override suspend fun restoreMail(mailId: Long) = Unit
 }
 
 private class RecordingMessageHelper : MessageHelper {

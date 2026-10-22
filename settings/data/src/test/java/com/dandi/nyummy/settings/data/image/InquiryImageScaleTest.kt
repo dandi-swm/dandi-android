@@ -1,4 +1,4 @@
-package com.dandi.nyummy.mailbox.data.image
+package com.dandi.nyummy.settings.data.image
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

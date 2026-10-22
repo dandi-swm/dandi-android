@@ -1,4 +1,4 @@
-package com.dandi.nyummy.mailbox.data.dto
+package com.dandi.nyummy.settings.data.dto
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
