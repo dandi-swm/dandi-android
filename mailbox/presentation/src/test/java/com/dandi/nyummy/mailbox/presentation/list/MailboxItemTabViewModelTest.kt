@@ -454,7 +454,9 @@ private class FakeMailboxRepository : MailboxRepository {
 
     override suspend fun getInquiries(cursor: Long?, size: Int): InquiryPageVO = InquiryPageVO.empty
     override suspend fun getInquiry(inquiryId: Long): InquiryVO? = null
-    override suspend fun sendInquiry(category: InquiryCategory, title: String, content: String) = Unit
+    override suspend fun prepareInquiryImage(photoUri: String): String = ""
+    override suspend fun uploadInquiryImage(imagePath: String): String = ""
+    override suspend fun sendInquiry(category: InquiryCategory, title: String, content: String, imageKey: String?) = Unit
     override suspend fun deleteInquiry(inquiryId: Long) = Unit
     override suspend fun restoreInquiry(inquiryId: Long) = Unit
 }
