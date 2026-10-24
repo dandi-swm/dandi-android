@@ -9,13 +9,14 @@ import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
-import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.home.domain.HomePreparePage
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * 온보딩 마무리. 지어 준 이름과 고른 평소 식사 시각으로 고양이를 만들고, 온보딩 완료를 기록한 뒤 홈을 루트로 이동한다.
+ * 온보딩 마무리. 지어 준 이름과 고른 평소 식사 시각으로 고양이를 만들고, 온보딩 완료를 기록한 뒤
+ * 냐미 방 준비 화면을 루트로 이동한다. 그 화면이 냐미 애니메이션을 받아 두고 홈을 연다.
  *
  * 서버는 이름과 식사 시각을 한 번에 받으므로 마지막 장면에서 한 번만 부른다. 완료 기록도 여기서 해야
  * 그 전에 앱이 꺼졌을 때 다음 실행에서 온보딩으로 돌아온다.
@@ -43,7 +44,7 @@ class FinishOnboardingUseCase @Inject constructor(
         // 기기 저장이 실패해도 홈으로 간다. 고양이는 이미 만들었다. 식사 시각은 고양이와 함께 서버에 저장했다.
         runIgnoringFailure { repository.markOnboardingComplete() }
         analyticsHelper.logEvent(AnalyticsEvent.OnboardingComplete)
-        navigationHelper.navigateToAsRoot(HomePage)
+        navigationHelper.navigateToAsRoot(HomePreparePage)
         return Result.success(Unit)
     }
 

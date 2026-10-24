@@ -1,7 +1,7 @@
 package com.dandi.nyummy.auth.domain
 
 import com.dandi.nyummy.common.domain.navigation.Page
-import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.home.domain.HomePreparePage
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 
 /**
@@ -9,13 +9,14 @@ import com.dandi.nyummy.onboarding.domain.OnboardingPage
  *
  * 서버는 앱 라우트 path(`"/onboarding"`)나 앱 링크 URL(`"https://link.nyummy.co.kr/onboarding"`)을 줄 수 있어
  * scheme·host·query 를 떼고 path 만 비교한다. 온보딩이 아니거나 비어 있으면 홈으로 보낸다.
+ * 홈은 냐미 방 준비 화면([HomePreparePage])을 거쳐 들어간다. 그 화면이 냐미 애니메이션을 받아 두고 홈을 연다.
  */
 object PostLoginDestination {
 
     fun from(redirectUrl: String): Page =
         when (redirectUrl.toPath()) {
             OnboardingPage.PATH -> OnboardingPage
-            else -> HomePage
+            else -> HomePreparePage
         }
 
     private fun String.toPath(): String {
