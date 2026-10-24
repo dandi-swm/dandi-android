@@ -59,6 +59,7 @@ dependencies {
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
     implementation(project(":intro:domain"))
     implementation(project(":intro:entity"))
+    implementation(project(":cat:domain"))
     implementation(project(":common:presentation"))
 
     implementation(libs.androidx.lifecycle.runtime.compose)
