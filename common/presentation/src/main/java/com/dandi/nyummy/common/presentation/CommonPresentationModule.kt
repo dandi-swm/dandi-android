@@ -2,9 +2,11 @@ package com.dandi.nyummy.common.presentation
 
 import android.content.Context
 import com.dandi.nyummy.common.domain.coroutine.TtiDispatcher
+import com.dandi.nyummy.common.domain.helper.ImagePrefetchHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.presentation.helper.ImagePrefetchHelperImpl
 import com.dandi.nyummy.common.presentation.helper.MessageHelperImpl
 import com.dandi.nyummy.common.presentation.helper.NavigationHelperImpl
 import com.dandi.nyummy.common.presentation.helper.ResourceHelperImpl
@@ -41,6 +43,11 @@ object CommonPresentationModule {
     @Singleton
     fun provideResourceHelper(@ApplicationContext context: Context): ResourceHelper =
         ResourceHelperImpl(context)
+
+    @Provides
+    @Singleton
+    fun provideImagePrefetchHelper(@ApplicationContext context: Context): ImagePrefetchHelper =
+        ImagePrefetchHelperImpl(context)
 
     @Provides
     @Singleton
