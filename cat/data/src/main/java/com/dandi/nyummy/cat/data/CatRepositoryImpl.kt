@@ -6,7 +6,6 @@ import com.dandi.nyummy.common.data.token.TokenProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 미리 받은 애니메이션은 조회 한 번만 넘겨준다. 그 뒤 조회는 매번 새로 받아, 체형이 바뀌거나 다른 계정으로 로그인해도 지난 값을 쓰지 않는다.
@@ -28,29 +27,18 @@ class CatRepositoryImpl(
     override suspend fun getAnimations(): CatAnimationSetVO {
         val pending = prefetched ?: return fetch()
         prefetched = null
-        return try {
-            pending.await() ?: fetch()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // 미리 받기가 실패했으면 지금 다시 받는다. 다시 받다가 실패하면 그 실패를 부른 쪽이 처리한다.
-            fetch()
-        }
+        // 로그인 전이라 받지 않았으면 지금 받는다. 미리 받기가 실패했으면 다시 받지 않고 그 실패를 부른 쪽에 넘긴다.
+        // 느린 망에서 같은 시간을 한 번 더 기다리지 않게 한다. 홈은 기본 냐미를 보이고 다음에 화면이 보일 때 다시 받는다.
+        return pending.await() ?: fetch()
     }
 
     override suspend fun prefetchAnimations(): CatAnimationSetVO? {
-        // 받는 중인 요청만 같이 기다린다. 이미 끝난 미리 받기(로그인 전에 인트로가 부른 것 등)는 새로 받는다.
+        // 받는 중인 요청만 같이 기다린다. 이미 끝난 미리 받기(로그인 전에 불린 것 등)는 새로 받는다.
         val pending = prefetched?.takeIf { it.isActive } ?: ioScope.async {
             // 토큰 저장소는 첫 읽기 때 디스크를 막고 읽으므로 IO 스코프 안에서 확인한다.
             if (tokenProvider.refreshToken.isNullOrBlank()) null else fetch()
         }.also { prefetched = it }
-        return try {
-            pending.await()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            null
-        }
+        return pending.await()
     }
 
     private suspend fun fetch(): CatAnimationSetVO = dataSource.getAnimations().toVO()

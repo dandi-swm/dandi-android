@@ -15,7 +15,8 @@ import javax.inject.Inject
  * 로그인 직후 냐미 방 준비 ViewModel. 로그인과 온보딩 완료 뒤에 거친다.
  *
  * 생성 즉시 냐미 애니메이션과 앱이 재생할 시트 그림을 받고, 끝나면 진행바를 채운 뒤 홈을 루트로 연다.
- * 받지 못해도 홈으로 간다(홈이 다시 받는다). 네트워크가 느려도 화면에 갇히지 않게 [PREFETCH_TIMEOUT_MS]까지만 기다린다.
+ * 받지 못해도 홈으로 간다. 받는 중이면 홈이 그 요청을 이어받고, 실패했으면 홈은 기본 냐미를 보이다가 다음에 화면이 보일 때 다시 받는다.
+ * 네트워크가 느려도 화면에 갇히지 않게 [PREFETCH_TIMEOUT_MS]까지만 기다린다.
  */
 @HiltViewModel
 class HomePrepareViewModel @Inject constructor(
