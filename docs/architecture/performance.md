@@ -77,7 +77,7 @@ Logcat 출력 예(디버그 빌드, `[TTI]` 태그): `Shot TTI Logging : intro#1
 [jank/](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/jank/) — AndroidX JankStats 기반.
 
 - **페이지 단위는 자동**: AppNavHost가 라우트 렌더마다 `JankPageEffect(path)` 적용 — 새 화면은 등록만 하면 계측이 따라온다.
-- 스크롤 리스트에는 `JankScrollWatcher(scrollableState)`를 화면에서 직접 추가 (스크롤 종료 시 구간 통계 flush). 파라미터는 `ScrollableState`라 LazyList(검색 `ContentsList`)·LazyGrid(즐겨찾기 `ContentsGrid`) 양쪽에 동일하게 쓴다.
+- 스크롤 리스트에는 `JankScrollWatcher(scrollableState)`를 화면에서 직접 추가 (스크롤 종료 시 구간 통계 flush). 파라미터는 `ScrollableState`라 LazyList·LazyGrid 양쪽에 동일하게 쓴다. 지금 쓰는 곳: 우편함 목록(`MailboxPage`), 문의 목록(`InquiryListPage`), 마이룸 보관함(`RoomInventorySheet`).
 - [JankReporter.kt](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/jank/JankReporter.kt) 발사 조건: PAGE_EXIT / SCROLL_END / FROZEN_FRAME(700ms+ 즉시) / THRESHOLD_EXCEEDED(120프레임 이상 표본에서 jank 비율 5%+).
 - 리포트 채널: DebugJankReport(Logcat `tag:"JankStats"`) ↔ RemoteJankReport(Firebase) — [JankModule](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/jank/JankModule.kt)에서 `@ReleaseBuild`로 분기한다. release 빌드에서만 RemoteJankReport다.
 
@@ -90,7 +90,7 @@ Logcat 출력 예(디버그 빌드, `[TTI]` 태그): `Shot TTI Logging : intro#1
 ./gradlew :baselineprofile:connectedBenchmarkAndroidTest   # 콜드 스타트 측정
 ```
 
-- 레거시 시나리오 설명: 콜드 스타트 → 검색("kakao") → 리스트 fling 3회 → 상세(전체화면) 진입. UI 요소는 **testTag** (`search_text_field`, `search_item`)로 찾는다. 현재 [BaselineProfileGenerator.kt](../../baselineprofile/src/main/java/com/dandi/nyummy/baselineprofile/BaselineProfileGenerator.kt)는 콜드 스타트만 수집한다.
-- 생성/머지된 프로파일 산출물은 `app/src/release/generated/baselineProfiles/baseline-prof.txt` 에 위치한다. `androidx.baselineprofile` 플러그인이 `:app`·`:baselineprofile` 양쪽에 적용되어 빌드 시 이 파일을 머지/패키징한다.
-- **새 핵심 플로우를 추가하면 이 시나리오에 반영하고 프로파일을 재생성**한다. 화면의 testTag를 지우면 시나리오가 깨진다.
+- 시나리오: [BaselineProfileGenerator.kt](../../baselineprofile/src/main/java/com/dandi/nyummy/baselineprofile/BaselineProfileGenerator.kt)는 지금 콜드 스타트만 수집한다.
+- 산출물은 `app/src/release/generated/baselineProfiles/baseline-prof.txt`에 생성된다. `androidx.baselineprofile` 플러그인이 `:app`·`:baselineprofile` 양쪽에 적용되어 빌드 시 이 파일을 머지/패키징한다. **아직 커밋된 프로파일은 없다** — 재수집해서 커밋해야 release에 반영된다.
+- **새 핵심 플로우를 시나리오에 추가하면 프로파일을 재생성**한다. 시나리오에서 UI 요소는 testTag로 찾으므로, 시나리오가 쓰는 testTag를 지우면 시나리오가 깨진다.
 - app의 `benchmark` buildType은 release와 동일 최적화 + profileable — 수집 전용.

@@ -41,35 +41,43 @@ inline fun <reified ErrorType> HttpResponseException.handlingErrorOnUseCase(): E
 
 ## UseCase 처리 패턴
 
-> 아래 `Intro` 계열 이름은 에러 처리 흐름을 보여주는 레거시 예시 식별자이며, 현재 저장소의 모듈 경로를 뜻하지 않습니다.
+골든 예제: [DeleteMealUseCase.kt](../../history/domain/src/main/java/com/dandi/nyummy/history/domain/DeleteMealUseCase.kt) + [HistoryErrorType.kt](../../history/domain/src/main/java/com/dandi/nyummy/history/domain/HistoryErrorType.kt)
 
 ```kotlin
 // BaseUseCase 생성자는 4개: resourceHelper, messageHelper, navigationHelper, ttiHelper.
 // 모두 super로 그대로 넘긴다.
-class GetIntroUseCase @Inject constructor(
+class DeleteMealUseCase @Inject constructor(
+    private val repository: HistoryRepository,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
 ) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
 
-    operator fun invoke(): Result<IntroVO> = try {
-        // 현재 intro의 repository 호출은 스텁(주석) 상태이므로 catch는 예시용이다.
-        // val result = introRepository.getIntro()
-        Result.success(...)
+    suspend operator fun invoke(mealId: Long): Result<Unit> = try {
+        Result.success(repository.deleteMeal(mealId))
     } catch (e: HttpResponseException) {
-        handleHttpError<IntroErrorType>(
-            e,
-            onDomainError = { errorType ->                                        // ① 서버 code
-                when (errorType) {
-                    IntroErrorType.REQUIRED_FORCE_UPDATE -> messageHelper.showOneButtonDialog(
-                        cantIgnore = true, descText = errorType.errorMsg, onClickButton = { ... })
-                }
-            },
-            // ② 맞는 code가 없으면 BaseUseCase가 공통 오류(401, 404, 5xx)로 안내한다.
-            onUnknownError = { messageHelper.showSnackBar(messageText = "...") }, // ③ 화면 기본 안내
-        )
+        if (e.handlingErrorOnUseCase<HistoryErrorType>() == HistoryErrorType.MEAL_NOT_FOUND) {
+            Result.success(Unit)                                                  // 이미 지워졌으면 성공으로 본다
+        } else {
+            handleHttpError<HistoryErrorType>(
+                e,
+                onDomainError = { showError(it.errorMsg) },                       // ① 서버 code
+                // ② 맞는 code가 없으면 BaseUseCase가 공통 오류(401, 404, 5xx)로 안내한다.
+                onUnknownError = { showError(DELETE_ERROR_MESSAGE) },             // ③ 화면 기본 안내
+            )
+            Result.failure(e)
+        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        // 네트워크 끊김 등 HTTP 응답 전 실패도 앱이 죽지 않게 실패로 돌려준다.
+        showError(DELETE_ERROR_MESSAGE)
         Result.failure(e)
+    }
+
+    private fun showError(message: String) {
+        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = message)
     }
 }
 ```
@@ -90,4 +98,4 @@ class GetIntroUseCase @Inject constructor(
 
 ## 사용자 노출 (MessageHelper)
 
-domain에서 직접 사용 가능한 인터페이스 ([MessageHelper.kt](../../common/domain/src/main/java/com/dandi/nyummy/common/domain/helper/MessageHelper.kt)): `showToast / showSnackBar(iconType, messageText|messageRes, CTA) / showOneButtonDialog(cantIgnore=true면 닫기 불가) / showTwoButtonDialog`. 구현은 presentation의 MessageHelperImpl — RootComposable의 SnackbarHost/다이얼로그가 `effect: Flow<MessageEffect>`를 구독한다.
+domain에서 직접 사용 가능한 인터페이스 ([MessageHelper.kt](../../common/domain/src/main/java/com/dandi/nyummy/common/domain/helper/MessageHelper.kt)): `showToast / showSnackBar(iconType, messageText|messageRes, CTA) / showOneButtonDialog(cantIgnore=true면 닫기 불가) / showTwoButtonDialog`. 구현은 presentation의 MessageHelperImpl — RootComposable의 SnackbarHost/ToastHost(`NyummyToastHostState`)/다이얼로그가 `effect: Flow<MessageEffect>`를 구독한다.

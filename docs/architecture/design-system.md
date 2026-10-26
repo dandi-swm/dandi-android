@@ -74,12 +74,11 @@ Modifier
 
 ## 제품 상태와 디자인 variant의 경계
 
-- 식사 분석 API 상태는 `ANALYSIS`, `COMPLETED`, `FAILED` 세 값이다.
-- `Retrying`은 재분석 요청/폴링 중인 UI 파생 상태이지 새로운 서버 enum이 아니다.
+- 식사 분석 서버 상태는 `WAITING`, `ANALYZING`, `COMPLETED`, `FAILED` 네 값이고, 그 밖의 값은 앱에서 `UNKNOWN`으로 받는다([MealAnalysisStatusParser.kt](../../history/data/src/main/java/com/dandi/nyummy/history/data/util/MealAnalysisStatusParser.kt), [MealAnalysisStatus.kt](../../history/entity/src/main/java/com/dandi/nyummy/history/entity/MealAnalysisStatus.kt)).
+- 재분석 중 표시는 UI 파생 상태(`HistoryUIState.isReanalyzing`)이지 새로운 서버 enum이 아니다.
 - 히스토리는 분석 중/실패 식사를 목록에서 제거하지 않는다.
-- 캘린더의 영양 평가는 `POSITIVE`, `NEGATIVE`, `UNRECORDED`를 UI variant `Positive`, `OutOfRange`, `NoRecord`에 매핑한다. `None`은 marker를 숨기는 표현 상태다.
-- 캘린더와 목록은 실제 사진 대신 `foodIconIds`로 CDN 이미지(`https://cdn.nyummy.co.kr/icons/{iconId}.png`)를 내려받아 표시한다. 아이콘은 분석이 끝난 식사에만 쓴다(서버는 분석 전이거나 실패한 식사에도 기본 iconId 1을 준다). iconId가 비어 있거나 이미지를 받지 못하면 아무것도 그리지 않는다(`NyummyFoodIcon`).
-- 홈 Bottom Sheet는 Bottom Navigation을 가리지 않고 그 위에서 열린다.
+- 캘린더는 영양 평가를 그리지 않고, 그날 기록이 있으면 기록 점(`colors.data.recordMarker`)만 찍는다(`HistoryCalendar`의 `hasRecord`).
+- 캘린더와 목록은 실제 사진 대신 `foodIconIds`로 CDN 이미지(`NyummyCdn.foodIconUrl` → `https://cdn.nyummy.co.kr/icons/{iconId}.png`)를 내려받아 표시한다. 아이콘은 분석이 끝난 식사에만 쓴다(서버는 분석 전이거나 실패한 식사에도 기본 iconId 1을 준다). iconId가 비어 있거나 이미지를 받지 못하면 기본은 아무것도 그리지 않고, 자리를 채워야 하는 곳은 `NyummyFoodIcon`의 `placeholder` 슬롯을 넘긴다.
 
 ## 변경 절차
 

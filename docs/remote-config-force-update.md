@@ -82,7 +82,8 @@ qa 환경은 따로 두지 않기로 했다. 앱은 빌드 타입이 release인�
 | 키 | `RemoteConfigKey` | 타입 | 기본값 | release | debug |
 |---|---|---|---|---|---|
 | `android_mail_item_tab_enabled` | `MailItemTabEnabled` | Boolean | false | false(우편함 아이템 탭 숨김) | `_debug`: true |
-| `android_my_room_enabled` | `MyRoomEnabled` | Boolean | false | false(홈 마이룸 버튼 동작 안 함) | `_debug`: true |
+| `android_my_room_enabled` | `MyRoomEnabled` | Boolean | false | false(하단 내비 마이룸 탭을 누르면 "준비 중" 안내) | `_debug`: true |
+| `android_shop_enabled` | `ShopEnabled` | Boolean | false | false(하단 내비 상점 탭을 누르면 "준비 중" 안내) | `_debug`: 미정 |
 
 키가 없거나 값을 받지 못하면 꺼진 것으로 본다.
 
@@ -101,7 +102,7 @@ qa 환경은 따로 두지 않기로 했다. 앱은 빌드 타입이 release인�
 
 - [ ] 콘솔 초안이 여전히 있는지 확인
 - [ ] 기존 키 5개의 이름과 값 유지 여부 확인
-- [ ] 기능 플래그 운영 키(`android_mail_item_tab_enabled`, `android_my_room_enabled`)가 false인지 확인
+- [ ] 기능 플래그 운영 키(`android_mail_item_tab_enabled`, `android_my_room_enabled`, `android_shop_enabled`)가 false인지 확인
 - [ ] release 최소 versionCode가 0인지 확인
 - [ ] 업데이트 링크와 문구 확인
 - [ ] 사용자 검토 및 승인 후 변경사항 게시

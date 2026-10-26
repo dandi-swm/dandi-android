@@ -6,7 +6,7 @@
 
 | 쪽 | 내용 |
 |---|---|
-| 앱 | `app/src/main/AndroidManifest.xml` 의 `autoVerify` intent-filter (`https://link.nyummy.co.kr`). path 는 `AppRouteRegistry.kt` 에 등록된 라우트와 동일 — 화면을 등록하면 링크가 함께 생긴다. 미등록 path 는 인트로로 폴백. |
+| 앱 | `app/src/main/AndroidManifest.xml` 의 `autoVerify` intent-filter (`https://link.nyummy.co.kr`). path 는 `AppRouteRegistry.kt` 에 등록된 라우트와 동일 — 화면을 등록하면 링크가 함께 생긴다. 서버 푸시처럼 경로가 다른 외부 링크는 `appLinkAliases` 별칭으로 앱 라우트에 잇는다. 미등록 path 는 콜드 스타트면 인트로로 폴백하고, 앱이 이미 켜져 있으면(웜) 무시한다. |
 | 도메인 | `link.nyummy.co.kr` → CloudFront → S3 (서울). 가비아 DNS: ACM 검증 CNAME + `link` CNAME → CloudFront. |
 | 파일 | `.well-known/assetlinks.json` ([assetlinks.json](assetlinks.json)) — 패키지명 + 서명 키 지문. `index.html` ([index.html](index.html)) — 앱으로 못 열린 경우 보이는 폴백 페이지. |
 
@@ -17,7 +17,11 @@
 | 링크 | 화면 |
 |---|---|
 | `https://link.nyummy.co.kr/meal/record` | 식사 기록 |
-| `https://link.nyummy.co.kr/home` · `/history` · `/collection` · `/shop` | 각 탭 |
+| `https://link.nyummy.co.kr/home` · `/history` · `/shop` | 각 탭 |
+| `https://link.nyummy.co.kr/room` | 마이룸 |
+| `https://link.nyummy.co.kr/mailbox/inquiry/{inquiryId}` | 문의 상세 (동적 라우트) |
+| `https://link.nyummy.co.kr/meals/{mealId}` | 기록 탭에서 그 식사 상세 (분석 결과 푸시 별칭) |
+| `https://link.nyummy.co.kr/inquiries/{inquiryId}` | 문의 상세 (문의 답장 푸시 별칭) |
 
 ## S3 / CloudFront 설정
 
