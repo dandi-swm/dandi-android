@@ -62,6 +62,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -138,6 +139,9 @@ internal fun MealCeremony(
     var giftDelivered by remember { mutableStateOf(stage == MealCeremonyStage.BoxSend) }
     var boxCenter by remember { mutableStateOf(Offset.Zero) }
     var mailCenter by remember { mutableStateOf(Offset.Zero) }
+    // 상자와 우편 아이콘 자리는 창 기준으로 잰다. 이 화면이 창 맨 위에서 시작하지 않으면(시스템 바를 피해 놓이는 등)
+    // 그만큼 빼야 이 화면 안에 그리는 날아가는 상자가 우편 아이콘에 닿는다.
+    var originInRoot by remember { mutableStateOf(Offset.Zero) }
 
     val serve = remember { Animatable(if (reducedMotion || stage != MealCeremonyStage.Serving) 1f else 0f) }
     val flash = remember { Animatable(0f) }
@@ -197,7 +201,8 @@ internal fun MealCeremony(
             // 빛줄기, 상자 무대의 빛, 색종이처럼 자기 영역보다 크게 그리는 효과가 상태 바와 내비게이션 바 위로 새지 않게 자른다.
             .clipToBounds()
             .background(NyummyTheme.colors.bg.surface)
-            .graphicsLayer { translationX = shake.value * shakePx },
+            .graphicsLayer { translationX = shake.value * shakePx }
+            .onGloballyPositioned { originInRoot = it.positionInRoot() },
     ) {
         when (stage) {
             MealCeremonyStage.Serving, MealCeremonyStage.Waiting, MealCeremonyStage.Reaction -> {
@@ -281,8 +286,8 @@ internal fun MealCeremony(
         if (sendsRewardBox && stage == MealCeremonyStage.BoxSend && !giftDelivered && !reducedMotion) {
             GiftFlight(
                 grade = rewardBoxGrade,
-                from = boxCenter,
-                to = mailCenter,
+                from = boxCenter - originInRoot,
+                to = mailCenter - originInRoot,
                 onArrived = {
                     giftDelivered = true
                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)

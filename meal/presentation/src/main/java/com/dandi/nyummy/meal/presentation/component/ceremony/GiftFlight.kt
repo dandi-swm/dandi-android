@@ -29,7 +29,7 @@ import kotlin.math.roundToInt
 /**
  * 상자가 무대 가운데([from])에서 오른쪽 위 우편 아이콘([to])으로 포물선을 그리며 날아갑니다.
  * 지나간 길에는 금빛 점선과 반짝이가 남고, 상자는 점점 작아지며 살짝 돕니다.
- * 좌표는 화면 기준 px 이고, 닿는 순간 [onArrived] 를 한 번 부릅니다.
+ * 좌표는 이 컴포저블을 놓은 자리 기준 px 이고, 닿는 순간 [onArrived] 를 한 번 부릅니다.
  */
 @Composable
 internal fun GiftFlight(
