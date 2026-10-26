@@ -1,17 +1,32 @@
 # 냐미(Nyummy) Android
 
-단디 팀의 AI 식사 기록 앱 냐미(Nyummy)의 멀티모듈 클린아키텍처 Android 프로젝트. feature 모듈은 `intro`/`auth`/`onboarding`/`home`/`meal`/`history`/`collection`/`shop` 8세트와 앱 셸 `main`이 있다(총 43모듈). 새 feature는 4모듈 구조와 `docs/architecture` 규칙을 따르고, 가장 완성도 높은 `auth`/`history`(실 API 연동)와 `common` 패턴을 우선 참고한다.
+단디 팀의 AI 식사 기록 앱 냐미(Nyummy)의 멀티모듈 클린아키텍처 Android 프로젝트. feature 모듈은 `intro`/`auth`/`onboarding`/`home`/`meal`/`history`/`mailbox`/`room`/`settings`/`legal`/`collection`/`shop`/`quest`/`achievement` 14세트, 여러 feature가 함께 쓰는 고양이 도메인 `cat`(presentation 없이 entity·domain·data 3모듈), 공통 `common`, 앱 셸 `main`이 있다(`app`/`tti`/`baselineprofile` 포함 총 70모듈). 새 feature는 4모듈 구조와 `docs/architecture` 규칙을 따르고, 가장 완성도 높은 `auth`/`history`(실 API 연동)와 `common` 패턴을 우선 참고한다.
 
-## 현재 구현 현황 (2026-09-09)
+## 현재 구현 현황 (2026-10-26)
 
-- 등록 라우트 11개: `""`(인트로 루트) `/login` `/login/email` `/signup` `/signup/social` `/onboarding` `/home` `/meal/record` `/history` `/collection` `/shop` — `AppRouteRegistry.kt` 기준.
-- 바텀 네비 4탭(홈·기록·컬렉션·상점) + 중앙 카메라 버튼(식사 기록 진입) — `NyummyNavigation.kt`/`RootComposable.kt`.
-- App Links: `https://link.nyummy.co.kr/<라우트 path>` (autoVerify, S3+CloudFront 서빙, 검증 완료). `assetlinks.json`·폴백 페이지·지문 추가/검증 절차는 `docs/app-links/`.
-- ApiService 3개: `AuthApiService`(login/oauth-login/signup/email-verification/confirm/refresh 6개), `HistoryApiService`(monthly/daily/상세/이름수정/삭제 5개), `OnboardingApiService`(고양이 생성 `POST /api/v1/cats` — 이름과 평소 식사 시각을 한 번에 보냄, 성공은 본문 없는 201).
+- 등록 라우트 20개(`AppRouteRegistry.kt` 기준): `""`(인트로 루트) `/onboarding` `/login` `/login/email` `/login/password-reset` `/signup` `/signup/social` `/home` `/meal/record` `/history` `/shop` `/mailbox` `/room` `/settings` `/settings/meal-time` `/settings/inquiry` `/mailbox/inquiry/write` `/mailbox/inquiry/{inquiryId}` `/legal/terms` `/legal/privacy`. 컬렉션·퀘스트·업적은 Page만 있고 등록하지 않았다. 문의는 설정으로 옮겼지만 작성·상세 경로는 `/mailbox/inquiry/...` 그대로다.
+- 바텀 네비 4탭(홈·마이룸·기록·상점) + 기록 탭 앞 가운데 카메라 버튼(식사 기록 진입) — `NyummyNavigation.kt`의 `NyummyMainTabs`/`RootComposable.kt`. 마이룸·상점은 기능 플래그가 꺼져 있으면 탭을 눌렀을 때 "준비 중"이라고 알린다.
+- 기능 플래그(Firebase Remote Config, `common/domain/.../remoteconfig/RemoteConfigKey.kt`): `android_mail_item_tab_enabled`(우편함 아이템 탭 + 식사 기록 뒤 상자를 우편함으로 보내는 연출), `android_my_room_enabled`, `android_shop_enabled`. 기본값은 모두 false이고 debug 빌드는 키 뒤에 `_debug`를 붙여 읽는다. 강제 업데이트 키는 `docs/remote-config-force-update.md`.
+- App Links: `https://link.nyummy.co.kr/<라우트 path>` (autoVerify, S3+CloudFront 서빙, 검증 완료). `assetlinks.json`·폴백 페이지·지문 추가/검증 절차는 `docs/app-links/`. 푸시는 FCM(`app/.../push/`)으로 받고, 디바이스 토큰을 서버에 등록하며, 알림을 탭하면 서버가 준 App Link로 들어간다.
+- API 계약은 dev 서버 Swagger(`https://ddanddi.nyummy.co.kr/swagger-ui/index.html`)가 기준이다. ApiService 13개:
+  - `AuthApiService`: 로그인, 소셜 로그인, 회원가입, 이메일 인증 발송·확인, 비밀번호 재설정, 토큰 재발급, 로그아웃
+  - `OnboardingApiService`: 고양이 생성 `POST /api/v1/cats`(이름과 평소 식사 시각을 한 번에 보냄, 성공은 본문 없는 201)
+  - `CatApiService`: 냐미 상태별 애니메이션 / `HomeApiService`: 홈 요약
+  - `MealRecordApiService`: 식사 생성 / `HistoryApiService`: 월간·일별·상세 조회, 이름 수정, 삭제, 영양 분석 재시도·평가
+  - `MailboxApiService`: 우편 목록, 하나 받기, 모두 받기, 받은 우편 삭제·복구
+  - `RoomApiService`: 마이룸 조회, 보유 아이템 목록, 꾸민 방 저장
+  - `SettingsApiService`: 내 프로필, 끼니 시각, 알림 수신 설정 조회·변경, 회원 탈퇴 / `InquiryApiService`: 문의 목록·상세·작성·삭제·복구
+  - `common:data`: `ImageUploadApiService`(presigned URL 발급), `ImageStorageApiService`(S3 직접 PUT, `@NoAuthApi`), `DeviceTokenApiService`(푸시 토큰 등록)
+- Swagger에는 있지만 앱이 아직 쓰지 않는 API: `GET /api/v1/cats`, `GET /api/v1/meals/{mealId}/analysis`, `PATCH /api/v1/users/me/password`, `PUT /api/v1/inquiries/{inquiryId}`, `DELETE /api/v1/rooms/owned-items/{ownedRoomItemId}`, `POST /api/v1/rooms/owned-items/{ownedRoomItemId}/restore`. 상점·컬렉션·퀘스트·업적 API는 아직 Swagger에 없다.
 - 로그인 직후 이동은 응답 `redirectUrl`의 path로 결정(`PostLoginDestination`: `/onboarding`이면 온보딩, 그 외 홈). 회원가입 직후는 항상 온보딩. 온보딩은 미연시형 냥줍 대본(`OnboardingScript`) → 이름 짓기(앱에서 검사만) → 평소 식사 시각 → 고양이 생성(`FinishOnboardingUseCase`) → 홈.
-- 빈 스캐폴드: `main:entity` `main:data` `home:data` `meal:data` + `collection`/`shop`의 entity·data.
-- 홈은 100% 목업(`HomeMockData`), 컬렉션·상점은 "준비 중" 플레이스홀더 화면. 식사 기록은 촬영(또는 갤러리 첨부 — EXIF 촬영일이 오늘(KST)인 사진만, ImportGalleryMealPhotoUseCase)→확인→제출(SubmitMealUseCase)→픽셀 세리머니→완료 화면까지 연동됨.
-- 소셜 로그인: 카카오·구글 동작(카카오 SDK / Credential Manager로 OIDC ID 토큰 → `SocialLoginUseCase` 서버 검증 → 기존 회원 redirectUrl 분기 / 신규 회원 `/signup/social` 프로필 입력). 제공자 추가는 `auth/presentation/.../social/SocialLoginClient` 구현 후 `socialLoginClientOf`에 등록. 네이버 로그인은 보류(로그인 화면에 버튼 없음, `SocialLoginType.NAVER`만 남김), 비밀번호 찾기 미구현(버튼 UI만). 로그인 화면은 원형 버튼 3개(카카오 축약형·구글·이메일). 테스트 계정 로그인 버튼은 debug 빌드에서 `local.properties`의 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`가 있을 때만 노출 — 자격 증명을 소스에 하드코딩 금지(공개 저장소).
+- 홈: 꾸민 방(`HomeRoomMapper`) 위에 냐미가 상태별 애니메이션으로 살고, 위에 지갑·우편·설정, 연속 기록 배너, 눈 버튼(화면 요소를 숨기고 방만 보기)이 뜬다. 화면이 보일 때마다 홈 요약을 다시 읽는다.
+- 식사 기록: 촬영(또는 갤러리 첨부 — EXIF 촬영일이 기기 타임존 기준 오늘인 사진만, `ImportGalleryMealPhotoUseCase`) → 확인 → 제출(`SubmitMealUseCase`) → 연출(`MealCeremonyStage`: 띠욧 컷신 → 맛 리액션 → 먹었어요 → 보상 상자가 우편함으로) → 홈. 건너뛰기는 띠욧 컷신만 건너뛴다. 앱이 종료됐다 돌아와도 찍은 사진과 연출 단계를 되살리고(`MealRecordSnapshot`), 업로드 중 종료됐으면 다시 보내지 않고 확인하라고 안내한다. 접수에 실패하면 안내 스낵바와 함께 곧장 홈으로 간다.
+- 기록: 월간 캘린더 → 일별 목록 → 식사 상세(이름 수정, 삭제, 영양 분석 재시도·평가).
+- 우편함: 받은 보상·코인·아이템 목록, 하나/모두 받기, 받은 우편만 밀어서 삭제(되돌리기로 복구), 보상 상자 열기 연출(`RewardBoxOpening`).
+- 마이룸: 보관함 시트에서 아이템을 방에 놓고, 끌어 옮기고, 두 손가락으로 크기를 바꾸고, 한 단계씩 되돌린 뒤 저장하면 홈으로 간다.
+- 설정: 알림(앱 알림 = 기기 알림 권한, 서비스·마케팅 알림 = 서버 값, 식사 시간), 약관, 로그아웃, 회원 탈퇴, 문의하기(목록·작성·상세·삭제·복구). 약관(`legal`)은 GitHub Pages 정책 페이지를 WebView로 연다.
+- "준비 중" 플레이스홀더 화면: 컬렉션·상점·퀘스트·업적. 이 4개 feature의 entity·data는 비어 있고 domain에는 Page만 있다. 그 밖의 빈 모듈은 `main:entity` `main:data` `legal:data` `intro:entity` `onboarding:entity`.
+- 소셜 로그인: 카카오·구글 동작(카카오 SDK / Credential Manager로 OIDC ID 토큰 → `SocialLoginUseCase` 서버 검증 → 기존 회원 redirectUrl 분기 / 신규 회원 `/signup/social` 프로필 입력). 제공자 추가는 `auth/presentation/.../social/SocialLoginClient` 구현 후 `socialLoginClientOf`에 등록. 네이버 로그인은 보류(로그인 화면에 버튼 없음, `SocialLoginType.NAVER`만 남김). 로그인 화면은 원형 버튼 3개(카카오 축약형·구글·이메일). 비밀번호 찾기(`/login/password-reset`)는 이메일 → 인증 코드 → 임시 비밀번호 메일 발송 순서로 한 라우트 안에서 진행한다. 테스트 계정 로그인 버튼은 debug 빌드에서 `local.properties`의 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`가 있을 때만 노출 — 자격 증명을 소스에 하드코딩 금지(공개 저장소).
 
 ## 빌드 / 테스트
 
@@ -21,7 +36,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  
 ./gradlew test                  # 단위 테스트 (run-android-tests 스킬)
 ```
 
-코드를 수정한 턴은 반드시 빌드 검증 후 종료한다. API 키/BASE_URL은 `local.properties`(`API_KEY`, debug는 `API_BASE_URL_DEV`·release는 `API_BASE_URL_PROD`) → BuildConfig 주입(debug 전용 테스트 계정 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`, 카카오 네이티브 앱 키 `KAKAO_NATIVE_APP_KEY`, 구글 OAuth 웹 클라이언트 ID `GOOGLE_WEB_CLIENT_ID`도 동일 — 키가 없으면 해당 제공자 버튼은 "준비 중" 안내). 베이스 URL은 debug→개발 서버, release→운영 서버이며 값이 없으면 placeholder로 빌드만 된다(release는 운영 키만 읽는다). release 서명도 같은 방식으로 `RELEASE_STORE_FILE`/`RELEASE_STORE_PASSWORD`/`RELEASE_KEY_ALIAS`/`RELEASE_KEY_PASSWORD`(local.properties, 없으면 환경변수)에서 읽고, 하나라도 없으면 release는 서명하지 않는다(debug 키로 대신 서명하지 않음). Meta 광고 설치 측정 키 `META_APP_ID`/`META_CLIENT_TOKEN`도 같은 곳에서 읽고, release는 없으면 빌드가 실패한다(자동 기록은 release만). 단위 테스트는 auth/history/intro/main/meal/onboarding 모듈에, 디자인 시스템 토큰 계약 테스트는 `common/presentation`의 단위 테스트에, 컴포넌트 UI 테스트는 androidTest에 있다.
+코드를 수정한 턴은 반드시 빌드 검증 후 종료한다. API 키/BASE_URL은 `local.properties`(`API_KEY`, debug는 `API_BASE_URL_DEV`·release는 `API_BASE_URL_PROD`) → BuildConfig 주입(debug 전용 테스트 계정 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`, 카카오 네이티브 앱 키 `KAKAO_NATIVE_APP_KEY`, 구글 OAuth 웹 클라이언트 ID `GOOGLE_WEB_CLIENT_ID`도 동일 — 키가 없으면 해당 제공자 버튼은 "준비 중" 안내). 베이스 URL은 debug→개발 서버, release→운영 서버이며 값이 없으면 placeholder로 빌드만 된다(release는 운영 키만 읽는다). release 서명도 같은 방식으로 `RELEASE_STORE_FILE`/`RELEASE_STORE_PASSWORD`/`RELEASE_KEY_ALIAS`/`RELEASE_KEY_PASSWORD`(local.properties, 없으면 환경변수)에서 읽고, 하나라도 없으면 release는 서명하지 않는다(debug 키로 대신 서명하지 않음). Meta 광고 설치 측정 키 `META_APP_ID`/`META_CLIENT_TOKEN`도 같은 곳에서 읽고, release는 없으면 빌드가 실패한다(자동 기록은 release만). 단위 테스트는 빈 스캐폴드와 플레이스홀더 feature를 뺀 대부분의 모듈에, 디자인 시스템 토큰 계약 테스트는 `common/presentation`의 단위 테스트에, 컴포넌트·화면 UI 테스트는 androidTest(`common`/`auth`/`history`/`home`/`intro`/`onboarding`/`room`의 presentation, `meal:data`)에 있다.
 
 ## 불변 규칙 (위반 금지)
 
@@ -50,7 +65,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  
 - [docs/architecture/performance.md](docs/architecture/performance.md) — TTI, JankStats, Baseline Profile
 - [docs/DESIGN_TO_CODE_GUIDE.md](docs/DESIGN_TO_CODE_GUIDE.md) — 디자인 스펙 → 코드 사용자 가이드
 
-일부 문서의 코드 예시는 템플릿 시절 레거시 예시(문서 내 주석 표기). 실제 패턴이 필요하면 auth/history/intro 모듈을 본다.
+문서의 골든 예제는 실제 모듈(주로 `history`, `auth`, `mailbox`)을 가리킨다. 문서와 코드가 다르면 코드가 맞고, 문서를 함께 고친다.
 
 ## 스킬 인덱스
 
