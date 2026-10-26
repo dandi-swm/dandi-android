@@ -225,28 +225,33 @@ class MealRecordViewModelTest {
     }
 
     @Test
-    fun `띠욧에서 건너뛰면 끝 장면으로 간다`() = runTest(testDispatcher) {
+    fun `띠욧에서 건너뛰면 컷신만 건너뛰고 먹었어요로 간다`() = runTest(testDispatcher) {
         val viewModel = createViewModel(isMailGiftEnabled = true)
         submit(viewModel)
         viewModel.finishStage(MealCeremonyStage.Serving)
 
         viewModel.onIntent(MealRecordIntent.ClickSkipCeremony)
 
-        assertEquals(MealCeremonyStage.Finished, viewModel.ceremony().stage)
+        assertEquals(MealCeremonyStage.Ate, viewModel.ceremony().stage)
         assertTrue(navigationHelper.calls.isEmpty())
     }
 
     @Test
-    fun `상자를 보내는 기록은 건너뛰면 곧장 홈으로 간다`() = runTest(testDispatcher) {
+    fun `상자를 보내는 기록은 건너뛰어도 상자 연출은 그대로 보여 준다`() = runTest(testDispatcher) {
         mealRepository.created = CreatedMealVO(mealId = 1, rewardBoxGrade = RewardBoxGrade.BRONZE)
         val viewModel = createViewModel(isMailGiftEnabled = true)
         submit(viewModel)
         viewModel.finishStage(MealCeremonyStage.Serving)
 
         viewModel.onIntent(MealRecordIntent.ClickSkipCeremony)
+        // 먹었어요와 상자 장면에서는 건너뛰기가 먹지 않는다.
+        viewModel.onIntent(MealRecordIntent.ClickSkipCeremony)
+        assertEquals(MealCeremonyStage.Ate, viewModel.ceremony().stage)
+        viewModel.finishStage(MealCeremonyStage.Ate)
         viewModel.onIntent(MealRecordIntent.ClickSkipCeremony)
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(MealCeremonyStage.BoxReveal, viewModel.ceremony().stage)
+        assertTrue(navigationHelper.calls.isEmpty())
     }
 
     @Test
