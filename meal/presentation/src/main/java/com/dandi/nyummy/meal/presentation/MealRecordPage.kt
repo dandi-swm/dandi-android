@@ -114,7 +114,7 @@ fun MealRecordPage(
         onPauseOrDispose { }
     }
     // 진입 직후(초기 상태 Requesting)와 거부 화면의 재요청 모두 이 한 곳에서 시스템 팝업을 띄운다.
-    // 이미 허용된 상태면 팝업 없이 즉시 허용 콜백이 온다. 앱이 종료됐다 사진 확인 단계로 되살아났으면
+    // 이미 허용된 상태면 팝업 없이 즉시 허용 콜백이 온다. 앱이 종료됐다 사진 확인이나 연출 단계로 되살아났으면
     // 카메라가 필요 없으니, 다시 찍으러 프리뷰로 돌아갈 때 묻는다.
     val isPreview = uiState.phase is MealCameraPhase.Preview
     LaunchedEffect(uiState.cameraPermission, isPreview) {

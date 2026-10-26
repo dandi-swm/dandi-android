@@ -55,6 +55,7 @@ class MealRecordViewModel @Inject constructor(
                 .distinctUntilChanged()
                 .collect { it.writeTo(savedStateHandle) }
         }
+        leaveIfSubmitInterrupted()
         // 연출의 고양이방은 지금 마이룸에 깔린 배경으로 그린다. 촬영하는 동안 미리 읽어 두고, 못 읽으면 기본 빈 방이다.
         viewModelScope.launch {
             getRoomBackground()?.let { dispatch(MealRecordReducerEvent.RoomBackgroundLoaded(it)) }
@@ -251,6 +252,17 @@ class MealRecordViewModel @Inject constructor(
         ceremony.skippedStage(currentState.isMailGiftEnabled)
             ?.let { dispatch(MealRecordReducerEvent.CeremonyStageChanged(it)) }
             ?: finishRecord()
+    }
+
+    /**
+     * 업로드를 시작했지만 접수 결과를 받기 전에 앱이 종료됐다 돌아왔으면 홈으로 보낸다.
+     * 서버에는 기록됐을 수 있어 다시 보내지 않고(다시 보내면 같은 끼니가 두 번 기록될 수 있다) 기록 탭에서 확인하도록 안내한다.
+     */
+    private fun leaveIfSubmitInterrupted() {
+        val phase = currentState.phase as? MealCameraPhase.Ceremony ?: return
+        if (phase.submit != MealSubmitStatus.Uploading) return
+        messageHelper.showSnackBar(iconType = IconType.WARNING, messageRes = R.string.meal_record_submit_interrupted)
+        finishRecord()
     }
 
     /**

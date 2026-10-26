@@ -13,6 +13,7 @@
     <string name="meal_record_permission_blocked_body">Camera access is turned off.\nAllow the camera in Settings &gt; Permissions. You can also record with a photo from your gallery.</string>
     <string name="meal_record_permission_open_settings">Open settings</string>
     <string name="meal_record_capture_failed">Couldn\'t take the photo. Please try again.</string>
+    <string name="meal_record_submit_interrupted">We couldn\'t confirm your meal was saved. Please check your history.</string>
     <string name="meal_record_captured_photo_content_description">Captured food photo</string>
     <string name="meal_record_cat_content_description">Nyummy</string>
     <string name="meal_record_done_title">Nyummy loved the meal!</string>
