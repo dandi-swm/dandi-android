@@ -22,6 +22,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 class GetIntroUseCase @Inject constructor(
     private val repository: IntroRepository,
@@ -109,6 +110,9 @@ class GetIntroUseCase @Inject constructor(
             navigationHelper.navigateToAsRoot(destination)
             Result.success(version)
         }
+    } catch (e: CancellationException) {
+        // 화면이 닫혀 취소된 것은 실패가 아니다. 다이얼로그를 띄우지 않고 취소를 이어 간다.
+        throw e
     } catch (e: Throwable) {
         // 재시도 다이얼로그는 사용자가 누를 때까지 기다리므로, 재시도로 끝난 측정에는 사용자 대기가 들어간다.
         ttiHelper.addTTIMetaData(TTIMetaData.USER_WAIT_INCLUDED, true)
