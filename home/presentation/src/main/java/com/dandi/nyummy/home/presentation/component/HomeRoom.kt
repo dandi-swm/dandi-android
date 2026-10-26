@@ -1,6 +1,5 @@
 package com.dandi.nyummy.home.presentation.component
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -66,8 +65,7 @@ internal fun HomeRoom(
 ) {
     BoxWithConstraints(
         modifier = modifier
-            .testTag(RoomCardTag)
-            .background(NyummyTheme.colors.bg.sceneRoomFloor),
+            .testTag(RoomCardTag),
     ) {
         val nyummyRect = RoomCardLayout.nyummyRect(maxWidth, maxHeight)
         val nyummySize = nyummyRect.right - nyummyRect.left

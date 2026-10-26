@@ -1,10 +1,12 @@
 package com.dandi.nyummy.home.data
 
+import com.dandi.nyummy.common.domain.coroutine.IoScope
 import com.dandi.nyummy.home.domain.HomeRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
 import retrofit2.Retrofit
 import javax.inject.Singleton
 
@@ -24,6 +26,8 @@ object HomeDataModule {
 
     @Provides
     @Singleton
-    fun provideHomeRepository(dataSource: HomeDataSource): HomeRepository =
-        HomeRepositoryImpl(dataSource)
+    fun provideHomeRepository(
+        dataSource: HomeDataSource,
+        @IoScope ioScope: CoroutineScope,
+    ): HomeRepository = HomeRepositoryImpl(dataSource, ioScope)
 }

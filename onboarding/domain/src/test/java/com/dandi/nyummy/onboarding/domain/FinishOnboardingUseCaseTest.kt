@@ -3,7 +3,7 @@ package com.dandi.nyummy.onboarding.domain
 import com.dandi.nyummy.common.entity.meal.Meal
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
-import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.home.domain.HomePreparePage
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -25,7 +25,7 @@ class FinishOnboardingUseCaseTest {
     )
 
     @Test
-    fun `앞뒤 공백을 뺀 이름과 고른 식사 시각으로 고양이를 만들고 완료를 기록한 뒤 홈을 루트로 이동한다`() = runBlocking {
+    fun `앞뒤 공백을 뺀 이름과 고른 식사 시각으로 고양이를 만들고 완료를 기록한 뒤 냐미 방 준비 화면을 루트로 이동한다`() = runBlocking {
         val mealTimes = MealTimesVO(lunch = MealTimeVO(hour = 13))
 
         val result = useCase("  냐미 ", mealTimes)
@@ -33,7 +33,7 @@ class FinishOnboardingUseCaseTest {
         assertTrue(result.isSuccess)
         assertEquals(listOf("냐미" to mealTimes), repository.createdCats)
         assertEquals(1, repository.onboardingCompleteCount)
-        assertEquals(listOf(HomePage), navigationHelper.rootPages)
+        assertEquals(listOf(HomePreparePage), navigationHelper.rootPages)
         assertTrue(messageHelper.dialogs.isEmpty())
     }
 
@@ -45,7 +45,7 @@ class FinishOnboardingUseCaseTest {
 
         assertTrue(result.isSuccess)
         assertEquals(1, repository.onboardingCompleteCount)
-        assertEquals(listOf(HomePage), navigationHelper.rootPages)
+        assertEquals(listOf(HomePreparePage), navigationHelper.rootPages)
         assertTrue(messageHelper.dialogs.isEmpty())
     }
 

@@ -62,11 +62,18 @@ private suspend fun loadSpriteImage(context: Context, loader: ImageLoader, sourc
     when (source) {
         is NyummySpriteSource.Resource -> ImageBitmap.imageResource(context.resources, source.resId)
         is NyummySpriteSource.Url -> {
-            val request = ImageRequest.Builder(context).data(source.url).allowHardware(false).build()
-            val result = loader.execute(request) as? SuccessResult ?: error("sprite load failed: ${source.url}")
+            val result = loader.execute(spriteSheetRequest(context, source.url)) as? SuccessResult
+                ?: error("sprite load failed: ${source.url}")
             result.image.toBitmap().asImageBitmap()
         }
     }
+
+/**
+ * 원격 시트 한 장의 요청. 미리 받을 때도 이 요청을 써야 그릴 때 같은 캐시를 찾는다.
+ * 캔버스에서 일부 영역을 잘라 그리므로 하드웨어 비트맵은 쓰지 않는다.
+ */
+internal fun spriteSheetRequest(context: Context, url: String): ImageRequest =
+    ImageRequest.Builder(context).data(url).allowHardware(false).build()
 
 /**
  * 곧 재생할 시트를 미리 받아 앱 공용 이미지 캐시에 넣어 둔다. 동작이 바뀔 때 시트를 받느라 기다리지 않게 한다.
@@ -77,6 +84,6 @@ fun NyummySpritePrefetch(urls: ImmutableList<String>) {
     val context = LocalContext.current
     LaunchedEffect(urls) {
         val loader = SingletonImageLoader.get(context)
-        urls.forEach { url -> loader.enqueue(ImageRequest.Builder(context).data(url).allowHardware(false).build()) }
+        urls.forEach { url -> loader.enqueue(spriteSheetRequest(context, url)) }
     }
 }

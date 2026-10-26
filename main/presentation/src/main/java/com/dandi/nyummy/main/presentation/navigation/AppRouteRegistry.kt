@@ -14,7 +14,9 @@ import com.dandi.nyummy.common.domain.navigation.LinkArgs
 import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.history.presentation.HistoryPage
 import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.home.domain.HomePreparePage
 import com.dandi.nyummy.home.presentation.HomePage
+import com.dandi.nyummy.home.presentation.prepare.HomePreparePage
 import com.dandi.nyummy.intro.domain.IntroPage
 import com.dandi.nyummy.intro.presentation.IntroPage
 import com.dandi.nyummy.legal.domain.LegalPage as LegalRoute
@@ -128,6 +130,15 @@ val appRoutes: List<AppRoute> = listOf(
         render = {
             HomePage()
         },
+    ),
+    AppRoute(
+        // 로그인 직후 냐미 방 준비(로그인, 온보딩 완료 뒤). 냐미 애니메이션을 받은 뒤 스스로 홈을 루트로 연다.
+        // 링크로 열 화면이 아니라서, 앱을 켜는 링크(콜드 스타트)는 이 화면을 건너뛰고 홈을 바로 깐다.
+        path = HomePreparePage.PATH,
+        isBottomTab = false,
+        drawsBehindSystemBars = true,
+        syntheticStack = { listOf(GenericNavKey(HomePage.PATH)) },
+        render = { HomePreparePage() },
     ),
     AppRoute(
         path = MealRecordPage.PATH,

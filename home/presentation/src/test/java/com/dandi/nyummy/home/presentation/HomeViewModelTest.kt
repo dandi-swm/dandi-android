@@ -362,6 +362,8 @@ class HomeViewModelTest {
             callCount++
             return next()
         }
+
+        override suspend fun prefetchAnimations(): CatAnimationSetVO? = null
     }
 
     private class FakeHomeRepository : HomeRepository {
@@ -373,6 +375,8 @@ class HomeViewModelTest {
             callCount++
             return next()
         }
+
+        override fun prefetchHomeSummary() = Unit
     }
 
     private class RecordingNavigationHelper : NavigationHelper {

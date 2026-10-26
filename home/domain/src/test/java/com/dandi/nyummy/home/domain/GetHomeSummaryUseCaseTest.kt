@@ -125,6 +125,7 @@ class GetHomeSummaryUseCaseTest {
 
     private class FakeHomeRepository(private val block: () -> HomeSummaryVO) : HomeRepository {
         override suspend fun getHomeSummary(): HomeSummaryVO = block()
+        override fun prefetchHomeSummary() = Unit
     }
 
     private class RecordingNavigationHelper : NavigationHelper {

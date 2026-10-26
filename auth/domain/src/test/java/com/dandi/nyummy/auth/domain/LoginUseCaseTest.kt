@@ -1,7 +1,7 @@
 package com.dandi.nyummy.auth.domain
 
 import com.dandi.nyummy.auth.entity.AuthTokenVO
-import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.home.domain.HomePreparePage
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -36,12 +36,12 @@ class LoginUseCaseTest {
     }
 
     @Test
-    fun `redirectUrl 이 홈이면 홈을 루트로 이동한다`() = runBlocking {
+    fun `redirectUrl 이 홈이면 냐미 방 준비 화면을 거쳐 홈으로 가도록 그 화면을 루트로 이동한다`() = runBlocking {
         repository.loginResult = AuthTokenVO("access", "refresh", redirectUrl = "/home")
 
         useCase.login("test@dandi.app", "pw1234")
 
-        assertEquals(listOf<Any>(HomePage), navigationHelper.rootPages)
+        assertEquals(listOf<Any>(HomePreparePage), navigationHelper.rootPages)
         assertFalse(repository.onboardingIncomplete)
     }
 

@@ -5,7 +5,7 @@ import com.dandi.nyummy.auth.entity.SocialCredentialVO
 import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.auth.entity.SocialLoginVO
 import com.dandi.nyummy.common.domain.message.IconType
-import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.home.domain.HomePreparePage
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -36,14 +36,14 @@ class SocialLoginUseCaseTest {
     private val credential = SocialCredentialVO(SocialLoginType.KAKAO, token = "id-token", nonce = "nonce-1")
 
     @Test
-    fun `기존 회원이면 홈을 루트로 이동하고 가입 세션을 남기지 않는다`() = runBlocking {
+    fun `기존 회원이면 냐미 방 준비 화면을 루트로 이동하고 가입 세션을 남기지 않는다`() = runBlocking {
         repository.socialLoginResult = SocialLoginVO(token = AuthTokenVO("access", "refresh"))
 
         val result = useCase.login(credential)
 
         assertTrue(result.isSuccess)
         assertEquals(listOf(credential), repository.socialLoginCalls)
-        assertEquals(listOf<Any>(HomePage), navigationHelper.rootPages)
+        assertEquals(listOf<Any>(HomePreparePage), navigationHelper.rootPages)
         assertFalse(repository.onboardingIncomplete)
         assertTrue(navigationHelper.pages.isEmpty())
         assertNull(session.pendingToken)

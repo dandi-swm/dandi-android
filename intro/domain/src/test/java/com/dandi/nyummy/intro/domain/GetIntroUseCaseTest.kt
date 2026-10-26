@@ -1,8 +1,12 @@
 package com.dandi.nyummy.intro.domain
 
 import com.dandi.nyummy.auth.domain.LoginPage
+import com.dandi.nyummy.cat.domain.CatRepository
+import com.dandi.nyummy.cat.domain.PrefetchCatAnimationsUseCase
+import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.domain.helper.DeviceHelper
+import com.dandi.nyummy.common.domain.helper.ImagePrefetchHelper
 import com.dandi.nyummy.common.domain.helper.PermissionHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
@@ -17,23 +21,35 @@ import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.remoteconfig.VersionCheckVO
 import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.home.domain.HomeRepository
+import com.dandi.nyummy.home.domain.PrefetchHomeSummaryUseCase
+import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
 import com.dandi.nyummy.tti.TimelineCategory
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GetIntroUseCaseTest {
 
     private val navigationHelper = RecordingNavigationHelper()
     private val messageHelper = RecordingMessageHelper()
     private val ttiHelper = RecordingTTIHelper()
+    private val catRepository = FakeCatRepository()
+    private val homeRepository = FakeHomeRepository()
 
     @Test
     fun `버전 통과 후 리프레시 토큰이 있으면 홈을 루트로 이동한다`() = runBlocking {
@@ -376,6 +392,59 @@ class GetIntroUseCaseTest {
         assertTrue(ttiHelper.metadata.isEmpty())
     }
 
+    @Test
+    fun `홈으로 가면 홈 요약과 냐미를 미리 받고, 냐미를 다 받은 뒤에 이동한다`() = runTest {
+        val prefetchDone = CompletableDeferred<Unit>()
+        catRepository.gate = prefetchDone
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = true),
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        val job = launch { useCase() }
+        runCurrent()
+        assertEquals(1, homeRepository.prefetchCount)
+        assertEquals(1, catRepository.prefetchCount)
+        assertTrue(navigationHelper.rootPages.isEmpty())
+
+        prefetchDone.complete(Unit)
+        job.join()
+        assertEquals(listOf<Page>(HomePage), navigationHelper.rootPages)
+    }
+
+    @Test
+    fun `온보딩이나 로그인으로 가면 홈 요약과 냐미를 미리 받지 않는다`() = runBlocking {
+        val remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3))
+        val deviceHelper = FakeDeviceHelper(appVersionCode = 5)
+
+        buildUseCase(FakeIntroRepository(hasRefreshToken = true, onboardingIncomplete = true), remoteConfigHelper, deviceHelper)()
+        buildUseCase(FakeIntroRepository(hasRefreshToken = false), remoteConfigHelper, deviceHelper)()
+
+        assertEquals(0, homeRepository.prefetchCount)
+        assertEquals(0, catRepository.prefetchCount)
+        assertEquals(listOf<Page>(OnboardingPage, LoginPage), navigationHelper.rootPages)
+    }
+
+    @Test
+    fun `냐미 미리 받기가 상한을 넘기면 더 기다리지 않고 홈으로 이동한다`() = runTest {
+        // 끝나지 않는 미리 받기
+        catRepository.gate = CompletableDeferred()
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = true),
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        val job = launch { useCase() }
+        advanceTimeBy(GetIntroUseCase.CAT_PREFETCH_TIMEOUT_MS - 1)
+        assertTrue(navigationHelper.rootPages.isEmpty())
+
+        advanceTimeBy(2)
+        job.join()
+        assertEquals(listOf<Page>(HomePage), navigationHelper.rootPages)
+    }
+
     private fun versionCheck(
         minimumVersionCode: Long,
         latestVersionUpdateLink: String = "",
@@ -396,6 +465,8 @@ class GetIntroUseCaseTest {
         remoteConfigHelper = remoteConfigHelper,
         deviceHelper = deviceHelper,
         permissionHelper = permissionHelper,
+        prefetchHomeSummary = PrefetchHomeSummaryUseCase(repository = homeRepository),
+        prefetchCatAnimations = PrefetchCatAnimationsUseCase(repository = catRepository, imagePrefetchHelper = NoImagePrefetchHelper),
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
@@ -417,6 +488,37 @@ class GetIntroUseCaseTest {
             permissionNoticeShown = true
             markPermissionNoticeShownCount++
         }
+    }
+
+    /** 냐미 미리 받기 호출을 센다. [gate]를 주면 그것이 열릴 때까지 끝나지 않는다. */
+    private class FakeCatRepository : CatRepository {
+        var prefetchCount = 0
+            private set
+        var gate: CompletableDeferred<Unit>? = null
+
+        override suspend fun getAnimations(): CatAnimationSetVO = error("인트로는 조회하지 않는다")
+
+        override suspend fun prefetchAnimations(): CatAnimationSetVO? {
+            prefetchCount++
+            gate?.await()
+            return null
+        }
+    }
+
+    /** 홈 요약 미리 받기 호출을 센다. */
+    private class FakeHomeRepository : HomeRepository {
+        var prefetchCount = 0
+            private set
+
+        override suspend fun getHomeSummary(): HomeSummaryVO = error("인트로는 조회하지 않는다")
+
+        override fun prefetchHomeSummary() {
+            prefetchCount++
+        }
+    }
+
+    private object NoImagePrefetchHelper : ImagePrefetchHelper {
+        override suspend fun prefetchSpriteSheets(urls: List<String>) = Unit
     }
 
     private class FakePermissionHelper(

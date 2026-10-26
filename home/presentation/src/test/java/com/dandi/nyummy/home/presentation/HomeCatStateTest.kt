@@ -1,5 +1,6 @@
 package com.dandi.nyummy.home.presentation
 
+import com.dandi.nyummy.cat.domain.PrefetchCatAnimationsUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.cat.entity.SpriteClipVO
@@ -8,6 +9,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteC
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSource
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HomeCatStateTest {
@@ -22,6 +24,16 @@ class HomeCatStateTest {
     fun `방금 기록하고 돌아왔거나 먹는 반응 중이면 먹는 반응이다`() {
         assertEquals(CatState.CONTENT, homeCatState(hasRecordedToday = true, recordedJustNow = true, isCelebrating = false))
         assertEquals(CatState.CONTENT, homeCatState(hasRecordedToday = true, recordedJustNow = false, isCelebrating = true))
+    }
+
+    @Test
+    fun `홈이 고를 수 있는 상태는 모두 냐미 미리 받기 대상이다`() {
+        val flags = listOf(true, false)
+        val chosen = flags.flatMap { recorded ->
+            flags.flatMap { justNow -> flags.map { celebrating -> homeCatState(recorded, justNow, celebrating) } }
+        }.toSet()
+
+        assertTrue(PrefetchCatAnimationsUseCase.PlayedStates.containsAll(chosen))
     }
 
     private val animation = CatAnimationVO(
