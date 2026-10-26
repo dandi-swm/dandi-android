@@ -182,4 +182,12 @@ internal object NyummyComponentDimens {
 
     /** 꾸민 글자(NyummyRichText) 안 코인 아이콘 크기. */
     val RichTextCoinSize = 18.dp
+
+    /** 상품 태그(NyummyTag Item) 좌우 여백. 위아래 여백은 spacing.s2. */
+    val TagItemHorizontalPadding = 6.dp
+
+    /** 배너 배지(NyummyTag Banner) 최소 높이와 여백. */
+    val TagBannerMinHeight = 24.dp
+    val TagBannerHorizontalPadding = 10.dp
+    val TagBannerVerticalPadding = 3.dp
 }
