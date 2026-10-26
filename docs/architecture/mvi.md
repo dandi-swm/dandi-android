@@ -29,42 +29,39 @@ abstract class MviViewModel<I : MviIntent, S : UiState, E : ReducerEvent>(
 
 ## 파일 세트 (feature/presentation)
 
-> `Search`/`Favorite`/`Intro`/`FullScreenMedia`는 패턴 설명을 위한 레거시 예시 이름입니다. 아래 파일명은 현재 저장소의 소스 경로로 연결되지 않습니다.
+골든 예제는 [history/presentation](../../history/presentation/src/main/java/com/dandi/nyummy/history/presentation/)이다.
 
 | 파일 | 역할 | 골든 예제 |
 |---|---|---|
-| `{Feature}Intent.kt` | `sealed interface : MviIntent` — 사용자 입력 전수 | `SearchIntent.kt` (레거시 예시) |
-| `{Feature}ReducerEvent.kt` | `sealed interface : ReducerEvent` — 상태 변이 원인 전수 | `SearchReducerEvent.kt` (레거시 예시) |
-| `{Feature}UIState.kt` | `data class : UiState` + `companion val empty` | `SearchUIState.kt` (레거시 예시) |
-| `{Feature}ViewModel.kt` | `@HiltViewModel`, onIntent/reduce 구현 | `SearchViewModel.kt` (레거시 예시) |
-| `{Feature}Page.kt` | `collectAsStateWithLifecycle()` + onIntent 호출만 | `SearchPage.kt` (레거시 예시) |
+| `{Feature}Intent.kt` | `sealed interface : MviIntent` — 사용자 입력 전수 | `HistoryIntent.kt` |
+| `{Feature}ReducerEvent.kt` | `sealed interface : ReducerEvent` — 상태 변이 원인 전수 | `HistoryReducerEvent.kt` |
+| `{Feature}UIState.kt` | `data class : UiState` + `companion val empty` | `HistoryUIState.kt` |
+| `{Feature}ViewModel.kt` | `@HiltViewModel`, onIntent/reduce 구현 | `HistoryViewModel.kt` |
+| `{Feature}Page.kt` | `collectAsStateWithLifecycle()` + onIntent 호출만 | `HistoryPage.kt` |
 
-> View 레이어는 화면마다 다르다 — 위 표는 Compose `Page` 변형(search/favorite)이고, intro 는 비-MVI 일반 ViewModel 변형(`IntroPage` 은 빈 Composable 스텁), fullScreenMedia 는 아래의 **Fragment 호스팅 MVI 변형**이다. Intent/UIState/ReducerEvent/MviViewModel 계약은 변형과 무관하게 동일하다.
+모든 화면이 Compose `Page` + `MviViewModel`이다. 상태가 거의 없는 화면(인트로, "준비 중" 플레이스홀더)도 예외 없이 같은 세트로 만든다.
 
-### Fragment 호스팅 MVI 변형 (fullScreenMedia 골든 예제)
+### 라우트 인자를 받는 ViewModel (signup 골든 예제)
 
-상세화면은 Compose `Page` 가 **없다**. ViewBinding + ViewPager2 기반의 `Fragment` 가 동일한 `MviViewModel` 을 호스팅한다 — 레거시 예시 `FullScreenMediaFragment.kt` + `FullScreenMediaPagerAdapter.kt`. fullScreenMedia 를 복제할 때 이 변형을 따른다.
+라우트 인자로 초기 상태가 달라지는 화면은 assisted injection으로 인자를 ViewModel 생성자에 넘긴다 — [SignUpViewModel.kt](../../auth/presentation/src/main/java/com/dandi/nyummy/auth/presentation/SignUpViewModel.kt) + [SignUpPage.kt](../../auth/presentation/src/main/java/com/dandi/nyummy/auth/presentation/SignUpPage.kt).
 
-- **ViewModel 주입**: ViewModel 은 `@HiltViewModel(assistedFactory = Factory::class)` + `@AssistedInject` (라우트 Args 를 `@Assisted` 로 받음). Fragment 는 `by viewModels(extrasProducer = { ...withCreationCallback<Factory> { it.create(args) } })` 로 주입.
-- **상태 수집**: `collectAsStateWithLifecycle()` 대신 `viewLifecycleOwner.lifecycleScope.launch { repeatOnLifecycle(STARTED) { viewModel.uiState.collect(::render) } }` 로 collect → `render(state)` 가 ViewBinding 갱신.
-- **목록 반영**: 페이저 데이터는 `pagerAdapter.submit(state.mediaItems)` 로 넘기고, `binding.mediaPager.setCurrentItem(state.currentIndex, false)` 로 위치 동기화.
-- **입력 진입**: 클릭/페이지 전환은 모두 `viewModel.onIntent(FullScreenMediaIntent...)` 단일 진입점으로 (예: `OnPageChangeCallback.onPageSelected` → `SelectPage`).
+- **ViewModel**: `@HiltViewModel(assistedFactory = Factory::class)` + `@AssistedInject constructor(@Assisted arg: ..., ...)`, 안에 `@AssistedFactory interface Factory { fun create(arg): XxxViewModel }`.
+- **Page**: `viewModel: XxxViewModel = hiltViewModel<XxxViewModel, XxxViewModel.Factory>(creationCallback = { it.create(arg) })`를 기본 파라미터로 둔다.
 
 ## 규칙
 
 1. UIState의 컬렉션은 **ImmutableList/ImmutableSet** (kotlinx.collections.immutable). `List` 금지 — Compose skip 불가.
-2. 상태 가공 로직은 UIState의 메서드로 (예: `appendPage`, `withFavorites`) — reduce는 분기만, Compose는 반영만.
+2. 상태 가공 로직은 UIState의 메서드로 (예: `HistoryUIState.withMealStatus`, `commitMealNameEdit`) — reduce는 분기만, Compose는 반영만.
 3. 부수효과(UseCase 호출, 네비게이션, 스낵바)는 onIntent 쪽 private 함수에서. reduce는 순수 함수.
 4. 에러 UX는 `messageHelper.showSnackBar(...)` / 다이얼로그 (error-handling.md).
 
-## 페이징 패턴 (search 골든 예제)
+## 페이징 패턴 (mailbox 골든 예제)
 
-상태 필드: `isLoading / isLoadingMore / isLastPage / currentPage / rawMediaItems(원본) / searchItemList(UI 모델)`
+서버는 cursor 방식으로 페이지를 준다. 골든 예제: [MailboxViewModel.kt](../../mailbox/presentation/src/main/java/com/dandi/nyummy/mailbox/presentation/list/MailboxViewModel.kt)의 `loadMoreMails()`, [MailboxUIState.kt](../../mailbox/presentation/src/main/java/com/dandi/nyummy/mailbox/presentation/list/MailboxUIState.kt)의 `MailItemsUiState`.
 
-- `loadNextPage()` 가드: `if (!hasSearched || isLoading || isLoadingMore || isLastPage) return`
-- `appendPage(result, page)`: 기존 urlKey 중복 제거 후 뒤에 이어붙임(재정렬 금지 — LazyColumn key 충돌 방지), `result.isEnd || items.isEmpty()` → isLastPage
-- 외부 변화 구독(예: 즐겨찾기): `init { observeFavorites() }`에서 Flow를 `launchIn(viewModelScope)`으로 collect → `dispatch(FavoritesChanged)` — 직접 state 갱신 금지
+상태 필드: `isLoaded / isLoadingMore / nextCursor(마지막 묶음이면 null) / mails(UI 모델)`
 
-## 단순 화면 변형 (intro 골든 예제)
-
-상태가 없는 화면은 MviViewModel 없이 일반 ViewModel + `init { useCase() }`도 허용 — 레거시 예시 `IntroViewModel.kt`. 단, 상태가 1개라도 생기면 MVI 세트로 작성한다.
+- 다음 묶음 가드: `if (!isLoaded || isLoadingMore || nextCursor == null || 첫 묶음 읽는 중) return`
+- 이어 붙이기: reduce에서 이미 있는 id를 걸러 내고 뒤에 붙인다(재정렬 금지 — LazyColumn key 충돌 방지). 실패하면 `isLoadingMore`만 내린다.
+- 목록 끝의 "더 보기" 트리거는 디자인 시스템의 [NyummyLoadMore.kt](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/foundation/NyummyLoadMore.kt)를 쓴다.
+- 외부 변화 구독: `init`에서 Flow를 `launchIn(viewModelScope)`으로 collect → `dispatch(...)` — 직접 state 갱신 금지

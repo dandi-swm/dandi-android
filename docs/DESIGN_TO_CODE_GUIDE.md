@@ -19,7 +19,7 @@ Figma 링크 (MCP) ──┐
 ### 1.1 실행 위치
 
 반드시 **Dandi 프로젝트 루트**(또는 이 템플릿에서 파생한 프로젝트 루트)에서 `claude` 를 실행합니다.
-`.agents/skills/` 의 스킬과 README 의 아키텍처 규칙이 자동으로 Context에 잡힙니다.
+루트의 `CLAUDE.md`(Codex는 `AGENTS.md`)가 자동으로 Context에 잡히고, `.agents/skills/` 의 스킬을 쓸 수 있습니다.
 
 ### 1.2 디자인 입력 3가지 방법
 
@@ -60,8 +60,6 @@ claude mcp add --transport http figma-desktop http://127.0.0.1:3845/mcp
 > 디자인 스펙(Figma 링크/이미지/PDF)을 함께 주세요 — 템플릿 복제 후 아래 Step 1~2가 이어서 실행됩니다.
 > 이미 프로젝트가 있다면 아래 Step 1부터 진행합니다.
 
-> `intro`/`search`/`favorite`/`fullScreenMedia`는 원본 아키텍처를 설명하기 위한 레거시 예시 이름입니다. 현재 저장소의 모듈이나 복제할 소스 경로를 뜻하지 않으며, 실제 모듈은 `settings.gradle.kts`를 기준으로 확인합니다.
-
 ### Step 1 — 토큰 동기화: `/design-token-sync`
 
 새 디자인 시스템을 적용할 때 **가장 먼저 1회** 실행합니다. 색, 글자, 간격 값은
@@ -79,8 +77,8 @@ claude mcp add --transport http figma-desktop http://127.0.0.1:3845/mcp
 끝나면 **매핑 리포트**(어떤 디자인 값이 어떤 토큰 슬롯에 들어갔는지 + 미매핑 목록)를 반드시 확인하세요.
 슬롯이 없는 새로운 색(예: 경고색)은 스킬이 임의로 추가하지 않고 물어봅니다.
 
-> Figma 쪽 Variable 네이밍을 `bg/default/level0`, `content/accent`, `palette/gray/900`,
-> Text Style 을 `title/strong/L` 형태로 맞춰두면 매핑이 100% 자동화됩니다. (디자이너 가이드로 공유 권장)
+> Figma 쪽 Variable 네이밍을 `palette/evergreen/600`, `bg/surface-sunken`, `content/on-action`,
+> Text Style 을 `title/m`, `label/m-strong` 형태로 맞춰두면 매핑이 100% 자동화됩니다. 전체 규칙은 `design-token-sync` 스킬의 Naming convention 표. (디자이너 가이드로 공유 권장)
 
 ### Step 2 — 화면 구현: `/design-to-feature`
 
@@ -105,7 +103,7 @@ API는 GET /v1/products 이고 응답 예시는 아래 JSON이야: {...}
 ```
 
 스킬이 구현 전에 **화면 인벤토리**(섹션/상태/인터랙션/데이터/토큰 매핑)와
-**베이스 패턴 선택**(intro/search/favorite/fullScreenMedia 중 무엇을 골든 예제로 삼는지)을 먼저 보고합니다 — 여기서 방향이 틀렸으면 바로 잡아주세요.
+**베이스 패턴 선택**(auth/history/mailbox 중 무엇을 골든 예제로 삼는지)을 먼저 보고합니다 — 여기서 방향이 틀렸으면 바로 잡아주세요.
 
 ### Step 3 — 검증
 
@@ -151,7 +149,7 @@ adb shell 'am start -W -a android.intent.action.VIEW -d "https://link.nyummy.co.
 
 1. **색/타이포 하드코딩 금지** — `NyummyTheme.colors.*` / `NyummyTheme.typography.*` 만 사용. raw hex/sp 가 보이면 버그입니다.
 2. **의존 방향** — `presentation → domain → entity`, `data → domain → entity`. presentation↔data 직접 의존 금지.
-3. **4-모듈 세트** — feature = entity/domain/data/presentation. 골든 예제(intro/search/favorite/fullScreenMedia) 중 하나를 베이스로 복제.
+3. **4-모듈 세트** — feature = entity/domain/data/presentation. 골든 예제(auth/history/mailbox) 중 하나를 베이스로 복제.
 4. **MVI 네이밍** — `{Feature}Page / UIState / Intent / ReducerEvent / ViewModel`, UIState 컬렉션은 ImmutableList/Set.
 5. **DTO/VO 분리** — DTO 전 필드 nullable, VO 기본값, 변환은 data 레이어 `toVO()` 에서만.
 6. **항상 빌드 통과 상태로 종료** — 실패 시 스킬이 자가 수정 루프를 돕니다.
@@ -163,8 +161,8 @@ adb shell 'am start -W -a android.intent.action.VIEW -d "https://link.nyummy.co.
 | 증상 | 조치 |
 |---|---|
 | Figma MCP 도구가 안 보임 | `claude mcp list` 로 연결 확인 → `/mcp` 재인증. 데스크톱 서버는 Figma 앱이 켜져 있어야 함 |
-| 토큰 매핑이 엉뚱함 | Figma Variable 네이밍을 §Step 1 규칙으로 정리하거나, 미매핑 리포트에서 직접 지정: "그 색은 contentAccent로 매핑해" |
-| 디자인에 없는 색이 결과물에 있음 | 토큰 기본값(템플릿 값)이 남은 것 — `/design-token-sync` 부터 다시 |
+| 토큰 매핑이 엉뚱함 | Figma Variable 네이밍을 §Step 1 규칙으로 정리하거나, 미매핑 리포트에서 직접 지정: "그 색은 content.brand로 매핑해" |
+| 디자인에 없는 색이 결과물에 있음 | 이전 토큰 값이 남은 것 — `/design-token-sync` 부터 다시 |
 | 빌드 실패 반복 | `/gradle-build-check` 단독 실행으로 에러를 분리 → 해당 에러만 고치게 지시 |
 | 이미지 기반 결과의 수치가 어긋남 | 이미지 해상도를 높이거나, 여백/크기 수치를 프롬프트에 텍스트로 명시 (이미지는 근사치임) |
 | 에뮬레이터에서 딥링크가 안 열림 (`unable to resolve Intent`) | App Links 도메인 미검증 상태 — `am start` 에 `-n com.dandi.nyummy/.main.presentation.MainActivity` 명시적 컴포넌트 추가 |
