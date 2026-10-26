@@ -36,9 +36,6 @@ sealed interface MealRecordIntent : MviIntent {
     /** 연출이 끝난 뒤 `완료` 버튼을 눌러 화면을 마무리합니다. */
     data object ClickDone : MealRecordIntent
 
-    /** 기록 접수에 실패해 냐미가 걱정하며 기록하지 못했다고 다 알렸습니다. 홈으로 돌아갑니다. */
-    data object CeremonyFailureShown : MealRecordIntent
-
     /** 닫기(X) 버튼을 눌렀습니다. */
     data object ClickClose : MealRecordIntent
 }

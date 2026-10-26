@@ -42,23 +42,17 @@ class MealCeremonyDebugActivity : ComponentActivity() {
         setContent {
             NyummyTheme {
                 var result by remember { mutableStateOf<MealCeremonyResult?>(null) }
-                var failed by remember { mutableStateOf(false) }
                 LaunchedEffect(Unit) {
                     delay(responseDelay)
-                    if (fails) {
-                        failed = true
-                    } else {
-                        result = MealCeremonyResult(rewardBoxGrade = grade)
-                    }
+                    // 실제 화면처럼 기록하지 못하면 곧장 닫는다.
+                    if (fails) finish() else result = MealCeremonyResult(rewardBoxGrade = grade)
                 }
                 MealCeremony(
                     photoPath = photoPath,
                     result = result,
-                    isFailed = failed,
                     isMailGiftEnabled = sendsGift,
                     roomBackgroundUrl = roomBackgroundUrl,
                     onCloseClick = { if (result != null) finish() },
-                    onFailureShown = { finish() },
                     onDoneClick = { finish() },
                     modifier = Modifier
                         .fillMaxSize()

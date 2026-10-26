@@ -27,7 +27,6 @@
     <string name="meal_ceremony_box_content_description">Reward box</string>
     <string name="meal_ceremony_mailbox_content_description">Mailbox</string>
     <string name="meal_ceremony_skip_label">Skip</string>
-    <string name="meal_ceremony_failed_line">Your meal wasn\'t recorded properly</string>
     <string name="meal_ceremony_box_badge">Meal record reward</string>
     <string name="meal_ceremony_bite_word">Nom!</string>
 </resources>

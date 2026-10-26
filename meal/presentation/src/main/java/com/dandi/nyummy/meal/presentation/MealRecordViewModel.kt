@@ -95,16 +95,9 @@ class MealRecordViewModel @Inject constructor(
 
             MealRecordIntent.ClickDone -> if (currentState.isSubmitSucceeded) finishRecord()
 
-            // 기록하지 못했다고 알린 뒤에는 확인 단계로 돌아가지 않고 홈으로 간다.
-            MealRecordIntent.CeremonyFailureShown ->
-                if (currentState.phase is MealCameraPhase.Ceremony && currentState.isSubmitFailed) {
-                    finishRecord()
-                }
-
             MealRecordIntent.ClickClose -> when (currentState.phase) {
-                // 업로드 진행 중 이탈은 차단하고, 접수됐거나 실패한 뒤에는 연출을 건너뛰고 곧장 마무리한다.
-                is MealCameraPhase.Ceremony ->
-                    if (currentState.isSubmitSucceeded || currentState.isSubmitFailed) finishRecord()
+                // 업로드 진행 중 이탈은 차단하고, 접수된 뒤에는 연출을 건너뛰고 곧장 마무리한다.
+                is MealCameraPhase.Ceremony -> if (currentState.isSubmitSucceeded) finishRecord()
 
                 else -> {
                     deleteCapturedFile()
@@ -187,6 +180,7 @@ class MealRecordViewModel @Inject constructor(
      * 촬영본을 업로드해 식사를 생성한다. 성공 알림은 연출 화면이 담당한다.
      *
      * 응답이 오면 기록이 접수된 것이라 연출이 맛 리액션으로 넘어간다. 영양 분석은 접수 뒤에 진행되므로 기다리지 않는다.
+     * 기록하지 못하면 UseCase 가 안내 스낵바를 띄우고, 연출을 멈추고 곧장 홈으로 간다.
      */
     private fun submitCapturedMeal() {
         val phase = currentState.phase as? MealCameraPhase.Captured ?: return
@@ -201,8 +195,10 @@ class MealRecordViewModel @Inject constructor(
                         AnalyticsEvent.MealSubmitSuccess(source = source, durationSec = openedAt.elapsedNow().inWholeSeconds),
                     )
                 }
-                // 실패 스낵바는 UseCase 가 이미 띄우므로 여기서는 상태 복귀만 한다.
-                .onFailure { dispatch(MealRecordReducerEvent.SubmitFailed) }
+                .onFailure {
+                    dispatch(MealRecordReducerEvent.SubmitFailed)
+                    finishRecord()
+                }
         }
     }
 

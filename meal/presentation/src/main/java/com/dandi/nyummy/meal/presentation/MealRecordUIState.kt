@@ -55,8 +55,8 @@ data class MealCeremonyResult(
  * [isCapturing] 은 셔터 연타를 막고 촬영 실행을 View 에 지시하는 플래그입니다.
  * [isImportingGalleryPhoto] 는 갤러리에서 고른 사진을 검증·복사하는 동안 켜져 촬영과 재선택을 막습니다.
  * [MealCameraPhase.Ceremony] 중에는 재촬영·이탈이 차단되고, 기록이 접수되면([ceremonyResult]) 연출이
- * 맛 리액션으로 넘어갑니다. 접수에 실패하면 [isSubmitFailed] 가 켜지고, 냐미가 기록하지 못했다고 알린 뒤
- * 홈으로 돌아갑니다. [isFinishing] 은 마무리(뒤로가기 신호)가 한 번만 나가도록 완료·닫기·백의
+ * 맛 리액션으로 넘어갑니다. 접수에 실패하면 [isSubmitFailed] 가 켜지고, 안내 스낵바와 함께 곧장 홈으로
+ * 돌아갑니다. [isFinishing] 은 마무리(뒤로가기 신호)가 한 번만 나가도록 완료·닫기·백의
  * 동시 입력을 래치합니다.
  *
  * @property isMailGiftEnabled 보상 상자를 우편함으로 보내는 연출을 보여 줄지. 우편함 아이템 탭이 보일 때만 켭니다.

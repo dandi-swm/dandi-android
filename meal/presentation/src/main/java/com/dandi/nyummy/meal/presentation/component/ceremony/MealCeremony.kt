@@ -13,7 +13,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -117,9 +116,6 @@ internal enum class CeremonyStage {
 
     /** 연출이 끝나 버튼을 보여 준다. */
     Finished,
-
-    /** 기록하지 못해 냐미가 고개를 젓는다. */
-    Failed,
 }
 
 /**
@@ -139,11 +135,9 @@ internal enum class CeremonyStage {
 internal fun MealCeremony(
     photoPath: String,
     result: MealCeremonyResult?,
-    isFailed: Boolean,
     isMailGiftEnabled: Boolean,
     roomBackgroundUrl: String?,
     onCloseClick: () -> Unit,
-    onFailureShown: () -> Unit,
     onDoneClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -152,8 +146,6 @@ internal fun MealCeremony(
     val scope = rememberCoroutineScope()
     val reducedMotion = rememberReducedMotion()
     val latestResult by rememberUpdatedState(result)
-    val latestIsFailed by rememberUpdatedState(isFailed)
-    val latestOnFailureShown by rememberUpdatedState(onFailureShown)
     val latestOnDone by rememberUpdatedState(onDoneClick)
 
     val grade = result?.rewardBoxGrade ?: RewardBoxGrade.NONE
@@ -192,16 +184,8 @@ internal fun MealCeremony(
         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         stage = CeremonyStage.Waiting
 
-        // 응답이 올 때까지 두근두근.
-        snapshotFlow { latestResult != null || latestIsFailed }.first { it }
-
-        // 기록하지 못했으면 냐미가 걱정하며 알린 뒤 홈으로 간다.
-        if (latestIsFailed) {
-            stage = CeremonyStage.Failed
-            delay(FailedHoldMillis)
-            latestOnFailureShown()
-            return@LaunchedEffect
-        }
+        // 응답이 올 때까지 두근두근. 기록하지 못하면 ViewModel 이 곧장 홈으로 보낸다.
+        snapshotFlow { latestResult != null }.first { it }
 
         // 2. 띠욧! 컷인. 터지는 순간의 섬광과 흔들림은 컷인이 onPop 으로 알려 준다.
         if (!reducedMotion) {
@@ -247,13 +231,12 @@ internal fun MealCeremony(
             .graphicsLayer { translationX = shake.value * shakePx },
     ) {
         when (stage) {
-            CeremonyStage.Serving, CeremonyStage.Waiting, CeremonyStage.Failed, CeremonyStage.Reaction -> {
+            CeremonyStage.Serving, CeremonyStage.Waiting, CeremonyStage.Reaction -> {
                 // 홈처럼 방이 화면 전체(시스템 바 뒤까지)를 채우고, 닫기와 제목은 방 위에 뜬다.
                 WaitingScene(
                     photoPath = photoPath,
                     roomBackgroundUrl = roomBackgroundUrl,
                     serveProgress = serve.value,
-                    isFailed = stage == CeremonyStage.Failed,
                     animate = !reducedMotion,
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -440,14 +423,12 @@ private fun MailTarget(
 /**
  * 기다리는 장면: 지금 마이룸에 깔린 방이 홈처럼 화면 전체를 채우고, 숟가락을 든 냐미가 식탁 뒤에 앉아 있으며,
  * 원본 사진 카드가 식탁 위로 비스듬히 올라옵니다. 냐미 머리 위 말풍선이 "맛보는 중이야"라고 말합니다.
- * 기록하지 못하면 냐미가 걱정하는 얼굴로 바뀌어 고개를 젓고, 말풍선이 기록하지 못했다고 알립니다.
  */
 @Composable
 private fun WaitingScene(
     photoPath: String,
     roomBackgroundUrl: String?,
     serveProgress: Float,
-    isFailed: Boolean,
     animate: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -465,12 +446,6 @@ private fun WaitingScene(
         animationSpec = infiniteRepeatable(tween(TwinkleMillis, easing = LinearEasing), RepeatMode.Reverse),
         label = "waitingTwinkle",
     )
-    // 기록하지 못하면 고개를 도리도리 젓는다.
-    val headShake = remember { Animatable(0f) }
-    LaunchedEffect(isFailed) {
-        if (isFailed && animate) headShake.animateTo(0f, headShakeSpec())
-    }
-    val bobs = animate && !isFailed
 
     BoxWithConstraints(modifier = modifier) {
         // 지금 마이룸에 깔린 배경을 홈과 같은 규칙(화면을 덮고 바닥을 맞춤)으로 화면 전체에 깐다.
@@ -508,21 +483,19 @@ private fun WaitingScene(
                     .fillMaxWidth()
                     .height(cardHeight),
             ) {
-                // 걱정하는 냐미는 기다리는 냐미 첫 칸과 같은 자리, 같은 크기로 그려져 있어 그대로 바꿔 끼운다.
                 CeremonyArtView(
-                    art = if (isFailed) MealCeremonyArt.worried else waitingArt,
+                    art = waitingArt,
                     width = catWidth,
                     contentDescription = stringResource(R.string.meal_record_cat_content_description),
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = catBottom)
                         .graphicsLayer {
-                            translationY = if (bobs) -BobLift.toPx() * bob else 0f
-                            rotationZ = headShake.value
+                            translationY = if (animate) -BobLift.toPx() * bob else 0f
                             transformOrigin = TransformOrigin(0.5f, 1f)
                         },
                 )
-                if (animate && !isFailed) {
+                if (animate) {
                     val sparkle = painterResource(R.drawable.ic_meal_sparkle)
                     val tint = NyummyTheme.colors.data.coin
                     Icon(
@@ -568,21 +541,15 @@ private fun WaitingScene(
                     alignment = Alignment.TopCenter,
                 )
                 // 말풍선은 꼬리가 냐미 머리 바로 위에 오게 놓고, 냐미와 함께 들썩인다.
-                androidx.compose.animation.AnimatedContent(
-                    targetState = isFailed,
-                    transitionSpec = { (fadeIn() + scaleIn(initialScale = PopInScale)) togetherWith fadeOut() },
-                    label = "waitingBubble",
+                NyummyVoiceBubble(
+                    text = stringResource(R.string.meal_ceremony_waiting),
+                    tail = NyummyBubbleTail.Bottom,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = catBottom + catHeight * (1f - WaitingHeadTop) + BubbleGap)
-                        .graphicsLayer { translationY = if (bobs) -BobLift.toPx() * bob else 0f }
+                        .graphicsLayer { translationY = if (animate) -BobLift.toPx() * bob else 0f }
                         .semantics { liveRegion = LiveRegionMode.Polite },
-                ) { failed ->
-                    NyummyVoiceBubble(
-                        text = stringResource(if (failed) R.string.meal_ceremony_failed_line else R.string.meal_ceremony_waiting),
-                        tail = NyummyBubbleTail.Bottom,
-                    )
-                }
+                )
             }
             // 원본 사진 카드. 식탁 아래 끝에 걸쳐 비스듬히 놓인다. 사진은 그대로 보여 준다.
             val serveDistancePx = with(density) { ServeDistance.toPx() }
@@ -747,16 +714,6 @@ private fun shakeSpec() = keyframes {
     0f at ShakeMillis
 }
 
-/** 고개를 도리도리 두 번 젓는다(각도). */
-private fun headShakeSpec() = keyframes {
-    durationMillis = HeadShakeMillis
-    -HeadShakeDegrees at HeadShakeMillis / 5
-    HeadShakeDegrees at HeadShakeMillis * 2 / 5
-    -HeadShakeDegrees at HeadShakeMillis * 3 / 5
-    HeadShakeDegrees / 2 at HeadShakeMillis * 4 / 5
-    0f at HeadShakeMillis
-}
-
 /** 통통 뛰기 한 번: 0 이 바닥, 1 이 가장 높은 곳. 바닥에서 잠깐 쉰다. */
 private fun jumpSpec() = keyframes {
     durationMillis = JumpMillis
@@ -776,9 +733,6 @@ private val SkippableStages = setOf(
 
 private const val ServeDamping = 0.62f
 private val ServeDistance = 260.dp
-
-/** 기록하지 못했다고 알린 뒤 홈으로 가기 전까지 머무는 시간. 말풍선을 읽을 수 있게 둔다. */
-private const val FailedHoldMillis = 2_200L
 
 private const val FlashAlpha = 0.5f
 private const val FlashMillis = 180
@@ -816,8 +770,6 @@ private val SparkleSize = 22.dp
 private val SparkleSpread = 96.dp
 private val SparkleRise = 90.dp
 private const val PopInScale = 0.85f
-private const val HeadShakeMillis = 700
-private const val HeadShakeDegrees = 6f
 
 
 /** 기다리는 냐미 그림에서 머리 꼭대기가 있는 높이(그림 높이 대비 비율). 말풍선을 그 위에 놓는다. */

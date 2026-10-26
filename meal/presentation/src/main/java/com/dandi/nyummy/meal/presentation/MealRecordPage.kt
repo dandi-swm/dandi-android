@@ -169,11 +169,9 @@ private fun MealRecordScreen(
         MealCeremony(
             photoPath = phase.photoPath,
             result = uiState.ceremonyResult,
-            isFailed = uiState.isSubmitFailed,
             isMailGiftEnabled = uiState.isMailGiftEnabled,
             roomBackgroundUrl = uiState.roomBackgroundItemId?.let(NyummyCdn::itemUrl),
             onCloseClick = { onIntent(MealRecordIntent.ClickClose) },
-            onFailureShown = { onIntent(MealRecordIntent.CeremonyFailureShown) },
             onDoneClick = { onIntent(MealRecordIntent.ClickDone) },
             modifier = modifier,
         )

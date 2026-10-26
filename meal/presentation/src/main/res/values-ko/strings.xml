@@ -27,7 +27,6 @@
     <string name="meal_ceremony_box_content_description">보상 상자</string>
     <string name="meal_ceremony_mailbox_content_description">우편함</string>
     <string name="meal_ceremony_skip_label">건너뛰기</string>
-    <string name="meal_ceremony_failed_line">음식 기록이 제대로 되지 않았어</string>
     <string name="meal_ceremony_box_badge">식사 기록 보상</string>
     <string name="meal_ceremony_bite_word">앙!</string>
 </resources>
