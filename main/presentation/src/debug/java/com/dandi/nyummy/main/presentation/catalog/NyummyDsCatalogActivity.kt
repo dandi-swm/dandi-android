@@ -33,6 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.dandi.nyummy.common.entity.richText.RichTextVO
+import com.dandi.nyummy.common.entity.tag.TagTone
+import com.dandi.nyummy.common.entity.tag.TagVO
 import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRewardRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
@@ -40,6 +43,9 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteS
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadge
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadgeTone
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRichText
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTag
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTagStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomCta
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomNav
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomSheet
@@ -149,6 +155,8 @@ private val CatalogEntries = listOf(
     CatalogEntry("Reward Row") { RewardRowSection() },
     CatalogEntry("Swipe To Delete") { SwipeToDeleteSection() },
     CatalogEntry("Badge, HUD Pill") { BadgeHudSection() },
+    CatalogEntry("Rich Text") { RichTextSection() },
+    CatalogEntry("Tag") { TagSection() },
     CatalogEntry("Progress") { ProgressSection() },
     CatalogEntry("Section Header, Divider, Skeleton") { StructureSection() },
     CatalogEntry("Top Bar, Tabs, Step Indicator") { NavigationSection() },
@@ -493,6 +501,45 @@ private fun BadgeHudSection() {
         NyummyCoinPill(coins = "1,240")
         NyummyStreakPill(days = 7)
         NyummyCoinPill(coins = "1,240", onAddClick = {})
+    }
+}
+
+@Composable
+private fun RichTextSection() {
+    NyummyRichText(listOf(RichTextVO("새 집사\n스타터 묶음", "displayM", "contentPrimary")))
+    NyummyRichText(
+        listOf(
+            RichTextVO("전체보기", "labelS", "contentSecondary"),
+            RichTextVO(icon = "chevronRight", color = "contentSecondary"),
+        ),
+    )
+    NyummyRichText(
+        listOf(
+            RichTextVO(icon = "clock", color = "contentTertiary"),
+            RichTextVO("9시간 후 바뀌어요", "labelS", "contentTertiary"),
+        ),
+    )
+    NyummyRichText(listOf(RichTextVO(icon = "coin"), RichTextVO("900", "numberS", "contentPrimary")))
+    NyummyRichText(
+        listOf(
+            RichTextVO("20%", "numberS", "contentPromo"),
+            RichTextVO(icon = "coin"),
+            RichTextVO("280 ", "numberS", "contentPrimary"),
+            RichTextVO("350", "labelS", "contentTertiary", strike = true),
+        ),
+    )
+    // 모르는 토큰은 bodyM, contentPrimary로 그리고 모르는 아이콘은 뺀다.
+    NyummyRichText(listOf(RichTextVO("모르는 토큰", "unknown", "unknown"), RichTextVO(icon = "unknown")))
+}
+
+@Composable
+private fun TagSection() {
+    NyummyTagStyle.entries.forEach { style ->
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
+            NyummyTag(TagVO("한정", TagTone.PROMO), style = style)
+            NyummyTag(TagVO("새 집사 전용", TagTone.SUCCESS), style = style)
+            NyummyTag(TagVO("신상품", TagTone.NEUTRAL), style = style)
+        }
     }
 }
 
