@@ -1,5 +1,6 @@
 package com.dandi.nyummy.meal.presentation
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
@@ -15,6 +16,8 @@ import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.room.domain.GetRoomBackgroundUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlin.time.TimeSource
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -26,18 +29,32 @@ class MealRecordViewModel @Inject constructor(
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
     private val analyticsHelper: AnalyticsHelper,
+    private val savedStateHandle: SavedStateHandle,
     remoteConfigHelper: RemoteConfigHelper,
     getRoomBackground: GetRoomBackgroundUseCase,
 ) : MviViewModel<MealRecordIntent, MealRecordUIState, MealRecordReducerEvent>(
-    // 상자를 받을 우편함 아이템 탭이 보일 때만 상자를 우편함으로 보내는 연출을 한다.
-    MealRecordUIState(isMailGiftEnabled = remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)),
+    MealRecordUIState(
+        // 앱이 백그라운드에서 종료됐다 돌아왔으면 저장해 둔 사실로 하던 단계를 되살린다.
+        phase = MealRecordSnapshot.readFrom(savedStateHandle)?.toPhase() ?: MealCameraPhase.Preview,
+        // 상자를 받을 우편함 아이템 탭이 보일 때만 상자를 우편함으로 보내는 연출을 한다.
+        isMailGiftEnabled = remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled),
+    ),
 ) {
 
     /** 화면에 들어온 순간. 저장까지 걸린 시간을 잰다. */
     private val openedAt = TimeSource.Monotonic.markNow()
 
+    /** 앱이 종료됐다 되살아난 화면인지. 진입은 종료 전에 이미 기록했다. */
+    private val isRestored = MealRecordSnapshot.readFrom(savedStateHandle) != null
+
     init {
-        analyticsHelper.logEvent(AnalyticsEvent.MealRecordOpen)
+        if (!isRestored) analyticsHelper.logEvent(AnalyticsEvent.MealRecordOpen)
+        // 앱이 백그라운드에서 종료돼도 돌아와서 이어 갈 수 있게, 되살리는 데 필요한 사실을 저장해 둔다.
+        viewModelScope.launch {
+            uiState.map { MealRecordSnapshot.of(it.phase) }
+                .distinctUntilChanged()
+                .collect { it.writeTo(savedStateHandle) }
+        }
         // 연출의 고양이방은 지금 마이룸에 깔린 배경으로 그린다. 촬영하는 동안 미리 읽어 두고, 못 읽으면 기본 빈 방이다.
         viewModelScope.launch {
             getRoomBackground()?.let { dispatch(MealRecordReducerEvent.RoomBackgroundLoaded(it)) }
