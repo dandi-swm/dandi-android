@@ -1,70 +1,11 @@
 # 냐미(Nyummy) Android
 
-단디 팀의 AI 식사 기록 앱 냐미(Nyummy)의 안드로이드 저장소. Codex 스킬과 서브에이전트 운영 규칙을 사용한다. feature 모듈은 `intro`/`auth`/`home`/`meal`/`history` 5세트와 앱 셸 `main`이 있다(총 31모듈). 새 feature를 추가할 때는 4모듈 구조와 `docs/architecture` 규칙을 따르고, 가장 완성도 높은 `auth`/`history`(실 API 연동)와 `common` 패턴을 우선 참고한다.
+단디 팀의 AI 식사 기록 앱 냐미(Nyummy)의 안드로이드 저장소. Codex 스킬과 서브에이전트 운영 규칙을 사용한다.
 
-## 현재 구현 현황 (2026-08-31)
-
-- 등록 라우트 7개: `""`(인트로 루트) `/login` `/login/email` `/signup` `/home` `/meal/record` `/history` — `AppRouteRegistry.kt` 기준.
-- ApiService 2개: `AuthApiService`(login/signup/email-verification/confirm/refresh 5개), `HistoryApiService`(monthly/daily/상세/이름수정/삭제 5개).
-- 빈 스캐폴드 4개: `main:entity` `main:data` `home:data` `meal:data`.
-- 홈은 100% 목업(`HomeMockData`), 식사 기록은 CameraX 촬영→확인까지만이고 제출(ClickSubmit) 미연동. 서버 식사 API는 구현 완료 상태이므로 `MealRecordViewModel.kt`의 "백엔드 미구현" TODO 주석은 낡은 서술이다 — 이 주석을 근거로 연동을 미루지 말 것.
-- 소셜 로그인(카카오·네이버·구글)·비밀번호 찾기 미구현(버튼 UI만). 테스트 계정 로그인 버튼은 debug 빌드에서 `local.properties`의 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`가 있을 때만 노출 — 자격 증명을 소스에 하드코딩 금지(공개 저장소).
-
-## 빌드 / 테스트
-
-```bash
-export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  # 시스템 JDK 없을 때
-./gradlew :app:assembleDebug    # 빌드 검증 (코드 수정 후 필수 — gradle-build-check 스킬)
-./gradlew test                  # 단위 테스트 (run-android-tests 스킬)
-```
-
-코드를 수정한 턴은 반드시 빌드 검증 후 종료한다. API 키/BASE_URL은 `local.properties`(`API_KEY`, debug는 `API_BASE_URL_DEV`·release는 `API_BASE_URL_PROD`) → BuildConfig 주입(debug 전용 테스트 계정 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`도 동일). 베이스 URL은 debug→개발 서버, release→운영 서버이며 값이 없으면 placeholder로 빌드만 된다(release는 운영 키만 읽는다). 단위 테스트는 auth/history/intro/main 모듈에, 디자인 시스템 토큰 계약 테스트는 `common/presentation`의 단위 테스트에, 컴포넌트 UI 테스트는 androidTest에 있다.
-
-## 불변 규칙 (위반 금지)
-
-1. **의존 방향**: `presentation → domain → entity`, `data → domain → entity`. presentation↔data 직접 의존 금지. entity/domain은 순수 Kotlin/JVM(Android 의존 금지).
-2. **feature = 4모듈**: `<feature>/{entity,domain,data,presentation}`. 생성은 `make-new-feature-module` 스킬로만.
-3. **MVI**: View→`onIntent(Intent)` 단일 진입, 상태 변이는 `dispatch(ReducerEvent)`→`reduce()` 한 곳에서만. UIState 컬렉션은 ImmutableList/ImmutableSet.
-4. **디자인 토큰**: 색, 글자, 간격, 모서리는 `NyummyTheme.colors/typography/spacing/radius/...`만 쓴다(텍스트는 `NyummyText` 경유). raw hex / raw sp 금지. 토큰 값 수정은 `common/presentation/.../designsystem/{token,theme}/`에서만 하고 계약 테스트 기대값도 함께 바꾼다. 자세한 규칙은 `docs/architecture/design-system.md`.
-5. **DTO/VO**: DTO는 `@Serializable`+전 필드 nullable, VO는 비-nullable+기본값. 변환은 data 레이어 `toVO()`에서만.
-6. **에러**: data는 `HttpResponseException` throw만, 처리(다이얼로그/네비게이션)는 domain UseCase에서 `isCommonErrorHandling()`/`handlingErrorOnUseCase<ErrorType>()`로.
-7. **네비게이션**: 화면 이동은 `navigationHelper.navigateTo(Page)`만. 새 화면은 `AppRouteRegistry.kt`에 등록.
-
-## 네이밍
-
-`{Feature}Page(=Composable & domain의 Page object) / {Feature}UIState / {Feature}Intent / {Feature}ReducerEvent / {Feature}ViewModel / {Feature}Repository(Impl) / {Feature}DataSource / {Feature}ApiService / {Feature}DTO / {Feature}VO / {Feature}DataModule / {Feature}ErrorType(domain에 위치)`
-
-## 상세 문서
-
-- [docs/architecture/module-structure.md](docs/architecture/module-structure.md) — 모듈 규칙, build.gradle.kts 3종 템플릿
-- [docs/architecture/mvi.md](docs/architecture/mvi.md) — MviViewModel 계약, 페이징 상태 패턴
-- [docs/architecture/navigation.md](docs/architecture/navigation.md) — Navigation3, synthetic backstack, 딥링크
-- [docs/architecture/error-handling.md](docs/architecture/error-handling.md) — 에러 전파/처리 체인
-- [docs/architecture/data-layer.md](docs/architecture/data-layer.md) — DTO/VO, DataSource, Hilt DataModule, 로컬 저장소
-- [docs/architecture/design-system.md](docs/architecture/design-system.md) — 토큰 구조, Figma 매핑 명세
-- [docs/architecture/performance.md](docs/architecture/performance.md) — TTI, JankStats, Baseline Profile
-- [docs/DESIGN_TO_CODE_GUIDE.md](docs/DESIGN_TO_CODE_GUIDE.md) — 디자인 스펙 → 코드 사용자 가이드
-
-일부 문서의 코드 예시는 템플릿 시절 레거시 예시(문서 내 주석 표기). 실제 패턴이 필요하면 auth/history/intro 모듈을 본다.
+**작업을 시작하기 전에 [CLAUDE.md](CLAUDE.md)를 먼저 읽는다.** 프로젝트 소개, 현재 구현 현황, 빌드/테스트, 불변 규칙, 네이밍, 상세 문서, 스킬 인덱스는 모두 그 파일에 있고 Codex도 똑같이 따른다. 두 파일에 같은 내용을 따로 적으면 한쪽이 낡으므로, 이 파일에는 Codex에만 해당하는 내용만 적는다.
 
 ## Subagent 운영
 
 - Kotlin/Gradle 기능 코드를 수정한 뒤 최종 보고 또는 커밋 전: `architecture-guardian`으로 변경 파일을 리뷰한다.
 - `architecture-guardian`이 `HIGH` 또는 `MEDIUM`으로 보고한 항목은 수정한 뒤 `gradle-build-check`를 다시 실행한다. 심각도 기준은 `.codex/agents/architecture-guardian.toml`에 정의되어 있다.
-- Gradle/Kotlin 빌드 또는 테스트가 실패하고 첫 번째 에러만으로 즉시 수정 방향이 명확하지 않거나 로그가 길 때: `build-fixer`에 원래 실패한 명령과 핵심 에러를 전달해 수정하게 한다.
 - subagent를 사용할 수 없으면 같은 검토를 메인 에이전트가 직접 수행하고, 최종 보고에 미사용 사유를 적는다.
-
-## 스킬 인덱스
-
-| 작업 | 스킬 |
-|---|---|
-| 디자인 스펙(Figma/이미지/PDF) → feature 전체 | `design-to-feature` |
-| Figma 토큰 → 테마 갱신 | `design-token-sync` |
-| 새 feature 4모듈 스캐폴딩 | `make-new-feature-module` |
-| 네비게이션/라우트/딥링크 규칙 (화면·경로·딥링크 추가/수정 시) | `navigation-conventions` |
-| 예시 JSON → 데이터 레이어 | `api-dto-code-gen` |
-| Composable 1개 추가 | `compose-component` |
-| 빌드 검증 (수정 후 필수) | `gradle-build-check` |
-| 테스트 실행 | `run-android-tests` |
-| 템플릿 → 신규 프로젝트 (디자인 스펙 Figma/이미지/PDF 동반 시 토큰+화면 생성까지 연계) | `new-project-from-archi` |
-| 에뮬레이터 화면 vs 디자인 비교 | `verify-screen` |
