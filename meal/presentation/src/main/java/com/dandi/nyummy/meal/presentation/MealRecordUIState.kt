@@ -47,7 +47,8 @@ sealed interface MealSubmitStatus {
 /**
  * 연출 장면입니다. 화면은 지금 장면의 움직임만 재생하고, 다음 장면은 [nextStage] 가 정합니다.
  *
- * @property isSkippable 건너뛰기 칩으로 끝 장면으로 건너뛸 수 있는지. 띠욧부터 건너뛸 수 있고, 접수 전에는 건너뛸 수 없습니다.
+ * @property isSkippable 건너뛰기 칩으로 건너뛸 수 있는지. 띠욧 컷신만 건너뛸 수 있고(접수된 뒤에만 나오는 장면),
+ * 이어지는 먹었어요와 상자 연출은 그대로 보여 줍니다.
  */
 enum class MealCeremonyStage(val isSkippable: Boolean = false) {
     /** 사진 카드가 식탁 위로 올라온다. */
@@ -60,13 +61,13 @@ enum class MealCeremonyStage(val isSkippable: Boolean = false) {
     Reaction(isSkippable = true),
 
     /** 냐미가 맛있게 먹었어요. */
-    Ate(isSkippable = true),
+    Ate,
 
     /** 진한 그린 무대 위에 상자가 등장하고 등급이 오른다. */
-    BoxReveal(isSkippable = true),
+    BoxReveal,
 
     /** 상자가 우편 아이콘으로 날아간다. */
-    BoxSend(isSkippable = true),
+    BoxSend,
 
     /** 연출이 끝나 완료 버튼을 보여 준다. */
     Finished,
@@ -106,10 +107,6 @@ fun MealCameraPhase.Ceremony.nextStage(isMailGiftEnabled: Boolean): MealCeremony
     MealCeremonyStage.BoxSend -> null
     MealCeremonyStage.Finished -> MealCeremonyStage.Finished
 }
-
-/** 건너뛰면 갈 장면. 상자를 보내는 기록이면 상자는 이미 우편함에 있으니 null(곧장 홈으로)입니다. */
-fun MealCameraPhase.Ceremony.skippedStage(isMailGiftEnabled: Boolean): MealCeremonyStage? =
-    if (sendsRewardBox(isMailGiftEnabled)) null else MealCeremonyStage.Finished
 
 /**
  * 카메라 권한 상태입니다.

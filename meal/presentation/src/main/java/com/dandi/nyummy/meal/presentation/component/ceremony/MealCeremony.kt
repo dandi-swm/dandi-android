@@ -108,8 +108,8 @@ import kotlinx.coroutines.launch
  * 알립니다. 화면이 다시 만들어지면 지금 장면만 처음부터 다시 재생하고, 지난 장면의 결과(올라온 사진 카드,
  * 우편함에 든 상자)는 끝난 모습으로 둡니다.
  *
- * 띠욧부터는 오른쪽 위 건너뛰기 칩([onSkipClick])으로 끝 장면으로 건너뜁니다. 기기에서 애니메이션을 끄면 섬광, 흔들림,
- * 컷인 없이 장면만 바꿉니다.
+ * 띠욧 컷신은 오른쪽 위 건너뛰기 칩([onSkipClick])으로 건너뜁니다. 컷신만 건너뛰고 먹었어요와 상자 연출은 그대로
+ * 보여 줍니다. 기기에서 애니메이션을 끄면 섬광, 흔들림, 컷인 없이 장면만 바꿉니다.
  *
  * @param rewardBoxGrade 접수된 기록의 보상 상자 등급. 접수 전이면 [RewardBoxGrade.NONE] 이다.
  * @param sendsRewardBox 상자를 우편함으로 보내는 장면까지 보여 줄지
@@ -159,8 +159,12 @@ internal fun MealCeremony(
             // 2. 띠욧! 컷인. 터지는 순간의 섬광과 흔들림은 컷인이 onPop 으로 알려 준다. 애니메이션을 끄면 곧장 넘어간다.
             MealCeremonyStage.Reaction -> if (!reducedMotion) delay(TasteReactionTotalMillis)
 
-            // 3. 냐미가 맛있게 먹었어요.
-            MealCeremonyStage.Ate -> delay(AteMillis)
+            // 3. 냐미가 맛있게 먹었어요. 띠욧을 건너뛰었으면 섬광과 흔들림이 남지 않게 걷는다.
+            MealCeremonyStage.Ate -> {
+                flash.snapTo(0f)
+                shake.snapTo(0f)
+                delay(AteMillis)
+            }
 
             // 4. 상자 등장과 승급 → 우편함에 쏙 → 곧장 홈으로. 따로 끝 화면을 두지 않는다.
             MealCeremonyStage.BoxReveal -> delay(if (reducedMotion) ReducedRevealMillis else rewardBoxGrade.stageMillis())
@@ -171,12 +175,8 @@ internal fun MealCeremony(
                 delay(MailGulpMillis + SentHoldMillis)
             }
 
-            // 끝 장면. 띠욧에서 건너뛰었으면 섬광과 흔들림이 남지 않게 걷는다.
-            MealCeremonyStage.Finished -> {
-                flash.snapTo(0f)
-                shake.snapTo(0f)
-                return@LaunchedEffect
-            }
+            // 끝 장면. 완료 버튼을 기다린다.
+            MealCeremonyStage.Finished -> return@LaunchedEffect
         }
         latestOnStageFinished(stage)
     }
@@ -290,8 +290,8 @@ internal fun MealCeremony(
             )
         }
 
-        // 건너뛰기: 상단 바 오른쪽에 둔다. 상자가 우편함으로 날아갈 때는 그 자리에 우편 아이콘이 떠서 숨긴다(곧 홈으로 간다).
-        if (stage.isSkippable && stage != MealCeremonyStage.BoxSend) {
+        // 건너뛰기: 띠욧 컷신 동안 상단 바 오른쪽에 둔다.
+        if (stage.isSkippable) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)

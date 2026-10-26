@@ -26,7 +26,6 @@ import com.dandi.nyummy.meal.presentation.isAccepted
 import com.dandi.nyummy.meal.presentation.nextStage
 import com.dandi.nyummy.meal.presentation.rewardBoxGrade
 import com.dandi.nyummy.meal.presentation.sendsRewardBox
-import com.dandi.nyummy.meal.presentation.skippedStage
 import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -98,7 +97,7 @@ class MealCeremonyDebugActivity : ComponentActivity() {
     }
 }
 
-/** 실제 화면의 ViewModel 처럼 연출 상태를 들고, 같은 장면 규칙([nextStage], [skippedStage])으로 넘긴다. */
+/** 실제 화면의 ViewModel 처럼 연출 상태를 들고, 같은 장면 규칙([nextStage])으로 넘긴다. */
 internal class CeremonyDebugViewModel : ViewModel() {
 
     var ceremony by mutableStateOf(MealCameraPhase.Ceremony(photoPath = "", source = MealPhotoSource.CAMERA))
@@ -125,11 +124,7 @@ internal class CeremonyDebugViewModel : ViewModel() {
         return true
     }
 
-    /** 끝 장면으로 건너뛴다. 곧장 마칠 차례면 false 다. */
-    fun skip(isMailGiftEnabled: Boolean): Boolean {
-        if (!ceremony.stage.isSkippable) return true
-        val next = ceremony.skippedStage(isMailGiftEnabled) ?: return false
-        ceremony = ceremony.copy(stage = next)
-        return true
-    }
+    /** 띠욧 컷신만 건너뛴다. 연출을 마칠 차례면 false 다. */
+    fun skip(isMailGiftEnabled: Boolean): Boolean =
+        !ceremony.stage.isSkippable || advance(ceremony.stage, isMailGiftEnabled)
 }

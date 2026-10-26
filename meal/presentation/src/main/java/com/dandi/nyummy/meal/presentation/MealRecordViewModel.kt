@@ -245,13 +245,10 @@ class MealRecordViewModel @Inject constructor(
         }
     }
 
-    /** 띠욧부터는 건너뛰기로 끝 장면으로 간다. 상자를 보내는 기록이면 상자는 이미 우편함에 있으니 곧장 홈으로 간다. */
+    /** 띠욧 컷신은 건너뛰기로 넘긴다. 컷신만 건너뛰고, 이어지는 먹었어요와 상자 연출은 그대로 보여 준다. */
     private fun skipCeremony() {
         val ceremony = currentState.phase as? MealCameraPhase.Ceremony ?: return
-        if (!ceremony.stage.isSkippable) return
-        ceremony.skippedStage(currentState.isMailGiftEnabled)
-            ?.let { dispatch(MealRecordReducerEvent.CeremonyStageChanged(it)) }
-            ?: finishRecord()
+        if (ceremony.stage.isSkippable) advanceCeremony(ceremony.stage)
     }
 
     /**
