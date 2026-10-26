@@ -96,8 +96,9 @@ enum class BoxOpeningFailure {
 }
 
 /**
- * 보상 상자 열기 연출.
+ * 보상 상자 열기 연출. 보상 모두 받기도 같은 연출로 받은 보상의 합계를 보여 준다.
  *
+ * @property mailId 여는 우편. 모두 받기면 우편 id와 겹치지 않는 음수다.
  * @property closedImageUrl 닫힌 상자 그림. 등장하고 흔들릴 때 보인다.
  * @property openedImageUrl 열린 상자 그림. 터지는 순간부터 보인다.
  * @property mailTitle 우편 제목. 공개 화면의 제목 아래에 보인다.

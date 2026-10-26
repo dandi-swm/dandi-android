@@ -303,8 +303,9 @@ internal fun RewardBoxOpening(
         val density = LocalDensity.current
         val topInset = with(density) { WindowInsets.systemBars.getTop(this).toDp() }
         val bottomInset = with(density) { WindowInsets.systemBars.getBottom(this).toDp() }
-        val layout = remember(maxWidth, maxHeight, topInset, bottomInset, opening.rewards.size) {
-            BoxOpeningLayout.of(maxHeight, topInset, bottomInset, opening.rewards.size)
+        val rewardCellCount = opening.rewards.size.coerceAtMost(MaxRewardCells)
+        val layout = remember(maxWidth, maxHeight, topInset, bottomInset, rewardCellCount) {
+            BoxOpeningLayout.of(maxHeight, topInset, bottomInset, rewardCellCount)
         }
         val centerX = maxWidth / 2
 
@@ -437,6 +438,7 @@ internal fun RewardBoxOpening(
 /**
  * 상자에서 나온 보상. 하나면 크게, 여럿이면 한 줄에 셋씩 놓는다.
  * 저마다 조금씩 늦게 상자 자리에서 솟아올라 제자리에 커지며 선다.
+ * 모두 받기처럼 칸보다 많으면 마지막 칸에 나머지 수를 보여 준다.
  */
 @Composable
 private fun BoxRewards(
@@ -447,34 +449,61 @@ private fun BoxRewards(
 ) {
     if (rewards.isEmpty()) return
     val single = rewards.size == 1
-    val rows = rewards.chunked(RewardsPerRow)
+    val shown = if (rewards.size > MaxRewardCells) rewards.take(MaxRewardCells - 1) else rewards
+    val moreCount = rewards.size - shown.size
+    val cellCount = shown.size + if (moreCount > 0) 1 else 0
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(RewardRowGap),
     ) {
-        var index = 0
-        rows.forEach { row ->
+        (0 until cellCount).chunked(RewardsPerRow).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(RewardCellGap)) {
-                row.forEach { reward ->
-                    val order = index++
-                    RewardCell(
-                        reward = reward,
-                        single = single,
-                        modifier = Modifier.graphicsLayer {
-                            val t = staggered(progress(), order, rewards.size)
-                            val rise = RiseEasing.transform(t)
-                            val grow = GrowEasing.transform(t)
-                            translationY = layout.riseDistance.toPx() * (1f - rise)
-                            val scale = lerp(RewardStartScale, 1f, grow)
-                            scaleX = scale
-                            scaleY = scale
-                            alpha = (t * RewardFadeSpeed).coerceAtMost(1f)
-                        },
-                    )
+                row.forEach { order ->
+                    val cellModifier = Modifier.graphicsLayer {
+                        val t = staggered(progress(), order, cellCount)
+                        val rise = RiseEasing.transform(t)
+                        val grow = GrowEasing.transform(t)
+                        translationY = layout.riseDistance.toPx() * (1f - rise)
+                        val scale = lerp(RewardStartScale, 1f, grow)
+                        scaleX = scale
+                        scaleY = scale
+                        alpha = (t * RewardFadeSpeed).coerceAtMost(1f)
+                    }
+                    val reward = shown.getOrNull(order)
+                    if (reward != null) {
+                        RewardCell(reward = reward, single = single, modifier = cellModifier)
+                    } else {
+                        MoreRewardsCell(count = moreCount, modifier = cellModifier)
+                    }
                 }
             }
         }
+    }
+}
+
+/** 칸에 다 놓지 못한 보상의 수. 아이콘 자리에 +N을 크게 쓴다. */
+@Composable
+private fun MoreRewardsCell(
+    count: Int,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.width(RewardCellWidth),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(RewardLabelGap),
+    ) {
+        Box(modifier = Modifier.size(RewardIcon), contentAlignment = Alignment.Center) {
+            RewardHeadline(
+                text = stringResource(R.string.mailbox_box_reward_more_count, count),
+                style = NyummyTheme.typography.titleL,
+            )
+        }
+        RewardHeadline(
+            text = stringResource(R.string.mailbox_box_reward_more),
+            style = NyummyTheme.typography.labelL,
+            stroke = SmallLabelStroke,
+        )
     }
 }
 
@@ -521,8 +550,10 @@ private fun RewardCell(
 /** 보상을 하나씩 조금 늦게 솟아오르게 한다. 전체 진행 [progress]에서 [index]번째 보상의 진행(0~1)을 구한다. */
 private fun staggered(progress: Float, index: Int, count: Int): Float {
     if (count <= 1) return progress
-    val span = 1f - RewardStagger * (count - 1)
-    return ((progress - RewardStagger * index) / span).coerceIn(0f, 1f)
+    // 보상이 많으면 간격을 좁혀, 늦게 나오는 보상도 솟아오를 시간을 남긴다.
+    val step = minOf(RewardStagger, MaxStaggerTotal / (count - 1))
+    val span = 1f - step * (count - 1)
+    return ((progress - step * index) / span).coerceIn(0f, 1f)
 }
 
 /** 좌우로 한 번 흔들고 제자리로 온다. */
@@ -610,6 +641,9 @@ private val RewardLabelHeight = 24.dp
 private val SmallLabelStroke = 4.dp
 
 private const val RewardsPerRow = 3
+
+/** 보상 칸은 세 줄까지. 넘치면 계속하기 버튼과 겹친다. */
+private const val MaxRewardCells = RewardsPerRow * 3
 private const val StageAlpha = 0.94f
 private const val StageEnterMillis = 220
 private const val StageLeaveMillis = 260
@@ -636,6 +670,7 @@ private const val RevealBoxScale = 0.72f
 private const val RewardsDelayMillis = 160L
 private const val RewardsInMillis = 720
 private const val RewardStagger = 0.15f
+private const val MaxStaggerTotal = 0.6f
 private const val RewardStartScale = 0.3f
 private const val RewardFadeSpeed = 3f
 private const val TitleStart = 0.3f

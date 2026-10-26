@@ -178,24 +178,125 @@ class MailboxItemTabViewModelTest {
     }
 
     @Test
-    fun `모두 받기에 성공하면 불러온 우편을 받았어요로 바꾸고 목록을 다시 받는다`() = runTest(testDispatcher) {
-        repository.mailPage = MailPageVO(mails = listOf(mail(1), mail(2)))
+    fun `모두 받기를 누르면 받을 상자 중 가장 높은 등급으로 연출을 띄우고 받은 보상의 합계로 연다`() = runTest(testDispatcher) {
+        repository.mailPage = MailPageVO(
+            mails = listOf(box(1, imageId = 1L), box(2, imageId = 3L).copy(isClaimed = true), box(3, imageId = 2L), mail(4)),
+        )
+        val claimGate = CompletableDeferred<RewardVO>()
+        repository.claimAllOverride = { claimGate.await() }
         val viewModel = loadedViewModel()
         val requestsBefore = repository.mailRequests.size
-        // 다시 받기 전에 화면 상태를 보려고 목록 응답을 멈춰 둔다.
-        val gate = CompletableDeferred<MailPageVO>()
-        repository.mailsOverride = { gate.await() }
 
         viewModel.onIntent(MailboxIntent.ClaimAllMails)
         runCurrent()
 
+        // 이미 받은 골드 상자는 빼고, 받을 상자 중 가장 높은 실버 상자다.
+        val waiting = viewModel.uiState.value.boxOpening!!
+        assertEquals(BoxOpeningPhase.Waiting, waiting.phase)
+        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/closed/2.png", waiting.closedImageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/opened/2.png", waiting.openedImageUrl)
+        assertTrue(viewModel.uiState.value.items.isClaimingAll)
+
+        // 다시 받기 전에 화면 상태를 보려고 목록 응답을 멈춰 둔다.
+        val mailsGate = CompletableDeferred<MailPageVO>()
+        repository.mailsOverride = { mailsGate.await() }
+        claimGate.complete(
+            RewardVO(
+                coin = RewardCoinVO(quantity = 300, imageId = 1L),
+                items = listOf(RewardItemVO(imageId = 5L, name = "가을 담요", quantity = 2)),
+            ),
+        )
+        runCurrent()
+
+        val opening = viewModel.uiState.value.boxOpening!!
+        assertEquals(BoxOpeningPhase.Opening, opening.phase)
+        assertEquals(
+            listOf(
+                BoxRewardUiModel.Coin(imageUrl = "https://cdn.nyummy.co.kr/coins/1.png", quantity = 300),
+                BoxRewardUiModel.Item(imageUrl = "https://cdn.nyummy.co.kr/items/5.png", name = "가을 담요", quantity = 2),
+            ),
+            opening.rewards,
+        )
         val items = viewModel.uiState.value.items
         assertTrue(items.mails.all { it.isClaimed })
         assertFalse(items.isClaimingAll)
         assertEquals(1, repository.claimAllCount)
         assertEquals(requestsBefore + 1, repository.mailRequests.size)
-        gate.complete(MailPageVO.empty)
+        assertTrue(messageHelper.snackBars.isEmpty())
+        mailsGate.complete(MailPageVO.empty)
         advanceUntilIdle()
+    }
+
+    @Test
+    fun `상자 우편 없이 모두 받으면 상자 그림 없이 연다`() = runTest(testDispatcher) {
+        repository.mailPage = MailPageVO(mails = listOf(mail(1)))
+        repository.claimAllOverride = { RewardVO(coin = RewardCoinVO(quantity = 100)) }
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MailboxIntent.ClaimAllMails)
+        advanceUntilIdle()
+
+        val opening = viewModel.uiState.value.boxOpening!!
+        assertEquals(BoxOpeningPhase.Opening, opening.phase)
+        assertEquals("", opening.closedImageUrl)
+        assertEquals("", opening.openedImageUrl)
+        assertEquals(listOf(BoxRewardUiModel.Coin(imageUrl = "", quantity = 100)), opening.rewards)
+    }
+
+    @Test
+    fun `모두 받기로 받은 보상이 없으면 무대가 걷힌 뒤 안내하고 목록을 다시 받는다`() = runTest(testDispatcher) {
+        repository.mailPage = MailPageVO(mails = listOf(mail(1)))
+        val viewModel = loadedViewModel()
+        val requestsBefore = repository.mailRequests.size
+
+        viewModel.onIntent(MailboxIntent.ClaimAllMails)
+        advanceUntilIdle()
+
+        assertEquals(BoxOpeningFailure.AlreadyGone, viewModel.uiState.value.boxOpening?.failure)
+        assertFalse(viewModel.uiState.value.items.mails.single().isClaimed)
+        assertTrue(messageHelper.snackBars.isEmpty())
+        assertEquals(requestsBefore, repository.mailRequests.size)
+
+        viewModel.onIntent(MailboxIntent.BoxOpeningFailureShown)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.boxOpening)
+        assertEquals("이미 받았거나 기한이 지난 우편이에요", messageHelper.snackBars.single().messageText)
+        assertEquals(requestsBefore + 1, repository.mailRequests.size)
+    }
+
+    @Test
+    fun `모두 받기에 실패하면 무대가 걷힌 뒤 오류를 안내한다`() = runTest(testDispatcher) {
+        repository.mailPage = MailPageVO(mails = listOf(mail(1)))
+        repository.claimAllOverride = { throw httpException(400) }
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MailboxIntent.ClaimAllMails)
+        advanceUntilIdle()
+
+        assertEquals(BoxOpeningFailure.Error, viewModel.uiState.value.boxOpening?.failure)
+        val items = viewModel.uiState.value.items
+        assertFalse(items.isClaimingAll)
+        assertFalse(items.mails.single().isClaimed)
+
+        viewModel.onIntent(MailboxIntent.BoxOpeningFailureShown)
+
+        assertNull(viewModel.uiState.value.boxOpening)
+        assertEquals(IconType.ERROR, messageHelper.snackBars.single().iconType)
+    }
+
+    @Test
+    fun `상자 연출 중에는 모두 받기를 하지 않는다`() = runTest(testDispatcher) {
+        repository.mailPage = MailPageVO(mails = listOf(box(1), mail(2)))
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MailboxIntent.ClaimMail(1))
+        advanceUntilIdle()
+        viewModel.onIntent(MailboxIntent.ClaimAllMails)
+        advanceUntilIdle()
+
+        assertEquals(0, repository.claimAllCount)
+        assertEquals(1L, viewModel.uiState.value.boxOpening?.mailId)
     }
 
     @Test
@@ -422,6 +523,7 @@ private class FakeMailboxRepository : MailboxRepository {
     var claimOverride: suspend (Long) -> RewardVO = { RewardVO.empty }
     val mailRequests = mutableListOf<Pair<Long?, Int>>()
     val claimedMailIds = mutableListOf<Long>()
+    var claimAllOverride: suspend () -> RewardVO = { RewardVO.empty }
     var claimAllCount = 0
     val deletedMailIds = mutableListOf<Long>()
     val restoredMailIds = mutableListOf<Long>()
@@ -438,7 +540,7 @@ private class FakeMailboxRepository : MailboxRepository {
 
     override suspend fun claimAllMails(): RewardVO {
         claimAllCount++
-        return RewardVO.empty
+        return claimAllOverride()
     }
 
     override suspend fun deleteMail(mailId: Long) {

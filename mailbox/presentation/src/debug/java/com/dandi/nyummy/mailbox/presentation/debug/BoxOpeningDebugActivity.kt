@@ -33,10 +33,10 @@ import kotlinx.coroutines.delay
  * adb shell am start -n com.dandi.nyummy/com.dandi.nyummy.mailbox.presentation.debug.BoxOpeningDebugActivity \
  *   --el box 3 --el delay 1500 --es fail none --ei coin 100 --ei items 2
  *
- * - box: 상자 번호(1 브론즈, 2 실버, 3 골드)
+ * - box: 상자 번호(1 브론즈, 2 실버, 3 골드). 0이면 상자 그림 없이 빛만 보인다(상자 없는 모두 받기).
  * - delay: 응답이 오기까지(ms). -1이면 응답 없이 기다림 장면에 머문다.
  * - fail: none, gone(이미 받았거나 기한 지남), error(받지 못함)
- * - coin: 받은 코인(0이면 코인 없음), items: 받은 아이템 수(0~3)
+ * - coin: 받은 코인(0이면 코인 없음), items: 받은 아이템 수(0~20, 샘플 아이템을 돌려 쓴다)
  */
 class BoxOpeningDebugActivity : ComponentActivity() {
 
@@ -46,7 +46,7 @@ class BoxOpeningDebugActivity : ComponentActivity() {
         val responseDelay = intent.getLongExtra(EXTRA_DELAY, DEFAULT_DELAY_MILLIS)
         val fail = intent.getStringExtra(EXTRA_FAIL) ?: FAIL_NONE
         val coin = intent.getIntExtra(EXTRA_COIN, DEFAULT_COIN)
-        val itemCount = intent.getIntExtra(EXTRA_ITEMS, 0).coerceIn(0, SAMPLE_ITEMS.size)
+        val itemCount = intent.getIntExtra(EXTRA_ITEMS, 0).coerceIn(0, MAX_SAMPLE_ITEMS)
 
         setContent {
             NyummyTheme {
@@ -54,8 +54,8 @@ class BoxOpeningDebugActivity : ComponentActivity() {
                     mutableStateOf<BoxOpeningUiState?>(
                         BoxOpeningUiState(
                             mailId = boxId,
-                            closedImageUrl = NyummyCdn.rewardBoxClosedUrl(boxId),
-                            openedImageUrl = NyummyCdn.rewardBoxOpenedUrl(boxId),
+                            closedImageUrl = if (boxId > 0) NyummyCdn.rewardBoxClosedUrl(boxId) else "",
+                            openedImageUrl = if (boxId > 0) NyummyCdn.rewardBoxOpenedUrl(boxId) else "",
                             mailTitle = SAMPLE_TITLE,
                         ),
                     )
@@ -102,7 +102,7 @@ class BoxOpeningDebugActivity : ComponentActivity() {
 
     private fun sampleRewards(coin: Int, itemCount: Int) = buildList {
         if (coin > 0) add(BoxRewardUiModel.Coin(imageUrl = NyummyCdn.coinUrl(1L), quantity = coin))
-        SAMPLE_ITEMS.take(itemCount).forEach { (itemId, name) ->
+        List(itemCount) { SAMPLE_ITEMS[it % SAMPLE_ITEMS.size] }.forEach { (itemId, name) ->
             add(BoxRewardUiModel.Item(imageUrl = NyummyCdn.itemUrl(itemId), name = name, quantity = 1))
         }
     }.toImmutableList()
@@ -118,6 +118,7 @@ class BoxOpeningDebugActivity : ComponentActivity() {
         const val FAIL_ERROR = "error"
         const val DEFAULT_DELAY_MILLIS = 1_500L
         const val DEFAULT_COIN = 100
+        const val MAX_SAMPLE_ITEMS = 20
         const val SAMPLE_TITLE = "식사 기록 상자"
         val SAMPLE_ITEMS = listOf(2L to "쿠션 침대", 3L to "캣타워", 1L to "기본 방")
     }

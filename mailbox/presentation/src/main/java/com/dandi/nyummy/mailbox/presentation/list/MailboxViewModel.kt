@@ -232,22 +232,52 @@ class MailboxViewModel @Inject constructor(
     }
 
     /**
-     * 안 받은 우편을 모두 받는다. 서버는 불러오지 않은 묶음까지 받으므로, 화면의 우편을 받았어요로 바꾼 뒤 목록을 다시 받는다.
+     * 안 받은 우편을 모두 받는다. 상자 하나를 열 때와 같은 연출로, 누르는 즉시 상자가 무대에 나와 응답을 기다리고
+     * 받은 보상의 합계를 상자에서 꺼내 보여 준다. 상자는 받을 우편 중 가장 높은 등급이고, 상자 우편이 없으면 그림 없이 빛만 보인다.
+     * 서버는 불러오지 않은 묶음까지 받으므로, 화면의 우편을 받았어요로 바꾼 뒤 목록을 다시 받는다.
      */
     private fun claimAll() {
         val items = currentState.items
-        if (items.isClaimingAll || !items.hasUnclaimed) return
+        if (items.isClaimingAll || !items.hasUnclaimed || currentState.boxOpening != null) return
+        // 상자 번호가 클수록 높은 등급이다(1 브론즈, 2 실버, 3 골드).
+        val boxImageId = items.mails
+            .filter { !it.isClaimed && it.category == MailCategory.REWARD_BOX }
+            .mapNotNull { it.imageId }
+            .maxOrNull()
         dispatch(MailboxReducerEvent.ClaimAllStarted)
+        dispatch(
+            MailboxReducerEvent.BoxOpeningStarted(
+                BoxOpeningUiState(
+                    mailId = CLAIM_ALL_OPENING_ID,
+                    closedImageUrl = boxImageUrl(boxImageId, opened = false),
+                    openedImageUrl = boxImageUrl(boxImageId, opened = true),
+                    mailTitle = "",
+                ),
+            ),
+        )
         viewModelScope.launch {
             claimAllMails()
-                .onSuccess {
+                .onSuccess { reward ->
+                    val rewards = reward.toBoxRewards()
+                    if (rewards.isEmpty()) {
+                        // 그사이 다른 기기에서 받았거나 기한이 지나 받을 우편이 없었다. 무대가 걷히면 안내하고 목록을 다시 받는다.
+                        dispatch(MailboxReducerEvent.ClaimAllFinished(isClaimed = false))
+                        dispatch(MailboxReducerEvent.BoxOpeningFailed(BoxOpeningFailure.AlreadyGone))
+                        return@onSuccess
+                    }
                     dispatch(MailboxReducerEvent.ClaimAllFinished(isClaimed = true))
-                    // TODO: 보상 연출. 받은 보상의 합계(코인, 아이템)로 축하 시트를 띄운다. 방식은 따로 정한다.
+                    dispatch(
+                        MailboxReducerEvent.BoxOpeningOpened(
+                            closedImageUrl = boxImageUrl(boxImageId, opened = false),
+                            openedImageUrl = boxImageUrl(boxImageId, opened = true),
+                            rewards = rewards,
+                        ),
+                    )
                     loadMails()
                 }
                 .onFailure {
                     dispatch(MailboxReducerEvent.ClaimAllFinished(isClaimed = false))
-                    messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = CLAIM_FAILED_MESSAGE)
+                    dispatch(MailboxReducerEvent.BoxOpeningFailed(BoxOpeningFailure.Error))
                 }
         }
     }
@@ -287,6 +317,8 @@ class MailboxViewModel @Inject constructor(
     }
 
     private companion object {
+        /** 모두 받기 연출의 [BoxOpeningUiState.mailId]. 서버 우편 id는 양수라 겹치지 않는다. */
+        const val CLAIM_ALL_OPENING_ID = -1L
         const val ALREADY_GONE_MESSAGE = "이미 받았거나 기한이 지난 우편이에요"
         const val CLAIM_FAILED_MESSAGE = "보상을 받지 못했어요. 잠시 후 다시 시도해 주세요."
         const val DELETED_MESSAGE = "우편을 지웠어요"
