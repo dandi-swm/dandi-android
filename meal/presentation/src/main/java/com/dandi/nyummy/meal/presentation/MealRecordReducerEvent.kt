@@ -38,6 +38,9 @@ sealed interface MealRecordReducerEvent : ReducerEvent {
     /** 제출이 실패했습니다. 안내 후 곧장 홈으로 돌아갑니다. */
     data object SubmitFailed : MealRecordReducerEvent
 
+    /** 연출을 끝 장면으로 건너뜁니다. */
+    data object CeremonySkipped : MealRecordReducerEvent
+
     /** 세리머니 마무리가 시작되어 추가 이탈 입력을 래치합니다. */
     data object FinishStarted : MealRecordReducerEvent
 

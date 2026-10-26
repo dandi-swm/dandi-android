@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -42,6 +43,8 @@ class MealCeremonyDebugActivity : ComponentActivity() {
         setContent {
             NyummyTheme {
                 var result by remember { mutableStateOf<MealCeremonyResult?>(null) }
+                // 실제 화면의 ViewModel 처럼 건너뛰었는지는 화면이 다시 만들어져도 남긴다.
+                var skipped by rememberSaveable { mutableStateOf(false) }
                 LaunchedEffect(Unit) {
                     delay(responseDelay)
                     // 실제 화면처럼 기록하지 못하면 곧장 닫는다.
@@ -51,7 +54,9 @@ class MealCeremonyDebugActivity : ComponentActivity() {
                     photoPath = photoPath,
                     result = result,
                     isMailGiftEnabled = sendsGift,
+                    skipped = skipped,
                     roomBackgroundUrl = roomBackgroundUrl,
+                    onSkipClick = { if (sendsGift && grade != RewardBoxGrade.NONE) finish() else skipped = true },
                     onCloseClick = { if (result != null) finish() },
                     onDoneClick = { finish() },
                     modifier = Modifier

@@ -128,7 +128,8 @@ internal enum class CeremonyStage {
  * 3. "냐미가 맛있게 먹었어요!". [isMailGiftEnabled] 가 꺼져 있거나 상자가 없으면 여기서 끝납니다.
  * 4. 켜져 있으면 진한 그린 무대 위에 상자가 등장해 등급만큼 승급하고, 무대가 걷히며 오른쪽 위 우편 아이콘으로 날아갑니다.
  *
- * 띠욧부터는 오른쪽 위 건너뛰기 칩으로 끝 장면으로 건너뜁니다. 기기에서 애니메이션을 끄면 섬광, 흔들림, 컷인 없이
+ * 띠욧부터는 오른쪽 위 건너뛰기 칩([onSkipClick])으로 끝 장면으로 건너뜁니다. 건너뛰었는지([skipped])는 ViewModel 이
+ * 들고 있어, 화면이 다시 만들어져도 건너뛴 연출을 다시 틀지 않습니다. 기기에서 애니메이션을 끄면 섬광, 흔들림, 컷인 없이
  * 장면만 바꿉니다.
  */
 @Composable
@@ -136,7 +137,9 @@ internal fun MealCeremony(
     photoPath: String,
     result: MealCeremonyResult?,
     isMailGiftEnabled: Boolean,
+    skipped: Boolean,
     roomBackgroundUrl: String?,
+    onSkipClick: () -> Unit,
     onCloseClick: () -> Unit,
     onDoneClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -155,7 +158,6 @@ internal fun MealCeremony(
     val latestSendsGift by rememberUpdatedState(sendsGift)
 
     var stage by remember { mutableStateOf(CeremonyStage.Serving) }
-    var skipped by remember { mutableStateOf(false) }
     var giftDelivered by remember { mutableStateOf(false) }
     var boxCenter by remember { mutableStateOf(Offset.Zero) }
     var mailCenter by remember { mutableStateOf(Offset.Zero) }
@@ -166,16 +168,12 @@ internal fun MealCeremony(
     val mailGulp = remember { Animatable(1f) }
 
     // 연출 타임라인. 건너뛰면 이 효과가 다시 시작되며 곧장 끝 장면으로 간다.
+    // 상자를 보내는 기록은 건너뛰면 ViewModel 이 곧장 홈으로 보낸다(상자는 이미 우편함에 있다).
     LaunchedEffect(skipped) {
         if (skipped) {
             flash.snapTo(0f)
             shake.snapTo(0f)
-            // 상자를 보내는 기록이면 상자는 이미 우편함에 있으니 곧장 홈으로, 아니면 먹었어요 끝 장면으로.
-            if (latestSendsGift) {
-                latestOnDone()
-            } else {
-                stage = CeremonyStage.Finished
-            }
+            stage = CeremonyStage.Finished
             return@LaunchedEffect
         }
 
@@ -333,7 +331,7 @@ internal fun MealCeremony(
                 NyummyChip(
                     text = stringResource(R.string.meal_ceremony_skip_label),
                     selected = false,
-                    onClick = { skipped = true },
+                    onClick = onSkipClick,
                 )
             }
         }

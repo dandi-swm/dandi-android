@@ -12,6 +12,7 @@ import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.meal.domain.ImportGalleryMealPhotoUseCase
 import com.dandi.nyummy.meal.domain.SubmitMealUseCase
 import com.dandi.nyummy.meal.entity.MealPhotoSource
+import com.dandi.nyummy.meal.entity.RewardBoxGrade
 import com.dandi.nyummy.room.domain.GetRoomBackgroundUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlin.time.TimeSource
@@ -95,6 +96,8 @@ class MealRecordViewModel @Inject constructor(
 
             MealRecordIntent.ClickDone -> if (currentState.isSubmitSucceeded) finishRecord()
 
+            MealRecordIntent.ClickSkipCeremony -> skipCeremony()
+
             MealRecordIntent.ClickClose -> when (currentState.phase) {
                 // 업로드 진행 중 이탈은 차단하고, 접수된 뒤에는 연출을 건너뛰고 곧장 마무리한다.
                 is MealCameraPhase.Ceremony -> if (currentState.isSubmitSucceeded) finishRecord()
@@ -133,6 +136,7 @@ class MealRecordViewModel @Inject constructor(
                 isCapturing = false,
                 ceremonyResult = null,
                 isSubmitFailed = false,
+                isCeremonySkipped = false,
             )
 
             MealRecordReducerEvent.SubmitStarted ->
@@ -141,12 +145,15 @@ class MealRecordViewModel @Inject constructor(
                         phase = MealCameraPhase.Ceremony(captured.photoPath, captured.source),
                         ceremonyResult = null,
                         isSubmitFailed = false,
+                        isCeremonySkipped = false,
                     )
                 } ?: state
 
             is MealRecordReducerEvent.SubmitSucceeded -> state.copy(ceremonyResult = event.result)
 
             MealRecordReducerEvent.SubmitFailed -> state.copy(ceremonyResult = null, isSubmitFailed = true)
+
+            MealRecordReducerEvent.CeremonySkipped -> state.copy(isCeremonySkipped = true)
 
             MealRecordReducerEvent.FinishStarted -> state.copy(isFinishing = true)
 
@@ -199,6 +206,17 @@ class MealRecordViewModel @Inject constructor(
                     dispatch(MealRecordReducerEvent.SubmitFailed)
                     finishRecord()
                 }
+        }
+    }
+
+    /** 띠욧부터는 건너뛰기로 끝 장면으로 간다. 상자를 보내는 기록이면 상자는 이미 우편함에 있으니 곧장 홈으로 간다. */
+    private fun skipCeremony() {
+        // 접수되기 전에는 건너뛸 수 없다.
+        val result = currentState.ceremonyResult ?: return
+        if (currentState.isMailGiftEnabled && result.rewardBoxGrade != RewardBoxGrade.NONE) {
+            finishRecord()
+        } else {
+            dispatch(MealRecordReducerEvent.CeremonySkipped)
         }
     }
 

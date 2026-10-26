@@ -36,6 +36,9 @@ sealed interface MealRecordIntent : MviIntent {
     /** 연출이 끝난 뒤 `완료` 버튼을 눌러 화면을 마무리합니다. */
     data object ClickDone : MealRecordIntent
 
+    /** 연출 중 `건너뛰기` 칩을 눌렀습니다. */
+    data object ClickSkipCeremony : MealRecordIntent
+
     /** 닫기(X) 버튼을 눌렀습니다. */
     data object ClickClose : MealRecordIntent
 }

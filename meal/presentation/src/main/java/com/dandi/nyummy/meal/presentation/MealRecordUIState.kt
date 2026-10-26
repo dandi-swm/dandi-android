@@ -59,6 +59,8 @@ data class MealCeremonyResult(
  * 돌아갑니다. [isFinishing] 은 마무리(뒤로가기 신호)가 한 번만 나가도록 완료·닫기·백의
  * 동시 입력을 래치합니다.
  *
+ * @property isCeremonySkipped 연출을 끝 장면으로 건너뛰었는지. 화면이 다시 만들어져도 건너뛴 연출을 다시 틀지 않도록
+ * 화면이 아니라 여기에 둡니다.
  * @property isMailGiftEnabled 보상 상자를 우편함으로 보내는 연출을 보여 줄지. 우편함 아이템 탭이 보일 때만 켭니다.
  * @property roomBackgroundItemId 지금 마이룸에 깔린 배경의 아이템 id. 연출의 고양이방을 이 배경으로 그리고, 없으면 기본 빈 방입니다.
  */
@@ -69,6 +71,7 @@ data class MealRecordUIState(
     val isImportingGalleryPhoto: Boolean = false,
     val ceremonyResult: MealCeremonyResult? = null,
     val isSubmitFailed: Boolean = false,
+    val isCeremonySkipped: Boolean = false,
     val isFinishing: Boolean = false,
     val isMailGiftEnabled: Boolean = false,
     val roomBackgroundItemId: Long? = null,
