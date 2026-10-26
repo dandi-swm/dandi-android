@@ -12,7 +12,6 @@ import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.meal.domain.ImportGalleryMealPhotoUseCase
 import com.dandi.nyummy.meal.domain.SubmitMealUseCase
 import com.dandi.nyummy.meal.entity.MealPhotoSource
-import com.dandi.nyummy.meal.entity.RewardBoxGrade
 import com.dandi.nyummy.room.domain.GetRoomBackgroundUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlin.time.TimeSource
@@ -96,6 +95,8 @@ class MealRecordViewModel @Inject constructor(
 
             MealRecordIntent.ClickDone -> if (currentState.isSubmitSucceeded) finishRecord()
 
+            is MealRecordIntent.CeremonyStageFinished -> advanceCeremony(intent.stage)
+
             MealRecordIntent.ClickSkipCeremony -> skipCeremony()
 
             MealRecordIntent.ClickClose -> when (currentState.phase) {
@@ -131,34 +132,31 @@ class MealRecordViewModel @Inject constructor(
 
             MealRecordReducerEvent.GalleryImportFailed -> state.copy(isImportingGalleryPhoto = false)
 
-            MealRecordReducerEvent.ReturnedToPreview -> state.copy(
-                phase = MealCameraPhase.Preview,
-                isCapturing = false,
-                ceremonyResult = null,
-                isSubmitFailed = false,
-                isCeremonySkipped = false,
-            )
+            MealRecordReducerEvent.ReturnedToPreview -> state.copy(phase = MealCameraPhase.Preview, isCapturing = false)
 
             MealRecordReducerEvent.SubmitStarted ->
                 (state.phase as? MealCameraPhase.Captured)?.let { captured ->
-                    state.copy(
-                        phase = MealCameraPhase.Ceremony(captured.photoPath, captured.source),
-                        ceremonyResult = null,
-                        isSubmitFailed = false,
-                        isCeremonySkipped = false,
-                    )
+                    state.copy(phase = MealCameraPhase.Ceremony(captured.photoPath, captured.source))
                 } ?: state
 
-            is MealRecordReducerEvent.SubmitSucceeded -> state.copy(ceremonyResult = event.result)
+            is MealRecordReducerEvent.SubmitSucceeded ->
+                state.updateCeremony { it.accepted(event.rewardBoxGrade) }
 
-            MealRecordReducerEvent.SubmitFailed -> state.copy(ceremonyResult = null, isSubmitFailed = true)
+            MealRecordReducerEvent.SubmitFailed ->
+                state.updateCeremony { it.copy(submit = MealSubmitStatus.Failed) }
 
-            MealRecordReducerEvent.CeremonySkipped -> state.copy(isCeremonySkipped = true)
+            is MealRecordReducerEvent.CeremonyStageChanged ->
+                state.updateCeremony { it.copy(stage = event.stage) }
 
             MealRecordReducerEvent.FinishStarted -> state.copy(isFinishing = true)
 
             is MealRecordReducerEvent.RoomBackgroundLoaded -> state.copy(roomBackgroundItemId = event.itemId)
         }
+
+    /** 연출 단계일 때만 [block] 으로 연출 상태를 바꾼다. */
+    private inline fun MealRecordUIState.updateCeremony(
+        block: (MealCameraPhase.Ceremony) -> MealCameraPhase.Ceremony,
+    ): MealRecordUIState = (phase as? MealCameraPhase.Ceremony)?.let { copy(phase = block(it)) } ?: this
 
     /**
      * 갤러리에서 고른 사진을 검증해 확인 단계로 가져온다.
@@ -197,7 +195,7 @@ class MealRecordViewModel @Inject constructor(
         viewModelScope.launch {
             submitMeal(phase.photoPath, phase.source)
                 .onSuccess { created ->
-                    dispatch(MealRecordReducerEvent.SubmitSucceeded(MealCeremonyResult(created.rewardBoxGrade)))
+                    dispatch(MealRecordReducerEvent.SubmitSucceeded(created.rewardBoxGrade))
                     analyticsHelper.logEvent(
                         AnalyticsEvent.MealSubmitSuccess(source = source, durationSec = openedAt.elapsedNow().inWholeSeconds),
                     )
@@ -209,15 +207,27 @@ class MealRecordViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 연출 장면 [finished] 의 움직임이 끝나면 다음 장면으로 넘긴다. 다음 장면이 없으면 연출을 마치고 홈으로 간다.
+     * 화면이 다시 만들어지며 늦게 온 지난 장면의 알림은 무시한다.
+     */
+    private fun advanceCeremony(finished: MealCeremonyStage) {
+        val ceremony = currentState.phase as? MealCameraPhase.Ceremony ?: return
+        if (ceremony.stage != finished) return
+        when (val next = ceremony.nextStage(currentState.isMailGiftEnabled)) {
+            null -> finishRecord()
+            ceremony.stage -> Unit
+            else -> dispatch(MealRecordReducerEvent.CeremonyStageChanged(next))
+        }
+    }
+
     /** 띠욧부터는 건너뛰기로 끝 장면으로 간다. 상자를 보내는 기록이면 상자는 이미 우편함에 있으니 곧장 홈으로 간다. */
     private fun skipCeremony() {
-        // 접수되기 전에는 건너뛸 수 없다.
-        val result = currentState.ceremonyResult ?: return
-        if (currentState.isMailGiftEnabled && result.rewardBoxGrade != RewardBoxGrade.NONE) {
-            finishRecord()
-        } else {
-            dispatch(MealRecordReducerEvent.CeremonySkipped)
-        }
+        val ceremony = currentState.phase as? MealCameraPhase.Ceremony ?: return
+        if (!ceremony.stage.isSkippable) return
+        ceremony.skippedStage(currentState.isMailGiftEnabled)
+            ?.let { dispatch(MealRecordReducerEvent.CeremonyStageChanged(it)) }
+            ?: finishRecord()
     }
 
     /**
@@ -258,8 +268,8 @@ private val MealPhotoSource.analyticsName: String
 
 /** 분석에 남기는 지금 단계(camera, confirm, uploading, failed). */
 private val MealRecordUIState.analyticsStage: String
-    get() = when (phase) {
+    get() = when (val phase = phase) {
         MealCameraPhase.Preview -> "camera"
         is MealCameraPhase.Captured -> "confirm"
-        is MealCameraPhase.Ceremony -> if (isSubmitFailed) "failed" else "uploading"
+        is MealCameraPhase.Ceremony -> if (phase.submit == MealSubmitStatus.Failed) "failed" else "uploading"
     }

@@ -168,10 +168,11 @@ private fun MealRecordScreen(
     if (phase is MealCameraPhase.Ceremony) {
         MealCeremony(
             photoPath = phase.photoPath,
-            result = uiState.ceremonyResult,
-            isMailGiftEnabled = uiState.isMailGiftEnabled,
-            skipped = uiState.isCeremonySkipped,
+            stage = phase.stage,
+            rewardBoxGrade = phase.rewardBoxGrade,
+            sendsRewardBox = phase.sendsRewardBox(uiState.isMailGiftEnabled),
             roomBackgroundUrl = uiState.roomBackgroundItemId?.let(NyummyCdn::itemUrl),
+            onStageFinished = { onIntent(MealRecordIntent.CeremonyStageFinished(it)) },
             onSkipClick = { onIntent(MealRecordIntent.ClickSkipCeremony) },
             onCloseClick = { onIntent(MealRecordIntent.ClickClose) },
             onDoneClick = { onIntent(MealRecordIntent.ClickDone) },

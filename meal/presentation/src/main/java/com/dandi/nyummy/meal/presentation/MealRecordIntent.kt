@@ -36,6 +36,9 @@ sealed interface MealRecordIntent : MviIntent {
     /** 연출이 끝난 뒤 `완료` 버튼을 눌러 화면을 마무리합니다. */
     data object ClickDone : MealRecordIntent
 
+    /** 연출 장면 [stage] 의 움직임이 끝났습니다. 다음 장면으로 넘어가거나 연출을 마칩니다. */
+    data class CeremonyStageFinished(val stage: MealCeremonyStage) : MealRecordIntent
+
     /** 연출 중 `건너뛰기` 칩을 눌렀습니다. */
     data object ClickSkipCeremony : MealRecordIntent
 
