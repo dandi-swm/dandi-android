@@ -480,6 +480,8 @@ private class FakeRoomRepository : RoomRepository {
 private class FakeCatRepository : CatRepository {
     var error: Exception? = null
 
+    override suspend fun prefetchAnimations(): CatAnimationSetVO? = null
+
     override suspend fun getAnimations(): CatAnimationSetVO {
         error?.let { throw it }
         return CatAnimationSetVO(

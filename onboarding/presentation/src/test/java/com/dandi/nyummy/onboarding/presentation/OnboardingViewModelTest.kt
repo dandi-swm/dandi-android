@@ -271,7 +271,7 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `식사 시각을 확인하면 한 번만 저장하고 홈을 루트로 이동한다`() = runTest(testDispatcher) {
+    fun `식사 시각을 확인하면 한 번만 저장하고 냐미 방 준비 화면을 루트로 이동한다`() = runTest(testDispatcher) {
         reachMealTimeScene()
         viewModel.onIntent(OnboardingIntent.SelectMealTime(Meal.DINNER, MealTimeVO(hour = 19)))
 
@@ -283,7 +283,7 @@ class OnboardingViewModelTest {
         assertTrue(state.isFinishing)
         val mealTimes = MealTimesVO(dinner = MealTimeVO(hour = 19))
         assertEquals(listOf("냐미" to mealTimes), repository.createdCats)
-        assertEquals(listOf("/home"), navigationHelper.rootPages.map { it.toRoute().path })
+        assertEquals(listOf("/home/prepare"), navigationHelper.rootPages.map { it.toRoute().path })
     }
 
     @Test
@@ -303,7 +303,7 @@ class OnboardingViewModelTest {
         advanceUntilIdle()
 
         assertEquals(2, repository.createdCats.size)
-        assertEquals(listOf("/home"), navigationHelper.rootPages.map { it.toRoute().path })
+        assertEquals(listOf("/home/prepare"), navigationHelper.rootPages.map { it.toRoute().path })
     }
 
     @Test

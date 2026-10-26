@@ -18,6 +18,8 @@ class GetCatAnimationsUseCaseTest {
     private fun useCase(block: () -> CatAnimationSetVO) = GetCatAnimationsUseCase(
         repository = object : CatRepository {
             override suspend fun getAnimations(): CatAnimationSetVO = block()
+
+            override suspend fun prefetchAnimations(): CatAnimationSetVO? = null
         },
         resourceHelper = FakeResourceHelper,
         messageHelper = messageHelper,
