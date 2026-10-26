@@ -69,11 +69,17 @@ class MealRecordViewModel @Inject constructor(
             }
 
             is MealRecordIntent.PhotoCaptured -> {
+                // 화면이 다시 만들어지며 겹친 촬영처럼 기다리지 않던 결과는 버리고 파일도 지운다.
+                if (!currentState.isCapturing || currentState.phase !is MealCameraPhase.Preview) {
+                    deletePhotoFile(intent.photoPath)
+                    return
+                }
                 dispatch(MealRecordReducerEvent.CaptureSucceeded(intent.photoPath))
                 analyticsHelper.logEvent(AnalyticsEvent.MealPhotoReady(MealPhotoSource.CAMERA.analyticsName))
             }
 
             MealRecordIntent.CaptureFailed -> {
+                if (!currentState.isCapturing) return
                 dispatch(MealRecordReducerEvent.CaptureEnded)
                 messageHelper.showSnackBar(
                     iconType = IconType.ERROR,
