@@ -13,6 +13,7 @@ import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.entity.remoteconfig.VersionCheckVO
 import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.home.domain.PrefetchHomeSummaryUseCase
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
@@ -27,6 +28,7 @@ class GetIntroUseCase @Inject constructor(
     private val remoteConfigHelper: RemoteConfigHelper,
     private val deviceHelper: DeviceHelper,
     private val permissionHelper: PermissionHelper,
+    private val prefetchHomeSummary: PrefetchHomeSummaryUseCase,
     private val prefetchCatAnimations: PrefetchCatAnimationsUseCase,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
@@ -45,8 +47,8 @@ class GetIntroUseCase @Inject constructor(
      *    이후 다른 기능의 flag 조회는 활성화된 스냅샷만 읽는다.
      * 3. 최소 요구 버전을 조회해 현재 앱 versionCode 와 비교한다.
      *    미만이면 닫을 수 없는 강제 업데이트 다이얼로그를 띄우고 홈/로그인 이동을 중단한다.
-     * 4. 홈으로 갈 회원(리프레시 토큰이 있고 온보딩을 마친 회원)이면 1~3과 함께 냐미 애니메이션과 시트를 미리 받고,
-     *    홈으로 넘어가기 전에 [CAT_PREFETCH_TIMEOUT_MS]까지만 기다린다. 다 받지 못한 것은 홈이 이어서 받는다.
+     * 4. 홈으로 갈 회원(리프레시 토큰이 있고 온보딩을 마친 회원)이면 1~3과 함께 홈 요약과 냐미 애니메이션, 시트를 미리 받는다.
+     *    요약은 기다리지 않고, 냐미는 홈으로 넘어가기 전에 [CAT_PREFETCH_TIMEOUT_MS]까지만 기다린다. 다 받지 못한 것은 홈이 이어서 받는다.
      *    온보딩을 마치지 않은 회원은 아직 고양이가 없어 받지 않는다.
      * 5. 이동 직전 [onBeforeNavigate] 로 UI 마무리(스플래시 진행바 100% 채움)를 기다린 뒤,
      *    저장된 리프레시 토큰과 온보딩 상태에 따라 홈/온보딩/로그인을 루트로 이동한다.
@@ -67,7 +69,13 @@ class GetIntroUseCase @Inject constructor(
         // 냐미 미리 받기가 실패해도 시작 흐름은 이어지도록 자식의 실패가 번지지 않는 스코프에서 돌린다.
         supervisorScope {
             // 권한 안내, 원격 설정, 버전 확인과 함께 받기 시작해 기다리는 시간을 줄인다.
-            val catPrefetch = async { if (startDestination() == HomePage) prefetchCatAnimations() }
+            val catPrefetch = async {
+                if (startDestination() == HomePage) {
+                    // 요약은 받기 시작만 하고 기다리지 않는다. 홈이 열리면 그 요청을 이어받는다.
+                    prefetchHomeSummary()
+                    prefetchCatAnimations()
+                }
+            }
 
             val ungranted = ungrantedStartupPermissions()
             if (ungranted.isNotEmpty() && !repository.hasShownPermissionNotice()) {
