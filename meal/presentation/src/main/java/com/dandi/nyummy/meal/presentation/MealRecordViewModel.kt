@@ -1,5 +1,6 @@
 package com.dandi.nyummy.meal.presentation
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
@@ -15,6 +16,8 @@ import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.room.domain.GetRoomBackgroundUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlin.time.TimeSource
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -26,18 +29,33 @@ class MealRecordViewModel @Inject constructor(
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
     private val analyticsHelper: AnalyticsHelper,
+    private val savedStateHandle: SavedStateHandle,
     remoteConfigHelper: RemoteConfigHelper,
     getRoomBackground: GetRoomBackgroundUseCase,
 ) : MviViewModel<MealRecordIntent, MealRecordUIState, MealRecordReducerEvent>(
-    // 상자를 받을 우편함 아이템 탭이 보일 때만 상자를 우편함으로 보내는 연출을 한다.
-    MealRecordUIState(isMailGiftEnabled = remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)),
+    MealRecordUIState(
+        // 앱이 백그라운드에서 종료됐다 돌아왔으면 저장해 둔 사실로 하던 단계를 되살린다.
+        phase = MealRecordSnapshot.readFrom(savedStateHandle)?.toPhase() ?: MealCameraPhase.Preview,
+        // 상자를 받을 우편함 아이템 탭이 보일 때만 상자를 우편함으로 보내는 연출을 한다.
+        isMailGiftEnabled = remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled),
+    ),
 ) {
 
     /** 화면에 들어온 순간. 저장까지 걸린 시간을 잰다. */
     private val openedAt = TimeSource.Monotonic.markNow()
 
+    /** 앱이 종료됐다 되살아난 화면인지. 진입은 종료 전에 이미 기록했다. */
+    private val isRestored = MealRecordSnapshot.readFrom(savedStateHandle) != null
+
     init {
-        analyticsHelper.logEvent(AnalyticsEvent.MealRecordOpen)
+        if (!isRestored) analyticsHelper.logEvent(AnalyticsEvent.MealRecordOpen)
+        // 앱이 백그라운드에서 종료돼도 돌아와서 이어 갈 수 있게, 되살리는 데 필요한 사실을 저장해 둔다.
+        viewModelScope.launch {
+            uiState.map { MealRecordSnapshot.of(it.phase) }
+                .distinctUntilChanged()
+                .collect { it.writeTo(savedStateHandle) }
+        }
+        leaveIfSubmitInterrupted()
         // 연출의 고양이방은 지금 마이룸에 깔린 배경으로 그린다. 촬영하는 동안 미리 읽어 두고, 못 읽으면 기본 빈 방이다.
         viewModelScope.launch {
             getRoomBackground()?.let { dispatch(MealRecordReducerEvent.RoomBackgroundLoaded(it)) }
@@ -69,11 +87,17 @@ class MealRecordViewModel @Inject constructor(
             }
 
             is MealRecordIntent.PhotoCaptured -> {
+                // 화면이 다시 만들어지며 겹친 촬영처럼 기다리지 않던 결과는 버리고 파일도 지운다.
+                if (!currentState.isCapturing || currentState.phase !is MealCameraPhase.Preview) {
+                    deletePhotoFile(intent.photoPath)
+                    return
+                }
                 dispatch(MealRecordReducerEvent.CaptureSucceeded(intent.photoPath))
                 analyticsHelper.logEvent(AnalyticsEvent.MealPhotoReady(MealPhotoSource.CAMERA.analyticsName))
             }
 
             MealRecordIntent.CaptureFailed -> {
+                if (!currentState.isCapturing) return
                 dispatch(MealRecordReducerEvent.CaptureEnded)
                 messageHelper.showSnackBar(
                     iconType = IconType.ERROR,
@@ -95,16 +119,13 @@ class MealRecordViewModel @Inject constructor(
 
             MealRecordIntent.ClickDone -> if (currentState.isSubmitSucceeded) finishRecord()
 
-            // 기록하지 못했다고 알린 뒤에는 확인 단계로 돌아가지 않고 홈으로 간다.
-            MealRecordIntent.CeremonyFailureShown ->
-                if (currentState.phase is MealCameraPhase.Ceremony && currentState.isSubmitFailed) {
-                    finishRecord()
-                }
+            is MealRecordIntent.CeremonyStageFinished -> advanceCeremony(intent.stage)
+
+            MealRecordIntent.ClickSkipCeremony -> skipCeremony()
 
             MealRecordIntent.ClickClose -> when (currentState.phase) {
-                // 업로드 진행 중 이탈은 차단하고, 접수됐거나 실패한 뒤에는 연출을 건너뛰고 곧장 마무리한다.
-                is MealCameraPhase.Ceremony ->
-                    if (currentState.isSubmitSucceeded || currentState.isSubmitFailed) finishRecord()
+                // 업로드 진행 중 이탈은 차단하고, 접수된 뒤에는 연출을 건너뛰고 곧장 마무리한다.
+                is MealCameraPhase.Ceremony -> if (currentState.isSubmitSucceeded) finishRecord()
 
                 else -> {
                     deleteCapturedFile()
@@ -135,30 +156,31 @@ class MealRecordViewModel @Inject constructor(
 
             MealRecordReducerEvent.GalleryImportFailed -> state.copy(isImportingGalleryPhoto = false)
 
-            MealRecordReducerEvent.ReturnedToPreview -> state.copy(
-                phase = MealCameraPhase.Preview,
-                isCapturing = false,
-                ceremonyResult = null,
-                isSubmitFailed = false,
-            )
+            MealRecordReducerEvent.ReturnedToPreview -> state.copy(phase = MealCameraPhase.Preview, isCapturing = false)
 
             MealRecordReducerEvent.SubmitStarted ->
                 (state.phase as? MealCameraPhase.Captured)?.let { captured ->
-                    state.copy(
-                        phase = MealCameraPhase.Ceremony(captured.photoPath, captured.source),
-                        ceremonyResult = null,
-                        isSubmitFailed = false,
-                    )
+                    state.copy(phase = MealCameraPhase.Ceremony(captured.photoPath, captured.source))
                 } ?: state
 
-            is MealRecordReducerEvent.SubmitSucceeded -> state.copy(ceremonyResult = event.result)
+            is MealRecordReducerEvent.SubmitSucceeded ->
+                state.updateCeremony { it.accepted(event.rewardBoxGrade) }
 
-            MealRecordReducerEvent.SubmitFailed -> state.copy(ceremonyResult = null, isSubmitFailed = true)
+            MealRecordReducerEvent.SubmitFailed ->
+                state.updateCeremony { it.copy(submit = MealSubmitStatus.Failed) }
+
+            is MealRecordReducerEvent.CeremonyStageChanged ->
+                state.updateCeremony { it.copy(stage = event.stage) }
 
             MealRecordReducerEvent.FinishStarted -> state.copy(isFinishing = true)
 
             is MealRecordReducerEvent.RoomBackgroundLoaded -> state.copy(roomBackgroundItemId = event.itemId)
         }
+
+    /** 연출 단계일 때만 [block] 으로 연출 상태를 바꾼다. */
+    private inline fun MealRecordUIState.updateCeremony(
+        block: (MealCameraPhase.Ceremony) -> MealCameraPhase.Ceremony,
+    ): MealRecordUIState = (phase as? MealCameraPhase.Ceremony)?.let { copy(phase = block(it)) } ?: this
 
     /**
      * 갤러리에서 고른 사진을 검증해 확인 단계로 가져온다.
@@ -186,8 +208,8 @@ class MealRecordViewModel @Inject constructor(
     /**
      * 촬영본을 업로드해 식사를 생성한다. 성공 알림은 연출 화면이 담당한다.
      *
-     * 연출은 분석 완료가 아니라 기록 접수(응답 도착)에 맞춰 넘어간다. 분석이 비동기로 바뀌어 응답이
-     * "처리 중"으로 바로 와도 같은 흐름이다.
+     * 응답이 오면 기록이 접수된 것이라 연출이 맛 리액션으로 넘어간다. 영양 분석은 접수 뒤에 진행되므로 기다리지 않는다.
+     * 기록하지 못하면 UseCase 가 안내 스낵바를 띄우고, 연출을 멈추고 곧장 홈으로 간다.
      */
     private fun submitCapturedMeal() {
         val phase = currentState.phase as? MealCameraPhase.Captured ?: return
@@ -197,18 +219,47 @@ class MealRecordViewModel @Inject constructor(
         viewModelScope.launch {
             submitMeal(phase.photoPath, phase.source)
                 .onSuccess { created ->
-                    val result = MealCeremonyResult(
-                        rewardBoxGrade = created.rewardBoxGrade,
-                        isAnalysisPending = created.isAnalysisPending,
-                    )
-                    dispatch(MealRecordReducerEvent.SubmitSucceeded(result))
+                    dispatch(MealRecordReducerEvent.SubmitSucceeded(created.rewardBoxGrade))
                     analyticsHelper.logEvent(
                         AnalyticsEvent.MealSubmitSuccess(source = source, durationSec = openedAt.elapsedNow().inWholeSeconds),
                     )
                 }
-                // 실패 스낵바는 UseCase 가 이미 띄우므로 여기서는 상태 복귀만 한다.
-                .onFailure { dispatch(MealRecordReducerEvent.SubmitFailed) }
+                .onFailure {
+                    dispatch(MealRecordReducerEvent.SubmitFailed)
+                    finishRecord()
+                }
         }
+    }
+
+    /**
+     * 연출 장면 [finished] 의 움직임이 끝나면 다음 장면으로 넘긴다. 다음 장면이 없으면 연출을 마치고 홈으로 간다.
+     * 화면이 다시 만들어지며 늦게 온 지난 장면의 알림은 무시한다.
+     */
+    private fun advanceCeremony(finished: MealCeremonyStage) {
+        val ceremony = currentState.phase as? MealCameraPhase.Ceremony ?: return
+        if (ceremony.stage != finished) return
+        when (val next = ceremony.nextStage(currentState.isMailGiftEnabled)) {
+            null -> finishRecord()
+            ceremony.stage -> Unit
+            else -> dispatch(MealRecordReducerEvent.CeremonyStageChanged(next))
+        }
+    }
+
+    /** 띠욧 컷신은 건너뛰기로 넘긴다. 컷신만 건너뛰고, 이어지는 먹었어요와 상자 연출은 그대로 보여 준다. */
+    private fun skipCeremony() {
+        val ceremony = currentState.phase as? MealCameraPhase.Ceremony ?: return
+        if (ceremony.stage.isSkippable) advanceCeremony(ceremony.stage)
+    }
+
+    /**
+     * 업로드를 시작했지만 접수 결과를 받기 전에 앱이 종료됐다 돌아왔으면 홈으로 보낸다.
+     * 서버에는 기록됐을 수 있어 다시 보내지 않고(다시 보내면 같은 끼니가 두 번 기록될 수 있다) 기록 탭에서 확인하도록 안내한다.
+     */
+    private fun leaveIfSubmitInterrupted() {
+        val phase = currentState.phase as? MealCameraPhase.Ceremony ?: return
+        if (phase.submit != MealSubmitStatus.Uploading) return
+        messageHelper.showSnackBar(iconType = IconType.WARNING, messageRes = R.string.meal_record_submit_interrupted)
+        finishRecord()
     }
 
     /**
@@ -249,8 +300,8 @@ private val MealPhotoSource.analyticsName: String
 
 /** 분석에 남기는 지금 단계(camera, confirm, uploading, failed). */
 private val MealRecordUIState.analyticsStage: String
-    get() = when (phase) {
+    get() = when (val phase = phase) {
         MealCameraPhase.Preview -> "camera"
         is MealCameraPhase.Captured -> "confirm"
-        is MealCameraPhase.Ceremony -> if (isSubmitFailed) "failed" else "uploading"
+        is MealCameraPhase.Ceremony -> if (phase.submit == MealSubmitStatus.Failed) "failed" else "uploading"
     }

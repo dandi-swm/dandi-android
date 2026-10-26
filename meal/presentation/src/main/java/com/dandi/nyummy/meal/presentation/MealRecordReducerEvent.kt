@@ -1,6 +1,7 @@
 package com.dandi.nyummy.meal.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
+import com.dandi.nyummy.meal.entity.RewardBoxGrade
 
 /** 식사 기록(카메라) 화면의 상태를 변이시키는 내부 이벤트입니다. */
 sealed interface MealRecordReducerEvent : ReducerEvent {
@@ -33,10 +34,13 @@ sealed interface MealRecordReducerEvent : ReducerEvent {
     data object SubmitStarted : MealRecordReducerEvent
 
     /** 기록이 접수되어 연출이 맛 리액션으로 넘어갑니다. */
-    data class SubmitSucceeded(val result: MealCeremonyResult) : MealRecordReducerEvent
+    data class SubmitSucceeded(val rewardBoxGrade: RewardBoxGrade) : MealRecordReducerEvent
 
-    /** 제출이 실패했습니다. 연출 화면에서 냐미의 아쉬운 동작을 보여 줍니다. */
+    /** 제출이 실패했습니다. 안내 후 곧장 홈으로 돌아갑니다. */
     data object SubmitFailed : MealRecordReducerEvent
+
+    /** 연출이 [stage] 장면으로 넘어갑니다. */
+    data class CeremonyStageChanged(val stage: MealCeremonyStage) : MealRecordReducerEvent
 
     /** 세리머니 마무리가 시작되어 추가 이탈 입력을 래치합니다. */
     data object FinishStarted : MealRecordReducerEvent

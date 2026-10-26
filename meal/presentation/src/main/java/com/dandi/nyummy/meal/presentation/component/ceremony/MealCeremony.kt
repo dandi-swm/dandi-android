@@ -13,7 +13,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -43,7 +42,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -64,6 +62,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -87,7 +86,7 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.room.RoomBackgroundImage
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
-import com.dandi.nyummy.meal.presentation.MealCeremonyResult
+import com.dandi.nyummy.meal.presentation.MealCeremonyStage
 import com.dandi.nyummy.meal.presentation.R
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyChip
@@ -96,55 +95,36 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-/** 연출 단계. 시간이 흐르며 순서대로 넘어간다. */
-internal enum class CeremonyStage {
-    /** 사진 카드가 식탁 위로 올라온다. */
-    Serving,
-
-    /** 응답을 기다리며 냐미가 두근두근한다. */
-    Waiting,
-
-    /** 띠욧! 맛 리액션 컷인. */
-    Reaction,
-
-    /** 냐미가 맛있게 먹었어요. */
-    Ate,
-
-    /** 진한 그린 무대 위에 상자가 등장하고 등급이 오른다. */
-    BoxReveal,
-
-    /** 상자가 우편 아이콘으로 날아간다. */
-    BoxSend,
-
-    /** 연출이 끝나 버튼을 보여 준다. */
-    Finished,
-
-    /** 기록하지 못해 냐미가 고개를 젓는다. */
-    Failed,
-}
-
 /**
  * 식사 기록 연출 화면입니다. 사진을 제출한 순간부터 끝날 때까지 한 화면에서 이어집니다.
  *
  * 1. 기다림: 고양이방 카드(지금 마이룸에 깔린 배경) 안에서 숟가락을 든 냐미가 침을 꼴깍 삼키고, 식탁 위에 원본 사진 카드가 놓입니다.
  *    사진은 어떤 장면에서도 변형하지 않습니다.
  * 2. 응답(기록 접수)이 오면 띠욧! 컷인: 오물오물 → 정적 → 섬광, 흔들림, 빛줄기와 함께 별눈.
- *    분석 완료가 아니라 접수에 맞춰 넘어가므로, 분석이 비동기로 바뀌어도 흐름이 같습니다.
- * 3. "냐미가 맛있게 먹었어요!". [isMailGiftEnabled] 가 꺼져 있거나 상자가 없으면 여기서 끝납니다.
- * 4. 켜져 있으면 진한 그린 무대 위에 상자가 등장해 등급만큼 승급하고, 무대가 걷히며 오른쪽 위 우편 아이콘으로 날아갑니다.
+ *    분석 완료가 아니라 접수에 맞춰 넘어갑니다. 영양 분석은 접수 뒤에 진행됩니다.
+ * 3. "냐미가 맛있게 먹었어요!". [sendsRewardBox] 가 아니면 여기서 끝납니다.
+ * 4. 상자를 보내면 진한 그린 무대 위에 상자가 등장해 등급만큼 승급하고, 무대가 걷히며 오른쪽 위 우편 아이콘으로 날아갑니다.
  *
- * 띠욧부터는 오른쪽 위 건너뛰기 칩으로 끝 장면으로 건너뜁니다. 기기에서 애니메이션을 끄면 섬광, 흔들림, 컷인 없이
- * 장면만 바꿉니다.
+ * 어느 장면인지([stage])는 ViewModel 이 정합니다. 이 화면은 그 장면의 움직임만 재생하고, 끝나면 [onStageFinished] 로
+ * 알립니다. 화면이 다시 만들어지면 지금 장면만 처음부터 다시 재생하고, 지난 장면의 결과(올라온 사진 카드,
+ * 우편함에 든 상자)는 끝난 모습으로 둡니다.
+ *
+ * 띠욧 컷신은 오른쪽 위 건너뛰기 칩([onSkipClick])으로 건너뜁니다. 컷신만 건너뛰고 먹었어요와 상자 연출은 그대로
+ * 보여 줍니다. 기기에서 애니메이션을 끄면 섬광, 흔들림, 컷인 없이 장면만 바꿉니다.
+ *
+ * @param rewardBoxGrade 접수된 기록의 보상 상자 등급. 접수 전이면 [RewardBoxGrade.NONE] 이다.
+ * @param sendsRewardBox 상자를 우편함으로 보내는 장면까지 보여 줄지
  */
 @Composable
 internal fun MealCeremony(
     photoPath: String,
-    result: MealCeremonyResult?,
-    isFailed: Boolean,
-    isMailGiftEnabled: Boolean,
+    stage: MealCeremonyStage,
+    rewardBoxGrade: RewardBoxGrade,
+    sendsRewardBox: Boolean,
     roomBackgroundUrl: String?,
+    onStageFinished: (MealCeremonyStage) -> Unit,
+    onSkipClick: () -> Unit,
     onCloseClick: () -> Unit,
-    onFailureShown: () -> Unit,
     onDoneClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -152,91 +132,67 @@ internal fun MealCeremony(
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
     val reducedMotion = rememberReducedMotion()
-    val latestResult by rememberUpdatedState(result)
-    val latestIsFailed by rememberUpdatedState(isFailed)
-    val latestOnFailureShown by rememberUpdatedState(onFailureShown)
-    val latestOnDone by rememberUpdatedState(onDoneClick)
+    val latestOnStageFinished by rememberUpdatedState(onStageFinished)
 
-    val grade = result?.rewardBoxGrade ?: RewardBoxGrade.NONE
-    val sendsGift = isMailGiftEnabled && grade != RewardBoxGrade.NONE
-    // 타임라인은 처음 그릴 때 시작해 응답 전부터 돈다. 응답으로 정해지는 값은 늘 최신 값을 읽는다.
-    val latestGrade by rememberUpdatedState(grade)
-    val latestSendsGift by rememberUpdatedState(sendsGift)
-
-    var stage by remember { mutableStateOf(CeremonyStage.Serving) }
-    var skipped by remember { mutableStateOf(false) }
-    var giftDelivered by remember { mutableStateOf(false) }
+    // 처음 그릴 때 이미 지난 장면이면(화면이 다시 만들어짐) 지난 장면의 결과는 끝난 모습으로 둔다.
+    // 사진 카드는 올라와 있고, 상자가 날아가던 중이었으면 이미 우편함에 들어간 것으로 본다.
+    var giftDelivered by remember { mutableStateOf(stage == MealCeremonyStage.BoxSend) }
     var boxCenter by remember { mutableStateOf(Offset.Zero) }
     var mailCenter by remember { mutableStateOf(Offset.Zero) }
+    // 상자와 우편 아이콘 자리는 창 기준으로 잰다. 이 화면이 창 맨 위에서 시작하지 않으면(시스템 바를 피해 놓이는 등)
+    // 그만큼 빼야 이 화면 안에 그리는 날아가는 상자가 우편 아이콘에 닿는다.
+    var originInRoot by remember { mutableStateOf(Offset.Zero) }
 
-    val serve = remember { Animatable(if (reducedMotion) 1f else 0f) }
+    val serve = remember { Animatable(if (reducedMotion || stage != MealCeremonyStage.Serving) 1f else 0f) }
     val flash = remember { Animatable(0f) }
     val shake = remember { Animatable(0f) }
     val mailGulp = remember { Animatable(1f) }
 
-    // 연출 타임라인. 건너뛰면 이 효과가 다시 시작되며 곧장 끝 장면으로 간다.
-    LaunchedEffect(skipped) {
-        if (skipped) {
-            flash.snapTo(0f)
-            shake.snapTo(0f)
-            // 상자를 보내는 기록이면 상자는 이미 우편함에 있으니 곧장 홈으로, 아니면 먹었어요 끝 장면으로.
-            if (latestSendsGift) {
-                latestOnDone()
-            } else {
-                stage = CeremonyStage.Finished
+    // 장면마다 그 장면의 움직임만 재생하고, 끝나면 알린다. 다음 장면은 ViewModel 이 정한다.
+    LaunchedEffect(stage) {
+        when (stage) {
+            // 1. 사진 카드가 식탁 위로 올라온다.
+            MealCeremonyStage.Serving -> {
+                if (!reducedMotion) serve.animateTo(1f, spring(dampingRatio = ServeDamping, stiffness = Spring.StiffnessLow))
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
             }
-            return@LaunchedEffect
+
+            // 응답이 올 때까지 두근두근. 접수되면 ViewModel 이 띠욧으로 넘긴다.
+            MealCeremonyStage.Waiting -> return@LaunchedEffect
+
+            // 2. 띠욧! 컷인. 터지는 순간의 섬광과 흔들림은 컷인이 onPop 으로 알려 준다. 애니메이션을 끄면 곧장 넘어간다.
+            MealCeremonyStage.Reaction -> if (!reducedMotion) delay(TasteReactionTotalMillis)
+
+            // 3. 냐미가 맛있게 먹었어요. 띠욧을 건너뛰었으면 섬광과 흔들림이 남지 않게 걷는다.
+            MealCeremonyStage.Ate -> {
+                flash.snapTo(0f)
+                shake.snapTo(0f)
+                delay(AteMillis)
+            }
+
+            // 4. 상자 등장과 승급 → 우편함에 쏙 → 곧장 홈으로. 따로 끝 화면을 두지 않는다.
+            MealCeremonyStage.BoxReveal -> delay(if (reducedMotion) ReducedRevealMillis else rewardBoxGrade.stageMillis())
+
+            MealCeremonyStage.BoxSend -> {
+                if (reducedMotion) giftDelivered = true
+                snapshotFlow { giftDelivered }.first { it }
+                delay(MailGulpMillis + SentHoldMillis)
+            }
+
+            // 끝 장면. 완료 버튼을 기다린다.
+            MealCeremonyStage.Finished -> return@LaunchedEffect
         }
-
-        // 1. 사진 카드가 식탁 위로 올라온다.
-        if (!reducedMotion) serve.animateTo(1f, spring(dampingRatio = ServeDamping, stiffness = Spring.StiffnessLow))
-        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-        stage = CeremonyStage.Waiting
-
-        // 응답이 올 때까지 두근두근.
-        snapshotFlow { latestResult != null || latestIsFailed }.first { it }
-
-        // 기록하지 못했으면 냐미가 걱정하며 알린 뒤 홈으로 간다.
-        if (latestIsFailed) {
-            stage = CeremonyStage.Failed
-            delay(FailedHoldMillis)
-            latestOnFailureShown()
-            return@LaunchedEffect
-        }
-
-        // 2. 띠욧! 컷인. 터지는 순간의 섬광과 흔들림은 컷인이 onPop 으로 알려 준다.
-        if (!reducedMotion) {
-            stage = CeremonyStage.Reaction
-            delay(TasteReactionTotalMillis)
-        }
-
-        // 3. 냐미가 맛있게 먹었어요.
-        stage = CeremonyStage.Ate
-        delay(AteMillis)
-        if (!latestSendsGift) {
-            stage = CeremonyStage.Finished
-            return@LaunchedEffect
-        }
-
-        // 4. 상자 등장과 승급 → 우편함에 쏙 → 곧장 홈으로. 따로 끝 화면을 두지 않는다.
-        stage = CeremonyStage.BoxReveal
-        delay(if (reducedMotion) ReducedRevealMillis else latestGrade.stageMillis())
-        stage = CeremonyStage.BoxSend
-        if (reducedMotion) giftDelivered = true
-        snapshotFlow { giftDelivered }.first { it }
-        delay(MailGulpMillis + SentHoldMillis)
-        latestOnDone()
+        latestOnStageFinished(stage)
     }
 
     // 상자가 닿으면 우편 아이콘이 꿀꺽 삼키듯 커졌다 돌아온다.
     LaunchedEffect(giftDelivered) {
-        if (giftDelivered && !reducedMotion && !skipped) {
+        if (giftDelivered && !reducedMotion) {
             mailGulp.snapTo(MailGulpScale)
             mailGulp.animateTo(1f, spring(dampingRatio = MailGulpDamping, stiffness = Spring.StiffnessMedium))
         }
     }
 
-    val canSkip = stage in SkippableStages && !skipped
     val shakePx = with(density) { ShakeDistance.toPx() }
 
     Box(
@@ -245,16 +201,16 @@ internal fun MealCeremony(
             // 빛줄기, 상자 무대의 빛, 색종이처럼 자기 영역보다 크게 그리는 효과가 상태 바와 내비게이션 바 위로 새지 않게 자른다.
             .clipToBounds()
             .background(NyummyTheme.colors.bg.surface)
-            .graphicsLayer { translationX = shake.value * shakePx },
+            .graphicsLayer { translationX = shake.value * shakePx }
+            .onGloballyPositioned { originInRoot = it.positionInRoot() },
     ) {
         when (stage) {
-            CeremonyStage.Serving, CeremonyStage.Waiting, CeremonyStage.Failed, CeremonyStage.Reaction -> {
+            MealCeremonyStage.Serving, MealCeremonyStage.Waiting, MealCeremonyStage.Reaction -> {
                 // 홈처럼 방이 화면 전체(시스템 바 뒤까지)를 채우고, 닫기와 제목은 방 위에 뜬다.
                 WaitingScene(
                     photoPath = photoPath,
                     roomBackgroundUrl = roomBackgroundUrl,
                     serveProgress = serve.value,
-                    isFailed = stage == CeremonyStage.Failed,
                     animate = !reducedMotion,
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -267,20 +223,21 @@ internal fun MealCeremony(
 
         // 먹었어요: 띠욧 배경이 차분해지며 이어진다. 상자를 보낼 때는 상자 무대가 이 위를 덮고,
         // 상자가 우편 아이콘에 쏙 들어가면 제목만 "우편함에 쏙!"으로 바뀐 뒤 홈으로 간다.
-        val showsAte = stage == CeremonyStage.Ate || stage == CeremonyStage.BoxReveal ||
-            stage == CeremonyStage.BoxSend || stage == CeremonyStage.Finished
+        val showsAte = stage == MealCeremonyStage.Ate || stage == MealCeremonyStage.BoxReveal ||
+            stage == MealCeremonyStage.BoxSend || stage == MealCeremonyStage.Finished
         if (showsAte) {
             AteCelebration(
                 title = if (giftDelivered) R.string.meal_ceremony_box_sent else R.string.meal_record_done_title,
-                line = if (stage == CeremonyStage.Ate) bubbleLineFor(result) else null,
-                showDone = stage == CeremonyStage.Finished,
+                showLine = stage == MealCeremonyStage.Ate,
+                showDone = stage == MealCeremonyStage.Finished,
                 animate = !reducedMotion,
                 onDoneClick = onDoneClick,
                 modifier = Modifier.fillMaxSize(),
             )
         }
 
-        if (stage == CeremonyStage.Reaction) {
+        // 애니메이션을 끄면 띠욧 장면은 곧장 지나가므로 그리지 않는다.
+        if (stage == MealCeremonyStage.Reaction && !reducedMotion) {
             // 만화 페이지 바탕은 시스템 바 뒤까지 깔고, 컷은 시스템 바를 피해 놓는다.
             Box(
                 Modifier
@@ -304,19 +261,19 @@ internal fun MealCeremony(
             )
         }
 
-        if (sendsGift && (stage == CeremonyStage.BoxReveal || stage == CeremonyStage.BoxSend)) {
+        if (sendsRewardBox && (stage == MealCeremonyStage.BoxReveal || stage == MealCeremonyStage.BoxSend)) {
             RewardBoxStage(
-                grade = grade,
-                leaving = stage == CeremonyStage.BoxSend,
+                grade = rewardBoxGrade,
+                leaving = stage == MealCeremonyStage.BoxSend,
                 reducedMotion = reducedMotion,
-                onBoxPositioned = { if (stage == CeremonyStage.BoxReveal) boxCenter = it },
+                onBoxPositioned = { if (stage == MealCeremonyStage.BoxReveal) boxCenter = it },
                 modifier = Modifier.fillMaxSize(),
             )
         }
         // 우편 아이콘: 홈 상단 우편 버튼과 같은 쪽(오른쪽 위)에 뜨고, 상자가 닿으면 꿀꺽 삼키듯 커졌다 돌아온다.
-        if (sendsGift) {
+        if (sendsRewardBox) {
             MailTarget(
-                visible = stage == CeremonyStage.BoxSend,
+                visible = stage == MealCeremonyStage.BoxSend,
                 showDot = giftDelivered,
                 gulp = mailGulp.value,
                 onPositioned = { mailCenter = it },
@@ -326,11 +283,11 @@ internal fun MealCeremony(
                     .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s8),
             )
         }
-        if (sendsGift && stage == CeremonyStage.BoxSend && !giftDelivered && !reducedMotion) {
+        if (sendsRewardBox && stage == MealCeremonyStage.BoxSend && !giftDelivered && !reducedMotion) {
             GiftFlight(
-                grade = grade,
-                from = boxCenter,
-                to = mailCenter,
+                grade = rewardBoxGrade,
+                from = boxCenter - originInRoot,
+                to = mailCenter - originInRoot,
                 onArrived = {
                     giftDelivered = true
                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -338,8 +295,8 @@ internal fun MealCeremony(
             )
         }
 
-        // 건너뛰기: 상단 바 오른쪽에 둔다. 상자가 우편함으로 날아갈 때는 그 자리에 우편 아이콘이 떠서 숨긴다(곧 홈으로 간다).
-        if (canSkip && stage != CeremonyStage.BoxSend) {
+        // 건너뛰기: 띠욧 컷신 동안 상단 바 오른쪽에 둔다.
+        if (stage.isSkippable) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -351,7 +308,7 @@ internal fun MealCeremony(
                 NyummyChip(
                     text = stringResource(R.string.meal_ceremony_skip_label),
                     selected = false,
-                    onClick = { skipped = true },
+                    onClick = onSkipClick,
                 )
             }
         }
@@ -441,14 +398,12 @@ private fun MailTarget(
 /**
  * 기다리는 장면: 지금 마이룸에 깔린 방이 홈처럼 화면 전체를 채우고, 숟가락을 든 냐미가 식탁 뒤에 앉아 있으며,
  * 원본 사진 카드가 식탁 위로 비스듬히 올라옵니다. 냐미 머리 위 말풍선이 "맛보는 중이야"라고 말합니다.
- * 기록하지 못하면 냐미가 걱정하는 얼굴로 바뀌어 고개를 젓고, 말풍선이 기록하지 못했다고 알립니다.
  */
 @Composable
 private fun WaitingScene(
     photoPath: String,
     roomBackgroundUrl: String?,
     serveProgress: Float,
-    isFailed: Boolean,
     animate: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -466,12 +421,6 @@ private fun WaitingScene(
         animationSpec = infiniteRepeatable(tween(TwinkleMillis, easing = LinearEasing), RepeatMode.Reverse),
         label = "waitingTwinkle",
     )
-    // 기록하지 못하면 고개를 도리도리 젓는다.
-    val headShake = remember { Animatable(0f) }
-    LaunchedEffect(isFailed) {
-        if (isFailed && animate) headShake.animateTo(0f, headShakeSpec())
-    }
-    val bobs = animate && !isFailed
 
     BoxWithConstraints(modifier = modifier) {
         // 지금 마이룸에 깔린 배경을 홈과 같은 규칙(화면을 덮고 바닥을 맞춤)으로 화면 전체에 깐다.
@@ -509,21 +458,19 @@ private fun WaitingScene(
                     .fillMaxWidth()
                     .height(cardHeight),
             ) {
-                // 걱정하는 냐미는 기다리는 냐미 첫 칸과 같은 자리, 같은 크기로 그려져 있어 그대로 바꿔 끼운다.
                 CeremonyArtView(
-                    art = if (isFailed) MealCeremonyArt.worried else waitingArt,
+                    art = waitingArt,
                     width = catWidth,
                     contentDescription = stringResource(R.string.meal_record_cat_content_description),
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = catBottom)
                         .graphicsLayer {
-                            translationY = if (bobs) -BobLift.toPx() * bob else 0f
-                            rotationZ = headShake.value
+                            translationY = if (animate) -BobLift.toPx() * bob else 0f
                             transformOrigin = TransformOrigin(0.5f, 1f)
                         },
                 )
-                if (animate && !isFailed) {
+                if (animate) {
                     val sparkle = painterResource(R.drawable.ic_meal_sparkle)
                     val tint = NyummyTheme.colors.data.coin
                     Icon(
@@ -569,21 +516,15 @@ private fun WaitingScene(
                     alignment = Alignment.TopCenter,
                 )
                 // 말풍선은 꼬리가 냐미 머리 바로 위에 오게 놓고, 냐미와 함께 들썩인다.
-                androidx.compose.animation.AnimatedContent(
-                    targetState = isFailed,
-                    transitionSpec = { (fadeIn() + scaleIn(initialScale = PopInScale)) togetherWith fadeOut() },
-                    label = "waitingBubble",
+                NyummyVoiceBubble(
+                    text = stringResource(R.string.meal_ceremony_waiting),
+                    tail = NyummyBubbleTail.Bottom,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = catBottom + catHeight * (1f - WaitingHeadTop) + BubbleGap)
-                        .graphicsLayer { translationY = if (bobs) -BobLift.toPx() * bob else 0f }
+                        .graphicsLayer { translationY = if (animate) -BobLift.toPx() * bob else 0f }
                         .semantics { liveRegion = LiveRegionMode.Polite },
-                ) { failed ->
-                    NyummyVoiceBubble(
-                        text = stringResource(if (failed) R.string.meal_ceremony_failed_line else R.string.meal_ceremony_waiting),
-                        tail = NyummyBubbleTail.Bottom,
-                    )
-                }
+                )
             }
             // 원본 사진 카드. 식탁 아래 끝에 걸쳐 비스듬히 놓인다. 사진은 그대로 보여 준다.
             val serveDistancePx = with(density) { ServeDistance.toPx() }
@@ -639,11 +580,12 @@ private fun CheeringNyummy(width: Dp, animate: Boolean, modifier: Modifier = Mod
 /**
  * 냐미가 맛있게 먹었어요. 띠욧과 같은 에버그린 빛 배경을 더 차분하게 깔고, 만세하며 뛰는 냐미 위에
  * 말풍선, 아래에 흰 글자에 그린 테두리를 두른 제목을 둡니다. 우편함 연출이 꺼져 있으면 여기서 [완료] 로 끝냅니다.
+ * 영양 분석은 접수 뒤에 진행되므로 말풍선([showLine])은 꼼꼼히 맛보고 알려 주겠다고 말합니다.
  */
 @Composable
 private fun AteCelebration(
     title: Int,
-    line: Int?,
+    showLine: Boolean,
     showDone: Boolean,
     animate: Boolean,
     onDoneClick: () -> Unit,
@@ -673,13 +615,14 @@ private fun AteCelebration(
             Spacer(Modifier.weight(AteTopWeight))
             Box(Modifier.height(BubbleSlotHeight), contentAlignment = Alignment.BottomCenter) {
                 androidx.compose.animation.AnimatedVisibility(
-                    visible = line != null,
+                    visible = showLine,
                     enter = fadeIn() + scaleIn(initialScale = PopInScale),
                     exit = fadeOut(),
                 ) {
-                    val last = remember { mutableIntStateOf(R.string.meal_ceremony_reaction_line) }
-                    if (line != null) last.intValue = line
-                    NyummyVoiceBubble(text = stringResource(last.intValue), tail = NyummyBubbleTail.Bottom)
+                    NyummyVoiceBubble(
+                        text = stringResource(R.string.meal_ceremony_analysis_pending),
+                        tail = NyummyBubbleTail.Bottom,
+                    )
                 }
             }
             CheeringNyummy(width = AteCheerWidth, animate = animate)
@@ -735,10 +678,6 @@ private fun OutlinedTitle(text: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** 먹었어요 장면에서 냐미가 할 말. 분석이 아직이면 알려 주겠다고 한다. */
-private fun bubbleLineFor(result: MealCeremonyResult?): Int =
-    if (result?.isAnalysisPending == true) R.string.meal_ceremony_analysis_pending else R.string.meal_ceremony_reaction_line
-
 /** 화면 전체를 좌우로 짧게 흔든다. 값은 [ShakeDistance] 배율이다. */
 private fun shakeSpec() = keyframes {
     durationMillis = ShakeMillis
@@ -750,16 +689,6 @@ private fun shakeSpec() = keyframes {
     0f at ShakeMillis
 }
 
-/** 고개를 도리도리 두 번 젓는다(각도). */
-private fun headShakeSpec() = keyframes {
-    durationMillis = HeadShakeMillis
-    -HeadShakeDegrees at HeadShakeMillis / 5
-    HeadShakeDegrees at HeadShakeMillis * 2 / 5
-    -HeadShakeDegrees at HeadShakeMillis * 3 / 5
-    HeadShakeDegrees / 2 at HeadShakeMillis * 4 / 5
-    0f at HeadShakeMillis
-}
-
 /** 통통 뛰기 한 번: 0 이 바닥, 1 이 가장 높은 곳. 바닥에서 잠깐 쉰다. */
 private fun jumpSpec() = keyframes {
     durationMillis = JumpMillis
@@ -769,19 +698,8 @@ private fun jumpSpec() = keyframes {
     0f at JumpMillis
 }
 
-/** 띠욧부터는 건너뛰기 칩으로 끝 장면으로 건너뛴다. 응답이 오기 전에는 건너뛸 수 없다. */
-private val SkippableStages = setOf(
-    CeremonyStage.Reaction,
-    CeremonyStage.Ate,
-    CeremonyStage.BoxReveal,
-    CeremonyStage.BoxSend,
-)
-
 private const val ServeDamping = 0.62f
 private val ServeDistance = 260.dp
-
-/** 기록하지 못했다고 알린 뒤 홈으로 가기 전까지 머무는 시간. 말풍선을 읽을 수 있게 둔다. */
-private const val FailedHoldMillis = 2_200L
 
 private const val FlashAlpha = 0.5f
 private const val FlashMillis = 180
@@ -819,8 +737,6 @@ private val SparkleSize = 22.dp
 private val SparkleSpread = 96.dp
 private val SparkleRise = 90.dp
 private const val PopInScale = 0.85f
-private const val HeadShakeMillis = 700
-private const val HeadShakeDegrees = 6f
 
 
 /** 기다리는 냐미 그림에서 머리 꼭대기가 있는 높이(그림 높이 대비 비율). 말풍선을 그 위에 놓는다. */

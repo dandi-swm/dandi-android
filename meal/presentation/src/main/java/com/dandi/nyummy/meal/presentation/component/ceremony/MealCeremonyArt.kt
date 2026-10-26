@@ -85,12 +85,6 @@ internal object MealCeremonyArt {
     val cheering: CeremonyArt = CeremonyArt.Still(R.drawable.meal_ceremony_nyummy_cheer)
 
     /**
-     * 기록하지 못했을 때 걱정하는 냐미(귀가 처지고 눈물이 맺힘). 기다리는 냐미 첫 칸과 같은 크기, 같은 자리로
-     * 그려 두어 그대로 바꿔 끼운다.
-     */
-    val worried: CeremonyArt = CeremonyArt.Still(R.drawable.meal_ceremony_nyummy_worry)
-
-        /**
      * 기다리는 냐미 앞을 가리는 나무 식탁 앞면. 윗판 아래로 판자가 길게 이어져, 윗선부터 화면 아래 끝까지 덮는다.
      * 냐미가 앉는 높이는 윗판과 첫 판자까지의 높이([TableFrontAspect])로 정한다.
      */

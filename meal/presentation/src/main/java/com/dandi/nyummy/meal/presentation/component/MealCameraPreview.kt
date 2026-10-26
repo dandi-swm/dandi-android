@@ -12,8 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -77,8 +80,16 @@ fun MealCameraPreview(
         modifier = modifier,
     )
 
+    // 촬영 지시([isCapturing])는 ViewModel 에 남아 있어, 화면이 다시 만들어지면 같은 지시로 한 장을 더 찍게 된다.
+    // 지시를 이미 실행했는지 저장해 두고 한 번만 찍는다. 앞서 찍던 결과는 이전 카메라가 성공이나 실패로 돌려준다.
+    var captureIssued by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(isCapturing) {
-        if (!isCapturing) return@LaunchedEffect
+        if (!isCapturing) {
+            captureIssued = false
+            return@LaunchedEffect
+        }
+        if (captureIssued) return@LaunchedEffect
+        captureIssued = true
         val photoFile = File(context.cacheDir, "meal_capture_${System.currentTimeMillis()}.jpeg")
         controller.takePicture(
             ImageCapture.OutputFileOptions.Builder(photoFile).build(),

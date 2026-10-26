@@ -13,13 +13,13 @@
     <string name="meal_record_permission_blocked_body">카메라 권한이 꺼져 있어요.\n기기 설정 &gt; 권한에서 카메라를 허용해 주세요. 갤러리 사진으로도 기록할 수 있어요.</string>
     <string name="meal_record_permission_open_settings">기기 설정 열기</string>
     <string name="meal_record_capture_failed">사진을 찍지 못했어요. 다시 시도해주세요.</string>
+    <string name="meal_record_submit_interrupted">기록됐는지 확인하지 못했어요. 기록 탭에서 확인해 주세요.</string>
     <string name="meal_record_captured_photo_content_description">촬영한 음식 사진</string>
     <string name="meal_record_cat_content_description">냐미</string>
     <string name="meal_record_done_title">냐미가 맛있게 먹었어요!</string>
     <string name="meal_record_done">완료</string>
     <string name="meal_ceremony_waiting">냐미가 맛보는 중이야…!!</string>
     <string name="meal_ceremony_reaction_word">띠욧!!</string>
-    <string name="meal_ceremony_reaction_line">으음~ 이 맛이야!</string>
     <string name="meal_ceremony_analysis_pending">꼼꼼히 맛보고 알려 줄게!</string>
     <string name="meal_ceremony_box_bronze">선물 상자!</string>
     <string name="meal_ceremony_box_silver">반짝 상자!</string>
@@ -28,7 +28,6 @@
     <string name="meal_ceremony_box_content_description">보상 상자</string>
     <string name="meal_ceremony_mailbox_content_description">우편함</string>
     <string name="meal_ceremony_skip_label">건너뛰기</string>
-    <string name="meal_ceremony_failed_line">음식 기록이 제대로 되지 않았어</string>
     <string name="meal_ceremony_box_badge">식사 기록 보상</string>
     <string name="meal_ceremony_bite_word">앙!</string>
 </resources>

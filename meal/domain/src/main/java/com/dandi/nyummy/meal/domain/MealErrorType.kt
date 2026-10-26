@@ -7,7 +7,8 @@ import com.dandi.nyummy.common.domain.error.HttpErrorType
  *
  * `type` 은 서버 공통 에러 바디의 `code` 값과 일치해야 매칭된다.
  * 서버 `message` 는 디버그용이라 화면에는 [errorMsg] 만 보여 준다.
- * 서버의 MealErrorCode, S3ErrorCode가 바뀌면 여기도 같이 고친다.
+ * 서버의 MealErrorCode, S3ErrorCode가 바뀌면 여기도 같이 고친다. 기록하지 못한 경우는 모두 에러 코드로 오므로
+ * 서버가 코드를 새로 알려 주면 항목을 더하고, 여기 없는 코드는 UseCase 의 기본 안내로 처리된다.
  */
 enum class MealErrorType(
     override val type: String,
