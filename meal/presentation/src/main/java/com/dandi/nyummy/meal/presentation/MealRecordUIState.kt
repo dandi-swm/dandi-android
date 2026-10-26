@@ -43,11 +43,9 @@ enum class MealCameraPermission { Requesting, Granted, Denied, Blocked }
  * 기록이 접수된 뒤 연출에 필요한 값입니다.
  *
  * @property rewardBoxGrade 우편함으로 보낼 보상 상자 등급. [RewardBoxGrade.NONE] 이면 상자 연출을 하지 않습니다.
- * @property isAnalysisPending 영양 분석이 아직 끝나지 않았는지. 냐미 대사가 달라집니다.
  */
 data class MealCeremonyResult(
     val rewardBoxGrade: RewardBoxGrade = RewardBoxGrade.NONE,
-    val isAnalysisPending: Boolean = false,
 )
 
 /**

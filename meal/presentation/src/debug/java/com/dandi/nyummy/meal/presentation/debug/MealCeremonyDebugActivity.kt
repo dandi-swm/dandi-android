@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
  *
  * 실행 예:
  * adb shell am start -n com.dandi.nyummy/com.dandi.nyummy.meal.presentation.debug.MealCeremonyDebugActivity \
- *   --es grade GOLD --ez gift true --el delay 2500 --ez fail false --ez pending false --el bg 1
+ *   --es grade GOLD --ez gift true --el delay 2500 --ez fail false --el bg 1
  */
 class MealCeremonyDebugActivity : ComponentActivity() {
 
@@ -36,7 +36,6 @@ class MealCeremonyDebugActivity : ComponentActivity() {
         val sendsGift = intent.getBooleanExtra(EXTRA_GIFT, true)
         val responseDelay = intent.getLongExtra(EXTRA_DELAY, DEFAULT_DELAY_MILLIS)
         val fails = intent.getBooleanExtra(EXTRA_FAIL, false)
-        val pending = intent.getBooleanExtra(EXTRA_PENDING, false)
         val roomBackgroundUrl = intent.getLongExtra(EXTRA_BACKGROUND, 0L).takeIf { it > 0L }?.let(NyummyCdn::itemUrl)
         val photoPath = copySamplePhoto()
 
@@ -49,7 +48,7 @@ class MealCeremonyDebugActivity : ComponentActivity() {
                     if (fails) {
                         failed = true
                     } else {
-                        result = MealCeremonyResult(rewardBoxGrade = grade, isAnalysisPending = pending)
+                        result = MealCeremonyResult(rewardBoxGrade = grade)
                     }
                 }
                 MealCeremony(
@@ -83,7 +82,6 @@ class MealCeremonyDebugActivity : ComponentActivity() {
         const val EXTRA_GIFT = "gift"
         const val EXTRA_DELAY = "delay"
         const val EXTRA_FAIL = "fail"
-        const val EXTRA_PENDING = "pending"
         const val EXTRA_BACKGROUND = "bg"
         const val DEFAULT_DELAY_MILLIS = 2_500L
         const val SAMPLE_PHOTO = "meal_ceremony_sample.png"

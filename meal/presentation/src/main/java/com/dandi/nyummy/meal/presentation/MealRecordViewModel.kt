@@ -186,8 +186,7 @@ class MealRecordViewModel @Inject constructor(
     /**
      * 촬영본을 업로드해 식사를 생성한다. 성공 알림은 연출 화면이 담당한다.
      *
-     * 연출은 분석 완료가 아니라 기록 접수(응답 도착)에 맞춰 넘어간다. 분석이 비동기로 바뀌어 응답이
-     * "처리 중"으로 바로 와도 같은 흐름이다.
+     * 응답이 오면 기록이 접수된 것이라 연출이 맛 리액션으로 넘어간다. 영양 분석은 접수 뒤에 진행되므로 기다리지 않는다.
      */
     private fun submitCapturedMeal() {
         val phase = currentState.phase as? MealCameraPhase.Captured ?: return
@@ -197,11 +196,7 @@ class MealRecordViewModel @Inject constructor(
         viewModelScope.launch {
             submitMeal(phase.photoPath, phase.source)
                 .onSuccess { created ->
-                    val result = MealCeremonyResult(
-                        rewardBoxGrade = created.rewardBoxGrade,
-                        isAnalysisPending = created.isAnalysisPending,
-                    )
-                    dispatch(MealRecordReducerEvent.SubmitSucceeded(result))
+                    dispatch(MealRecordReducerEvent.SubmitSucceeded(MealCeremonyResult(created.rewardBoxGrade)))
                     analyticsHelper.logEvent(
                         AnalyticsEvent.MealSubmitSuccess(source = source, durationSec = openedAt.elapsedNow().inWholeSeconds),
                     )

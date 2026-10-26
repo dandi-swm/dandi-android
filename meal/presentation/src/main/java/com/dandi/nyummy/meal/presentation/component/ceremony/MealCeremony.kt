@@ -43,7 +43,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -129,7 +128,7 @@ internal enum class CeremonyStage {
  * 1. 기다림: 고양이방 카드(지금 마이룸에 깔린 배경) 안에서 숟가락을 든 냐미가 침을 꼴깍 삼키고, 식탁 위에 원본 사진 카드가 놓입니다.
  *    사진은 어떤 장면에서도 변형하지 않습니다.
  * 2. 응답(기록 접수)이 오면 띠욧! 컷인: 오물오물 → 정적 → 섬광, 흔들림, 빛줄기와 함께 별눈.
- *    분석 완료가 아니라 접수에 맞춰 넘어가므로, 분석이 비동기로 바뀌어도 흐름이 같습니다.
+ *    분석 완료가 아니라 접수에 맞춰 넘어갑니다. 영양 분석은 접수 뒤에 진행됩니다.
  * 3. "냐미가 맛있게 먹었어요!". [isMailGiftEnabled] 가 꺼져 있거나 상자가 없으면 여기서 끝납니다.
  * 4. 켜져 있으면 진한 그린 무대 위에 상자가 등장해 등급만큼 승급하고, 무대가 걷히며 오른쪽 위 우편 아이콘으로 날아갑니다.
  *
@@ -272,7 +271,7 @@ internal fun MealCeremony(
         if (showsAte) {
             AteCelebration(
                 title = if (giftDelivered) R.string.meal_ceremony_box_sent else R.string.meal_record_done_title,
-                line = if (stage == CeremonyStage.Ate) bubbleLineFor(result) else null,
+                showLine = stage == CeremonyStage.Ate,
                 showDone = stage == CeremonyStage.Finished,
                 animate = !reducedMotion,
                 onDoneClick = onDoneClick,
@@ -639,11 +638,12 @@ private fun CheeringNyummy(width: Dp, animate: Boolean, modifier: Modifier = Mod
 /**
  * 냐미가 맛있게 먹었어요. 띠욧과 같은 에버그린 빛 배경을 더 차분하게 깔고, 만세하며 뛰는 냐미 위에
  * 말풍선, 아래에 흰 글자에 그린 테두리를 두른 제목을 둡니다. 우편함 연출이 꺼져 있으면 여기서 [완료] 로 끝냅니다.
+ * 영양 분석은 접수 뒤에 진행되므로 말풍선([showLine])은 꼼꼼히 맛보고 알려 주겠다고 말합니다.
  */
 @Composable
 private fun AteCelebration(
     title: Int,
-    line: Int?,
+    showLine: Boolean,
     showDone: Boolean,
     animate: Boolean,
     onDoneClick: () -> Unit,
@@ -673,13 +673,14 @@ private fun AteCelebration(
             Spacer(Modifier.weight(AteTopWeight))
             Box(Modifier.height(BubbleSlotHeight), contentAlignment = Alignment.BottomCenter) {
                 androidx.compose.animation.AnimatedVisibility(
-                    visible = line != null,
+                    visible = showLine,
                     enter = fadeIn() + scaleIn(initialScale = PopInScale),
                     exit = fadeOut(),
                 ) {
-                    val last = remember { mutableIntStateOf(R.string.meal_ceremony_reaction_line) }
-                    if (line != null) last.intValue = line
-                    NyummyVoiceBubble(text = stringResource(last.intValue), tail = NyummyBubbleTail.Bottom)
+                    NyummyVoiceBubble(
+                        text = stringResource(R.string.meal_ceremony_analysis_pending),
+                        tail = NyummyBubbleTail.Bottom,
+                    )
                 }
             }
             CheeringNyummy(width = AteCheerWidth, animate = animate)
@@ -734,10 +735,6 @@ private fun OutlinedTitle(text: String, modifier: Modifier = Modifier) {
         )
     }
 }
-
-/** 먹었어요 장면에서 냐미가 할 말. 분석이 아직이면 알려 주겠다고 한다. */
-private fun bubbleLineFor(result: MealCeremonyResult?): Int =
-    if (result?.isAnalysisPending == true) R.string.meal_ceremony_analysis_pending else R.string.meal_ceremony_reaction_line
 
 /** 화면 전체를 좌우로 짧게 흔든다. 값은 [ShakeDistance] 배율이다. */
 private fun shakeSpec() = keyframes {
