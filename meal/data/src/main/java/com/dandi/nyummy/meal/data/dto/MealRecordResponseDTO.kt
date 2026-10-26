@@ -16,10 +16,10 @@ internal fun ImageUploadUrlDTO.toVO(): MealImageUploadVO = MealImageUploadVO(
 )
 
 /**
- * 식사 생성 응답입니다.
+ * 식사 생성 응답입니다. 기록하지 못한 경우는 이 응답이 아니라 에러 코드로 옵니다.
  *
  * @property id 생성된 식사 ID
- * @property status 영양 분석 상태 문자열 (WAITING/ANALYZING/COMPLETED/FAILED/UNKNOWN)
+ * @property status 영양 분석 상태 문자열. 분석은 접수 뒤에 진행되므로 늘 처리 중(WAITING/ANALYZING)이다
  * @property rewardBoxCategory 이번 기록으로 생긴 보상 상자 우편의 등급 (BRONZE/SILVER/GOLD)
  */
 @Serializable

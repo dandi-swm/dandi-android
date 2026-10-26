@@ -13,13 +13,13 @@
     <string name="meal_record_permission_blocked_body">Camera access is turned off.\nAllow the camera in Settings &gt; Permissions. You can also record with a photo from your gallery.</string>
     <string name="meal_record_permission_open_settings">Open settings</string>
     <string name="meal_record_capture_failed">Couldn\'t take the photo. Please try again.</string>
+    <string name="meal_record_submit_interrupted">We couldn\'t confirm your meal was saved. Please check your history.</string>
     <string name="meal_record_captured_photo_content_description">Captured food photo</string>
     <string name="meal_record_cat_content_description">Nyummy</string>
     <string name="meal_record_done_title">Nyummy loved the meal!</string>
     <string name="meal_record_done">Done</string>
     <string name="meal_ceremony_waiting">Nyummy is tasting…!!</string>
     <string name="meal_ceremony_reaction_word">Boing!!</string>
-    <string name="meal_ceremony_reaction_line">Mmm~ this is it!</string>
     <string name="meal_ceremony_analysis_pending">I\'ll taste it carefully and let you know!</string>
     <string name="meal_ceremony_box_bronze">Gift box!</string>
     <string name="meal_ceremony_box_silver">Sparkly box!</string>
@@ -28,7 +28,6 @@
     <string name="meal_ceremony_box_content_description">Reward box</string>
     <string name="meal_ceremony_mailbox_content_description">Mailbox</string>
     <string name="meal_ceremony_skip_label">Skip</string>
-    <string name="meal_ceremony_failed_line">Your meal wasn\'t recorded properly</string>
     <string name="meal_ceremony_box_badge">Meal record reward</string>
     <string name="meal_ceremony_bite_word">Nom!</string>
 </resources>

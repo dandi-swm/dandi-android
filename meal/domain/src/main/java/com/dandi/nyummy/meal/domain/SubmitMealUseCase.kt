@@ -18,7 +18,8 @@ import javax.inject.Inject
  *
  * 촬영본 준비(검증·상한 초과 시 재압축) → presigned URL 발급 → 스토리지 업로드 →
  * 식사 생성(분석 시작)을 순서대로 수행하며, 어느 단계에서 실패해도 실패 안내 후
- * [Result.failure] 를 돌려준다.
+ * [Result.failure] 를 돌려준다. 식사 생성 응답이 오면 기록이 접수된 것이고, 기록하지 못한 경우는
+ * 에러 코드로 와서 [MealErrorType] 으로 안내한다.
  */
 class SubmitMealUseCase @Inject constructor(
     private val repository: MealRecordRepository,
