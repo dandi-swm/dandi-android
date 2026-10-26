@@ -1,6 +1,7 @@
 package com.dandi.nyummy.common.presentation.designsystem.component
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -40,7 +41,10 @@ fun NyummyText(
     )
 }
 
-/** 부분 스타일(굵게, 링크 등)이 필요한 텍스트용 [AnnotatedString] 오버로드. */
+/**
+ * 부분 스타일(굵게, 링크 등)이 필요한 텍스트용 [AnnotatedString] 오버로드.
+ * 글자 사이에 아이콘을 넣을 때는 [inlineContent]로 넘긴다.
+ */
 @Composable
 fun NyummyText(
     text: AnnotatedString,
@@ -51,6 +55,7 @@ fun NyummyText(
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Ellipsis,
     onTextLayout: (TextLayoutResult) -> Unit = {},
+    inlineContent: Map<String, InlineTextContent> = emptyMap(),
 ) {
     Text(
         text = text,
@@ -59,6 +64,7 @@ fun NyummyText(
         textAlign = textAlign,
         maxLines = maxLines,
         overflow = overflow,
+        inlineContent = inlineContent,
         onTextLayout = onTextLayout,
         style = style,
     )

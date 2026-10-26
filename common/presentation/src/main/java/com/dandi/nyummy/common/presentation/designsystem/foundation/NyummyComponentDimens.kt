@@ -179,4 +179,7 @@ internal object NyummyComponentDimens {
 
     /** 식사 행(NyummyMealRow) 왼쪽 사진, 냐미 자리 크기. */
     val MealRowLeadingSize = 48.dp
+
+    /** 꾸민 글자(NyummyRichText) 안 코인 아이콘 크기. */
+    val RichTextCoinSize = 18.dp
 }
