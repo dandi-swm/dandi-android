@@ -14,7 +14,12 @@ interface MealRecordApiService {
     @POST(MEALS_PATH)
     suspend fun createMeal(@Body request: CreateMealRequestDTO): Response<CreatedMealDTO>
 
+    /** 튜토리얼 식사 생성 */
+    @POST(TUTORIAL_MEAL_PATH)
+    suspend fun createTutorialMeal(): Response<CreatedMealDTO>
+
     companion object {
         const val MEALS_PATH = "/api/v1/meals"
+        const val TUTORIAL_MEAL_PATH = "/api/v1/meals/tutorial"
     }
 }

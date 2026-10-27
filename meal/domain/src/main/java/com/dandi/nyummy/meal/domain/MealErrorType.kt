@@ -39,4 +39,10 @@ enum class MealErrorType(
         type = "api.s3.fileSizeExceeded",
         errorMsg = "사진 용량이 너무 커요. 다시 찍어주세요",
     ),
+
+    /** 튜토리얼 식사를 이미 했다(409). 다른 기기에서 먼저 마친 경우라 안내 없이 마친 것으로 본다. */
+    TUTORIAL_ALREADY_COMPLETED(
+        type = "api.meal.tutorialAlreadyCompleted",
+        errorMsg = "",
+    ),
 }

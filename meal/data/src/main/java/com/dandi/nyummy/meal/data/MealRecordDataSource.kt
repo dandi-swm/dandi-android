@@ -9,4 +9,7 @@ class MealRecordDataSource(
 ) : BaseRemoteDataSource() {
     suspend fun createMeal(request: CreateMealRequestDTO): CreatedMealDTO =
         checkResponse(apiService.createMeal(request))
+
+    suspend fun createTutorialMeal(): CreatedMealDTO =
+        checkResponse(apiService.createTutorialMeal())
 }

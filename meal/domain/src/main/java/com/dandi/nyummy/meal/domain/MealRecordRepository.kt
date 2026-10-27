@@ -35,4 +35,10 @@ interface MealRecordRepository {
 
     /** 업로드된 이미지 키로 식사를 생성하고 분석을 시작시킨다. */
     suspend fun createMeal(imageKey: String): CreatedMealVO
+
+    /**
+     * 튜토리얼 식사를 기록한다. 사진 없이 기록하고, 서버가 보상 상자 우편을 보낸다. 기록 탭과 연속 기록에는 남지 않는다.
+     * 사용자당 한 번만 성공하고, 이미 했으면 [MealErrorType.TUTORIAL_ALREADY_COMPLETED]로 실패한다.
+     */
+    suspend fun createTutorialMeal(): CreatedMealVO
 }

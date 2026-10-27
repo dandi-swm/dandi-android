@@ -81,6 +81,7 @@ private val MealErrorType.analyticsReason: String
         MealErrorType.DAILY_COUNT_EXCEEDED -> "daily_limit"
         MealErrorType.UNSUPPORTED_CONTENT_TYPE -> "unsupported_type"
         MealErrorType.FILE_SIZE_EXCEEDED -> "file_too_large"
+        MealErrorType.TUTORIAL_ALREADY_COMPLETED -> "tutorial_already_completed"
     }
 
 /** 제출 전 촬영본 검증·압축 실패. [message] 는 사용자에게 그대로 노출할 안내 문구다. */
