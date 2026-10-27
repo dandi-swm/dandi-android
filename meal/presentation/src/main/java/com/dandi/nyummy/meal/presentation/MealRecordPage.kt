@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,7 +19,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -62,6 +62,8 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.domain.helper.AppPermission
+import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.coachmark.coachMarkTarget
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
@@ -73,12 +75,10 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
-import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.meal.presentation.component.MealCameraOverlay
 import com.dandi.nyummy.meal.presentation.component.MealCameraPreview
 import com.dandi.nyummy.meal.presentation.component.ceremony.MealCeremony
-import java.io.File
 
 /**
  * 식사 기록(카메라) 화면입니다.
@@ -117,8 +117,8 @@ fun MealRecordPage(
     // 이미 허용된 상태면 팝업 없이 즉시 허용 콜백이 온다. 앱이 종료됐다 사진 확인이나 연출 단계로 되살아났으면
     // 카메라가 필요 없으니, 다시 찍으러 프리뷰로 돌아갈 때 묻는다.
     val isPreview = uiState.phase is MealCameraPhase.Preview
-    LaunchedEffect(uiState.cameraPermission, isPreview) {
-        if (isPreview && uiState.cameraPermission == MealCameraPermission.Requesting) {
+    LaunchedEffect(uiState.cameraPermission, isPreview, uiState.isTutorialChecked) {
+        if (isPreview && uiState.isTutorialChecked && uiState.cameraPermission == MealCameraPermission.Requesting) {
             permissionRequester.request(listOf(AppPermission.CAMERA))
         }
     }
@@ -160,13 +160,16 @@ private fun MealRecordScreen(
     // (접수되기 전에는 ViewModel 이 무시한다).
     BackHandler(enabled = uiState.phase !is MealCameraPhase.Preview) {
         when (uiState.phase) {
-            is MealCameraPhase.Captured -> onIntent(MealRecordIntent.ClickRetake)
+            // 튜토리얼은 다시 찍을 사진이 없어 닫는다(기록하지 않고 홈으로).
+            is MealCameraPhase.Captured ->
+                onIntent(if (uiState.phase.isTutorial) MealRecordIntent.ClickClose else MealRecordIntent.ClickRetake)
             is MealCameraPhase.Ceremony -> onIntent(MealRecordIntent.ClickClose)
             MealCameraPhase.Preview -> Unit
         }
     }
 
     val phase = uiState.phase
+    MealTutorialCoachMark(phase)
     if (phase is MealCameraPhase.Ceremony) {
         MealCeremony(
             photoPath = phase.photoPath,
@@ -229,7 +232,7 @@ private fun MealRecordScreen(
                 }
 
                 is MealCameraPhase.Captured -> AsyncImage(
-                    model = File(phase.photoPath),
+                    model = mealPhotoModel(phase.photoPath),
                     contentDescription = stringResource(
                         R.string.meal_record_captured_photo_content_description,
                     ),
@@ -266,8 +269,10 @@ private fun MealRecordScreen(
                 )
 
                 is MealCameraPhase.Captured -> CapturedActionBar(
+                    showRetake = !phase.isTutorial,
                     onRetakeClick = { onIntent(MealRecordIntent.ClickRetake) },
                     onSubmitClick = { onIntent(MealRecordIntent.ClickSubmit) },
+                    submitModifier = Modifier.coachMarkTarget(MealSubmitCoachMarkKey) { onIntent(MealRecordIntent.ClickSubmit) },
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -405,24 +410,30 @@ private fun PreviewActionBar(
 /** 촬영 확인 단계 하단 바: 다시 찍기 · `냐미에게 주기`(주 액션) 버튼. */
 @Composable
 private fun CapturedActionBar(
+    showRetake: Boolean,
     onRetakeClick: () -> Unit,
     onSubmitClick: () -> Unit,
     modifier: Modifier = Modifier,
+    submitModifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier.padding(horizontal = NyummyTheme.spacing.s20),
         horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NyummyButton(
-            text = stringResource(R.string.meal_record_retake),
-            style = NyummyButtonStyle.Secondary,
-            size = NyummyButtonSize.L,
-            onClick = onRetakeClick,
-        )
+        if (showRetake) {
+            NyummyButton(
+                text = stringResource(R.string.meal_record_retake),
+                style = NyummyButtonStyle.Secondary,
+                size = NyummyButtonSize.L,
+                onClick = onRetakeClick,
+            )
+        }
         NyummyButton(
             text = stringResource(R.string.meal_record_submit),
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .then(submitModifier),
             style = NyummyButtonStyle.Primary,
             size = NyummyButtonSize.L,
             onClick = onSubmitClick,

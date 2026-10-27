@@ -47,4 +47,7 @@ sealed interface MealRecordReducerEvent : ReducerEvent {
 
     /** 지금 마이룸에 깔린 배경을 읽었습니다. 연출의 고양이방을 이 배경으로 그립니다. */
     data class RoomBackgroundLoaded(val itemId: Long) : MealRecordReducerEvent
+
+    /** 식사 기록 튜토리얼로 열지 확인했습니다. 튜토리얼이면 예시 사진 확인 단계에서 시작합니다. */
+    data class TutorialChecked(val isTutorial: Boolean) : MealRecordReducerEvent
 }

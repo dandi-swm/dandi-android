@@ -30,4 +30,6 @@
     <string name="meal_ceremony_skip_label">Skip</string>
     <string name="meal_ceremony_box_badge">Meal record reward</string>
     <string name="meal_ceremony_bite_word">Nom!</string>
+    <string name="meal_tutorial_title">Not time to eat yet, right?</string>
+    <string name="meal_tutorial_body">Just this once, I prepared a meal. Tap here!</string>
 </resources>

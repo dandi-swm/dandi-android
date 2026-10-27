@@ -128,6 +128,8 @@ enum class MealCameraPermission { Requesting, Granted, Denied, Blocked }
  *
  * @property isMailGiftEnabled 보상 상자를 우편함으로 보내는 연출을 보여 줄지. 우편함 아이템 탭이 보일 때만 켭니다.
  * @property roomBackgroundItemId 지금 마이룸에 깔린 배경의 아이템 id. 연출의 고양이방을 이 배경으로 그리고, 없으면 기본 빈 방입니다.
+ * @property isTutorialChecked 식사 기록 튜토리얼로 열지 확인을 마쳤는지. 마치기 전에는 카메라 권한을 묻지 않습니다
+ * (튜토리얼은 예시 사진을 쓰므로 권한을 묻지 않습니다).
  */
 data class MealRecordUIState(
     val phase: MealCameraPhase = MealCameraPhase.Preview,
@@ -137,6 +139,7 @@ data class MealRecordUIState(
     val isFinishing: Boolean = false,
     val isMailGiftEnabled: Boolean = false,
     val roomBackgroundItemId: Long? = null,
+    val isTutorialChecked: Boolean = false,
 ) : UiState {
 
     /** 기록이 접수됐는지. 접수된 뒤에만 연출 중 닫기·백으로 화면을 마칠 수 있습니다. */
