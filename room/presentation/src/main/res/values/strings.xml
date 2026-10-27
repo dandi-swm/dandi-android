@@ -20,4 +20,13 @@
     <string name="my_room_put_away">보관함에 넣기</string>
     <string name="my_room_sheet_expand">보관함 펼치기</string>
     <string name="my_room_sheet_collapse">보관함 접기</string>
+
+    <string name="my_room_tutorial_intro_title">여긴 냐미 방이야</string>
+    <string name="my_room_tutorial_intro_body">보관함 아이템을 눌러 방을 꾸밀 수 있어</string>
+    <string name="my_room_tutorial_box_title">아이템은 보상 상자에서 나와</string>
+    <string name="my_room_tutorial_box_body">밥을 기록하고 상자를 열어 모아 보자</string>
+    <string name="my_room_tutorial_place_title">이걸 방에 놓아 볼까?</string>
+    <string name="my_room_tutorial_place_body">누르면 방 가운데에 놓여</string>
+    <string name="my_room_tutorial_save_title">마음에 들면 저장해 줘!</string>
+    <string name="my_room_tutorial_save_body">놓은 아이템은 끌어서 옮기고, 두 손가락으로 크기를 바꿀 수 있어</string>
 </resources>

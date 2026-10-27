@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.coachmark.coachMarkTarget
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
@@ -33,7 +35,6 @@ import com.dandi.nyummy.room.presentation.component.RoomStage
 import com.dandi.nyummy.room.presentation.component.rememberRoomSheetState
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
  * 마이룸(방 꾸미기). 방은 홈처럼 화면 전체(시스템 바 뒤까지)를 채우고 같은 규칙으로 그려서, 꾸민 모습과 잘리는 곳이 홈과 같다.
@@ -58,6 +59,7 @@ fun MyRoomPage(
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
+    MyRoomTutorialCoachMark(tutorial = uiState.tutorial, onIntent = viewModel::onIntent)
 }
 
 @Composable
@@ -110,6 +112,7 @@ internal fun MyRoomScreen(
                     text = stringResource(R.string.my_room_save),
                     onClick = { onIntent(MyRoomIntent.ClickSave) },
                     enabled = uiState.canSave,
+                    modifier = Modifier.coachMarkTarget(RoomSaveCoachMarkKey) { onIntent(MyRoomIntent.ClickSave) },
                 )
             },
             containerColor = Color.Transparent,
@@ -134,6 +137,7 @@ internal fun MyRoomScreen(
             loadState = uiState.loadState,
             tabs = uiState.inventoryTabs,
             selectedCategory = uiState.selectedCategory,
+            tutorialItemId = uiState.tutorial?.itemId,
             onSelectTab = { onIntent(MyRoomIntent.SelectTab(it)) },
             onInteriorClick = { id ->
                 val point = frame.newItemPoint()
@@ -143,7 +147,9 @@ internal fun MyRoomScreen(
             onReachEnd = { onIntent(MyRoomIntent.ReachInventoryEnd(it)) },
             onShopClick = { onIntent(MyRoomIntent.ClickShop) },
             onRetry = { onIntent(MyRoomIntent.RetryLoad) },
-            modifier = Modifier.align(Alignment.BottomCenter),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .coachMarkTarget(RoomInventoryCoachMarkKey) {},
         )
     }
 }

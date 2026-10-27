@@ -7,7 +7,9 @@ import com.dandi.nyummy.cat.entity.CatAnimationVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
@@ -25,6 +27,7 @@ import com.dandi.nyummy.room.presentation.model.toRoomCatMotion
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -37,10 +40,13 @@ class MyRoomViewModel @Inject constructor(
     private val catMotionPicker: CatMotionPicker,
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
+    private val tutorialHelper: TutorialHelper,
 ) : MviViewModel<MyRoomIntent, MyRoomUIState, MyRoomReducerEvent>(MyRoomUIState()) {
 
     /** 방에서 쓰는 냐미 애니메이션(마이룸 꾸미기 상태). 받지 못했으면 null이고 냐미를 그리지 않는다. */
     private var catAnimation: CatAnimationVO? = null
+
+    private var tutorialJob: Job? = null
 
     init {
         load()
@@ -64,6 +70,14 @@ class MyRoomViewModel @Inject constructor(
             // TODO: 상점 화면이 생기면 ShopPage로 연결한다.
             MyRoomIntent.ClickShop -> messageHelper.showToast(CommonR.string.nyummy_not_ready)
             is MyRoomIntent.CatMotionFinished -> if (intent.playId == currentState.catMotion?.playId) startCatMotion()
+            MyRoomIntent.TutorialAdvance -> advanceTutorial()
+            MyRoomIntent.TutorialTargetClicked -> when (currentState.tutorial?.phase) {
+                MyRoomTutorialPhase.Place -> changeTutorial(MyRoomTutorialUiState(MyRoomTutorialPhase.Save))
+                MyRoomTutorialPhase.Save -> changeTutorial(MyRoomTutorialUiState(MyRoomTutorialPhase.Saving))
+                else -> Unit
+            }
+            MyRoomIntent.TutorialSkip -> endTutorial { tutorialHelper.skipAll() }
+            MyRoomIntent.TutorialBack -> endTutorial { tutorialHelper.complete(TutorialStep.ROOM) }
         }
     }
 
@@ -96,15 +110,60 @@ class MyRoomViewModel @Inject constructor(
                 savedRoom = if (event.isSaved) state.room else state.savedRoom,
             )
             is MyRoomReducerEvent.CatMotionChanged -> state.copy(catMotion = event.motion)
+            is MyRoomReducerEvent.TutorialChanged -> state.copy(tutorial = event.tutorial)
         }
 
     private fun load() {
         dispatch(MyRoomReducerEvent.LoadStarted)
         viewModelScope.launch {
             getRoom()
-                .onSuccess { dispatch(MyRoomReducerEvent.Loaded(it)) }
+                .onSuccess {
+                    dispatch(MyRoomReducerEvent.Loaded(it))
+                    updateTutorial()
+                }
                 .onFailure { dispatch(MyRoomReducerEvent.LoadFailed) }
         }
+    }
+
+    /**
+     * 마이룸 안내가 남아 있으면 띄운다. 놓지 않은 아이템이 있으면 그 탭으로 바꿔 칸을 가리키고, 없으면 꾸미기를 소개한다.
+     * 인테리어를 배경보다 먼저 고른다. 방을 다시 불러오면 처음부터 다시 고른다.
+     */
+    private fun updateTutorial() {
+        tutorialJob?.cancel()
+        tutorialJob = viewModelScope.launch {
+            if (!tutorialHelper.isPending(TutorialStep.ROOM)) return@launch
+            val item = currentState.inventoryTabs
+                .sortedBy { it.category == RoomItemCategory.BACKGROUND }
+                .firstNotNullOfOrNull { tab -> tab.items.firstOrNull { !it.isPlaced } }
+            if (item == null) {
+                changeTutorial(MyRoomTutorialUiState(MyRoomTutorialPhase.Intro))
+                return@launch
+            }
+            dispatch(MyRoomReducerEvent.TabSelected(item.category))
+            changeTutorial(MyRoomTutorialUiState(MyRoomTutorialPhase.Place, itemId = item.roomItemId))
+        }
+    }
+
+    private fun advanceTutorial() {
+        val tutorial = currentState.tutorial ?: return
+        if (tutorial.phase != MyRoomTutorialPhase.Intro) return
+        if (tutorial.isLastIntro) {
+            endTutorial { tutorialHelper.complete(TutorialStep.ROOM) }
+        } else {
+            changeTutorial(tutorial.copy(introIndex = tutorial.introIndex + 1))
+        }
+    }
+
+    private fun changeTutorial(tutorial: MyRoomTutorialUiState?) {
+        dispatch(MyRoomReducerEvent.TutorialChanged(tutorial))
+    }
+
+    /** 튜토리얼을 닫고 [record]로 남긴다(마이룸 안내 마침 또는 전체 건너뛰기). */
+    private fun endTutorial(record: suspend () -> Unit) {
+        if (currentState.tutorial == null) return
+        changeTutorial(null)
+        tutorialJob = viewModelScope.launch { record() }
     }
 
     /**
@@ -239,6 +298,11 @@ class MyRoomViewModel @Inject constructor(
             saveRoom(state.room.toPlacements())
                 .onSuccess {
                     dispatch(MyRoomReducerEvent.SaveFinished(isSaved = true))
+                    // 안내대로 저장했다. 돌아가면 viewModelScope가 끝나므로 돌아가기 전에 기록을 마친다.
+                    if (currentState.tutorial?.phase == MyRoomTutorialPhase.Saving) {
+                        changeTutorial(null)
+                        tutorialHelper.complete(TutorialStep.ROOM)
+                    }
                     navigationHelper.navigateToBack()
                     messageHelper.showSnackBar(iconType = IconType.SUCCESS, messageText = SAVED_MESSAGE)
                 }
@@ -249,6 +313,10 @@ class MyRoomViewModel @Inject constructor(
                         load()
                     } else {
                         messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = SAVE_FAILED_MESSAGE)
+                        // 저장하지 못했으니 저장을 다시 가리킨다.
+                        if (currentState.tutorial?.phase == MyRoomTutorialPhase.Saving) {
+                            changeTutorial(MyRoomTutorialUiState(MyRoomTutorialPhase.Save))
+                        }
                     }
                 }
         }

@@ -19,6 +19,7 @@ import kotlinx.collections.immutable.toImmutableList
  * @property selectedCategory 보관함에서 보고 있는 탭(아이템 종류)
  * @property inventoryTabs 보관함 탭. 아이템 종류마다 하나씩, [RoomItemCategory] 순서로 늘 세 개다.
  * @property catMotion 방에 앉은 냐미가 지금 하는 동작. 애니메이션을 받지 못했으면 null이고 냐미를 그리지 않는다.
+ * @property tutorial 첫 사용자 튜토리얼. 보여 주지 않으면 null.
  */
 @Immutable
 data class MyRoomUIState(
@@ -31,6 +32,7 @@ data class MyRoomUIState(
     val inventoryTabs: ImmutableList<InventoryTabUiModel> = InventoryTabUiModel.emptyTabs(),
     val isSaving: Boolean = false,
     val catMotion: RoomCatMotion? = null,
+    val tutorial: MyRoomTutorialUiState? = null,
 ) : UiState {
     val hasChanges: Boolean
         get() = room != savedRoom
