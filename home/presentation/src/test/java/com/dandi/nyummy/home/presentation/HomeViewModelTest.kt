@@ -14,6 +14,7 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
@@ -21,6 +22,8 @@ import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
+import com.dandi.nyummy.common.entity.tutorial.TutorialStep
+import com.dandi.nyummy.common.presentation.coachmark.MainCoachMarkKeys
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSource
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
@@ -67,6 +70,11 @@ class HomeViewModelTest {
     /** 원격 구성 마이룸 플래그. 읽을 때마다 이 값을 돌려준다. */
     private var isMyRoomEnabled = false
 
+    /** 원격 구성 우편함 아이템 탭 플래그. */
+    private var isMailEnabled = true
+
+    private val tutorialHelper = FakeTutorialHelper()
+
     private val state get() = viewModel.uiState.value
 
     @Before
@@ -95,9 +103,13 @@ class HomeViewModelTest {
                 override suspend fun sync() = Unit
 
                 @Suppress("UNCHECKED_CAST")
-                override fun <T> get(key: RemoteConfigKey<T>): T =
-                    if (key == RemoteConfigKey.MyRoomEnabled) isMyRoomEnabled as T else key.defaultValue
+                override fun <T> get(key: RemoteConfigKey<T>): T = when (key) {
+                    RemoteConfigKey.MyRoomEnabled -> isMyRoomEnabled as T
+                    RemoteConfigKey.MailItemTabEnabled -> isMailEnabled as T
+                    else -> key.defaultValue
+                }
             },
+            tutorialHelper = tutorialHelper,
         )
     }
 
@@ -326,6 +338,119 @@ class HomeViewModelTest {
         resumeWith(HomeSummaryVO(todayRecordedCount = 0))
 
         assertEquals(1, catRepository.callCount)
+    }
+
+    @Test
+    fun `튜토리얼 대상이 아니면 튜토리얼을 띄우지 않는다`() = runTest(testDispatcher) {
+        resumeWith(HomeSummaryVO(hasMailboxBadge = true))
+
+        assertNull(state.tutorial)
+    }
+
+    @Test
+    fun `대상이 홈에 처음 오면 소개를 띄우고 카드를 넘기다 카메라 버튼에서 멈춘다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+
+        resumeWith(HomeSummaryVO.empty)
+        assertEquals(TutorialStep.HOME_INTRO, state.tutorial?.step)
+        assertEquals(0, state.tutorial?.index)
+
+        repeat(3) { viewModel.onIntent(HomeIntent.TutorialAdvance) }
+
+        assertEquals(HomeTutorialScript.Intro.lastIndex, state.tutorial?.index)
+        assertEquals(MainCoachMarkKeys.MealRecord, state.tutorial?.line?.target)
+    }
+
+    @Test
+    fun `카메라 버튼을 누르면 소개를 마치고 다시 띄우지 않는다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+        resumeWith(HomeSummaryVO.empty)
+
+        viewModel.onIntent(HomeIntent.TutorialTargetClicked)
+        advanceUntilIdle()
+        resumeWith(HomeSummaryVO.empty)
+
+        assertNull(state.tutorial)
+        assertTrue(TutorialStep.HOME_INTRO in tutorialHelper.done)
+    }
+
+    @Test
+    fun `소개를 마쳤고 받을 우편이 있으면 우편 버튼을 가리킨다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+        tutorialHelper.done += TutorialStep.HOME_INTRO
+
+        resumeWith(HomeSummaryVO(hasMailboxBadge = true))
+
+        assertEquals(TutorialStep.HOME_MAIL_POINTER, state.tutorial?.step)
+    }
+
+    @Test
+    fun `우편함 기능이 꺼져 있으면 우편 버튼을 가리키지 않는다`() = runTest(testDispatcher) {
+        isMailEnabled = false
+        tutorialHelper.pending = true
+        tutorialHelper.done += TutorialStep.HOME_INTRO
+
+        resumeWith(HomeSummaryVO(hasMailboxBadge = true))
+
+        assertNull(state.tutorial)
+    }
+
+    @Test
+    fun `우편함 안내를 마쳤고 마이룸이 켜져 있으면 마이룸 탭을 가리킨다`() = runTest(testDispatcher) {
+        isMyRoomEnabled = true
+        tutorialHelper.pending = true
+        tutorialHelper.done += listOf(TutorialStep.HOME_INTRO, TutorialStep.MAILBOX)
+
+        resumeWith(HomeSummaryVO.empty)
+
+        assertEquals(TutorialStep.HOME_ROOM_POINTER, state.tutorial?.step)
+        assertEquals(MainCoachMarkKeys.MyRoomTab, state.tutorial?.line?.target)
+    }
+
+    @Test
+    fun `건너뛰면 남은 튜토리얼을 모두 끝낸다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+        resumeWith(HomeSummaryVO(hasMailboxBadge = true))
+
+        viewModel.onIntent(HomeIntent.TutorialSkip)
+        advanceUntilIdle()
+        resumeWith(HomeSummaryVO(hasMailboxBadge = true))
+
+        assertNull(state.tutorial)
+        assertFalse(tutorialHelper.pending)
+    }
+
+    @Test
+    fun `뒤로 가면 그 단계만 마치고 다음 단계는 남긴다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+        resumeWith(HomeSummaryVO.empty)
+
+        viewModel.onIntent(HomeIntent.TutorialBack)
+        advanceUntilIdle()
+        resumeWith(HomeSummaryVO(hasMailboxBadge = true))
+
+        assertEquals(setOf(TutorialStep.HOME_INTRO), tutorialHelper.done)
+        assertEquals(TutorialStep.HOME_MAIL_POINTER, state.tutorial?.step)
+    }
+
+    private class FakeTutorialHelper : TutorialHelper {
+        var pending = false
+        val done = mutableSetOf<TutorialStep>()
+        override suspend fun isPending(step: TutorialStep) = pending && step !in done
+        override suspend fun complete(step: TutorialStep) {
+            done += step
+        }
+        override suspend fun start() {
+            pending = true
+            done.clear()
+        }
+        override suspend fun skipAll() {
+            pending = false
+        }
+        override suspend fun clear() {
+            pending = false
+            done.clear()
+        }
     }
 
     private fun lines(state: CatState) = listOf("${state.name} 대사 1", "${state.name} 대사 2", "${state.name} 대사 3")
