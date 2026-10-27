@@ -57,13 +57,14 @@ import kotlin.math.roundToInt
 
 /**
  * 코치마크를 그리는 맨 위 층. 루트가 화면과 바텀 네비 위에 둔다. 띄울 코치마크가 없으면 아무것도 그리지 않는다.
- * 뒤로 가기는 지금 코치마크의 onBack으로 넘긴다.
+ * 뒤로 가기는 지금 코치마크의 onBack으로 넘긴다. onBack이 없으면 가로채지 않아 화면이 평소처럼 처리한다.
  */
 @Composable
 fun CoachMarkLayer(host: CoachMarkHost, modifier: Modifier = Modifier) {
     val mark = host.mark ?: return
     val target = mark.target?.let { host.targets[it] }
-    BackHandler(onBack = mark.onBack)
+    val onBack = mark.onBack
+    BackHandler(enabled = onBack != null) { onBack?.invoke() }
     CoachMarkContent(
         mark = mark,
         targetBounds = target?.bounds,
