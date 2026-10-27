@@ -29,15 +29,22 @@ data class HomeTutorialLine(
     val target: CoachMarkKey? = null,
 )
 
-/** 지금 보여 주는 홈 튜토리얼 단계와 몇 번째 대사인지. */
+/**
+ * 지금 보여 주는 홈 튜토리얼 단계와 몇 번째 대사인지.
+ *
+ * @property step 뒤 안내 단계. null이면 첫 식사 튜토리얼(홈 소개)이라 건너뛸 수 없고 서버가 마쳤다고 할 때까지 닫지 않는다.
+ */
 @Immutable
 data class HomeTutorialUiState(
-    val step: TutorialStep,
+    val step: TutorialStep?,
     val lines: ImmutableList<HomeTutorialLine>,
     val index: Int = 0,
 ) {
     val line: HomeTutorialLine
         get() = lines[index]
+
+    val isMealTutorial: Boolean
+        get() = step == null
 
     /** 다음 대사가 있고, 지금 대사가 대상을 기다리지 않으면 넘길 수 있다. */
     val canAdvance: Boolean
@@ -46,7 +53,7 @@ data class HomeTutorialUiState(
 
 /** 홈 튜토리얼 대본. 단계마다 대사 묶음 하나다. */
 internal object HomeTutorialScript {
-    /** 홈 첫 진입 소개. 마지막에 가운데 카메라 버튼을 가리킨다. */
+    /** 첫 식사 튜토리얼의 홈 소개. 마지막에 가운데 카메라 버튼을 가리켜 식사 기록 튜토리얼로 이끈다. */
     val Intro: ImmutableList<HomeTutorialLine> = persistentListOf(
         HomeTutorialLine(R.string.home_tutorial_hello_title, R.string.home_tutorial_hello_body, NyummyTutorialExpression.Greet),
         HomeTutorialLine(R.string.home_tutorial_reward_title, R.string.home_tutorial_reward_body, NyummyTutorialExpression.Greet),
@@ -58,7 +65,7 @@ internal object HomeTutorialScript {
         ),
     )
 
-    /** 첫 기록 뒤 보상 상자 도착. 우편 버튼을 가리킨다. */
+    /** 튜토리얼 식사 뒤 보상 상자 도착. 우편 버튼을 가리킨다. */
     val MailPointer: ImmutableList<HomeTutorialLine> = persistentListOf(
         HomeTutorialLine(R.string.home_tutorial_mail_title, R.string.home_tutorial_mail_body, NyummyTutorialExpression.Surprise, HomeMailCoachMarkKey),
     )
@@ -71,6 +78,7 @@ internal object HomeTutorialScript {
 
 /**
  * 홈 튜토리얼을 코치마크로 올린다. 대상이 없는 소개 대사는 카메라 버튼 바로 위에 띄워 다음 대사와 자리가 이어지게 한다.
+ * 첫 식사 튜토리얼은 건너뛰기가 없고 뒤로 가기를 가로채지 않는다(앱이 평소처럼 닫히고 다음에 다시 시작한다).
  */
 @Composable
 internal fun HomeTutorialCoachMark(tutorial: HomeTutorialUiState?, onIntent: (HomeIntent) -> Unit) {
@@ -83,8 +91,8 @@ internal fun HomeTutorialCoachMark(tutorial: HomeTutorialUiState?, onIntent: (Ho
             anchor = MainCoachMarkKeys.MealRecord.takeIf { line.target == null },
             onAdvance = { onIntent(HomeIntent.TutorialAdvance) },
             onTargetClick = { onIntent(HomeIntent.TutorialTargetClicked) },
-            onSkip = { onIntent(HomeIntent.TutorialSkip) },
-            onBack = { onIntent(HomeIntent.TutorialBack) },
+            onSkip = { onIntent(HomeIntent.TutorialSkip) }.takeUnless { tutorial.isMealTutorial },
+            onBack = { onIntent(HomeIntent.TutorialBack) }.takeUnless { tutorial.isMealTutorial },
         )
     }
     ShowCoachMark(mark)

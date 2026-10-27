@@ -33,14 +33,20 @@ data class HomeDTO(
         todayAttemptCount = todayMealSummary?.todayAttemptCount ?: 0,
         todayMaxAttemptCount = todayMealSummary?.todayMaxAttemptCount ?: 0,
         hasMailboxBadge = hasMailboxBadge == true,
+        // 서버가 아직 보내지 않으면 마친 것으로 본다. 기존 사용자가 건너뛸 수 없는 튜토리얼에 갇히지 않게 한다.
+        isTutorialMealCompleted = user?.tutorialMealCompleted ?: true,
         roomPlacements = equippedRoomItems.orEmpty().map { it.toVO() }.sortedBy { it.zIndex },
     )
 }
 
-/** @property coin 보유 코인 */
+/**
+ * @property coin 보유 코인
+ * @property tutorialMealCompleted 튜토리얼 식사(POST /api/v1/meals/tutorial)를 마쳤는지. 기능 배포 전 가입자는 true.
+ */
 @Serializable
 data class HomeUserDTO(
     val coin: Int? = null,
+    val tutorialMealCompleted: Boolean? = null,
 )
 
 /**

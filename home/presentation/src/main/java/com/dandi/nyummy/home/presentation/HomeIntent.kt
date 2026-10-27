@@ -41,12 +41,12 @@ sealed interface HomeIntent : MviIntent {
     /** 튜토리얼 카드를 눌렀다. 다음 대사로 넘긴다. */
     data object TutorialAdvance : HomeIntent
 
-    /** 튜토리얼이 가리킨 곳을 눌렀다. 이동은 그 버튼이 하고, 이 단계는 마친다. */
+    /** 튜토리얼이 가리킨 곳을 눌렀다. 이동은 그 버튼이 하고, 뒤 안내 단계면 마친다(첫 식사 튜토리얼은 서버가 마칠 때까지 둔다). */
     data object TutorialTargetClicked : HomeIntent
 
-    /** 튜토리얼 건너뛰기. 남은 튜토리얼을 모두 끝낸다. */
+    /** 튜토리얼 건너뛰기. 남은 뒤 안내를 모두 끝낸다. 첫 식사 튜토리얼에는 없다. */
     data object TutorialSkip : HomeIntent
 
-    /** 튜토리얼 중 뒤로 가기. 이 단계만 마친다. */
+    /** 뒤 안내 중 뒤로 가기. 이 단계만 마친다. 첫 식사 튜토리얼은 뒤로 가기를 가로채지 않는다. */
     data object TutorialBack : HomeIntent
 }

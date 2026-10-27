@@ -128,24 +128,30 @@ class HomeViewModel @Inject constructor(
                 val showsMailBadge = summary.hasMailboxBadge && remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)
                 dispatch(HomeReducerEvent.SummaryLoaded(summary, room, showsMailBadge))
                 updateCatState(recordedJustNow)
-                updateTutorial(showsMailBadge)
+                updateTutorial(summary.isTutorialMealCompleted, showsMailBadge)
             }
         }
     }
 
     /**
      * 요약을 받을 때마다 보여 줄 튜토리얼 단계를 고른다. 이미 보여 주는 중이면 그대로 둔다.
-     * 첫 진입 소개 → (받을 우편이 있으면) 우편 버튼 → (우편함 안내를 마쳤고 마이룸이 켜져 있으면) 마이룸 탭 순으로 본다.
+     * 첫 식사 튜토리얼(서버가 아직이라고 하면 소개) → (받을 우편이 있으면) 우편 버튼 →
+     * (우편함 안내를 마쳤고 마이룸이 켜져 있으면) 마이룸 탭 순으로 본다.
      * 우편 배지는 우편함 기능이 켜져 있을 때만 서므로, 우편함이 꺼져 있으면 우편 버튼을 가리키지 않는다.
+     *
+     * 첫 식사 튜토리얼은 서버가 마쳤다고 할 때까지 지금 대사 위치를 지킨다. 식사 기록 튜토리얼에서 기록하지 않고
+     * 돌아오면 카메라 버튼을 다시 가리킨다. 서버 값은 식사 기록 화면이 읽을 수 있게 [TutorialHelper]에 옮겨 둔다.
      */
-    private fun updateTutorial(showsMailBadge: Boolean) {
-        if (currentState.tutorial != null || tutorialJob?.isActive == true) return
+    private fun updateTutorial(isTutorialMealCompleted: Boolean, showsMailBadge: Boolean) {
+        val current = currentState.tutorial
+        if (current != null && (!current.isMealTutorial || !isTutorialMealCompleted)) return
+        if (tutorialJob?.isActive == true) return
         tutorialJob = viewModelScope.launch {
+            tutorialHelper.setMealTutorialRequired(!isTutorialMealCompleted)
             // 방금 마친 단계를 기록하는 중이면 끝난 뒤에 고른다. 그래야 같은 안내가 다시 뜨지 않는다.
             tutorialRecordJob?.join()
             val tutorial = when {
-                tutorialHelper.isPending(TutorialStep.HOME_INTRO) ->
-                    HomeTutorialUiState(TutorialStep.HOME_INTRO, HomeTutorialScript.Intro)
+                !isTutorialMealCompleted -> HomeTutorialUiState(step = null, lines = HomeTutorialScript.Intro)
                 showsMailBadge &&
                     tutorialHelper.isPending(TutorialStep.MAILBOX) &&
                     tutorialHelper.isPending(TutorialStep.HOME_MAIL_POINTER) ->
@@ -157,11 +163,11 @@ class HomeViewModel @Inject constructor(
                     HomeTutorialUiState(TutorialStep.HOME_ROOM_POINTER, HomeTutorialScript.RoomPointer)
                 else -> null
             }
-            if (tutorial != null) dispatch(HomeReducerEvent.TutorialChanged(tutorial))
+            if (tutorial != current) dispatch(HomeReducerEvent.TutorialChanged(tutorial))
         }
     }
 
-    /** 튜토리얼을 닫고, 지금 단계를 [record]로 남긴다(마침 또는 전체 건너뛰기). */
+    /** 튜토리얼을 닫고, 지금 단계를 [record]로 남긴다(마침 또는 전체 건너뛰기). 첫 식사 튜토리얼은 닫지 않는다. */
     private fun endTutorial(record: suspend (TutorialStep) -> Unit) {
         val step = currentState.tutorial?.step ?: return
         dispatch(HomeReducerEvent.TutorialChanged(null))
