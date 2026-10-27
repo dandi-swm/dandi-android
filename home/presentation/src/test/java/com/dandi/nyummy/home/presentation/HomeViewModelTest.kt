@@ -342,7 +342,7 @@ class HomeViewModelTest {
 
     @Test
     fun `튜토리얼 대상이 아니면 튜토리얼을 띄우지 않는다`() = runTest(testDispatcher) {
-        resumeWith(HomeSummaryVO(hasMailboxBadge = true))
+        resumeWith(mealDone.copy(hasMailboxBadge = true))
 
         assertNull(state.tutorial)
         assertFalse(tutorialHelper.mealRequired)
@@ -391,7 +391,7 @@ class HomeViewModelTest {
         // 튜토리얼 식사가 접수되면 뒤 안내가 시작된다.
         tutorialHelper.start()
 
-        resumeWith(HomeSummaryVO(hasMailboxBadge = true))
+        resumeWith(mealDone.copy(hasMailboxBadge = true))
 
         assertEquals(TutorialStep.HOME_MAIL_POINTER, state.tutorial?.step)
         assertFalse(tutorialHelper.mealRequired)
@@ -402,7 +402,7 @@ class HomeViewModelTest {
         isMailEnabled = false
         tutorialHelper.pending = true
 
-        resumeWith(HomeSummaryVO(hasMailboxBadge = true))
+        resumeWith(mealDone.copy(hasMailboxBadge = true))
 
         assertNull(state.tutorial)
     }
@@ -413,7 +413,7 @@ class HomeViewModelTest {
         tutorialHelper.pending = true
         tutorialHelper.done += TutorialStep.MAILBOX
 
-        resumeWith(HomeSummaryVO.empty)
+        resumeWith(mealDone)
 
         assertEquals(TutorialStep.HOME_ROOM_POINTER, state.tutorial?.step)
         assertEquals(MainCoachMarkKeys.MyRoomTab, state.tutorial?.line?.target)
@@ -422,11 +422,11 @@ class HomeViewModelTest {
     @Test
     fun `뒤 안내에서 건너뛰면 남은 뒤 안내를 모두 끝낸다`() = runTest(testDispatcher) {
         tutorialHelper.pending = true
-        resumeWith(HomeSummaryVO(hasMailboxBadge = true))
+        resumeWith(mealDone.copy(hasMailboxBadge = true))
 
         viewModel.onIntent(HomeIntent.TutorialSkip)
         advanceUntilIdle()
-        resumeWith(HomeSummaryVO(hasMailboxBadge = true))
+        resumeWith(mealDone.copy(hasMailboxBadge = true))
 
         assertNull(state.tutorial)
         assertFalse(tutorialHelper.pending)
@@ -435,16 +435,19 @@ class HomeViewModelTest {
     @Test
     fun `뒤 안내에서 뒤로 가면 그 단계만 마치고 우편함 안내는 남긴다`() = runTest(testDispatcher) {
         tutorialHelper.pending = true
-        resumeWith(HomeSummaryVO(hasMailboxBadge = true))
+        resumeWith(mealDone.copy(hasMailboxBadge = true))
 
         viewModel.onIntent(HomeIntent.TutorialBack)
         advanceUntilIdle()
-        resumeWith(HomeSummaryVO(hasMailboxBadge = true))
+        resumeWith(mealDone.copy(hasMailboxBadge = true))
 
         assertEquals(setOf(TutorialStep.HOME_MAIL_POINTER), tutorialHelper.done)
         assertNull(state.tutorial)
         assertTrue(tutorialHelper.pending)
     }
+
+    /** 서버가 튜토리얼 식사를 마쳤다고 알려 주는 홈 요약. */
+    private val mealDone = HomeSummaryVO(isTutorialMealCompleted = true)
 
     /** 서버가 튜토리얼 식사를 아직 하지 않았다고 알려 주는 홈 요약. */
     private val mealTutorialPending = HomeSummaryVO(isTutorialMealCompleted = false)
