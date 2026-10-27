@@ -59,13 +59,14 @@ enum class NyummyTutorialExpression(@DrawableRes internal val drawable: Int) {
  * [NyummyBubbleTail.Top]으로 두고 [tailCenterX]에 대상 가운데의 가로 위치(카드 왼쪽 기준)를 넘긴다.
  * 꼬리가 위로 나면 대상과 겹치지 않게 건너뛰기를 카드 아래 모서리로 옮긴다. 대상이 없으면 [NyummyBubbleTail.None].
  *
+ * @param onSkip 건너뛰기. null이면 건너뛸 수 없는 단계라 건너뛰기를 그리지 않는다.
  * @param showHint "탭해서 계속"을 보인다. 누를 곳이 있어 카드를 눌러도 넘어가지 않는 단계는 false.
  */
 @Composable
 fun NyummyTutorialCard(
     title: String,
     expression: NyummyTutorialExpression,
-    onSkip: () -> Unit,
+    onSkip: (() -> Unit)?,
     modifier: Modifier = Modifier,
     body: String? = null,
     tail: NyummyBubbleTail = NyummyBubbleTail.None,
@@ -112,7 +113,7 @@ private fun TutorialCardBody(
     tail: NyummyBubbleTail,
     tailCenterX: Dp?,
     showHint: Boolean,
-    onSkip: () -> Unit,
+    onSkip: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
@@ -160,6 +161,7 @@ private fun TutorialCardBody(
                 .background(NyummyTheme.colors.bg.actionPrimary, RoundedCornerShape(NyummyTheme.radius.full)),
             strong = true,
         )
+        if (onSkip == null) return@BoxWithConstraints
         val skipAtBottom = tail == NyummyBubbleTail.Top
         TutorialPill(
             text = stringResource(R.string.nyummy_tutorial_skip),
