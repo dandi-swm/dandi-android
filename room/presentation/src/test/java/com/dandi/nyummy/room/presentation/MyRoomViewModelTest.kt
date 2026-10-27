@@ -560,6 +560,10 @@ private class FakeTutorialHelper : TutorialHelper {
         pending = false
         done.clear()
     }
+
+    override suspend fun isMealTutorialRequired() = false
+
+    override suspend fun setMealTutorialRequired(required: Boolean) = Unit
 }
 
 /** 마이룸 API를 흉내 내는 저장소. 불러오기와 저장 실패를 따로 정할 수 있다. */
