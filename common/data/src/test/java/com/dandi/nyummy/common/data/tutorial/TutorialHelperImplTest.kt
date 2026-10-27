@@ -37,9 +37,9 @@ class TutorialHelperImplTest {
     @Test
     fun `시작하면 마친 단계만 빼고 보여 준다`() = runBlocking {
         helper.start()
-        helper.complete(TutorialStep.HOME_INTRO)
+        helper.complete(TutorialStep.HOME_MAIL_POINTER)
 
-        assertFalse(helper.isPending(TutorialStep.HOME_INTRO))
+        assertFalse(helper.isPending(TutorialStep.HOME_MAIL_POINTER))
         assertTrue(helper.isPending(TutorialStep.MAILBOX))
         assertTrue(helper.isPending(TutorialStep.ROOM))
     }
@@ -66,9 +66,22 @@ class TutorialHelperImplTest {
     @Test
     fun `지우면 대상이 아니게 된다`() = runBlocking {
         helper.start()
+        helper.setMealTutorialRequired(true)
 
         helper.clear()
 
         TutorialStep.entries.forEach { assertFalse(helper.isPending(it)) }
+        assertFalse(helper.isMealTutorialRequired())
+    }
+
+    @Test
+    fun `식사 튜토리얼 여부는 옮겨 둔 값을 그대로 읽는다`() = runBlocking {
+        assertFalse(helper.isMealTutorialRequired())
+
+        helper.setMealTutorialRequired(true)
+        assertTrue(helper.isMealTutorialRequired())
+
+        helper.setMealTutorialRequired(false)
+        assertFalse(helper.isMealTutorialRequired())
     }
 }

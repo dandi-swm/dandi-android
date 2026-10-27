@@ -21,6 +21,8 @@ class LogoutUseCaseTest {
         override suspend fun clear() {
             initialCountsAtClear += navigationHelper.initialCount
         }
+        override suspend fun isMealTutorialRequired() = false
+        override suspend fun setMealTutorialRequired(required: Boolean) = Unit
     }
     private val pushTokenHelper = object : PushTokenHelper {
         override fun register(token: String?) = Unit

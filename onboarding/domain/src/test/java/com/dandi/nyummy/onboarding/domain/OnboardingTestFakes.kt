@@ -8,14 +8,12 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
-import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
-import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -140,16 +138,4 @@ internal class RecordingAnalyticsHelper : AnalyticsHelper {
     override fun logEvent(event: AnalyticsEvent) {
         events += event
     }
-}
-
-/** 튜토리얼 시작 횟수만 센다. */
-internal class RecordingTutorialHelper : TutorialHelper {
-    var startCount = 0
-    override suspend fun isPending(step: TutorialStep) = false
-    override suspend fun complete(step: TutorialStep) = Unit
-    override suspend fun start() {
-        startCount++
-    }
-    override suspend fun skipAll() = Unit
-    override suspend fun clear() = Unit
 }

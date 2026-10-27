@@ -198,4 +198,6 @@ internal object FakeTutorialHelper : TutorialHelper {
     override suspend fun start() = Unit
     override suspend fun skipAll() = Unit
     override suspend fun clear() = Unit
+    override suspend fun isMealTutorialRequired() = false
+    override suspend fun setMealTutorialRequired(required: Boolean) = Unit
 }
