@@ -6,11 +6,13 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
+import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.mailbox.domain.ClaimAllMailsUseCase
 import com.dandi.nyummy.mailbox.domain.ClaimMailUseCase
 import com.dandi.nyummy.mailbox.domain.DeleteMailUseCase
@@ -54,6 +56,7 @@ class MailboxItemTabViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val repository = FakeMailboxRepository()
     private val messageHelper = RecordingMessageHelper()
+    private val tutorialHelper = FakeTutorialHelper()
 
     @Before
     fun setUp() {
@@ -473,6 +476,99 @@ class MailboxItemTabViewModelTest {
         assertTrue(viewModel.uiState.value.items.mails.single().isClaimed)
     }
 
+    @Test
+    fun `튜토리얼 대상이 아니면 안내하지 않는다`() = runTest(testDispatcher) {
+        repository.mailPage = MailPageVO(mails = listOf(box(1)))
+
+        val viewModel = loadedViewModel()
+
+        assertNull(viewModel.uiState.value.tutorial)
+    }
+
+    @Test
+    fun `우편함 안내를 이미 마쳤으면 안내하지 않는다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+        tutorialHelper.done += TutorialStep.MAILBOX
+        repository.mailPage = MailPageVO(mails = listOf(box(1)))
+
+        val viewModel = loadedViewModel()
+
+        assertNull(viewModel.uiState.value.tutorial)
+    }
+
+    @Test
+    fun `받지 않은 상자가 있으면 목록에서 가장 위의 받지 않은 상자를 가리킨다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+        repository.mailPage = MailPageVO(mails = listOf(mail(1), box(2).copy(isClaimed = true), box(3), box(4)))
+
+        val viewModel = loadedViewModel()
+
+        assertEquals(MailboxTutorialUiState(boxMailId = 3), viewModel.uiState.value.tutorial)
+    }
+
+    @Test
+    fun `받을 상자가 없으면 우편함을 소개하고 카드를 누르면 마친다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+        repository.mailPage = MailPageVO(mails = listOf(mail(1)))
+        val viewModel = loadedViewModel()
+        assertEquals(MailboxTutorialUiState(boxMailId = null), viewModel.uiState.value.tutorial)
+
+        viewModel.onIntent(MailboxIntent.TutorialAdvance)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.tutorial)
+        assertEquals(setOf(TutorialStep.MAILBOX), tutorialHelper.done)
+    }
+
+    @Test
+    fun `안내대로 상자를 열고 연출을 닫으면 우편함 안내를 마친다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+        repository.mailPage = MailPageVO(mails = listOf(box(1)))
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MailboxIntent.ClaimMail(1))
+        viewModel.onIntent(MailboxIntent.TutorialTargetClicked)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.tutorial!!.isWaitingForBox)
+        assertTrue(tutorialHelper.done.isEmpty())
+
+        viewModel.onIntent(MailboxIntent.BoxOpeningBurstFinished)
+        viewModel.onIntent(MailboxIntent.CloseBoxOpening)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.tutorial)
+        assertEquals(setOf(TutorialStep.MAILBOX), tutorialHelper.done)
+    }
+
+    @Test
+    fun `안내한 상자를 받지 못하면 실패 안내 뒤 같은 상자를 다시 가리킨다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+        repository.mailPage = MailPageVO(mails = listOf(box(1)))
+        val viewModel = loadedViewModel()
+        repository.claimOverride = { throw httpException(400) }
+
+        viewModel.onIntent(MailboxIntent.ClaimMail(1))
+        viewModel.onIntent(MailboxIntent.TutorialTargetClicked)
+        advanceUntilIdle()
+        viewModel.onIntent(MailboxIntent.BoxOpeningFailureShown)
+
+        assertEquals(MailboxTutorialUiState(boxMailId = 1), viewModel.uiState.value.tutorial)
+        assertTrue(tutorialHelper.done.isEmpty())
+    }
+
+    @Test
+    fun `건너뛰면 남은 튜토리얼을 모두 끝낸다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+        repository.mailPage = MailPageVO(mails = listOf(box(1)))
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MailboxIntent.TutorialSkip)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.tutorial)
+        assertFalse(tutorialHelper.pending)
+    }
+
     private fun TestScope.loadedViewModel(): MailboxViewModel {
         val viewModel = createViewModel()
         viewModel.onIntent(MailboxIntent.ScreenResumed)
@@ -492,6 +588,7 @@ class MailboxItemTabViewModelTest {
             restoreMail = deps(::RestoreMailUseCase),
             navigationHelper = navigationHelper,
             messageHelper = messageHelper,
+            tutorialHelper = tutorialHelper,
             ioScope = this,
         )
     }
@@ -513,6 +610,32 @@ class MailboxItemTabViewModelTest {
 
     private companion object {
         const val DAY_MILLIS = 24 * 60 * 60 * 1000L
+    }
+}
+
+/** 메모리로 동작하는 튜토리얼 진행 기록. */
+private class FakeTutorialHelper : TutorialHelper {
+    var pending = false
+    val done = mutableSetOf<TutorialStep>()
+
+    override suspend fun isPending(step: TutorialStep) = pending && step !in done
+
+    override suspend fun complete(step: TutorialStep) {
+        done += step
+    }
+
+    override suspend fun start() {
+        pending = true
+        done.clear()
+    }
+
+    override suspend fun skipAll() {
+        pending = false
+    }
+
+    override suspend fun clear() {
+        pending = false
+        done.clear()
     }
 }
 
