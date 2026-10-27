@@ -20,4 +20,14 @@
     <string name="home_prepare_progress_complete">준비 완료! 방으로 들어갈게요</string>
     <string name="home_prepare_progress_percent">%1$d%%</string>
     <string name="home_prepare_tip">냐미를 누르면 새로운 이야기를 들려줘요</string>
+    <string name="home_tutorial_hello_title">안녕, 집사! 나는 냐미야</string>
+    <string name="home_tutorial_hello_body">집사가 밥을 기록하면 나도 같이 먹을 수 있어</string>
+    <string name="home_tutorial_reward_title">밥을 기록하면 보상 상자도 받아</string>
+    <string name="home_tutorial_reward_body">상자는 우편함으로 도착해</string>
+    <string name="home_tutorial_camera_title">밥을 먹으면 여기를 눌러 줘!</string>
+    <string name="home_tutorial_camera_body">사진 한 장이면 기록 끝이야</string>
+    <string name="home_tutorial_mail_title">보상 상자가 도착했어!</string>
+    <string name="home_tutorial_mail_body">우편함에서 같이 열어 보자</string>
+    <string name="home_tutorial_room_title">받은 아이템으로 방을 꾸며 보자!</string>
+    <string name="home_tutorial_room_body">마이룸으로 가 볼까?</string>
 </resources>

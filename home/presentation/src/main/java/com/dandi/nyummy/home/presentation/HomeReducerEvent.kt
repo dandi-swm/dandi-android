@@ -22,6 +22,9 @@ sealed interface HomeReducerEvent : ReducerEvent {
 
     data object CatAnimationsLoaded : HomeReducerEvent
 
+    /** 튜토리얼을 띄우거나, 다음 대사로 넘기거나, 닫았다(null). */
+    data class TutorialChanged(val tutorial: HomeTutorialUiState?) : HomeReducerEvent
+
     data object CatAnimationsLoadFailed : HomeReducerEvent
 
     /** 냐미 상태나 동작이 바뀌었다. [motion]은 애니메이션을 아직 받지 못했으면 null이다. */

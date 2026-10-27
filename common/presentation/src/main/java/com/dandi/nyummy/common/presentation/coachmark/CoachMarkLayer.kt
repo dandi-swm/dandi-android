@@ -93,7 +93,11 @@ internal fun CoachMarkContent(
 ) {
     val density = LocalDensity.current
     val spot = targetBounds?.inflate(with(density) { SpotPadding.toPx() })
-    val spotRadius = spot?.let { minOf(it.width, it.height, with(density) { SpotMaxRadius.toPx() * 2 }) / 2 } ?: 0f
+    // 정사각형에 가까운 대상(카메라 버튼처럼 동그란 것)은 원으로, 나머지는 모서리만 둥글게 비운다.
+    val spotRadius = spot?.let {
+        val short = minOf(it.width, it.height)
+        if (maxOf(it.width, it.height) <= short * RoundSpotRatio) short / 2 else minOf(short / 2, with(density) { SpotMaxRadius.toPx() })
+    } ?: 0f
     val latestOnTargetClick by rememberUpdatedState(onTargetClick)
     val scrim = NyummyTheme.colors.bg.scrim
     val ring = NyummyTheme.colors.bg.surface
@@ -205,6 +209,8 @@ private val PawSize = 48.dp
 /** 발바닥이 비운 곳 오른쪽 아래 모서리 안으로 들어오는 깊이. */
 private val PawInset = 26.dp
 
+/** 긴 변이 짧은 변의 이 배수 이하이면 원으로 비운다. */
+private const val RoundSpotRatio = 1.2f
 private const val PulseAlpha = 0.6f
 private const val PulseMillis = 1_400
 private const val PawMillis = 600

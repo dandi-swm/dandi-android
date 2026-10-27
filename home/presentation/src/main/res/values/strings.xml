@@ -20,4 +20,14 @@
     <string name="home_prepare_progress_complete">All set! Heading to the room</string>
     <string name="home_prepare_progress_percent">%1$d%%</string>
     <string name="home_prepare_tip">Tap Nyummy to hear something new</string>
+    <string name="home_tutorial_hello_title">Hi! I\'m Nyummy</string>
+    <string name="home_tutorial_hello_body">When you log your meals, I get to eat too</string>
+    <string name="home_tutorial_reward_title">Every meal you log brings a reward box</string>
+    <string name="home_tutorial_reward_body">Boxes arrive in your mailbox</string>
+    <string name="home_tutorial_camera_title">Tap here when you eat!</string>
+    <string name="home_tutorial_camera_body">One photo and you\'re done</string>
+    <string name="home_tutorial_mail_title">A reward box has arrived!</string>
+    <string name="home_tutorial_mail_body">Let\'s open it in your mailbox</string>
+    <string name="home_tutorial_room_title">Let\'s decorate the room with your items!</string>
+    <string name="home_tutorial_room_body">Shall we go to My Room?</string>
 </resources>

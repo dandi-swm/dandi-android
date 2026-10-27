@@ -37,4 +37,16 @@ sealed interface HomeIntent : MviIntent {
 
     /** 받은 요약 숫자가 처음 화면에 그려졌다. 홈 TTI 끝 판단에 쓴다. */
     data object SummaryShown : HomeIntent
+
+    /** 튜토리얼 카드를 눌렀다. 다음 대사로 넘긴다. */
+    data object TutorialAdvance : HomeIntent
+
+    /** 튜토리얼이 가리킨 곳을 눌렀다. 이동은 그 버튼이 하고, 이 단계는 마친다. */
+    data object TutorialTargetClicked : HomeIntent
+
+    /** 튜토리얼 건너뛰기. 남은 튜토리얼을 모두 끝낸다. */
+    data object TutorialSkip : HomeIntent
+
+    /** 튜토리얼 중 뒤로 가기. 이 단계만 마친다. */
+    data object TutorialBack : HomeIntent
 }

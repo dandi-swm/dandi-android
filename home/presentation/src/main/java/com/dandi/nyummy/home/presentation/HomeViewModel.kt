@@ -7,8 +7,10 @@ import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
+import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
@@ -31,6 +33,7 @@ class HomeViewModel @Inject constructor(
     private val catMotionPicker: CatMotionPicker,
     private val ttiHelper: TTIHelper,
     private val remoteConfigHelper: RemoteConfigHelper,
+    private val tutorialHelper: TutorialHelper,
 ) : MviViewModel<HomeIntent, HomeUIState, HomeReducerEvent>(HomeUIState.empty) {
 
     init {
@@ -40,6 +43,8 @@ class HomeViewModel @Inject constructor(
 
     private var summaryJob: Job? = null
     private var catAnimationsJob: Job? = null
+    private var tutorialJob: Job? = null
+    private var tutorialRecordJob: Job? = null
 
     /** 홈 요약을 한 번이라도 읽었는지. 첫 진입을 "방금 기록하고 돌아옴"으로 착각하지 않게 한다. */
     private var hasLoadedSummary = false
@@ -77,6 +82,11 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.CatMotionFinished -> if (intent.playId == currentState.catPlayId) finishCatMotion()
             HomeIntent.CatShown -> onCatShown()
             HomeIntent.SummaryShown -> onSummaryShown()
+            HomeIntent.TutorialAdvance -> currentState.tutorial?.takeIf { it.canAdvance }?.let {
+                dispatch(HomeReducerEvent.TutorialChanged(it.copy(index = it.index + 1)))
+            }
+            HomeIntent.TutorialTargetClicked, HomeIntent.TutorialBack -> endTutorial { tutorialHelper.complete(it) }
+            HomeIntent.TutorialSkip -> endTutorial { tutorialHelper.skipAll() }
         }
     }
 
@@ -98,6 +108,7 @@ class HomeViewModel @Inject constructor(
                 catLine = event.line,
                 catMotion = event.motion,
             )
+            is HomeReducerEvent.TutorialChanged -> state.copy(tutorial = event.tutorial)
         }
 
     /**
@@ -117,8 +128,44 @@ class HomeViewModel @Inject constructor(
                 val showsMailBadge = summary.hasMailboxBadge && remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)
                 dispatch(HomeReducerEvent.SummaryLoaded(summary, room, showsMailBadge))
                 updateCatState(recordedJustNow)
+                updateTutorial(showsMailBadge)
             }
         }
+    }
+
+    /**
+     * 요약을 받을 때마다 보여 줄 튜토리얼 단계를 고른다. 이미 보여 주는 중이면 그대로 둔다.
+     * 첫 진입 소개 → (받을 우편이 있으면) 우편 버튼 → (우편함 안내를 마쳤고 마이룸이 켜져 있으면) 마이룸 탭 순으로 본다.
+     * 우편 배지는 우편함 기능이 켜져 있을 때만 서므로, 우편함이 꺼져 있으면 우편 버튼을 가리키지 않는다.
+     */
+    private fun updateTutorial(showsMailBadge: Boolean) {
+        if (currentState.tutorial != null || tutorialJob?.isActive == true) return
+        tutorialJob = viewModelScope.launch {
+            // 방금 마친 단계를 기록하는 중이면 끝난 뒤에 고른다. 그래야 같은 안내가 다시 뜨지 않는다.
+            tutorialRecordJob?.join()
+            val tutorial = when {
+                tutorialHelper.isPending(TutorialStep.HOME_INTRO) ->
+                    HomeTutorialUiState(TutorialStep.HOME_INTRO, HomeTutorialScript.Intro)
+                showsMailBadge &&
+                    tutorialHelper.isPending(TutorialStep.MAILBOX) &&
+                    tutorialHelper.isPending(TutorialStep.HOME_MAIL_POINTER) ->
+                    HomeTutorialUiState(TutorialStep.HOME_MAIL_POINTER, HomeTutorialScript.MailPointer)
+                remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled) &&
+                    !tutorialHelper.isPending(TutorialStep.MAILBOX) &&
+                    tutorialHelper.isPending(TutorialStep.ROOM) &&
+                    tutorialHelper.isPending(TutorialStep.HOME_ROOM_POINTER) ->
+                    HomeTutorialUiState(TutorialStep.HOME_ROOM_POINTER, HomeTutorialScript.RoomPointer)
+                else -> null
+            }
+            if (tutorial != null) dispatch(HomeReducerEvent.TutorialChanged(tutorial))
+        }
+    }
+
+    /** 튜토리얼을 닫고, 지금 단계를 [record]로 남긴다(마침 또는 전체 건너뛰기). */
+    private fun endTutorial(record: suspend (TutorialStep) -> Unit) {
+        val step = currentState.tutorial?.step ?: return
+        dispatch(HomeReducerEvent.TutorialChanged(null))
+        tutorialRecordJob = viewModelScope.launch { record(step) }
     }
 
     /** 냐미 애니메이션을 아직 받지 못했으면 받는다. 실패하면 기본 냐미를 두고, 다음에 화면이 보일 때 다시 받는다. */

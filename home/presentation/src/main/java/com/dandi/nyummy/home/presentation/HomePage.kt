@@ -25,6 +25,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.coachmark.coachMarkTarget
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -71,6 +72,7 @@ internal fun HomeScreen(
         }
     }
     HideBottomBarEffect(hidden = uiState.isUiHidden)
+    HomeTutorialCoachMark(tutorial = uiState.tutorial, onIntent = onIntent)
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -116,6 +118,7 @@ internal fun HomeScreen(
                             onNoticeClick = { onIntent(HomeIntent.ClickNotice) },
                             onSettingsClick = { onIntent(HomeIntent.ClickSettings) },
                             hasUnreadMail = uiState.showsMailBadge,
+                            mailButtonModifier = Modifier.coachMarkTarget(HomeMailCoachMarkKey) { onIntent(HomeIntent.ClickMail) },
                         )
                         Spacer(Modifier.height(NyummyTheme.spacing.s12))
                         HomeStreakBanner(streakDays = uiState.summary.streakDays)
