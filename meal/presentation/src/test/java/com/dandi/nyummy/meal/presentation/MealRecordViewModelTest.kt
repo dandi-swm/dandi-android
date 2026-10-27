@@ -7,10 +7,13 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
+import com.dandi.nyummy.common.domain.error.HttpResponseException
+import com.dandi.nyummy.common.domain.error.HttpResponseStatus
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
@@ -18,9 +21,11 @@ import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
+import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.meal.domain.ImportGalleryMealPhotoUseCase
 import com.dandi.nyummy.meal.domain.MealRecordRepository
 import com.dandi.nyummy.meal.domain.SubmitMealUseCase
+import com.dandi.nyummy.meal.domain.SubmitTutorialMealUseCase
 import com.dandi.nyummy.meal.entity.CreatedMealVO
 import com.dandi.nyummy.meal.entity.MealImageUploadVO
 import com.dandi.nyummy.meal.entity.MealPhotoSource
@@ -35,7 +40,6 @@ import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
 import com.dandi.nyummy.tti.TimelineCategory
-import kotlin.reflect.KClass
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -58,6 +62,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.IOException
 import java.time.LocalDateTime
+import kotlin.reflect.KClass
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MealRecordViewModelTest {
@@ -71,6 +76,7 @@ class MealRecordViewModelTest {
     private val messageHelper = RecordingMessageHelper()
     private val roomRepository = FakeRoomRepository()
     private val analytics = RecordingAnalyticsHelper()
+    private val tutorialHelper = FakeTutorialHelper()
 
     @Before
     fun setUp() {
@@ -434,6 +440,80 @@ class MealRecordViewModelTest {
         assertEquals(mapOf("source" to "camera"), mealEvents().single { it.name == "meal_retake" }.params)
     }
 
+    @Test
+    fun `튜토리얼이 아니면 카메라 미리보기에서 시작하고 권한을 물을 수 있다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+        assertFalse(viewModel.uiState.value.isTutorialChecked)
+
+        advanceUntilIdle()
+
+        assertEquals(MealCameraPhase.Preview, viewModel.uiState.value.phase)
+        assertTrue(viewModel.uiState.value.isTutorialChecked)
+    }
+
+    @Test
+    fun `튜토리얼이면 예시 사진 확인 단계에서 시작하고 다시 찍기는 무시한다`() = runTest(testDispatcher) {
+        tutorialHelper.mealRequired = true
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(MealRecordIntent.ClickRetake)
+
+        val phase = viewModel.uiState.value.phase
+        assertTrue(phase.isTutorial)
+        assertTrue(phase is MealCameraPhase.Captured)
+    }
+
+    @Test
+    fun `튜토리얼에서 담기를 누르면 사진 없이 튜토리얼 식사로 기록하고 연출을 이어 간다`() = runTest(testDispatcher) {
+        tutorialHelper.mealRequired = true
+        mealRepository.created = CreatedMealVO(mealId = 2, rewardBoxGrade = RewardBoxGrade.SILVER)
+        val viewModel = createViewModel(isMailGiftEnabled = true)
+        advanceUntilIdle()
+
+        viewModel.onIntent(MealRecordIntent.ClickSubmit)
+        advanceUntilIdle()
+
+        assertEquals(1, mealRepository.tutorialCount)
+        assertEquals(0, mealRepository.createCount)
+        assertEquals(MealSubmitStatus.Accepted(RewardBoxGrade.SILVER), viewModel.ceremony().submit)
+        assertFalse(tutorialHelper.mealRequired)
+        assertTrue(tutorialHelper.started)
+    }
+
+    @Test
+    fun `이미 튜토리얼 식사를 했다고 하면 연출 없이 홈으로 간다`() = runTest(testDispatcher) {
+        tutorialHelper.mealRequired = true
+        mealRepository.createError = HttpResponseException(
+            status = HttpResponseStatus.create(409),
+            rawCode = 409,
+            errorRequestUrl = "https://test/api/v1/meals/tutorial",
+            cause = Throwable("api.meal.tutorialAlreadyCompleted"),
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(MealRecordIntent.ClickSubmit)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isSubmitSucceeded)
+        assertEquals(listOf("back"), navigationHelper.calls)
+        assertFalse(tutorialHelper.mealRequired)
+    }
+
+    @Test
+    fun `튜토리얼 확인 단계는 앱이 종료됐다 돌아와도 예시 사진으로 되살아난다`() = runTest(testDispatcher) {
+        tutorialHelper.mealRequired = true
+        val savedState = SavedStateHandle()
+        createViewModel(savedState = savedState)
+        advanceUntilIdle()
+
+        val restored = createViewModel(savedState = savedState.afterProcessDeath())
+
+        assertTrue(restored.uiState.value.phase.isTutorial)
+        assertTrue(restored.uiState.value.isTutorialChecked)
+    }
+
     private fun mealEvents(): List<AnalyticsEvent> = analytics.events.filter { it.name.startsWith("meal_") }
 
     private fun MealRecordViewModel.ceremony(): MealCameraPhase.Ceremony =
@@ -497,9 +577,34 @@ class MealRecordViewModelTest {
         messageHelper = messageHelper,
         analyticsHelper = analytics,
         savedStateHandle = savedState,
+        submitTutorialMeal = SubmitTutorialMealUseCase(
+            repository = mealRepository,
+            tutorialHelper = tutorialHelper,
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+        ),
+        tutorialHelper = tutorialHelper,
         remoteConfigHelper = FakeRemoteConfigHelper(isMailGiftEnabled),
         getRoomBackground = GetRoomBackgroundUseCase(roomRepository),
     )
+
+    private class FakeTutorialHelper : TutorialHelper {
+        var mealRequired = false
+        var started = false
+        override suspend fun isPending(step: TutorialStep) = false
+        override suspend fun complete(step: TutorialStep) = Unit
+        override suspend fun start() {
+            started = true
+        }
+        override suspend fun skipAll() = Unit
+        override suspend fun clear() = Unit
+        override suspend fun isMealTutorialRequired() = mealRequired
+        override suspend fun setMealTutorialRequired(required: Boolean) {
+            mealRequired = required
+        }
+    }
 
     private class FakeRoomRepository : RoomRepository {
         var room: RoomVO = RoomVO()
