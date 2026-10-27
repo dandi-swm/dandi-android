@@ -529,6 +529,15 @@ class MealRecordViewModelTest {
             createError?.let { throw it }
             return created
         }
+
+        var tutorialCount = 0
+
+        override suspend fun createTutorialMeal(): CreatedMealVO {
+            tutorialCount++
+            createGate?.await()
+            createError?.let { throw it }
+            return created
+        }
     }
 
     private class FakeRemoteConfigHelper(private val isMailGiftEnabled: Boolean) : RemoteConfigHelper {

@@ -128,9 +128,10 @@ class SubmitMealUseCaseTest {
             issueUrlError?.let { throw it } ?: MealImageUploadVO()
         override suspend fun uploadImage(uploadTarget: MealImageUploadVO, photoPath: String) = Unit
         override suspend fun createMeal(imageKey: String): CreatedMealVO = throw createMealError
+        override suspend fun createTutorialMeal(): CreatedMealVO = throw createMealError
     }
 
-    private class FakeNavigationHelper : NavigationHelper {
+    internal class FakeNavigationHelper : NavigationHelper {
         override val navigationFlow: Flow<NavSignal> = emptyFlow()
         override fun navigateByRoute(route: NavRoute) = Unit
         override fun navigateTo(page: Page) = Unit
@@ -141,11 +142,11 @@ class SubmitMealUseCaseTest {
         override fun navigateToExternalLink(url: String) = Unit
     }
 
-    private class FakeResourceHelper : ResourceHelper {
+    internal class FakeResourceHelper : ResourceHelper {
         override fun getString(resource: StringResource): String = resource.name
     }
 
-    private class RecordingMessageHelper : MessageHelper {
+    internal class RecordingMessageHelper : MessageHelper {
         data class SnackBarCall(val iconType: IconType, val messageText: String)
 
         val snackBars = mutableListOf<SnackBarCall>()
@@ -191,7 +192,7 @@ class SubmitMealUseCaseTest {
         ) = Unit
     }
 
-    private class FakeTTIHelper : TTIHelper {
+    internal class FakeTTIHelper : TTIHelper {
         override fun startTTITracking(page: TTIPage) = Unit
         override fun startTTITimeline(category: TimelineCategory) = Unit
         override fun endTTITimeline(category: TimelineCategory) = Unit
