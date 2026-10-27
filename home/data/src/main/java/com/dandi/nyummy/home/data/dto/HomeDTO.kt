@@ -33,8 +33,8 @@ data class HomeDTO(
         todayAttemptCount = todayMealSummary?.todayAttemptCount ?: 0,
         todayMaxAttemptCount = todayMealSummary?.todayMaxAttemptCount ?: 0,
         hasMailboxBadge = hasMailboxBadge == true,
-        // 서버가 아직 보내지 않으면 마친 것으로 본다. 기존 사용자가 건너뛸 수 없는 튜토리얼에 갇히지 않게 한다.
-        isTutorialMealCompleted = user?.tutorialMealCompleted ?: true,
+        // 서버가 아직 보내지 않으면 튜토리얼 식사 전으로 본다(백엔드 배포 전 확인용). 배포 전에 머지하면 모두에게 뜬다.
+        isTutorialMealCompleted = user?.tutorialMealCompleted ?: false,
         roomPlacements = equippedRoomItems.orEmpty().map { it.toVO() }.sortedBy { it.zIndex },
     )
 }

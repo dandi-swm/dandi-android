@@ -29,7 +29,7 @@ data class HomeSummaryVO(
     val todayAttemptCount: Int = 0,
     val todayMaxAttemptCount: Int = 0,
     val hasMailboxBadge: Boolean = false,
-    val isTutorialMealCompleted: Boolean = true,
+    val isTutorialMealCompleted: Boolean = false,
     val roomPlacements: List<RoomPlacementVO> = emptyList(),
 ) {
 
