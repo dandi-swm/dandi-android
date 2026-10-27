@@ -1,6 +1,5 @@
 package com.dandi.nyummy.room.presentation.component
 
-import androidx.annotation.StringRes
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -150,7 +149,7 @@ internal fun rememberRoomSheetState(expanded: Boolean = true): RoomSheetState = 
  * 마이룸 아래 보관함 시트. 손잡이와 탭을 끌어 올리고 내리며, 내리면 손잡이와 탭만 남아 방이 다 보인다.
  * 손잡이를 누르거나 접힌 채 탭을 눌러도 펼친다. 탭을 바꿔도 칸 영역 높이가 같아 시트가 흔들리지 않는다.
  *
- * - 탭은 아이템 종류마다 하나(배경, 침대, 기타)이고, 칸은 가로 한 줄로 넘긴다. 끝에 가까워지면 그 종류만 더 받는다.
+ * - 탭은 서버가 주는 아이템 종류마다 하나(예 배경, 침대, 기타)이고, 칸은 가로 한 줄로 넘긴다. 끝에 가까워지면 그 종류만 더 받는다.
  * - 칸은 그림과 이름. 방에 놓인 인테리어는 그림을 흐리게 하고 "배치됨", 깔린 배경은 테두리와 "사용 중"을 붙인다.
  * - 가진 게 없으면 안내와 상점 구경하기, 있으면 줄 아래에 상점에서 더 찾기.
  */
@@ -209,7 +208,7 @@ internal fun RoomInventorySheet(
                 )
             }
             NyummyTabs(
-                tabs = tabs.map { tab -> tab.name.ifBlank { stringResource(tab.category.labelRes()) } }.toImmutableList(),
+                tabs = tabs.map { tab -> tab.name.ifBlank { tab.category.fallbackLabel() } }.toImmutableList(),
                 selectedIndex = tabs.indexOfFirst { it.category == selectedCategory }.coerceAtLeast(0),
                 onSelect = { index ->
                     tabs.getOrNull(index)?.let { onSelectTab(it.category) }
@@ -387,12 +386,13 @@ private fun InventoryCell(
     }
 }
 
-/** 탭 이름. 서버가 종류 이름을 주지 않았을 때만 쓴다. */
-@StringRes
-private fun RoomItemCategory.labelRes(): Int = when (this) {
-    RoomItemCategory.BACKGROUND -> R.string.my_room_category_background
-    RoomItemCategory.BED -> R.string.my_room_category_bed
-    RoomItemCategory.ETC -> R.string.my_room_category_etc
+/** 탭 이름. 서버가 종류 이름을 주지 않았을 때만 쓴다. 앱이 이름을 모르는 종류는 종류 값을 그대로 보인다. */
+@Composable
+private fun RoomItemCategory.fallbackLabel(): String = when (key) {
+    RoomItemCategory.BACKGROUND.key -> stringResource(R.string.my_room_category_background)
+    BED_KEY -> stringResource(R.string.my_room_category_bed)
+    RoomItemCategory.ETC.key -> stringResource(R.string.my_room_category_etc)
+    else -> key
 }
 
 /** 칸 위 상태 표시(배치됨, 사용 중). 진한 바탕에 흰 글자. */
@@ -459,6 +459,9 @@ private fun LoadMoreEffect(
 }
 
 private const val LOAD_MORE_THRESHOLD = 4
+
+/** 침대 종류 값. 서버가 이름을 주지 않았을 때 앱의 이름을 붙이려고만 쓴다. */
+private const val BED_KEY = "BED"
 
 /** 방에 놓인 아이템 칸의 그림 불투명도. */
 private const val PlacedImageAlpha = 0.35f

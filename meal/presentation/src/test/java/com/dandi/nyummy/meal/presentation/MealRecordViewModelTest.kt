@@ -369,7 +369,7 @@ class MealRecordViewModelTest {
     fun `연출의 고양이방은 지금 마이룸에 깔린 배경으로 그린다`() = runTest(testDispatcher) {
         roomRepository.room = RoomVO(
             placements = listOf(
-                RoomPlacementVO(roomItemId = 10, category = RoomItemCategory.BED, itemId = 2),
+                RoomPlacementVO(roomItemId = 10, category = RoomItemCategory("BED"), itemId = 2),
                 RoomPlacementVO(roomItemId = 11, category = RoomItemCategory.BACKGROUND, itemId = 7),
             ),
         )

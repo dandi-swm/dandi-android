@@ -269,28 +269,33 @@ class MyRoomViewModel @Inject constructor(
 
 /**
  * 서버에서 받은 방으로 화면 상태를 처음부터 만든다. 되돌리기 목록과 고른 아이템은 비운다.
- * 보관함 탭은 종류마다 하나씩 늘 세 개이고, 각 탭에는 방과 함께 받은 첫 묶음을 넣는다.
+ * 보관함 탭은 서버가 준 종류마다 하나씩 그 순서대로 만들고, 각 탭에는 방과 함께 받은 첫 묶음을 넣는다.
+ * 처음 불러왔거나 보던 탭이 없어졌으면 첫 탭을 보여 준다(다시 불러와도 보던 탭이 남아 있으면 그대로 둔다).
  */
 private fun loadedState(state: MyRoomUIState, room: RoomVO): MyRoomUIState {
     val draft = room.placements.toDraft()
+    // 종류 값이 빠진 묶음은 기타로 모이므로 같은 종류 묶음이 여럿일 수 있다. 다음 묶음은 첫 묶음의 cursor로 받는다.
+    val tabs = room.categories.groupBy { it.category }.map { (category, pages) ->
+        InventoryTabUiModel(
+            category = category,
+            name = pages.first().categoryName,
+            items = pages.flatMap { page -> page.items.map { it.toInventoryItem(category) } }
+                .distinctBy { it.roomItemId }
+                .toImmutableList(),
+            nextCursor = pages.first().nextCursor,
+        )
+    }
     return state.copy(
         loadState = MyRoomLoadState.LOADED,
         room = draft,
         savedRoom = draft,
         undoStack = persistentListOf(),
         selectedItemId = null,
-        inventoryTabs = RoomItemCategory.entries.map { category ->
-            // 모르는 종류는 기타로 바뀌어 오므로 같은 종류 묶음이 여럿일 수 있다. 다음 묶음은 첫 묶음의 cursor로 받는다.
-            val pages = room.categories.filter { it.category == category }
-            InventoryTabUiModel(
-                category = category,
-                name = pages.firstOrNull()?.categoryName.orEmpty(),
-                items = pages.flatMap { page -> page.items.map { it.toInventoryItem(category) } }
-                    .distinctBy { it.roomItemId }
-                    .toImmutableList(),
-                nextCursor = pages.firstOrNull()?.nextCursor,
-            )
-        }.toImmutableList(),
+        selectedCategory = state.selectedCategory
+            .takeIf { selected -> state.inventoryTabs.any { it.category == selected } && tabs.any { it.category == selected } }
+            ?: tabs.firstOrNull()?.category
+            ?: state.selectedCategory,
+        inventoryTabs = tabs.toImmutableList(),
     ).withPlacedMarks()
 }
 

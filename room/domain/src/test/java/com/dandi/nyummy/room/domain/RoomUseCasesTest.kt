@@ -47,12 +47,12 @@ class RoomUseCasesTest {
 
     @Test
     fun `가진 아이템 다음 묶음은 종류와 cursor를 넘기고 크기는 서버 최대치로 자른다`() = runBlocking {
-        val page = OwnedRoomItemPageVO(category = RoomItemCategory.BED, nextCursor = 30)
+        val page = OwnedRoomItemPageVO(category = RoomItemCategory("BED"), nextCursor = 30)
         repository.ownedPage = page
 
-        val result = getOwnedItems()(RoomItemCategory.BED, cursor = 12, size = 999)
+        val result = getOwnedItems()(RoomItemCategory("BED"), cursor = 12, size = 999)
 
-        assertEquals(listOf(Triple(RoomItemCategory.BED, 12L as Long?, GetRoomUseCase.MAX_PAGE_SIZE)), repository.ownedRequests)
+        assertEquals(listOf(Triple(RoomItemCategory("BED"), 12L as Long?, GetRoomUseCase.MAX_PAGE_SIZE)), repository.ownedRequests)
         assertEquals(page, result.getOrNull())
     }
 

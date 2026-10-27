@@ -6,7 +6,6 @@ import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.presentation.model.RoomCatMotion
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 
 /**
  * 마이룸 화면 상태.
@@ -16,8 +15,8 @@ import kotlinx.collections.immutable.toImmutableList
  * @property savedRoom 마지막으로 저장된 방. [room]과 다르면 저장할 것이 있다.
  * @property undoStack 되돌리기용 이전 방들. 마지막이 바로 전 상태다.
  * @property selectedItemId 방에서 고른 아이템(테두리와 도구 모음을 보여 준다)
- * @property selectedCategory 보관함에서 보고 있는 탭(아이템 종류)
- * @property inventoryTabs 보관함 탭. 아이템 종류마다 하나씩, [RoomItemCategory] 순서로 늘 세 개다.
+ * @property selectedCategory 보관함에서 보고 있는 탭(아이템 종류). 방을 불러오면 있는 탭으로 맞춘다.
+ * @property inventoryTabs 보관함 탭. 서버가 주는 종류마다 하나씩, 서버가 준 순서대로다. 불러오기 전에는 비어 있다.
  * @property catMotion 방에 앉은 냐미가 지금 하는 동작. 애니메이션을 받지 못했으면 null이고 냐미를 그리지 않는다.
  */
 @Immutable
@@ -27,8 +26,8 @@ data class MyRoomUIState(
     val savedRoom: RoomDraft = RoomDraft(),
     val undoStack: ImmutableList<RoomDraft> = persistentListOf(),
     val selectedItemId: Long? = null,
-    val selectedCategory: RoomItemCategory = RoomItemCategory.entries.first(),
-    val inventoryTabs: ImmutableList<InventoryTabUiModel> = InventoryTabUiModel.emptyTabs(),
+    val selectedCategory: RoomItemCategory = RoomItemCategory.BACKGROUND,
+    val inventoryTabs: ImmutableList<InventoryTabUiModel> = persistentListOf(),
     val isSaving: Boolean = false,
     val catMotion: RoomCatMotion? = null,
 ) : UiState {
@@ -95,12 +94,7 @@ data class InventoryTabUiModel(
     val items: ImmutableList<InventoryItemUiModel> = persistentListOf(),
     val nextCursor: Long? = null,
     val isLoadingMore: Boolean = false,
-) {
-    companion object {
-        fun emptyTabs(): ImmutableList<InventoryTabUiModel> =
-            RoomItemCategory.entries.map { InventoryTabUiModel(it) }.toImmutableList()
-    }
-}
+)
 
 /** 보관함 칸 하나. 같은 아이템을 여러 개 가졌으면 칸도 여러 개다. */
 @Immutable
