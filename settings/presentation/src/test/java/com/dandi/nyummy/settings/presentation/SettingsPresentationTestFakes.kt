@@ -13,12 +13,14 @@ import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.PushTokenHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
+import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.settings.domain.SettingsRepository
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
@@ -188,4 +190,12 @@ internal object FakeAuthRepository : AuthRepository {
 internal object FakePushTokenHelper : PushTokenHelper {
     override fun register(token: String?) = Unit
     override suspend fun deleteToken() = Unit
+}
+
+internal object FakeTutorialHelper : TutorialHelper {
+    override suspend fun isPending(step: TutorialStep) = false
+    override suspend fun complete(step: TutorialStep) = Unit
+    override suspend fun start() = Unit
+    override suspend fun skipAll() = Unit
+    override suspend fun clear() = Unit
 }

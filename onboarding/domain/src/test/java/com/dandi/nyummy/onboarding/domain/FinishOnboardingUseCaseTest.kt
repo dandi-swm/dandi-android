@@ -15,9 +15,11 @@ class FinishOnboardingUseCaseTest {
     private val repository = FakeOnboardingRepository()
     private val navigationHelper = RecordingNavigationHelper()
     private val messageHelper = RecordingMessageHelper()
+    private val tutorialHelper = RecordingTutorialHelper()
     private val useCase = FinishOnboardingUseCase(
         repository = repository,
         analyticsHelper = RecordingAnalyticsHelper(),
+        tutorialHelper = tutorialHelper,
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
@@ -35,6 +37,7 @@ class FinishOnboardingUseCaseTest {
         assertEquals(1, repository.onboardingCompleteCount)
         assertEquals(listOf(HomePreparePage), navigationHelper.rootPages)
         assertTrue(messageHelper.dialogs.isEmpty())
+        assertEquals(1, tutorialHelper.startCount)
     }
 
     @Test
@@ -96,5 +99,14 @@ class FinishOnboardingUseCaseTest {
         assertEquals(1, messageHelper.dialogs.size)
         assertEquals(0, repository.onboardingCompleteCount)
         assertTrue(navigationHelper.rootPages.isEmpty())
+    }
+
+    @Test
+    fun `고양이를 만들지 못하면 튜토리얼 대상으로 표시하지 않는다`() = runBlocking {
+        repository.error = httpException(400, OnboardingErrorType.INVALID_INPUT.type)
+
+        useCase("냐미", MealTimesVO.default)
+
+        assertEquals(0, tutorialHelper.startCount)
     }
 }

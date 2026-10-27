@@ -1,7 +1,9 @@
 package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.domain.helper.PushTokenHelper
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -24,9 +26,22 @@ class WithdrawUseCaseTest {
         }
     }
 
+    /** 튜토리얼 진행 상태를 지운 시점에 첫 화면으로 몇 번 갔는지 기록한다. */
+    private val tutorialHelper = object : TutorialHelper {
+        val initialCountsAtClear = mutableListOf<Int>()
+        override suspend fun isPending(step: TutorialStep) = false
+        override suspend fun complete(step: TutorialStep) = Unit
+        override suspend fun start() = Unit
+        override suspend fun skipAll() = Unit
+        override suspend fun clear() {
+            initialCountsAtClear += navigationHelper.initialCount
+        }
+    }
+
     private val useCase = WithdrawUseCase(
         repository = repository,
         pushTokenHelper = pushTokenHelper,
+        tutorialHelper = tutorialHelper,
         resourceHelper = FakeResourceHelper,
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
@@ -40,6 +55,7 @@ class WithdrawUseCaseTest {
         assertTrue(result.isSuccess)
         assertEquals(1, repository.withdrawCount)
         assertEquals(listOf(0), pushTokenHelper.initialCountsAtDelete)
+        assertEquals(listOf(0), tutorialHelper.initialCountsAtClear)
         assertEquals(1, navigationHelper.initialCount)
         val snackBar = messageHelper.snackBars.single()
         assertEquals(IconType.SUCCESS, snackBar.iconType)
@@ -54,6 +70,7 @@ class WithdrawUseCaseTest {
 
         assertTrue(result.isFailure)
         assertTrue(pushTokenHelper.initialCountsAtDelete.isEmpty())
+        assertTrue(tutorialHelper.initialCountsAtClear.isEmpty())
         assertEquals(0, navigationHelper.initialCount)
         val snackBar = messageHelper.snackBars.single()
         assertEquals(IconType.ERROR, snackBar.iconType)
