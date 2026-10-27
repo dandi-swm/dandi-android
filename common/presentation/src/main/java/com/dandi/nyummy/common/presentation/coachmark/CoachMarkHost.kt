@@ -28,6 +28,8 @@ value class CoachMarkKey(val id: String)
  * @property waitsForTarget true면 카드를 눌러도 넘어가지 않고 대상을 눌러야 진행된다.
  * @property onAdvance 카드를 눌렀다(대사 넘김). [waitsForTarget]이면 부르지 않는다.
  * @property onTargetClick 밝게 비운 대상을 눌렀다. 대상이 등록한 동작 뒤에 부른다.
+ * @property onSkip 건너뛰기. null이면 건너뛸 수 없는 단계라 건너뛰기를 그리지 않는다.
+ * @property onBack 뒤로 가기. null이면 코치마크가 뒤로 가기를 가로채지 않아 화면이 평소처럼 처리한다.
  */
 @Immutable
 data class CoachMark(
@@ -39,8 +41,8 @@ data class CoachMark(
     val waitsForTarget: Boolean = target != null,
     val onAdvance: () -> Unit = {},
     val onTargetClick: () -> Unit = {},
-    val onSkip: () -> Unit = {},
-    val onBack: () -> Unit = {},
+    val onSkip: (() -> Unit)? = null,
+    val onBack: (() -> Unit)? = null,
 )
 
 /** 코치마크 대상 하나. 루트 기준 영역과, 대상을 눌렀을 때 하던 동작. */
