@@ -14,7 +14,7 @@ class RoomRepositoryImpl(
         dataSource.getRoom(size).toVO()
 
     override suspend fun getOwnedItems(category: RoomItemCategory, cursor: Long?, size: Int) =
-        dataSource.getOwnedItems(category.name, cursor, size).toVO(category)
+        dataSource.getOwnedItems(category.key, cursor, size).toVO(category)
 
     override suspend fun saveRoom(placements: List<RoomPlacementVO>) =
         dataSource.updateEquippedItems(

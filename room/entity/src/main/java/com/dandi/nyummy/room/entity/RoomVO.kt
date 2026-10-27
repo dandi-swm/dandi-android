@@ -2,16 +2,23 @@ package com.dandi.nyummy.room.entity
 
 import kotlinx.serialization.Serializable
 
-/** 마이룸 아이템 종류. 배경은 방에 하나만 깔고, 나머지(인테리어)는 자유롭게 여러 개 놓는다. */
-enum class RoomItemCategory {
-    BACKGROUND,
-    BED,
-    ETC,
-    ;
+/**
+ * 마이룸 아이템 종류. 서버가 주는 종류 값(예 "BED")을 그대로 담아서, 서버에 종류가 늘면 보관함 탭도 따라 는다.
+ * 앱이 따로 다루는 종류는 배경뿐이다. 배경은 방에 하나만 깔고, 나머지(인테리어)는 자유롭게 여러 개 놓는다.
+ *
+ * @property key 서버가 주는 종류 값. 보유 아이템 목록을 읽을 때 그대로 넘긴다.
+ */
+@Serializable
+@JvmInline
+value class RoomItemCategory(val key: String) {
 
     companion object {
-        /** 서버에 종류가 새로 생겨도 앱이 죽지 않게, 모르는 값은 기타(ETC)로 본다. */
-        fun from(raw: String?): RoomItemCategory = entries.firstOrNull { it.name == raw } ?: ETC
+        val BACKGROUND = RoomItemCategory("BACKGROUND")
+
+        /** 종류 값이 오지 않은 아이템을 담는 기타. */
+        val ETC = RoomItemCategory("ETC")
+
+        fun from(raw: String?): RoomItemCategory = raw?.trim()?.takeIf { it.isNotEmpty() }?.let(::RoomItemCategory) ?: ETC
     }
 }
 
@@ -74,7 +81,7 @@ data class RoomPlacementVO(
 /**
  * 마이룸 화면을 처음 그리는 데 필요한 값.
  *
- * @property categories 종류별 가진 아이템의 첫 묶음. 가진 게 없어도 모든 종류가 빈 목록으로 오고 순서는 고정이다.
+ * @property categories 종류별 가진 아이템의 첫 묶음. 가진 게 없어도 모든 종류가 빈 목록으로 오고, 이 순서가 보관함 탭 순서다.
  * @property placements 지금 방에 놓인 아이템(첫 묶음에 없는 아이템도 들어 있다). [RoomPlacementVO.zIndex] 오름차순.
  */
 data class RoomVO(

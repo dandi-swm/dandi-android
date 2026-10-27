@@ -32,7 +32,6 @@ import com.dandi.nyummy.room.presentation.component.RoomInventorySheet
 import com.dandi.nyummy.room.presentation.component.RoomStage
 import com.dandi.nyummy.room.presentation.component.rememberRoomSheetState
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
@@ -148,6 +147,8 @@ internal fun MyRoomScreen(
     }
 }
 
+private val PreviewBed = RoomItemCategory("BED")
+
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun MyRoomPreview() {
@@ -162,17 +163,21 @@ private fun MyRoomPreview() {
                     ),
                 ),
                 selectedItemId = 2,
-                selectedCategory = RoomItemCategory.BED,
-                inventoryTabs = InventoryTabUiModel.emptyTabs().map { tab ->
-                    if (tab.category != RoomItemCategory.BED) return@map tab
-                    tab.copy(
+                selectedCategory = PreviewBed,
+                inventoryTabs = persistentListOf(
+                    InventoryTabUiModel(RoomItemCategory.BACKGROUND, name = "배경"),
+                    InventoryTabUiModel(
+                        category = PreviewBed,
+                        name = "침대",
                         items = persistentListOf(
-                            InventoryItemUiModel(1, RoomItemCategory.BED, "구름 방석", "", isPlaced = true),
-                            InventoryItemUiModel(2, RoomItemCategory.BED, "나무 침대", "", isPlaced = true),
-                            InventoryItemUiModel(3, RoomItemCategory.BED, "바구니 침대", "", isPlaced = false),
+                            InventoryItemUiModel(1, PreviewBed, "구름 방석", "", isPlaced = true),
+                            InventoryItemUiModel(2, PreviewBed, "나무 침대", "", isPlaced = true),
+                            InventoryItemUiModel(3, PreviewBed, "바구니 침대", "", isPlaced = false),
                         ),
-                    )
-                }.toImmutableList(),
+                    ),
+                    InventoryTabUiModel(RoomItemCategory("PLANT"), name = "식물"),
+                    InventoryTabUiModel(RoomItemCategory.ETC, name = "기타"),
+                ),
             ),
             onIntent = {},
         )
