@@ -89,3 +89,12 @@ fun ShowCoachMark(mark: CoachMark?) {
         onDispose { if (host.mark == mark) host.mark = null }
     }
 }
+
+/** 앱 공통 바텀 네비의 코치마크 대상. 바텀 네비가 공통 컴포넌트라 여기 둔다. 등록은 루트가 한다. */
+object MainCoachMarkKeys {
+    /** 가운데 식사 기록(카메라) 버튼. */
+    val MealRecord = CoachMarkKey("main.mealRecord")
+
+    /** 마이룸 탭. */
+    val MyRoomTab = CoachMarkKey("main.myRoomTab")
+}

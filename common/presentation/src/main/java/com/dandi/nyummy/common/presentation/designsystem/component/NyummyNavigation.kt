@@ -145,6 +145,8 @@ data class NyummyBottomNavAction(
  * 크기는 화면 크기와 상관없이 dp로 고정이다.
  *
  * @param centerActionIndex 가운데 버튼 앞에 올 탭 수. 탭 번호([selectedIndex], [onSelect])는 가운데 버튼을 빼고 센다.
+ * @param tabModifier 탭마다 덧붙일 Modifier(코치마크 대상 등록 등). 탭 번호를 받는다.
+ * @param centerActionModifier 가운데 버튼의 원에 덧붙일 Modifier(코치마크 대상 등록 등).
  */
 @Composable
 fun NyummyBottomNav(
@@ -155,6 +157,8 @@ fun NyummyBottomNav(
     centerAction: NyummyBottomNavAction? = null,
     centerActionIndex: Int = (items.size + 1) / 2,
     onCenterActionClick: () -> Unit = {},
+    tabModifier: @Composable (Int) -> Modifier = { Modifier },
+    centerActionModifier: Modifier = Modifier,
 ) {
     val dimens = NyummyComponentDimens
     Column(
@@ -179,17 +183,27 @@ fun NyummyBottomNav(
             // 탭과 가운데 버튼은 균등 너비로 나눠 360dp 이하 화면에서도 서로 겹치지 않게 한다(넓은 화면에서는 최대 70dp).
             items.forEachIndexed { index, item ->
                 if (centerAction != null && index == centerActionIndex) {
-                    BottomNavCenterAction(action = centerAction, onClick = onCenterActionClick, modifier = Modifier.weight(1f))
+                    BottomNavCenterAction(
+                        action = centerAction,
+                        onClick = onCenterActionClick,
+                        modifier = Modifier.weight(1f),
+                        circleModifier = centerActionModifier,
+                    )
                 }
                 BottomNavTab(
                     item = item,
                     selected = index == selectedIndex,
                     onClick = { onSelect(index) },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).then(tabModifier(index)),
                 )
             }
             if (centerAction != null && centerActionIndex >= items.size) {
-                BottomNavCenterAction(action = centerAction, onClick = onCenterActionClick, modifier = Modifier.weight(1f))
+                BottomNavCenterAction(
+                    action = centerAction,
+                    onClick = onCenterActionClick,
+                    modifier = Modifier.weight(1f),
+                    circleModifier = centerActionModifier,
+                )
             }
         }
         Box(Modifier.navigationBarsPadding())
@@ -205,6 +219,7 @@ private fun BottomNavCenterAction(
     action: NyummyBottomNavAction,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    circleModifier: Modifier = Modifier,
 ) {
     val dimens = NyummyComponentDimens
     val interactionSource = rememberNyummyInteractionSource()
@@ -232,6 +247,7 @@ private fun BottomNavCenterAction(
             Box(
                 modifier = Modifier
                     .size(ringSize)
+                    .then(circleModifier)
                     .background(NyummyTheme.colors.bg.surface, CircleShape)
                     .padding(dimens.BottomNavActionRing)
                     .background(
