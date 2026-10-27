@@ -14,11 +14,13 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
+import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSource
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.room.domain.GetOwnedRoomItemsUseCase
@@ -61,6 +63,7 @@ class MyRoomViewModelTest {
     private val catRepository = FakeCatRepository()
     private val messageHelper = RecordingMessageHelper()
     private val navigationHelper = RecordingNavigationHelper()
+    private val tutorialHelper = FakeTutorialHelper()
 
     @Before
     fun setUp() {
@@ -416,6 +419,91 @@ class MyRoomViewModelTest {
         assertEquals(MyRoomLoadState.LOADED, state.loadState)
     }
 
+    @Test
+    fun `튜토리얼 대상이 아니면 안내하지 않는다`() = runTest(testDispatcher) {
+        val viewModel = loadedViewModel()
+
+        assertNull(viewModel.uiState.value.tutorial)
+    }
+
+    @Test
+    fun `놓지 않은 아이템이 있으면 그 탭으로 바꿔 칸을 가리키고 인테리어를 배경보다 먼저 고른다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+
+        val state = loadedViewModel().uiState.value
+
+        // 놓이지 않은 칸은 배경 101과 기타 3이다.
+        assertEquals(RoomItemCategory.ETC, state.selectedCategory)
+        assertEquals(MyRoomTutorialUiState(MyRoomTutorialPhase.Place, itemId = 3), state.tutorial)
+    }
+
+    @Test
+    fun `칸을 놓으면 저장을 가리키고 저장에 성공하면 돌아가기 전에 마이룸 안내를 마친다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3, x = 0.5f, y = 0.8f))
+        viewModel.onIntent(MyRoomIntent.TutorialTargetClicked)
+        assertEquals(MyRoomTutorialPhase.Save, viewModel.uiState.value.tutorial?.phase)
+
+        viewModel.onIntent(MyRoomIntent.ClickSave)
+        viewModel.onIntent(MyRoomIntent.TutorialTargetClicked)
+        assertEquals(MyRoomTutorialPhase.Saving, viewModel.uiState.value.tutorial?.phase)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.tutorial)
+        assertEquals(setOf(TutorialStep.ROOM), tutorialHelper.done)
+        assertEquals(1, navigationHelper.backCount)
+    }
+
+    @Test
+    fun `안내대로 저장하지 못하면 실패 안내 뒤 저장을 다시 가리킨다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+        repository.saveError = httpException(400)
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3, x = 0.5f, y = 0.8f))
+        viewModel.onIntent(MyRoomIntent.TutorialTargetClicked)
+        viewModel.onIntent(MyRoomIntent.ClickSave)
+        viewModel.onIntent(MyRoomIntent.TutorialTargetClicked)
+        advanceUntilIdle()
+
+        assertEquals(IconType.ERROR, messageHelper.snackBars.single().iconType)
+        assertEquals(MyRoomTutorialPhase.Save, viewModel.uiState.value.tutorial?.phase)
+        assertTrue(tutorialHelper.done.isEmpty())
+    }
+
+    @Test
+    fun `놓을 아이템이 없으면 꾸미기를 소개하고 끝까지 넘기면 마친다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+        repository.room = RoomVO(
+            categories = listOf(page(RoomItemCategory.BACKGROUND, owned(100, "햇살 방"))),
+            placements = listOf(RoomPlacementVO(roomItemId = 100, category = RoomItemCategory.BACKGROUND, itemId = 100)),
+        )
+        val viewModel = loadedViewModel()
+        assertEquals(MyRoomTutorialUiState(MyRoomTutorialPhase.Intro), viewModel.uiState.value.tutorial)
+
+        viewModel.onIntent(MyRoomIntent.TutorialAdvance)
+        assertEquals(1, viewModel.uiState.value.tutorial?.introIndex)
+        viewModel.onIntent(MyRoomIntent.TutorialAdvance)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.tutorial)
+        assertEquals(setOf(TutorialStep.ROOM), tutorialHelper.done)
+    }
+
+    @Test
+    fun `건너뛰면 남은 튜토리얼을 모두 끝낸다`() = runTest(testDispatcher) {
+        tutorialHelper.pending = true
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MyRoomIntent.TutorialSkip)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.tutorial)
+        assertFalse(tutorialHelper.pending)
+    }
+
     private fun TestScope.loadedViewModel(): MyRoomViewModel {
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -433,6 +521,7 @@ class MyRoomViewModelTest {
             catMotionPicker = CatMotionPicker(Random(seed = 3)),
             navigationHelper = navigationHelper,
             messageHelper = messageHelper,
+            tutorialHelper = tutorialHelper,
         )
     }
 
@@ -445,6 +534,32 @@ class MyRoomViewModelTest {
 
     private fun placed(id: Long, zIndex: Int, x: Float, y: Float, scale: Float = 1f) =
         RoomPlacementVO(roomItemId = id, itemId = id, x = x, y = y, zIndex = zIndex, scale = scale)
+}
+
+/** 메모리로 동작하는 튜토리얼 진행 기록. */
+private class FakeTutorialHelper : TutorialHelper {
+    var pending = false
+    val done = mutableSetOf<TutorialStep>()
+
+    override suspend fun isPending(step: TutorialStep) = pending && step !in done
+
+    override suspend fun complete(step: TutorialStep) {
+        done += step
+    }
+
+    override suspend fun start() {
+        pending = true
+        done.clear()
+    }
+
+    override suspend fun skipAll() {
+        pending = false
+    }
+
+    override suspend fun clear() {
+        pending = false
+        done.clear()
+    }
 }
 
 /** 마이룸 API를 흉내 내는 저장소. 불러오기와 저장 실패를 따로 정할 수 있다. */
