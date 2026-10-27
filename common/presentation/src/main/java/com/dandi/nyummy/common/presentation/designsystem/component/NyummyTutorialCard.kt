@@ -101,7 +101,7 @@ fun NyummyTutorialCard(
             tailCenterX = tailCenterX,
             showHint = showHint,
             onSkip = onSkip,
-            modifier = Modifier.padding(top = GuideSize - GuideOverlap),
+            modifier = Modifier.padding(top = TutorialCardBodyTop),
         )
     }
 }
@@ -192,6 +192,9 @@ private val GuideSize = 104.dp
 
 /** 냐미가 카드 윗변 아래로 겹치는 깊이. */
 private val GuideOverlap = 18.dp
+
+/** 카드 맨 위에서 카드 몸통(꼬리가 위면 꼬리 끝)까지의 높이. 코치마크가 카드를 대상 아래에 붙일 때 쓴다. */
+internal val TutorialCardBodyTop = GuideSize - GuideOverlap
 
 /** 이름표와 건너뛰기가 카드 윗변(아래 모서리면 아랫변) 밖으로 걸치는 깊이. */
 private val PillOverlap = 13.dp
