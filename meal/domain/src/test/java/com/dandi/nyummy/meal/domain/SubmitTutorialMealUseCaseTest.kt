@@ -52,13 +52,28 @@ class SubmitTutorialMealUseCaseTest {
     }
 
     @Test
-    fun `기록하지 못하면 안내하고 튜토리얼 상태는 그대로 둔다`() = runBlocking {
+    fun `기록하지 못하면 다시 시도하라는 다이얼로그를 띄우고 튜토리얼 상태는 그대로 둔다`() = runBlocking {
         val result = useCase { throw java.io.IOException("network") }()
 
         assertTrue(result.isFailure)
-        assertEquals("식사를 기록하지 못했어요. 다시 시도해주세요", messageHelper.snackBars.single().messageText)
+        assertEquals(RETRY_MESSAGE, messageHelper.dialogs.single())
+        assertTrue(messageHelper.snackBars.isEmpty())
         assertTrue(tutorialHelper.mealRequired)
         assertFalse(tutorialHelper.started)
+    }
+
+    @Test
+    fun `서버 오류도 사유와 상관없이 같은 다이얼로그로 안내한다`() = runBlocking {
+        useCase { throw httpException(404, "") }()
+        useCase { throw httpException(500, "") }()
+        useCase { throw httpException(409, MealErrorType.DAILY_COUNT_EXCEEDED.type) }()
+
+        assertEquals(List(3) { RETRY_MESSAGE }, messageHelper.dialogs)
+        assertTrue(messageHelper.snackBars.isEmpty())
+    }
+
+    private companion object {
+        const val RETRY_MESSAGE = "잠시 네트워크 환경이 불안정합니다. 잠시 후 다시 시도해주세요"
     }
 
     private fun httpException(code: Int, errorCode: String) = HttpResponseException(
