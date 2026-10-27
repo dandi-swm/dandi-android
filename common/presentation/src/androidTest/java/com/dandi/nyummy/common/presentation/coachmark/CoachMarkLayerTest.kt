@@ -126,6 +126,14 @@ class CoachMarkLayerTest {
         assertEquals(1, skips)
     }
 
+    @Test
+    fun 건너뛸_수_없는_코치마크는_건너뛰기를_그리지_않는다() {
+        setLayer(pointing().copy(onSkip = null))
+        val skip = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.nyummy_tutorial_skip)
+
+        composeRule.onNodeWithText(skip).assertDoesNotExist()
+    }
+
     private companion object {
         val TargetKey = CoachMarkKey("camera")
         const val TargetTag = "target"
