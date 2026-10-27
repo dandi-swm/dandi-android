@@ -637,6 +637,10 @@ private class FakeTutorialHelper : TutorialHelper {
         pending = false
         done.clear()
     }
+
+    override suspend fun isMealTutorialRequired() = false
+
+    override suspend fun setMealTutorialRequired(required: Boolean) = Unit
 }
 
 /** 우편 API를 흉내 내는 저장소. 응답을 멈추거나 실패시키려면 override를 바꾼다. */
