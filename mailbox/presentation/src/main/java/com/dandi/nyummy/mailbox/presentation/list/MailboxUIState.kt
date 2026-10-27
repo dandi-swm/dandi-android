@@ -13,10 +13,12 @@ import kotlinx.collections.immutable.persistentSetOf
  *
  * @property items 받은 우편 목록 상태.
  * @property boxOpening 보상 상자를 여는 연출. 열고 있지 않으면 null.
+ * @property tutorial 첫 사용자 튜토리얼. 보여 주지 않으면 null.
  */
 data class MailboxUIState(
     val items: MailItemsUiState = MailItemsUiState(),
     val boxOpening: BoxOpeningUiState? = null,
+    val tutorial: MailboxTutorialUiState? = null,
 ) : UiState {
 
     companion object {

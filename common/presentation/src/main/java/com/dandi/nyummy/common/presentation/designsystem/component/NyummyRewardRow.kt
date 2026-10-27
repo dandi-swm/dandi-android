@@ -31,6 +31,7 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
  * @param largeImage 보상 상자처럼 앞 칸을 거의 채우는 그림(48)이면 true. 코인, 아이템은 36.
  * @param remaining 남은 기간(예 "6일 남았어요"). 받은 뒤이거나 사라지지 않는 보상이면 null.
  * @param actionEnabled 받는 중에는 false로 두어 두 번 받지 않게 한다.
+ * @param actionModifier 받기(열기) 버튼에 덧붙일 Modifier(코치마크 대상 등록 등).
  */
 @Composable
 fun NyummyRewardRow(
@@ -47,6 +48,7 @@ fun NyummyRewardRow(
     remaining: String? = null,
     isExpiring: Boolean = false,
     actionEnabled: Boolean = true,
+    actionModifier: Modifier = Modifier,
 ) {
     val dividerColor = NyummyTheme.colors.border.subtle
     val dividerWidth = NyummyTheme.borderWidth.hairline
@@ -121,6 +123,7 @@ fun NyummyRewardRow(
                     onClick = onActionClick,
                     size = NyummyButtonSize.S,
                     enabled = actionEnabled,
+                    modifier = actionModifier,
                 )
             }
         }

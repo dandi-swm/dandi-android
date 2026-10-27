@@ -36,4 +36,16 @@ sealed interface MailboxIntent : MviIntent {
 
     /** 받은 보상을 본 뒤 계속하기(또는 뒤로 가기). 연출을 닫는다. */
     data object CloseBoxOpening : MailboxIntent
+
+    /** 튜토리얼 소개 카드를 눌렀다. 소개를 마친다. */
+    data object TutorialAdvance : MailboxIntent
+
+    /** 튜토리얼이 가리킨 열기를 눌렀다. 상자 열기 연출이 끝나길 기다린다. */
+    data object TutorialTargetClicked : MailboxIntent
+
+    /** 튜토리얼 건너뛰기. 남은 튜토리얼을 모두 끝낸다. */
+    data object TutorialSkip : MailboxIntent
+
+    /** 튜토리얼 중 뒤로 가기. 우편함 안내만 마친다. */
+    data object TutorialBack : MailboxIntent
 }
