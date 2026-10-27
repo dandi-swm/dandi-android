@@ -68,7 +68,7 @@ class MyRoomViewModelTest {
         repository.room = RoomVO(
             categories = listOf(
                 page(RoomItemCategory.BACKGROUND, owned(100, "햇살 방"), owned(101, "민트 방"), name = "배경"),
-                page(RoomItemCategory.BED, owned(1, "구름 방석"), nextCursor = 1, name = "침대"),
+                page(RoomItemCategory("BED"), owned(1, "구름 방석"), nextCursor = 1, name = "침대"),
                 page(RoomItemCategory.ETC, owned(2, "털실 공"), owned(3, "털실 공"), name = "기타"),
             ),
             placements = listOf(
@@ -104,12 +104,15 @@ class MyRoomViewModelTest {
         // 그림은 아이템 id를 CDN 아이템 경로에 붙인 주소다.
         assertEquals("https://cdn.nyummy.co.kr/items/100.png", state.room.background?.imageUrl)
         assertEquals("https://cdn.nyummy.co.kr/items/1.png", inRange.imageUrl)
-        // 탭은 서버가 주지 않은 종류까지 늘 세 개이고, 각 탭에는 방과 함께 받은 첫 묶음이 들어간다.
-        assertEquals(RoomItemCategory.entries, state.inventoryTabs.map { it.category })
+        // 탭은 서버가 준 종류마다 하나씩 그 순서대로이고, 각 탭에는 방과 함께 받은 첫 묶음이 들어간다.
+        assertEquals(
+            listOf(RoomItemCategory.BACKGROUND, RoomItemCategory("BED"), RoomItemCategory.ETC),
+            state.inventoryTabs.map { it.category },
+        )
         assertEquals(listOf("배경", "침대", "기타"), state.inventoryTabs.map { it.name })
         assertEquals(listOf(null, 1L, null), state.inventoryTabs.map { it.nextCursor })
         assertEquals(listOf(true, false), state.itemsOf(RoomItemCategory.BACKGROUND).map { it.isPlaced })
-        assertEquals(listOf(true), state.itemsOf(RoomItemCategory.BED).map { it.isPlaced })
+        assertEquals(listOf(true), state.itemsOf(RoomItemCategory("BED")).map { it.isPlaced })
         // 같은 아이템을 두 개 가지면 칸도 두 개다.
         assertEquals(listOf(2L, 3L), state.itemsOf(RoomItemCategory.ETC).map { it.roomItemId })
         assertEquals(listOf(true, false), state.itemsOf(RoomItemCategory.ETC).map { it.isPlaced })
@@ -319,22 +322,65 @@ class MyRoomViewModelTest {
     }
 
     @Test
+    fun `서버에 새 종류가 생기면 그 순서대로 탭을 늘리고 다음 묶음도 그 종류로 받는다`() = runTest(testDispatcher) {
+        repository.room = RoomVO(
+            categories = listOf(
+                page(RoomItemCategory("PLANT"), owned(7, "화분"), nextCursor = 3, name = "식물"),
+                page(RoomItemCategory.BACKGROUND, owned(100, "햇살 방"), name = "배경"),
+                page(RoomItemCategory.ETC, owned(2, "털실 공"), name = "기타"),
+            ),
+        )
+        val viewModel = loadedViewModel()
+
+        val state = viewModel.uiState.value
+        assertEquals(
+            listOf(RoomItemCategory("PLANT"), RoomItemCategory.BACKGROUND, RoomItemCategory.ETC),
+            state.inventoryTabs.map { it.category },
+        )
+        assertEquals(listOf("식물", "배경", "기타"), state.inventoryTabs.map { it.name })
+        // 새 종류는 기타에 섞이지 않는다.
+        assertEquals(listOf(2L), state.itemsOf(RoomItemCategory.ETC).map { it.roomItemId })
+        // 처음에는 서버가 준 첫 탭을 본다.
+        assertEquals(RoomItemCategory("PLANT"), state.selectedCategory)
+
+        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory("PLANT")))
+        advanceUntilIdle()
+
+        assertEquals(listOf(Triple(RoomItemCategory("PLANT"), 3L, GetRoomUseCase.PAGE_SIZE)), repository.ownedRequests)
+    }
+
+    @Test
+    fun `다시 불러오면 보던 탭을 그대로 보고 그 탭이 없어졌으면 첫 탭을 본다`() = runTest(testDispatcher) {
+        val viewModel = loadedViewModel()
+        viewModel.onIntent(MyRoomIntent.SelectTab(RoomItemCategory.ETC))
+
+        viewModel.onIntent(MyRoomIntent.RetryLoad)
+        advanceUntilIdle()
+        assertEquals(RoomItemCategory.ETC, viewModel.uiState.value.selectedCategory)
+
+        repository.room = repository.room.copy(categories = repository.room.categories.filter { it.category != RoomItemCategory.ETC })
+        viewModel.onIntent(MyRoomIntent.RetryLoad)
+        advanceUntilIdle()
+        assertEquals(RoomItemCategory.BACKGROUND, viewModel.uiState.value.selectedCategory)
+    }
+
+    @Test
     fun `탭 끝에 닿으면 그 종류의 다음 묶음만 받아 그 탭 끝에 붙인다`() = runTest(testDispatcher) {
         val viewModel = loadedViewModel()
         // 묶음 사이에 겹친 칸(1)은 한 번만 둔다.
-        repository.ownedPage = page(RoomItemCategory.BED, owned(4, "바구니 침대"), owned(1, "구름 방석"), nextCursor = 9)
+        repository.ownedPage = page(RoomItemCategory("BED"), owned(4, "바구니 침대"), owned(1, "구름 방석"), nextCursor = 9)
 
         // 다음 묶음이 없는 종류는 요청하지 않는다.
         viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory.ETC))
         // 받는 중에 또 끝에 닿아도 한 번만 요청한다.
-        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory.BED))
-        assertTrue(viewModel.uiState.value.tabOf(RoomItemCategory.BED)!!.isLoadingMore)
-        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory.BED))
+        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory("BED")))
+        assertTrue(viewModel.uiState.value.tabOf(RoomItemCategory("BED"))!!.isLoadingMore)
+        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory("BED")))
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertEquals(listOf(Triple(RoomItemCategory.BED, 1L, GetRoomUseCase.PAGE_SIZE)), repository.ownedRequests)
-        val bed = state.tabOf(RoomItemCategory.BED)!!
+        assertEquals(listOf(Triple(RoomItemCategory("BED"), 1L, GetRoomUseCase.PAGE_SIZE)), repository.ownedRequests)
+        val bed = state.tabOf(RoomItemCategory("BED"))!!
         assertEquals(listOf(1L, 4L), bed.items.map { it.roomItemId })
         assertEquals(listOf(true, false), bed.items.map { it.isPlaced })
         assertEquals(9L, bed.nextCursor)
@@ -342,15 +388,15 @@ class MyRoomViewModelTest {
         assertEquals(listOf(2L, 3L), state.itemsOf(RoomItemCategory.ETC).map { it.roomItemId })
 
         // 마지막 묶음을 받으면 더 요청하지 않는다.
-        repository.ownedPage = page(RoomItemCategory.BED, owned(5, "해먹"))
-        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory.BED))
+        repository.ownedPage = page(RoomItemCategory("BED"), owned(5, "해먹"))
+        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory("BED")))
         advanceUntilIdle()
-        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory.BED))
+        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory("BED")))
         advanceUntilIdle()
 
         assertEquals(listOf(1L, 9L), repository.ownedRequests.map { it.second })
-        assertEquals(listOf(1L, 4L, 5L), viewModel.uiState.value.itemsOf(RoomItemCategory.BED).map { it.roomItemId })
-        assertNull(viewModel.uiState.value.tabOf(RoomItemCategory.BED)!!.nextCursor)
+        assertEquals(listOf(1L, 4L, 5L), viewModel.uiState.value.itemsOf(RoomItemCategory("BED")).map { it.roomItemId })
+        assertNull(viewModel.uiState.value.tabOf(RoomItemCategory("BED"))!!.nextCursor)
     }
 
     @Test
@@ -358,21 +404,21 @@ class MyRoomViewModelTest {
         val viewModel = loadedViewModel()
         repository.ownedError = httpException(500)
 
-        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory.BED))
+        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory("BED")))
         advanceUntilIdle()
 
-        val bed = viewModel.uiState.value.tabOf(RoomItemCategory.BED)!!
+        val bed = viewModel.uiState.value.tabOf(RoomItemCategory("BED"))!!
         assertEquals(listOf(1L), bed.items.map { it.roomItemId })
         assertEquals(1L, bed.nextCursor)
         assertFalse(bed.isLoadingMore)
 
         repository.ownedError = null
-        repository.ownedPage = page(RoomItemCategory.BED, owned(4, "바구니 침대"))
-        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory.BED))
+        repository.ownedPage = page(RoomItemCategory("BED"), owned(4, "바구니 침대"))
+        viewModel.onIntent(MyRoomIntent.ReachInventoryEnd(RoomItemCategory("BED")))
         advanceUntilIdle()
 
         assertEquals(listOf(1L, 1L), repository.ownedRequests.map { it.second })
-        assertEquals(listOf(1L, 4L), viewModel.uiState.value.itemsOf(RoomItemCategory.BED).map { it.roomItemId })
+        assertEquals(listOf(1L, 4L), viewModel.uiState.value.itemsOf(RoomItemCategory("BED")).map { it.roomItemId })
     }
 
     @Test

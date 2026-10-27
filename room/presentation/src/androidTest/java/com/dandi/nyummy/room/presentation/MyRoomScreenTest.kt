@@ -11,7 +11,6 @@ import com.dandi.nyummy.common.presentation.jank.LocalJankReporter
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.presentation.MyRoomLoadState.LOADED
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -37,10 +36,14 @@ class MyRoomScreenTest {
                                 ),
                             ),
                             selectedCategory = RoomItemCategory.ETC,
-                            inventoryTabs = InventoryTabUiModel.emptyTabs().map { tab ->
-                                if (tab.category != RoomItemCategory.ETC) return@map tab
-                                tab.copy(items = persistentListOf(InventoryItemUiModel(1, RoomItemCategory.ETC, "털실 공", "", isPlaced = true)))
-                            }.toImmutableList(),
+                            inventoryTabs = persistentListOf(
+                                InventoryTabUiModel(RoomItemCategory.BACKGROUND),
+                                InventoryTabUiModel(RoomItemCategory("BED")),
+                                InventoryTabUiModel(
+                                    category = RoomItemCategory.ETC,
+                                    items = persistentListOf(InventoryItemUiModel(1, RoomItemCategory.ETC, "털실 공", "", isPlaced = true)),
+                                ),
+                            ),
                         ),
                         onIntent = {},
                     )

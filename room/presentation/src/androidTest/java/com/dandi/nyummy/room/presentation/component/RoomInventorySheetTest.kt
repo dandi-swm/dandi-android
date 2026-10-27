@@ -39,24 +39,24 @@ class RoomInventorySheetTest {
     private val reachedEnds = mutableListOf<RoomItemCategory>()
 
     /** 배경 하나, 침대 [bedCount]개를 가졌고 서버가 침대 탭 이름만 준 보관함. */
-    private fun tabs(bedCount: Int = 1) = InventoryTabUiModel.emptyTabs().map { tab ->
-        when (tab.category) {
-            RoomItemCategory.BACKGROUND -> tab.copy(
-                items = persistentListOf(InventoryItemUiModel(100, RoomItemCategory.BACKGROUND, "햇살 방", "", isPlaced = true)),
-            )
-            RoomItemCategory.BED -> tab.copy(
-                name = "침대",
-                items = List(bedCount) { InventoryItemUiModel(it + 1L, RoomItemCategory.BED, "침대 ${it + 1}", "", isPlaced = false) }
-                    .toImmutableList(),
-                nextCursor = 1,
-            )
-            else -> tab
-        }
-    }.toImmutableList()
+    private fun tabs(bedCount: Int = 1) = persistentListOf(
+        InventoryTabUiModel(
+            category = RoomItemCategory.BACKGROUND,
+            items = persistentListOf(InventoryItemUiModel(100, RoomItemCategory.BACKGROUND, "햇살 방", "", isPlaced = true)),
+        ),
+        InventoryTabUiModel(
+            category = RoomItemCategory("BED"),
+            name = "침대",
+            items = List(bedCount) { InventoryItemUiModel(it + 1L, RoomItemCategory("BED"), "침대 ${it + 1}", "", isPlaced = false) }
+                .toImmutableList(),
+            nextCursor = 1,
+        ),
+        InventoryTabUiModel(RoomItemCategory.ETC),
+    )
 
     private fun setSheet(
         expanded: Boolean = true,
-        selectedCategory: RoomItemCategory = RoomItemCategory.BED,
+        selectedCategory: RoomItemCategory = RoomItemCategory("BED"),
         bedCount: Int = 1,
     ) {
         composeRule.setContent {
@@ -143,7 +143,7 @@ class RoomInventorySheetTest {
         composeRule.onNodeWithText("햇살 방").performClick()
 
         composeRule.onNodeWithText("침대").performClick()
-        assertEquals(listOf(RoomItemCategory.BED), selectedTabs)
+        assertEquals(listOf(RoomItemCategory("BED")), selectedTabs)
 
         assertEquals(listOf(100L), backgroundClicks)
         assertTrue(interiorClicks.isEmpty())
@@ -160,6 +160,6 @@ class RoomInventorySheetTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText("침대 20").assertIsDisplayed()
-        assertEquals(RoomItemCategory.BED, reachedEnds.distinct().single())
+        assertEquals(RoomItemCategory("BED"), reachedEnds.distinct().single())
     }
 }

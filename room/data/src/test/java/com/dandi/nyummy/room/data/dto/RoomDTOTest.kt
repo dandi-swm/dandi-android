@@ -37,7 +37,7 @@ class RoomDTOTest {
             """.trimIndent(),
         ).toVO()
 
-        assertEquals(listOf(RoomItemCategory.BACKGROUND, RoomItemCategory.BED), room.categories.map { it.category })
+        assertEquals(listOf(RoomItemCategory.BACKGROUND, RoomItemCategory("BED")), room.categories.map { it.category })
         assertNull(room.categories[0].nextCursor)
         assertEquals(101L, room.categories[1].nextCursor)
         assertEquals("침대", room.categories[1].categoryName)
@@ -45,7 +45,7 @@ class RoomDTOTest {
         assertEquals(2L, room.categories[1].items.single().itemId)
         // zIndex 오름차순으로 정렬한다.
         assertEquals(listOf(108L, 101L), room.placements.map { it.roomItemId })
-        assertEquals(RoomPlacementVO(101, RoomItemCategory.BED, itemId = 2, x = 50f, y = 20f, zIndex = 2, scale = 1.2f), room.placements[1])
+        assertEquals(RoomPlacementVO(101, RoomItemCategory("BED"), itemId = 2, x = 50f, y = 20f, zIndex = 2, scale = 1.2f), room.placements[1])
     }
 
     @Test
@@ -67,11 +67,20 @@ class RoomDTOTest {
     }
 
     @Test
-    fun `모르는 종류는 기타로, 0 이하 배율은 1로 본다`() {
+    fun `앱이 모르는 종류도 그대로 받고, 0 이하 배율은 1로 본다`() {
         val placement = json.decodeFromString<EquippedRoomItemDTO>("""{"ownedRoomItemId":1,"category":"SOFA","scale":0}""").toVO()
 
-        assertEquals(RoomItemCategory.ETC, placement.category)
+        assertEquals(RoomItemCategory("SOFA"), placement.category)
         assertEquals(1f, placement.scale)
+    }
+
+    @Test
+    fun `종류 값이 없거나 비었으면 기타로 본다`() {
+        val missing = json.decodeFromString<EquippedRoomItemDTO>("""{"ownedRoomItemId":1}""").toVO()
+        val blank = json.decodeFromString<RoomItemCategoryDTO>("""{"category":" ","categoryName":"기타"}""").toVO()
+
+        assertEquals(RoomItemCategory.ETC, missing.category)
+        assertEquals(RoomItemCategory.ETC, blank.category)
     }
 
     @Test
