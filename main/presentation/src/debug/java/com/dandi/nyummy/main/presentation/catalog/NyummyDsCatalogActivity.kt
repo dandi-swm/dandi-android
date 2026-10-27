@@ -105,6 +105,8 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextBut
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonTone
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextField
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialCard
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialExpression
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceBubble
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceToast
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyWheelColumn
@@ -163,6 +165,7 @@ private val CatalogEntries = listOf(
     CatalogEntry("Bottom Nav") { BottomNavSection() },
     CatalogEntry("Pose") { PoseSection() },
     CatalogEntry("Voice") { VoiceSection() },
+    CatalogEntry("Tutorial Card") { TutorialCardSection() },
     CatalogEntry("Sprite") { SpriteSection() },
     CatalogEntry("Overlays") { OverlaySection() },
     CatalogEntry("State Surface") { StateSurfaceSection() },
@@ -610,6 +613,34 @@ private fun VoiceSection() {
     NyummyCoachCard(text = "채소 가득한 비빔밥이네! 오늘 첫 끼 최고였어. 다음 끼니도 같이 먹자. 내일은 단백질도 조금 더 챙겨 보자")
     NyummyCoachCard(text = "오늘 첫 끼 최고였어")
     NyummyVoiceToast(text = "기록 완료! 냐미가 맛있게 먹었어")
+}
+
+/** 첫 사용자 튜토리얼 안내 카드. 대상 없음(소개), 아래 대상(꼬리 아래), 위 대상(꼬리 위, 건너뛰기 아래). */
+@Composable
+private fun TutorialCardSection() {
+    NyummyTutorialCard(
+        title = "안녕, 집사! 나는 냐미야",
+        body = "집사가 밥을 기록하면 나도 같이 먹을 수 있어",
+        expression = NyummyTutorialExpression.Greet,
+        onSkip = {},
+        showHint = true,
+    )
+    NyummyTutorialCard(
+        title = "밥을 먹으면 여기를 눌러 줘!",
+        body = "사진 한 장이면 기록 끝이야",
+        expression = NyummyTutorialExpression.Point,
+        onSkip = {},
+        tail = NyummyBubbleTail.Bottom,
+        tailCenterX = 175.dp,
+    )
+    NyummyTutorialCard(
+        title = "보상 상자가 도착했어!",
+        body = "우편함에서 같이 열어 보자",
+        expression = NyummyTutorialExpression.Surprise,
+        onSkip = {},
+        tail = NyummyBubbleTail.Top,
+        tailCenterX = 264.dp,
+    )
 }
 
 /**

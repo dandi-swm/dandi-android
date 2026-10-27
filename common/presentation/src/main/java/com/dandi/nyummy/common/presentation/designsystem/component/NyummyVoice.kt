@@ -91,9 +91,9 @@ fun NyummyVoiceBubble(
     }
 }
 
-/** 둥근 몸통 + 삼각 꼬리를 하나의 Path로 합친 말풍선 모양. */
+/** 둥근 몸통 + 삼각 꼬리를 하나의 Path로 합친 말풍선 모양. [tailOffset]은 꼬리 왼쪽(세로 꼬리는 위쪽) 끝의 위치다. 튜토리얼 안내 카드도 함께 쓴다. */
 @Immutable
-private class BubbleShape(
+internal class BubbleShape(
     private val tail: NyummyBubbleTail,
     private val cornerRadius: Dp,
     private val tailBase: Dp,
