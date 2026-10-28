@@ -48,6 +48,15 @@ sealed class RemoteConfigKey<T>(
         defaultValue = "",
     )
 
+    // ---- 홈 새 소식 공지(docs/remote-config-home-notice.md) ----
+
+    /** 홈 첫 진입 때 띄울 새 소식 공지 JSON. 비어 있거나 형식이 맞지 않으면 띄우지 않는다. 파싱은 홈 데이터 계층이 한다. */
+    data object HomeNotice : RemoteConfigKey<String>(
+        key = "android_home_notice",
+        serializer = String.serializer(),
+        defaultValue = "",
+    )
+
     // ---- 기능 플래그 ----
 
     /** 우편함 아이템 탭(보상, 코인, 아이템 받기). 백엔드가 완성될 때까지 운영에서는 끈다. */
