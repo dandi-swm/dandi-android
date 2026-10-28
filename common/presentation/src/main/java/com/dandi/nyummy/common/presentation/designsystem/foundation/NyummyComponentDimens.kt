@@ -116,9 +116,13 @@ internal object NyummyComponentDimens {
     val StepBarHeight = 4.dp
     val StepBarGap = 6.dp
 
-    /** Voice Bubble 꼬리 크기(밑변 20 × 높이 12)와 몸통 모서리에서 꼬리까지 거리. */
-    val BubbleTailBase = 20.dp
-    val BubbleTailHeight = 12.dp
+    /**
+     * Voice Bubble 꼬리: 14 정사각형(모서리 2)을 45도 돌려 몸통 가장자리에 반쯤 겹친다.
+     * 몸통 밖으로 나오는 높이는 대각선의 절반(약 10)이다. 몸통 모서리에서 꼬리까지 거리는 아래 오프셋.
+     */
+    val BubbleTailSize = 14.dp
+    val BubbleTailCorner = 2.dp
+    val BubbleTailHeight = 10.dp
     val BubbleTailOffset = 24.dp
     val BubbleTailOffsetVertical = 14.dp
 

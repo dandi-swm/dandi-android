@@ -109,7 +109,7 @@ internal fun HomeScreen(
         ) {
             Spacer(Modifier.height(NyummyTheme.spacing.s8))
             // 숨겨도 자리는 그대로 두어 눈 버튼이 움직이지 않게 한다.
-            Box(Modifier.height(HudHeight + NyummyTheme.spacing.s12 + StreakHeight)) {
+            Box(Modifier.height(HudHeight + NyummyTheme.spacing.s10 + StreakHeight)) {
                 androidx.compose.animation.AnimatedVisibility(visible = !uiState.isUiHidden, enter = fadeIn(), exit = fadeOut()) {
                     Column {
                         HomeHud(
@@ -122,12 +122,12 @@ internal fun HomeScreen(
                             onSettingsClick = { onIntent(HomeIntent.ClickSettings) },
                             hasUnreadMail = uiState.showsMailBadge,
                         )
-                        Spacer(Modifier.height(NyummyTheme.spacing.s12))
+                        Spacer(Modifier.height(NyummyTheme.spacing.s10))
                         HomeStreakBanner(streakDays = uiState.summary.streakDays)
                     }
                 }
             }
-            Spacer(Modifier.height(NyummyTheme.spacing.s12))
+            Spacer(Modifier.height(NyummyTheme.spacing.s10))
             NyummyIconButton(
                 icon = if (uiState.isUiHidden) CommonR.drawable.nyummy_ic_eye_off else CommonR.drawable.nyummy_ic_eye,
                 contentDescription = stringResource(
@@ -135,6 +135,7 @@ internal fun HomeScreen(
                 ),
                 onClick = { onIntent(HomeIntent.ToggleUiHidden) },
                 style = NyummyIconButtonStyle.Filled,
+                tint = NyummyTheme.colors.content.secondary,
                 modifier = Modifier.align(Alignment.End),
             )
             // debug 빌드에만: 냐미가 지금 어떤 기분으로 무슨 동작을 하는지 보이고, 누르면 기분을 차례로 고정한다.
