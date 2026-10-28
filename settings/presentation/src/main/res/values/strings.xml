@@ -59,7 +59,7 @@
     <string name="inquiry_category_question">단순 문의</string>
     <string name="inquiry_category_suggestion">건의</string>
     <string name="inquiry_status_answered">답장이 왔어요</string>
-    <string name="inquiry_status_waiting">답장을 기다리는 중</string>
+    <string name="inquiry_status_waiting">답장을 기다리고 있어요</string>
     <string name="inquiry_empty_title">보낸 문의가 없어요</string>
     <string name="inquiry_empty_body">궁금한 점이나 불편한 점을 알려 주세요</string>
     <string name="inquiry_write_title">문의하기</string>

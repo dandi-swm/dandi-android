@@ -127,12 +127,6 @@ internal fun InquiryWriteScreen(
                 .padding(horizontal = NyummyTheme.spacing.gutter)
                 .padding(top = ContentTopGap, bottom = NyummyTheme.spacing.s24),
         ) {
-            NyummyText(
-                text = stringResource(R.string.inquiry_write_reply_notice),
-                style = NyummyTheme.typography.bodyM,
-                color = NyummyTheme.colors.content.secondary,
-            )
-            Spacer(Modifier.height(NyummyTheme.spacing.s20))
             NyummySelectField(
                 value = stringResource(uiState.category.labelRes),
                 label = stringResource(R.string.inquiry_write_category_label),
@@ -181,6 +175,7 @@ internal fun InquiryWriteScreen(
                 primaryText = stringResource(R.string.inquiry_write_send),
                 onPrimaryClick = { onIntent(InquiryWriteIntent.ClickSend) },
                 primaryEnabled = !uiState.isSending && !uiState.isImageLoading,
+                caption = stringResource(R.string.inquiry_write_reply_notice),
             )
         }
     }
@@ -264,16 +259,25 @@ private fun InquiryImageField(
                 modifier = Modifier
                     .nyummyClickable(onClick = onAddClick)
                     .size(ImageTileSize)
-                    .background(NyummyTheme.colors.bg.surface, shape)
-                    .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.border.default, shape),
+                    .background(NyummyTheme.colors.bg.surfaceSubtle, shape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    painter = painterResource(CommonR.drawable.nyummy_ic_image_plus),
-                    contentDescription = stringResource(R.string.inquiry_write_image_add),
-                    tint = NyummyTheme.colors.content.tertiary,
-                    modifier = Modifier.size(NyummyTheme.size.iconL),
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
+                ) {
+                    Icon(
+                        painter = painterResource(CommonR.drawable.nyummy_ic_plus),
+                        contentDescription = null,
+                        tint = NyummyTheme.colors.content.secondary,
+                        modifier = Modifier.size(NyummyTheme.size.iconM),
+                    )
+                    NyummyText(
+                        text = stringResource(R.string.inquiry_write_image_add),
+                        style = NyummyTheme.typography.bodyS,
+                        color = NyummyTheme.colors.content.secondary,
+                    )
+                }
             }
         }
     }

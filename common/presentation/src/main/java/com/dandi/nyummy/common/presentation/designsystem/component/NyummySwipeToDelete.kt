@@ -170,7 +170,7 @@ private fun NyummySwipeToDeletePreview() {
                 type = "건의",
                 time = "9월 28일",
                 title = "히스토리에서 사진을 크게 보고 싶어요",
-                status = "답장을 기다리는 중",
+                status = "답장을 기다리고 있어요",
                 isStatusEmphasized = false,
                 onClick = {},
                 modifier = Modifier.padding(horizontal = NyummyTheme.spacing.gutter),

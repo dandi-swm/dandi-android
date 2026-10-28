@@ -38,7 +38,9 @@ fun NyummySelectField(
     enabled: Boolean = true,
 ) {
     val shape = RoundedCornerShape(NyummyTheme.radius.s)
-    val contentColor = if (enabled) NyummyTheme.colors.content.tertiary else NyummyTheme.colors.content.disabled
+    // 고른 값은 입력한 글자처럼 진하게, 아래 화살표는 옅게 둔다(v2 Dropdown Filled).
+    val valueColor = if (enabled) NyummyTheme.colors.content.primary else NyummyTheme.colors.content.disabled
+    val iconColor = if (enabled) NyummyTheme.colors.content.tertiary else NyummyTheme.colors.content.disabled
 
     Column(
         modifier = modifier,
@@ -68,14 +70,14 @@ fun NyummySelectField(
             NyummyText(
                 text = value,
                 style = NyummyTheme.typography.bodyL,
-                color = contentColor,
+                color = valueColor,
                 maxLines = 1,
                 modifier = Modifier.weight(1f),
             )
             Icon(
                 painter = painterResource(R.drawable.nyummy_ic_chevron_down),
                 contentDescription = null,
-                tint = contentColor,
+                tint = iconColor,
                 modifier = Modifier.size(NyummyTheme.size.iconM),
             )
         }

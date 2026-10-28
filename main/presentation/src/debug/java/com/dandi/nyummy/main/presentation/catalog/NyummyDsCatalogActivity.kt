@@ -385,7 +385,7 @@ private fun MailRowSection() {
             type = "건의",
             time = "9월 28일",
             title = "히스토리에서 사진을 크게 보고 싶어요",
-            status = "답장을 기다리는 중",
+            status = "답장을 기다리고 있어요",
             isStatusEmphasized = false,
             onClick = {},
         )
@@ -450,7 +450,7 @@ private fun SwipeToDeleteSection() {
             type = "건의",
             time = "9월 28일",
             title = "왼쪽으로 밀어 지워 보세요",
-            status = "답장을 기다리는 중",
+            status = "답장을 기다리고 있어요",
             isStatusEmphasized = false,
             onClick = {},
         )
