@@ -13,7 +13,9 @@ import androidx.compose.ui.unit.dp
 class NyummySpacing internal constructor(
     val s2: Dp,
     val s4: Dp,
+    val s6: Dp,
     val s8: Dp,
+    val s10: Dp,
     val s12: Dp,
     val s16: Dp,
     val s20: Dp,
@@ -33,6 +35,8 @@ class NyummyRadius internal constructor(
     val s: Dp,
     /** 버튼 L, 카드, 말풍선. */
     val m: Dp,
+    /** 큰 카드, 탭바 위 모서리. */
+    val ml: Dp,
     /** 시트, 다이얼로그. */
     val l: Dp,
     /** pill, 원형. */
@@ -62,12 +66,16 @@ class NyummySize internal constructor(
     val buttonM: Dp,
     val buttonL: Dp,
     val bottomNav: Dp,
+    /** 섹션을 나누는 띠 높이. */
+    val sectionBand: Dp,
 )
 
 internal val DefaultNyummySpacing = NyummySpacing(
     s2 = 2.dp,
     s4 = 4.dp,
+    s6 = 6.dp,
     s8 = 8.dp,
+    s10 = 10.dp,
     s12 = 12.dp,
     s16 = 16.dp,
     s20 = 20.dp,
@@ -82,6 +90,7 @@ internal val DefaultNyummyRadius = NyummyRadius(
     xs = 8.dp,
     s = 12.dp,
     m = 16.dp,
+    ml = 20.dp,
     l = 24.dp,
     full = 999.dp,
 )
@@ -105,4 +114,5 @@ internal val DefaultNyummySize = NyummySize(
     buttonM = 48.dp,
     buttonL = 56.dp,
     bottomNav = 77.dp,
+    sectionBand = 6.dp,
 )

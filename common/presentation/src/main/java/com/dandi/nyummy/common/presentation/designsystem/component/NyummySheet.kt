@@ -269,7 +269,7 @@ private fun ConfirmSheetSecondaryAction(text: String, onClick: () -> Unit, destr
                 onClick = onClick,
             )
             .height(NyummyTheme.size.buttonL)
-            .background(if (pressed) NyummyTheme.colors.bg.actionSecondary else Color.Transparent, shape),
+            .background(if (pressed) NyummyTheme.colors.bg.actionNeutral else Color.Transparent, shape),
         contentAlignment = Alignment.Center,
     ) {
         NyummyText(

@@ -39,7 +39,7 @@ fun NyummyTag(
     val (container, color) = when (tag.tone) {
         TagTone.PROMO -> bg.promoSubtle to content.promo
         TagTone.SUCCESS -> bg.successSubtle to content.success
-        TagTone.NEUTRAL -> bg.actionSecondary to content.secondary
+        TagTone.NEUTRAL -> bg.actionNeutral to content.secondary
     }
     val shapeModifier = when (style) {
         NyummyTagStyle.Item -> Modifier

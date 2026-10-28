@@ -153,12 +153,12 @@ private fun buttonColors(style: NyummyButtonStyle, enabled: Boolean, pressed: Bo
         NyummyButtonStyle.Primary -> ButtonColors(bg.actionPrimary, overlay, content.onAction)
         NyummyButtonStyle.Danger -> ButtonColors(bg.actionDanger, overlay, content.onAction)
         NyummyButtonStyle.Secondary -> ButtonColors(
-            container = if (pressed) bg.actionSecondaryPressed else bg.actionSecondary,
+            container = if (pressed) bg.actionNeutralPressed else bg.actionNeutral,
             overlay = Color.Transparent,
             content = content.primary,
         )
         NyummyButtonStyle.Ghost -> ButtonColors(
-            container = if (pressed) bg.actionSecondary else Color.Transparent,
+            container = if (pressed) bg.actionNeutral else Color.Transparent,
             overlay = Color.Transparent,
             content = content.brand,
         )

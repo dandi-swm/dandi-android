@@ -53,8 +53,8 @@ fun NyummyIconButton(
     val filled = style == NyummyIconButtonStyle.Filled
 
     val container = when {
-        filled && pressed -> NyummyTheme.colors.bg.actionSecondaryPressed
-        filled -> NyummyTheme.colors.bg.actionSecondary
+        filled && pressed -> NyummyTheme.colors.bg.actionNeutralPressed
+        filled -> NyummyTheme.colors.bg.actionNeutral
         pressed -> NyummyTheme.colors.bg.selected
         else -> Color.Transparent
     }
