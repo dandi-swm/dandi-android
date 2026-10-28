@@ -49,6 +49,10 @@ class MealRecordRepositoryImpl(
     override suspend fun createMeal(imageKey: String) =
         dataSource.createMeal(CreateMealRequestDTO(imageKey)).toVO()
 
+    override suspend fun createTutorialMeal() {
+        dataSource.createTutorialMeal()
+    }
+
     private companion object {
         const val IMAGE_CONTENT_TYPE = "image/jpeg"
     }
