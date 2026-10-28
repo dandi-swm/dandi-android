@@ -81,23 +81,27 @@ internal fun NoticeHero(page: NyummyNoticePage, modifier: Modifier = Modifier) {
 }
 
 /**
- * 사진 아래 글 칸(작은 글, 제목, 설명 → 점, 버튼). [fillHeight]면 받은 높이를 채워 점과 버튼을 맨 아래에 두고,
+ * 사진 아래 글 칸(작은 글, 제목, 설명 → 버튼). [fillHeight]면 받은 높이를 채워 버튼을 맨 아래에 두고,
  * 높이가 모자라면 글만 스크롤한다. 아니면 내용 높이만큼만 차지한다(높이를 잴 때).
+ * 장이 여럿이면 아래에 고정된 점([NoticeDots])이 오므로 아래 여백을 점과의 간격으로 줄인다.
  */
 @Composable
 internal fun NoticeBody(
     page: NyummyNoticePage,
     pageCount: Int,
-    pageIndex: Int,
     onCtaClick: () -> Unit,
     modifier: Modifier = Modifier,
     fillHeight: Boolean = false,
 ) {
-    val hasFooter = pageCount > 1 || page.ctaText != null
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = NyummyTheme.spacing.s24, vertical = NyummyTheme.spacing.s20),
+            .padding(
+                start = NyummyTheme.spacing.s24,
+                end = NyummyTheme.spacing.s24,
+                top = NyummyTheme.spacing.s20,
+                bottom = if (pageCount > 1) NyummyComponentDimens.NoticeFooterGap else NyummyTheme.spacing.s20,
+            ),
     ) {
         val headModifier = if (fillHeight) Modifier.weight(1f).verticalScroll(rememberScrollState()) else Modifier
         Column(modifier = headModifier, verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s6)) {
@@ -109,21 +113,24 @@ internal fun NoticeBody(
                 NyummyText(text = page.body, style = NyummyTheme.typography.bodyM, color = NyummyTheme.colors.content.secondary)
             }
         }
-        if (hasFooter) {
+        page.ctaText?.let {
             Spacer(Modifier.height(NyummyTheme.spacing.s16))
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(NyummyComponentDimens.NoticeFooterGap),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                if (pageCount > 1) {
-                    Box(Modifier.testTag(NoticeDotsTestTag)) { PageDots(count = pageCount, current = pageIndex) }
-                }
-                page.ctaText?.let {
-                    NyummyButton(text = it, onClick = onCtaClick, modifier = Modifier.fillMaxWidth())
-                }
-            }
+            NyummyButton(text = it, onClick = onCtaClick, modifier = Modifier.fillMaxWidth())
         }
+    }
+}
+
+/** 카드 맨 아래에 고정한 장 표시 점. 내용을 넘겨도 움직이지 않고 지금 장만 칠한다. */
+@Composable
+internal fun NoticeDots(count: Int, current: Int, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = NyummyTheme.spacing.s20)
+            .testTag(NoticeDotsTestTag),
+        contentAlignment = Alignment.Center,
+    ) {
+        PageDots(count = count, current = current)
     }
 }
 

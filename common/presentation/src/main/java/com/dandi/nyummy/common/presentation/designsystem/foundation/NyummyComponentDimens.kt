@@ -199,7 +199,7 @@ internal object NyummyComponentDimens {
     /** 세로가 모자라 새 소식 사진을 줄일 때의 최소 너비. 여기서도 모자라면 글만 스크롤한다. */
     val NoticeDialogMinWidth = 240.dp
 
-    /** 새 소식 카드 아래쪽의 점과 버튼 사이. */
+    /** 새 소식 카드의 글 칸(버튼)과 맨 아래 고정 점 사이. */
     val NoticeFooterGap = 14.dp
 
     /** 새 소식 카드와 아래 "오늘 하루 보지 않기" 줄 사이, 그 줄의 높이와 체크박스. */

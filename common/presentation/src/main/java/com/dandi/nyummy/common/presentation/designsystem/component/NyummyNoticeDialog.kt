@@ -34,9 +34,9 @@ import kotlin.math.min
 
 /**
  * 새 소식 공지 다이얼로그(피그마 `v2 · 20 Home & My Room`의 Notice · 01~03).
- * 카드 하나에 10:9 사진(위 왼쪽 배지), 제목, 설명, 버튼(있는 장만)을 두고, 장이 여럿이면 카드는 그대로 둔 채 안의 내용만
- * 가로로 넘긴다. 카드 높이는 가장 긴 장에 맞춰 넘겨도 바뀌지 않는다. 카드 위 닫기(X)는 없고, 카드 아래에
- * "오늘 하루 보지 않기" 체크와 "닫기"를 둔다. 바깥을 누르거나 뒤로 가기를 하면 [onClose]다.
+ * 카드 하나에 10:9 사진(위 왼쪽 배지), 제목, 설명, 버튼(있는 장만)을 두고, 장이 여럿이면 카드는 그대로 둔 채 사진과 글만
+ * 가로로 넘긴다. 몇 번째 장인지 보이는 점은 카드 맨 아래에 고정해 넘겨도 움직이지 않는다. 카드 높이는 가장 긴 장에 맞춰
+ * 넘겨도 바뀌지 않는다. 카드 위 닫기(X)는 없고, 카드 아래에 "오늘 하루 보지 않기" 체크와 "닫기"를 둔다. 바깥을 누르거나 뒤로 가기를 하면 [onClose]다.
  *
  * 폭은 최대 334다. 세로가 모자라면 사진을 자르지 않고 폭을 줄이고(사진이 10:9라 함께 작아진다), 최소 폭(240)에서도
  * 모자라면 사진 아래 글만 스크롤한다.
@@ -75,8 +75,17 @@ internal fun NyummyNoticeContent(
     SubcomposeLayout(modifier) { constraints ->
         val maxWidth = min(constraints.maxWidth, NyummyComponentDimens.NoticeDialogMaxWidth.roundToPx())
         val minWidth = min(maxWidth, NyummyComponentDimens.NoticeDialogMinWidth.roundToPx())
+        // 장이 여럿이면 카드 맨 아래 고정 점의 높이도 뺀다. 재기만 하므로 시맨틱을 지운다.
+        val dotsHeight = if (pages.size > 1) {
+            subcompose(SlotDots) {
+                NoticeDots(count = pages.size, current = 0, modifier = Modifier.clearAndSetSemantics { })
+            }.first().maxIntrinsicHeight(maxWidth)
+        } else {
+            0
+        }
         // 실제 배치처럼 하나씩 반올림해야 1px도 넘치지 않는다.
-        val below = NyummyComponentDimens.NoticeDismissRowGap.roundToPx() + NyummyComponentDimens.NoticeDismissRowHeight.roundToPx()
+        val below = dotsHeight + NyummyComponentDimens.NoticeDismissRowGap.roundToPx() +
+            NyummyComponentDimens.NoticeDismissRowHeight.roundToPx()
         val maxHeight = if (constraints.hasBoundedHeight) constraints.maxHeight else Int.MAX_VALUE
         // 모든 장의 글 칸을 그리지 않고 재기만 해서, 폭마다 가장 긴 장의 높이를 구한다.
         // 재기만 하는 칸은 화면 읽기와 테스트에 잡히지 않게 시맨틱을 지운다.
@@ -85,7 +94,6 @@ internal fun NyummyNoticeContent(
                 NoticeBody(
                     page = it,
                     pageCount = pages.size,
-                    pageIndex = 0,
                     onCtaClick = {},
                     modifier = Modifier.clearAndSetSemantics { },
                 )
@@ -131,27 +139,30 @@ private fun NoticeCardWithDismissRow(
     onClose: () -> Unit,
     onCtaClick: (pageIndex: Int) -> Unit,
 ) {
-    val title = pages[pagerState.currentPage.coerceIn(pages.indices)].title
+    val current = pagerState.currentPage.coerceIn(pages.indices)
+    val title = pages[current].title
     Column(Modifier.fillMaxWidth()) {
-        HorizontalPager(
-            state = pagerState,
+        // 넘기는 것은 사진과 글 칸뿐이다. 점은 카드 맨 아래에 고정해 움직이지 않는다.
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(NyummyTheme.radius.l))
                 .background(NyummyTheme.colors.bg.surface)
                 .semantics { paneTitle = title },
-        ) { index ->
-            Column {
-                NoticeHero(page = pages[index], modifier = Modifier.fillMaxWidth().height(imageHeight))
-                NoticeBody(
-                    page = pages[index],
-                    pageCount = pages.size,
-                    pageIndex = index,
-                    onCtaClick = { onCtaClick(index) },
-                    modifier = Modifier.height(bodyHeight),
-                    fillHeight = true,
-                )
+        ) {
+            HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth()) { index ->
+                Column {
+                    NoticeHero(page = pages[index], modifier = Modifier.fillMaxWidth().height(imageHeight))
+                    NoticeBody(
+                        page = pages[index],
+                        pageCount = pages.size,
+                        onCtaClick = { onCtaClick(index) },
+                        modifier = Modifier.height(bodyHeight),
+                        fillHeight = true,
+                    )
+                }
             }
+            if (pages.size > 1) NoticeDots(count = pages.size, current = current)
         }
         Spacer(Modifier.height(NyummyComponentDimens.NoticeDismissRowGap))
         NoticeDismissRow(todayChecked = todayChecked, onTodayCheckedChange = onTodayCheckedChange, onClose = onClose)
@@ -166,6 +177,7 @@ private fun imageHeight(width: Int): Int = (width / ImageRatio).toInt()
 private const val MaxFitAttempts = 3
 
 private const val SlotMeasure = "measure"
+private const val SlotDots = "dots"
 private const val SlotContent = "content"
 
 @Preview(showBackground = true, backgroundColor = 0xFF5B6B5E, widthDp = 390, heightDp = 844)
