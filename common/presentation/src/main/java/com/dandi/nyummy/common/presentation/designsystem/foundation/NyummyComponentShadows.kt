@@ -13,4 +13,7 @@ import com.dandi.nyummy.common.presentation.designsystem.token.NyummyPalette
 internal object NyummyComponentShadows {
     /** 하단 고정 CTA가 위로 드리우는 옅은 그림자(검정 6%). */
     val BottomCta = NyummyShadow(color = NyummyPalette.Black.copy(alpha = 0x0F / 255f), blur = 16.dp, offsetY = (-4).dp)
+
+    /** Segmented 고른 칸(검정 8%). */
+    val SegmentedOption = NyummyShadow(color = NyummyPalette.Black.copy(alpha = 0x14 / 255f), blur = 4.dp, offsetY = 1.dp)
 }

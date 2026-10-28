@@ -1,7 +1,6 @@
 package com.dandi.nyummy.common.presentation.designsystem.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -21,13 +20,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
+import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
+import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentShadows
 import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyummyInteractionSource
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 /**
- * 2~3개 중 하나를 고르는 세그먼트. 높이 48, 움푹한 바탕 안에서 선택한 칸만 흰 바탕 + 그린 2px 테두리.
+ * 2~3개 중 하나를 고르는 세그먼트. 높이 48, 움푹한 바탕 안에서 선택한 칸만 흰 바탕 + 옅은 그림자.
  * 칸은 같은 너비로 나뉘고, 전체 너비는 [modifier]로 정한다.
  */
 @Composable
@@ -38,8 +40,8 @@ fun NyummySegmentedControl(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    val containerShape = RoundedCornerShape(NyummyTheme.radius.s)
-    val optionShape = RoundedCornerShape(NyummyTheme.radius.xs)
+    val containerShape = RoundedCornerShape(NyummyComponentDimens.SegmentedContainerRadius)
+    val optionShape = RoundedCornerShape(NyummyComponentDimens.SegmentedOptionRadius)
 
     Row(
         modifier = modifier
@@ -66,16 +68,8 @@ fun NyummySegmentedControl(
                     .then(
                         if (selected) {
                             Modifier
+                                .nyummyShadow(optionShape, NyummyComponentShadows.SegmentedOption)
                                 .background(NyummyTheme.colors.bg.surface, optionShape)
-                                .border(
-                                    NyummyTheme.borderWidth.bold,
-                                    if (enabled) {
-                                        NyummyTheme.colors.border.selected
-                                    } else {
-                                        NyummyTheme.colors.border.default
-                                    },
-                                    optionShape,
-                                )
                         } else {
                             Modifier
                         },
@@ -84,10 +78,10 @@ fun NyummySegmentedControl(
             ) {
                 NyummyText(
                     text = option,
-                    style = NyummyTheme.typography.labelM,
+                    style = if (selected) NyummyTheme.typography.labelM else NyummyTheme.typography.bodyM,
                     color = when {
                         !enabled -> NyummyTheme.colors.content.disabled
-                        selected -> NyummyTheme.colors.content.brand
+                        selected -> NyummyTheme.colors.content.primary
                         else -> NyummyTheme.colors.content.secondary
                     },
                     maxLines = 1,

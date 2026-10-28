@@ -56,6 +56,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonS
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCard
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCheckbox
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyChip
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyInfoChip
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgress
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgressSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCoachCard
@@ -248,7 +249,9 @@ private fun ChipSection() {
         listOf("아침", "점심", "저녁").forEach { meal ->
             NyummyChip(text = meal, selected = meal == selected, onClick = { selected = meal })
         }
+        NyummyChip(text = "간식", selected = true, onClick = {}, enabled = false)
     }
+    NyummyInfoChip(text = "이번 달 4일 기록했어요!", highlight = "4일")
 }
 
 @Composable

@@ -12,9 +12,6 @@ internal object NyummyComponentDimens {
     /** Chip 높이. */
     val CompactControlHeight = 36.dp
 
-    /** Chip 좌우 여백. */
-    val CompactControlHorizontalPadding = 14.dp
-
     /** Button S(작은 버튼) 높이. */
     val ButtonSmallHeight = 32.dp
 
@@ -87,11 +84,19 @@ internal object NyummyComponentDimens {
 
     /** HUD Pill 높이와 아이콘, 숫자 사이 간격. */
     val HudPillHeight = 40.dp
-    val HudPillGap = 6.dp
     val HudPillEndPadding = 14.dp
 
-    /** Badge 세로 여백. */
-    val BadgeVerticalPadding = 2.dp
+    /** Badge 세로 여백. label/s 줄 높이(14)와 합쳐 높이 20이 된다. */
+    val BadgeVerticalPadding = 3.dp
+
+    /** Info Chip 세로 여백. body/s 줄 높이(17)와 합쳐 높이 24에 가깝게 맞춘다. */
+    val InfoChipVerticalPadding = 3.dp
+
+    /** Segmented 바깥 모서리. */
+    val SegmentedContainerRadius = 14.dp
+
+    /** Segmented 고른 칸 모서리. */
+    val SegmentedOptionRadius = 10.dp
 
     /** Skeleton 한 줄 높이. */
     val SkeletonLineHeight = 14.dp
