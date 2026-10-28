@@ -67,4 +67,13 @@ sealed interface HomeIntent : MviIntent {
 
     /** 마침에서 시작하기를 눌렀다. 튜토리얼을 끝낸다. */
     data object TutorialFinished : HomeIntent
+
+    /** 새 소식 공지에서 "오늘 하루 보지 않기"를 체크하거나 풀었다. */
+    data class NoticeHideTodayChanged(val checked: Boolean) : HomeIntent
+
+    /** 새 소식 공지를 닫았다("닫기", 바깥, 뒤로 가기). 체크해 두었으면 오늘 하루 더 띄우지 않는다. */
+    data object NoticeClosed : HomeIntent
+
+    /** 새 소식 공지 [index]번째 장의 버튼을 눌렀다. 공지를 닫고 그 장의 앱 경로로 간다. */
+    data class NoticeCtaClicked(val index: Int) : HomeIntent
 }

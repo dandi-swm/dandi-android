@@ -78,6 +78,7 @@ internal fun HomeScreen(
     // 건강 이야기를 보는 동안은 코치마크를 내린다.
     HomeTutorialCoachMark(tutorial = uiState.tutorial.takeIf { uiState.healthStory == null }, onIntent = onIntent)
     HomeTutorialDialogs(skipConfirm = uiState.tutorialSkipConfirm, healthStory = uiState.healthStory, onIntent = onIntent)
+    HomeNoticeDialog(notice = uiState.notice, onIntent = onIntent)
     Box(
         modifier = Modifier
             .fillMaxSize()

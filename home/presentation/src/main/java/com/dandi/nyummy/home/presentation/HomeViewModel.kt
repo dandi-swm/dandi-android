@@ -15,6 +15,7 @@ import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
+import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.time.DeviceTime
@@ -22,6 +23,8 @@ import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
+import com.dandi.nyummy.home.domain.CloseHomeNoticeUseCase
+import com.dandi.nyummy.home.domain.GetHomeNoticesUseCase
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.home.domain.tti.HomeTTIPage
 import com.dandi.nyummy.home.entity.HomeSummaryVO
@@ -52,6 +55,8 @@ class HomeViewModel @Inject constructor(
     private val remoteConfigHelper: RemoteConfigHelper,
     private val tutorialHelper: TutorialHelper,
     private val submitTutorialMeal: SubmitTutorialMealUseCase,
+    private val getHomeNotices: GetHomeNoticesUseCase,
+    private val closeHomeNotice: CloseHomeNoticeUseCase,
 ) : MviViewModel<HomeIntent, HomeUIState, HomeReducerEvent>(HomeUIState.empty) {
 
     init {
@@ -63,6 +68,9 @@ class HomeViewModel @Inject constructor(
     private var catAnimationsJob: Job? = null
     private var tutorialJob: Job? = null
     private var tutorialRecordJob: Job? = null
+
+    /** 새 소식 공지를 띄울지 정하는 일. 홈 요약을 처음 받은 뒤 한 번만 한다. */
+    private var noticeJob: Job? = null
 
     /** 홈 요약을 한 번이라도 읽었는지. 첫 진입을 "방금 기록하고 돌아옴"으로 착각하지 않게 한다. */
     private var hasLoadedSummary = false
@@ -146,6 +154,16 @@ class HomeViewModel @Inject constructor(
                 dispatch(HomeReducerEvent.HealthStoryChanged(null))
                 tutorialRecordJob = viewModelScope.launch { tutorialHelper.finish() }
             }
+            is HomeIntent.NoticeHideTodayChanged -> currentState.notice?.let {
+                dispatch(HomeReducerEvent.NoticeChanged(it.copy(isHideTodayChecked = intent.checked)))
+            }
+            HomeIntent.NoticeClosed -> closeNotice()
+            is HomeIntent.NoticeCtaClicked -> {
+                val link = currentState.notice?.links?.getOrNull(intent.index)
+                closeNotice()
+                // 앱 경로만 연다. 앱에 없는 경로면 이동 쪽이 무시하고 홈에 머문다.
+                if (link != null && link.startsWith("/")) navigationHelper.navigateDeepLink(NavRoute(link))
+            }
         }
     }
 
@@ -176,6 +194,7 @@ class HomeViewModel @Inject constructor(
             is HomeReducerEvent.TutorialChanged -> state.copy(tutorial = event.tutorial)
             is HomeReducerEvent.TutorialSkipConfirmChanged -> state.copy(tutorialSkipConfirm = event.remaining)
             is HomeReducerEvent.HealthStoryChanged -> state.copy(healthStory = event.story)
+            is HomeReducerEvent.NoticeChanged -> state.copy(notice = event.notice)
         }
 
     /**
@@ -197,8 +216,37 @@ class HomeViewModel @Inject constructor(
                 if (recordedJustNow) pendingReaction = CatReaction.EAT
                 driveCat()
                 updateTutorial(summary)
+                showNoticeIfNeeded()
             }
         }
+    }
+
+    /**
+     * 홈 요약을 처음 받으면 튜토리얼 판단이 끝나기를 기다렸다가 새 소식 공지를 띄울지 정한다. 이 화면에서는 한 번만 정한다.
+     * 튜토리얼(코치마크, 건너뛰기 확인, 건강 이야기)이 떠 있으면 이번 실행에는 띄우지 않는다. 튜토리얼을 마친 직후 같은 실행에서
+     * 공지가 연달아 뜨지 않게 한다. 이번 실행에 이미 다뤘거나 오늘 하루 숨겼으면 UseCase가 빈 목록을 준다.
+     */
+    private fun showNoticeIfNeeded() {
+        if (noticeJob != null) return
+        noticeJob = viewModelScope.launch {
+            tutorialJob?.join()
+            val tutorialShown = currentState.tutorial != null ||
+                currentState.tutorialSkipConfirm != null ||
+                currentState.healthStory != null
+            if (tutorialShown) {
+                closeHomeNotice(hideToday = false)
+                return@launch
+            }
+            val notices = getHomeNotices()
+            if (notices.isNotEmpty()) dispatch(HomeReducerEvent.NoticeChanged(notices.toNoticeUiState()))
+        }
+    }
+
+    /** 공지를 내리고, 이번 실행에서는 다시 띄우지 않는다. "오늘 하루 보지 않기"를 체크해 두었으면 오늘 하루 더 띄우지 않는다. */
+    private fun closeNotice() {
+        val notice = currentState.notice ?: return
+        dispatch(HomeReducerEvent.NoticeChanged(null))
+        viewModelScope.launch { closeHomeNotice(hideToday = notice.isHideTodayChecked) }
     }
 
     /**

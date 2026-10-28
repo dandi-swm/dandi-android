@@ -33,6 +33,9 @@ sealed interface HomeReducerEvent : ReducerEvent {
     /** 건너뛰기 확인을 띄웠다(남은 안내) 또는 닫았다(null). */
     data class TutorialSkipConfirmChanged(val remaining: ImmutableList<NyummyTutorialLesson>?) : HomeReducerEvent
 
+    /** 새 소식 공지를 띄우거나, 체크를 바꾸거나, 닫았다(null). */
+    data class NoticeChanged(val notice: HomeNoticeUiState?) : HomeReducerEvent
+
     /** 냐미 건강 이야기를 띄우거나 넘기거나 닫았다(null). */
     data class HealthStoryChanged(val story: HomeHealthStoryUiState?) : HomeReducerEvent
 
