@@ -177,7 +177,7 @@ private fun ContinueChip(visible: Boolean) {
                 color = NyummyTheme.colors.content.brand,
             )
             Icon(
-                painter = painterResource(CommonR.drawable.nyummy_ic_corner_down_left),
+                painter = painterResource(CommonR.drawable.nyummy_ic_chevron_right),
                 contentDescription = null,
                 tint = NyummyTheme.colors.content.brand,
                 modifier = Modifier

@@ -59,7 +59,7 @@ fun NyummyInlineNotice(
         verticalAlignment = Alignment.Top,
     ) {
         Icon(
-            painter = painterResource(if (danger) R.drawable.nyummy_ic_circle_alert else R.drawable.nyummy_ic_info),
+            painter = painterResource(R.drawable.nyummy_ic_circle_alert),
             contentDescription = null,
             tint = accent,
             modifier = Modifier.size(NyummyComponentDimens.InlineNoticeIconSize),
