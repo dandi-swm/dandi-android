@@ -1,5 +1,10 @@
 package com.dandi.nyummy.history.presentation.component
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -157,7 +162,7 @@ internal fun HistoryDaySection(
     }
 }
 
-/** 연초록 패널: "하루 영양 1,224 kcal  접기" 머리줄과 흰 탄단지 카드. 접으면 카드를 숨긴다. */
+/** 연초록 패널: "하루 영양 1,224 kcal  접기" 머리줄과 흰 탄단지 카드. 접으면 카드가 애니메이션으로 접힌다. */
 @Composable
 private fun NutritionPanel(
     nutrition: DailyNutritionVO,
@@ -200,7 +205,12 @@ private fun NutritionPanel(
                 )
             }
         }
-        if (isExpanded) {
+        // 접고 펼칠 때 카드가 위아래로 부드럽게 줄고 늘어난다.
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut(),
+        ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

@@ -144,7 +144,7 @@ internal object NyummyComponentDimens {
 
     /** Star Rating 별 하나 크기와 별 사이 간격. */
     val StarRatingStarSize = 36.dp
-    val StarRatingGap = 6.dp
+    val StarRatingGap = 8.dp
 
     /** Bottom Sheet 손잡이. */
     val SheetHandleWidth = 36.dp

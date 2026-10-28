@@ -161,6 +161,8 @@ val appRoutes: List<AppRoute> = listOf(
     ),
     AppRoute(
         path = MealDetailRoute.PATH,
+        // 식사 사진이 상태 표시줄 뒤까지 깔린다. 뒤로 버튼과 상단 바는 화면이 직접 시스템 바를 피한다.
+        drawsBehindSystemBars = true,
         syntheticStack = { args ->
             listOf(
                 GenericNavKey(HomePage.PATH),

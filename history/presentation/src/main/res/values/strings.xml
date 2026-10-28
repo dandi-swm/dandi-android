@@ -54,10 +54,11 @@
 
     <string name="history_kcal_unit">kcal</string>
 
-    <string name="history_detail_close">닫기</string>
     <string name="history_detail_edit_name">이름 수정</string>
     <string name="history_detail_delete">기록 삭제</string>
     <string name="history_detail_nutrition_title">이 식사 영양</string>
+    <string name="history_detail_cat_comment_title">냐미의 한마디</string>
+    <string name="history_detail_meta_with_order">%1$s · %2$s</string>
     <string name="history_detail_cat_comment_empty">맛있게 먹었어? 다음 끼니도 냐미랑 같이 기록하자!</string>
 
     <string name="history_edit_dialog_title">음식 이름을 바꿀까요?</string>

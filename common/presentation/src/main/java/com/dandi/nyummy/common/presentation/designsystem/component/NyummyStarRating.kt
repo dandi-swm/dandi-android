@@ -38,7 +38,7 @@ import kotlin.math.roundToInt
  * 별점 입력. 별 5개로 0.5점 단위를 고른다. 값은 반 칸 수([halfSteps], 0 = 고르지 않음, 1~10 = 0.5~5.0점)다.
  *
  * 별의 왼쪽 절반을 누르면 반 칸, 오른쪽 절반을 누르면 한 칸까지 채우고, 가로로 끌어서도 고른다. 별 사이 틈은 왼쪽 별로 본다.
- * 빈 별은 border/default, 채운 부분은 data/coin(금색 채움)이다. 화면 읽기 프로그램에서는 조절 막대처럼 값을 올리고 내린다.
+ * 빈 별은 content/disabled, 채운 부분은 data/coin(금색 채움)이다. 화면 읽기 프로그램에서는 조절 막대처럼 값을 올리고 내린다.
  */
 @Composable
 fun NyummyStarRating(
@@ -90,7 +90,7 @@ fun NyummyStarRating(
     }
 }
 
-/** 별 하나. [fill]만큼(0, 0.5, 1) 왼쪽부터 금색으로 채운다. */
+/** 별 하나. [fill]만큼(0, 0.5, 1) 왼쪽부터 금색으로 채운다. 빈 별은 흰 바탕에서도 보이게 content/disabled로 그린다. */
 @Composable
 private fun Star(fill: Float, size: Dp) {
     val painter = painterResource(R.drawable.nyummy_ic_star_filled)
@@ -98,7 +98,7 @@ private fun Star(fill: Float, size: Dp) {
         Icon(
             painter = painter,
             contentDescription = null,
-            tint = NyummyTheme.colors.border.default,
+            tint = NyummyTheme.colors.content.disabled,
             modifier = Modifier.size(size),
         )
         if (fill > 0f) {
