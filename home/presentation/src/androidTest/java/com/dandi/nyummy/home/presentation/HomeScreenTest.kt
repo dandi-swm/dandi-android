@@ -92,8 +92,11 @@ class HomeScreenTest {
         composeRule.onNodeWithText(text(R.string.home_speech_recorded)).assertDoesNotExist()
         composeRule.onNodeWithContentDescription(text(R.string.home_character_description)).performClick()
 
-        // 냐미를 그리면 홈 TTI용 CatShown도 보내므로 누른 의도만 본다.
-        assertEquals(listOf<HomeIntent>(HomeIntent.ClickCat), intents.filterNot { it == HomeIntent.CatShown })
+        // 냐미를 그리면 홈 TTI용 CatShown, 대사를 다 찍으면 CatLineRevealed도 보내므로 누른 의도만 본다.
+        assertEquals(
+            listOf<HomeIntent>(HomeIntent.ClickCat),
+            intents.filterNot { it == HomeIntent.CatShown || it is HomeIntent.CatLineRevealed },
+        )
     }
 
     @Test
