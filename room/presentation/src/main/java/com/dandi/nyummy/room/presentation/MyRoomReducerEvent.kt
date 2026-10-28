@@ -34,4 +34,7 @@ sealed interface MyRoomReducerEvent : ReducerEvent {
     data class SaveFinished(val isSaved: Boolean) : MyRoomReducerEvent
 
     data class CatMotionChanged(val motion: RoomCatMotion) : MyRoomReducerEvent
+
+    /** 튜토리얼을 띄우거나 바꾸거나 닫았다(null). */
+    data class TutorialChanged(val tutorial: MyRoomTutorialUiState?) : MyRoomReducerEvent
 }

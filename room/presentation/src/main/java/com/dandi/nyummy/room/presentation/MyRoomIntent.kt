@@ -43,4 +43,19 @@ sealed interface MyRoomIntent : MviIntent {
 
     /** 냐미 동작 하나가 끝났다. 같은 상태의 다른 동작을 이어 간다. */
     data class CatMotionFinished(val playId: Int) : MyRoomIntent
+
+    /** 튜토리얼 소개 카드를 눌렀다. 다음 대사로, 마지막이면 마이룸 단계를 마치고 홈으로 돌아간다. */
+    data object TutorialAdvance : MyRoomIntent
+
+    /** 튜토리얼이 가리킨 칸을 눌렀다. 놓기는 칸이 하고, 튜토리얼은 저장 안내로 간다. */
+    data object TutorialTargetClicked : MyRoomIntent
+
+    /** 화면 오른쪽 위 건너뛰기를 눌렀다. 건너뛰기 확인을 띄운다. */
+    data object TutorialSkip : MyRoomIntent
+
+    /** 건너뛰기 확인에서 계속 배우기로 했다(바깥·뒤로 가기 포함). */
+    data object TutorialSkipCancelled : MyRoomIntent
+
+    /** 건너뛰기 확인에서 그래도 건너뛰기로 했다. 홈의 냐미 건강 이야기로 돌아간다. */
+    data object TutorialSkipConfirmed : MyRoomIntent
 }
