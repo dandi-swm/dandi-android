@@ -1,13 +1,24 @@
-<!-- MingCute 기반 v2 아이콘(피그마 `Icon / UI / EyeClose`). 색은 사용처에서 tint로 정한다. -->
+<!-- 눈에 사선을 그은 v2 아이콘(피그마 `Icon / UI / EyeOff`). nyummy_ic_eye와 같은 윤곽에 사선 자리만 끊는다. 색은 사용처에서 tint로 정한다. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
+    <group>
+        <!-- 사선 양옆으로 틈을 남기는 영역(사선 둘레 띠를 뺀 두 삼각형) -->
+        <clip-path android:pathData="M2.8,0 L24,0 L24,21.2 Z M0,2.8 L0,24 L21.2,24 Z" />
+        <path
+            android:pathData="M21 12C21 14.5 16.97 19 12 19C7.03 19 3 14.5 3 12C3 9.5 7.03 5 12 5C16.97 5 21 9.5 21 12Z"
+            android:strokeColor="#FF000000"
+            android:strokeWidth="2" />
+        <path
+            android:pathData="M15,12 A3,3 0 1,1 9,12 A3,3 0 1,1 15,12 Z"
+            android:strokeColor="#FF000000"
+            android:strokeWidth="2" />
+    </group>
     <path
-        android:pathData="M14.33 14.693L14.976 17.108M18.364 12.364L20.132 14.132M9.67001 14.693L9.02301 17.108M5.63601 12.364L3.86801 14.132M4.00001 9C6.36001 16.965 17.64 16.965 20 9"
+        android:pathData="M4,4 L20,20"
         android:strokeColor="#FF000000"
         android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:strokeLineCap="round" />
 </vector>
