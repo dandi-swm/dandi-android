@@ -379,8 +379,8 @@ private fun InventoryCell(
         }
         NyummyText(
             text = item.name,
-            style = NyummyTheme.typography.labelM,
-            color = if (isInUseBackground) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.secondary,
+            style = NyummyTheme.typography.bodyS,
+            color = NyummyTheme.colors.content.secondary,
             maxLines = 1,
         )
     }
