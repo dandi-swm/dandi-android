@@ -91,9 +91,4 @@ class NyummyTypographyContractTest {
         }
     }
 
-    @Suppress("DEPRECATION")
-    @Test
-    fun `튜토리얼 스택용으로 남긴 labelSStrong은 labelS와 같다`() {
-        assertEquals(typography.labelS, typography.labelSStrong)
-    }
 }

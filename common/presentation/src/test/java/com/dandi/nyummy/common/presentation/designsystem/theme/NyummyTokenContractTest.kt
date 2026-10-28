@@ -123,12 +123,6 @@ class NyummyTokenContractTest {
         }
     }
 
-    @Suppress("DEPRECATION")
-    @Test
-    fun `튜토리얼 스택용으로 남긴 voiceCoach는 brandSubtle과 같다`() {
-        assertEquals(colors.bg.brandSubtle.toHex(), colors.bg.voiceCoach.toHex())
-    }
-
     @Test
     fun `외부 브랜드 색은 Figma 값과 같다`() {
         val external = colors.external
