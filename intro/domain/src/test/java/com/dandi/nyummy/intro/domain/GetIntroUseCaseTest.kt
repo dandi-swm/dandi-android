@@ -6,7 +6,6 @@ import com.dandi.nyummy.cat.domain.PrefetchCatAnimationsUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.domain.helper.DeviceHelper
-import com.dandi.nyummy.common.domain.helper.ImagePrefetchHelper
 import com.dandi.nyummy.common.domain.helper.PermissionHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
@@ -466,7 +465,7 @@ class GetIntroUseCaseTest {
         deviceHelper = deviceHelper,
         permissionHelper = permissionHelper,
         prefetchHomeSummary = PrefetchHomeSummaryUseCase(repository = homeRepository),
-        prefetchCatAnimations = PrefetchCatAnimationsUseCase(repository = catRepository, imagePrefetchHelper = NoImagePrefetchHelper),
+        prefetchCatAnimations = PrefetchCatAnimationsUseCase(repository = catRepository),
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
@@ -498,10 +497,10 @@ class GetIntroUseCaseTest {
 
         override suspend fun getAnimations(): CatAnimationSetVO = error("인트로는 조회하지 않는다")
 
-        override suspend fun prefetchAnimations(): CatAnimationSetVO? {
+        override suspend fun refreshWeight(): Boolean {
             prefetchCount++
             gate?.await()
-            return null
+            return false
         }
     }
 
@@ -515,10 +514,6 @@ class GetIntroUseCaseTest {
         override fun prefetchHomeSummary() {
             prefetchCount++
         }
-    }
-
-    private object NoImagePrefetchHelper : ImagePrefetchHelper {
-        override suspend fun prefetchSpriteSheets(urls: List<String>) = Unit
     }
 
     private class FakePermissionHelper(

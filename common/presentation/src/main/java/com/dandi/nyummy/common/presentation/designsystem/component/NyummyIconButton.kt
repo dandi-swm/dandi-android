@@ -2,7 +2,6 @@ package com.dandi.nyummy.common.presentation.designsystem.component
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,7 +29,7 @@ enum class NyummyIconButtonStyle {
     /** 배경 없음. 툴바, 상단 바에 쓴다. */
     Ghost,
 
-    /** 연회색 원 + 2px 테두리 + soft 그림자. 일러스트 위 HUD에 쓴다. */
+    /** 흰 원 + soft 그림자(v2 HUD 버튼). 일러스트 위 HUD에 쓴다. */
     Filled,
 }
 
@@ -54,7 +53,7 @@ fun NyummyIconButton(
 
     val container = when {
         filled && pressed -> NyummyTheme.colors.bg.actionNeutralPressed
-        filled -> NyummyTheme.colors.bg.actionNeutral
+        filled -> NyummyTheme.colors.bg.surface
         pressed -> NyummyTheme.colors.bg.selected
         else -> Color.Transparent
     }
@@ -72,14 +71,7 @@ fun NyummyIconButton(
             .then(
                 if (filled && !pressed) Modifier.nyummyShadow(CircleShape, NyummyTheme.elevation.soft) else Modifier,
             )
-            .background(container, CircleShape)
-            .then(
-                if (filled) {
-                    Modifier.border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, CircleShape)
-                } else {
-                    Modifier
-                },
-            ),
+            .background(container, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Icon(

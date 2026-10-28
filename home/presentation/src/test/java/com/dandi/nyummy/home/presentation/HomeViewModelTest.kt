@@ -1,15 +1,19 @@
 package com.dandi.nyummy.home.presentation
 
-import com.dandi.nyummy.cat.domain.CatMotionPicker
+import com.dandi.nyummy.cat.domain.CatBrain
+import com.dandi.nyummy.cat.domain.CatLineRepository
 import com.dandi.nyummy.cat.domain.CatRepository
 import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
+import com.dandi.nyummy.cat.domain.GetCatLinesUseCase
+import com.dandi.nyummy.cat.domain.RefreshCatWeightUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatAnimationVO
+import com.dandi.nyummy.cat.entity.CatLineVO
+import com.dandi.nyummy.cat.entity.CatMotionVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.cat.entity.SpriteClipVO
 import com.dandi.nyummy.cat.entity.SpriteFrameVO
-import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.HttpResponseStatus
+import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -21,7 +25,6 @@ import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSource
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.home.domain.HomeRepository
@@ -46,7 +49,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -60,6 +63,7 @@ class HomeViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val homeRepository = FakeHomeRepository()
     private val catRepository = FakeCatRepository()
+    private val companionMemory = FakeCompanionMemory()
     private val navigationHelper = RecordingNavigationHelper()
     private val tti = RecordingTTIHelper()
     private lateinit var viewModel: HomeViewModel
@@ -89,7 +93,18 @@ class HomeViewModelTest {
                 navigationHelper = navigationHelper,
                 ttiHelper = FakeTTIHelper,
             ),
-            catMotionPicker = CatMotionPicker(Random(seed = 1)),
+            refreshCatWeight = RefreshCatWeightUseCase(
+                repository = catRepository,
+                resourceHelper = FakeResourceHelper,
+                messageHelper = SilentMessageHelper,
+                navigationHelper = navigationHelper,
+                ttiHelper = FakeTTIHelper,
+            ),
+            catBrain = CatBrain(Random(seed = 1)),
+            getCatLines = GetCatLinesUseCase(repository = object : CatLineRepository {
+                override suspend fun getLines(): List<CatLineVO> = catLines
+            }),
+            companionMemory = companionMemory,
             ttiHelper = tti,
             remoteConfigHelper = object : RemoteConfigHelper {
                 override suspend fun sync() = Unit
@@ -214,57 +229,43 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `오늘 기록이 없으면 기다리는 냐미를 보여 주고 대사도 그 상태에서 고른다`() = runTest(testDispatcher) {
+    fun `처음 들어오면 인사 동작과 인사 대사를 보여 준다`() = runTest(testDispatcher) {
+        companionMemory.lastSeen = null
+
         resumeWith(HomeSummaryVO(todayRecordedCount = 0))
 
+        assertEquals(CatState.HOME_GREET, state.catState)
+        assertEquals("인사", state.catLine)
         val motion = state.catMotion!!
-        assertEquals(sheetUrls(CatState.CONFLICTED_CAUTIOUS), motion.sheetUrls)
-        assertEquals(
-            listOf(NyummySpriteSource.Url(sheetUrl(CatState.CONFLICTED_CAUTIOUS, state.catGroup))),
-            motion.clips.map { it.sheet.source },
-        )
         assertEquals(state.catPlayId, motion.playId)
-        assertTrue(state.catLine in lines(CatState.CONFLICTED_CAUTIOUS))
-        assertTrue(motion.restMillis in CatMotionPicker.MIN_REST_MILLIS..CatMotionPicker.MAX_REST_MILLIS)
+        assertTrue(motion.sheetUrls.first().startsWith(sheetPrefix(CatState.HOME_GREET)))
     }
 
     @Test
-    fun `처음 들어왔을 때 오늘 기록이 있으면 먹는 반응 없이 바로 여유로운 냐미다`() = runTest(testDispatcher) {
+    fun `방금 다녀갔으면 인사 없이 지금 분위기의 일상 동작을 한다`() = runTest(testDispatcher) {
         resumeWith(HomeSummaryVO(todayRecordedCount = 2))
 
-        assertEquals(CatState.RELAXED, state.catState)
+        assertTrue(state.catState in moodStates)
+        assertNotNull(state.catMotion)
     }
 
     @Test
-    fun `식사를 기록하고 돌아오면 먹는 반응을 보여 주고, 끝나면 여유로 돌아간다`() = runTest(testDispatcher) {
+    fun `식사를 기록하고 돌아오면 먹는 반응을 보여 주고, 끝나면 일상 동작으로 돌아간다`() = runTest(testDispatcher) {
         resumeWith(HomeSummaryVO(todayRecordedCount = 0))
 
         resumeWith(HomeSummaryVO(todayRecordedCount = 1))
-        assertEquals(CatState.CONTENT, state.catState)
-        assertTrue(state.catLine in lines(CatState.CONTENT))
+        assertEquals(CatState.HOME_AFTER_MEAL, state.catState)
+        assertEquals("잘 먹었다", state.catLine)
 
         // 먹는 반응 중에 다시 돌아와도(기록 수 그대로) 끊지 않는다.
         val playId = state.catPlayId
         resumeWith(HomeSummaryVO(todayRecordedCount = 1))
-        assertEquals(CatState.CONTENT, state.catState)
+        assertEquals(CatState.HOME_AFTER_MEAL, state.catState)
         assertEquals(playId, state.catPlayId)
 
         viewModel.onIntent(HomeIntent.CatMotionFinished(playId))
-        assertEquals(CatState.RELAXED, state.catState)
-        assertTrue(state.catLine in lines(CatState.RELAXED))
-    }
-
-    @Test
-    fun `동작이 끝나면 같은 상태의 다른 동작으로 넘어가고 대사는 그대로 둔다`() = runTest(testDispatcher) {
-        resumeWith(HomeSummaryVO(todayRecordedCount = 0))
-        val before = state
-
-        viewModel.onIntent(HomeIntent.CatMotionFinished(before.catPlayId))
-
-        assertEquals(CatState.CONFLICTED_CAUTIOUS, state.catState)
-        assertNotEquals(before.catGroup, state.catGroup)
-        assertEquals(before.catPlayId + 1, state.catPlayId)
-        assertEquals(before.catLine, state.catLine)
+        assertTrue(state.catState in moodStates)
+        assertEquals(playId + 1, state.catPlayId)
     }
 
     @Test
@@ -272,90 +273,128 @@ class HomeViewModelTest {
         resumeWith(HomeSummaryVO(todayRecordedCount = 0))
         val stalePlayId = state.catPlayId
         resumeWith(HomeSummaryVO(todayRecordedCount = 1))
-        val content = state
+        val afterMeal = state
 
         viewModel.onIntent(HomeIntent.CatMotionFinished(stalePlayId))
 
-        assertEquals(content, state)
+        assertEquals(afterMeal, state)
     }
 
     @Test
-    fun `냐미를 누르면 같은 상태의 다른 동작과 새 대사를 보여 준다`() = runTest(testDispatcher) {
+    fun `냐미를 누르면 터치 반응을 하고, 대사가 아직 찍히는 중이면 대사는 그대로 둔다`() = runTest(testDispatcher) {
         resumeWith(HomeSummaryVO(todayRecordedCount = 2))
         val before = state
 
         viewModel.onIntent(HomeIntent.ClickCat)
 
-        assertEquals(CatState.RELAXED, state.catState)
-        assertNotEquals(before.catGroup, state.catGroup)
-        assertNotEquals(before.catLine, state.catLine)
-        assertTrue(state.catLine in lines(CatState.RELAXED))
+        assertEquals(CatState.HOME_TAP, state.catState)
+        assertEquals(before.catPlayId + 1, state.catPlayId)
+        assertEquals(before.catLine, state.catLine)
     }
 
     @Test
-    fun `고른 상태가 응답에 없으면 기본 인사 동작과 대사를 쓴다`() = runTest(testDispatcher) {
-        catRepository.next = { animationSet(CatState.FRIENDLY) }
+    fun `대사가 다 찍힌 뒤 냐미를 누르면 터치 대사로 넘어간다`() = runTest(testDispatcher) {
+        resumeWith(HomeSummaryVO(todayRecordedCount = 2))
+        viewModel.onIntent(HomeIntent.CatLineRevealed(state.catLineId))
 
-        resumeWith(HomeSummaryVO(todayRecordedCount = 0))
+        viewModel.onIntent(HomeIntent.ClickCat)
 
-        assertEquals(sheetUrls(CatState.FRIENDLY), state.catMotion?.sheetUrls)
-        assertTrue(state.catLine in lines(CatState.FRIENDLY))
+        assertEquals(CatState.HOME_TAP, state.catState)
+        assertEquals("간지러워", state.catLine)
+        assertFalse(state.isCatLineRevealed)
     }
 
     @Test
-    fun `고양이가 없으면 기본 냐미로 대신하고, 다음에 화면이 보일 때 다시 받는다`() = runTest(testDispatcher) {
-        catRepository.next = { throw notFound() }
+    fun `애니메이션을 읽지 못하면 기본 냐미로 대신하고, 다음에 화면이 보일 때 다시 읽는다`() = runTest(testDispatcher) {
+        catRepository.next = { CatAnimationSetVO.empty }
         resumeWith(HomeSummaryVO(todayRecordedCount = 0))
 
         assertTrue(state.isCatAnimationFailed)
         assertNull(state.catMotion)
-        assertNull(state.catLine)
         assertTrue(navigationHelper.pages.isEmpty())
 
-        catRepository.next = { animationSet(CatState.CONFLICTED_CAUTIOUS) }
+        catRepository.next = { animationSet() }
         resumeWith(HomeSummaryVO(todayRecordedCount = 0))
 
         assertFalse(state.isCatAnimationFailed)
-        assertEquals(sheetUrls(CatState.CONFLICTED_CAUTIOUS), state.catMotion?.sheetUrls)
+        assertNotNull(state.catMotion)
         assertEquals(2, catRepository.callCount)
     }
 
     @Test
-    fun `애니메이션은 한 번 받으면 화면에 돌아올 때 다시 받지 않는다`() = runTest(testDispatcher) {
+    fun `애니메이션은 한 번 읽으면 체형이 그대로인 동안 다시 읽지 않는다`() = runTest(testDispatcher) {
         resumeWith(HomeSummaryVO(todayRecordedCount = 0))
         resumeWith(HomeSummaryVO(todayRecordedCount = 0))
 
         assertEquals(1, catRepository.callCount)
+        assertEquals(2, catRepository.refreshCount)
     }
 
-    private fun lines(state: CatState) = listOf("${state.name} 대사 1", "${state.name} 대사 2", "${state.name} 대사 3")
+    @Test
+    fun `체형이 바뀌었으면 새 체형 애니메이션을 다시 읽는다`() = runTest(testDispatcher) {
+        resumeWith(HomeSummaryVO(todayRecordedCount = 0))
+        catRepository.weightChanged = true
 
-    private fun sheetUrl(state: CatState, group: Int) = "https://cdn/${state.name}_$group.png"
+        resumeWith(HomeSummaryVO(todayRecordedCount = 0))
 
-    private fun sheetUrls(state: CatState) = (0..2).map { sheetUrl(state, it) }
+        assertEquals(2, catRepository.callCount)
+    }
+
+    @Test
+    fun `홈을 떠나면 마지막 방문 시각을 남긴다`() = runTest(testDispatcher) {
+        companionMemory.lastSeen = null
+
+        viewModel.onIntent(HomeIntent.ScreenPaused)
+        advanceUntilIdle()
+
+        assertNotNull(companionMemory.lastSeen)
+    }
+
+    /** 분위기(낮·졸림·밤)로 고를 수 있는 상황. 테스트를 도는 시각에 따라 달라서 셋 중 하나인지만 본다. */
+    private val moodStates = setOf(CatState.HOME_DAY, CatState.HOME_DROWSY, CatState.HOME_NIGHT)
+
+    private val catLines = listOf(
+        CatLineVO("인사", setOf("greet")),
+        CatLineVO("잘 먹었다", setOf("after_meal")),
+        CatLineVO("간지러워", setOf("tap")),
+        CatLineVO("좋은 아침", setOf("morning")),
+        CatLineVO("낮이다", setOf("day")),
+        CatLineVO("졸려", setOf("night")),
+    )
+
+    private fun sheetPrefix(state: CatState) = "https://cdn/${state.name}_"
 
     private fun animation(state: CatState) = CatAnimationVO(
         state = state,
         frame = SpriteFrameVO(width = 136, height = 136, framesPerRow = 4, durationMs = 100),
-        groups = (0..2).map { listOf(SpriteClipVO(url = sheetUrl(state, it), frames = 8)) },
-        lines = lines(state),
+        motions = (0..2).map { CatMotionVO(name = "${state.name}_$it", weight = 1.0, clips = listOf(SpriteClipVO(url = "${sheetPrefix(state)}$it.png", frames = 8))) },
     )
 
-    private fun animationSet(vararg states: CatState) =
-        CatAnimationSetVO(weight = "NORMAL", animations = states.associateWith { animation(it) })
-
-    private fun notFound() = HttpResponseException(
-        status = HttpResponseStatus.NotFound,
-        rawCode = 404,
-        errorRequestUrl = "https://test/api/v1/cats/animations",
-        cause = Throwable("api.cat.notFound"),
+    private fun animationSet() = CatAnimationSetVO(
+        weight = "NORMAL",
+        animations = (CatState.entries - CatState.UNKNOWN - CatState.ROOM_IDLE).associateWith { animation(it) },
     )
+
+    /** 마지막 방문 시각. 기본은 방금이라 들어올 때 인사하지 않는다. */
+    private class FakeCompanionMemory : CompanionMemoryHelper {
+        var lastSeen: Long? = System.currentTimeMillis()
+
+        override suspend fun lastSeenAtMillis(): Long? = lastSeen
+        override suspend fun setLastSeenAtMillis(millis: Long) {
+            lastSeen = millis
+        }
+
+        override suspend fun lastCatWeight(): String? = null
+        override suspend fun setLastCatWeight(weight: String) = Unit
+        override suspend fun clear() = Unit
+    }
 
     private inner class FakeCatRepository : CatRepository {
-        var next: () -> CatAnimationSetVO = {
-            animationSet(CatState.CONFLICTED_CAUTIOUS, CatState.RELAXED, CatState.CONTENT, CatState.FRIENDLY)
-        }
+        var next: () -> CatAnimationSetVO = { animationSet() }
+        var weightChanged = false
         var callCount = 0
+            private set
+        var refreshCount = 0
             private set
 
         override suspend fun getAnimations(): CatAnimationSetVO {
@@ -363,7 +402,10 @@ class HomeViewModelTest {
             return next()
         }
 
-        override suspend fun prefetchAnimations(): CatAnimationSetVO? = null
+        override suspend fun refreshWeight(): Boolean {
+            refreshCount++
+            return weightChanged
+        }
     }
 
     private class FakeHomeRepository : HomeRepository {

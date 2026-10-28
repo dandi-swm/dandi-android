@@ -173,6 +173,7 @@ class RoomStageTest {
         val StageWidth = 360.dp
         val StageHeight = 480.dp
         val TallStageWidth = 300.dp
-        val TallStageHeight = 520.dp
+        // 방 그림은 9:16 기준이라, 좌우가 잘리려면 무대가 9:16보다 세로로 길어야 한다(300×640 ≈ 0.47).
+        val TallStageHeight = 640.dp
     }
 }

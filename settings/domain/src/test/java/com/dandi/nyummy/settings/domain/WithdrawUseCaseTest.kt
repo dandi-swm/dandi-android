@@ -1,5 +1,6 @@
 package com.dandi.nyummy.settings.domain
 
+import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.PushTokenHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import kotlinx.coroutines.runBlocking
@@ -24,9 +25,23 @@ class WithdrawUseCaseTest {
         }
     }
 
+    private val companionMemory = RecordingCompanionMemory()
+
+    private class RecordingCompanionMemory : CompanionMemoryHelper {
+        var clearCount = 0
+        override suspend fun lastSeenAtMillis(): Long? = null
+        override suspend fun setLastSeenAtMillis(millis: Long) = Unit
+        override suspend fun lastCatWeight(): String? = null
+        override suspend fun setLastCatWeight(weight: String) = Unit
+        override suspend fun clear() {
+            clearCount++
+        }
+    }
+
     private val useCase = WithdrawUseCase(
         repository = repository,
         pushTokenHelper = pushTokenHelper,
+        companionMemory = companionMemory,
         resourceHelper = FakeResourceHelper,
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
@@ -39,6 +54,7 @@ class WithdrawUseCaseTest {
 
         assertTrue(result.isSuccess)
         assertEquals(1, repository.withdrawCount)
+        assertEquals(1, companionMemory.clearCount)
         assertEquals(listOf(0), pushTokenHelper.initialCountsAtDelete)
         assertEquals(1, navigationHelper.initialCount)
         val snackBar = messageHelper.snackBars.single()

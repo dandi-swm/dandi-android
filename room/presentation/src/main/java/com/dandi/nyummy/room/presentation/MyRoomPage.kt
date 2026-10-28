@@ -2,17 +2,20 @@ package com.dandi.nyummy.room.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -20,11 +23,13 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.presentation.component.RoomFrame
@@ -32,7 +37,6 @@ import com.dandi.nyummy.room.presentation.component.RoomInventorySheet
 import com.dandi.nyummy.room.presentation.component.RoomStage
 import com.dandi.nyummy.room.presentation.component.rememberRoomSheetState
 import kotlinx.collections.immutable.persistentListOf
-import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
  * 마이룸(방 꾸미기). 방은 홈처럼 화면 전체(시스템 바 뒤까지)를 채우고 같은 규칙으로 그려서, 꾸민 모습과 잘리는 곳이 홈과 같다.
@@ -100,20 +104,39 @@ internal fun MyRoomScreen(
                 }
                 .size(stage),
         )
-        // 뒤로 가기와 저장은 방 위에 뜬다.
-        NyummyTopBar(
-            title = stringResource(R.string.my_room_title),
-            onBackClick = { onIntent(MyRoomIntent.ClickBack) },
-            trailing = {
-                NyummyTextButton(
-                    text = stringResource(R.string.my_room_save),
-                    onClick = { onIntent(MyRoomIntent.ClickSave) },
-                    enabled = uiState.canSave,
-                )
-            },
-            containerColor = Color.Transparent,
-            modifier = Modifier.statusBarsPadding(),
-        )
+        // 뒤로 가기, 제목, 저장은 방 위에 뜬 흰 원·알약이다(v2).
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s8),
+        ) {
+            NyummyIconButton(
+                icon = CommonR.drawable.nyummy_ic_chevron_left,
+                contentDescription = stringResource(CommonR.string.nyummy_back_description),
+                onClick = { onIntent(MyRoomIntent.ClickBack) },
+                style = NyummyIconButtonStyle.Filled,
+                modifier = Modifier.align(Alignment.CenterStart),
+            )
+            NyummyText(
+                text = stringResource(R.string.my_room_title),
+                style = NyummyTheme.typography.titleS,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .roomPill()
+                    .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s8),
+            )
+            NyummyText(
+                text = stringResource(R.string.my_room_save),
+                style = NyummyTheme.typography.labelM,
+                color = if (uiState.canSave) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.disabled,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .roomPill()
+                    .nyummyClickable(onClick = { onIntent(MyRoomIntent.ClickSave) }, enabled = uiState.canSave)
+                    .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s10),
+            )
+        }
         // 빈 방에 처음 들어왔을 때(되돌릴 것도 놓인 것도 없을 때)는 되돌리기를 숨긴다.
         if (uiState.canUndo || uiState.room.items.isNotEmpty()) {
             NyummyIconButton(
@@ -193,4 +216,11 @@ private fun MyRoomEmptyPreview() {
             onIntent = {},
         )
     }
+}
+
+/** 방 위에 뜨는 흰 알약(옅은 그림자). */
+@Composable
+private fun Modifier.roomPill(): Modifier {
+    val shape = RoundedCornerShape(NyummyTheme.radius.full)
+    return nyummyShadow(shape, NyummyTheme.elevation.soft).background(NyummyTheme.colors.bg.surface, shape)
 }

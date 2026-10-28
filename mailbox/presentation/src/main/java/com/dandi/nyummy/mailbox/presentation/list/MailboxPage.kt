@@ -31,8 +31,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomCta
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgress
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgressSize
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPose
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPoseImage
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRewardRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySwipeToDelete
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
@@ -204,23 +202,22 @@ private fun MailItemsContent(
     }
 }
 
-/** 도착한 우편이 없을 때. 잠자는 냐미와 안내. */
+/** 도착한 우편이 없을 때의 안내(v2 State View: 제목 + 설명). */
 @Composable
 private fun MailItemsEmpty(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.padding(horizontal = NyummyTheme.spacing.gutter),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(EmptyGap),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
     ) {
-        NyummyPoseImage(pose = NyummyPose.Sleep, size = NyummyTheme.size.characterM)
         NyummyText(
             text = stringResource(R.string.mailbox_item_empty_title),
             style = NyummyTheme.typography.titleS,
         )
         NyummyText(
             text = stringResource(R.string.mailbox_item_empty_body),
-            style = NyummyTheme.typography.bodyS,
-            color = NyummyTheme.colors.content.tertiary,
+            style = NyummyTheme.typography.bodyM,
+            color = NyummyTheme.colors.content.secondary,
         )
     }
 }
@@ -231,8 +228,6 @@ private const val RETENTION_NOTICE_KEY = "retentionNotice"
 
 /** 상단 바와 첫 행 사이. */
 private val ListTopGap = 12.dp
-
-private val EmptyGap = 6.dp
 
 /** 빈 화면 묶음은 가운데보다 조금 위에 둔다. */
 private val EmptyAlignment = BiasAlignment(horizontalBias = 0f, verticalBias = -0.38f)

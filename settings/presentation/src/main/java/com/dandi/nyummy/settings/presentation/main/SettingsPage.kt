@@ -15,17 +15,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
@@ -35,13 +40,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.entity.meal.Meal
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialog
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialogType
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDivider
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRowTrailing
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionBand
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionCaption
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySheetTitle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
@@ -50,11 +56,11 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextBut
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonTone
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.component.nyummyMealTimeText
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
 import com.dandi.nyummy.legal.entity.LegalDocument
 import com.dandi.nyummy.settings.presentation.R
-import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
  * 설정. 알림(앱 알림, 서비스 알림, 마케팅 알림, 식사 시간), 약관, 로그아웃.
@@ -116,32 +122,36 @@ internal fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .wrapContentWidth(Alignment.CenterHorizontally)
                 .widthIn(max = ContentMaxWidth)
-                .padding(horizontal = NyummyTheme.spacing.gutter)
                 .padding(bottom = NyummyTheme.spacing.s24),
         ) {
-            NotificationSection(uiState, onIntent, onOpenDeviceSettings)
-            SupportSection(onIntent)
-            LegalSection(onIntent)
-            Spacer(Modifier.height(NyummyTheme.spacing.s24))
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                NyummyTextButton(
-                    text = stringResource(R.string.settings_logout),
-                    onClick = { onIntent(SettingsIntent.ClickLogout) },
-                    tone = NyummyTextButtonTone.Danger,
-                )
-                NyummyTextButton(
-                    text = stringResource(R.string.settings_withdraw),
-                    onClick = { onIntent(SettingsIntent.ClickWithdraw) },
-                    tone = NyummyTextButtonTone.Neutral,
-                    size = NyummyTextButtonSize.S,
-                )
+            Column(modifier = Modifier.padding(horizontal = NyummyTheme.spacing.gutter)) {
+                NotificationSection(uiState, onIntent, onOpenDeviceSettings)
             }
-
+            NyummySectionBand(modifier = Modifier.padding(top = NyummyTheme.spacing.s8))
+            Column(modifier = Modifier.padding(horizontal = NyummyTheme.spacing.gutter)) {
+                SupportSection(onIntent)
+                LegalSection(onIntent)
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = AccountTopGap),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    AccountAction(
+                        text = stringResource(R.string.settings_logout),
+                        style = NyummyTheme.typography.labelM,
+                        color = NyummyTheme.colors.content.danger,
+                        onClick = { onIntent(SettingsIntent.ClickLogout) },
+                    )
+                    AccountAction(
+                        text = stringResource(R.string.settings_withdraw),
+                        style = NyummyTheme.typography.bodyS,
+                        color = NyummyTheme.colors.content.tertiary,
+                        onClick = { onIntent(SettingsIntent.ClickWithdraw) },
+                    )
+                }
+            }
         }
     }
 
@@ -224,8 +234,8 @@ private fun NotificationSection(
             onCheckedChange = { onIntent(SettingsIntent.ToggleServicePush(it)) },
         ),
         enabled = togglesEnabled,
+        below = { NotificationDetailLink { onIntent(SettingsIntent.ClickNotificationDetail(NotificationKind.SERVICE)) } },
     )
-    NotificationDetailButton { onIntent(SettingsIntent.ClickNotificationDetail(NotificationKind.SERVICE)) }
     NyummyListRow(
         title = stringResource(R.string.settings_notification_marketing),
         subtitle = stringResource(R.string.settings_notification_marketing_desc),
@@ -234,8 +244,8 @@ private fun NotificationSection(
             onCheckedChange = { onIntent(SettingsIntent.ToggleMarketingPush(it)) },
         ),
         enabled = togglesEnabled,
+        below = { NotificationDetailLink { onIntent(SettingsIntent.ClickNotificationDetail(NotificationKind.MARKETING)) } },
     )
-    NotificationDetailButton { onIntent(SettingsIntent.ClickNotificationDetail(NotificationKind.MARKETING)) }
     NyummyListRow(
         title = stringResource(R.string.settings_meal_time),
         subtitle = uiState.mealTimes?.let { mealTimesSummary(it) },
@@ -244,15 +254,40 @@ private fun NotificationSection(
     )
 }
 
-/** 알림 묶음 토글 아래의 "자세히 보기". 기기 알림이 꺼져 있거나 읽기 전이어도 볼 수 있다. */
+/** 알림 줄 설명 아래의 "자세히 보기 ›". 기기 알림이 꺼져 있거나 읽기 전이어도 볼 수 있다. */
 @Composable
-private fun NotificationDetailButton(onClick: () -> Unit) {
-    NyummyTextButton(
-        text = stringResource(R.string.settings_notification_detail),
-        onClick = onClick,
-        tone = NyummyTextButtonTone.Neutral,
-        size = NyummyTextButtonSize.S,
-        trailingIcon = CommonR.drawable.nyummy_ic_chevron_right,
+private fun NotificationDetailLink(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .padding(top = NyummyTheme.spacing.s4)
+            .nyummyClickable(onClick = onClick),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        NyummyText(
+            text = stringResource(R.string.settings_notification_detail),
+            style = NyummyTheme.typography.labelS,
+            color = NyummyTheme.colors.content.secondary,
+        )
+        Icon(
+            painter = painterResource(CommonR.drawable.nyummy_ic_chevron_right),
+            contentDescription = null,
+            tint = NyummyTheme.colors.content.secondary,
+            modifier = Modifier.size(DetailChevronSize),
+        )
+    }
+}
+
+/** 맨 아래 로그아웃 / 회원 탈퇴 글자 버튼. */
+@Composable
+private fun AccountAction(text: String, style: TextStyle, color: Color, onClick: () -> Unit) {
+    NyummyText(
+        text = text,
+        style = style,
+        color = color,
+        modifier = Modifier
+            .nyummyClickable(onClick = onClick)
+            .padding(vertical = NyummyTheme.spacing.s8),
     )
 }
 
@@ -307,16 +342,14 @@ private val NotificationKind.disclosure: NotificationDisclosure
 private fun NotificationDetailSheet(kind: NotificationKind, onDismiss: () -> Unit) {
     val disclosure = kind.disclosure
     NyummyBottomSheet(onDismissRequest = onDismiss) {
-        NyummySheetTitle(text = stringResource(disclosure.title))
-        Column {
+        NyummySheetTitle(text = stringResource(disclosure.title), onClose = onDismiss)
+        Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16)) {
             DisclosureRow(label = R.string.settings_push_detail_sender_label) {
                 DisclosureValue(text = stringResource(R.string.settings_push_detail_sender))
             }
-            NyummyDivider()
             DisclosureRow(label = R.string.settings_push_detail_purpose_label) {
                 DisclosureValue(text = stringResource(disclosure.purpose))
             }
-            NyummyDivider()
             DisclosureRow(label = R.string.settings_push_detail_contents_label) {
                 Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12)) {
                     disclosure.contents.forEach { push ->
@@ -334,7 +367,6 @@ private fun NotificationDetailSheet(kind: NotificationKind, onDismiss: () -> Uni
                     }
                 }
             }
-            NyummyDivider()
             DisclosureRow(label = disclosure.optOutLabel) {
                 DisclosureValue(text = stringResource(disclosure.optOut))
             }
@@ -351,12 +383,11 @@ private fun NotificationDetailSheet(kind: NotificationKind, onDismiss: () -> Uni
 @Composable
 private fun FontCreditSheet(onDismiss: () -> Unit) {
     NyummyBottomSheet(onDismissRequest = onDismiss) {
-        NyummySheetTitle(text = stringResource(R.string.settings_font_credit))
-        Column {
+        NyummySheetTitle(text = stringResource(R.string.settings_font_credit), onClose = onDismiss)
+        Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16)) {
             DisclosureRow(label = R.string.settings_font_credit_pretendard_label) {
                 DisclosureValue(text = stringResource(R.string.settings_font_credit_pretendard))
             }
-            NyummyDivider()
             DisclosureRow(label = R.string.settings_font_credit_katuri_label) {
                 DisclosureValue(text = stringResource(R.string.settings_font_credit_katuri))
             }
@@ -373,15 +404,13 @@ private fun FontCreditSheet(onDismiss: () -> Unit) {
 @Composable
 private fun DisclosureRow(@StringRes label: Int, value: @Composable () -> Unit) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = NyummyTheme.spacing.s12),
+        modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
     ) {
         NyummyText(
             text = stringResource(label),
-            style = NyummyTheme.typography.labelM,
-            color = NyummyTheme.colors.content.secondary,
+            style = NyummyTheme.typography.bodyS,
+            color = NyummyTheme.colors.content.tertiary,
         )
         value()
     }
@@ -466,3 +495,6 @@ private fun SettingsScreenDeviceOffPreview() {
         )
     }
 }
+
+private val DetailChevronSize = 12.dp
+private val AccountTopGap = 20.dp

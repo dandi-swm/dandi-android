@@ -1,7 +1,6 @@
 package com.dandi.nyummy.history.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
-import com.dandi.nyummy.history.entity.AnalysisFeedbackReason
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
@@ -23,33 +22,6 @@ sealed interface HistoryReducerEvent : ReducerEvent {
 
     /** 식사 수정/삭제 요청이 시작되었습니다(완료 전 중복 조작 차단). */
     data object MealActionStarted : HistoryReducerEvent
-
-    /** 식사 단건 상세(사진 URL·아이콘·냐미 한마디)가 로드되었습니다. 현재 열린 상세가 [mealId]와 같을 때만 반영합니다. */
-    data class MealDetailLoaded(
-        val mealId: String,
-        val photoUrl: String,
-        val foodIconId: String,
-        val catComment: String,
-    ) : HistoryReducerEvent
-
-    /** 평가 대상인 식사 [mealId]의 상세가 열린 채 기다린 시간이 지나 평가 카드를 띄웁니다. 다른 식사가 열려 있으면 무시합니다. */
-    data class FeedbackPromptShown(val mealId: String) : HistoryReducerEvent
-
-    data class FeedbackRatingChanged(val halfSteps: Int) : HistoryReducerEvent
-
-    /** 아쉬운 점 [reason]을 골랐습니다. 이미 고른 것이면 선택을 풉니다. */
-    data class FeedbackReasonSelected(val reason: AnalysisFeedbackReason) : HistoryReducerEvent
-
-    data class FeedbackCommentChanged(val text: String) : HistoryReducerEvent
-
-    /** 식사 [mealId]의 평가를 보내기 시작했습니다. 아래 결과 이벤트도 같은 식사가 열려 있을 때만 반영합니다. */
-    data class FeedbackSubmitStarted(val mealId: String) : HistoryReducerEvent
-
-    /** 보내지 못했습니다. 안내는 UseCase 의 스낵바가 맡고, 카드는 남겨 다시 보낼 수 있게 합니다. */
-    data class FeedbackSubmitFailed(val mealId: String) : HistoryReducerEvent
-
-    /** 평가 카드를 닫았습니다. 보내기에 성공하면 카드가 아니라 상세 시트 전체를 닫습니다. */
-    data class FeedbackDismissed(val mealId: String) : HistoryReducerEvent
 
     /** 보고 있는 달이 [month]로 바뀌었습니다. 데이터는 아직 받는 중이고, 그 사이 고른 날은 [selectedDate]입니다. */
     data class MonthChanged(
@@ -115,30 +87,6 @@ sealed interface HistoryReducerEvent : ReducerEvent {
 
     /** `하루 영양 현황` 카드의 접힘 상태가 토글되었습니다. */
     data object NutritionSummaryToggled : HistoryReducerEvent
-
-    /** 식사 상세 오버레이가 열렸습니다. */
-    data class MealDetailOpened(val meal: MealHistoryVO) : HistoryReducerEvent
-
-    /** 식사 상세 오버레이가 닫혔습니다. */
-    data object MealDetailDismissed : HistoryReducerEvent
-
-    /** 이름 수정 다이얼로그가 열렸습니다. */
-    data object MealNameEditStarted : HistoryReducerEvent
-
-    /** 이름 수정 입력값이 바뀌었습니다. */
-    data class MealNameDraftChanged(val text: String) : HistoryReducerEvent
-
-    /** [mealId] 식사의 이름 수정이 서버에 저장되었습니다. */
-    data class MealNameEditCommitted(
-        val mealId: String,
-        val newName: String,
-    ) : HistoryReducerEvent
-
-    /** 이름 수정이 취소되었습니다. */
-    data object MealNameEditCanceled : HistoryReducerEvent
-
-    /** 삭제 확인 다이얼로그가 열렸습니다. */
-    data object MealDeleteRequested : HistoryReducerEvent
 
     /** 삭제가 취소되었습니다. */
     data object MealDeleteCanceled : HistoryReducerEvent

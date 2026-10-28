@@ -1,6 +1,7 @@
 package com.dandi.nyummy.history.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyInfoChip
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionBand
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.history.entity.DailyNutritionEvaluation
@@ -34,7 +36,8 @@ import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.entity.NutrientProgressVO
 import com.dandi.nyummy.history.presentation.component.HistoryCalendar
 import com.dandi.nyummy.history.presentation.component.HistoryDaySection
-import com.dandi.nyummy.history.presentation.component.HistoryMealDetail
+import com.dandi.nyummy.history.presentation.component.MealDeleteDialog
+import com.dandi.nyummy.history.presentation.component.recordSummaryOf
 import com.dandi.nyummy.history.presentation.model.HistoryMonth
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
 import kotlinx.collections.immutable.persistentListOf
@@ -46,14 +49,10 @@ import kotlinx.collections.immutable.persistentMapOf
  * 월간 캘린더에서 날짜를 고르면 그날의 식사 목록과 하루 영양 현황이 바뀌고,
  * 식사를 누르면 상세 오버레이가 열립니다. 상태 수집과 [HistoryIntent] 전달만 담당합니다.
  *
- * @param openMealId 열자마자 상세를 띄울 식사(알림의 식사 상세 링크)
- * @param linkEventId 이 링크를 연 알림의 식별자. 같은 알림은 한 번만 연다. 없으면 [openMealId]로 구분한다.
  */
 @Composable
 fun HistoryPage(
     modifier: Modifier = Modifier,
-    openMealId: Long? = null,
-    linkEventId: String? = null,
     viewModel: HistoryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -61,11 +60,6 @@ fun HistoryPage(
     LifecycleResumeEffect(Unit) {
         viewModel.onIntent(HistoryIntent.ScreenResumed)
         onPauseOrDispose { }
-    }
-    LaunchedEffect(openMealId, linkEventId) {
-        openMealId?.let { mealId ->
-            viewModel.onIntent(HistoryIntent.OpenMealFromLink(mealId, eventId = linkEventId ?: mealId.toString()))
-        }
     }
     HistoryScreen(
         uiState = uiState,
@@ -92,62 +86,93 @@ internal fun HistoryScreen(
                 .verticalScroll(rememberScrollState())
                 .wrapContentWidth(Alignment.CenterHorizontally)
                 .widthIn(max = ContentMaxWidth)
-                .padding(top = PageTopGap, bottom = PageBottomGap),
+                .padding(bottom = PageBottomGap),
         ) {
-            Column(modifier = Modifier.padding(horizontal = NyummyTheme.spacing.gutter)) {
+            Column(
+                modifier = Modifier.padding(
+                    start = NyummyTheme.spacing.gutter,
+                    end = NyummyTheme.spacing.gutter,
+                    top = NyummyTheme.spacing.s12,
+                ),
+                verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
+            ) {
                 NyummyText(
                     text = stringResource(R.string.history_title),
                     style = NyummyTheme.typography.titleXl,
                 )
-                Spacer(Modifier.height(NyummyTheme.spacing.s4))
                 NyummyText(
                     text = stringResource(R.string.history_subtitle),
-                    style = NyummyTheme.typography.bodyM,
+                    style = NyummyTheme.typography.bodyL,
                     color = NyummyTheme.colors.content.tertiary,
                 )
-                Spacer(Modifier.height(CalendarTopGap))
-                HistoryCalendar(
-                    displayedMonth = uiState.displayedHistoryMonth,
-                    today = uiState.today,
-                    selectedDate = uiState.selectedDate,
-                    calendarMonths = uiState.calendarMonths,
-                    onChangeMonth = { onIntent(HistoryIntent.ChangeMonth(it)) },
-                    onClickToday = { onIntent(HistoryIntent.ClickToday) },
-                    onSelectDate = { onIntent(HistoryIntent.SelectDate(it)) },
-                )
-                Spacer(Modifier.height(DaySectionTopGap))
-                HistoryDaySection(
-                    date = uiState.selectedDate,
-                    isToday = uiState.isTodaySelected,
-                    meals = uiState.selectedDayMeals,
-                    completedMealCount = uiState.completedMealCount,
-                    nutrition = uiState.dailyNutrition,
-                    isNutritionExpanded = uiState.isNutritionExpanded,
-                    isLoading = uiState.isLoading,
-                    isLoadFailed = uiState.isLoadFailed,
-                    reanalyzingMealIds = uiState.reanalyzingMealIds,
-                    onToggleNutrition = { onIntent(HistoryIntent.ToggleNutritionSummary) },
-                    onRetryLoad = { onIntent(HistoryIntent.RetryLoad) },
-                    onRecordMeal = { onIntent(HistoryIntent.ClickRecordMeal) },
-                    onClickMeal = { onIntent(HistoryIntent.ClickMeal(it)) },
-                    onRetryAnalysis = { onIntent(HistoryIntent.ClickRetryAnalysis(it)) },
-                    onDeleteFailedMeal = { onIntent(HistoryIntent.ClickDeleteFailedMeal(it)) },
-                )
             }
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = NyummyTheme.spacing.gutter)
+                    .padding(top = NyummyTheme.spacing.s12)
+                    .height(SummaryChipSlotHeight),
+            ) {
+                recordSummaryOf(
+                    month = uiState.displayedHistoryMonth,
+                    currentMonth = uiState.currentMonth,
+                    days = uiState.calendarMonths[uiState.displayedHistoryMonth],
+                )?.let { (text, highlight) -> NyummyInfoChip(text = text, highlight = highlight) }
+            }
+            HistoryCalendar(
+                displayedMonth = uiState.displayedHistoryMonth,
+                today = uiState.today,
+                selectedDate = uiState.selectedDate,
+                calendarMonths = uiState.calendarMonths,
+                onChangeMonth = { onIntent(HistoryIntent.ChangeMonth(it)) },
+                onClickToday = { onIntent(HistoryIntent.ClickToday) },
+                onSelectDate = { onIntent(HistoryIntent.SelectDate(it)) },
+                modifier = Modifier.padding(
+                    start = NyummyTheme.spacing.gutter,
+                    end = NyummyTheme.spacing.gutter,
+                    top = NyummyTheme.spacing.s4,
+                    bottom = NyummyTheme.spacing.s20,
+                ),
+            )
+            NyummySectionBand()
+            HistoryDaySection(
+                date = uiState.selectedDate,
+                isToday = uiState.isTodaySelected,
+                meals = uiState.selectedDayMeals,
+                completedMealCount = uiState.completedMealCount,
+                nutrition = uiState.dailyNutrition,
+                isNutritionExpanded = uiState.isNutritionExpanded,
+                isLoading = uiState.isLoading,
+                isLoadFailed = uiState.isLoadFailed,
+                reanalyzingMealIds = uiState.reanalyzingMealIds,
+                onToggleNutrition = { onIntent(HistoryIntent.ToggleNutritionSummary) },
+                onRetryLoad = { onIntent(HistoryIntent.RetryLoad) },
+                onRecordMeal = { onIntent(HistoryIntent.ClickRecordMeal) },
+                onClickMeal = { onIntent(HistoryIntent.ClickMeal(it)) },
+                onRetryAnalysis = { onIntent(HistoryIntent.ClickRetryAnalysis(it)) },
+                onDeleteFailedMeal = { onIntent(HistoryIntent.ClickDeleteFailedMeal(it)) },
+                modifier = Modifier.padding(
+                    start = NyummyTheme.spacing.gutter,
+                    end = NyummyTheme.spacing.gutter,
+                    top = NyummyTheme.spacing.s20,
+                ),
+            )
         }
-        uiState.mealDetail?.let { detail ->
-            HistoryMealDetail(detail = detail, selectedDate = uiState.selectedDate, onIntent = onIntent)
+        uiState.deletingMeal?.let { meal ->
+            MealDeleteDialog(
+                mealName = meal.name,
+                isDeleting = uiState.isDeletingMeal,
+                onConfirm = { onIntent(HistoryIntent.ConfirmDeleteMeal) },
+                onCancel = { onIntent(HistoryIntent.CancelDeleteMeal) },
+            )
         }
     }
 }
 
-private val PageTopGap = 12.dp
 private val PageBottomGap = 120.dp
 private val ContentMaxWidth = 480.dp
 
-// "오늘" 버튼 터치 영역(44)이 월 이름(30)보다 높아 위 간격을 그만큼 줄여 Figma 위치(24)에 맞춘다.
-private val CalendarTopGap = 17.dp
-private val DaySectionTopGap = 28.dp
+// 칩이 아직 없는 동안(첫 조회 전)에도 캘린더가 튀지 않게 칩 높이만큼 자리를 둔다.
+private val SummaryChipSlotHeight = 24.dp
 
 private fun previewUiState(): HistoryUIState {
     val today = HistoryDateVO(2026, 7, 24)

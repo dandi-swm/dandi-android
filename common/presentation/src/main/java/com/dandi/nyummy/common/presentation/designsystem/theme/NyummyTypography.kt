@@ -47,11 +47,7 @@ class NyummyTypography internal constructor(
     val numberM: TextStyle,
     val numberS: TextStyle,
     val numberXs: TextStyle,
-) {
-    /** 튜토리얼 스택이 머지될 때까지만 남긴다. v2 라벨은 모두 Bold라 [labelS]와 같다. */
-    @Deprecated("v2에서 labelS로 합쳤다.", ReplaceWith("labelS"))
-    val labelSStrong: TextStyle get() = labelS
-}
+)
 
 internal object NyummyFontFamily {
     val Ui = FontFamily(

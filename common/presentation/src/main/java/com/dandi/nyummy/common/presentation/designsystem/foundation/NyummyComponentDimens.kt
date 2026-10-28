@@ -39,9 +39,19 @@ internal object NyummyComponentDimens {
     val WheelPickerBandHeight = 44.dp
     val WheelPickerBandInset = 6.dp
 
+    /** 작은 Wheel Picker(폼 안 생년월일·키·몸무게): 높이 105, 행 35 × 3, 밴드 31. */
+    val WheelPickerCompactHeight = 105.dp
+    val WheelPickerCompactRowHeight = 35.dp
+    val WheelPickerCompactBandHeight = 31.dp
+    val WheelPickerCompactBandInset = 9.dp
+    val WheelPickerCompactBandRadius = 10.dp
+
     /** Radio 크기와 안 점. */
     val SelectionControlSize = 24.dp
     val RadioDotSize = 12.dp
+
+    /** 식사 시각 줄의 오른쪽 시각 칸 너비. */
+    val MealTimeChipWidth = 150.dp
 
     /** Checkbox 크기, 모서리, 안 체크 아이콘. */
     val CheckboxSize = 22.dp
@@ -106,9 +116,13 @@ internal object NyummyComponentDimens {
     val StepBarHeight = 4.dp
     val StepBarGap = 6.dp
 
-    /** Voice Bubble 꼬리 크기(밑변 20 × 높이 12)와 몸통 모서리에서 꼬리까지 거리. */
-    val BubbleTailBase = 20.dp
-    val BubbleTailHeight = 12.dp
+    /**
+     * Voice Bubble 꼬리: 14 정사각형(모서리 2)을 45도 돌려 몸통 가장자리에 반쯤 겹친다.
+     * 몸통 밖으로 나오는 높이는 대각선의 절반(약 10)이다. 몸통 모서리에서 꼬리까지 거리는 아래 오프셋.
+     */
+    val BubbleTailSize = 14.dp
+    val BubbleTailCorner = 2.dp
+    val BubbleTailHeight = 10.dp
     val BubbleTailOffset = 24.dp
     val BubbleTailOffsetVertical = 14.dp
 
@@ -134,7 +148,7 @@ internal object NyummyComponentDimens {
 
     /** Star Rating 별 하나 크기와 별 사이 간격. */
     val StarRatingStarSize = 36.dp
-    val StarRatingGap = 6.dp
+    val StarRatingGap = 8.dp
 
     /** Bottom Sheet 손잡이. */
     val SheetHandleWidth = 36.dp

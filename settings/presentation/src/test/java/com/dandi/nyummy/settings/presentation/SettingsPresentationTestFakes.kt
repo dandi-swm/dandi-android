@@ -8,6 +8,7 @@ import com.dandi.nyummy.auth.entity.EmailVerifiedVO
 import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.auth.entity.SocialCredentialVO
 import com.dandi.nyummy.auth.entity.SocialLoginVO
+import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.PushTokenHelper
@@ -188,4 +189,13 @@ internal object FakeAuthRepository : AuthRepository {
 internal object FakePushTokenHelper : PushTokenHelper {
     override fun register(token: String?) = Unit
     override suspend fun deleteToken() = Unit
+}
+
+/** 냐미가 기기에 남기는 기억. 설정 테스트에서는 탈퇴 때 지우는지만 쓰고 값은 두지 않는다. */
+internal object FakeCompanionMemoryHelper : CompanionMemoryHelper {
+    override suspend fun lastSeenAtMillis(): Long? = null
+    override suspend fun setLastSeenAtMillis(millis: Long) = Unit
+    override suspend fun lastCatWeight(): String? = null
+    override suspend fun setLastCatWeight(weight: String) = Unit
+    override suspend fun clear() = Unit
 }

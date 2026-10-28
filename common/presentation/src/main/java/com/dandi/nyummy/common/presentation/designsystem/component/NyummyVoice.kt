@@ -23,8 +23,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathOperation
@@ -35,8 +37,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
 import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyummyInteractionSource
@@ -47,8 +49,9 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 enum class NyummyBubbleTail { Bottom, Left, Top, None }
 
 /**
- * 냐미 말풍선. Voice 서체(voice/m) 전용, 최대 3줄. 흰 바탕 + 2px default 테두리, 모서리 16.
- * 몸통과 꼬리를 하나의 외곽선으로 그려 이음새가 보이지 않는다.
+ * 냐미 말풍선(v2 Speech Bubble). Voice 서체(voice/m, content/voice) 전용, 최대 3줄. 흰 바탕, 모서리 16, 옅은 그림자.
+ * 꼬리는 모서리 둥근 정사각형을 45도 돌려 몸통 가장자리에 반쯤 겹친 것이고, 몸통과 하나의 외곽선으로 합쳐
+ * 그림자와 바탕에 이음새가 보이지 않는다.
  * 너비는 글 길이에 맞춰 늘어나고, 최대 너비는 [modifier]로 제한한다.
  *
  * @param typing true면 대사가 바뀔 때마다 미연시처럼 한 글자씩 찍는다. 말풍선 크기는 처음부터 문장 전체에 맞춘다.
@@ -70,7 +73,8 @@ fun NyummyVoiceBubble(
         BubbleShape(
             tail = tail,
             cornerRadius = cornerRadius,
-            tailBase = dimens.BubbleTailBase,
+            tailSize = dimens.BubbleTailSize,
+            tailCorner = dimens.BubbleTailCorner,
             tailHeight = dimens.BubbleTailHeight,
             tailOffset = if (tail == NyummyBubbleTail.Left) dimens.BubbleTailOffsetVertical else dimens.BubbleTailOffset,
         )
@@ -82,8 +86,8 @@ fun NyummyVoiceBubble(
     )
     Box(
         modifier = modifier
+            .nyummyShadow(shape, NyummyTheme.elevation.soft)
             .background(NyummyTheme.colors.bg.voiceBubble, shape)
-            .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, shape)
             .then(tailPadding)
             .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s12),
     ) {
@@ -91,29 +95,38 @@ fun NyummyVoiceBubble(
             NyummyTypewriterText(
                 text = text,
                 style = NyummyTheme.typography.voiceM,
+                color = NyummyTheme.colors.content.voice,
                 lineKey = lineKey,
                 onRevealed = onRevealed,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
             )
         } else {
-            NyummyText(text = text, style = NyummyTheme.typography.voiceM, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            NyummyText(
+                text = text,
+                style = NyummyTheme.typography.voiceM,
+                color = NyummyTheme.colors.content.voice,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
 
-/** 둥근 몸통 + 삼각 꼬리를 하나의 Path로 합친 말풍선 모양. */
+/** 둥근 몸통 + 45도 돌린 둥근 정사각형 꼬리를 하나의 Path로 합친 말풍선 모양. 꼬리 중심은 몸통 가장자리 위에 있다. */
 @Immutable
 private class BubbleShape(
     private val tail: NyummyBubbleTail,
     private val cornerRadius: Dp,
-    private val tailBase: Dp,
+    private val tailSize: Dp,
+    private val tailCorner: Dp,
     private val tailHeight: Dp,
     private val tailOffset: Dp,
 ) : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
         val radius = with(density) { cornerRadius.toPx() }
-        val base = with(density) { tailBase.toPx() }
+        val side = with(density) { tailSize.toPx() }
+        val corner = with(density) { tailCorner.toPx() }
         val height = with(density) { tailHeight.toPx() }
         val offset = with(density) { tailOffset.toPx() }
 
@@ -123,31 +136,27 @@ private class BubbleShape(
         val body = Path().apply {
             addRoundRect(RoundRect(left, top, size.width, bottom, CornerRadius(radius)))
         }
-        val tailPath = Path()
-        when (tail) {
-            NyummyBubbleTail.Bottom -> tailPath.apply {
-                moveTo(left + offset, bottom - 1f)
-                lineTo(left + offset + base / 2, size.height)
-                lineTo(left + offset + base, bottom - 1f)
-                close()
-            }
-            NyummyBubbleTail.Top -> tailPath.apply {
-                moveTo(left + offset, top + 1f)
-                lineTo(left + offset + base / 2, 0f)
-                lineTo(left + offset + base, top + 1f)
-                close()
-            }
-            NyummyBubbleTail.Left -> tailPath.apply {
-                moveTo(left + 1f, top + offset)
-                lineTo(0f, top + offset + base / 2)
-                lineTo(left + 1f, top + offset + base)
-                close()
-            }
+        // 꼬리 중심. 옛 삼각 꼬리의 밑변 가운데와 같은 자리라 호출하는 쪽의 꼬리 위치 맞춤은 그대로다.
+        val center = when (tail) {
+            NyummyBubbleTail.Bottom -> Offset(left + offset + side / 2, bottom)
+            NyummyBubbleTail.Top -> Offset(left + offset + side / 2, top)
+            NyummyBubbleTail.Left -> Offset(left, top + offset + side / 2)
             NyummyBubbleTail.None -> return Outline.Generic(body)
+        }
+        val tailPath = Path().apply {
+            addRoundRect(RoundRect(-side / 2, -side / 2, side / 2, side / 2, CornerRadius(corner)))
+            transform(
+                Matrix().apply {
+                    translate(center.x, center.y)
+                    rotateZ(TAIL_ROTATION_DEGREES)
+                },
+            )
         }
         return Outline.Generic(Path.combine(PathOperation.Union, body, tailPath))
     }
 }
+
+private const val TAIL_ROTATION_DEGREES = 45f
 
 /**
  * 냐미 코멘트 카드. 매달린 냐미(Hang)가 연민트 말풍선 윗변에 앞발을 걸친다.

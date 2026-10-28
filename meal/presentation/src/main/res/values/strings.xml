@@ -1,8 +1,7 @@
 <resources>
     <string name="meal_record_title">Meal Record</string>
     <string name="meal_record_close_content_description">Close</string>
-    <string name="meal_record_subtitle">Snap your food and analysis starts right away 🌱</string>
-    <string name="meal_record_cancel">Cancel</string>
+    <string name="meal_record_subtitle">Snap your food and analysis starts right away</string>
     <string name="meal_record_capture">Capture</string>
     <string name="meal_record_gallery_content_description">Choose from gallery</string>
     <string name="meal_record_retake">Retake</string>

@@ -1,52 +1,32 @@
 package com.dandi.nyummy.home.presentation
 
-import com.dandi.nyummy.cat.domain.PrefetchCatAnimationsUseCase
-import com.dandi.nyummy.cat.entity.CatAnimationVO
+import com.dandi.nyummy.cat.domain.CatPick
+import com.dandi.nyummy.cat.entity.CatMotionVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.cat.entity.SpriteClipVO
 import com.dandi.nyummy.cat.entity.SpriteFrameVO
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSource
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class HomeCatStateTest {
 
-    @Test
-    fun `오늘 기록이 없으면 기다림, 있으면 여유다`() {
-        assertEquals(CatState.CONFLICTED_CAUTIOUS, homeCatState(hasRecordedToday = false, recordedJustNow = false, isCelebrating = false))
-        assertEquals(CatState.RELAXED, homeCatState(hasRecordedToday = true, recordedJustNow = false, isCelebrating = false))
-    }
-
-    @Test
-    fun `방금 기록하고 돌아왔거나 먹는 반응 중이면 먹는 반응이다`() {
-        assertEquals(CatState.CONTENT, homeCatState(hasRecordedToday = true, recordedJustNow = true, isCelebrating = false))
-        assertEquals(CatState.CONTENT, homeCatState(hasRecordedToday = true, recordedJustNow = false, isCelebrating = true))
-    }
-
-    @Test
-    fun `홈이 고를 수 있는 상태는 모두 냐미 미리 받기 대상이다`() {
-        val flags = listOf(true, false)
-        val chosen = flags.flatMap { recorded ->
-            flags.flatMap { justNow -> flags.map { celebrating -> homeCatState(recorded, justNow, celebrating) } }
-        }.toSet()
-
-        assertTrue(PrefetchCatAnimationsUseCase.PlayedStates.containsAll(chosen))
-    }
-
-    private val animation = CatAnimationVO(
-        state = CatState.RELAXED,
+    private val pick = CatPick(
+        state = CatState.HOME_DAY,
         frame = SpriteFrameVO(width = 136, height = 120, framesPerRow = 4, durationMs = 90),
-        groups = listOf(
-            listOf(SpriteClipVO("https://cdn/a.png", 9), SpriteClipVO("https://cdn/b.png", 8, loop = true)),
-            listOf(SpriteClipVO("https://cdn/a.png", 9), SpriteClipVO("https://cdn/c.png", 13)),
+        motion = CatMotionVO(
+            name = "lie_down",
+            weight = 1.0,
+            clips = listOf(
+                SpriteClipVO("https://cdn/a.png", 9),
+                SpriteClipVO("https://cdn/b.png", 8, loop = true, loopTimes = 4),
+            ),
         ),
-        lines = listOf("쉬자"),
     )
 
-    /** 응답의 칸 규격(136x120, 한 줄 4칸, 90ms)을 담은 시트. */
+    /** 칸 규격(136x120, 한 줄 4칸, 90ms)을 담은 시트. */
     private fun sheet(url: String, frames: Int) = NyummySpriteSheet(
         url = url,
         frameWidth = 136,
@@ -57,26 +37,31 @@ class HomeCatStateTest {
     )
 
     @Test
-    fun `고른 동작 묶음을 재생 모델로 바꾸고 상태의 시트 주소를 모두 모은다`() {
-        val motion = animation.toHomeCatMotion(group = 1, playId = 7, restMillis = 6_000L)
+    fun `고른 동작을 재생 모델로 바꾸고 되풀이 횟수는 동작이 정한 값을 쓴다`() {
+        val motion = pick.toHomeCatMotion(playId = 7, restMillis = 6_000L)
 
         assertEquals(
-            listOf(NyummySpriteClip(sheet("https://cdn/a.png", 9)), NyummySpriteClip(sheet("https://cdn/c.png", 13))),
+            listOf(NyummySpriteClip(sheet("https://cdn/a.png", 9)), NyummySpriteClip(sheet("https://cdn/b.png", 8), loop = true)),
             motion.clips,
         )
-        assertEquals(listOf("https://cdn/a.png", "https://cdn/b.png", "https://cdn/c.png"), motion.sheetUrls)
+        assertEquals(listOf("https://cdn/a.png", "https://cdn/b.png"), motion.sheetUrls)
         assertEquals(7, motion.playId)
         assertEquals(6_000L, motion.restMillis)
+        assertEquals(4, motion.loopTimes)
     }
 
     @Test
-    fun `묶음 번호가 범위를 벗어나면 첫 묶음을 재생한다`() {
-        val motion = animation.toHomeCatMotion(group = 5, playId = 1, restMillis = 6_000L)
+    fun `다음 동작의 시트 주소도 겹치지 않게 함께 모은다`() {
+        val motion = pick.toHomeCatMotion(playId = 1, restMillis = 0L, prefetchUrls = listOf("https://cdn/b.png", "https://cdn/c.png"))
 
-        assertEquals(
-            listOf(NyummySpriteSource.Url("https://cdn/a.png"), NyummySpriteSource.Url("https://cdn/b.png")),
-            motion.clips.map { it.sheet.source },
-        )
-        assertEquals(true, motion.clips.last().loop)
+        assertEquals(listOf("https://cdn/a.png", "https://cdn/b.png", "https://cdn/c.png"), motion.sheetUrls)
+    }
+
+    @Test
+    fun `되풀이 횟수를 정하지 않은 동작은 재생 기본값을 쓴다`() {
+        val motion = pick.copy(motion = pick.motion.copy(clips = listOf(SpriteClipVO("https://cdn/a.png", 9))))
+            .toHomeCatMotion(playId = 1, restMillis = 0L)
+
+        assertNull(motion.loopTimes)
     }
 }

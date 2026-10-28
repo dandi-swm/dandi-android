@@ -62,8 +62,7 @@ fun NyummyRewardRow(
         Box(
             modifier = Modifier
                 .size(NyummyComponentDimens.RewardRowLeadingSize)
-                .alpha(if (isClaimed) ClaimedImageAlpha else 1f)
-                .background(NyummyTheme.colors.bg.surfaceSubtle, RoundedCornerShape(NyummyTheme.radius.s)),
+                .alpha(if (isClaimed) ClaimedImageAlpha else 1f),
             contentAlignment = Alignment.Center,
         ) {
             AsyncImage(

@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
@@ -65,6 +66,7 @@ fun NyummyListRow(
     trailing: NyummyListRowTrailing = NyummyListRowTrailing.Chevron,
     onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
+    below: (@Composable () -> Unit)? = null,
 ) {
     val interactionSource = rememberNyummyInteractionSource()
     val interaction = when (trailing) {
@@ -110,7 +112,7 @@ fun NyummyListRow(
             .fillMaxWidth()
             .defaultMinSize(minHeight = NyummyComponentDimens.ListRowMinHeight)
             .then(interaction)
-            .padding(vertical = NyummyTheme.spacing.s12),
+            .padding(vertical = ListRowVerticalPadding),
         horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -133,7 +135,7 @@ fun NyummyListRow(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2),
         ) {
-            NyummyText(text = title, style = NyummyTheme.typography.titleS, maxLines = 1)
+            NyummyText(text = title, style = NyummyTheme.typography.bodyL, maxLines = 1)
             if (subtitle != null) {
                 NyummyText(
                     text = subtitle,
@@ -142,6 +144,7 @@ fun NyummyListRow(
                     maxLines = 1,
                 )
             }
+            below?.invoke()
         }
         ListRowTrailing(trailing, enabled)
     }
@@ -196,3 +199,6 @@ private fun NyummyListRowPreview() {
         }
     }
 }
+
+/** v2 List Row 위아래 여백. */
+private val ListRowVerticalPadding = 14.dp

@@ -88,7 +88,7 @@ internal fun ColumnScope.OnboardingCatNameSlot(
     NyummyButton(
         text = stringResource(R.string.onboarding_name_submit),
         onClick = onSubmit,
-        size = NyummyButtonSize.M,
+        size = NyummyButtonSize.L,
         modifier = Modifier.fillMaxWidth(),
     )
 }

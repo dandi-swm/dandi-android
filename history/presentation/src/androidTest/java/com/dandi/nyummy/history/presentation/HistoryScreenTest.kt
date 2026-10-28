@@ -94,7 +94,7 @@ class HistoryScreenTest {
         composeRule.waitForIdle()
 
         assertTrue(intents.none { it is HistoryIntent.ChangeMonth && it.month > october })
-        composeRule.onNodeWithText("2026년 10월").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("2026년 10월").assertIsDisplayed()
     }
 
     @Test
@@ -192,7 +192,8 @@ class HistoryScreenTest {
         setScreen(state(meals = meals)) { intents += it }
 
         composeRule.onNodeWithText(text(R.string.history_day_summary, 1)).performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("첫 끼 오전 8:10").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("첫 끼").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("오전 8:10").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.history_analysis_pending_title)).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.history_analysis_retry)).performScrollTo().performClick()
         composeRule.onNodeWithText(text(R.string.history_analysis_delete)).performScrollTo().performClick()
@@ -209,46 +210,21 @@ class HistoryScreenTest {
     }
 
     @Test
-    fun 이름을_비우면_안내하고_저장할_수_없다() {
-        val meal = MealHistoryVO(id = "1", name = "비빔밥", recordedAt = "08:10", orderIndex = 1)
-        setScreen(
-            state(meals = listOf(meal)).copy(
-                mealDetail = HistoryMealDetailUiState(meal = meal, mode = HistoryMealDetailMode.EditingName, nameDraft = " "),
-            ),
-        )
-
-        composeRule.onNodeWithText(text(R.string.history_edit_dialog_empty)).assertIsDisplayed()
-        composeRule.onNodeWithText(text(R.string.history_edit_dialog_confirm)).assertIsNotEnabled()
-    }
-
-    @Test
     fun 삭제_요청을_보내는_중에는_닫기와_삭제를_누를_수_없다() {
-        val meal = MealHistoryVO(id = "1", name = "비빔밥", recordedAt = "08:10", orderIndex = 1)
-        setScreen(
-            state(meals = listOf(meal)).copy(
-                mealDetail = HistoryMealDetailUiState(
-                    meal = meal,
-                    mode = HistoryMealDetailMode.ConfirmingDelete,
-                    isActionInFlight = true,
-                ),
-            ),
-        )
+        val meal = MealHistoryVO(id = "1", recordedAt = "08:10", status = MealAnalysisStatus.FAILED)
+        setScreen(state(meals = listOf(meal)).copy(deletingMeal = meal, isDeletingMeal = true))
 
         composeRule.onNodeWithText(context.getString(com.dandi.nyummy.common.presentation.R.string.nyummy_dialog_dismiss)).assertIsNotEnabled()
         composeRule.onNodeWithText(text(R.string.history_delete_dialog_confirm)).assertIsNotEnabled()
     }
 
     @Test
-    fun 삭제_확인은_식사_이름을_묻고_확정을_보낸다() {
+    fun 실패_기록의_삭제_확인은_확정을_보낸다() {
         val intents = mutableListOf<HistoryIntent>()
-        val meal = MealHistoryVO(id = "1", name = "비빔밥", recordedAt = "08:10", orderIndex = 1)
-        setScreen(
-            state(meals = listOf(meal)).copy(
-                mealDetail = HistoryMealDetailUiState(meal = meal, mode = HistoryMealDetailMode.ConfirmingDelete),
-            ),
-        ) { intents += it }
+        val meal = MealHistoryVO(id = "1", recordedAt = "08:10", status = MealAnalysisStatus.FAILED)
+        setScreen(state(meals = listOf(meal)).copy(deletingMeal = meal)) { intents += it }
 
-        composeRule.onNodeWithText(text(R.string.history_delete_dialog_title, "비빔밥")).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.history_delete_dialog_title_unnamed)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.history_delete_dialog_confirm)).performClick()
 
         assertEquals(listOf<HistoryIntent>(HistoryIntent.ConfirmDeleteMeal), intents)

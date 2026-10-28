@@ -59,6 +59,14 @@ fun dayTitleOf(date: HistoryDateVO): String {
     return "${dayLabelOf(date)} $weekday"
 }
 
+/** "10. 5 (월)" 형태의 짧은 선택일 제목입니다. */
+fun dayShortTitleOf(date: HistoryDateVO): String {
+    val weekday = WEEKDAY_SHORT_LABELS[LocalDate.of(date.year, date.month, date.day).sundayBasedWeekday]
+    return "${date.month}. ${date.day} ($weekday)"
+}
+
+private val WEEKDAY_SHORT_LABELS = listOf("일", "월", "화", "수", "목", "금", "토")
+
 private val WEEKDAY_TITLE_LABELS =
     listOf("일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일")
 

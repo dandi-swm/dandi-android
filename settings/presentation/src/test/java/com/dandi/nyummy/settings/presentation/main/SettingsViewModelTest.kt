@@ -13,6 +13,7 @@ import com.dandi.nyummy.settings.domain.WithdrawUseCase
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import com.dandi.nyummy.settings.presentation.FakeAuthRepository
+import com.dandi.nyummy.settings.presentation.FakeCompanionMemoryHelper
 import com.dandi.nyummy.settings.presentation.FakePushTokenHelper
 import com.dandi.nyummy.settings.presentation.FakeResourceHelper
 import com.dandi.nyummy.settings.presentation.FakeSettingsRepository
@@ -55,10 +56,11 @@ class SettingsViewModelTest {
                 navigationHelper,
                 FakeTTIHelper,
             ),
-            logout = LogoutUseCase(FakeAuthRepository, FakePushTokenHelper, navigationHelper),
+            logout = LogoutUseCase(FakeAuthRepository, FakePushTokenHelper, FakeCompanionMemoryHelper, navigationHelper),
             withdraw = WithdrawUseCase(
                 repository,
                 FakePushTokenHelper,
+                FakeCompanionMemoryHelper,
                 FakeResourceHelper,
                 messageHelper,
                 navigationHelper,

@@ -40,7 +40,7 @@ internal fun ColumnScope.OnboardingMealTimeSlot(
     NyummyButton(
         text = stringResource(R.string.onboarding_meal_done),
         onClick = onDone,
-        size = NyummyButtonSize.M,
+        size = NyummyButtonSize.L,
         enabled = enabled,
         modifier = Modifier.fillMaxWidth(),
     )

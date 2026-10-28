@@ -320,7 +320,7 @@ val shape = RoundedCornerShape(NyummyTheme.radius.l)
             // 큰 글꼴에서도 퍼센트는 한 줄로 두고, 줄바꿈은 왼쪽 문구가 맡는다.
             NyummyText(
                 text = stringResource(R.string.intro_splash_progress_percent, (progress * 100).toInt()),
-                style = NyummyTheme.typography.numberM,
+                style = NyummyTheme.typography.numberL,
                 color = NyummyTheme.colors.content.brand,
                 maxLines = 1,
                 modifier = Modifier.padding(start = NyummyTheme.spacing.s8),

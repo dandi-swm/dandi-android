@@ -4,7 +4,8 @@
 
 ## 현재 구현 현황 (2026-10-26)
 
-- 등록 라우트 21개(`AppRouteRegistry.kt` 기준): `""`(인트로 루트) `/onboarding` `/login` `/login/email` `/login/password-reset` `/signup` `/signup/social` `/home` `/home/prepare`(로그인 직후 냐미 방 준비) `/meal/record` `/history` `/shop` `/mailbox` `/room` `/settings` `/settings/meal-time` `/settings/inquiry` `/mailbox/inquiry/write` `/mailbox/inquiry/{inquiryId}` `/legal/terms` `/legal/privacy`. 컬렉션·퀘스트·업적은 Page만 있고 등록하지 않았다. 문의는 설정으로 옮겼지만 작성·상세 경로는 `/mailbox/inquiry/...` 그대로다.
+- 등록 라우트 22개(`AppRouteRegistry.kt` 기준): `""`(인트로 루트) `/onboarding` `/login` `/login/email` `/login/password-reset` `/signup` `/signup/social` `/home` `/home/prepare`(로그인 직후 냐미 방 준비) `/meal/record` `/history` `/history/meals/{mealId}`(식사 상세) `/shop` `/mailbox` `/room` `/settings` `/settings/meal-time` `/settings/inquiry` `/mailbox/inquiry/write` `/mailbox/inquiry/{inquiryId}` `/legal/terms` `/legal/privacy`. 컬렉션·퀘스트·업적은 Page만 있고 등록하지 않았다. 문의는 설정으로 옮겼지만 작성·상세 경로는 `/mailbox/inquiry/...` 그대로다.
+- 디자인은 피그마 v2(외주 정리안 기반, `v2 · 01 Foundations`~) 기준이다. 글꼴은 Pretendard(UI)와 AndongKaturi(냐미 말투·강조)이고, AndongKaturi에 모양이 없는 글자가 든 문장은 통째로 Pretendard로 그린다(`foundation/NyummyAccentFallback.kt`). 글꼴 출처는 설정 > 약관의 "글꼴 출처".
 - 바텀 네비 4탭(홈·마이룸·기록·상점, v2 단색 채움 아이콘) + 기록 탭 앞 바 안의 초록 카메라 버튼(식사 기록 진입) — `NyummyNavigation.kt`의 `NyummyMainTabs`/`RootComposable.kt`. 마이룸·상점은 기능 플래그가 꺼져 있으면 탭을 눌렀을 때 "준비 중"이라고 알린다.
 - 기능 플래그(Firebase Remote Config, `common/domain/.../remoteconfig/RemoteConfigKey.kt`): `android_mail_item_tab_enabled`(우편함 아이템 탭 + 식사 기록 뒤 상자를 우편함으로 보내는 연출), `android_my_room_enabled`, `android_shop_enabled`. 기본값은 모두 false이고 debug 빌드는 키 뒤에 `_debug`를 붙여 읽는다. 강제 업데이트 키는 `docs/remote-config-force-update.md`.
 - App Links: `https://link.nyummy.co.kr/<라우트 path>` (autoVerify, S3+CloudFront 서빙, 검증 완료). `assetlinks.json`·폴백 페이지·지문 추가/검증 절차는 `docs/app-links/`. 푸시는 FCM(`app/.../push/`)으로 받고, 디바이스 토큰을 서버에 등록하며, 알림을 탭하면 서버가 준 App Link로 들어간다.
@@ -21,7 +22,7 @@
 - 로그인 직후 이동은 응답 `redirectUrl`의 path로 결정(`PostLoginDestination`: `/onboarding`이면 온보딩, 그 외 방 준비 화면 `/home/prepare`를 거쳐 홈). 회원가입 직후는 항상 온보딩. 온보딩은 미연시형 냥줍 대본(`OnboardingScript`) → 이름 짓기(앱에서 검사만) → 평소 식사 시각 → 고양이 생성(`FinishOnboardingUseCase`) → 방 준비 → 홈. 방 준비 화면과, 자동 로그인으로 홈에 가는 인트로(`GetIntroUseCase`)는 냐미 애니메이션과 시트를 미리 받고(`PrefetchCatAnimationsUseCase`, 최대 3초 대기) 홈으로 간다. 홈 요약도 같이 받기 시작하지만 기다리지 않고, 홈의 첫 조회가 그 요청을 이어받는다(`PrefetchHomeSummaryUseCase`).
 - 홈: 꾸민 방(`HomeRoomMapper`) 위에 냐미가 상태별 애니메이션으로 살고, 위에 지갑·우편·설정, 연속 기록 배너, 눈 버튼(화면 요소를 숨기고 방만 보기)이 뜬다. 화면이 보일 때마다 홈 요약을 다시 읽는다.
 - 식사 기록: 촬영(또는 갤러리 첨부 — EXIF 촬영일이 기기 타임존 기준 오늘인 사진만, `ImportGalleryMealPhotoUseCase`) → 확인 → 제출(`SubmitMealUseCase`) → 연출(`MealCeremonyStage`: 띠욧 컷신 → 맛 리액션 → 먹었어요 → 보상 상자가 우편함으로) → 홈. 건너뛰기는 띠욧 컷신만 건너뛴다. 앱이 종료됐다 돌아와도 찍은 사진과 연출 단계를 되살리고(`MealRecordSnapshot`), 업로드 중 종료됐으면 다시 보내지 않고 확인하라고 안내한다. 접수에 실패하면 안내 스낵바와 함께 곧장 홈으로 간다.
-- 기록: 월간 캘린더 → 일별 목록 → 식사 상세(이름 수정, 삭제, 영양 분석 재시도·평가).
+- 기록: 월간 캘린더 → 일별 목록 → 식사 상세 페이지 `/history/meals/{mealId}`(이름 수정, 삭제, 영양 분석 평가, `MealDetailViewModel`). 분석 실패 줄의 재시도·삭제는 목록에서 한다.
 - 우편함: 받은 보상·코인·아이템 목록, 하나/모두 받기, 받은 우편만 밀어서 삭제(되돌리기로 복구), 보상 상자 열기 연출(`RewardBoxOpening`).
 - 마이룸: 보관함 시트에서 아이템을 방에 놓고, 끌어 옮기고, 두 손가락으로 크기를 바꾸고, 한 단계씩 되돌린 뒤 저장하면 홈으로 간다.
 - 설정: 알림(앱 알림 = 기기 알림 권한, 서비스·마케팅 알림 = 서버 값, 식사 시간), 약관, 로그아웃, 회원 탈퇴, 문의하기(목록·작성·상세·삭제·복구). 약관(`legal`)은 GitHub Pages 정책 페이지를 WebView로 연다.

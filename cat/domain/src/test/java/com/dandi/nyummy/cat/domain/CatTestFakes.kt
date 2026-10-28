@@ -1,5 +1,11 @@
 package com.dandi.nyummy.cat.domain
 
+import com.dandi.nyummy.cat.entity.CatAnimationSetVO
+import com.dandi.nyummy.cat.entity.CatAnimationVO
+import com.dandi.nyummy.cat.entity.CatMotionVO
+import com.dandi.nyummy.cat.entity.CatState
+import com.dandi.nyummy.cat.entity.SpriteClipVO
+import com.dandi.nyummy.cat.entity.SpriteFrameVO
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -93,3 +99,21 @@ internal object FakeTTIHelper : TTIHelper {
     override fun shotTTILogging() = Unit
     override fun addTTIMetaData(metadata: TTIMetaData, value: Any?) = Unit
 }
+
+internal fun catMotion(name: String) = CatMotionVO(
+    name = name,
+    weight = 1.0,
+    clips = listOf(SpriteClipVO(url = "$name.png", frames = 4)),
+)
+
+/** [states]마다 동작 셋(a, b, c)을 가진 애니메이션. */
+internal fun catAnimationSet(vararg states: CatState) = CatAnimationSetVO(
+        weight = "NORMAL",
+        animations = states.associateWith { state ->
+            CatAnimationVO(
+                state = state,
+                frame = SpriteFrameVO(width = 136, height = 136, framesPerRow = 4, durationMs = 100),
+                motions = listOf("a", "b", "c").map { catMotion("${state.name}-$it") },
+            )
+        },
+    )

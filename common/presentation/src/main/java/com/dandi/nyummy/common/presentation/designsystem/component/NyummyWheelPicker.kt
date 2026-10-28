@@ -1,6 +1,7 @@
 package com.dandi.nyummy.common.presentation.designsystem.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +41,8 @@ import kotlin.math.abs
 /**
  * 휠 피커 한 개(값 1열). 높이 150, 행 50 × 3, 가운데 선택 밴드.
  * 날짜처럼 여러 열이 필요하면 [NyummyWheelPickerFrame] 안에 [NyummyWheelColumn]을 나란히 둔다.
+ *
+ * @param compact 폼 안에 여러 개를 나란히 두는 작은 휠. 높이 105, 1px 테두리 칸, 가운데 값 title/s + 단위 body/s.
  */
 @Composable
 fun NyummyWheelPicker(
@@ -49,14 +52,16 @@ fun NyummyWheelPicker(
     modifier: Modifier = Modifier,
     unit: String? = null,
     contentDescription: String? = null,
+    compact: Boolean = false,
 ) {
-    NyummyWheelPickerFrame(modifier = modifier) {
+    NyummyWheelPickerFrame(modifier = modifier, compact = compact) {
         NyummyWheelColumn(
             items = items,
             selectedIndex = selectedIndex,
             onSelectedIndexChange = onSelectedIndexChange,
             unit = unit,
             contentDescription = contentDescription,
+            compact = compact,
             modifier = Modifier.weight(1f),
         )
     }
@@ -70,28 +75,43 @@ fun NyummyWheelPicker(
 fun NyummyWheelPickerFrame(
     modifier: Modifier = Modifier,
     framed: Boolean = true,
+    compact: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
-    val shape = RoundedCornerShape(NyummyTheme.radius.l)
-    val frame = if (framed) {
-        Modifier
+    val shape = RoundedCornerShape(if (compact) NyummyTheme.radius.m else NyummyTheme.radius.l)
+    val frame = when {
+        !framed -> Modifier
+        compact -> Modifier
             .clip(shape)
             .background(NyummyTheme.colors.bg.surface)
-    } else {
-        Modifier
+            .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.border.default, shape)
+        else -> Modifier
+            .clip(shape)
+            .background(NyummyTheme.colors.bg.surface)
     }
     Box(
         modifier = modifier
-            .height(NyummyComponentDimens.WheelPickerHeight)
+            .height(if (compact) NyummyComponentDimens.WheelPickerCompactHeight else NyummyComponentDimens.WheelPickerHeight)
             .then(frame),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = NyummyComponentDimens.WheelPickerBandInset)
-                .height(NyummyComponentDimens.WheelPickerBandHeight)
-                .background(NyummyTheme.colors.bg.surfaceSubtle, RoundedCornerShape(NyummyTheme.radius.s)),
+                .padding(
+                    horizontal = if (compact) {
+                        NyummyComponentDimens.WheelPickerCompactBandInset
+                    } else {
+                        NyummyComponentDimens.WheelPickerBandInset
+                    },
+                )
+                .height(
+                    if (compact) NyummyComponentDimens.WheelPickerCompactBandHeight else NyummyComponentDimens.WheelPickerBandHeight,
+                )
+                .background(
+                    NyummyTheme.colors.bg.surfaceSubtle,
+                    RoundedCornerShape(if (compact) NyummyComponentDimens.WheelPickerCompactBandRadius else NyummyTheme.radius.s),
+                ),
         )
         Row(modifier = Modifier.fillMaxSize(), content = content)
     }
@@ -116,8 +136,9 @@ fun NyummyWheelColumn(
     unit: String? = null,
     contentDescription: String? = null,
     animateSelectionChange: Boolean = false,
+    compact: Boolean = false,
 ) {
-    val rowHeight = NyummyComponentDimens.WheelPickerRowHeight
+    val rowHeight = if (compact) NyummyComponentDimens.WheelPickerCompactRowHeight else NyummyComponentDimens.WheelPickerRowHeight
     val itemCount = items.size
     val safeSelectedIndex = selectedIndex.coerceIn(0, items.lastIndex.coerceAtLeast(0))
     // 위아래 빈 행을 실제 아이템으로 넣어 "첫 보이는 아이템 인덱스 == 가운데 데이터 인덱스"를 유지한다.
@@ -167,7 +188,7 @@ fun NyummyWheelColumn(
     val selectedLabel = items.getOrNull(centeredIndex).orEmpty() + unit.orEmpty()
     LazyColumn(
         modifier = modifier
-            .height(NyummyComponentDimens.WheelPickerHeight)
+            .height(rowHeight * 3)
             .semantics {
                 contentDescription?.let { this.contentDescription = it }
                 stateDescription = selectedLabel
@@ -190,7 +211,12 @@ fun NyummyWheelColumn(
                 Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4)) {
                     NyummyText(
                         text = item,
-                        style = if (centered) NyummyTheme.typography.titleL else NyummyTheme.typography.bodyL,
+                        style = when {
+                            compact && centered -> NyummyTheme.typography.titleS
+                            compact -> NyummyTheme.typography.bodyM
+                            centered -> NyummyTheme.typography.titleL
+                            else -> NyummyTheme.typography.bodyL
+                        },
                         color = if (centered) {
                             NyummyTheme.colors.content.primary
                         } else {
@@ -202,7 +228,7 @@ fun NyummyWheelColumn(
                     if (centered && unit != null) {
                         NyummyText(
                             text = unit,
-                            style = NyummyTheme.typography.labelM,
+                            style = if (compact) NyummyTheme.typography.bodyS else NyummyTheme.typography.labelM,
                             color = NyummyTheme.colors.content.secondary,
                             maxLines = 1,
                             modifier = Modifier.alignByBaseline(),

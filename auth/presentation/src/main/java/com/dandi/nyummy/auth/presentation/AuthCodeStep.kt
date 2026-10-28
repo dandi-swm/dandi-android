@@ -89,7 +89,7 @@ internal fun AuthCodeStepBottom(
     ) {
         NyummyText(
             text = stringResource(R.string.auth_signup_code_resend_question),
-            style = NyummyTheme.typography.bodyM,
+            style = NyummyTheme.typography.bodyS,
             color = NyummyTheme.colors.content.tertiary,
         )
         if (resendRemainingSeconds > 0) {
@@ -98,8 +98,8 @@ internal fun AuthCodeStepBottom(
                     R.string.auth_signup_code_resend_countdown,
                     resendRemainingSeconds.toCountdownText(),
                 ),
-                style = NyummyTheme.typography.labelM,
-                color = NyummyTheme.colors.content.disabled,
+                style = NyummyTheme.typography.bodyS,
+                color = NyummyTheme.colors.content.tertiary,
             )
         } else {
             val label = stringResource(R.string.auth_signup_code_resend)
@@ -107,7 +107,7 @@ internal fun AuthCodeStepBottom(
                 text = buildAnnotatedString {
                     withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) { append(label) }
                 },
-                style = NyummyTheme.typography.labelM,
+                style = NyummyTheme.typography.labelS,
                 color = if (canResend) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.disabled,
                 modifier = Modifier.nyummyClickable(
                     onClick = onResendClick,

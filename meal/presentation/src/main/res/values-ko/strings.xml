@@ -1,8 +1,7 @@
 <resources>
     <string name="meal_record_title">식사 기록</string>
     <string name="meal_record_close_content_description">닫기</string>
-    <string name="meal_record_subtitle">음식을 촬영하면 바로 분석이 시작돼요 🌱</string>
-    <string name="meal_record_cancel">취소</string>
+    <string name="meal_record_subtitle">음식을 촬영하면 바로 분석이 시작돼요</string>
     <string name="meal_record_capture">담기</string>
     <string name="meal_record_gallery_content_description">갤러리에서 사진 선택</string>
     <string name="meal_record_retake">다시 찍기</string>

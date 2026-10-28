@@ -25,6 +25,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgress
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgressSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMailRow
@@ -152,7 +155,7 @@ internal fun InquiryListScreen(
     }
 }
 
-/** 보낸 문의가 없을 때. 캐릭터 없이 제목, 안내, 문의하기 글자 버튼만 둔다. */
+/** 보낸 문의가 없을 때(v2 State View). 캐릭터 없이 제목, 안내, 작은 톤 "문의하기" 버튼. */
 @Composable
 private fun InquiryListEmpty(
     onWriteClick: () -> Unit,
@@ -161,7 +164,7 @@ private fun InquiryListEmpty(
     Column(
         modifier = modifier.padding(horizontal = NyummyTheme.spacing.gutter),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(EmptyGap),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
     ) {
         NyummyText(
             text = stringResource(R.string.inquiry_empty_title),
@@ -169,13 +172,15 @@ private fun InquiryListEmpty(
         )
         NyummyText(
             text = stringResource(R.string.inquiry_empty_body),
-            style = NyummyTheme.typography.bodyS,
-            color = NyummyTheme.colors.content.tertiary,
+            style = NyummyTheme.typography.bodyM,
+            color = NyummyTheme.colors.content.secondary,
         )
-        NyummyTextButton(
+        NyummyButton(
             text = stringResource(R.string.inquiry_write_action),
             onClick = onWriteClick,
-            trailingIcon = CommonR.drawable.nyummy_ic_chevron_right,
+            style = NyummyButtonStyle.Tonal,
+            size = NyummyButtonSize.S,
+            modifier = Modifier.padding(top = NyummyTheme.spacing.s8),
         )
     }
 }
@@ -184,8 +189,6 @@ private const val LOADING_MORE_KEY = "loadingMore"
 
 /** 상단 바와 첫 행 사이. */
 private val ListTopGap = 12.dp
-
-private val EmptyGap = 6.dp
 
 /** 빈 화면 묶음은 가운데보다 조금 위에 둔다. */
 private val EmptyAlignment = BiasAlignment(horizontalBias = 0f, verticalBias = -0.38f)

@@ -86,10 +86,21 @@ class RouteMatcherTest {
             segments = listOf("meals", "123"),
             query = emptyMap(),
             literalPaths = setOf("/history"),
-            templates = emptyList(),
-            aliases = listOf(LinkAlias("/meals/{mealId}", targetPath = "/history")),
+            templates = listOf(RoutePattern("/history/meals/{mealId}")),
+            aliases = listOf(LinkAlias("/meals/{mealId}", targetPath = "/history/meals/{mealId}")),
         )
-        assertEquals(NavRoute("/history", mapOf("mealId" to "123")), route)
+        assertEquals(NavRoute("/history/meals/{mealId}", mapOf("mealId" to "123")), route)
+    }
+
+    @Test
+    fun `template - nested meal detail path extracts the meal id`() {
+        val route = matchRoute(
+            segments = listOf("history", "meals", "7"),
+            query = emptyMap(),
+            literalPaths = setOf("/history"),
+            templates = listOf(RoutePattern("/history/meals/{mealId}")),
+        )
+        assertEquals(NavRoute("/history/meals/{mealId}", mapOf("mealId" to "7")), route)
     }
 
     @Test

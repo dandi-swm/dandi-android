@@ -37,7 +37,7 @@ If the Figma MCP is not connected and no image/PDF is given, stop and ask for on
 |---|---|
 | `palette/{family}/{step}` (e.g. `palette/evergreen/600`) | `NyummyPalette.{Family}{Step}` (e.g. `Evergreen600`) |
 | `{group}/{role}` with kebab case (e.g. `bg/surface-sunken`, `content/on-action`) | `NyummyColors.{group}.{roleCamel}` (e.g. `bg.surfaceSunken`, `content.onAction`) |
-| Nested role (e.g. `bg/action/primary-pressed`, `bg/voice/coach`) | Joined camel case (e.g. `bg.actionPrimaryPressed`, `bg.voiceCoach`) |
+| Nested role (e.g. `bg/action/primary-pressed`, `bg/brand-subtle`) | Joined camel case (e.g. `bg.actionPrimaryPressed`, `bg.brandSubtle`) |
 | Text style `{group}/{size}` (e.g. `title/m`, `label/m-strong`) | `NyummyTypography.{group}{Size}` (e.g. `titleM`, `labelMStrong`) |
 | `3 Dimension` spacing, radius, size | `NyummyTheme.spacing.s{n}`, `NyummyTheme.radius.{xs,s,m,l,full}`, `NyummyTheme.size.*` |
 
