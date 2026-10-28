@@ -271,4 +271,13 @@ class NyummyDisplayTest {
 
         assertEquals(1, clicks)
     }
+
+    @Test
+    fun 섹션_띠는_높이가_6이다() {
+        composeRule.setContent {
+            NyummyTheme { NyummySectionBand(Modifier.testTag("band")) }
+        }
+
+        composeRule.onNodeWithTag("band").assertHeightIsEqualTo(6.dp)
+    }
 }

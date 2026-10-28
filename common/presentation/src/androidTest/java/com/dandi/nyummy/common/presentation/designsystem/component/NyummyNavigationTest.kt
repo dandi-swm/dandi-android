@@ -68,6 +68,28 @@ class NyummyNavigationTest {
     }
 
     @Test
+    fun 가운데_카메라_버튼은_라벨을_설명으로_읽고_누르면_호출된다() {
+        var clicks = 0
+        composeRule.setContent {
+            NyummyTheme {
+                NyummyBottomNav(
+                    items = NyummyMainTabs,
+                    selectedIndex = 0,
+                    onSelect = {},
+                    centerAction = NyummyMealRecordAction,
+                    centerActionIndex = 2,
+                    onCenterActionClick = { clicks++ },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("식사 기록").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("식사 기록").performClick()
+
+        assertEquals(1, clicks)
+    }
+
+    @Test
     fun 하단_내비_탭을_누르면_선택이_바뀐다() {
         var selected = 0
         composeRule.setContent {

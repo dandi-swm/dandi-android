@@ -9,6 +9,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsEqualTo
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
@@ -74,7 +75,21 @@ class NyummyActionsTest {
 
         composeRule.onNodeWithText("L 버튼").assertHeightIsEqualTo(56.dp)
         composeRule.onNodeWithText("M 버튼").assertHeightIsEqualTo(48.dp)
-        composeRule.onNodeWithText("S 버튼").assertHeightIsEqualTo(36.dp)
+        composeRule.onNodeWithText("S 버튼").assertHeightIsEqualTo(32.dp)
+    }
+
+    @Test
+    fun 톤_버튼은_누르면_onClick이_한_번_호출된다() {
+        var clicks = 0
+        composeRule.setContent {
+            NyummyTheme {
+                NyummyButton(text = "받기", onClick = { clicks++ }, style = NyummyButtonStyle.Tonal, size = NyummyButtonSize.S)
+            }
+        }
+
+        composeRule.onNodeWithText("받기").assertIsDisplayed().performClick()
+
+        assertEquals(1, clicks)
     }
 
     @Test
