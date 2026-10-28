@@ -207,10 +207,10 @@ private fun ButtonSection() {
             horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
             verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
         ) {
-            NyummyButtonSize.entries.forEach { size ->
+            listOf(NyummyButtonSize.L, NyummyButtonSize.S).forEach { size ->
                 NyummyButton(text = "밥 주기", onClick = {}, style = style, size = size)
             }
-            NyummyButton(text = "밥 주기", onClick = {}, style = style, size = NyummyButtonSize.M, enabled = false)
+            NyummyButton(text = "밥 주기", onClick = {}, style = style, size = NyummyButtonSize.S, enabled = false)
         }
     }
     NyummyButton(
@@ -254,6 +254,7 @@ private fun ChipSection() {
 @Composable
 private fun BottomCtaSection() {
     NyummyBottomCta(primaryText = "확인", onPrimaryClick = {})
+    NyummyBottomCta(primaryText = "보내기", onPrimaryClick = {}, caption = "답장은 설정의 문의하기에서 볼 수 있어요")
     NyummyBottomCta(primaryText = "확인", onPrimaryClick = {}, secondaryText = "닫기")
 }
 
@@ -690,7 +691,7 @@ private fun OverlaySection() {
             NyummyButton(
                 text = overlay.name,
                 onClick = { open = overlay },
-                style = NyummyButtonStyle.Secondary,
+                style = NyummyButtonStyle.Neutral,
                 size = NyummyButtonSize.S,
             )
         }
@@ -701,7 +702,7 @@ private fun OverlaySection() {
     NyummyButton(
         text = "스낵바 띄우기",
         onClick = { scope.launch { hostState.showSnackbar("식사 기록을 삭제했어요", actionLabel = "실행 취소") } },
-        style = NyummyButtonStyle.Secondary,
+        style = NyummyButtonStyle.Neutral,
         size = NyummyButtonSize.M,
     )
     NyummySnackbarHost(hostState = hostState)
@@ -710,7 +711,7 @@ private fun OverlaySection() {
     NyummyButton(
         text = "토스트 띄우기",
         onClick = { toastHostState.show("준비 중인 기능이에요.") },
-        style = NyummyButtonStyle.Secondary,
+        style = NyummyButtonStyle.Neutral,
         size = NyummyButtonSize.M,
     )
     NyummyToastHost(hostState = toastHostState)

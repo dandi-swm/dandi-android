@@ -88,7 +88,7 @@ object NyummyStateSurface {
             NyummyButton(
                 text = openSettings.text,
                 onClick = openSettings.onClick,
-                style = NyummyButtonStyle.Secondary,
+                style = NyummyButtonStyle.Neutral,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

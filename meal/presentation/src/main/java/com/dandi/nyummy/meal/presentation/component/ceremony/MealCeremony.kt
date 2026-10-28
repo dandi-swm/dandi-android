@@ -645,7 +645,7 @@ private fun AteCelebration(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = NyummyTheme.spacing.s20),
-                        style = NyummyButtonStyle.Secondary,
+                        style = NyummyButtonStyle.Neutral,
                         size = NyummyButtonSize.L,
                         onClick = onDoneClick,
                     )

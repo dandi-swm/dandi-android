@@ -147,7 +147,7 @@ internal fun NyummyDialogCard(
                 NyummyButton(
                     text = dismissText,
                     onClick = onDismiss,
-                    style = NyummyButtonStyle.Secondary,
+                    style = NyummyButtonStyle.Neutral,
                     size = NyummyButtonSize.M,
                     enabled = dismissEnabled,
                     modifier = Modifier.weight(1f),

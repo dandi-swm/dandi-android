@@ -89,7 +89,7 @@ internal fun EmailLoginContent(
             NyummyButton(
                 text = stringResource(R.string.auth_signup_button),
                 onClick = { onIntent(EmailLoginIntent.ClickSignUp) },
-                style = NyummyButtonStyle.Secondary,
+                style = NyummyButtonStyle.Neutral,
                 enabled = enabled,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -140,7 +140,7 @@ internal fun EmailLoginContent(
             NyummyButton(
                 text = stringResource(R.string.auth_forgot_password),
                 onClick = { onIntent(EmailLoginIntent.ClickForgotPassword) },
-                style = NyummyButtonStyle.Ghost,
+                style = NyummyButtonStyle.Text,
                 size = NyummyButtonSize.M,
                 enabled = enabled,
             )

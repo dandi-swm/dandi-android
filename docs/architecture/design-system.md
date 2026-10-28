@@ -79,6 +79,8 @@ Modifier
 5. 상태색(`brand`, `danger`, `promo`)은 뜻이 있을 때만 쓴다.
 
 - 버튼, 칩, 썸에 검정(`content.primary` 같은 짙은 회색) 채움을 쓰지 않는다. 주 행동은 `bg.actionPrimary`, 보조는 `bg.actionTonal` 또는 `bg.actionNeutral`이다.
+- 버튼 위계는 `NyummyButtonStyle`의 Primary(초록 채움) > Tonal(연초록, 목록 행 안 행동) > Neutral(회색) > Text(배경 없음) 순이다. Danger(빨강)는 삭제·탈퇴 확정에만 쓴다. 크기는 L(56)과 S(32) 두 가지이고, 눌리면 덮개 대신 위계마다 정한 눌림색으로 바뀐다.
+- 화면 하단 고정 버튼은 `NyummyBottomCta`다. 흰 바탕에 위로 옅은 그림자를 드리우고, 버튼 위에 짧은 안내(tertiary)를 둘 수 있다.
 - 계약 테스트는 역할 묶음마다 대비 하한을 둔다. 본문급 4.5, 굵은 강조·버튼 글자 3.9, 메타·태그 2.9, 없음·지나감 2.4이고 `disabled`는 검사하지 않는다. 하한보다 낮은 조합이 나오면 테스트를 낮추지 말고 디자인을 고친다.
 
 ### 글꼴

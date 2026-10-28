@@ -9,11 +9,14 @@ import androidx.compose.ui.unit.dp
  * 화면 코드에서는 쓰지 않는다.
  */
 internal object NyummyComponentDimens {
-    /** Button S, Chip 높이. */
+    /** Chip 높이. */
     val CompactControlHeight = 36.dp
 
-    /** Button S, Chip 좌우 여백. */
+    /** Chip 좌우 여백. */
     val CompactControlHorizontalPadding = 14.dp
+
+    /** Button S(작은 버튼) 높이. */
+    val ButtonSmallHeight = 32.dp
 
     /** Text Field, Text Area의 라벨과 입력칸 사이. */
     val FieldLabelGap = 6.dp

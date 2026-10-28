@@ -39,7 +39,7 @@ internal fun OnboardingChoiceList(
             NyummyButton(
                 text = stringResource(option.labelRes),
                 onClick = { onSelect(index) },
-                style = NyummyButtonStyle.Secondary,
+                style = NyummyButtonStyle.Neutral,
                 size = NyummyButtonSize.L,
                 modifier = Modifier.fillMaxWidth(),
             )

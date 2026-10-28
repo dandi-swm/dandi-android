@@ -384,7 +384,7 @@ private fun LoadFailed(onRetry: () -> Unit) {
         NyummyButton(
             text = stringResource(R.string.history_load_retry),
             onClick = onRetry,
-            style = NyummyButtonStyle.Secondary,
+            style = NyummyButtonStyle.Neutral,
             size = NyummyButtonSize.M,
             icon = CommonR.drawable.nyummy_ic_refresh_cw,
             modifier = Modifier.fillMaxWidth(),
