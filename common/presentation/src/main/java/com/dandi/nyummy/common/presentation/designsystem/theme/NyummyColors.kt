@@ -60,9 +60,6 @@ class NyummyBackgroundColors internal constructor(
     /** 보상 연출 무대. 상자가 등장할 때 화면을 덮는 진한 그린(88% 불투명으로 쓴다). */
     val sceneRewardStage: Color,
 
-    /** 튜토리얼 스택이 머지될 때까지만 남긴다. 값은 [brandSubtle]과 같다. */
-    @Deprecated("v2에 없는 역할이다. bg.brandSubtle을 쓴다.", ReplaceWith("brandSubtle"))
-    val voiceCoach: Color,
 )
 
 @Immutable
@@ -156,7 +153,6 @@ internal val DefaultNyummyColors = NyummyColors(
         sceneDark = NyummyPalette.Gray900,
         sceneRoomFloor = NyummyPalette.SceneRoomFloor,
         sceneRewardStage = NyummyPalette.SceneRewardStage,
-        voiceCoach = NyummyPalette.Evergreen100,
     ),
     content = NyummyContentColors(
         primary = NyummyPalette.Gray900,
