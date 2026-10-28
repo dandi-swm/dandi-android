@@ -501,7 +501,7 @@ private fun MoreRewardsCell(
         }
         RewardHeadline(
             text = stringResource(R.string.mailbox_box_reward_more),
-            style = NyummyTheme.typography.labelL,
+            style = NyummyTheme.typography.titleS,
             stroke = SmallLabelStroke,
         )
     }
@@ -542,7 +542,7 @@ private fun RewardCell(
                 style = if (reward is BoxRewardUiModel.Coin) NyummyTheme.typography.displayL else NyummyTheme.typography.titleL,
             )
         } else {
-            RewardHeadline(text = label, style = NyummyTheme.typography.labelL, stroke = SmallLabelStroke)
+            RewardHeadline(text = label, style = NyummyTheme.typography.titleS, stroke = SmallLabelStroke)
         }
     }
 }

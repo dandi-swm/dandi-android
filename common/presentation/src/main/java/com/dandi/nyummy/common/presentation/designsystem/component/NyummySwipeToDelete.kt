@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -23,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
@@ -125,7 +123,7 @@ fun NyummySwipeToDelete(
     }
 }
 
-/** 오른쪽 끝에 붙는 삭제 버튼. 행 높이를 채우고 폭은 [NyummyComponentDimens.SwipeActionWidth]. */
+/** 오른쪽 끝에 붙는 삭제 버튼(빨간 채움 + 흰 "삭제"). 행 높이를 채우고 폭은 [NyummyComponentDimens.SwipeActionWidth]. */
 @Composable
 private fun SwipeDeleteAction(
     label: String,
@@ -138,26 +136,20 @@ private fun SwipeDeleteAction(
                 .fillMaxHeight()
                 .padding(vertical = NyummyComponentDimens.SwipeActionVerticalInset)
                 .width(NyummyComponentDimens.SwipeActionWidth)
-                .background(NyummyTheme.colors.bg.dangerSubtle, RoundedCornerShape(NyummyTheme.radius.m))
+                .background(NyummyTheme.colors.bg.actionDanger, RoundedCornerShape(NyummyTheme.radius.m))
                 .clickable(
                     interactionSource = rememberNyummyInteractionSource(),
                     indication = null,
                     role = Role.Button,
                     onClick = onClick,
                 ),
-            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4, Alignment.CenterVertically),
+            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.nyummy_ic_trash_2),
-                contentDescription = null,
-                tint = NyummyTheme.colors.content.danger,
-                modifier = Modifier.size(NyummyTheme.size.iconM),
-            )
             NyummyText(
                 text = label,
-                style = NyummyTheme.typography.labelS,
-                color = NyummyTheme.colors.content.danger,
+                style = NyummyTheme.typography.labelM,
+                color = NyummyTheme.colors.content.onAction,
             )
         }
     }
