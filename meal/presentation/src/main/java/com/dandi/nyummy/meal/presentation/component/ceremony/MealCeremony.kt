@@ -21,20 +21,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -74,6 +74,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBubbleTail
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
@@ -82,14 +83,13 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconBut
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceBubble
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.room.RoomBackgroundImage
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
 import com.dandi.nyummy.meal.presentation.MealCeremonyStage
 import com.dandi.nyummy.meal.presentation.R
-import com.dandi.nyummy.common.presentation.R as CommonR
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyChip
 import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -305,10 +305,14 @@ internal fun MealCeremony(
                     .height(NyummyTheme.size.touchTarget),
                 contentAlignment = Alignment.Center,
             ) {
-                NyummyChip(
+                NyummyText(
                     text = stringResource(R.string.meal_ceremony_skip_label),
-                    selected = false,
-                    onClick = onSkipClick,
+                    style = NyummyTheme.typography.labelM,
+                    color = NyummyTheme.colors.content.secondary,
+                    modifier = Modifier
+                        .nyummyClickable(onClick = onSkipClick)
+                        .background(NyummyTheme.colors.bg.surface, RoundedCornerShape(NyummyTheme.radius.full))
+                        .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s8),
                 )
             }
         }

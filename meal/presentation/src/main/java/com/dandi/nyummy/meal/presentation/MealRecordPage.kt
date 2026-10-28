@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,7 +19,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -44,7 +44,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
@@ -62,6 +62,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.domain.helper.AppPermission
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
@@ -70,10 +71,10 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconBut
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPose
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPoseImage
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
-import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.meal.presentation.component.MealCameraOverlay
 import com.dandi.nyummy.meal.presentation.component.MealCameraPreview
@@ -195,14 +196,13 @@ private fun MealRecordScreen(
             showSubtitle = true,
             onCloseClick = { onIntent(MealRecordIntent.ClickClose) },
         )
-        Spacer(Modifier.height(NyummyTheme.spacing.s16))
+        Spacer(Modifier.height(NyummyTheme.spacing.s40))
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = NyummyTheme.spacing.s20)
-                .clip(RoundedCornerShape(NyummyTheme.radius.l))
-                .background(NyummyTheme.colors.bg.surfaceSunken),
+                .clipToBounds()
+                .background(NyummyTheme.colors.bg.surfaceSubtle),
         ) {
             when (phase) {
                 MealCameraPhase.Preview -> when (uiState.cameraPermission) {
@@ -260,7 +260,6 @@ private fun MealRecordScreen(
                     // 갤러리 첨부는 카메라 권한과 무관하므로 권한이 거부된 상태에서도 열어 둔다.
                     galleryEnabled = !uiState.isCapturing && !uiState.isImportingGalleryPhoto,
                     onGalleryClick = onGalleryClick,
-                    onCancelClick = { onIntent(MealRecordIntent.ClickClose) },
                     onCaptureClick = { onIntent(MealRecordIntent.ClickShutter) },
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -295,22 +294,25 @@ private fun MealRecordHeader(
                 contentDescription = stringResource(R.string.meal_record_close_content_description),
                 onClick = onCloseClick,
                 modifier = Modifier.align(Alignment.CenterStart),
-                style = NyummyIconButtonStyle.Filled,
-            )
-            NyummyText(
-                text = stringResource(R.string.meal_record_title),
-                modifier = Modifier.align(Alignment.Center),
-                color = NyummyTheme.colors.content.primary,
-                style = NyummyTheme.typography.titleXl,
+                style = NyummyIconButtonStyle.Ghost,
             )
         }
+        NyummyText(
+            text = stringResource(R.string.meal_record_title),
+            modifier = Modifier.fillMaxWidth(),
+            color = NyummyTheme.colors.content.primary,
+            textAlign = TextAlign.Center,
+            style = NyummyTheme.typography.titleXl,
+        )
         if (showSubtitle) {
             NyummyText(
                 text = stringResource(R.string.meal_record_subtitle),
-                modifier = Modifier.fillMaxWidth(),
-                color = NyummyTheme.colors.content.secondary,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = NyummyTheme.spacing.s4),
+                color = NyummyTheme.colors.content.tertiary,
                 textAlign = TextAlign.Center,
-                style = NyummyTheme.typography.bodyM,
+                style = NyummyTheme.typography.bodyL,
             )
         }
     }
@@ -327,6 +329,13 @@ private fun PermissionDeniedContent(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        Icon(
+            painter = painterResource(CommonR.drawable.nyummy_ic_circle_alert),
+            contentDescription = null,
+            tint = NyummyTheme.colors.content.tertiary,
+            modifier = Modifier.size(PermissionIconSize),
+        )
+        Spacer(Modifier.height(NyummyTheme.spacing.s12))
         NyummyText(
             text = stringResource(R.string.meal_record_permission_denied_title),
             color = NyummyTheme.colors.content.primary,
@@ -344,13 +353,13 @@ private fun PermissionDeniedContent(
             maxLines = Int.MAX_VALUE,
             style = NyummyTheme.typography.bodyM,
         )
-        Spacer(Modifier.height(NyummyTheme.spacing.s24))
+        Spacer(Modifier.height(NyummyTheme.spacing.s16))
         NyummyButton(
             text = stringResource(
                 if (isBlocked) R.string.meal_record_permission_open_settings else R.string.meal_record_permission_retry,
             ),
-            style = NyummyButtonStyle.Neutral,
-            size = NyummyButtonSize.M,
+            style = NyummyButtonStyle.Tonal,
+            size = NyummyButtonSize.S,
             onClick = onActionClick,
         )
     }
@@ -362,41 +371,41 @@ private fun openAppSettings(context: Context) {
     runCatching { context.startActivity(intent) }
 }
 
-/** 프리뷰 단계 하단 바: 갤러리 첨부 · 취소 · `담기`(촬영) 버튼. */
+/** 프리뷰 단계 하단 바: 갤러리 첨부(회색 사각 버튼) · `담기`(촬영) 버튼. 닫기는 위 X가 맡는다. */
 @Composable
 private fun PreviewActionBar(
     captureEnabled: Boolean,
     galleryEnabled: Boolean,
     onGalleryClick: () -> Unit,
-    onCancelClick: () -> Unit,
     onCaptureClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier.padding(horizontal = NyummyTheme.spacing.s20),
-        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NyummyIconButton(
-            icon = R.drawable.ic_meal_gallery,
-            contentDescription = stringResource(R.string.meal_record_gallery_content_description),
-            onClick = onGalleryClick,
-            style = NyummyIconButtonStyle.Filled,
-            enabled = galleryEnabled,
-        )
-        NyummyButton(
-            text = stringResource(R.string.meal_record_cancel),
-            style = NyummyButtonStyle.Neutral,
-            size = NyummyButtonSize.L,
-            onClick = onCancelClick,
-        )
+        val galleryShape = RoundedCornerShape(NyummyTheme.radius.m)
+        Box(
+            modifier = Modifier
+                .size(GalleryButtonSize)
+                .nyummyClickable(onClick = onGalleryClick, enabled = galleryEnabled)
+                .background(NyummyTheme.colors.bg.actionNeutral, galleryShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_meal_gallery),
+                contentDescription = stringResource(R.string.meal_record_gallery_content_description),
+                tint = if (galleryEnabled) NyummyTheme.colors.content.primary else NyummyTheme.colors.content.disabled,
+                modifier = Modifier.size(NyummyTheme.size.iconL),
+            )
+        }
         NyummyButton(
             text = stringResource(R.string.meal_record_capture),
             modifier = Modifier.weight(1f),
             style = NyummyButtonStyle.Primary,
             size = NyummyButtonSize.L,
             enabled = captureEnabled,
-            icon = R.drawable.ic_meal_camera,
             onClick = onCaptureClick,
         )
     }
@@ -431,6 +440,8 @@ private fun CapturedActionBar(
 }
 
 private val BottomBarHeight = 120.dp
+private val GalleryButtonSize = 56.dp
+private val PermissionIconSize = 32.dp
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
