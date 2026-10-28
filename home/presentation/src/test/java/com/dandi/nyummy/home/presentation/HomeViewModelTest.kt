@@ -18,6 +18,7 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
@@ -25,11 +26,18 @@ import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
+import com.dandi.nyummy.common.entity.tutorial.TutorialStep
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.home.domain.HomeRepository
 import com.dandi.nyummy.home.domain.tti.HomeTTIPage
 import com.dandi.nyummy.home.entity.HomeSummaryVO
+import com.dandi.nyummy.meal.domain.MealRecordRepository
+import com.dandi.nyummy.meal.domain.SubmitTutorialMealUseCase
+import com.dandi.nyummy.meal.entity.CreatedMealVO
+import com.dandi.nyummy.meal.entity.MealImageUploadVO
+import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.entity.RoomPlacementVO
 import com.dandi.nyummy.tti.TTIHelper
@@ -55,6 +63,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import java.time.LocalDateTime
 import kotlin.random.Random
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -70,6 +79,12 @@ class HomeViewModelTest {
 
     /** 원격 구성 마이룸 플래그. 읽을 때마다 이 값을 돌려준다. */
     private var isMyRoomEnabled = false
+
+    /** 원격 구성 우편함 아이템 플래그. 읽을 때마다 이 값을 돌려준다. */
+    private var isMailEnabled = false
+
+    private val tutorialHelper = FakeTutorialHelper()
+    private val mealRepository = FakeMealRecordRepository()
 
     private val state get() = viewModel.uiState.value
 
@@ -110,9 +125,21 @@ class HomeViewModelTest {
                 override suspend fun sync() = Unit
 
                 @Suppress("UNCHECKED_CAST")
-                override fun <T> get(key: RemoteConfigKey<T>): T =
-                    if (key == RemoteConfigKey.MyRoomEnabled) isMyRoomEnabled as T else key.defaultValue
+                override fun <T> get(key: RemoteConfigKey<T>): T = when (key) {
+                    RemoteConfigKey.MyRoomEnabled -> isMyRoomEnabled as T
+                    RemoteConfigKey.MailItemTabEnabled -> isMailEnabled as T
+                    else -> key.defaultValue
+                }
             },
+            tutorialHelper = tutorialHelper,
+            submitTutorialMeal = SubmitTutorialMealUseCase(
+                repository = mealRepository,
+                tutorialHelper = tutorialHelper,
+                resourceHelper = FakeResourceHelper,
+                messageHelper = SilentMessageHelper,
+                navigationHelper = navigationHelper,
+                ttiHelper = FakeTTIHelper,
+            ),
         )
     }
 
@@ -374,6 +401,243 @@ class HomeViewModelTest {
         weight = "NORMAL",
         animations = (CatState.entries - CatState.UNKNOWN - CatState.ROOM_IDLE).associateWith { animation(it) },
     )
+
+    // region 첫 사용자 튜토리얼
+
+    private val beforeTutorialMeal = HomeSummaryVO(isTutorialCompleted = false)
+    private val afterTutorialMeal = HomeSummaryVO(isTutorialCompleted = true)
+
+    @Test
+    fun `튜토리얼을 마치지 않았으면 홈 소개를 띄우고 식사 기록 화면이 튜토리얼로 열리게 한다`() = runTest(testDispatcher) {
+        resumeWith(beforeTutorialMeal)
+
+        assertEquals(HomeTutorialStage.Intro, state.tutorial?.stage)
+        assertEquals(0, state.tutorial?.index)
+        assertTrue(tutorialHelper.mealRequired)
+    }
+
+    @Test
+    fun `튜토리얼을 마친 사용자는 아무것도 띄우지 않는다`() = runTest(testDispatcher) {
+        resumeWith(afterTutorialMeal)
+
+        assertNull(state.tutorial)
+        assertNull(state.healthStory)
+        assertFalse(tutorialHelper.mealRequired)
+    }
+
+    @Test
+    fun `소개 대사를 넘기면 카메라 버튼을 가리키고 그 뒤로는 넘어가지 않는다`() = runTest(testDispatcher) {
+        resumeWith(beforeTutorialMeal)
+
+        repeat(5) { viewModel.onIntent(HomeIntent.TutorialAdvance) }
+
+        assertEquals(2, state.tutorial?.index)
+        assertNotNull(state.tutorial?.line?.target)
+    }
+
+    @Test
+    fun `식사 기록에서 기록하지 않고 돌아오면 카메라 버튼을 계속 가리킨다`() = runTest(testDispatcher) {
+        resumeWith(beforeTutorialMeal)
+        repeat(2) { viewModel.onIntent(HomeIntent.TutorialAdvance) }
+        viewModel.onIntent(HomeIntent.TutorialTargetClicked)
+
+        resumeWith(beforeTutorialMeal)
+
+        assertEquals(HomeTutorialStage.Intro, state.tutorial?.stage)
+        assertEquals(2, state.tutorial?.index)
+    }
+
+    @Test
+    fun `튜토리얼 식사 뒤에는 우편 버튼을 가리키고 누르면 그 단계를 마친다`() = runTest(testDispatcher) {
+        isMailEnabled = true
+        tutorialHelper.startAfterMeal()
+        resumeWith(afterTutorialMeal)
+
+        assertEquals(HomeTutorialStage.MailPointer, state.tutorial?.stage)
+
+        viewModel.onIntent(HomeIntent.TutorialTargetClicked)
+        advanceUntilIdle()
+
+        assertNull(state.tutorial)
+        assertFalse(TutorialStep.HOME_MAIL in tutorialHelper.pending)
+    }
+
+    @Test
+    fun `우편함 단계를 마치고 돌아오면 마이룸 탭을 가리킨다`() = runTest(testDispatcher) {
+        isMailEnabled = true
+        isMyRoomEnabled = true
+        tutorialHelper.startAfterMeal()
+        tutorialHelper.complete(TutorialStep.HOME_MAIL)
+        tutorialHelper.complete(TutorialStep.MAILBOX)
+
+        resumeWith(afterTutorialMeal)
+
+        assertEquals(HomeTutorialStage.RoomTabPointer, state.tutorial?.stage)
+    }
+
+    @Test
+    fun `우편함 기능이 꺼져 있으면 우편 단계를 마치고 마이룸 탭으로 간다`() = runTest(testDispatcher) {
+        isMyRoomEnabled = true
+        tutorialHelper.startAfterMeal()
+
+        resumeWith(afterTutorialMeal)
+
+        assertEquals(HomeTutorialStage.RoomTabPointer, state.tutorial?.stage)
+        assertFalse(TutorialStep.MAILBOX in tutorialHelper.pending)
+    }
+
+    @Test
+    fun `우편함과 마이룸 단계를 마치면 냐미 건강 이야기를 보이고 끝까지 넘기면 튜토리얼을 마친다`() = runTest(testDispatcher) {
+        tutorialHelper.startAfterMeal()
+
+        resumeWith(afterTutorialMeal)
+
+        assertNull(state.tutorial)
+        assertEquals(0, state.healthStory?.page)
+        repeat(3) { viewModel.onIntent(HomeIntent.HealthStoryNext) }
+        assertTrue(state.healthStory?.isFinish == true)
+
+        viewModel.onIntent(HomeIntent.TutorialFinished)
+        advanceUntilIdle()
+
+        assertNull(state.healthStory)
+        assertTrue(tutorialHelper.pending.isEmpty())
+    }
+
+    @Test
+    fun `마이룸을 저장하고 돌아오면 방이 저장됐다고 알리고 넘기면 냐미 건강 이야기를 보인다`() = runTest(testDispatcher) {
+        isMyRoomEnabled = true
+        tutorialHelper.pending += setOf(TutorialStep.HOME_ROOM_SAVED, TutorialStep.HEALTH_STORY)
+
+        resumeWith(afterTutorialMeal)
+
+        assertEquals(HomeTutorialStage.RoomSaved, state.tutorial?.stage)
+        assertNull(state.healthStory)
+
+        viewModel.onIntent(HomeIntent.TutorialAdvance)
+        advanceUntilIdle()
+
+        assertNull(state.tutorial)
+        assertEquals(0, state.healthStory?.page)
+        assertEquals(setOf(TutorialStep.HEALTH_STORY), tutorialHelper.pending)
+    }
+
+    @Test
+    fun `건너뛰기를 누르면 남은 안내와 함께 확인을 띄우고 계속 배우면 같은 단계로 돌아온다`() = runTest(testDispatcher) {
+        isMailEnabled = true
+        isMyRoomEnabled = true
+        resumeWith(beforeTutorialMeal)
+        viewModel.onIntent(HomeIntent.TutorialAdvance)
+
+        viewModel.onIntent(HomeIntent.TutorialSkip)
+
+        assertEquals(NyummyTutorialLesson.entries, state.tutorialSkipConfirm)
+
+        viewModel.onIntent(HomeIntent.TutorialSkipCancelled)
+
+        assertNull(state.tutorialSkipConfirm)
+        assertEquals(1, state.tutorial?.index)
+    }
+
+    @Test
+    fun `마이룸 탭 단계에서 건너뛰면 남은 안내는 꾸미기와 건강 이야기뿐이다`() = runTest(testDispatcher) {
+        isMyRoomEnabled = true
+        tutorialHelper.startAfterMeal()
+        resumeWith(afterTutorialMeal)
+
+        viewModel.onIntent(HomeIntent.TutorialSkip)
+
+        assertEquals(listOf(NyummyTutorialLesson.DecorateRoom, NyummyTutorialLesson.CatHealth), state.tutorialSkipConfirm)
+    }
+
+    @Test
+    fun `튜토리얼 식사 전에 건너뛰면 튜토리얼 식사를 대신 기록하고 냐미 건강 이야기만 남긴다`() = runTest(testDispatcher) {
+        resumeWith(beforeTutorialMeal)
+        viewModel.onIntent(HomeIntent.TutorialSkip)
+
+        viewModel.onIntent(HomeIntent.TutorialSkipConfirmed)
+        advanceUntilIdle()
+
+        assertEquals(1, mealRepository.tutorialMealCount)
+        assertNull(state.tutorial)
+        assertNull(state.tutorialSkipConfirm)
+        assertEquals(0, state.healthStory?.page)
+        assertEquals(setOf(TutorialStep.HEALTH_STORY), tutorialHelper.pending)
+    }
+
+    @Test
+    fun `튜토리얼 식사 뒤에 건너뛰면 튜토리얼 식사를 다시 부르지 않는다`() = runTest(testDispatcher) {
+        isMyRoomEnabled = true
+        tutorialHelper.startAfterMeal()
+        resumeWith(afterTutorialMeal)
+        viewModel.onIntent(HomeIntent.TutorialSkip)
+
+        viewModel.onIntent(HomeIntent.TutorialSkipConfirmed)
+        advanceUntilIdle()
+
+        assertEquals(0, mealRepository.tutorialMealCount)
+        assertEquals(setOf(TutorialStep.HEALTH_STORY), tutorialHelper.pending)
+    }
+
+    @Test
+    fun `건너뛰기 뒤 튜토리얼 식사 기록에 실패해도 다음 홈에서 소개보다 건강 이야기를 먼저 보인다`() = runTest(testDispatcher) {
+        mealRepository.tutorialMealError = IOException("network")
+        resumeWith(beforeTutorialMeal)
+        viewModel.onIntent(HomeIntent.TutorialSkip)
+        viewModel.onIntent(HomeIntent.TutorialSkipConfirmed)
+        advanceUntilIdle()
+
+        resumeWith(beforeTutorialMeal)
+
+        assertNull(state.tutorial)
+        assertEquals(0, state.healthStory?.page)
+    }
+
+    private class FakeTutorialHelper : TutorialHelper {
+        val pending = mutableSetOf<TutorialStep>()
+        var mealRequired = false
+
+        override suspend fun pendingSteps(): Set<TutorialStep> = pending.toSet()
+        override suspend fun startAfterMeal() {
+            pending.clear()
+            pending += TutorialStep.entries
+        }
+
+        override suspend fun complete(step: TutorialStep) {
+            pending -= step
+        }
+
+        override suspend fun skipToHealthStory() {
+            pending.clear()
+            pending += TutorialStep.HEALTH_STORY
+        }
+
+        override suspend fun finish() = pending.clear()
+        override suspend fun clear() = pending.clear()
+        override suspend fun isMealTutorialRequired(): Boolean = mealRequired
+        override suspend fun setMealTutorialRequired(required: Boolean) {
+            mealRequired = required
+        }
+    }
+
+    private class FakeMealRecordRepository : MealRecordRepository {
+        var tutorialMealCount = 0
+            private set
+        var tutorialMealError: Exception? = null
+
+        override suspend fun readGalleryPhotoTakenAt(photoUri: String): LocalDateTime? = null
+        override suspend fun importGalleryPhoto(photoUri: String) = photoUri
+        override suspend fun prepareUploadImage(photoPath: String, source: MealPhotoSource) = Unit
+        override suspend fun issueImageUploadUrl(photoPath: String) = MealImageUploadVO()
+        override suspend fun uploadImage(uploadTarget: MealImageUploadVO, photoPath: String) = Unit
+        override suspend fun createMeal(imageKey: String) = CreatedMealVO.empty
+        override suspend fun createTutorialMeal() {
+            tutorialMealCount++
+            tutorialMealError?.let { throw it }
+        }
+    }
+
+    // endregion
 
     /** 마지막 방문 시각. 기본은 방금이라 들어올 때 인사하지 않는다. */
     private class FakeCompanionMemory : CompanionMemoryHelper {
