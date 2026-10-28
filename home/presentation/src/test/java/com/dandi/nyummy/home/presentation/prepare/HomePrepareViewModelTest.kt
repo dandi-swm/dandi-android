@@ -3,12 +3,15 @@ package com.dandi.nyummy.home.presentation.prepare
 import com.dandi.nyummy.cat.domain.CatRepository
 import com.dandi.nyummy.cat.domain.PrefetchCatAnimationsUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
+import com.dandi.nyummy.common.domain.helper.DeviceHelper
+import com.dandi.nyummy.common.domain.helper.ImagePrefetchHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.home.domain.HomeRepository
+import com.dandi.nyummy.home.domain.PrefetchHomeNoticesUseCase
 import com.dandi.nyummy.home.domain.PrefetchHomeSummaryUseCase
 import com.dandi.nyummy.home.entity.HomeNoticeVO
 import com.dandi.nyummy.home.entity.HomeSummaryVO
@@ -38,6 +41,7 @@ class HomePrepareViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val navigationHelper = RecordingNavigationHelper()
     private val homeRepository = FakeHomeRepository()
+    private val imagePrefetch = RecordingImagePrefetchHelper()
 
     /** 미리 받기가 끝나는 시점. 완료하기 전까지 미리 받기가 끝나지 않는다. */
     private val prefetchDone = CompletableDeferred<Unit>()
@@ -60,6 +64,14 @@ class HomePrepareViewModelTest {
                 override suspend fun refreshWeight(): Boolean = prefetch()
             },
         ),
+        prefetchHomeNotices = PrefetchHomeNoticesUseCase(
+            repository = homeRepository,
+            deviceHelper = object : DeviceHelper {
+                override val appVersionCode: Long = 8
+                override val appVersionName: String = "2.1.3"
+            },
+            imagePrefetchHelper = imagePrefetch,
+        ),
         navigationHelper = navigationHelper,
     )
 
@@ -76,6 +88,38 @@ class HomePrepareViewModelTest {
         assertTrue(navigationHelper.rootPages.isEmpty())
 
         advanceTimeBy(HomePrepareViewModel.COMPLETE_ANIMATION_WAIT_MS + 1)
+        assertEquals(listOf<Page>(HomePage), navigationHelper.rootPages)
+    }
+
+    @Test
+    fun `로그인을 거쳐 온 회원도 공지 사진을 받고, 다 받은 뒤에 홈으로 간다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(HomeNoticeVO(id = "a", title = "새단장", imageUrl = "https://cdn.example/a.webp"))
+        val imagesDone = CompletableDeferred<Unit>()
+        imagePrefetch.gate = imagesDone
+        val viewModel = viewModel { false }
+
+        runCurrent()
+        assertEquals(listOf("https://cdn.example/a.webp"), imagePrefetch.imageUrls)
+        assertFalse(viewModel.uiState.value.isComplete)
+
+        imagesDone.complete(Unit)
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isComplete)
+        advanceTimeBy(HomePrepareViewModel.COMPLETE_ANIMATION_WAIT_MS + 1)
+        assertEquals(listOf<Page>(HomePage), navigationHelper.rootPages)
+    }
+
+    @Test
+    fun `공지 사진 받기가 끝나지 않아도 상한이 지나면 홈으로 간다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(HomeNoticeVO(id = "a", title = "새단장", imageUrl = "https://cdn.example/a.webp"))
+        imagePrefetch.gate = CompletableDeferred()
+        val viewModel = viewModel { false }
+
+        advanceTimeBy(HomePrepareViewModel.PREFETCH_TIMEOUT_MS - 1)
+        assertFalse(viewModel.uiState.value.isComplete)
+
+        advanceTimeBy(HomePrepareViewModel.COMPLETE_ANIMATION_WAIT_MS + 2)
+        assertTrue(viewModel.uiState.value.isComplete)
         assertEquals(listOf<Page>(HomePage), navigationHelper.rootPages)
     }
 
@@ -103,11 +147,25 @@ private class FakeHomeRepository : HomeRepository {
         prefetchCount++
     }
 
-    override fun getNotices(): List<HomeNoticeVO> = emptyList()
+    var noticeList: List<HomeNoticeVO> = emptyList()
+
+    override fun getNotices(): List<HomeNoticeVO> = noticeList
     override suspend fun getNoticeHiddenDate(): LocalDate? = null
     override suspend fun setNoticeHiddenDate(date: LocalDate) = Unit
     override fun isNoticeHandled(): Boolean = false
     override fun markNoticeHandled() = Unit
+}
+
+/** 미리 받은 그림 주소를 남긴다. [gate]를 주면 그것이 열릴 때까지 끝나지 않는다. */
+private class RecordingImagePrefetchHelper : ImagePrefetchHelper {
+    val imageUrls = mutableListOf<String>()
+    var gate: CompletableDeferred<Unit>? = null
+
+    override suspend fun prefetchSpriteSheets(urls: List<String>) = Unit
+    override suspend fun prefetchImages(urls: List<String>) {
+        imageUrls += urls
+        gate?.await()
+    }
 }
 
 private class RecordingNavigationHelper : NavigationHelper {
