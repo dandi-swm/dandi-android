@@ -44,6 +44,17 @@ fun NyummyDivider(modifier: Modifier = Modifier) {
 }
 
 /** 세로 구분선 1dp(border/subtle). 높이는 [height]로 정한다. */
+/** 섹션 사이를 나누는 6px 회색 띠. 화면 폭 전체로 늘려 쓴다(좌우 gutter 밖까지). */
+@Composable
+fun NyummySectionBand(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(NyummyTheme.size.sectionBand)
+            .background(NyummyTheme.colors.bg.sectionBand),
+    )
+}
+
 @Composable
 fun NyummyVerticalDivider(height: Dp, modifier: Modifier = Modifier) {
     Box(

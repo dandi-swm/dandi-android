@@ -1,7 +1,6 @@
 package com.dandi.nyummy.common.presentation.designsystem.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,10 +20,8 @@ import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyum
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
- * 카드. 여백 20, radius m, 그림자 없음. 너비는 화면에서 채운다(고정 너비 금지).
- *
- * - 정보 카드([onClick] == null): 2px default 테두리
- * - 누를 수 있는 카드: 1px subtle 테두리, 눌리면 검정 8% 덮기 + 0.96배
+ * 카드. 테두리 대신 옅은 바탕(surface-subtle)으로 흰 화면과 나눈다. 여백 20, radius m, 그림자 없음.
+ * 너비는 화면에서 채운다(고정 너비 금지). 누를 수 있으면([onClick]) 눌릴 때 검정 8%를 덮고 0.96배로 줄어든다.
  */
 @Composable
 fun NyummyCard(
@@ -35,7 +32,6 @@ fun NyummyCard(
     val shape = RoundedCornerShape(NyummyTheme.radius.m)
     val interactionSource = rememberNyummyInteractionSource()
     val pressed by interactionSource.collectIsPressedAsState()
-    val pressable = onClick != null
 
     Column(
         modifier = modifier
@@ -52,20 +48,15 @@ fun NyummyCard(
                 },
             )
             .clip(shape)
-            .background(NyummyTheme.colors.bg.surface)
+            .background(NyummyTheme.colors.bg.surfaceSubtle)
             .background(if (pressed) NyummyTheme.colors.bg.pressedOverlay else Color.Transparent)
-            .border(
-                width = if (pressable) NyummyTheme.borderWidth.hairline else NyummyTheme.borderWidth.bold,
-                color = if (pressable) NyummyTheme.colors.border.subtle else NyummyTheme.colors.border.default,
-                shape = shape,
-            )
             .padding(NyummyTheme.spacing.s20),
         verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
         content = content,
     )
 }
 
-/** 제목(title/m)과 본문(body/m)만 있는 카드. 아래에 [content]를 더 붙일 수 있다(위 여백 8). */
+/** 제목(title/s)과 본문(body/m)만 있는 카드. 아래에 [content]를 더 붙일 수 있다(위 여백 8). */
 @Composable
 fun NyummyCard(
     title: String,
@@ -75,7 +66,7 @@ fun NyummyCard(
     content: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     NyummyCard(modifier = modifier, onClick = onClick) {
-        NyummyText(text = title, style = NyummyTheme.typography.titleM)
+        NyummyText(text = title, style = NyummyTheme.typography.titleS)
         NyummyText(text = body, style = NyummyTheme.typography.bodyM, color = NyummyTheme.colors.content.secondary)
         if (content != null) {
             Column(modifier = Modifier.fillMaxWidth().padding(top = NyummyTheme.spacing.s8), content = content)

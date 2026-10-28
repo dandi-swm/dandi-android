@@ -183,10 +183,10 @@ internal object NyummyComponentDimens {
     val SpinnerSize = 36.dp
 
     /** 영양소 일러스트 아이콘(NyummyNutrientStat) 크기. */
-    val NutrientIconSize = 32.dp
+    val NutrientIconSize = 24.dp
 
     /** 식사 행(NyummyMealRow) 왼쪽 사진, 냐미 자리 크기. */
-    val MealRowLeadingSize = 48.dp
+    val MealRowLeadingSize = 40.dp
 
     /** 꾸민 글자(NyummyRichText) 안 코인 아이콘 크기. */
     val RichTextCoinSize = 18.dp

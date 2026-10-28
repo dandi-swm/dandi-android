@@ -81,6 +81,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPoseIma
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRadio
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionCaption
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionHeader
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionBand
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionHeaderWithMeta
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySegmentedControl
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySelectField
@@ -562,6 +563,7 @@ private fun StructureSection() {
         NyummySectionHeader(title = "오늘의 식사", actionText = "전체보기")
         NyummySectionCaption(title = "오늘의 식사", actionText = "전체보기")
         NyummySectionHeaderWithMeta(title = "오늘의 식사", meta = "6시간 남음")
+        NyummySectionBand()
     }
     NyummyDivider()
     Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16)) {
