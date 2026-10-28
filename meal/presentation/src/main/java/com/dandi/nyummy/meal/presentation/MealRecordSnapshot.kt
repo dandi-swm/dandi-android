@@ -36,7 +36,8 @@ internal data class MealRecordSnapshot(
         val path = photoPath ?: return MealCameraPhase.Preview
         val source = photoSource ?: return MealCameraPhase.Preview
         if (!isSubmitStarted) {
-            return if (File(path).exists()) MealCameraPhase.Captured(path, source) else MealCameraPhase.Preview
+            val exists = path == TUTORIAL_PHOTO_PATH || File(path).exists()
+            return if (exists) MealCameraPhase.Captured(path, source) else MealCameraPhase.Preview
         }
         val grade = acceptedRewardBoxGrade
             ?: return MealCameraPhase.Ceremony(path, source, stage = MealCeremonyStage.Waiting)

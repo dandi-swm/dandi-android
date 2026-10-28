@@ -1,7 +1,9 @@
 package com.dandi.nyummy.meal.presentation
 
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
+import kotlinx.collections.immutable.ImmutableList
 
 /** 식사 기록(카메라) 화면의 상태를 변이시키는 내부 이벤트입니다. */
 sealed interface MealRecordReducerEvent : ReducerEvent {
@@ -47,4 +49,10 @@ sealed interface MealRecordReducerEvent : ReducerEvent {
 
     /** 지금 마이룸에 깔린 배경을 읽었습니다. 연출의 고양이방을 이 배경으로 그립니다. */
     data class RoomBackgroundLoaded(val itemId: Long) : MealRecordReducerEvent
+
+    /** 식사 기록 튜토리얼로 열지 확인했습니다. 튜토리얼이면 예시 사진 확인 단계에서 시작합니다. */
+    data class TutorialChecked(val isTutorial: Boolean) : MealRecordReducerEvent
+
+    /** 건너뛰기 확인을 띄웠습니다(남은 안내) 또는 닫았습니다(null). */
+    data class TutorialSkipConfirmChanged(val remaining: ImmutableList<NyummyTutorialLesson>?) : MealRecordReducerEvent
 }

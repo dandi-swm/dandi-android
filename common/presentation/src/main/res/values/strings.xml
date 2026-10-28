@@ -34,4 +34,22 @@
     <string name="nyummy_meal_hour_description">Hour</string>
     <string name="nyummy_star_rating_state">%1$s out of 5 stars</string>
     <string name="nyummy_not_ready">This feature is coming soon.</string>
+    <string name="nyummy_tutorial_name">Nyummy</string>
+    <string name="nyummy_tutorial_hint">Tap to continue ›</string>
+    <string name="nyummy_tutorial_skip">Skip</string>
+    <string name="nyummy_tutorial_skip_title">Skip the tutorial?</string>
+    <string name="nyummy_tutorial_skip_body">It only takes a minute to learn how to care for Nyummy.\nKnowing it now helps you raise Nyummy much better.</string>
+    <string name="nyummy_tutorial_skip_remaining">Still to learn</string>
+    <string name="nyummy_tutorial_skip_continue">Keep learning</string>
+    <string name="nyummy_tutorial_skip_anyway">Skip anyway</string>
+    <string name="nyummy_tutorial_lesson_record">Record a meal with one photo</string>
+    <string name="nyummy_tutorial_lesson_box">Open a reward box for items</string>
+    <string name="nyummy_tutorial_lesson_room">Place items in My Room</string>
+    <string name="nyummy_tutorial_lesson_health">Keep Nyummy healthy</string>
+    <string name="nyummy_health_story_chip">Nyummy health story %1$d/%2$d</string>
+    <string name="nyummy_health_gauge_lean">Lean</string>
+    <string name="nyummy_health_gauge_slim">Slim</string>
+    <string name="nyummy_health_gauge_normal">Just right</string>
+    <string name="nyummy_health_gauge_chubby">Chubby</string>
+    <string name="nyummy_health_gauge_plump">Plump</string>
 </resources>

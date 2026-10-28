@@ -26,6 +26,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.coachmark.coachMarkTarget
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
@@ -74,6 +75,9 @@ internal fun HomeScreen(
         }
     }
     HideBottomBarEffect(hidden = uiState.isUiHidden)
+    // 건강 이야기를 보는 동안은 코치마크를 내린다.
+    HomeTutorialCoachMark(tutorial = uiState.tutorial.takeIf { uiState.healthStory == null }, onIntent = onIntent)
+    HomeTutorialDialogs(skipConfirm = uiState.tutorialSkipConfirm, healthStory = uiState.healthStory, onIntent = onIntent)
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -118,6 +122,7 @@ internal fun HomeScreen(
                             hasUnreadNotice = false,
                             onWalletClick = { onIntent(HomeIntent.ClickWallet) },
                             onMailClick = { onIntent(HomeIntent.ClickMail) },
+                            mailButtonModifier = Modifier.coachMarkTarget(HomeMailCoachMarkKey) { onIntent(HomeIntent.ClickMail) },
                             onNoticeClick = { onIntent(HomeIntent.ClickNotice) },
                             onSettingsClick = { onIntent(HomeIntent.ClickSettings) },
                             hasUnreadMail = uiState.showsMailBadge,

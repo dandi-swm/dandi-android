@@ -3,6 +3,7 @@ package com.dandi.nyummy.home.presentation
 import androidx.compose.runtime.Immutable
 import com.dandi.nyummy.cat.domain.CatMood
 import com.dandi.nyummy.cat.entity.CatState
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.UiState
 import com.dandi.nyummy.common.presentation.room.RoomSceneItem
 import com.dandi.nyummy.home.entity.HomeSummaryVO
@@ -26,6 +27,9 @@ import kotlinx.collections.immutable.ImmutableList
  * @property catDebugLabel debug 빌드에서 냐미 위에 보일 기분·동작 표시. release 에서는 null
  * @property room 고양이방에 그릴 꾸민 방. 마이룸이 꺼져 있으면 null이고, 기본 빈 방만 그린다.
  * @property showsMailBadge 우편 버튼에 빨간 점을 단다. 받을 우편이 있어도 우편함 아이템 기능이 꺼져 있으면(준비 중) 달지 않는다.
+ * @property tutorial 지금 띄울 첫 사용자 튜토리얼 코치마크. 없으면 null
+ * @property tutorialSkipConfirm 건너뛰기 확인에 보일 남은 안내. 확인이 닫혀 있으면 null
+ * @property healthStory 냐미 건강 이야기와 마침. 띄우지 않으면 null
  */
 data class HomeUIState(
     val summary: HomeSummaryVO = HomeSummaryVO.empty,
@@ -43,6 +47,9 @@ data class HomeUIState(
     val catDebugLabel: String? = null,
     val room: HomeRoomUiModel? = null,
     val showsMailBadge: Boolean = false,
+    val tutorial: HomeTutorialUiState? = null,
+    val tutorialSkipConfirm: ImmutableList<NyummyTutorialLesson>? = null,
+    val healthStory: HomeHealthStoryUiState? = null,
 ) : UiState {
 
     /** 오늘 한 끼라도 기록했는지. 냐미 상태와 대사가 이 값으로 갈린다. */

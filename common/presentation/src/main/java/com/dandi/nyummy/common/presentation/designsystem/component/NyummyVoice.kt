@@ -113,9 +113,12 @@ fun NyummyVoiceBubble(
     }
 }
 
-/** 둥근 몸통 + 45도 돌린 둥근 정사각형 꼬리를 하나의 Path로 합친 말풍선 모양. 꼬리 중심은 몸통 가장자리 위에 있다. */
+/**
+ * 둥근 몸통 + 45도 돌린 둥근 정사각형 꼬리를 하나의 Path로 합친 말풍선 모양. 꼬리 중심은 몸통 가장자리 위에 있다.
+ * [tailOffset]은 몸통 시작에서 꼬리 정사각형 왼쪽(세로 꼬리면 위쪽)까지의 거리다. 튜토리얼 안내 카드도 같은 모양을 쓴다.
+ */
 @Immutable
-private class BubbleShape(
+internal class BubbleShape(
     private val tail: NyummyBubbleTail,
     private val cornerRadius: Dp,
     private val tailSize: Dp,

@@ -35,4 +35,10 @@ interface MealRecordRepository {
 
     /** 업로드된 이미지 키로 식사를 생성하고 분석을 시작시킨다. */
     suspend fun createMeal(imageKey: String): CreatedMealVO
+
+    /**
+     * 튜토리얼 식사를 기록한다. 사진은 올리지 않고, 서버가 만료 없는 골드 보상 상자 우편을 만든다.
+     * 기록 조회·연속 기록·오늘 기록 횟수에는 들어가지 않는다. 사용자당 한 번만 성공한다.
+     */
+    suspend fun createTutorialMeal()
 }

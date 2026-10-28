@@ -6,31 +6,41 @@ import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.meal.domain.ImportGalleryMealPhotoUseCase
 import com.dandi.nyummy.meal.domain.SubmitMealUseCase
+import com.dandi.nyummy.meal.domain.SubmitTutorialMealUseCase
+import com.dandi.nyummy.meal.domain.TutorialMealResult
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.room.domain.GetRoomBackgroundUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlin.time.TimeSource
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.File
+import java.io.IOException
 import javax.inject.Inject
+import kotlin.time.TimeSource
 
 @HiltViewModel
 class MealRecordViewModel @Inject constructor(
     private val submitMeal: SubmitMealUseCase,
+    private val submitTutorialMeal: SubmitTutorialMealUseCase,
+    private val tutorialHelper: TutorialHelper,
     private val importGalleryMealPhoto: ImportGalleryMealPhotoUseCase,
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
     private val analyticsHelper: AnalyticsHelper,
     private val savedStateHandle: SavedStateHandle,
-    remoteConfigHelper: RemoteConfigHelper,
+    private val remoteConfigHelper: RemoteConfigHelper,
     getRoomBackground: GetRoomBackgroundUseCase,
 ) : MviViewModel<MealRecordIntent, MealRecordUIState, MealRecordReducerEvent>(
     MealRecordUIState(
@@ -38,6 +48,8 @@ class MealRecordViewModel @Inject constructor(
         phase = MealRecordSnapshot.readFrom(savedStateHandle)?.toPhase() ?: MealCameraPhase.Preview,
         // 상자를 받을 우편함 아이템 탭이 보일 때만 상자를 우편함으로 보내는 연출을 한다.
         isMailGiftEnabled = remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled),
+        // 되살린 화면은 저장해 둔 사진 경로로 튜토리얼인지 이미 안다.
+        isTutorialChecked = MealRecordSnapshot.readFrom(savedStateHandle) != null,
     ),
 ) {
 
@@ -56,6 +68,7 @@ class MealRecordViewModel @Inject constructor(
                 .collect { it.writeTo(savedStateHandle) }
         }
         leaveIfSubmitInterrupted()
+        if (!isRestored) checkTutorial()
         // 연출의 고양이방은 지금 마이룸에 깔린 배경으로 그린다. 촬영하는 동안 미리 읽어 두고, 못 읽으면 기본 빈 방이다.
         viewModelScope.launch {
             getRoomBackground()?.let { dispatch(MealRecordReducerEvent.RoomBackgroundLoaded(it)) }
@@ -108,20 +121,29 @@ class MealRecordViewModel @Inject constructor(
             is MealRecordIntent.GalleryPhotoPicked -> importGalleryPhoto(intent.photoUri)
 
             MealRecordIntent.ClickRetake -> {
-                // 연출(업로드) 중에는 업로드 대상 파일을 지우면 안 되므로 재촬영을 막는다.
+                // 연출(업로드) 중에는 업로드 대상 파일을 지우면 안 되므로 재촬영을 막는다. 튜토리얼은 찍지 않는다.
                 val phase = currentState.phase as? MealCameraPhase.Captured ?: return
+                if (phase.isTutorial) return
                 analyticsHelper.logEvent(AnalyticsEvent.MealRetake(phase.source.analyticsName))
                 deletePhotoFile(phase.photoPath)
                 dispatch(MealRecordReducerEvent.ReturnedToPreview)
             }
 
-            MealRecordIntent.ClickSubmit -> submitCapturedMeal()
+            MealRecordIntent.ClickSubmit -> if (currentState.phase.isTutorial) submitTutorial() else submitCapturedMeal()
 
             MealRecordIntent.ClickDone -> if (currentState.isSubmitSucceeded) finishRecord()
 
             is MealRecordIntent.CeremonyStageFinished -> advanceCeremony(intent.stage)
 
             MealRecordIntent.ClickSkipCeremony -> skipCeremony()
+
+            MealRecordIntent.TutorialSkip -> if (currentState.phase.isTutorial && currentState.phase is MealCameraPhase.Captured) {
+                dispatch(MealRecordReducerEvent.TutorialSkipConfirmChanged(remainingTutorialLessons()))
+            }
+
+            MealRecordIntent.TutorialSkipCancelled -> dispatch(MealRecordReducerEvent.TutorialSkipConfirmChanged(null))
+
+            MealRecordIntent.TutorialSkipConfirmed -> skipTutorial()
 
             MealRecordIntent.ClickClose -> when (currentState.phase) {
                 // 업로드 진행 중 이탈은 차단하고, 접수된 뒤에는 연출을 건너뛰고 곧장 마무리한다.
@@ -175,6 +197,17 @@ class MealRecordViewModel @Inject constructor(
             MealRecordReducerEvent.FinishStarted -> state.copy(isFinishing = true)
 
             is MealRecordReducerEvent.RoomBackgroundLoaded -> state.copy(roomBackgroundItemId = event.itemId)
+
+            is MealRecordReducerEvent.TutorialSkipConfirmChanged -> state.copy(tutorialSkipConfirm = event.remaining)
+
+            is MealRecordReducerEvent.TutorialChecked -> state.copy(
+                isTutorialChecked = true,
+                phase = if (event.isTutorial && state.phase is MealCameraPhase.Preview) {
+                    MealCameraPhase.Captured(TUTORIAL_PHOTO_PATH, MealPhotoSource.CAMERA)
+                } else {
+                    state.phase
+                },
+            )
         }
 
     /** 연출 단계일 때만 [block] 으로 연출 상태를 바꾼다. */
@@ -223,6 +256,46 @@ class MealRecordViewModel @Inject constructor(
                     analyticsHelper.logEvent(
                         AnalyticsEvent.MealSubmitSuccess(source = source, durationSec = openedAt.elapsedNow().inWholeSeconds),
                     )
+                }
+                .onFailure {
+                    dispatch(MealRecordReducerEvent.SubmitFailed)
+                    finishRecord()
+                }
+        }
+    }
+
+    /** 홈이 옮겨 둔 서버 값으로 식사 기록 튜토리얼인지 정한다. 읽지 못하면 평소처럼 찍는다. */
+    private fun checkTutorial() {
+        viewModelScope.launch {
+            val isTutorial = try {
+                tutorialHelper.isMealTutorialRequired()
+            } catch (_: IOException) {
+                false
+            }
+            dispatch(MealRecordReducerEvent.TutorialChecked(isTutorial))
+        }
+    }
+
+    /**
+     * 냐미가 준비한 예시 사진으로 튜토리얼 식사를 기록한다. 사진은 올리지 않는다.
+     * 접수되면 평소처럼 연출을 이어 가고, 이미 했다고 하면 연출 없이 홈으로 간다. 실패하면 UseCase 가 안내하고 홈으로 간다.
+     * 사진을 올리지 않아 응답이 바로 오므로, 접수 결과는 [TUTORIAL_MIN_WAIT_MILLIS]가 지난 뒤에 반영한다.
+     * 그래야 사진 카드가 올라오고 냐미가 두근두근 기다리는 장면을 보고 띠욧으로 넘어간다.
+     */
+    private fun submitTutorial() {
+        if (currentState.phase !is MealCameraPhase.Captured) return
+        dispatch(MealRecordReducerEvent.SubmitStarted)
+        val startedAt = TimeSource.Monotonic.markNow()
+        viewModelScope.launch {
+            submitTutorialMeal()
+                .onSuccess { result ->
+                    when (result) {
+                        is TutorialMealResult.Accepted -> {
+                            delay((TUTORIAL_MIN_WAIT_MILLIS - startedAt.elapsedNow().inWholeMilliseconds).coerceAtLeast(0L))
+                            dispatch(MealRecordReducerEvent.SubmitSucceeded(result.meal.rewardBoxGrade))
+                        }
+                        TutorialMealResult.AlreadyCompleted -> finishRecord()
+                    }
                 }
                 .onFailure {
                     dispatch(MealRecordReducerEvent.SubmitFailed)
@@ -281,7 +354,34 @@ class MealRecordViewModel @Inject constructor(
         }
     }
 
+    /** 건너뛰기 확인에 보일 남은 안내. 꺼진 기능은 뺀다. */
+    private fun remainingTutorialLessons(): ImmutableList<NyummyTutorialLesson> = buildList {
+        add(NyummyTutorialLesson.RecordMeal)
+        if (remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)) add(NyummyTutorialLesson.OpenBox)
+        if (remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled)) add(NyummyTutorialLesson.DecorateRoom)
+        add(NyummyTutorialLesson.CatHealth)
+    }.toImmutableList()
+
+    /**
+     * 건너뛰기를 확정했다. 연출 없이 튜토리얼 식사를 대신 기록해 서버에 마쳤다고 남기고(첫 보상 상자도 받는다),
+     * 냐미 건강 이야기만 남긴 뒤 홈으로 돌아간다. 기록 결과와 상관없이 홈이 건강 이야기를 보인다(실패 안내는 UseCase가 한다).
+     */
+    private fun skipTutorial() {
+        if (currentState.isFinishing) return
+        dispatch(MealRecordReducerEvent.TutorialSkipConfirmChanged(null))
+        dispatch(MealRecordReducerEvent.FinishStarted)
+        viewModelScope.launch {
+            submitTutorialMeal()
+            try {
+                tutorialHelper.skipToHealthStory()
+            } catch (_: IOException) {
+            }
+            navigationHelper.navigateToBack()
+        }
+    }
+
     private fun deletePhotoFile(photoPath: String) {
+        if (photoPath == TUTORIAL_PHOTO_PATH) return
         runCatching { File(photoPath).delete() }
     }
 
@@ -305,3 +405,6 @@ private val MealRecordUIState.analyticsStage: String
         is MealCameraPhase.Captured -> "confirm"
         is MealCameraPhase.Ceremony -> if (phase.submit == MealSubmitStatus.Failed) "failed" else "uploading"
     }
+
+/** 튜토리얼 식사 접수 결과를 반영하기까지 기다리는 최소 시간. 사진 카드가 올라오고(약 1초) 두근두근을 잠깐 보여 준다. */
+private const val TUTORIAL_MIN_WAIT_MILLIS = 2_500L

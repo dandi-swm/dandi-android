@@ -7,8 +7,11 @@ import com.dandi.nyummy.cat.entity.CatAnimationVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
@@ -25,6 +28,7 @@ import com.dandi.nyummy.room.presentation.model.toRoomCatMotion
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -37,10 +41,13 @@ class MyRoomViewModel @Inject constructor(
     private val catMotionPicker: CatMotionPicker,
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
+    private val tutorialHelper: TutorialHelper,
 ) : MviViewModel<MyRoomIntent, MyRoomUIState, MyRoomReducerEvent>(MyRoomUIState()) {
 
     /** 방에서 쓰는 냐미 애니메이션(마이룸 꾸미기 상태). 받지 못했으면 null이고 냐미를 그리지 않는다. */
     private var catAnimation: CatAnimationVO? = null
+
+    private var tutorialJob: Job? = null
 
     init {
         load()
@@ -50,7 +57,11 @@ class MyRoomViewModel @Inject constructor(
     override fun onIntent(intent: MyRoomIntent) {
         when (intent) {
             MyRoomIntent.ClickBack -> clickBack()
-            MyRoomIntent.ClickSave -> save()
+            MyRoomIntent.ClickSave -> {
+                // 저장 안내는 화면을 막지 않아 사용자가 저장 버튼을 직접 누른다. 결과를 기다리는 동안 안내를 내린다.
+                if (currentState.tutorial?.phase == MyRoomTutorialPhase.Save) changeTutorial(MyRoomTutorialUiState(MyRoomTutorialPhase.Saving))
+                save()
+            }
             MyRoomIntent.RetryLoad -> load()
             is MyRoomIntent.SelectTab -> dispatch(MyRoomReducerEvent.TabSelected(intent.category))
             is MyRoomIntent.ClickInteriorItem -> clickInteriorItem(intent)
@@ -64,6 +75,15 @@ class MyRoomViewModel @Inject constructor(
             // TODO: 상점 화면이 생기면 ShopPage로 연결한다.
             MyRoomIntent.ClickShop -> messageHelper.showToast(CommonR.string.nyummy_not_ready)
             is MyRoomIntent.CatMotionFinished -> if (intent.playId == currentState.catMotion?.playId) startCatMotion()
+            MyRoomIntent.TutorialAdvance -> advanceTutorial()
+            MyRoomIntent.TutorialTargetClicked -> if (currentState.tutorial?.phase == MyRoomTutorialPhase.Place) {
+                changeTutorial(MyRoomTutorialUiState(MyRoomTutorialPhase.Save))
+            }
+            MyRoomIntent.TutorialSkip -> currentState.tutorial?.let {
+                changeTutorial(it.copy(skipConfirm = persistentListOf(NyummyTutorialLesson.DecorateRoom, NyummyTutorialLesson.CatHealth)))
+            }
+            MyRoomIntent.TutorialSkipCancelled -> currentState.tutorial?.let { changeTutorial(it.copy(skipConfirm = null)) }
+            MyRoomIntent.TutorialSkipConfirmed -> endTutorial { tutorialHelper.skipToHealthStory() }
         }
     }
 
@@ -96,14 +116,69 @@ class MyRoomViewModel @Inject constructor(
                 savedRoom = if (event.isSaved) state.room else state.savedRoom,
             )
             is MyRoomReducerEvent.CatMotionChanged -> state.copy(catMotion = event.motion)
+            is MyRoomReducerEvent.TutorialChanged -> state.copy(tutorial = event.tutorial)
         }
 
     private fun load() {
         dispatch(MyRoomReducerEvent.LoadStarted)
         viewModelScope.launch {
             getRoom()
-                .onSuccess { dispatch(MyRoomReducerEvent.Loaded(it)) }
+                .onSuccess {
+                    dispatch(MyRoomReducerEvent.Loaded(it))
+                    updateTutorial()
+                }
                 .onFailure { dispatch(MyRoomReducerEvent.LoadFailed) }
+        }
+    }
+
+    /**
+     * 마이룸 안내가 남아 있으면 띄운다. 놓지 않은 아이템이 있으면 그 탭으로 바꿔 칸을 가리키고, 없으면 꾸미기를 소개한다.
+     * 인테리어를 배경보다 먼저 고른다. 방을 다시 불러오면 처음부터 다시 고른다.
+     */
+    private fun updateTutorial() {
+        tutorialJob?.cancel()
+        tutorialJob = viewModelScope.launch {
+            if (!tutorialHelper.isPending(TutorialStep.ROOM)) return@launch
+            val item = currentState.inventoryTabs
+                .sortedBy { it.category == RoomItemCategory.BACKGROUND }
+                .firstNotNullOfOrNull { tab -> tab.items.firstOrNull { !it.isPlaced } }
+            if (item == null) {
+                changeTutorial(MyRoomTutorialUiState(MyRoomTutorialPhase.Intro))
+                return@launch
+            }
+            dispatch(MyRoomReducerEvent.TabSelected(item.category))
+            changeTutorial(MyRoomTutorialUiState(MyRoomTutorialPhase.Place, itemId = item.roomItemId))
+        }
+    }
+
+    private fun advanceTutorial() {
+        val tutorial = currentState.tutorial ?: return
+        if (tutorial.phase != MyRoomTutorialPhase.Intro) return
+        if (tutorial.isLastIntro) {
+            // 저장하지 않았으니 방 저장 안내도 함께 마친다.
+            endTutorial {
+                tutorialHelper.complete(TutorialStep.ROOM)
+                tutorialHelper.complete(TutorialStep.HOME_ROOM_SAVED)
+            }
+        } else {
+            changeTutorial(tutorial.copy(introIndex = tutorial.introIndex + 1))
+        }
+    }
+
+    private fun changeTutorial(tutorial: MyRoomTutorialUiState?) {
+        dispatch(MyRoomReducerEvent.TutorialChanged(tutorial))
+    }
+
+    /**
+     * 튜토리얼을 닫고 [record]로 남긴 뒤(소개 마침 또는 건너뛰기) 홈으로 돌아간다. 홈이 다음 단계(냐미 건강 이야기)를 보인다.
+     * 돌아가면 viewModelScope가 끝나므로 기록을 마친 뒤 돌아간다.
+     */
+    private fun endTutorial(record: suspend () -> Unit) {
+        if (currentState.tutorial == null) return
+        changeTutorial(null)
+        tutorialJob = viewModelScope.launch {
+            record()
+            navigationHelper.navigateToBack()
         }
     }
 
@@ -239,6 +314,11 @@ class MyRoomViewModel @Inject constructor(
             saveRoom(state.room.toPlacements())
                 .onSuccess {
                     dispatch(MyRoomReducerEvent.SaveFinished(isSaved = true))
+                    // 안내대로 저장했다. 돌아가면 viewModelScope가 끝나므로 돌아가기 전에 기록을 마친다.
+                    if (currentState.tutorial?.phase == MyRoomTutorialPhase.Saving) {
+                        changeTutorial(null)
+                        tutorialHelper.complete(TutorialStep.ROOM)
+                    }
                     navigationHelper.navigateToBack()
                     messageHelper.showSnackBar(iconType = IconType.SUCCESS, messageText = SAVED_MESSAGE)
                 }
@@ -249,6 +329,10 @@ class MyRoomViewModel @Inject constructor(
                         load()
                     } else {
                         messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = SAVE_FAILED_MESSAGE)
+                        // 저장하지 못했으니 저장을 다시 가리킨다.
+                        if (currentState.tutorial?.phase == MyRoomTutorialPhase.Saving) {
+                            changeTutorial(MyRoomTutorialUiState(MyRoomTutorialPhase.Save))
+                        }
                     }
                 }
         }

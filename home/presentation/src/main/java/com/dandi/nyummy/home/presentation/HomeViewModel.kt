@@ -14,18 +14,25 @@ import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.time.DeviceTime
+import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.home.domain.tti.HomeTTIPage
+import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.mailbox.domain.MailboxPage
+import com.dandi.nyummy.meal.domain.SubmitTutorialMealUseCase
 import com.dandi.nyummy.settings.domain.SettingsPage
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TimelineCategory
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -43,6 +50,8 @@ class HomeViewModel @Inject constructor(
     private val companionMemory: CompanionMemoryHelper,
     private val ttiHelper: TTIHelper,
     private val remoteConfigHelper: RemoteConfigHelper,
+    private val tutorialHelper: TutorialHelper,
+    private val submitTutorialMeal: SubmitTutorialMealUseCase,
 ) : MviViewModel<HomeIntent, HomeUIState, HomeReducerEvent>(HomeUIState.empty) {
 
     init {
@@ -52,6 +61,8 @@ class HomeViewModel @Inject constructor(
 
     private var summaryJob: Job? = null
     private var catAnimationsJob: Job? = null
+    private var tutorialJob: Job? = null
+    private var tutorialRecordJob: Job? = null
 
     /** 홈 요약을 한 번이라도 읽었는지. 첫 진입을 "방금 기록하고 돌아옴"으로 착각하지 않게 한다. */
     private var hasLoadedSummary = false
@@ -123,6 +134,18 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.CatMotionFinished -> if (intent.playId == currentState.catPlayId) finishCatMotion()
             HomeIntent.CatShown -> onCatShown()
             HomeIntent.SummaryShown -> onSummaryShown()
+            HomeIntent.TutorialAdvance -> advanceTutorial()
+            HomeIntent.TutorialTargetClicked -> onTutorialTargetClicked()
+            HomeIntent.TutorialSkip -> dispatch(HomeReducerEvent.TutorialSkipConfirmChanged(remainingLessons()))
+            HomeIntent.TutorialSkipCancelled -> dispatch(HomeReducerEvent.TutorialSkipConfirmChanged(null))
+            HomeIntent.TutorialSkipConfirmed -> skipTutorial()
+            HomeIntent.HealthStoryNext -> currentState.healthStory?.let {
+                dispatch(HomeReducerEvent.HealthStoryChanged(it.copy(page = it.page + 1)))
+            }
+            HomeIntent.TutorialFinished -> {
+                dispatch(HomeReducerEvent.HealthStoryChanged(null))
+                tutorialRecordJob = viewModelScope.launch { tutorialHelper.finish() }
+            }
         }
     }
 
@@ -150,6 +173,9 @@ class HomeViewModel @Inject constructor(
             is HomeReducerEvent.CatLineRevealed ->
                 if (event.lineId == state.catLineId) state.copy(isCatLineRevealed = true) else state
             is HomeReducerEvent.CatMoodChanged -> state.copy(catMood = event.mood, catDebugLabel = event.debugLabel)
+            is HomeReducerEvent.TutorialChanged -> state.copy(tutorial = event.tutorial)
+            is HomeReducerEvent.TutorialSkipConfirmChanged -> state.copy(tutorialSkipConfirm = event.remaining)
+            is HomeReducerEvent.HealthStoryChanged -> state.copy(healthStory = event.story)
         }
 
     /**
@@ -170,7 +196,104 @@ class HomeViewModel @Inject constructor(
                 dispatch(HomeReducerEvent.SummaryLoaded(summary, room, showsMailBadge))
                 if (recordedJustNow) pendingReaction = CatReaction.EAT
                 driveCat()
+                updateTutorial(summary)
             }
+        }
+    }
+
+    /**
+     * 요약을 받을 때마다 보여 줄 튜토리얼 단계를 고른다. 같은 단계를 보여 주는 중이면 대사 위치를 지킨다.
+     * 건너뛴 직후(냐미 건강 이야기만 남음) → 튜토리얼 식사 전 소개 → 우편 버튼 → 마이룸 탭 → 냐미 건강 이야기 순으로 본다.
+     * 기능 플래그가 꺼진 기능의 단계는 그 자리에서 마친다. 나중에 켜져도 지난 사용자에게 갑자기 뜨지 않게 한다.
+     * 서버의 튜토리얼 완료 여부는 식사 기록 화면이 읽을 수 있게 [TutorialHelper]에 옮겨 둔다.
+     */
+    private fun updateTutorial(summary: HomeSummaryVO) {
+        if (currentState.healthStory != null || tutorialJob?.isActive == true) return
+        tutorialJob = viewModelScope.launch {
+            tutorialHelper.setMealTutorialRequired(!summary.isTutorialCompleted)
+            // 방금 마친 단계를 기록하는 중이면 끝난 뒤에 고른다. 그래야 같은 안내가 다시 뜨지 않는다.
+            tutorialRecordJob?.join()
+            val pending = tutorialHelper.pendingSteps().toMutableSet()
+            if (!remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)) pending.completeAll(TutorialStep.HOME_MAIL, TutorialStep.MAILBOX)
+            if (!remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled)) {
+                pending.completeAll(TutorialStep.HOME_ROOM_TAB, TutorialStep.ROOM, TutorialStep.HOME_ROOM_SAVED)
+            }
+            val stage = when {
+                TutorialStep.HEALTH_STORY in pending && pending.none { it in StepsBeforeStory } -> {
+                    dispatch(HomeReducerEvent.TutorialChanged(null))
+                    dispatch(HomeReducerEvent.HealthStoryChanged(HomeHealthStoryUiState()))
+                    return@launch
+                }
+                !summary.isTutorialCompleted -> HomeTutorialStage.Intro
+                TutorialStep.MAILBOX in pending -> HomeTutorialStage.MailPointer
+                TutorialStep.ROOM in pending -> HomeTutorialStage.RoomTabPointer
+                TutorialStep.HOME_ROOM_SAVED in pending -> HomeTutorialStage.RoomSaved
+                else -> null
+            }
+            val current = currentState.tutorial
+            if (current?.stage == stage) return@launch
+            dispatch(HomeReducerEvent.TutorialChanged(stage?.let { HomeTutorialUiState(it) }))
+        }
+    }
+
+    /** 다음 대사로 넘긴다. 방 저장 안내를 끝까지 보면 그 단계를 마치고 냐미 건강 이야기를 보인다. */
+    private fun advanceTutorial() {
+        val tutorial = currentState.tutorial ?: return
+        when {
+            tutorial.canAdvance -> dispatch(HomeReducerEvent.TutorialChanged(tutorial.copy(index = tutorial.index + 1)))
+            tutorial.stage == HomeTutorialStage.RoomSaved -> {
+                dispatch(HomeReducerEvent.TutorialChanged(null))
+                dispatch(HomeReducerEvent.HealthStoryChanged(HomeHealthStoryUiState()))
+                tutorialRecordJob = viewModelScope.launch { tutorialHelper.complete(TutorialStep.HOME_ROOM_SAVED) }
+            }
+        }
+    }
+
+    private suspend fun MutableSet<TutorialStep>.completeAll(vararg steps: TutorialStep) {
+        steps.filter { it in this }.forEach {
+            tutorialHelper.complete(it)
+            remove(it)
+        }
+    }
+
+    /**
+     * 가리킨 곳을 눌렀다. 이동은 그 버튼이 한다. 우편 버튼과 마이룸 탭 단계는 이 홈 단계를 마치고 코치마크를 내린다
+     * (그 화면 단계를 마치지 않고 돌아오면 다음 요약에서 다시 가리킨다). 소개의 카메라 버튼은 서버가 마쳤다고 할 때까지 둔다.
+     */
+    private fun onTutorialTargetClicked() {
+        val step = when (currentState.tutorial?.stage) {
+            HomeTutorialStage.MailPointer -> TutorialStep.HOME_MAIL
+            HomeTutorialStage.RoomTabPointer -> TutorialStep.HOME_ROOM_TAB
+            else -> return
+        }
+        dispatch(HomeReducerEvent.TutorialChanged(null))
+        tutorialRecordJob = viewModelScope.launch { tutorialHelper.complete(step) }
+    }
+
+    /** 건너뛰기 확인에 보일 남은 안내. 지금 단계 뒤의 것만, 꺼진 기능은 빼고 보인다. */
+    private fun remainingLessons(): ImmutableList<NyummyTutorialLesson> {
+        val mail = remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)
+        val room = remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled)
+        return buildList {
+            if (currentState.tutorial?.stage == HomeTutorialStage.Intro) add(NyummyTutorialLesson.RecordMeal)
+            if (mail && currentState.tutorial?.stage == HomeTutorialStage.Intro) add(NyummyTutorialLesson.OpenBox)
+            if (room && currentState.tutorial?.stage != HomeTutorialStage.RoomSaved) add(NyummyTutorialLesson.DecorateRoom)
+            add(NyummyTutorialLesson.CatHealth)
+        }.toImmutableList()
+    }
+
+    /**
+     * 건너뛰기를 확정했다. 튜토리얼 식사 전이면 튜토리얼 식사를 대신 기록해 서버에 마쳤다고 남긴다(실패 안내는 UseCase가 한다).
+     * 결과와 상관없이 냐미 건강 이야기만 남기고 바로 보인다.
+     */
+    private fun skipTutorial() {
+        dispatch(HomeReducerEvent.TutorialSkipConfirmChanged(null))
+        dispatch(HomeReducerEvent.TutorialChanged(null))
+        dispatch(HomeReducerEvent.HealthStoryChanged(HomeHealthStoryUiState()))
+        val beforeMeal = !currentState.summary.isTutorialCompleted
+        tutorialRecordJob = viewModelScope.launch {
+            if (beforeMeal) submitTutorialMeal()
+            tutorialHelper.skipToHealthStory()
         }
     }
 
@@ -378,3 +501,12 @@ class HomeViewModel @Inject constructor(
         const val LINE_EVERY_MOTIONS = 2
     }
 }
+
+/** 냐미 건강 이야기보다 먼저 보여 주는 단계. 하나라도 남아 있으면 건강 이야기를 미룬다. */
+private val StepsBeforeStory = setOf(
+    TutorialStep.HOME_MAIL,
+    TutorialStep.MAILBOX,
+    TutorialStep.HOME_ROOM_TAB,
+    TutorialStep.ROOM,
+    TutorialStep.HOME_ROOM_SAVED,
+)

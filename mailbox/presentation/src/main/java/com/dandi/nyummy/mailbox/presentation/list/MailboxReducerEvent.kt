@@ -35,6 +35,9 @@ sealed interface MailboxReducerEvent : ReducerEvent {
     /** 되돌리기나 삭제 실패로 [row]를 원래 자리([index])에 다시 넣는다. */
     data class MailRestored(val row: MailRowUiModel, val index: Int) : MailboxReducerEvent
 
+    /** 튜토리얼을 띄우거나 바꾸거나 닫았다(null). */
+    data class TutorialChanged(val tutorial: MailboxTutorialUiState?) : MailboxReducerEvent
+
     /** 상자 열기 연출의 변화. 우편 목록은 바꾸지 않는다. */
     sealed interface BoxOpeningEvent : MailboxReducerEvent
 

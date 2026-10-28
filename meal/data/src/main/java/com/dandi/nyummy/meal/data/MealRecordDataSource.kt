@@ -9,4 +9,8 @@ class MealRecordDataSource(
 ) : BaseRemoteDataSource() {
     suspend fun createMeal(request: CreateMealRequestDTO): CreatedMealDTO =
         checkResponse(apiService.createMeal(request))
+
+    /** 본문 없는 204가 성공이다. */
+    suspend fun createTutorialMeal(): Unit =
+        checkResponse(apiService.createTutorialMeal())
 }

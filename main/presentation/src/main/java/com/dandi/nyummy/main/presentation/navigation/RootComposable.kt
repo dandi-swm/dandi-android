@@ -23,11 +23,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.core.view.WindowCompat
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.Page
+import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.coachmark.CoachMarkHost
+import com.dandi.nyummy.common.presentation.coachmark.CoachMarkLayer
+import com.dandi.nyummy.common.presentation.coachmark.LocalCoachMarkHost
+import com.dandi.nyummy.common.presentation.coachmark.MainCoachMarkKeys
+import com.dandi.nyummy.common.presentation.coachmark.coachMarkTarget
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomNav
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialog
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialogType
@@ -37,7 +44,6 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySnackba
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyToastHost
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyToastHostState
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
-import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.helper.BottomBarVisibility
 import com.dandi.nyummy.common.presentation.helper.LocalBottomBarVisibility
 import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
@@ -136,62 +142,83 @@ fun RootComposable(
         )
     }
 
+    // 첫 사용자 튜토리얼 코치마크. 화면과 바텀 네비가 대상을 등록하고, 맨 위 층에서 그린다.
+    val coachMarkHost = remember { CoachMarkHost() }
+    val onSelectTab: (Int) -> Unit = { index ->
+        val page = mainTabPages[index]
+        if (isMainTabReady(page, mainTabFlags())) {
+            navigationHelper.navigateTo(page)
+        } else {
+            messageHelper.showToast(CommonR.string.nyummy_not_ready)
+        }
+    }
+    val onMealRecordClick = { navigationHelper.navigateTo(MealRecordPage) }
+
     val drawsBehindSystemBars = currentRoute?.drawsBehindSystemBars == true
     // 홈 눈 버튼처럼 화면이 잠시 하단 내비를 숨길 수 있다.
     val bottomBarVisibility = remember { BottomBarVisibility() }
     val showsBottomBar = currentRoute?.isBottomTab == true && currentTabIndex >= 0 && !bottomBarVisibility.isHidden
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = NyummyTheme.colors.bg.canvas,
-        snackbarHost = {
-            // Scaffold는 스낵바를 하단 탭 위나 contentWindowInsets의 하단 인셋만큼 올린다. 하단 탭이 있으면 탭바 위 12에 둔다.
-            // 전체 화면 라우트는 인셋을 0으로 두고 하단 탭도 없어, 직접 올리지 않으면 스낵바가
-            // 시스템 내비게이션 바(3버튼) 뒤에 깔린다.
-            // 토스트도 같은 자리에 띄운다.
-            Box(
-                modifier = when {
-                    showsBottomBar -> Modifier.padding(bottom = NyummyTheme.spacing.s12)
-                    drawsBehindSystemBars -> Modifier.navigationBarsPadding()
-                    else -> Modifier
+    CompositionLocalProvider(LocalCoachMarkHost provides coachMarkHost) {
+        Box(modifier = modifier.fillMaxSize()) {
+            Scaffold(
+                modifier = Modifier
+                    .fillMaxSize()
+                    // 화면을 덮는 코치마크가 떠 있는 동안 아래 화면은 화면 읽기에서 뺀다.
+                    .then(if (coachMarkHost.mark?.blocksTouches == true) Modifier.clearAndSetSemantics {} else Modifier),
+                containerColor = NyummyTheme.colors.bg.canvas,
+                snackbarHost = {
+                    // Scaffold는 스낵바를 하단 탭 위나 contentWindowInsets의 하단 인셋만큼 올린다. 하단 탭이 있으면 탭바 위 12에 둔다.
+                    // 전체 화면 라우트는 인셋을 0으로 두고 하단 탭도 없어, 직접 올리지 않으면 스낵바가
+                    // 시스템 내비게이션 바(3버튼) 뒤에 깔린다.
+                    // 토스트도 같은 자리에 띄운다.
+                    Box(
+                        modifier = when {
+                            showsBottomBar -> Modifier.padding(bottom = NyummyTheme.spacing.s12)
+                            drawsBehindSystemBars -> Modifier.navigationBarsPadding()
+                            else -> Modifier
+                        },
+                        contentAlignment = Alignment.BottomCenter,
+                    ) {
+                        NyummySnackbarHost(hostState = snackBarHostState)
+                        NyummyToastHost(hostState = toastHostState)
+                    }
                 },
-                contentAlignment = Alignment.BottomCenter,
-            ) {
-                NyummySnackbarHost(hostState = snackBarHostState)
-                NyummyToastHost(hostState = toastHostState)
+                // 전체 화면 라우트는 시스템 바 뒤까지 그리고 인셋을 스스로 처리한다. 나머지는 Scaffold가 민다.
+                contentWindowInsets = if (drawsBehindSystemBars) {
+                    WindowInsets(0, 0, 0, 0)
+                } else {
+                    ScaffoldDefaults.contentWindowInsets
+                },
+                bottomBar = {
+                    if (showsBottomBar) {
+                        // 내비가 시스템 내비게이션 바 영역까지 흰 바탕을 이어 그린다.
+                        NyummyBottomNav(
+                            items = NyummyMainTabs,
+                            selectedIndex = currentTabIndex,
+                            onSelect = onSelectTab,
+                            centerAction = NyummyMealRecordAction,
+                            centerActionIndex = MealRecordActionIndex,
+                            onCenterActionClick = onMealRecordClick,
+                            tabModifier = { index ->
+                                if (mainTabPages[index] == MyRoomPage) {
+                                    Modifier.coachMarkTarget(MainCoachMarkKeys.MyRoomTab) { onSelectTab(index) }
+                                } else {
+                                    Modifier
+                                }
+                            },
+                            centerActionModifier = Modifier.coachMarkTarget(MainCoachMarkKeys.MealRecord, onMealRecordClick),
+                        )
+                    }
+                }
+            ) { innerPadding ->
+                CompositionLocalProvider(LocalBottomBarVisibility provides bottomBarVisibility) {
+                    AppNavHost(
+                        backStack = backStack,
+                        modifier = if (currentRoute?.drawsBehindBottomBar == true) Modifier else Modifier.padding(innerPadding),
+                    )
+                }
             }
-        },
-        // 전체 화면 라우트는 시스템 바 뒤까지 그리고 인셋을 스스로 처리한다. 나머지는 Scaffold가 민다.
-        contentWindowInsets = if (drawsBehindSystemBars) {
-            WindowInsets(0, 0, 0, 0)
-        } else {
-            ScaffoldDefaults.contentWindowInsets
-        },
-        bottomBar = {
-            if (showsBottomBar) {
-                // 내비가 시스템 내비게이션 바 영역까지 흰 바탕을 이어 그린다.
-                NyummyBottomNav(
-                    items = NyummyMainTabs,
-                    selectedIndex = currentTabIndex,
-                    onSelect = { index ->
-                        val page = mainTabPages[index]
-                        if (isMainTabReady(page, mainTabFlags())) {
-                            navigationHelper.navigateTo(page)
-                        } else {
-                            messageHelper.showToast(CommonR.string.nyummy_not_ready)
-                        }
-                    },
-                    centerAction = NyummyMealRecordAction,
-                    centerActionIndex = MealRecordActionIndex,
-                    onCenterActionClick = { navigationHelper.navigateTo(MealRecordPage) },
-                )
-            }
-        }
-    ) { innerPadding ->
-        CompositionLocalProvider(LocalBottomBarVisibility provides bottomBarVisibility) {
-            AppNavHost(
-                backStack = backStack,
-                modifier = if (currentRoute?.drawsBehindBottomBar == true) Modifier else Modifier.padding(innerPadding),
-            )
+            CoachMarkLayer(host = coachMarkHost)
         }
     }
 }

@@ -6,11 +6,16 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
+import com.dandi.nyummy.common.entity.tutorial.TutorialStep
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.mailbox.domain.ClaimAllMailsUseCase
 import com.dandi.nyummy.mailbox.domain.ClaimMailUseCase
 import com.dandi.nyummy.mailbox.domain.DeleteMailUseCase
@@ -54,6 +59,9 @@ class MailboxItemTabViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val repository = FakeMailboxRepository()
     private val messageHelper = RecordingMessageHelper()
+    private val navigationHelper = RecordingNavigationHelper()
+    private val tutorialHelper = FakeTutorialHelper()
+    private var isMyRoomEnabled = true
 
     @Before
     fun setUp() {
@@ -473,6 +481,125 @@ class MailboxItemTabViewModelTest {
         assertTrue(viewModel.uiState.value.items.mails.single().isClaimed)
     }
 
+    // region 첫 사용자 튜토리얼
+
+    @Test
+    fun `우편함 단계가 없으면 안내하지 않는다`() = runTest(testDispatcher) {
+        repository.mailPage = MailPageVO(mails = listOf(box(1)))
+
+        val viewModel = loadedViewModel()
+
+        assertNull(viewModel.uiState.value.tutorial)
+    }
+
+    @Test
+    fun `받지 않은 상자가 있으면 목록에서 가장 위의 받지 않은 상자의 열기를 가리킨다`() = runTest(testDispatcher) {
+        tutorialHelper.pending += TutorialStep.MAILBOX
+        repository.mailPage = MailPageVO(mails = listOf(mail(1), box(2).copy(isClaimed = true), box(3), box(4)))
+
+        val viewModel = loadedViewModel()
+
+        assertEquals(MailboxTutorialUiState(MailboxTutorialStage.OpenBox, boxMailId = 3), viewModel.uiState.value.tutorial)
+    }
+
+    @Test
+    fun `받을 상자가 없으면 우편함을 소개하고 넘기면 우편함 단계를 마치고 뒤로가기를 가리킨다`() = runTest(testDispatcher) {
+        tutorialHelper.pending += TutorialStep.MAILBOX
+        repository.mailPage = MailPageVO(mails = listOf(mail(1)))
+        val viewModel = loadedViewModel()
+        assertEquals(MailboxTutorialStage.Intro, viewModel.uiState.value.tutorial?.stage)
+
+        viewModel.onIntent(MailboxIntent.TutorialAdvance)
+        advanceUntilIdle()
+
+        assertEquals(MailboxTutorialStage.GoBack, viewModel.uiState.value.tutorial?.stage)
+        assertFalse(TutorialStep.MAILBOX in tutorialHelper.pending)
+    }
+
+    @Test
+    fun `안내대로 상자를 열고 연출을 닫으면 우편함 단계를 마치고 뒤로가기를 가리킨다`() = runTest(testDispatcher) {
+        tutorialHelper.pending += TutorialStep.MAILBOX
+        repository.mailPage = MailPageVO(mails = listOf(box(1)))
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MailboxIntent.ClaimMail(1))
+        viewModel.onIntent(MailboxIntent.TutorialTargetClicked)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.tutorial!!.isWaitingForBox)
+        assertTrue(TutorialStep.MAILBOX in tutorialHelper.pending)
+
+        viewModel.onIntent(MailboxIntent.BoxOpeningBurstFinished)
+        viewModel.onIntent(MailboxIntent.CloseBoxOpening)
+        advanceUntilIdle()
+
+        assertEquals(MailboxTutorialUiState(MailboxTutorialStage.GoBack, isRoomNext = true), viewModel.uiState.value.tutorial)
+        assertFalse(TutorialStep.MAILBOX in tutorialHelper.pending)
+    }
+
+    @Test
+    fun `마이룸 기능이 꺼져 있으면 뒤로가기 안내가 홈으로 돌아가자고 한다`() = runTest(testDispatcher) {
+        isMyRoomEnabled = false
+        tutorialHelper.pending += TutorialStep.MAILBOX
+        repository.mailPage = MailPageVO(mails = listOf(mail(1)))
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MailboxIntent.TutorialAdvance)
+
+        assertFalse(viewModel.uiState.value.tutorial!!.isRoomNext)
+    }
+
+    @Test
+    fun `안내한 상자를 받지 못하면 실패 안내 뒤 같은 상자를 다시 가리킨다`() = runTest(testDispatcher) {
+        tutorialHelper.pending += TutorialStep.MAILBOX
+        repository.mailPage = MailPageVO(mails = listOf(box(1)))
+        val viewModel = loadedViewModel()
+        repository.claimOverride = { throw httpException(400) }
+
+        viewModel.onIntent(MailboxIntent.ClaimMail(1))
+        viewModel.onIntent(MailboxIntent.TutorialTargetClicked)
+        advanceUntilIdle()
+        viewModel.onIntent(MailboxIntent.BoxOpeningFailureShown)
+
+        assertEquals(MailboxTutorialUiState(MailboxTutorialStage.OpenBox, boxMailId = 1), viewModel.uiState.value.tutorial)
+        assertTrue(TutorialStep.MAILBOX in tutorialHelper.pending)
+    }
+
+    @Test
+    fun `건너뛰기를 누르면 남은 안내와 함께 확인을 띄우고 계속 배우면 닫는다`() = runTest(testDispatcher) {
+        tutorialHelper.pending += TutorialStep.MAILBOX
+        repository.mailPage = MailPageVO(mails = listOf(box(1)))
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MailboxIntent.TutorialSkip)
+
+        assertEquals(
+            listOf(NyummyTutorialLesson.OpenBox, NyummyTutorialLesson.DecorateRoom, NyummyTutorialLesson.CatHealth),
+            viewModel.uiState.value.tutorial?.skipConfirm,
+        )
+
+        viewModel.onIntent(MailboxIntent.TutorialSkipCancelled)
+
+        assertNull(viewModel.uiState.value.tutorial?.skipConfirm)
+        assertEquals(MailboxTutorialStage.OpenBox, viewModel.uiState.value.tutorial?.stage)
+    }
+
+    @Test
+    fun `건너뛰기를 확정하면 냐미 건강 이야기만 남기고 홈으로 돌아간다`() = runTest(testDispatcher) {
+        tutorialHelper.pending += TutorialStep.entries
+        repository.mailPage = MailPageVO(mails = listOf(box(1)))
+        val viewModel = loadedViewModel()
+        viewModel.onIntent(MailboxIntent.TutorialSkip)
+
+        viewModel.onIntent(MailboxIntent.TutorialSkipConfirmed)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.tutorial)
+        assertEquals(setOf(TutorialStep.HEALTH_STORY), tutorialHelper.pending)
+        assertEquals(1, navigationHelper.backCount)
+    }
+
+    // endregion
+
     private fun TestScope.loadedViewModel(): MailboxViewModel {
         val viewModel = createViewModel()
         viewModel.onIntent(MailboxIntent.ScreenResumed)
@@ -481,7 +608,6 @@ class MailboxItemTabViewModelTest {
     }
 
     private fun TestScope.createViewModel(): MailboxViewModel {
-        val navigationHelper = RecordingNavigationHelper()
         fun <T : Any> deps(build: (MailboxRepository, ResourceHelper, MessageHelper, NavigationHelper, TTIHelper) -> T) =
             build(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper)
         return MailboxViewModel(
@@ -492,6 +618,14 @@ class MailboxItemTabViewModelTest {
             restoreMail = deps(::RestoreMailUseCase),
             navigationHelper = navigationHelper,
             messageHelper = messageHelper,
+            tutorialHelper = tutorialHelper,
+            remoteConfigHelper = object : RemoteConfigHelper {
+                override suspend fun sync() = Unit
+
+                @Suppress("UNCHECKED_CAST")
+                override fun <T> get(key: RemoteConfigKey<T>): T =
+                    if (key == RemoteConfigKey.MyRoomEnabled) isMyRoomEnabled as T else key.defaultValue
+            },
             ioScope = this,
         )
     }
@@ -644,4 +778,29 @@ private object FakeTTIHelper : TTIHelper {
     override fun endTTITracking() = Unit
     override fun shotTTILogging() = Unit
     override fun addTTIMetaData(metadata: TTIMetaData, value: Any?) = Unit
+}
+
+/** 메모리로 동작하는 튜토리얼 진행 기록. */
+private class FakeTutorialHelper : TutorialHelper {
+    val pending = mutableSetOf<TutorialStep>()
+
+    override suspend fun pendingSteps(): Set<TutorialStep> = pending.toSet()
+    override suspend fun startAfterMeal() {
+        pending.clear()
+        pending += TutorialStep.entries
+    }
+
+    override suspend fun complete(step: TutorialStep) {
+        pending -= step
+    }
+
+    override suspend fun skipToHealthStory() {
+        pending.clear()
+        pending += TutorialStep.HEALTH_STORY
+    }
+
+    override suspend fun finish() = pending.clear()
+    override suspend fun clear() = pending.clear()
+    override suspend fun isMealTutorialRequired() = false
+    override suspend fun setMealTutorialRequired(required: Boolean) = Unit
 }

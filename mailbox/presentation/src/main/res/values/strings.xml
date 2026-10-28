@@ -18,4 +18,12 @@
     <string name="mailbox_box_reward_item_count">%1$s %2$d개</string>
     <string name="mailbox_box_reward_more_count">+%1$d</string>
     <string name="mailbox_box_reward_more">더 받았어요</string>
+
+    <string name="mailbox_tutorial_open_title">열기를 눌러 볼까?</string>
+    <string name="mailbox_tutorial_open_body">상자 안에 뭐가 들었을까</string>
+    <string name="mailbox_tutorial_intro_title">여긴 우편함이야</string>
+    <string name="mailbox_tutorial_intro_body">보상은 여기서 30일 동안 집사를 기다려</string>
+    <string name="mailbox_tutorial_back_title">보상을 받았어!</string>
+    <string name="mailbox_tutorial_back_body">이제 뒤로 가서 마이룸을 꾸며 보자</string>
+    <string name="mailbox_tutorial_back_home_body">이제 뒤로 가서 홈으로 돌아가 보자</string>
 </resources>

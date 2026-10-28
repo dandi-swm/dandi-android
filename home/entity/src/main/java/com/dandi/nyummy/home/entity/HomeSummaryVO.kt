@@ -16,6 +16,8 @@ import kotlinx.serialization.Serializable
  * @property todayMaxAttemptCount 하루에 시도할 수 있는 최대 횟수. 아직 화면에서 쓰지 않는다.
  * @property hasMailboxBadge 받을 수 있는 우편(받지 않았고 기한이 지나지 않은)이 있다. 홈 우편 버튼에 빨간 점을 단다.
  * @property roomPlacements 마이룸에 놓인 아이템(배경 포함). zIndex 오름차순이고 마이룸 조회의 놓인 아이템과 같다.
+ * @property isTutorialCompleted 튜토리얼 식사를 마쳤다. false면 홈이 첫 사용자 튜토리얼을 시작한다.
+ *   기본값은 true라 값을 모르면 튜토리얼을 띄우지 않는다.
  */
 @Serializable
 data class HomeSummaryVO(
@@ -29,6 +31,7 @@ data class HomeSummaryVO(
     val todayMaxAttemptCount: Int = 0,
     val hasMailboxBadge: Boolean = false,
     val roomPlacements: List<RoomPlacementVO> = emptyList(),
+    val isTutorialCompleted: Boolean = true,
 ) {
 
     companion object {

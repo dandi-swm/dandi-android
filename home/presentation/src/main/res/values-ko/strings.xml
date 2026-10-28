@@ -20,4 +20,27 @@
     <string name="home_prepare_progress_complete">준비 완료! 방으로 들어갈게요</string>
     <string name="home_prepare_progress_percent">%1$d%%</string>
     <string name="home_prepare_tip">냐미를 누르면 새로운 이야기를 들려줘요</string>
+    <string name="home_tutorial_hello_title">안녕, 집사! 나는 냐미야</string>
+    <string name="home_tutorial_hello_body">집사가 밥을 기록하면 나도 같이 먹을 수 있어</string>
+    <string name="home_tutorial_reward_title">밥을 기록하면 보상 상자도 받아</string>
+    <string name="home_tutorial_reward_body">상자는 우편함으로 도착해</string>
+    <string name="home_tutorial_camera_title">여기를 눌러 첫 기록을 해 보자!</string>
+    <string name="home_tutorial_camera_body">밥을 먹을 때마다 사진 한 장이면 기록 끝이야</string>
+    <string name="home_tutorial_mail_title">보상 상자가 도착했어!</string>
+    <string name="home_tutorial_mail_body">우편함에서 같이 열어 보자</string>
+    <string name="home_tutorial_room_title">받은 아이템으로 방을 꾸며 보자!</string>
+    <string name="home_tutorial_room_body">마이룸으로 가 볼까?</string>
+    <string name="home_tutorial_room_saved_title">방이 예쁘게 저장됐어!</string>
+    <string name="home_tutorial_room_saved_body">꾸민 방은 홈에서도 이렇게 볼 수 있어</string>
+    <string name="home_health_steady_title">꾸준히 기록하면\n우리 둘 다 건강해!</string>
+    <string name="home_health_steady_body">집사가 끼니를 기록할 때마다 나도 같이 먹어.\n잘 챙겨 주면 지금처럼 딱 좋은 몸이야.</string>
+    <string name="home_health_starving_title">끼니를 거르면\n내가 홀쭉해져</string>
+    <string name="home_health_starving_body">집사가 밥을 굶으면 나도 같이 굶어서\n점점 말라 가. 다시 챙겨 주면 금방 돌아와!</string>
+    <string name="home_health_overeating_title">너무 많이 먹으면\n통통 뚱냥이가 돼</string>
+    <string name="home_health_overeating_body">집사가 과식하면 나도 같이 많이 먹어서\n동글동글해져. 알맞게 먹는 게 둘 다 좋아.</string>
+    <string name="home_health_next">다음</string>
+    <string name="home_health_done">알겠어!</string>
+    <string name="home_tutorial_finish_title">이제 준비 끝!\n다음 끼니를 기다릴게</string>
+    <string name="home_tutorial_finish_body">밥 먹을 때 가운데 카메라 버튼만 눌러 줘.\n기록할 때마다 보상 상자가 우편함으로 가.</string>
+    <string name="home_tutorial_finish_start">시작하기</string>
 </resources>

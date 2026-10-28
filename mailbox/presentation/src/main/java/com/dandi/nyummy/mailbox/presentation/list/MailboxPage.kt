@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dandi.nyummy.common.presentation.coachmark.coachMarkTarget
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomCta
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgress
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgressSize
@@ -81,15 +82,18 @@ internal fun MailboxScreen(
         NyummyTopBar(
             title = stringResource(R.string.mailbox_title),
             onBackClick = { onIntent(MailboxIntent.ClickBack) },
+            backModifier = Modifier.coachMarkTarget(MailboxBackCoachMarkKey) { onIntent(MailboxIntent.ClickBack) },
         )
         MailItemsContent(
             items = uiState.items,
+            tutorialBoxMailId = uiState.tutorial?.boxMailId,
             onIntent = onIntent,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
         )
     }
+    MailboxTutorialCoachMark(tutorial = uiState.tutorial, isBoxOpening = uiState.boxOpening != null, onIntent = onIntent)
     uiState.boxOpening?.let { opening ->
         // 상자마다 새 장면으로 시작한다(닫히는 중 상태가 다음 상자로 넘어가지 않게).
         key(opening.mailId) {
@@ -105,6 +109,7 @@ internal fun MailboxScreen(
 @Composable
 private fun MailItemsContent(
     items: MailItemsUiState,
+    tutorialBoxMailId: Long?,
     onIntent: (MailboxIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -162,6 +167,11 @@ private fun MailItemsContent(
                                 },
                                 isExpiring = row.remainingDays != null && row.remainingDays <= MAIL_EXPIRING_DAYS,
                                 actionEnabled = !items.isClaiming(row.mailId),
+                                actionModifier = if (row.mailId == tutorialBoxMailId) {
+                                    Modifier.coachMarkTarget(MailboxOpenCoachMarkKey) { onIntent(MailboxIntent.ClaimMail(row.mailId)) }
+                                } else {
+                                    Modifier
+                                },
                             )
                         }
                     }

@@ -34,13 +34,19 @@ data class HomeDTO(
         todayMaxAttemptCount = todayMealSummary?.todayMaxAttemptCount ?: 0,
         hasMailboxBadge = hasMailboxBadge == true,
         roomPlacements = equippedRoomItems.orEmpty().map { it.toVO() }.sortedBy { it.zIndex },
+        // 값이 없으면 마친 것으로 본다. 건너뛸 수 없는 튜토리얼에 기존 사용자를 가두지 않는다.
+        isTutorialCompleted = user?.isTutorialCompleted ?: true,
     )
 }
 
-/** @property coin 보유 코인 */
+/**
+ * @property coin 보유 코인
+ * @property isTutorialCompleted 튜토리얼 식사를 기록했다(POST /api/v1/meals/tutorial 성공 뒤 true)
+ */
 @Serializable
 data class HomeUserDTO(
     val coin: Int? = null,
+    val isTutorialCompleted: Boolean? = null,
 )
 
 /**

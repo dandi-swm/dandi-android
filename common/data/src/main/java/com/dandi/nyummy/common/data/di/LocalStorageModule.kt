@@ -9,7 +9,9 @@ import com.dandi.nyummy.common.data.preference.AppPreferenceProviderImpl
 import com.dandi.nyummy.common.data.preference.CompanionMemoryHelperImpl
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.data.token.TokenProviderImpl
+import com.dandi.nyummy.common.data.tutorial.TutorialHelperImpl
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -70,4 +72,10 @@ object LocalStorageModule {
     fun provideCompanionMemoryHelper(
         @AppPreferenceDataStore dataStore: DataStore<Preferences>,
     ): CompanionMemoryHelper = CompanionMemoryHelperImpl(dataStore)
+
+    @Provides
+    @Singleton
+    fun provideTutorialHelper(
+        @AppPreferenceDataStore dataStore: DataStore<Preferences>,
+    ): TutorialHelper = TutorialHelperImpl(dataStore)
 }

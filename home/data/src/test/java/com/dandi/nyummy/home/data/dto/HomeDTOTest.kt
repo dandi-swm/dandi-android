@@ -5,6 +5,7 @@ import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.entity.RoomPlacementVO
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -44,6 +45,20 @@ class HomeDTOTest {
         val summary = json.decodeFromString<HomeDTO>(body).toVO()
 
         assertEquals(HomeSummaryVO(streakDays = 4), summary)
+    }
+
+    @Test
+    fun `튜토리얼 완료 여부를 옮긴다`() {
+        val body = """{"user": {"coin": 0, "isTutorialCompleted": false}}"""
+
+        assertFalse(json.decodeFromString<HomeDTO>(body).toVO().isTutorialCompleted)
+    }
+
+    @Test
+    fun `튜토리얼 완료 여부가 없으면 마친 것으로 본다`() {
+        val body = """{"user": {"coin": 0}}"""
+
+        assertTrue(json.decodeFromString<HomeDTO>(body).toVO().isTutorialCompleted)
     }
 
     @Test

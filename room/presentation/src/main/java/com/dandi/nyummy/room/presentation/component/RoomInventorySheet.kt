@@ -54,6 +54,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.coachmark.coachMarkTarget
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpinner
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTabs
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
@@ -69,14 +71,14 @@ import com.dandi.nyummy.room.presentation.InventoryItemUiModel
 import com.dandi.nyummy.room.presentation.InventoryTabUiModel
 import com.dandi.nyummy.room.presentation.MyRoomLoadState
 import com.dandi.nyummy.room.presentation.R
-import kotlin.math.roundToInt
+import com.dandi.nyummy.room.presentation.RoomItemCoachMarkKey
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import com.dandi.nyummy.common.presentation.R as CommonR
+import kotlin.math.roundToInt
 
 /**
  * 보관함 시트 펼침 상태. [expansion]이 1이면 칸까지 다 보이고, 0이면 손잡이와 탭만 보인다.
@@ -152,6 +154,8 @@ internal fun rememberRoomSheetState(expanded: Boolean = true): RoomSheetState = 
  * - 탭은 서버가 주는 아이템 종류마다 하나(예 배경, 침대, 기타)이고, 칸은 가로 한 줄로 넘긴다. 끝에 가까워지면 그 종류만 더 받는다.
  * - 칸은 그림과 이름. 방에 놓인 인테리어는 그림을 흐리게 하고 "배치됨", 깔린 배경은 테두리와 "사용 중"을 붙인다.
  * - 가진 게 없으면 안내와 상점 구경하기, 있으면 줄 아래에 상점에서 더 찾기.
+ *
+ * @param tutorialItemId 튜토리얼이 가리킬 칸. 그 칸을 코치마크 대상으로 등록한다.
  */
 @Composable
 internal fun RoomInventorySheet(
@@ -159,6 +163,7 @@ internal fun RoomInventorySheet(
     loadState: MyRoomLoadState,
     tabs: ImmutableList<InventoryTabUiModel>,
     selectedCategory: RoomItemCategory,
+    tutorialItemId: Long?,
     onSelectTab: (RoomItemCategory) -> Unit,
     onInteriorClick: (Long) -> Unit,
     onBackgroundClick: (Long) -> Unit,
@@ -267,6 +272,7 @@ internal fun RoomInventorySheet(
                             InventoryRow(
                                 items = items,
                                 isBackground = isBackground,
+                                tutorialItemId = tutorialItemId,
                                 onClick = if (isBackground) onBackgroundClick else onInteriorClick,
                                 onReachEnd = { onReachEnd(selectedCategory) },
                             )
@@ -292,6 +298,7 @@ internal fun RoomInventorySheet(
 private fun InventoryRow(
     items: ImmutableList<InventoryItemUiModel>,
     isBackground: Boolean,
+    tutorialItemId: Long?,
     onClick: (Long) -> Unit,
     onReachEnd: () -> Unit,
     modifier: Modifier = Modifier,
@@ -306,7 +313,13 @@ private fun InventoryRow(
         horizontalArrangement = Arrangement.spacedBy(CellGap),
     ) {
         items(items, key = { it.roomItemId }) { item ->
-            InventoryCell(item = item, isBackground = isBackground, onClick = { onClick(item.roomItemId) })
+            val onCellClick = { onClick(item.roomItemId) }
+            InventoryCell(
+                item = item,
+                isBackground = isBackground,
+                onClick = onCellClick,
+                modifier = if (item.roomItemId == tutorialItemId) Modifier.coachMarkTarget(RoomItemCoachMarkKey, onCellClick) else Modifier,
+            )
         }
     }
 }
@@ -321,12 +334,13 @@ private fun InventoryCell(
     item: InventoryItemUiModel,
     isBackground: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val stateText = stringResource(if (isBackground) R.string.my_room_background_in_use else R.string.my_room_item_placed)
     val shape = RoundedCornerShape(NyummyTheme.radius.m)
     val isInUseBackground = isBackground && item.isPlaced
     Column(
-        modifier = Modifier
+        modifier = modifier
             .width(CellSize)
             .nyummyClickable(onClick = onClick)
             // 이름과 "배치됨"/"사용 중" 글자를 한 칸으로 묶어 읽는다.

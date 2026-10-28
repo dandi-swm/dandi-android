@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.coachmark.coachMarkTarget
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
@@ -61,6 +62,7 @@ fun MyRoomPage(
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
+    MyRoomTutorialCoachMark(tutorial = uiState.tutorial, onIntent = viewModel::onIntent)
 }
 
 @Composable
@@ -132,6 +134,7 @@ internal fun MyRoomScreen(
                 color = if (uiState.canSave) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.disabled,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
+                    .coachMarkTarget(RoomSaveCoachMarkKey) { onIntent(MyRoomIntent.ClickSave) }
                     .roomPill()
                     .nyummyClickable(onClick = { onIntent(MyRoomIntent.ClickSave) }, enabled = uiState.canSave)
                     .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s10),
@@ -156,6 +159,7 @@ internal fun MyRoomScreen(
             loadState = uiState.loadState,
             tabs = uiState.inventoryTabs,
             selectedCategory = uiState.selectedCategory,
+            tutorialItemId = uiState.tutorial?.itemId,
             onSelectTab = { onIntent(MyRoomIntent.SelectTab(it)) },
             onInteriorClick = { id ->
                 val point = frame.newItemPoint()
@@ -165,7 +169,9 @@ internal fun MyRoomScreen(
             onReachEnd = { onIntent(MyRoomIntent.ReachInventoryEnd(it)) },
             onShopClick = { onIntent(MyRoomIntent.ClickShop) },
             onRetry = { onIntent(MyRoomIntent.RetryLoad) },
-            modifier = Modifier.align(Alignment.BottomCenter),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .coachMarkTarget(RoomInventoryCoachMarkKey) {},
         )
     }
 }

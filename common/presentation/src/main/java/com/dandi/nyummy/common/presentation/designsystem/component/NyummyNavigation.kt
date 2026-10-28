@@ -54,6 +54,7 @@ import kotlinx.collections.immutable.persistentListOf
  * 제목은 양옆 요소와 상관없이 화면 가운데에 둔다.
  *
  * @param containerColor 바탕색. 마이룸처럼 그림 위에 띄울 때는 투명으로 둔다.
+ * @param backModifier 뒤로가기 버튼에 덧붙일 Modifier(코치마크 대상 등록 등).
  */
 @Composable
 fun NyummyTopBar(
@@ -62,6 +63,7 @@ fun NyummyTopBar(
     onBackClick: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
     containerColor: Color = NyummyTheme.colors.bg.canvas,
+    backModifier: Modifier = Modifier,
 ) {
     val minSide = NyummyTheme.size.touchTarget
     // 제목은 화면 가운데에 두되, 양옆 슬롯 중 넓은 쪽 너비만큼 양쪽을 비워 겹치지 않게 한다.
@@ -78,6 +80,7 @@ fun NyummyTopBar(
                         icon = R.drawable.nyummy_ic_chevron_left,
                         contentDescription = stringResource(R.string.nyummy_back_description),
                         onClick = onBackClick,
+                        modifier = backModifier,
                     )
                 }
             }
@@ -139,6 +142,8 @@ data class NyummyBottomNavAction(
  * 크기는 화면 크기와 상관없이 dp로 고정이다.
  *
  * @param centerActionIndex 가운데 버튼 앞에 올 탭 수. 탭 번호([selectedIndex], [onSelect])는 가운데 버튼을 빼고 센다.
+ * @param tabModifier 탭마다 덧붙일 Modifier(코치마크 대상 등록 등). 탭 번호를 받는다.
+ * @param centerActionModifier 가운데 버튼에 덧붙일 Modifier(코치마크 대상 등록 등).
  */
 @Composable
 fun NyummyBottomNav(
@@ -149,6 +154,8 @@ fun NyummyBottomNav(
     centerAction: NyummyBottomNavAction? = null,
     centerActionIndex: Int = (items.size + 1) / 2,
     onCenterActionClick: () -> Unit = {},
+    tabModifier: @Composable (Int) -> Modifier = { Modifier },
+    centerActionModifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(topStart = NyummyTheme.radius.ml, topEnd = NyummyTheme.radius.ml)
     Column(
@@ -168,17 +175,27 @@ fun NyummyBottomNav(
             // 탭과 가운데 버튼은 균등 너비로 나눠 360dp 이하 화면에서도 서로 겹치지 않게 한다.
             items.forEachIndexed { index, item ->
                 if (centerAction != null && index == centerActionIndex) {
-                    BottomNavCenterAction(action = centerAction, onClick = onCenterActionClick, modifier = Modifier.weight(1f))
+                    BottomNavCenterAction(
+                        action = centerAction,
+                        onClick = onCenterActionClick,
+                        modifier = Modifier.weight(1f),
+                        buttonModifier = centerActionModifier,
+                    )
                 }
                 BottomNavTab(
                     item = item,
                     selected = index == selectedIndex,
                     onClick = { onSelect(index) },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).then(tabModifier(index)),
                 )
             }
             if (centerAction != null && centerActionIndex >= items.size) {
-                BottomNavCenterAction(action = centerAction, onClick = onCenterActionClick, modifier = Modifier.weight(1f))
+                BottomNavCenterAction(
+                        action = centerAction,
+                        onClick = onCenterActionClick,
+                        modifier = Modifier.weight(1f),
+                        buttonModifier = centerActionModifier,
+                    )
             }
         }
         Box(Modifier.navigationBarsPadding())
@@ -191,6 +208,7 @@ private fun BottomNavCenterAction(
     action: NyummyBottomNavAction,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    buttonModifier: Modifier = Modifier,
 ) {
     val dimens = NyummyComponentDimens
     val interactionSource = rememberNyummyInteractionSource()
@@ -199,6 +217,7 @@ private fun BottomNavCenterAction(
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Box(
             modifier = Modifier
+                .then(buttonModifier)
                 .nyummyClickable(onClick = onClick, interactionSource = interactionSource)
                 .semantics { contentDescription = action.label }
                 .size(dimens.BottomNavActionSize)
