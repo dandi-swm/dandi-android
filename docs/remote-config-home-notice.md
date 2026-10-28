@@ -24,7 +24,7 @@
       "badge": "업데이트",
       "startAt": "2026-10-28T00:00:00+09:00",
       "endAt": "2026-11-30T23:59:59+09:00",
-      "minVersionCode": 6,
+      "minVersionCode": 8,
       "imageUrl": "https://cdn.nyummy.co.kr/notices/2026-10-renewal.webp",
       "title": "냐미가 새단장을 했어요!",
       "body": "화면을 더 보기 편하게 새로 꾸몄어요.\n새로 들어온 기능도 확인해 보세요."
