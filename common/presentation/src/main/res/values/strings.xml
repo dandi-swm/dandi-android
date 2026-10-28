@@ -34,4 +34,6 @@
     <string name="nyummy_meal_hour_description">Hour</string>
     <string name="nyummy_star_rating_state">%1$s out of 5 stars</string>
     <string name="nyummy_not_ready">This feature is coming soon.</string>
+    <string name="nyummy_tutorial_name">Nyummy</string>
+    <string name="nyummy_tutorial_hint">Tap to continue ›</string>
 </resources>

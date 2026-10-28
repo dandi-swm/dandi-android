@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 서버 없이 튜토리얼 공통 컴포넌트만 띄워 보는 디버그 화면. debug 빌드에만 들어간다. -->
+    <application>
+        <activity
+            android:name="com.dandi.nyummy.common.presentation.debug.TutorialDebugActivity"
+            android:exported="true"
+            android:label="Nyummy Tutorial Debug" />
+    </application>
+
+</manifest>

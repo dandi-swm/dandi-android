@@ -35,4 +35,6 @@
     <string name="nyummy_meal_hour_description">시</string>
     <string name="nyummy_star_rating_state">5점 만점에 %1$s점</string>
     <string name="nyummy_not_ready">준비 중인 기능이에요.</string>
+    <string name="nyummy_tutorial_name">냐미</string>
+    <string name="nyummy_tutorial_hint">탭해서 계속 ›</string>
 </resources>
