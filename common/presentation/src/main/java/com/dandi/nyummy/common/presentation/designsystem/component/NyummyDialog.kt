@@ -113,7 +113,7 @@ internal fun NyummyDialogCard(
             .padding(
                 start = NyummyTheme.spacing.s20,
                 end = NyummyTheme.spacing.s20,
-                top = NyummyTheme.spacing.s24,
+                top = NyummyComponentDimens.DialogTopPadding,
                 bottom = NyummyTheme.spacing.s20,
             ),
     ) {
@@ -123,11 +123,11 @@ internal fun NyummyDialogCard(
                 .weight(1f, fill = false)
                 .verticalScroll(rememberScrollState()),
         ) {
-            NyummyText(text = title, style = NyummyTheme.typography.titleL)
+            NyummyText(text = title, style = NyummyTheme.typography.titleM)
             if (body != null) {
                 NyummyText(
                     text = body,
-                    style = NyummyTheme.typography.bodyL,
+                    style = NyummyTheme.typography.bodyM,
                     color = NyummyTheme.colors.content.secondary,
                     modifier = Modifier.padding(top = NyummyTheme.spacing.s8),
                 )
@@ -140,7 +140,7 @@ internal fun NyummyDialogCard(
             }
         }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = NyummyTheme.spacing.s20),
+            modifier = Modifier.fillMaxWidth().padding(top = NyummyTheme.spacing.s24),
             horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
         ) {
             if (type != NyummyDialogType.Alert) {
@@ -148,7 +148,7 @@ internal fun NyummyDialogCard(
                     text = dismissText,
                     onClick = onDismiss,
                     style = NyummyButtonStyle.Neutral,
-                    size = NyummyButtonSize.M,
+                    size = NyummyButtonSize.L,
                     enabled = dismissEnabled,
                     modifier = Modifier.weight(1f),
                 )
@@ -157,7 +157,7 @@ internal fun NyummyDialogCard(
                 text = confirmText,
                 onClick = onConfirm,
                 style = if (type == NyummyDialogType.Destructive) NyummyButtonStyle.Danger else NyummyButtonStyle.Primary,
-                size = NyummyButtonSize.M,
+                size = NyummyButtonSize.L,
                 enabled = confirmEnabled,
                 modifier = Modifier.weight(1f),
             )

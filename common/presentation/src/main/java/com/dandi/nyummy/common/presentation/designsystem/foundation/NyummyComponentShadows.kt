@@ -17,6 +17,9 @@ internal object NyummyComponentShadows {
     /** Segmented 고른 칸(검정 8%). */
     val SegmentedOption = NyummyShadow(color = NyummyPalette.Black.copy(alpha = 0x14 / 255f), blur = 4.dp, offsetY = 1.dp)
 
+    /** Snackbar, Toast 아래 딱딱한 그림자(흐림 없이 4 아래로, border/default 색). */
+    val Snackbar = NyummyShadow(color = NyummyPalette.Gray150, blur = 0.dp, offsetY = 4.dp)
+
     /** Switch 흰 썸(검정 15%). */
     val SwitchThumb = NyummyShadow(color = NyummyPalette.Black.copy(alpha = 0x26 / 255f), blur = 3.dp, offsetY = 1.dp)
 }

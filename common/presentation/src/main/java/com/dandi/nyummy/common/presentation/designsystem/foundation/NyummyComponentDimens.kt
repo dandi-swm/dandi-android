@@ -36,7 +36,7 @@ internal object NyummyComponentDimens {
     val WheelPickerRowHeight = 50.dp
 
     /** Wheel Picker 선택 밴드 높이와 좌우 들여쓰기. */
-    val WheelPickerBandHeight = 46.dp
+    val WheelPickerBandHeight = 44.dp
     val WheelPickerBandInset = 6.dp
 
     /** Radio 크기와 안 점. */
@@ -142,6 +142,8 @@ internal object NyummyComponentDimens {
 
     /** Dialog 최대 너비와 화면 좌우 여백. */
     val DialogMaxWidth = 320.dp
+    /** Dialog 위쪽 안쪽 여백. */
+    val DialogTopPadding = 28.dp
     val DialogScreenMargin = 32.dp
 
     /** Star Rating 별 하나 크기와 별 사이 간격. */
@@ -149,7 +151,7 @@ internal object NyummyComponentDimens {
     val StarRatingGap = 6.dp
 
     /** Bottom Sheet 손잡이. */
-    val SheetHandleWidth = 40.dp
+    val SheetHandleWidth = 36.dp
     val SheetHandleHeight = 4.dp
 
     /** Confirm Sheet 냐미 크기와 바닥 타원. */
@@ -166,9 +168,9 @@ internal object NyummyComponentDimens {
     val StateLoadingBarWidth = 200.dp
     val StateLoadingBarHeight = 8.dp
 
-    /** 화면 안 안내 카드(NyummyInlineNotice)의 세로 여백과 아이콘과 글 사이 간격. */
-    val InlineNoticeVerticalPadding = 14.dp
-    val InlineNoticeIconGap = 10.dp
+    /** 화면 안 안내 카드(NyummyInlineNotice)의 좌우 여백과 아이콘 크기. */
+    val InlineNoticeHorizontalPadding = 14.dp
+    val InlineNoticeIconSize = 18.dp
 
     /** 처리 중 아이콘(NyummySpinner) 크기. */
     val SpinnerSize = 36.dp

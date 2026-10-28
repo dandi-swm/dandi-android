@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
+import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentShadows
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import kotlinx.coroutines.delay
@@ -43,7 +44,7 @@ fun NyummyToast(
     val shape = RoundedCornerShape(NyummyTheme.radius.full)
     Box(
         modifier = modifier
-            .nyummyShadow(shape, NyummyTheme.elevation.float)
+            .nyummyShadow(shape, NyummyComponentShadows.Snackbar)
             .background(NyummyTheme.colors.bg.surface, shape)
             .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, shape)
             .semantics { liveRegion = LiveRegionMode.Polite }
