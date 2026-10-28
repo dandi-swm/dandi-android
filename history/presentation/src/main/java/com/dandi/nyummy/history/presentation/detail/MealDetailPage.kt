@@ -1,8 +1,10 @@
-package com.dandi.nyummy.history.presentation.component
+package com.dandi.nyummy.history.presentation.detail
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.MutatePriority
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,10 +16,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.MutatePriority
-import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -27,10 +29,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,91 +41,134 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import com.dandi.nyummy.common.presentation.R as CommonR
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyChip
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCoachCard
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialog
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialogType
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyFoodIcon
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyInlineNotice
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyInlineNoticeTone
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyNutrient
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyNutrientStat
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpinner
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStarRating
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextArea
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonTone
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextField
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.history.domain.SubmitAnalysisFeedbackUseCase
 import com.dandi.nyummy.history.entity.AnalysisFeedbackReason
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
-import com.dandi.nyummy.history.presentation.AnalysisFeedbackUiState
-import com.dandi.nyummy.history.presentation.HistoryIntent
-import com.dandi.nyummy.history.presentation.HistoryMealDetailMode
-import com.dandi.nyummy.history.presentation.HistoryMealDetailUiState
 import com.dandi.nyummy.history.presentation.R
+import com.dandi.nyummy.history.presentation.component.MealDeleteDialog
 import com.dandi.nyummy.history.presentation.model.dayLabelOf
 import com.dandi.nyummy.history.presentation.model.meridiemTimeOf
 import com.dandi.nyummy.history.presentation.model.numberLabelOf
 
 /**
- * 식사 하나의 상세와 이름 수정, 삭제 확인.
+ * 식사 하나의 상세 페이지(`/history/meals/{mealId}`). 뒤로 가면 기록 화면이다.
  *
- * - 보기: 하단 시트(날짜와 시각, 이름, 사진, 냐미 한마디, 이 식사 영양, 이름 수정 / 기록 삭제, 맨 아래 AI 분석 평가 카드(평가 대상일 때))
+ * - 보기: 상단 바(뒤로), 날짜와 시각, 이름, 사진, 냐미 한마디, 이 식사 영양, 이름 수정 / 기록 삭제, 맨 아래 AI 분석 평가 카드(평가 대상일 때)
  * - 이름 수정: 입력 다이얼로그. 이름을 비우면 안내하고 저장할 수 없다.
- * - 삭제 확인: 빨간 주 버튼 다이얼로그. 분석 실패 줄에서 바로 열리기도 한다.
+ * - 삭제 확인: 빨간 주 버튼 다이얼로그. 지우면 기록 화면으로 돌아간다.
  *
  * 수정이나 삭제를 서버에 보내는 동안에는 버튼과 닫기를 막아 결과가 엇갈리지 않게 한다.
  */
 @Composable
-internal fun HistoryMealDetail(
-    detail: HistoryMealDetailUiState,
-    selectedDate: HistoryDateVO,
-    onIntent: (HistoryIntent) -> Unit,
+fun MealDetailPage(
+    mealId: Long,
+    modifier: Modifier = Modifier,
+    viewModel: MealDetailViewModel = hiltViewModel(),
 ) {
-    when (detail.mode) {
-        HistoryMealDetailMode.Viewing -> NyummyBottomSheet(onDismissRequest = { onIntent(HistoryIntent.DismissMealDetail) }) {
-            MealDetailContent(
-                meal = detail.meal,
-                feedback = detail.feedback,
-                onIntent = onIntent,
-                selectedDate = selectedDate,
-                onClose = { onIntent(HistoryIntent.DismissMealDetail) },
-                onEditName = { onIntent(HistoryIntent.ClickEditMealName) },
-                onDelete = { onIntent(HistoryIntent.ClickDeleteMeal) },
-            )
-        }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(mealId) {
+        viewModel.onIntent(MealDetailIntent.Enter(mealId))
+    }
+    MealDetailScreen(uiState = uiState, onIntent = viewModel::onIntent, modifier = modifier)
+}
 
-        HistoryMealDetailMode.EditingName -> EditNameDialog(
-            draft = detail.nameDraft,
-            isSaving = detail.isActionInFlight,
-            onDraftChange = { onIntent(HistoryIntent.ChangeMealNameDraft(it)) },
-            onConfirm = { onIntent(HistoryIntent.ConfirmEditMealName) },
-            onCancel = { onIntent(HistoryIntent.CancelEditMealName) },
+@Composable
+internal fun MealDetailScreen(
+    uiState: MealDetailUIState,
+    onIntent: (MealDetailIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(NyummyTheme.colors.bg.canvas)
+            .statusBarsPadding(),
+    ) {
+        NyummyTopBar(title = "", onBackClick = { onIntent(MealDetailIntent.ClickBack) })
+        val meal = uiState.meal
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = NyummyTheme.spacing.gutter),
+        ) {
+            when {
+                meal != null -> MealDetailContent(meal = meal, feedback = uiState.feedback, onIntent = onIntent)
+                uiState.isLoadFailed -> LoadFailed(
+                    onRetry = { onIntent(MealDetailIntent.RetryLoad) },
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                else -> NyummySpinner(contentDescription = null, modifier = Modifier.align(Alignment.Center))
+            }
+        }
+    }
+    val meal = uiState.meal ?: return
+    when (uiState.mode) {
+        MealDetailMode.Viewing -> Unit
+
+        MealDetailMode.EditingName -> EditNameDialog(
+            draft = uiState.nameDraft,
+            isSaving = uiState.isActionInFlight,
+            onDraftChange = { onIntent(MealDetailIntent.ChangeNameDraft(it)) },
+            onConfirm = { onIntent(MealDetailIntent.ConfirmEditName) },
+            onCancel = { onIntent(MealDetailIntent.CancelEditName) },
         )
 
-        HistoryMealDetailMode.ConfirmingDelete -> NyummyDialog(
-            type = NyummyDialogType.Destructive,
-            title = if (detail.meal.name.isBlank()) {
-                stringResource(R.string.history_delete_dialog_title_unnamed)
-            } else {
-                stringResource(R.string.history_delete_dialog_title, detail.meal.name)
-            },
-            body = stringResource(R.string.history_delete_dialog_body),
-            confirmText = stringResource(R.string.history_delete_dialog_confirm),
-            onConfirm = { onIntent(HistoryIntent.ConfirmDeleteMeal) },
-            onDismissRequest = { onIntent(HistoryIntent.CancelDeleteMeal) },
-            confirmEnabled = !detail.isActionInFlight,
-            dismissEnabled = !detail.isActionInFlight,
-            dismissible = !detail.isActionInFlight,
+        MealDetailMode.ConfirmingDelete -> MealDeleteDialog(
+            mealName = meal.name,
+            isDeleting = uiState.isActionInFlight,
+            onConfirm = { onIntent(MealDetailIntent.ConfirmDelete) },
+            onCancel = { onIntent(MealDetailIntent.CancelDelete) },
+        )
+    }
+}
+
+@Composable
+private fun LoadFailed(onRetry: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
+    ) {
+        NyummyInlineNotice(
+            title = stringResource(R.string.history_load_failed_title),
+            body = stringResource(R.string.history_load_failed_body),
+            tone = NyummyInlineNoticeTone.Danger,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        NyummyButton(
+            text = stringResource(R.string.history_load_retry),
+            onClick = onRetry,
+            style = NyummyButtonStyle.Neutral,
+            size = NyummyButtonSize.M,
+            icon = CommonR.drawable.nyummy_ic_refresh_cw,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -132,11 +177,7 @@ internal fun HistoryMealDetail(
 private fun MealDetailContent(
     meal: MealHistoryVO,
     feedback: AnalysisFeedbackUiState?,
-    onIntent: (HistoryIntent) -> Unit,
-    selectedDate: HistoryDateVO,
-    onClose: () -> Unit,
-    onEditName: () -> Unit,
-    onDelete: () -> Unit,
+    onIntent: (MealDetailIntent) -> Unit,
 ) {
     val name = meal.name.ifBlank { stringResource(R.string.history_analysis_unknown_meal) }
     val scrollState = rememberScrollState()
@@ -144,28 +185,23 @@ private fun MealDetailContent(
         // 평가 카드의 입력칸을 쓸 때 키보드에 가리지 않도록 키보드 높이만큼 비우고 스크롤로 올린다.
         modifier = Modifier
             .imePadding()
-            .verticalScroll(scrollState),
+            .verticalScroll(scrollState)
+            .navigationBarsPadding()
+            .padding(bottom = NyummyTheme.spacing.s24),
         verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2)) {
-                    NyummyText(
-                        text = stringResource(
-                            R.string.history_meal_meta,
-                            dayLabelOf(selectedDate),
-                            meridiemTimeOf(meal.recordedAt),
-                        ),
-                        style = NyummyTheme.typography.labelS,
-                        color = NyummyTheme.colors.content.brand,
-                    )
-                    NyummyText(text = name, style = NyummyTheme.typography.titleL)
-                }
-                NyummyIconButton(
-                    icon = CommonR.drawable.nyummy_ic_x,
-                    contentDescription = stringResource(R.string.history_detail_close),
-                    onClick = onClose,
+            Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2)) {
+                NyummyText(
+                    text = stringResource(
+                        R.string.history_meal_meta,
+                        dayLabelOf(meal.date),
+                        meridiemTimeOf(meal.recordedAt),
+                    ),
+                    style = NyummyTheme.typography.labelS,
+                    color = NyummyTheme.colors.content.brand,
                 )
+                NyummyText(text = name, style = NyummyTheme.typography.titleL)
             }
             MealPhoto(meal = meal)
         }
@@ -174,7 +210,7 @@ private fun MealDetailContent(
         Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
             NyummyButton(
                 text = stringResource(R.string.history_detail_edit_name),
-                onClick = onEditName,
+                onClick = { onIntent(MealDetailIntent.ClickEditName) },
                 style = NyummyButtonStyle.Neutral,
                 icon = CommonR.drawable.nyummy_ic_pencil,
                 modifier = Modifier.weight(1f),
@@ -187,7 +223,7 @@ private fun MealDetailContent(
             ) {
                 NyummyTextButton(
                     text = stringResource(R.string.history_detail_delete),
-                    onClick = onDelete,
+                    onClick = { onIntent(MealDetailIntent.ClickDelete) },
                     tone = NyummyTextButtonTone.Danger,
                     leadingIcon = CommonR.drawable.nyummy_ic_trash_2,
                 )
@@ -206,10 +242,10 @@ private fun MealDetailContent(
 @Composable
 private fun AnalysisFeedbackSection(
     feedback: AnalysisFeedbackUiState?,
-    onIntent: (HistoryIntent) -> Unit,
+    onIntent: (MealDetailIntent) -> Unit,
     revealBottom: suspend () -> Unit,
 ) {
-    // 카드는 시트 맨 아래라 나타나도 화면 밖일 수 있다. 나타난 순간 카드까지 시트를 내린다.
+    // 카드는 맨 아래라 나타나도 화면 밖일 수 있다. 나타난 순간 카드까지 내린다.
     RevealWhenBecomesTrue(condition = feedback != null, reveal = revealBottom)
     if (feedback != null) {
         AnalysisFeedbackCard(feedback = feedback, onIntent = onIntent, revealBottom = revealBottom)
@@ -217,13 +253,13 @@ private fun AnalysisFeedbackSection(
 }
 
 /**
- * AI 분석 평가 카드. 별점(0.5 단위)을 고르면 이유 고르기와 보내기가 한 번에 펼쳐지고, 보내면 상세 시트가 닫히며 스낵바로 고마움을 알린다.
+ * AI 분석 평가 카드. 별점(0.5 단위)을 고르면 이유 고르기와 보내기가 한 번에 펼쳐지고, 보내면 카드가 닫히며 스낵바로 고마움을 알린다.
  * 아쉬운 점(하나만 고름)과 직접 쓰기는 모두 선택이다.
  */
 @Composable
 private fun AnalysisFeedbackCard(
     feedback: AnalysisFeedbackUiState,
-    onIntent: (HistoryIntent) -> Unit,
+    onIntent: (MealDetailIntent) -> Unit,
     revealBottom: suspend () -> Unit,
 ) {
     Column(
@@ -248,18 +284,18 @@ private fun AnalysisFeedbackCard(
             NyummyIconButton(
                 icon = CommonR.drawable.nyummy_ic_x,
                 contentDescription = stringResource(R.string.history_feedback_dismiss),
-                onClick = { onIntent(HistoryIntent.DismissFeedback) },
+                onClick = { onIntent(MealDetailIntent.DismissFeedback) },
                 enabled = !feedback.isSubmitting,
             )
         }
         NyummyStarRating(
             halfSteps = feedback.ratingHalfSteps,
-            onHalfStepsChange = { onIntent(HistoryIntent.ChangeFeedbackRating(it)) },
+            onHalfStepsChange = { onIntent(MealDetailIntent.ChangeFeedbackRating(it)) },
             contentDescription = stringResource(R.string.history_feedback_rating_description),
             enabled = !feedback.isSubmitting,
             modifier = Modifier.align(Alignment.CenterHorizontally),
         )
-        // 별을 누르면 아래로 생기는 부분이 화면 밖이라 모르고 지나치기 쉽다. 처음 별점을 고른 순간에만 시트를 맨 아래까지 내린다.
+        // 별을 누르면 아래로 생기는 부분이 화면 밖이라 모르고 지나치기 쉽다. 처음 별점을 고른 순간에만 맨 아래까지 내린다.
         RevealWhenBecomesTrue(condition = feedback.isRated, reveal = revealBottom)
         // 별점을 고르면 애니메이션 없이 한 번에 펼친다.
         if (feedback.isRated) {
@@ -277,14 +313,14 @@ private fun AnalysisFeedbackCard(
                         NyummyChip(
                             text = stringResource(reason.labelRes),
                             selected = reason == feedback.selectedReason,
-                            onClick = { onIntent(HistoryIntent.SelectFeedbackReason(reason)) },
+                            onClick = { onIntent(MealDetailIntent.SelectFeedbackReason(reason)) },
                             enabled = !feedback.isSubmitting,
                         )
                     }
                 }
                 NyummyTextArea(
                     value = feedback.comment,
-                    onValueChange = { onIntent(HistoryIntent.ChangeFeedbackComment(it)) },
+                    onValueChange = { onIntent(MealDetailIntent.ChangeFeedbackComment(it)) },
                     label = stringResource(R.string.history_feedback_comment_label),
                     placeholder = stringResource(R.string.history_feedback_comment_placeholder),
                     enabled = !feedback.isSubmitting,
@@ -293,7 +329,7 @@ private fun AnalysisFeedbackCard(
                 )
                 NyummyButton(
                     text = stringResource(R.string.history_feedback_submit),
-                    onClick = { onIntent(HistoryIntent.SubmitFeedback) },
+                    onClick = { onIntent(MealDetailIntent.SubmitFeedback) },
                     size = NyummyButtonSize.M,
                     enabled = feedback.canSubmit,
                     modifier = Modifier.fillMaxWidth(),
@@ -314,7 +350,7 @@ private val AnalysisFeedbackReason.labelRes: Int
 
 /**
  * [condition]이 false에서 true로 바뀐 순간에만 [reveal]을 한 번 부른다. 새로 생긴 부분의 크기가 잡히도록 한 프레임 뒤에 부른다.
- * 처음부터 true인 채로 그려질 때(이름 수정 다이얼로그를 닫고 시트로 돌아올 때 등)는 부르지 않는다.
+ * 처음부터 true인 채로 그려질 때(이름 수정 다이얼로그를 닫고 돌아올 때 등)는 부르지 않는다.
  */
 @Composable
 private fun RevealWhenBecomesTrue(condition: Boolean, reveal: suspend () -> Unit) {
@@ -331,7 +367,7 @@ private fun RevealWhenBecomesTrue(condition: Boolean, reveal: suspend () -> Unit
 
 /**
  * 맨 아래까지 부드럽게 스크롤한다. 사용자가 끌고 있어도 그 입력은 무시한다([MutatePriority.PreventUserInput]):
- * 스크롤이 끝날 때까지 사용자 스크롤을 막아, 자동 스크롤과 손가락이 서로 당겨 시트가 버티는 느낌이 나지 않게 한다.
+ * 스크롤이 끝날 때까지 사용자 스크롤을 막아, 자동 스크롤과 손가락이 서로 당겨 화면이 버티는 느낌이 나지 않게 한다.
  */
 private suspend fun ScrollState.scrollToBottomIgnoringUser() {
     scroll(MutatePriority.PreventUserInput) {
@@ -339,7 +375,7 @@ private suspend fun ScrollState.scrollToBottomIgnoringUser() {
         animate(0f, (maxValue - value).toFloat(), animationSpec = tween(REVEAL_SCROLL_MILLIS)) { target, _ ->
             scrolled += scrollBy(target - scrolled)
         }
-        // 그사이 시트가 자라 끝이 더 멀어졌으면 남은 만큼 맞춘다.
+        // 그사이 내용이 자라 끝이 더 멀어졌으면 남은 만큼 맞춘다.
         scrollBy((maxValue - value).toFloat())
     }
 }
@@ -457,6 +493,7 @@ private val previewMeal = MealHistoryVO(
     proteinGram = 24,
     fatGram = 18,
     orderIndex = 1,
+    date = HistoryDateVO(2026, 10, 5),
     catComment = "채소 가득한 비빔밥이네! 고추장은 조금만 넣었지? 계란 반숙까지 완벽해. 오늘 첫 끼 최고였어.",
 )
 
@@ -469,10 +506,6 @@ private fun MealDetailContentPreview() {
                 meal = previewMeal,
                 feedback = null,
                 onIntent = {},
-                selectedDate = HistoryDateVO(2026, 10, 5),
-                onClose = {},
-                onEditName = {},
-                onDelete = {},
             )
         }
     }
@@ -490,10 +523,6 @@ private fun MealDetailContentFeedbackPreview() {
                     selectedReason = AnalysisFeedbackReason.WRONG_PORTION,
                 ),
                 onIntent = {},
-                selectedDate = HistoryDateVO(2026, 10, 5),
-                onClose = {},
-                onEditName = {},
-                onDelete = {},
             )
         }
     }

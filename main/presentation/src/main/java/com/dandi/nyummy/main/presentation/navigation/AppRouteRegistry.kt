@@ -10,9 +10,10 @@ import com.dandi.nyummy.auth.presentation.LoginPage
 import com.dandi.nyummy.auth.presentation.PasswordResetPage
 import com.dandi.nyummy.auth.presentation.SignUpPage
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
-import com.dandi.nyummy.common.domain.navigation.LinkArgs
 import com.dandi.nyummy.history.domain.HistoryPage
+import com.dandi.nyummy.history.domain.MealDetailPage as MealDetailRoute
 import com.dandi.nyummy.history.presentation.HistoryPage
+import com.dandi.nyummy.history.presentation.detail.MealDetailPage
 import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.home.domain.HomePreparePage
 import com.dandi.nyummy.home.presentation.HomePage
@@ -156,11 +157,19 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = HistoryPage.PATH,
         isBottomTab = true,
-        render = { args ->
-            HistoryPage(
-                openMealId = args[HistoryPage.ARG_MEAL_ID]?.toLongOrNull(),
-                linkEventId = args[LinkArgs.NOTIFICATION_ID],
+        render = { HistoryPage() },
+    ),
+    AppRoute(
+        path = MealDetailRoute.PATH,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(HomePage.PATH),
+                GenericNavKey(HistoryPage.PATH),
+                GenericNavKey(MealDetailRoute.PATH, args),
             )
+        },
+        render = { args ->
+            MealDetailPage(mealId = args[MealDetailRoute.ARG_MEAL_ID]?.toLongOrNull() ?: 0L)
         },
     ),
     AppRoute(
@@ -271,8 +280,8 @@ val appRouteByPath: Map<String, AppRoute> = appRoutes.associateBy { it.path }
  * 외부에서 주는 딥링크 경로가 실제로 타켓팅 되어야하는 우리 앱에서의 관심사로 설계된 링크와 다르다면, 이 별칭을 등록한다.
  */
 val appLinkAliases: List<LinkAlias> = listOf(
-    // 분석 결과 푸시의 식사 상세 링크(서버 app-link meal-detail-url) → 기록 탭에서 그 식사 상세 열기
-    LinkAlias("/meals/{${HistoryPage.ARG_MEAL_ID}}", targetPath = HistoryPage.PATH),
+    // 분석 결과 푸시의 식사 상세 링크(서버 app-link meal-detail-url) → 그 식사 상세(뒤로 가면 기록 탭)
+    LinkAlias("/meals/{${MealDetailRoute.ARG_MEAL_ID}}", targetPath = MealDetailRoute.PATH),
     // 문의 답장 푸시의 문의 링크 → 그 문의 상세(뒤로 가면 설정의 문의 목록)
     LinkAlias("/inquiries/{${InquiryDetailRoute.ARG_INQUIRY_ID}}", targetPath = InquiryDetailRoute.PATH),
 )

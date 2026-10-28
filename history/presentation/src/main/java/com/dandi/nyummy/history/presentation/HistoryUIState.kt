@@ -1,7 +1,6 @@
 package com.dandi.nyummy.history.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.UiState
-import com.dandi.nyummy.history.entity.AnalysisFeedbackReason
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
@@ -24,11 +23,13 @@ import kotlinx.collections.immutable.toImmutableSet
  *
  * 캘린더는 달마다 한 장씩 좌우로 넘기며, 받아 둔 달의 칸은 [calendarMonths]에 남겨 둡니다.
  * 날짜를 고르면 [selectedDayMeals]와 [dailyNutrition]이 함께 바뀝니다.
- * [mealDetail]이 null 이 아니면 식사 상세 오버레이가 열립니다.
+ * 식사를 누르면 상세 페이지로 갑니다. 분석에 실패한 식사의 삭제 확인만 이 화면에서 엽니다([deletingMeal]).
  *
  * @property displayedYear 지금 보고 있는 달의 연도. 달을 넘기면 데이터를 받기 전에 바로 바뀝니다.
  * @property calendarMonths 받아 둔 달의 캘린더 칸. 다시 넘겨 왔을 때 바로 보여 주고 뒤에서 새로 받습니다.
  * @property isLoadFailed 고른 날의 기록을 불러오지 못했다. 화면 안에서 안내하고 다시 불러오게 합니다.
+ * @property deletingMeal 삭제 확인을 띄운 분석 실패 식사. null 이면 다이얼로그가 없습니다.
+ * @property isDeletingMeal [deletingMeal]을 지우는 중. 그동안 다이얼로그 버튼과 닫기를 막습니다.
  */
 data class HistoryUIState(
     val displayedYear: Int = 0,
@@ -42,7 +43,8 @@ data class HistoryUIState(
     val isLoading: Boolean = false,
     val isLoadFailed: Boolean = false,
     val reanalyzingMealIds: ImmutableSet<String> = persistentSetOf(),
-    val mealDetail: HistoryMealDetailUiState? = null,
+    val deletingMeal: MealHistoryVO? = null,
+    val isDeletingMeal: Boolean = false,
 ) : UiState {
 
     /** 지금 보고 있는 달. */
@@ -98,44 +100,14 @@ data class HistoryUIState(
         },
     )
 
-    /** 상세 오버레이가 열려 있을 때만 [transform]을 적용합니다. */
-    fun withMealDetail(
-        transform: (HistoryMealDetailUiState) -> HistoryMealDetailUiState,
-    ): HistoryUIState = mealDetail?.let { copy(mealDetail = transform(it)) } ?: this
-
-    /**
-     * [mealId] 식사의 이름 수정 저장 결과를 반영합니다.
-     * 목록에서는 해당 식사만 rename 하고, 상세 오버레이는 같은 식사가 열려 있을 때만 갱신합니다 —
-     * 응답 도착 시점에 다른 식사가 열려 있어도 그 식사의 draft 를 건드리지 않습니다.
-     */
-    fun commitMealNameEdit(mealId: String, newName: String): HistoryUIState {
-        if (newName.isEmpty()) return this
-        val detail = mealDetail
-        return copy(
-            selectedDayMeals = selectedDayMeals
-                .map { meal -> if (meal.id == mealId) meal.copy(name = newName) else meal }
-                .toImmutableList(),
-            mealDetail = if (detail != null && detail.meal.id == mealId) {
-                detail.copy(
-                    meal = detail.meal.copy(name = newName),
-                    mode = HistoryMealDetailMode.Viewing,
-                    nameDraft = "",
-                    isActionInFlight = false,
-                )
-            } else {
-                detail
-            },
-        )
-    }
-
     /**
      * [mealId] 식사의 삭제 완료를 반영합니다.
      * 남은 식사로 하루 영양 합계를 다시 계산하고, 해당 날짜의 캘린더 셀 표시도 갱신합니다.
-     * 상세 오버레이는 같은 식사가 열려 있을 때만 닫습니다.
+     * 삭제 확인은 같은 식사를 지우던 중일 때만 닫습니다.
      */
-    fun deleteDetailMeal(mealId: String): HistoryUIState {
-        val closedDetail = if (mealDetail?.meal?.id == mealId) null else mealDetail
-        if (selectedDayMeals.none { it.id == mealId }) return copy(mealDetail = closedDetail)
+    fun deleteMeal(mealId: String): HistoryUIState {
+        val closed = if (deletingMeal?.id == mealId) copy(deletingMeal = null, isDeletingMeal = false) else this
+        if (selectedDayMeals.none { it.id == mealId }) return closed
         val remaining = selectedDayMeals.filterNot { it.id == mealId }.withCompletedMealOrder()
         val totalCalorie = remaining.sumOf { it.calorieKcal }
         // 분석 전이거나 실패한 식사는 아이콘이 없다(빈 값). 아이콘이 있는 식사에서만 두 개를 고른다.
@@ -148,7 +120,7 @@ data class HistoryUIState(
                 cell
             }
         }.toImmutableList()
-        return copy(
+        return closed.copy(
             selectedDayMeals = remaining,
             reanalyzingMealIds = (reanalyzingMealIds - mealId).toImmutableSet(),
             dailyNutrition = dailyNutrition.copy(
@@ -159,7 +131,6 @@ data class HistoryUIState(
                 protein = dailyNutrition.protein.copy(dailyGram = remaining.sumOf { it.proteinGram }),
                 fat = dailyNutrition.fat.copy(dailyGram = remaining.sumOf { it.fatGram }),
             ),
-            mealDetail = closedDetail,
         ).withCalendarMonth(selectedMonth, updatedDays)
     }
 
@@ -178,59 +149,6 @@ data class HistoryUIState(
             isLoading = true,
         )
     }
-}
-
-/**
- * 식사 상세 오버레이의 상태입니다.
- *
- * @property nameDraft 이름 수정 다이얼로그의 입력값. [HistoryMealDetailMode.EditingName]에서만 의미가 있습니다.
- * @property isActionInFlight 수정/삭제 요청이 진행 중인지 여부. true 인 동안 확정/취소 조작을 무시합니다.
- * @property feedback AI 분석 평가 카드. null 이면 카드를 보여 주지 않습니다.
- */
-data class HistoryMealDetailUiState(
-    val meal: MealHistoryVO = MealHistoryVO.empty,
-    val mode: HistoryMealDetailMode = HistoryMealDetailMode.Viewing,
-    val nameDraft: String = "",
-    val isActionInFlight: Boolean = false,
-    val feedback: AnalysisFeedbackUiState? = null,
-) {
-    /** 평가 카드가 떠 있을 때만 [transform]을 적용합니다. */
-    fun withFeedback(transform: (AnalysisFeedbackUiState) -> AnalysisFeedbackUiState): HistoryMealDetailUiState =
-        feedback?.let { copy(feedback = transform(it)) } ?: this
-}
-
-/**
- * 식사 상세 안 AI 분석 평가 카드의 상태입니다.
- *
- * @property ratingHalfSteps 고른 별점(반 칸 수, 1~10 = 0.5~5.0점). 0 이면 아직 고르지 않았습니다.
- * @property selectedReason 고른 아쉬운 점(하나). 고르지 않았으면 null
- * @property comment 직접 쓴 이유
- * @property isSubmitting 보내는 중. 그동안 다시 보내지 않고, 별점·아쉬운 점·직접 쓰기도 바꾸지 못하게 막습니다. 보내기에 성공하면 상세 시트를 닫습니다.
- */
-data class AnalysisFeedbackUiState(
-    val ratingHalfSteps: Int = 0,
-    val selectedReason: AnalysisFeedbackReason? = null,
-    val comment: String = "",
-    val isSubmitting: Boolean = false,
-) {
-    /** 별점을 골랐을 때만 이유 입력과 보내기를 펼칩니다. */
-    val isRated: Boolean
-        get() = ratingHalfSteps > 0
-
-    val canSubmit: Boolean
-        get() = isRated && !isSubmitting
-}
-
-/** 식사 상세 오버레이가 보여주는 단계입니다. */
-enum class HistoryMealDetailMode {
-    /** 상세 카드 보기 */
-    Viewing,
-
-    /** 이름 수정 다이얼로그 */
-    EditingName,
-
-    /** 삭제 확인 다이얼로그 */
-    ConfirmingDelete,
 }
 
 /**

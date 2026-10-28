@@ -7,7 +7,7 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
  *
  * 1. [literalPaths] **exact** 매칭 우선 (예: "/users/me").
  * 2. [templates] **순차** 매칭 (예: "/users/{id}") — path 구간 값을 추출.
- * 3. [aliases] 앱 라우트와 경로가 다른 외부 링크를 앱 라우트로 바꾼다(예: 서버 푸시의 "/meals/{mealId}" → "/history").
+ * 3. [aliases] 앱 라우트와 경로가 다른 외부 링크를 앱 라우트로 바꾼다(예: 서버 푸시의 "/meals/{mealId}" → "/history/meals/{mealId}").
  *    앱 라우트를 모두 본 뒤에만 시도한다.
  *
  * 동일 이름의 path 파라미터와 query 가 충돌하면 구조적인 path 파라미터를 우선한다(`query + pathParams`).

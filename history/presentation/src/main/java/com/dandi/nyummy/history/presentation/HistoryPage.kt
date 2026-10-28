@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,7 +33,7 @@ import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.entity.NutrientProgressVO
 import com.dandi.nyummy.history.presentation.component.HistoryCalendar
 import com.dandi.nyummy.history.presentation.component.HistoryDaySection
-import com.dandi.nyummy.history.presentation.component.HistoryMealDetail
+import com.dandi.nyummy.history.presentation.component.MealDeleteDialog
 import com.dandi.nyummy.history.presentation.model.HistoryMonth
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
 import kotlinx.collections.immutable.persistentListOf
@@ -46,14 +45,10 @@ import kotlinx.collections.immutable.persistentMapOf
  * 월간 캘린더에서 날짜를 고르면 그날의 식사 목록과 하루 영양 현황이 바뀌고,
  * 식사를 누르면 상세 오버레이가 열립니다. 상태 수집과 [HistoryIntent] 전달만 담당합니다.
  *
- * @param openMealId 열자마자 상세를 띄울 식사(알림의 식사 상세 링크)
- * @param linkEventId 이 링크를 연 알림의 식별자. 같은 알림은 한 번만 연다. 없으면 [openMealId]로 구분한다.
  */
 @Composable
 fun HistoryPage(
     modifier: Modifier = Modifier,
-    openMealId: Long? = null,
-    linkEventId: String? = null,
     viewModel: HistoryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -61,11 +56,6 @@ fun HistoryPage(
     LifecycleResumeEffect(Unit) {
         viewModel.onIntent(HistoryIntent.ScreenResumed)
         onPauseOrDispose { }
-    }
-    LaunchedEffect(openMealId, linkEventId) {
-        openMealId?.let { mealId ->
-            viewModel.onIntent(HistoryIntent.OpenMealFromLink(mealId, eventId = linkEventId ?: mealId.toString()))
-        }
     }
     HistoryScreen(
         uiState = uiState,
@@ -135,8 +125,13 @@ internal fun HistoryScreen(
                 )
             }
         }
-        uiState.mealDetail?.let { detail ->
-            HistoryMealDetail(detail = detail, selectedDate = uiState.selectedDate, onIntent = onIntent)
+        uiState.deletingMeal?.let { meal ->
+            MealDeleteDialog(
+                mealName = meal.name,
+                isDeleting = uiState.isDeletingMeal,
+                onConfirm = { onIntent(HistoryIntent.ConfirmDeleteMeal) },
+                onCancel = { onIntent(HistoryIntent.CancelDeleteMeal) },
+            )
         }
     }
 }
