@@ -3,6 +3,7 @@ package com.dandi.nyummy.common.presentation.helper
 import android.content.Context
 import coil3.SingletonImageLoader
 import coil3.request.CachePolicy
+import coil3.request.ImageRequest
 import com.dandi.nyummy.common.domain.helper.ImagePrefetchHelper
 import com.dandi.nyummy.common.presentation.designsystem.component.spriteSheetRequest
 import kotlinx.coroutines.async
@@ -19,6 +20,21 @@ class ImagePrefetchHelperImpl(private val context: Context) : ImagePrefetchHelpe
             urls.map { url ->
                 async {
                     val request = spriteSheetRequest(context, url).newBuilder()
+                        .memoryCachePolicy(CachePolicy.DISABLED)
+                        .build()
+                    loader.execute(request)
+                }
+            }.awaitAll()
+        }
+    }
+
+    override suspend fun prefetchImages(urls: List<String>) {
+        val loader = SingletonImageLoader.get(context)
+        coroutineScope {
+            urls.map { url ->
+                async {
+                    val request = ImageRequest.Builder(context)
+                        .data(url)
                         .memoryCachePolicy(CachePolicy.DISABLED)
                         .build()
                     loader.execute(request)

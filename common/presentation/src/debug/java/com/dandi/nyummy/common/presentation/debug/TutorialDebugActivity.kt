@@ -10,6 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Box
@@ -21,6 +25,8 @@ import com.dandi.nyummy.common.presentation.coachmark.CoachMarkKey
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBubbleTail
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyHealthStoryDialog
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyHealthStoryPage
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyNoticeDialog
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyNoticePage
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialFinishDialog
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialSkipDialog
@@ -31,22 +37,28 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
  * 서버 없이 튜토리얼 공통 컴포넌트를 띄워 피그마 `v2 · 25 Tutorial`과 비교하는 디버그 액티비티 (debug 빌드에만 포함).
+ * 새 소식 공지 다이얼로그도 띄워 `v2 · 20 Home & My Room`의 Notice · 01~03과 비교한다.
  *
  * 실행 예:
  * adb shell am start -n com.dandi.nyummy/com.dandi.nyummy.common.presentation.debug.TutorialDebugActivity --es scene cards
  *
  * - scene: cards(안내 카드 꼬리 세 가지), intro(대상 없는 소개), bottom(바텀 네비 카메라), mail(오른쪽 위 우편 버튼,
- *   건너뛰기 숨김), back(왼쪽 위 뒤로 가기, 냐미 가운데), skip(건너뛰기 확인), story0~story2(냐미 건강 이야기), finish(마침)
+ *   건너뛰기 숨김), back(왼쪽 위 뒤로 가기, 냐미 가운데), skip(건너뛰기 확인), story0~story2(냐미 건강 이야기), finish(마침),
+ *   notice(새 소식 세 장: 업데이트, 사진 찍는 법, 이벤트), notice1(새 소식 한 장)
+ * - images: notice 장면의 사진 주소를 쉼표로 나눠 장 순서대로 준다. 없으면 연초록 바탕만 보인다.
+ *   debug 빌드는 평문 HTTP를 허용하므로 `adb reverse tcp:8765 tcp:8765` 뒤 `http://localhost:8765/a.png`처럼 쓴다.
  */
 class TutorialDebugActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val scene = intent.getStringExtra(EXTRA_SCENE) ?: SCENE_CARDS
+        val images = intent.getStringExtra(EXTRA_IMAGES)?.split(',')?.map { it.trim() }.orEmpty()
         setContent {
             NyummyTheme {
                 when (scene) {
                     SCENE_CARDS -> CardsScene()
+                    "notice", "notice1" -> NoticeScene(single = scene == "notice1", images = images)
                     "skip", "finish", "story0", "story1", "story2" -> DialogScene(scene)
                     else -> CoachMarkScene(scene)
                 }
@@ -56,6 +68,7 @@ class TutorialDebugActivity : ComponentActivity() {
 
     private companion object {
         const val EXTRA_SCENE = "scene"
+        const val EXTRA_IMAGES = "images"
         const val SCENE_CARDS = "cards"
     }
 }
@@ -164,5 +177,41 @@ private fun DialogScene(scene: String) {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun NoticeScene(single: Boolean, images: List<String>) {
+    var todayChecked by remember { mutableStateOf(false) }
+    val pages = listOf(
+        NyummyNoticePage(
+            badge = "업데이트",
+            imageUrl = images.getOrNull(0),
+            title = "냐미가 새단장을 했어요!",
+            body = "화면을 더 보기 편하게 새로 꾸몄어요.\n새로 들어온 기능도 확인해 보세요.",
+        ),
+        NyummyNoticePage(
+            badge = "사진 팁",
+            imageUrl = images.getOrNull(1),
+            title = "냐미는 진짜 밥상을 좋아해요",
+            body = "지금 먹을 음식을 바로 찍어 주세요.\n글로 쓴 식단이나 화면 속 음식 사진은\n냐미가 알아보기 어려워요.",
+        ),
+        NyummyNoticePage(
+            badge = "이벤트",
+            imageUrl = images.getOrNull(2),
+            meta = "10월 28일 ~ 11월 10일",
+            title = "가을 한 상 이벤트가 열렸어요",
+            body = "이벤트 페이지에서 자세히 알아보세요.",
+            ctaText = "자세히 보기",
+        ),
+    ).let { if (single) it.take(1) else it }.toImmutableList()
+    Box(Modifier.fillMaxSize().background(NyummyTheme.colors.bg.surfaceSunken)) {
+        NyummyNoticeDialog(
+            pages = pages,
+            todayChecked = todayChecked,
+            onTodayCheckedChange = { todayChecked = it },
+            onClose = {},
+            onCtaClick = {},
+        )
     }
 }

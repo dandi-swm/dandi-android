@@ -53,4 +53,5 @@
     <string name="nyummy_health_gauge_normal">딱 좋아</string>
     <string name="nyummy_health_gauge_chubby">통통</string>
     <string name="nyummy_health_gauge_plump">뚱뚱</string>
+    <string name="nyummy_notice_hide_today">오늘 하루 보지 않기</string>
 </resources>

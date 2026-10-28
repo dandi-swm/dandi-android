@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
@@ -177,12 +178,13 @@ internal fun NyummyDialogCard(
 
 /**
  * 플랫폼 기본 딤 대신 bg/scrim(40%)을 직접 깐 전체 화면 다이얼로그 창.
- * 바깥을 누르거나 뒤로 가기를 누르면 [onDismissRequest]가 호출된다.
+ * 바깥을 누르거나 뒤로 가기를 누르면 [onDismissRequest]가 호출된다. 화면 좌우 여백은 [screenMargin]이다.
  */
 @Composable
 internal fun NyummyDialogWindow(
     onDismissRequest: () -> Unit,
     dismissible: Boolean = true,
+    screenMargin: Dp = NyummyComponentDimens.DialogScreenMargin,
     content: @Composable () -> Unit,
 ) {
     val dismiss = if (dismissible) onDismissRequest else ({})
@@ -206,7 +208,7 @@ internal fun NyummyDialogWindow(
                 .pointerInput(dismiss) { detectTapGestures { dismiss() } }
                 // 딤은 전체 화면에 깔고, 카드는 시스템 바와 키보드를 뺀 영역 안에 둔다.
                 .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = NyummyComponentDimens.DialogScreenMargin, vertical = NyummyTheme.spacing.s24),
+                .padding(horizontal = screenMargin, vertical = NyummyTheme.spacing.s24),
             contentAlignment = Alignment.Center,
         ) {
             // 카드 안쪽을 눌러도 바깥 클릭으로 닫히지 않게 탭을 소비한다.

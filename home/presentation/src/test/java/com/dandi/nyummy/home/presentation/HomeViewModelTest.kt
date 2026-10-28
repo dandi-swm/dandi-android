@@ -14,6 +14,7 @@ import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.cat.entity.SpriteClipVO
 import com.dandi.nyummy.cat.entity.SpriteFrameVO
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
+import com.dandi.nyummy.common.domain.helper.DeviceHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -26,12 +27,16 @@ import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
+import com.dandi.nyummy.home.domain.CloseHomeNoticeUseCase
+import com.dandi.nyummy.home.domain.GetHomeNoticesUseCase
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.home.domain.HomeRepository
 import com.dandi.nyummy.home.domain.tti.HomeTTIPage
+import com.dandi.nyummy.home.entity.HomeNoticeVO
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.meal.domain.MealRecordRepository
 import com.dandi.nyummy.meal.domain.SubmitTutorialMealUseCase
@@ -63,6 +68,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.random.Random
 
@@ -140,6 +146,14 @@ class HomeViewModelTest {
                 navigationHelper = navigationHelper,
                 ttiHelper = FakeTTIHelper,
             ),
+            getHomeNotices = GetHomeNoticesUseCase(
+                repository = homeRepository,
+                deviceHelper = object : DeviceHelper {
+                    override val appVersionCode: Long = 210
+                    override val appVersionName: String = "1.0"
+                },
+            ),
+            closeHomeNotice = CloseHomeNoticeUseCase(repository = homeRepository),
         )
     }
 
@@ -593,6 +607,114 @@ class HomeViewModelTest {
         assertEquals(0, state.healthStory?.page)
     }
 
+    // region 새 소식 공지
+
+    private val renewal = HomeNoticeVO(id = "renewal", badge = "업데이트", title = "냐미가 새단장을 했어요!", body = "새로 꾸몄어요.")
+    private val event = HomeNoticeVO(id = "event", badge = "이벤트", title = "가을 이벤트", ctaText = "자세히 보기", ctaLink = "/shop")
+
+    @Test
+    fun `공지가 있으면 홈에 처음 들어올 때 JSON 순서대로 띄운다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(renewal, event)
+
+        resumeWith(afterTutorialMeal)
+
+        assertEquals(listOf("냐미가 새단장을 했어요!", "가을 이벤트"), state.notice?.pages?.map { it.title })
+        assertEquals(listOf(null, "/shop"), state.notice?.links)
+        assertFalse(state.notice!!.isHideTodayChecked)
+    }
+
+    @Test
+    fun `공지가 없으면 아무것도 띄우지 않는다`() = runTest(testDispatcher) {
+        resumeWith(afterTutorialMeal)
+
+        assertNull(state.notice)
+    }
+
+    @Test
+    fun `닫은 뒤 다시 홈이 보여도 공지를 띄우지 않고 날짜도 남기지 않는다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(renewal)
+        resumeWith(afterTutorialMeal)
+
+        viewModel.onIntent(HomeIntent.NoticeClosed)
+        advanceUntilIdle()
+        resumeWith(afterTutorialMeal)
+
+        assertNull(state.notice)
+        assertTrue(homeRepository.noticeHandled)
+        assertNull(homeRepository.hiddenDate)
+    }
+
+    @Test
+    fun `이번 실행에 이미 다뤘으면 새로 만든 홈에서도 띄우지 않는다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(renewal)
+        homeRepository.noticeHandled = true
+
+        resumeWith(afterTutorialMeal)
+
+        assertNull(state.notice)
+    }
+
+    @Test
+    fun `튜토리얼 중이면 공지를 띄우지 않고 이번 실행에는 건너뛴다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(renewal)
+
+        resumeWith(beforeTutorialMeal)
+
+        assertEquals(HomeTutorialStage.Intro, state.tutorial?.stage)
+        assertNull(state.notice)
+        assertTrue(homeRepository.noticeHandled)
+    }
+
+    @Test
+    fun `오늘 하루 보지 않기를 체크하고 닫으면 오늘 날짜를 남긴다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(renewal)
+        resumeWith(afterTutorialMeal)
+
+        viewModel.onIntent(HomeIntent.NoticeHideTodayChanged(true))
+        assertTrue(state.notice!!.isHideTodayChecked)
+        viewModel.onIntent(HomeIntent.NoticeClosed)
+        advanceUntilIdle()
+
+        assertNull(state.notice)
+        assertEquals(DeviceTime.today(), homeRepository.hiddenDate)
+    }
+
+    @Test
+    fun `오늘 하루 숨긴 날에는 띄우지 않는다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(renewal)
+        homeRepository.hiddenDate = DeviceTime.today()
+
+        resumeWith(afterTutorialMeal)
+
+        assertNull(state.notice)
+    }
+
+    @Test
+    fun `버튼을 누르면 공지를 닫고 그 장의 앱 경로로 간다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(renewal, event)
+        resumeWith(afterTutorialMeal)
+
+        viewModel.onIntent(HomeIntent.NoticeCtaClicked(1))
+        advanceUntilIdle()
+
+        assertNull(state.notice)
+        assertEquals(listOf("/shop"), navigationHelper.deepLinks)
+    }
+
+    @Test
+    fun `앱 경로가 아닌 링크는 공지만 닫고 이동하지 않는다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(event.copy(ctaLink = "https://nyummy.co.kr/event"))
+        resumeWith(afterTutorialMeal)
+
+        viewModel.onIntent(HomeIntent.NoticeCtaClicked(0))
+        advanceUntilIdle()
+
+        assertNull(state.notice)
+        assertTrue(navigationHelper.deepLinks.isEmpty())
+    }
+
+    // endregion
+
     private class FakeTutorialHelper : TutorialHelper {
         val pending = mutableSetOf<TutorialStep>()
         var mealRequired = false
@@ -683,6 +805,21 @@ class HomeViewModelTest {
         }
 
         override fun prefetchHomeSummary() = Unit
+
+        var noticeList: List<HomeNoticeVO> = emptyList()
+        var hiddenDate: LocalDate? = null
+        var noticeHandled = false
+
+        override fun getNotices(): List<HomeNoticeVO> = noticeList
+        override suspend fun getNoticeHiddenDate(): LocalDate? = hiddenDate
+        override suspend fun setNoticeHiddenDate(date: LocalDate) {
+            hiddenDate = date
+        }
+
+        override fun isNoticeHandled(): Boolean = noticeHandled
+        override fun markNoticeHandled() {
+            noticeHandled = true
+        }
     }
 
     private class RecordingNavigationHelper : NavigationHelper {
@@ -694,7 +831,12 @@ class HomeViewModelTest {
             pages += page
         }
 
-        override fun navigateDeepLink(route: NavRoute) = Unit
+        val deepLinks = mutableListOf<String>()
+
+        override fun navigateDeepLink(route: NavRoute) {
+            deepLinks += route.path
+        }
+
         override fun navigateToBack() = Unit
         override fun navigateToAsRoot(page: Page) = Unit
         override fun navigateToInitial() = Unit

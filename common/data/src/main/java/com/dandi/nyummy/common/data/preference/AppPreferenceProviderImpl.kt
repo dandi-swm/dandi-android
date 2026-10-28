@@ -3,6 +3,7 @@ package com.dandi.nyummy.common.data.preference
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import com.dandi.nyummy.common.data.BaseLocalDataSource
 
 /**
@@ -29,8 +30,15 @@ class AppPreferenceProviderImpl(
         write(KEY_ONBOARDING_INCOMPLETE, incomplete)
     }
 
+    override suspend fun homeNoticeHiddenDate(): String? = read(KEY_HOME_NOTICE_HIDDEN_DATE)
+
+    override suspend fun setHomeNoticeHiddenDate(date: String) {
+        write(KEY_HOME_NOTICE_HIDDEN_DATE, date)
+    }
+
     companion object {
         private val KEY_PERMISSION_NOTICE_SHOWN = booleanPreferencesKey("permission_notice_shown")
         private val KEY_ONBOARDING_INCOMPLETE = booleanPreferencesKey("onboarding_incomplete")
+        private val KEY_HOME_NOTICE_HIDDEN_DATE = stringPreferencesKey("home_notice_hidden_date")
     }
 }

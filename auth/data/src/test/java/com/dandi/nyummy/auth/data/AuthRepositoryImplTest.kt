@@ -297,5 +297,7 @@ class AuthRepositoryImplTest {
             onboardingIncomplete = incomplete
         }
 
+        override suspend fun homeNoticeHiddenDate(): String? = null
+        override suspend fun setHomeNoticeHiddenDate(date: String) = Unit
     }
 }

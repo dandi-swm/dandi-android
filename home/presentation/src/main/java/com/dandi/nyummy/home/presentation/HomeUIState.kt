@@ -30,6 +30,7 @@ import kotlinx.collections.immutable.ImmutableList
  * @property tutorial 지금 띄울 첫 사용자 튜토리얼 코치마크. 없으면 null
  * @property tutorialSkipConfirm 건너뛰기 확인에 보일 남은 안내. 확인이 닫혀 있으면 null
  * @property healthStory 냐미 건강 이야기와 마침. 띄우지 않으면 null
+ * @property notice 홈 첫 진입 때 띄운 새 소식 공지. 띄우지 않았거나 닫았으면 null
  */
 data class HomeUIState(
     val summary: HomeSummaryVO = HomeSummaryVO.empty,
@@ -50,6 +51,7 @@ data class HomeUIState(
     val tutorial: HomeTutorialUiState? = null,
     val tutorialSkipConfirm: ImmutableList<NyummyTutorialLesson>? = null,
     val healthStory: HomeHealthStoryUiState? = null,
+    val notice: HomeNoticeUiState? = null,
 ) : UiState {
 
     /** 오늘 한 끼라도 기록했는지. 냐미 상태와 대사가 이 값으로 갈린다. */

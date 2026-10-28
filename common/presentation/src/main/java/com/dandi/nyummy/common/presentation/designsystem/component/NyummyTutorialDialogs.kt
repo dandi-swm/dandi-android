@@ -275,7 +275,7 @@ private fun WeightGauge(activeIndex: Int, activeColor: Color) {
 }
 
 @Composable
-private fun PageDots(count: Int, current: Int) {
+internal fun PageDots(count: Int, current: Int) {
     Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s6), verticalAlignment = Alignment.CenterVertically) {
         repeat(count) { index ->
             val active = index == current

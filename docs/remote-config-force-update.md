@@ -87,6 +87,10 @@ qa 환경은 따로 두지 않기로 했다. 앱은 빌드 타입이 release인�
 
 키가 없거나 값을 받지 못하면 꺼진 것으로 본다.
 
+### 홈 새 소식 공지 키
+
+`android_home_notice`(debug는 `_debug`)에 공지 JSON을 넣는다. 형식과 게시 순서는 [remote-config-home-notice.md](remote-config-home-notice.md)를 본다.
+
 ### 남은 일
 
 - [x] qa와 debug를 구분하는 방식 결정: qa 없이 release / 그 밖의 빌드 두 갈래

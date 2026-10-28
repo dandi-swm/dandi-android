@@ -12,4 +12,11 @@ interface ImagePrefetchHelper {
      * 받지 못한 시트는 건너뛰고 알리지 않는다(화면이 그릴 때 다시 받는다).
      */
     suspend fun prefetchSpriteSheets(urls: List<String>)
+
+    /**
+     * 일반 그림 [urls]를 디스크 캐시에 모두 받을 때까지 기다린다. 메모리에는 올리지 않는다.
+     * 화면이 같은 주소를 그대로 그리면(AsyncImage) 네트워크 대신 디스크에서 읽는다.
+     * 받지 못한 그림은 건너뛰고 알리지 않는다(화면이 그릴 때 다시 받는다).
+     */
+    suspend fun prefetchImages(urls: List<String>)
 }

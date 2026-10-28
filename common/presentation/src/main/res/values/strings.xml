@@ -52,4 +52,5 @@
     <string name="nyummy_health_gauge_normal">Just right</string>
     <string name="nyummy_health_gauge_chubby">Chubby</string>
     <string name="nyummy_health_gauge_plump">Plump</string>
+    <string name="nyummy_notice_hide_today">Don\'t show again today</string>
 </resources>

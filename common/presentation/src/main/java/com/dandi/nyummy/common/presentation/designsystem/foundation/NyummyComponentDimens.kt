@@ -191,4 +191,19 @@ internal object NyummyComponentDimens {
     val TagBannerMinHeight = 24.dp
     val TagBannerHorizontalPadding = 10.dp
     val TagBannerVerticalPadding = 3.dp
+
+    /** 새 소식 공지(NyummyNoticeDialog) 최대 너비와 화면 좌우 여백. */
+    val NoticeDialogMaxWidth = 334.dp
+    val NoticeDialogScreenMargin = 28.dp
+
+    /** 세로가 모자라 새 소식 사진을 줄일 때의 최소 너비. 여기서도 모자라면 글만 스크롤한다. */
+    val NoticeDialogMinWidth = 240.dp
+
+    /** 새 소식 카드의 글 칸(버튼)과 맨 아래 고정 점 사이. */
+    val NoticeFooterGap = 14.dp
+
+    /** 새 소식 카드와 아래 "오늘 하루 보지 않기" 줄 사이, 그 줄의 높이와 체크박스. */
+    val NoticeDismissRowGap = 14.dp
+    val NoticeDismissRowHeight = 44.dp
+    val NoticeCheckboxSize = 20.dp
 }
