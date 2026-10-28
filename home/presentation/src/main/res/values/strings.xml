@@ -20,4 +20,27 @@
     <string name="home_prepare_progress_complete">All set! Heading to the room</string>
     <string name="home_prepare_progress_percent">%1$d%%</string>
     <string name="home_prepare_tip">Tap Nyummy to hear something new</string>
+    <string name="home_tutorial_hello_title">Hi! I\'m Nyummy</string>
+    <string name="home_tutorial_hello_body">When you record a meal, I get to eat too</string>
+    <string name="home_tutorial_reward_title">Recording meals earns reward boxes</string>
+    <string name="home_tutorial_reward_body">Boxes arrive in your mailbox</string>
+    <string name="home_tutorial_camera_title">Tap here for your first record!</string>
+    <string name="home_tutorial_camera_body">One photo per meal is all it takes</string>
+    <string name="home_tutorial_mail_title">A reward box arrived!</string>
+    <string name="home_tutorial_mail_body">Let\'s open it in the mailbox</string>
+    <string name="home_tutorial_room_title">Decorate with your new item!</string>
+    <string name="home_tutorial_room_body">Shall we go to My Room?</string>
+    <string name="home_tutorial_room_saved_title">Your room is saved!</string>
+    <string name="home_tutorial_room_saved_body">You can see your decorated room right here on Home</string>
+    <string name="home_health_steady_title">Record regularly and\nwe both stay healthy!</string>
+    <string name="home_health_steady_body">I eat whenever you record a meal.\nKeep it up and I stay just right.</string>
+    <string name="home_health_starving_title">Skip meals and\nI get skinny</string>
+    <string name="home_health_starving_body">If you skip meals, I go hungry too.\nFeed me again and I bounce right back!</string>
+    <string name="home_health_overeating_title">Eat too much and\nI get chubby</string>
+    <string name="home_health_overeating_body">If you overeat, I eat a lot too\nand get round. Eating just right is best.</string>
+    <string name="home_health_next">Next</string>
+    <string name="home_health_done">Got it!</string>
+    <string name="home_tutorial_finish_title">All set!\nI\'ll wait for your next meal</string>
+    <string name="home_tutorial_finish_body">Just tap the camera button when you eat.\nEvery record sends a reward box to your mailbox.</string>
+    <string name="home_tutorial_finish_start">Let\'s start</string>
 </resources>

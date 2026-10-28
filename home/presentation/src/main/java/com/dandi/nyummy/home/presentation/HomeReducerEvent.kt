@@ -2,8 +2,10 @@ package com.dandi.nyummy.home.presentation
 
 import com.dandi.nyummy.cat.domain.CatMood
 import com.dandi.nyummy.cat.entity.CatState
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
 import com.dandi.nyummy.home.entity.HomeSummaryVO
+import kotlinx.collections.immutable.ImmutableList
 
 /** 홈 화면 상태를 변이시키는 내부 이벤트. */
 sealed interface HomeReducerEvent : ReducerEvent {
@@ -24,6 +26,15 @@ sealed interface HomeReducerEvent : ReducerEvent {
     data object CatAnimationsLoaded : HomeReducerEvent
 
     data object CatAnimationsLoadFailed : HomeReducerEvent
+
+    /** 튜토리얼 코치마크를 띄우거나, 다음 대사로 넘기거나, 내렸다(null). */
+    data class TutorialChanged(val tutorial: HomeTutorialUiState?) : HomeReducerEvent
+
+    /** 건너뛰기 확인을 띄웠다(남은 안내) 또는 닫았다(null). */
+    data class TutorialSkipConfirmChanged(val remaining: ImmutableList<NyummyTutorialLesson>?) : HomeReducerEvent
+
+    /** 냐미 건강 이야기를 띄우거나 넘기거나 닫았다(null). */
+    data class HealthStoryChanged(val story: HomeHealthStoryUiState?) : HomeReducerEvent
 
     /** 냐미 상태나 동작이 바뀌었다. [motion]은 애니메이션을 아직 받지 못했으면 null이다. */
     data class CatMotionChanged(

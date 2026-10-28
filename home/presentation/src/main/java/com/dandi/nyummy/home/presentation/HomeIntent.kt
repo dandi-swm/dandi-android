@@ -46,4 +46,25 @@ sealed interface HomeIntent : MviIntent {
 
     /** 받은 요약 숫자가 처음 화면에 그려졌다. 홈 TTI 끝 판단에 쓴다. */
     data object SummaryShown : HomeIntent
+
+    /** 튜토리얼 카드를 눌렀다. 다음 대사로 넘긴다. 방 저장 안내의 마지막 대사면 냐미 건강 이야기로 간다. */
+    data object TutorialAdvance : HomeIntent
+
+    /** 튜토리얼이 가리킨 곳을 눌렀다. 이동은 그 버튼이 하고, 우편 버튼·마이룸 탭 단계면 마친다. */
+    data object TutorialTargetClicked : HomeIntent
+
+    /** 화면 오른쪽 위 건너뛰기를 눌렀다. 건너뛰기 확인을 띄운다. */
+    data object TutorialSkip : HomeIntent
+
+    /** 건너뛰기 확인에서 계속 배우기로 했다(바깥·뒤로 가기 포함). */
+    data object TutorialSkipCancelled : HomeIntent
+
+    /** 건너뛰기 확인에서 그래도 건너뛰기로 했다. 냐미 건강 이야기로 간다. */
+    data object TutorialSkipConfirmed : HomeIntent
+
+    /** 냐미 건강 이야기에서 다음(마지막 장이면 알겠어)을 눌렀다. */
+    data object HealthStoryNext : HomeIntent
+
+    /** 마침에서 시작하기를 눌렀다. 튜토리얼을 끝낸다. */
+    data object TutorialFinished : HomeIntent
 }

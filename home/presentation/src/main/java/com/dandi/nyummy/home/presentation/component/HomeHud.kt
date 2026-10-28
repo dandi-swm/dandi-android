@@ -47,6 +47,7 @@ internal fun HomeHud(
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
     hasUnreadMail: Boolean = false,
+    mailButtonModifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
@@ -68,6 +69,7 @@ internal fun HomeHud(
                 label = stringResource(R.string.home_action_mail),
                 onClick = onMailClick,
                 showDot = hasUnreadMail,
+                modifier = mailButtonModifier,
             )
 //            HomeHudAction(
 //                icon = CommonR.drawable.nyummy_ic_bell,
@@ -140,9 +142,10 @@ private fun HomeHudAction(
     label: String,
     onClick: () -> Unit,
     showDot: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(HudActionSize)
             .nyummyShadow(CircleShape, NyummyTheme.elevation.soft)
             .nyummyClickable(onClick = onClick)
