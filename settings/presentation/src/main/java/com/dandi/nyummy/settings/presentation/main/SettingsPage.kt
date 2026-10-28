@@ -45,7 +45,6 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomS
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialog
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialogType
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDivider
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRowTrailing
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionBand
@@ -343,16 +342,14 @@ private val NotificationKind.disclosure: NotificationDisclosure
 private fun NotificationDetailSheet(kind: NotificationKind, onDismiss: () -> Unit) {
     val disclosure = kind.disclosure
     NyummyBottomSheet(onDismissRequest = onDismiss) {
-        NyummySheetTitle(text = stringResource(disclosure.title))
-        Column {
+        NyummySheetTitle(text = stringResource(disclosure.title), onClose = onDismiss)
+        Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16)) {
             DisclosureRow(label = R.string.settings_push_detail_sender_label) {
                 DisclosureValue(text = stringResource(R.string.settings_push_detail_sender))
             }
-            NyummyDivider()
             DisclosureRow(label = R.string.settings_push_detail_purpose_label) {
                 DisclosureValue(text = stringResource(disclosure.purpose))
             }
-            NyummyDivider()
             DisclosureRow(label = R.string.settings_push_detail_contents_label) {
                 Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12)) {
                     disclosure.contents.forEach { push ->
@@ -370,7 +367,6 @@ private fun NotificationDetailSheet(kind: NotificationKind, onDismiss: () -> Uni
                     }
                 }
             }
-            NyummyDivider()
             DisclosureRow(label = disclosure.optOutLabel) {
                 DisclosureValue(text = stringResource(disclosure.optOut))
             }
@@ -387,12 +383,11 @@ private fun NotificationDetailSheet(kind: NotificationKind, onDismiss: () -> Uni
 @Composable
 private fun FontCreditSheet(onDismiss: () -> Unit) {
     NyummyBottomSheet(onDismissRequest = onDismiss) {
-        NyummySheetTitle(text = stringResource(R.string.settings_font_credit))
-        Column {
+        NyummySheetTitle(text = stringResource(R.string.settings_font_credit), onClose = onDismiss)
+        Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16)) {
             DisclosureRow(label = R.string.settings_font_credit_pretendard_label) {
                 DisclosureValue(text = stringResource(R.string.settings_font_credit_pretendard))
             }
-            NyummyDivider()
             DisclosureRow(label = R.string.settings_font_credit_katuri_label) {
                 DisclosureValue(text = stringResource(R.string.settings_font_credit_katuri))
             }
@@ -409,15 +404,13 @@ private fun FontCreditSheet(onDismiss: () -> Unit) {
 @Composable
 private fun DisclosureRow(@StringRes label: Int, value: @Composable () -> Unit) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = NyummyTheme.spacing.s12),
+        modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
     ) {
         NyummyText(
             text = stringResource(label),
-            style = NyummyTheme.typography.labelM,
-            color = NyummyTheme.colors.content.secondary,
+            style = NyummyTheme.typography.bodyS,
+            color = NyummyTheme.colors.content.tertiary,
         )
         value()
     }
