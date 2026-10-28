@@ -11,6 +11,10 @@ data class HistoryMonth(val year: Int, val month: Int) : Comparable<HistoryMonth
     val label: String
         get() = monthLabelOf(year, month)
 
+    /** 캘린더 머리에 쓰는 "2026. 10" 형태의 짧은 라벨입니다. 읽어 줄 때는 [label]을 씁니다. */
+    val shortLabel: String
+        get() = "$year. ${month.toString().padStart(2, '0')}"
+
     /** [months]만큼 앞(양수)이나 뒤(음수)로 옮긴 달입니다. */
     fun plusMonths(months: Int): HistoryMonth {
         val index = monthIndex + months

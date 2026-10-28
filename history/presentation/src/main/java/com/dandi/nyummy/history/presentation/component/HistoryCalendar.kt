@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,8 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,11 +29,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.selected
@@ -70,11 +69,13 @@ import kotlinx.coroutines.launch
  * 좌우로 넘겨 달을 바꾸는 월 캘린더. 월 이름과 요일 줄은 고정하고 날짜 6줄만 넘어간다.
  *
  * - 이번 달이 마지막 장이라 미래 달로는 넘어가지 않는다.
- * - 오늘이 아닌 날을 고르고 있거나 다른 달을 보고 있으면 "오늘로 이동" 버튼이 보인다. 누르면 이번 달 오늘로 돌아간다.
+ * - 머리 가운데 "‹ 2026. 10 ›"의 화살표로도 한 달씩 넘긴다.
+ * - 오늘이 아닌 날을 고르고 있거나 다른 달을 보고 있으면 머리 오른쪽에 "오늘로 이동"이 보인다. 누르면 이번 달 오늘로 돌아간다.
  *   버튼을 "오늘"이라고만 쓰면 지금 고른 날이 오늘이라는 표시로 읽힐 수 있어 이동한다는 말을 붙였다.
  * - 넘기다 멈추면 [onChangeMonth]로 그 달을 알린다. 보고 있는 달은 [displayedMonth]가 정하고,
  *   바깥에서 바뀌면(오늘 버튼, 다른 달 날짜 선택) 그 달로 넘겨 맞춘다.
  * - 그 달 날짜가 있는 주만 그린다(4~6주). 주 수가 다른 달로 넘기면 캘린더 높이가 부드럽게 바뀐다.
+ * - "이번 달 N일 기록했어요"는 화면 머리의 정보 칩([recordSummaryOf])이 맡는다.
  *
  * @param calendarMonths 받아 둔 달의 칸. 아직 없는 달은 날짜만 그린다.
  */
@@ -117,18 +118,16 @@ internal fun HistoryCalendar(
     Column(modifier = modifier) {
         CalendarHeader(
             month = visibleMonth,
+            canGoPrevious = pagerState.currentPage > 0,
+            canGoNext = pagerState.currentPage < HISTORY_MONTH_PAGE_COUNT - 1,
+            onPrevious = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
+            onNext = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
             showToday = visibleMonth != currentMonth || selectedDate != today,
             onClickToday = onClickToday,
         )
-        Spacer(Modifier.height(HeaderBottomGap))
+        Spacer(Modifier.height(NyummyTheme.spacing.s6))
         WeekdayRow()
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(NyummyTheme.borderWidth.hairline)
-                .background(NyummyTheme.colors.border.subtle),
-        )
-        Spacer(Modifier.height(GridTopGap))
+        Spacer(Modifier.height(NyummyTheme.spacing.s6))
         val weeks = weekCountOf(visibleMonth.year, visibleMonth.month)
         val gridHeight by animateDpAsState(
             targetValue = DayCellHeight * weeks + WeekGap * (weeks - 1),
@@ -172,8 +171,6 @@ internal fun HistoryCalendar(
                 onSelectDate = onSelectDate,
             )
         }
-        Spacer(Modifier.height(CaptionTopGap))
-        RecordCaption(month = visibleMonth, currentMonth = currentMonth, days = calendarMonths[visibleMonth])
     }
 }
 
@@ -181,27 +178,72 @@ internal fun HistoryCalendar(
 @Composable
 private fun CalendarHeader(
     month: HistoryMonth,
+    canGoPrevious: Boolean,
+    canGoNext: Boolean,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
     showToday: Boolean,
     onClickToday: () -> Unit,
 ) {
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(NyummyTheme.size.touchTarget),
-        verticalAlignment = Alignment.CenterVertically,
+        contentAlignment = Alignment.Center,
     ) {
-        NyummyText(
-            text = month.label,
-            style = NyummyTheme.typography.titleL,
-            modifier = Modifier.weight(1f),
-        )
-        AnimatedVisibility(visible = showToday, enter = fadeIn(), exit = fadeOut()) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            MonthArrow(
+                icon = CommonR.drawable.nyummy_ic_chevron_left,
+                description = stringResource(R.string.history_calendar_previous_month),
+                enabled = canGoPrevious,
+                onClick = onPrevious,
+            )
+            NyummyText(
+                text = month.shortLabel,
+                style = NyummyTheme.typography.titleL,
+                modifier = Modifier.clearAndSetSemantics { contentDescription = month.label },
+            )
+            MonthArrow(
+                icon = CommonR.drawable.nyummy_ic_chevron_right,
+                description = stringResource(R.string.history_calendar_next_month),
+                enabled = canGoNext,
+                onClick = onNext,
+            )
+        }
+        AnimatedVisibility(
+            visible = showToday,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.align(Alignment.CenterEnd),
+        ) {
             NyummyTextButton(
                 text = stringResource(R.string.history_go_today),
                 onClick = onClickToday,
                 tone = NyummyTextButtonTone.Neutral,
             )
         }
+    }
+}
+
+/** 한 달씩 넘기는 화살표. 넘길 달이 없으면 흐리게 두고 누를 수 없다. */
+@Composable
+private fun MonthArrow(icon: Int, description: String, enabled: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(NyummyTheme.size.touchTarget)
+            .nyummyClickable(onClick = onClick, enabled = enabled)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = if (enabled) NyummyTheme.colors.content.primary else NyummyTheme.colors.content.disabled,
+            modifier = Modifier.size(NyummyTheme.size.iconM),
+        )
     }
 }
 
@@ -256,9 +298,8 @@ private fun MonthGrid(
 }
 
 /**
- * 날짜 칸 하나. 오늘은 그린 원, 고른 날은 연민트 칸으로 따로 표시하고, 오늘을 고르면 둘 다 보인다.
- * 다른 달 날짜와 미래 날짜는 흐리게 그리며, 미래 날짜는 누를 수 없다.
- * 기록이 있는 날은 음식 아이콘(최대 2개)과 기록 점을 붙인다.
+ * 날짜 칸 하나. 기록이 있는 날은 굵게(primary) 쓰고 음식 아이콘(최대 2개)을 붙이며, 기록이 없는 날은 옅게(quiet) 쓴다.
+ * 다른 달 날짜는 가장 옅게(disabled) 그린다. 고른 날은 연초록 칸에 브랜드색 숫자다. 미래 날짜는 누를 수 없다.
  */
 @Composable
 private fun CalendarDay(
@@ -270,13 +311,14 @@ private fun CalendarDay(
     modifier: Modifier = Modifier,
 ) {
     val colors = NyummyTheme.colors
-    val numberColor = when {
-        isToday -> colors.content.onAction
-        !day.inCurrentMonth -> colors.content.disabled
-        isFuture -> colors.content.tertiary
-        else -> colors.content.primary
-    }
     val showRecord = day.inCurrentMonth && day.hasRecord
+    val numberColor = when {
+        !day.inCurrentMonth -> colors.content.disabled
+        isSelected -> colors.content.brand
+        showRecord -> colors.content.primary
+        else -> colors.content.quiet
+    }
+    val numberStyle = if (showRecord || isSelected) NyummyTheme.typography.labelM else NyummyTheme.typography.bodyM
     val description = buildString {
         append(dayLabelOf(day.date))
         if (isToday) append(", ").append(stringResource(R.string.history_calendar_day_today))
@@ -286,7 +328,7 @@ private fun CalendarDay(
         modifier = modifier
             .height(DayCellHeight)
             .clip(RoundedCornerShape(NyummyTheme.radius.s))
-            .background(if (isSelected) colors.bg.selected else Color.Transparent)
+            .background(if (isSelected) colors.bg.brandSubtle else Color.Transparent)
             .nyummyClickable(onClick = onClick, enabled = !isFuture)
             .semantics(mergeDescendants = true) {
                 contentDescription = description
@@ -296,79 +338,47 @@ private fun CalendarDay(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(DayCellGap),
     ) {
-        Box(
-            modifier = Modifier
-                .size(DayNumberSize)
-                .clip(CircleShape)
-                .background(if (isToday) colors.bg.actionPrimary else Color.Transparent),
-            contentAlignment = Alignment.Center,
-        ) {
-            NyummyText(text = day.dayLabel, style = NyummyTheme.typography.numberXs, color = numberColor)
-        }
+        NyummyText(text = day.dayLabel, style = numberStyle, color = numberColor)
         if (showRecord) {
-            Row(horizontalArrangement = Arrangement.spacedBy(FoodIconOverlap)) {
+            Row {
                 day.foodIconIds.forEach { iconId ->
                     Box(modifier = Modifier.size(FoodIconSize), contentAlignment = Alignment.Center) {
                         NyummyFoodIcon(foodIconId = iconId)
                     }
                 }
             }
-            Box(
-                Modifier
-                    .size(RecordDotSize)
-                    .background(colors.data.recordMarker, CircleShape),
-            )
         }
     }
 }
 
-/** 캘린더 아래 "이번 달 N일 기록했어요". 아직 받지 않은 달은 자리만 둔다. */
+/**
+ * 화면 머리의 "이번 달 N일 기록했어요" 칩 문구와 굵게 쓸 부분("N일"). 아직 받지 않은 달이면 null.
+ */
 @Composable
-private fun RecordCaption(
+internal fun recordSummaryOf(
     month: HistoryMonth,
     currentMonth: HistoryMonth,
     days: ImmutableList<HistoryCalendarDayUiModel>?,
-) {
-    Row(
-        modifier = Modifier.height(CaptionHeight),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
-    ) {
-        if (days == null) return@Row
-        val recorded = days.count { it.inCurrentMonth && it.hasRecord }
-        val text = when {
-            month == currentMonth && recorded > 0 -> stringResource(R.string.history_calendar_recorded_this_month, recorded)
-            month == currentMonth -> stringResource(R.string.history_calendar_no_record_this_month)
-            recorded > 0 -> stringResource(R.string.history_calendar_recorded_month, month.month, recorded)
-            else -> stringResource(R.string.history_calendar_no_record_month, month.month)
-        }
-        Image(
-            painter = painterResource(CommonR.drawable.nyummy_ic_calendar_days),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(NyummyTheme.colors.content.tertiary),
-            modifier = Modifier.size(NyummyTheme.size.iconS),
-        )
-        NyummyText(text = text, style = NyummyTheme.typography.bodyS, color = NyummyTheme.colors.content.tertiary)
+): Pair<String, String?>? {
+    if (days == null) return null
+    val recorded = days.count { it.inCurrentMonth && it.hasRecord }
+    val highlight = stringResource(R.string.history_calendar_recorded_days, recorded).takeIf { recorded > 0 }
+    val text = when {
+        month == currentMonth && recorded > 0 -> stringResource(R.string.history_calendar_recorded_this_month, recorded)
+        month == currentMonth -> stringResource(R.string.history_calendar_no_record_this_month)
+        recorded > 0 -> stringResource(R.string.history_calendar_recorded_month, month.month, recorded)
+        else -> stringResource(R.string.history_calendar_no_record_month, month.month)
     }
+    return text to highlight
 }
 
-// "오늘로 이동" 버튼(터치 영역 44)이 있어 머리줄이 Figma(30)보다 높다. 그만큼 아래 간격을 줄여 요일 줄 위치를 맞춘다.
-private val HeaderBottomGap = 5.dp
-private val WeekdayRowHeight = 28.dp
-private val GridTopGap = 6.dp
-private val WeekGap = 2.dp
-private val DayCellHeight = 72.dp
-private val DayCellInset = 1.dp
+private val WeekdayRowHeight = 24.dp
+private val WeekGap = 6.dp
+private val DayCellHeight = 48.dp
+private val DayCellInset = 3.dp
 private val DayCellTopPadding = 6.dp
-private val DayCellGap = 4.dp
-private val DayNumberSize = 26.dp
-private val FoodIconSize = 22.dp
-
-// 아이콘 둘을 살짝 겹쳐 칸 폭(48)에 맞춘다.
-private val FoodIconOverlap = (-4).dp
-private val RecordDotSize = 5.dp
-private val CaptionTopGap = 16.dp
-private val CaptionHeight = 18.dp
+private val DayCellGap = 2.dp
+private val FoodIconSize = 14.dp
 
 @Preview(showBackground = true, widthDp = 390)
 @Composable
