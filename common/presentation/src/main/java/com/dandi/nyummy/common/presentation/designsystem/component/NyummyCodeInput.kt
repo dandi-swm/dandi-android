@@ -1,7 +1,6 @@
 package com.dandi.nyummy.common.presentation.designsystem.component
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -91,24 +90,25 @@ fun NyummyCodeInput(
 @Composable
 private fun CodeCell(digit: Char?, active: Boolean, isError: Boolean, enabled: Boolean) {
     val shape = RoundedCornerShape(NyummyTheme.radius.s)
-    val borderColor = when {
-        !enabled -> NyummyTheme.colors.border.subtle
-        isError -> NyummyTheme.colors.border.danger
-        active -> NyummyTheme.colors.border.focus
-        digit != null -> NyummyTheme.colors.border.strong
-        else -> NyummyTheme.colors.border.default
+    // 입력칸 규칙에 더해, 숫자가 들어간 칸은 흰 바탕 + 1px 테두리로 채워졌음을 보인다.
+    val surface = if (enabled && !isError && !active && digit != null) {
+        FieldSurface(
+            NyummyTheme.colors.bg.surface,
+            BorderStroke(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.border.default),
+        )
+    } else {
+        fieldSurface(enabled = enabled, isError = isError, focused = active)
     }
     Box(
         modifier = Modifier
             .size(DpSize(NyummyComponentDimens.CodeCellWidth, NyummyComponentDimens.CodeCellHeight))
-            .background(if (enabled) NyummyTheme.colors.bg.surface else NyummyTheme.colors.bg.surfaceSunken, shape)
-            .border(NyummyTheme.borderWidth.bold, borderColor, shape),
+            .fieldSurface(surface, shape),
         contentAlignment = Alignment.Center,
     ) {
         if (digit != null) {
             NyummyText(
                 text = digit.toString(),
-                style = NyummyTheme.typography.numberM,
+                style = NyummyTheme.typography.titleL,
                 color = if (enabled) NyummyTheme.colors.content.primary else NyummyTheme.colors.content.disabled,
             )
         }

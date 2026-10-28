@@ -15,20 +15,17 @@ internal object NyummyComponentDimens {
     /** Button S(작은 버튼) 높이. */
     val ButtonSmallHeight = 32.dp
 
-    /** Text Field, Text Area의 라벨과 입력칸 사이. */
-    val FieldLabelGap = 6.dp
+    /** 입력칸이 입력 중이거나 오류일 때 테두리 두께. */
+    val FieldActiveBorderWidth = 1.5.dp
 
     /** Text Field 입력칸 높이. */
     val TextFieldHeight = 52.dp
 
-    /** Text Field 아이콘과 글자 사이. */
-    val TextFieldIconGap = 10.dp
-
     /** Text Area 입력칸 높이(고정, 내용이 많으면 안에서 스크롤). */
-    val TextAreaHeight = 180.dp
+    val TextAreaHeight = 140.dp
 
-    /** Text Area 위쪽 안쪽 여백. */
-    val TextAreaTopPadding = 14.dp
+    /** Text Area 위아래 안쪽 여백. */
+    val TextAreaVerticalPadding = 14.dp
 
     /** 인증 코드 셀 크기. */
     val CodeCellWidth = 48.dp

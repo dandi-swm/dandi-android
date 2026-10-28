@@ -1,7 +1,5 @@
 package com.dandi.nyummy.common.presentation.designsystem.component
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,20 +45,13 @@ fun NyummyTextArea(
     val focused by interactionSource.collectIsFocusedAsState()
     val isError = errorMessage != null
     val shape = RoundedCornerShape(NyummyTheme.radius.s)
-    val emphasized = enabled && (isError || focused)
-    val borderWidth = if (emphasized) NyummyTheme.borderWidth.bold else NyummyTheme.borderWidth.hairline
-    val borderColor = when {
-        !enabled -> NyummyTheme.colors.border.default
-        isError -> NyummyTheme.colors.border.danger
-        focused -> NyummyTheme.colors.border.focus
-        else -> NyummyTheme.colors.border.default
-    }
+    val surface = fieldSurface(enabled = enabled, isError = isError, focused = focused)
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(NyummyComponentDimens.FieldLabelGap),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
     ) {
-        NyummyText(text = label, style = NyummyTheme.typography.labelM, color = NyummyTheme.colors.content.secondary)
+        NyummyText(text = label, style = NyummyTheme.typography.labelM)
         BasicTextField(
             value = value,
             onValueChange = { onValueChange(it.take(maxLength)) },
@@ -71,7 +62,7 @@ fun NyummyTextArea(
                     if (errorMessage != null && enabled) error(errorMessage)
                 },
             enabled = enabled,
-            textStyle = NyummyTheme.typography.bodyM.copy(color = NyummyTheme.colors.content.primary),
+            textStyle = NyummyTheme.typography.bodyL.copy(color = NyummyTheme.colors.content.primary),
             cursorBrush = SolidColor(NyummyTheme.colors.border.focus),
             interactionSource = interactionSource,
             decorationBox = { innerTextField ->
@@ -79,16 +70,10 @@ fun NyummyTextArea(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(NyummyComponentDimens.TextAreaHeight)
-                        .background(
-                            if (enabled) NyummyTheme.colors.bg.surface else NyummyTheme.colors.bg.actionDisabled,
-                            shape,
-                        )
-                        .border(borderWidth, borderColor, shape)
+                        .fieldSurface(surface, shape)
                         .padding(
-                            start = NyummyTheme.spacing.s16,
-                            end = NyummyTheme.spacing.s16,
-                            top = NyummyComponentDimens.TextAreaTopPadding,
-                            bottom = NyummyTheme.spacing.s12,
+                            horizontal = NyummyTheme.spacing.s16,
+                            vertical = NyummyComponentDimens.TextAreaVerticalPadding,
                         ),
                     verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
                 ) {
@@ -96,15 +81,15 @@ fun NyummyTextArea(
                         if (value.isEmpty() && placeholder != null) {
                             NyummyText(
                                 text = placeholder,
-                                style = NyummyTheme.typography.bodyM,
+                                style = NyummyTheme.typography.bodyL,
                                 color = NyummyTheme.colors.content.tertiary,
                             )
                         }
                         innerTextField()
                     }
                     NyummyText(
-                        text = "${value.length.formatted()}/${maxLength.formatted()}",
-                        style = NyummyTheme.typography.labelS,
+                        text = "${value.length.formatted()} / ${maxLength.formatted()}",
+                        style = NyummyTheme.typography.bodyS,
                         color = NyummyTheme.colors.content.tertiary,
                         textAlign = TextAlign.End,
                         modifier = Modifier.fillMaxWidth(),
