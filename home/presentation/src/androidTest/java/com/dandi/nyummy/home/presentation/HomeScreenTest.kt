@@ -83,7 +83,7 @@ class HomeScreenTest {
             HomeUIState(
                 summary = recordedSummary,
                 catMotion = catMotion,
-                catState = CatState.RELAXED,
+                catState = CatState.HOME_DAY,
                 catLine = "이제 느긋하게 쉬어도 돼",
             ),
         ) { intents += it }

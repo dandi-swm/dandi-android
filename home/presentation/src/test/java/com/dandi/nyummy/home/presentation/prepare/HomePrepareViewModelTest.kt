@@ -3,7 +3,6 @@ package com.dandi.nyummy.home.presentation.prepare
 import com.dandi.nyummy.cat.domain.CatRepository
 import com.dandi.nyummy.cat.domain.PrefetchCatAnimationsUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
-import com.dandi.nyummy.common.domain.helper.ImagePrefetchHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
@@ -51,15 +50,12 @@ class HomePrepareViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(prefetch: suspend () -> CatAnimationSetVO?) = HomePrepareViewModel(
+    private fun viewModel(prefetch: suspend () -> Boolean) = HomePrepareViewModel(
         prefetchHomeSummary = PrefetchHomeSummaryUseCase(homeRepository),
         prefetchCatAnimations = PrefetchCatAnimationsUseCase(
             repository = object : CatRepository {
                 override suspend fun getAnimations(): CatAnimationSetVO = CatAnimationSetVO.empty
-                override suspend fun prefetchAnimations(): CatAnimationSetVO? = prefetch()
-            },
-            imagePrefetchHelper = object : ImagePrefetchHelper {
-                override suspend fun prefetchSpriteSheets(urls: List<String>) = Unit
+                override suspend fun refreshWeight(): Boolean = prefetch()
             },
         ),
         navigationHelper = navigationHelper,
@@ -67,7 +63,7 @@ class HomePrepareViewModelTest {
 
     @Test
     fun `홈 요약은 기다리지 않고, 냐미 미리 받기가 끝나야 진행바를 채운 뒤 채움 애니메이션을 기다려 홈을 루트로 연다`() = runTest(testDispatcher) {
-        val viewModel = viewModel { prefetchDone.await(); CatAnimationSetVO.empty }
+        val viewModel = viewModel { prefetchDone.await(); false }
         runCurrent()
         assertEquals(1, homeRepository.prefetchCount)
         assertFalse(viewModel.uiState.value.isComplete)

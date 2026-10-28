@@ -5,7 +5,6 @@ import com.dandi.nyummy.cat.entity.SpriteClipVO
 import com.dandi.nyummy.cat.entity.SpriteFrameVO
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -18,114 +17,97 @@ class CatAnimationDTOTest {
         coerceInputValues = true
     }
 
-    /** 실제 응답 형식을 줄인 예시. loop가 false면 서버가 값을 빼고 보낼 수 있다. */
+    private val baseUrl = "file:///android_asset/cats/NORMAL/"
+
+    /** 앱 에셋 `animations.json` 형식을 줄인 예시. loop가 false면 값이 빠질 수 있다. */
     private val sample = """
         {
-          "weight": "NORMAL",
-          "baseUrl": "https://cdn.nyummy.co.kr/cats/normal/v1/",
           "animations": [
             {
-              "state": "CONTENT",
-              "moment": "기록 직후 eat 리액션",
-              "frame": {"width": 136, "height": 136, "framesPerRow": 4, "durationMs": 100},
-              "animation": [
-                [{"src": "content/eat/nyami_content_eat_01_eat_grid_136.png", "frames": 13}],
-                [{"src": "content/purr/nyami_content_purr_01_purr_grid_136.png", "frames": 9, "loop": true}]
-              ],
-              "text": ["냠냠… 잘 먹었어!", "골골골… 배부르고 행복해"]
+              "state": "HOME_DAY",
+              "frame": {"width": 136, "height": 120, "framesPerRow": 4, "durationMs": 90},
+              "motions": [
+                {"name": "lie_down", "weight": 2.0, "clips": [
+                  {"src": "home_day/lie_in.png", "frames": 9},
+                  {"src": "/home_day/lie_loop.png", "frames": 8, "loop": true, "loopTimes": 3}
+                ]},
+                {"name": "zero", "weight": 0, "clips": [{"src": "zero.png", "frames": 4}]}
+              ]
             },
-            {
-              "state": "SOMETHING_NEW",
-              "moment": "앱이 아직 모르는 상태",
-              "frame": {"width": 136, "height": 136, "framesPerRow": 4, "durationMs": 100},
-              "animation": [[{"src": "new/a.png", "frames": 4}]],
-              "text": ["안녕"]
-            }
+            {"state": "SOMETHING_NEW", "frame": {"width": 1, "height": 1, "framesPerRow": 1}, "motions": [{"name": "x", "weight": 1, "clips": [{"src": "x.png", "frames": 1}]}]}
           ]
         }
     """.trimIndent()
 
-    @Test
-    fun `응답을 상태별 애니메이션으로 바꾸고 이미지 주소를 완성한다`() {
-        val vo = json.decodeFromString<CatAnimationSetDTO>(sample).toVO()
+    private fun parse(raw: String) = json.decodeFromString<CatAnimationSetDTO>(raw).toVO("NORMAL", baseUrl)
 
-        assertEquals("NORMAL", vo.weight)
-        val content = vo.animations.getValue(CatState.CONTENT)
-        assertEquals(SpriteFrameVO(width = 136, height = 136, framesPerRow = 4, durationMs = 100), content.frame)
+    @Test
+    fun `동작 목록을 상황별 애니메이션으로 바꾸고 시트 주소를 체형 폴더 기준으로 완성한다`() {
+        val set = parse(sample)
+
+        assertEquals("NORMAL", set.weight)
+        assertEquals(setOf(CatState.HOME_DAY), set.animations.keys)
+        val day = set.animations.getValue(CatState.HOME_DAY)
+        assertEquals(SpriteFrameVO(width = 136, height = 120, framesPerRow = 4, durationMs = 90), day.frame)
+        val motion = day.motions.single()
+        assertEquals("lie_down", motion.name)
+        assertEquals(2.0, motion.weight, 0.0)
         assertEquals(
             listOf(
-                listOf(SpriteClipVO("https://cdn.nyummy.co.kr/cats/normal/v1/content/eat/nyami_content_eat_01_eat_grid_136.png", 13, loop = false)),
-                listOf(SpriteClipVO("https://cdn.nyummy.co.kr/cats/normal/v1/content/purr/nyami_content_purr_01_purr_grid_136.png", 9, loop = true)),
+                SpriteClipVO(url = "${baseUrl}home_day/lie_in.png", frames = 9),
+                SpriteClipVO(url = "${baseUrl}home_day/lie_loop.png", frames = 8, loop = true, loopTimes = 3),
             ),
-            content.groups,
+            motion.clips,
         )
-        assertEquals(listOf("냠냠… 잘 먹었어!", "골골골… 배부르고 행복해"), content.lines)
+        assertEquals(3, motion.loopTimes)
     }
 
     @Test
-    fun `앱이 모르는 상태는 빼고 받는다`() {
-        val vo = json.decodeFromString<CatAnimationSetDTO>(sample).toVO()
-
-        assertEquals(setOf(CatState.CONTENT), vo.animations.keys)
+    fun `값이 모두 비어 있으면 빈 애니메이션이다`() {
+        assertTrue(parse("{}").animations.isEmpty())
     }
 
     @Test
-    fun `값이 모두 비어 있어도 빈 묶음으로 바꾼다`() {
-        val vo = CatAnimationSetDTO().toVO()
-
-        assertEquals("", vo.weight)
-        assertTrue(vo.animations.isEmpty())
+    fun `프레임 규격이 없거나 0 이하이면 그 상황을 빼고, 프레임 시간이 없으면 100ms로 둔다`() {
+        assertEquals(null, SpriteFrameDTO(width = 0, height = 10, framesPerRow = 1).toVO())
+        assertEquals(null, SpriteFrameDTO(width = 10, height = 10).toVO())
+        assertEquals(100, SpriteFrameDTO(width = 10, height = 10, framesPerRow = 1).toVO()?.durationMs)
+        assertEquals(null, CatAnimationDTO(state = "HOME_DAY", motions = listOf(motionDTO("a"))).toVO(baseUrl))
     }
 
     @Test
-    fun `프레임 규격이 없거나 0 이하이면 그 상태를 뺀다`() {
-        val noFrame = CatAnimationDTO(state = "CONTENT", animation = listOf(listOf(SpriteClipDTO("a.png", 4))))
-        val zeroWidth = noFrame.copy(frame = SpriteFrameDTO(width = 0, height = 136, framesPerRow = 4, durationMs = 100))
-
-        assertNull(noFrame.toVO("https://cdn/"))
-        assertNull(zeroWidth.toVO("https://cdn/"))
+    fun `주소나 프레임 수가 없는 클립은 빼고, 클립이 없거나 이름이 없거나 가중치가 0 이하인 동작은 뺀다`() {
+        assertEquals(null, SpriteClipDTO(src = "", frames = 4).toVO(baseUrl))
+        assertEquals(null, SpriteClipDTO(src = "a.png", frames = 0).toVO(baseUrl))
+        assertEquals(null, CatMotionDTO(name = "a", weight = 1.0, clips = listOf(SpriteClipDTO(src = "a.png"))).toVO(baseUrl))
+        assertEquals(null, motionDTO("").toVO(baseUrl))
+        assertEquals(null, motionDTO("a", weight = -1.0).toVO(baseUrl))
     }
 
     @Test
-    fun `프레임 시간이 없으면 100ms로 둔다`() {
-        val frame = SpriteFrameDTO(width = 136, height = 136, framesPerRow = 4, durationMs = null).toVO()
-
-        assertEquals(100, frame?.durationMs)
-    }
-
-    @Test
-    fun `주소나 프레임 수가 없는 클립과 비어 버린 묶음은 빼고, 남은 묶음이 없으면 상태를 뺀다`() {
-        val frame = SpriteFrameDTO(width = 136, height = 136, framesPerRow = 4, durationMs = 100)
-        val mixed = CatAnimationDTO(
-            state = "RELAXED",
-            frame = frame,
-            animation = listOf(
-                listOf(SpriteClipDTO(src = null, frames = 4)),
-                listOf(SpriteClipDTO(src = "ok.png", frames = 0), SpriteClipDTO(src = "yawn.png", frames = 13)),
+    fun `고를 동작이 없는 상황은 빼고, 같은 상황이 두 번 오면 앞의 것을 쓰고, 같은 이름의 동작도 앞의 것을 쓴다`() {
+        val frame = SpriteFrameDTO(width = 10, height = 10, framesPerRow = 1)
+        val set = CatAnimationSetDTO(
+            animations = listOf(
+                CatAnimationDTO(state = "HOME_TAP", frame = frame, motions = listOf(motionDTO("a", weight = 0.0))),
+                CatAnimationDTO(state = "HOME_DAY", frame = frame, motions = listOf(motionDTO("first"), motionDTO("first", weight = 5.0))),
+                CatAnimationDTO(state = "HOME_DAY", frame = frame, motions = listOf(motionDTO("second"))),
             ),
-        )
-        val empty = mixed.copy(animation = listOf(listOf(SpriteClipDTO(src = "", frames = 4))))
+        ).toVO("NORMAL", baseUrl)
 
-        assertEquals(listOf(listOf(SpriteClipVO("https://cdn/yawn.png", 13))), mixed.toVO("https://cdn/")?.groups)
-        assertNull(empty.toVO("https://cdn/"))
+        assertEquals(setOf(CatState.HOME_DAY), set.animations.keys)
+        val motions = set.animations.getValue(CatState.HOME_DAY).motions
+        assertEquals(listOf("first"), motions.map { it.name })
+        assertEquals(1.0, motions.single().weight, 0.0)
     }
 
     @Test
-    fun `같은 상태가 두 번 오면 앞의 것을 쓴다`() {
-        val frame = SpriteFrameDTO(width = 136, height = 136, framesPerRow = 4, durationMs = 100)
-        val first = CatAnimationDTO(state = "RELAXED", frame = frame, animation = listOf(listOf(SpriteClipDTO("first.png", 4))))
-        val second = first.copy(animation = listOf(listOf(SpriteClipDTO("second.png", 4))))
-
-        val vo = CatAnimationSetDTO(baseUrl = "https://cdn/", animations = listOf(first, second)).toVO()
-
-        assertEquals("https://cdn/first.png", vo.animations.getValue(CatState.RELAXED).groups.single().single().url)
-    }
-
-    @Test
-    fun `주소는 슬래시가 겹치거나 빠지지 않게 잇고, 전체 주소는 그대로 둔다`() {
-        assertEquals("https://cdn/a/b.png", joinUrl("https://cdn/a/", "/b.png"))
-        assertEquals("https://cdn/a/b.png", joinUrl("https://cdn/a", "b.png"))
-        assertEquals("https://other/b.png", joinUrl("https://cdn/a/", "https://other/b.png"))
+    fun `주소는 슬래시가 겹치거나 빠지지 않게 잇는다`() {
+        assertEquals("a/b.png", joinUrl("a/", "/b.png"))
+        assertEquals("a/b.png", joinUrl("a", "b.png"))
         assertEquals("b.png", joinUrl("", "b.png"))
     }
+
+    private fun motionDTO(name: String, weight: Double = 1.0) =
+        CatMotionDTO(name = name, weight = weight, clips = listOf(SpriteClipDTO(src = "$name.png", frames = 4)))
 }

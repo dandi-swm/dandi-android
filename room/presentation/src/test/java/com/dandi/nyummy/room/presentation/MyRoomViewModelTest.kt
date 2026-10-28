@@ -5,6 +5,7 @@ import com.dandi.nyummy.cat.domain.CatRepository
 import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatAnimationVO
+import com.dandi.nyummy.cat.entity.CatMotionVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.cat.entity.SpriteClipVO
 import com.dandi.nyummy.cat.entity.SpriteFrameVO
@@ -436,7 +437,7 @@ class MyRoomViewModelTest {
     }
 
     @Test
-    fun `냐미는 마이룸 꾸미기 동작을 하고 끝나면 다음 동작으로 넘어간다`() = runTest(testDispatcher) {
+    fun `냐미는 마이룸 동작을 하고 끝나면 다음 동작으로 넘어간다`() = runTest(testDispatcher) {
         val viewModel = loadedViewModel()
         val first = viewModel.uiState.value.catMotion!!
         assertEquals(NyummySpriteSource.Url("playful-${first.group}"), first.clips.single().sheet.source)
@@ -448,7 +449,7 @@ class MyRoomViewModelTest {
         viewModel.onIntent(MyRoomIntent.CatMotionFinished(first.playId))
         val next = viewModel.uiState.value.catMotion!!
         assertEquals(first.playId + 1, next.playId)
-        // 묶음이 둘이면 바로 전 묶음은 고르지 않는다.
+        // 동작이 둘이면 바로 전 동작은 고르지 않는다.
         assertTrue(next.group != first.group)
     }
 
@@ -522,25 +523,24 @@ private class FakeRoomRepository : RoomRepository {
     }
 }
 
-/** 마이룸 꾸미기(PLAYFUL) 동작 묶음이 둘인 내 고양이 애니메이션. 시트 주소에 묶음 번호를 넣어 구분한다. */
+/** 마이룸(ROOM_IDLE) 동작이 둘인 내 고양이 애니메이션. 시트 주소에 동작 번호를 넣어 구분한다. */
 private class FakeCatRepository : CatRepository {
     var error: Exception? = null
 
-    override suspend fun prefetchAnimations(): CatAnimationSetVO? = null
+    override suspend fun refreshWeight(): Boolean = false
 
     override suspend fun getAnimations(): CatAnimationSetVO {
         error?.let { throw it }
         return CatAnimationSetVO(
             weight = "NORMAL",
             animations = mapOf(
-                CatState.PLAYFUL to CatAnimationVO(
-                    state = CatState.PLAYFUL,
+                CatState.ROOM_IDLE to CatAnimationVO(
+                    state = CatState.ROOM_IDLE,
                     frame = SpriteFrameVO(width = 136, height = 136, framesPerRow = 4, durationMs = 100),
-                    groups = listOf(
-                        listOf(SpriteClipVO(url = "playful-0", frames = 8)),
-                        listOf(SpriteClipVO(url = "playful-1", frames = 8)),
+                    motions = listOf(
+                        CatMotionVO(name = "idle-0", weight = 1.0, clips = listOf(SpriteClipVO(url = "playful-0", frames = 8))),
+                        CatMotionVO(name = "idle-1", weight = 1.0, clips = listOf(SpriteClipVO(url = "playful-1", frames = 8))),
                     ),
-                    lines = emptyList(),
                 ),
             ),
         )

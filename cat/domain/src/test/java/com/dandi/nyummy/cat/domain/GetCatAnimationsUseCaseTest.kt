@@ -1,6 +1,7 @@
 package com.dandi.nyummy.cat.domain
 
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
+import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.HttpResponseStatus
 import kotlinx.coroutines.runBlocking
@@ -18,8 +19,7 @@ class GetCatAnimationsUseCaseTest {
     private fun useCase(block: () -> CatAnimationSetVO) = GetCatAnimationsUseCase(
         repository = object : CatRepository {
             override suspend fun getAnimations(): CatAnimationSetVO = block()
-
-            override suspend fun prefetchAnimations(): CatAnimationSetVO? = null
+            override suspend fun refreshWeight(): Boolean = error("조회는 체형을 다시 읽지 않는다")
         },
         resourceHelper = FakeResourceHelper,
         messageHelper = messageHelper,
@@ -35,8 +35,8 @@ class GetCatAnimationsUseCaseTest {
     }
 
     @Test
-    fun `성공하면 애니메이션을 돌려준다`() = runBlocking {
-        val animations = CatAnimationSetVO(weight = "NORMAL")
+    fun `애니메이션이 있으면 돌려준다`() = runBlocking {
+        val animations = catAnimationSet(CatState.HOME_DAY)
 
         val result = useCase { animations }()
 
@@ -45,55 +45,17 @@ class GetCatAnimationsUseCaseTest {
     }
 
     @Test
-    fun `고양이가 없으면(404) 아무것도 띄우지 않고 뒤로 가지도 않는다`() = runBlocking {
-        val result = useCase { throw httpException(404, "api.cat.notFound") }()
+    fun `앱 에셋에 애니메이션이 하나도 없으면 조용히 실패한다`() = runBlocking {
+        val result = useCase { CatAnimationSetVO.empty }()
 
         assertTrue(result.isFailure)
         assertNothingShown()
     }
 
     @Test
-    fun `서버 오류도 홈을 막지 않도록 조용히 실패한다`() = runBlocking {
-        val result = useCase { throw httpException(500, "api.cat.animationMetadataInvalid") }()
-
-        assertTrue(result.isFailure)
-        assertNothingShown()
-    }
-
-    @Test
-    fun `네트워크 오류도 조용히 실패한다`() = runBlocking {
-        val result = useCase { throw IOException("offline") }()
-
-        assertTrue(result.isFailure)
-        assertNothingShown()
-    }
-
-    @Test
-    fun `401 이면 세션 만료 안내 후 처음 화면으로 보낸다`() = runBlocking {
-        val result = useCase { throw httpException(401, null) }()
-
-        val dialog = messageHelper.dialogs.single()
-        dialog.onClickButton?.invoke()
-        assertEquals(1, navigationHelper.initialCount)
-        assertTrue(result.isFailure)
-    }
-
-    @Test
-    fun `액세스 토큰 만료 code 의 401 도 재발급까지 실패한 것이라 세션 만료로 안내한다`() = runBlocking {
-        val result = useCase { throw httpException(401, "api.auth.tokenExpired") }()
-
-        val dialog = messageHelper.dialogs.single()
-        assertTrue(dialog.cantIgnore)
-        dialog.onClickButton?.invoke()
-        assertEquals(1, navigationHelper.initialCount)
-        assertTrue(result.isFailure)
-    }
-
-    @Test
-    fun `로그인 만료가 아닌 code 의 401 은 다른 실패처럼 조용히 넘긴다`() = runBlocking {
-        val result = useCase { throw httpException(401, "api.auth.invalidVerifiedToken") }()
-
-        assertTrue(result.isFailure)
+    fun `읽다가 실패해도 아무것도 띄우지 않고 실패만 돌려준다`() = runBlocking {
+        assertTrue(useCase { throw IOException("asset") }().isFailure)
+        assertTrue(useCase { throw httpException(401) }().isFailure)
         assertNothingShown()
     }
 
@@ -102,12 +64,12 @@ class GetCatAnimationsUseCaseTest {
         useCase { throw CancellationException("left home") }()
         Unit
     }
-
-    private fun httpException(code: Int, errorCode: String?) = HttpResponseException(
-        status = HttpResponseStatus.create(code),
-        rawCode = code,
-        errorRequestUrl = "https://test/api/v1/cats/animations",
-        msg = "Http Request Failed ($code)",
-        cause = errorCode?.let(::Throwable),
-    )
 }
+
+internal fun httpException(code: Int, errorCode: String? = null) = HttpResponseException(
+    status = HttpResponseStatus.create(code),
+    rawCode = code,
+    errorRequestUrl = "https://test/api/v1/cats",
+    msg = "Http Request Failed ($code)",
+    cause = errorCode?.let(::Throwable),
+)
