@@ -13,6 +13,7 @@ import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.entity.remoteconfig.VersionCheckVO
 import com.dandi.nyummy.home.domain.HomePage
+import com.dandi.nyummy.home.domain.PrefetchHomeNoticesUseCase
 import com.dandi.nyummy.home.domain.PrefetchHomeSummaryUseCase
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.tti.TTIHelper
@@ -31,6 +32,7 @@ class GetIntroUseCase @Inject constructor(
     private val permissionHelper: PermissionHelper,
     private val prefetchHomeSummary: PrefetchHomeSummaryUseCase,
     private val prefetchCatAnimations: PrefetchCatAnimationsUseCase,
+    private val prefetchHomeNotices: PrefetchHomeNoticesUseCase,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -51,6 +53,7 @@ class GetIntroUseCase @Inject constructor(
      * 4. 홈으로 갈 회원(리프레시 토큰이 있고 온보딩을 마친 회원)이면 1~3과 함께 홈 요약과 냐미 애니메이션, 시트를 미리 받는다.
      *    요약은 기다리지 않고, 냐미는 홈으로 넘어가기 전에 [CAT_PREFETCH_TIMEOUT_MS]까지만 기다린다. 다 받지 못한 것은 홈이 이어서 받는다.
      *    온보딩을 마치지 않은 회원은 아직 고양이가 없어 받지 않는다.
+ *    원격 구성을 받은 뒤에는 홈에서 띄울 새 소식 공지의 사진도 미리 받고, 냐미와 같은 상한까지 함께 기다린다.
      * 5. 이동 직전 [onBeforeNavigate] 로 UI 마무리(스플래시 진행바 100% 채움)를 기다린 뒤,
      *    저장된 리프레시 토큰과 온보딩 상태에 따라 홈/온보딩/로그인을 루트로 이동한다.
      *    실패할 수 있는 작업은 모두 이 훅 이전에 끝나 있어야 한다.
@@ -103,8 +106,16 @@ class GetIntroUseCase @Inject constructor(
 
             val destination = startDestination()
             if (destination == HomePage) {
-                // 느린 망에서도 인트로에 갇히지 않게 상한까지만 기다린다. 넘기면 시트 받기를 멈추고, 받지 못한 것은 홈이 이어서 받는다.
-                withTimeoutOrNull(CAT_PREFETCH_TIMEOUT_MS) { catPrefetch.join() } ?: catPrefetch.cancel()
+                // 공지는 원격 구성 값이 있어야 고를 수 있어 받은 뒤에 시작한다.
+                val noticePrefetch = async { prefetchHomeNotices() }
+                // 느린 망에서도 인트로에 갇히지 않게 상한까지만 기다린다. 넘기면 받기를 멈추고, 받지 못한 것은 홈이 이어서 받는다.
+                withTimeoutOrNull(CAT_PREFETCH_TIMEOUT_MS) {
+                    catPrefetch.join()
+                    noticePrefetch.join()
+                } ?: run {
+                    catPrefetch.cancel()
+                    noticePrefetch.cancel()
+                }
             }
             onBeforeNavigate()
             navigationHelper.navigateToAsRoot(destination)

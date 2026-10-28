@@ -3,6 +3,7 @@ package com.dandi.nyummy.home.domain
 import com.dandi.nyummy.common.domain.helper.DeviceHelper
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.home.entity.HomeNoticeVO
+import java.time.LocalDate
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -22,20 +23,23 @@ class GetHomeNoticesUseCase @Inject constructor(
         repository.markNoticeHandled()
         if (hiddenDate() == DeviceTime.today(nowMillis)) return emptyList()
         val versionCode = deviceHelper.appVersionCode
-        return repository.getNotices().filter { it.isVisible(nowMillis, versionCode) }
+        return repository.getNotices().filter { it.isVisibleAt(nowMillis, versionCode) }
     }
 
-    /** 기기 저장소를 읽지 못하면 숨기지 않은 것으로 본다. */
-    private suspend fun hiddenDate() = try {
-        repository.getNoticeHiddenDate()
-    } catch (e: CancellationException) {
-        throw e
-    } catch (_: Exception) {
-        null
-    }
-
-    private fun HomeNoticeVO.isVisible(nowMillis: Long, versionCode: Long): Boolean =
-        startAtMillis.let { it == null || it <= nowMillis } &&
-            endAtMillis.let { it == null || nowMillis <= it } &&
-            minVersionCode.let { it == null || it <= versionCode }
+    private suspend fun hiddenDate() = repository.noticeHiddenDateOrNull()
 }
+
+/** 기기 저장소를 읽지 못하면 숨기지 않은 것으로 본다. */
+internal suspend fun HomeRepository.noticeHiddenDateOrNull(): LocalDate? = try {
+    getNoticeHiddenDate()
+} catch (e: CancellationException) {
+    throw e
+} catch (_: Exception) {
+    null
+}
+
+/** 지금이 기간 안이고 앱 versionCode가 최소 버전 이상인지. 적지 않은 조건은 보지 않는다. */
+internal fun HomeNoticeVO.isVisibleAt(nowMillis: Long, versionCode: Long): Boolean =
+    startAtMillis.let { it == null || it <= nowMillis } &&
+        endAtMillis.let { it == null || nowMillis <= it } &&
+        minVersionCode.let { it == null || it <= versionCode }
