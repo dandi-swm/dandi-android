@@ -2,8 +2,6 @@ package com.dandi.nyummy.history.presentation.component
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -174,7 +172,6 @@ private fun NutritionPanel(
             .fillMaxWidth()
             .background(NyummyTheme.colors.bg.brandSubtle, RoundedCornerShape(NyummyTheme.radius.m))
             .padding(NyummyTheme.spacing.s16),
-        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             NyummyText(text = stringResource(R.string.history_nutrition_title), style = NyummyTheme.typography.titleS)
@@ -205,14 +202,16 @@ private fun NutritionPanel(
                 )
             }
         }
-        // 접고 펼칠 때 카드가 위아래로 부드럽게 줄고 늘어난다.
+        // 접고 펼칠 때 카드가 위쪽을 기준으로 부드럽게 줄고 늘어난다.
+        // 머리줄과의 간격도 카드 안(위 여백)에 넣어 함께 줄어들게 한다. 바깥 간격으로 두면 접기가 끝나는 순간 그만큼 툭 튄다.
         AnimatedVisibility(
             visible = isExpanded,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut(),
+            enter = expandVertically(expandFrom = Alignment.Top),
+            exit = shrinkVertically(shrinkTowards = Alignment.Top),
         ) {
             Row(
                 modifier = Modifier
+                    .padding(top = NyummyTheme.spacing.s12)
                     .fillMaxWidth()
                     .background(NyummyTheme.colors.bg.surface, RoundedCornerShape(NyummyTheme.radius.s))
                     .padding(horizontal = NyummyTheme.spacing.s20, vertical = NyummyTheme.spacing.s16),
