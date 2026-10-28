@@ -38,7 +38,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.auth.domain.EmailLoginFieldError
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPasswordVisibilityToggle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
@@ -46,6 +45,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextFie
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyHiddenWhileTyping
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClearFocusOnTap
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
@@ -137,12 +137,16 @@ internal fun EmailLoginContent(
                 .padding(top = NyummyTheme.spacing.s4),
             contentAlignment = Alignment.CenterEnd,
         ) {
-            NyummyButton(
+            NyummyText(
                 text = stringResource(R.string.auth_forgot_password),
-                onClick = { onIntent(EmailLoginIntent.ClickForgotPassword) },
-                style = NyummyButtonStyle.Text,
-                size = NyummyButtonSize.M,
-                enabled = enabled,
+                style = NyummyTheme.typography.labelS,
+                color = if (enabled) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.disabled,
+                modifier = Modifier
+                    .nyummyClickable(
+                        onClick = { onIntent(EmailLoginIntent.ClickForgotPassword) },
+                        enabled = enabled,
+                    )
+                    .padding(vertical = NyummyTheme.spacing.s8),
             )
         }
     }

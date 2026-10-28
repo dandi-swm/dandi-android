@@ -39,6 +39,13 @@ internal object NyummyComponentDimens {
     val WheelPickerBandHeight = 44.dp
     val WheelPickerBandInset = 6.dp
 
+    /** 작은 Wheel Picker(폼 안 생년월일·키·몸무게): 높이 105, 행 35 × 3, 밴드 31. */
+    val WheelPickerCompactHeight = 105.dp
+    val WheelPickerCompactRowHeight = 35.dp
+    val WheelPickerCompactBandHeight = 31.dp
+    val WheelPickerCompactBandInset = 9.dp
+    val WheelPickerCompactBandRadius = 10.dp
+
     /** Radio 크기와 안 점. */
     val SelectionControlSize = 24.dp
     val RadioDotSize = 12.dp

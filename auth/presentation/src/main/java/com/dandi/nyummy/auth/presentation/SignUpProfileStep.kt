@@ -77,6 +77,7 @@ internal fun ColumnScope.SignUpProfileStep(
                 onSelectedIndexChange = { onIntent(SignUpIntent.SelectHeight(HEIGHT_RANGE.first + it)) },
                 unit = stringResource(R.string.auth_signup_unit_height),
                 contentDescription = stringResource(R.string.auth_signup_height_label),
+                compact = true,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -88,6 +89,7 @@ internal fun ColumnScope.SignUpProfileStep(
                 onSelectedIndexChange = { onIntent(SignUpIntent.SelectWeight(WEIGHT_RANGE.first + it)) },
                 unit = stringResource(R.string.auth_signup_unit_weight),
                 contentDescription = stringResource(R.string.auth_signup_weight_label),
+                compact = true,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -141,6 +143,7 @@ private fun BirthWheelPickers(
             onSelectedIndexChange = { onIntent(SignUpIntent.SelectBirthYear(birthYearRange.first + it)) },
             unit = stringResource(R.string.auth_signup_unit_year),
             contentDescription = stringResource(R.string.auth_signup_birth_year_description),
+            compact = true,
             modifier = Modifier.weight(1f),
         )
         NyummyWheelPicker(
@@ -149,6 +152,7 @@ private fun BirthWheelPickers(
             onSelectedIndexChange = { onIntent(SignUpIntent.SelectBirthMonth(MONTH_RANGE.first + it)) },
             unit = stringResource(R.string.auth_signup_unit_month),
             contentDescription = stringResource(R.string.auth_signup_birth_month_description),
+            compact = true,
             modifier = Modifier.weight(1f),
         )
         NyummyWheelPicker(
@@ -157,6 +161,7 @@ private fun BirthWheelPickers(
             onSelectedIndexChange = { onIntent(SignUpIntent.SelectBirthDay(it + 1)) },
             unit = stringResource(R.string.auth_signup_unit_day),
             contentDescription = stringResource(R.string.auth_signup_birth_day_description),
+            compact = true,
             modifier = Modifier.weight(1f),
         )
     }
@@ -164,7 +169,7 @@ private fun BirthWheelPickers(
 
 @Composable
 private fun FieldLabel(text: String) {
-    NyummyText(text = text, style = NyummyTheme.typography.titleS)
+    NyummyText(text = text, style = NyummyTheme.typography.labelM)
     Spacer(Modifier.height(NyummyTheme.spacing.s8))
 }
 
