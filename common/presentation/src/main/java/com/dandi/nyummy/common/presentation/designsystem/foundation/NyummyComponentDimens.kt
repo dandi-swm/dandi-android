@@ -43,6 +43,9 @@ internal object NyummyComponentDimens {
     val SelectionControlSize = 24.dp
     val RadioDotSize = 12.dp
 
+    /** 식사 시각 줄의 오른쪽 시각 칸 너비. */
+    val MealTimeChipWidth = 150.dp
+
     /** Checkbox 크기, 모서리, 안 체크 아이콘. */
     val CheckboxSize = 22.dp
     val CheckboxRadius = 6.dp

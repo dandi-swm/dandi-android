@@ -5,10 +5,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -26,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.entity.meal.Meal
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.presentation.R
+import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import kotlinx.collections.immutable.ImmutableList
@@ -33,7 +36,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
 /**
- * 평소 식사 시각 드롭다운 한 줄. 왼쪽에 끼니, 오른쪽에 시각(안 먹으면 "안 먹어요")과 아래 화살표.
+ * 평소 식사 시각 한 줄. 왼쪽에 끼니(label/m), 오른쪽에 옅은 바탕 시각 칸(시각 body/m, 안 먹으면 "안 먹어요")과 아래 화살표.
  * 누르면 [NyummyMealTimeSheet]를 연다.
  */
 @Composable
@@ -50,33 +53,40 @@ fun NyummyMealTimeField(
         modifier = modifier
             .fillMaxWidth()
             .height(MealRowHeight)
-            .nyummyClickable(onClick = onClick, enabled = enabled, interactionSource = interactionSource)
-            .background(
-                color = if (pressed) NyummyTheme.colors.bg.actionNeutralPressed else NyummyTheme.colors.bg.surfaceSunken,
-                shape = RoundedCornerShape(NyummyTheme.radius.s),
-            )
-            .padding(start = NyummyTheme.spacing.s16, end = NyummyTheme.spacing.s12),
-        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
+            .nyummyClickable(onClick = onClick, enabled = enabled, interactionSource = interactionSource),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NyummyText(
             text = stringResource(meal.nyummyLabelRes),
             style = NyummyTheme.typography.labelM,
-        )
-        NyummyText(
-            text = if (time.isSkipped) stringResource(R.string.nyummy_meal_skipped) else nyummyMealTimeText(time),
-            style = NyummyTheme.typography.labelL,
-            color = if (time.isSkipped) NyummyTheme.colors.content.tertiary else NyummyTheme.colors.content.primary,
-            textAlign = TextAlign.End,
-            maxLines = 1,
             modifier = Modifier.weight(1f),
         )
-        Icon(
-            painter = painterResource(R.drawable.nyummy_ic_chevron_down),
-            contentDescription = null,
-            tint = NyummyTheme.colors.content.tertiary,
-            modifier = Modifier.size(NyummyTheme.size.iconM),
-        )
+        Row(
+            modifier = Modifier
+                .width(NyummyComponentDimens.MealTimeChipWidth)
+                .fillMaxHeight()
+                .background(
+                    color = if (pressed) NyummyTheme.colors.bg.actionNeutralPressed else NyummyTheme.colors.bg.surfaceSubtle,
+                    shape = RoundedCornerShape(NyummyTheme.radius.s),
+                )
+                .padding(start = NyummyTheme.spacing.s16, end = NyummyTheme.spacing.s12),
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            NyummyText(
+                text = if (time.isSkipped) stringResource(R.string.nyummy_meal_skipped) else nyummyMealTimeText(time),
+                style = NyummyTheme.typography.bodyM,
+                color = if (time.isSkipped) NyummyTheme.colors.content.tertiary else NyummyTheme.colors.content.primary,
+                maxLines = 1,
+                modifier = Modifier.weight(1f),
+            )
+            Icon(
+                painter = painterResource(R.drawable.nyummy_ic_chevron_down),
+                contentDescription = null,
+                tint = NyummyTheme.colors.content.tertiary,
+                modifier = Modifier.size(NyummyTheme.size.iconM),
+            )
+        }
     }
 }
 
