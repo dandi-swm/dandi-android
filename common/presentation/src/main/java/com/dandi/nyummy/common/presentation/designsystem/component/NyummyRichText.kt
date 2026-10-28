@@ -29,6 +29,8 @@ import com.dandi.nyummy.common.entity.richText.RichText
 import com.dandi.nyummy.common.entity.richText.RichTextVO
 import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
+import com.dandi.nyummy.common.presentation.designsystem.foundation.accentSafe
+import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberAccentGlyphCoverage
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyContentColors
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTypography
@@ -53,12 +55,14 @@ fun NyummyRichText(
     val iconSize = NyummyTheme.size.iconXs
     val pieces = richText.filter { !it.isIcon || RichTextIcon.of(it.icon) != null }
     val inlineContent = mutableMapOf<String, InlineTextContent>()
+    val coverage = rememberAccentGlyphCoverage()
 
     val text = buildAnnotatedString {
         pieces.forEachIndexed { index, piece ->
             val icon = RichTextIcon.of(piece.icon)
             if (icon == null) {
-                val style = typography.styleOf(piece.typeScale).toSpanStyle().copy(
+                // 조각마다 스타일이 달라, 엄마까투리체에 없는 글자 처리도 조각 단위로 한다.
+                val style = typography.styleOf(piece.typeScale).accentSafe(piece.text, coverage).toSpanStyle().copy(
                     color = content.colorOf(piece.color),
                     textDecoration = if (piece.strike) TextDecoration.LineThrough else null,
                 )

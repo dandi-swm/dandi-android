@@ -163,6 +163,7 @@ private val CatalogEntries = listOf(
     CatalogEntry("Bottom Nav") { BottomNavSection() },
     CatalogEntry("Pose") { PoseSection() },
     CatalogEntry("Voice") { VoiceSection() },
+    CatalogEntry("Accent Font") { AccentFontSection() },
     CatalogEntry("Sprite") { SpriteSection() },
     CatalogEntry("Overlays") { OverlaySection() },
     CatalogEntry("State Surface") { StateSurfaceSection() },
@@ -610,6 +611,14 @@ private fun VoiceSection() {
     NyummyCoachCard(text = "채소 가득한 비빔밥이네! 오늘 첫 끼 최고였어. 다음 끼니도 같이 먹자. 내일은 단백질도 조금 더 챙겨 보자")
     NyummyCoachCard(text = "오늘 첫 끼 최고였어")
     NyummyVoiceToast(text = "기록 완료! 냐미가 맛있게 먹었어")
+}
+
+/** 엄마까투리체에 없는 글자("똠")가 든 문장은 문장 전체가 Pretendard Medium으로 바뀐다. */
+@Composable
+private fun AccentFontSection() {
+    NyummyText(text = "기다리고 있었어요! 오늘도 냠냠", style = NyummyTheme.typography.voiceM)
+    NyummyText(text = "똠양꿍도 맛있게 먹었어요!", style = NyummyTheme.typography.voiceM)
+    NyummyText(text = "1,224 kcal", style = NyummyTheme.typography.numberXl)
 }
 
 /**

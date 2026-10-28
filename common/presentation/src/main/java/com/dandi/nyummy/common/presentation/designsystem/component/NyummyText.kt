@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
@@ -12,11 +13,16 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import com.dandi.nyummy.common.presentation.designsystem.foundation.accentSafe
+import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberAccentGlyphCoverage
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
  * 냐미 디자인 시스템 텍스트. [style]은 `NyummyTheme.typography.*` 20개 스타일 중 하나만 넘긴다.
  * 크기나 굵기를 copy로 바꾸면 디자인의 텍스트 스타일과 어긋나므로 바꾸지 않는다.
+ *
+ * 엄마까투리체 스타일(number, voice, display)인데 그 글꼴에 없는 글자가 있으면
+ * 문장 전체를 같은 크기의 Pretendard Medium으로 그린다.
  */
 @Composable
 fun NyummyText(
@@ -29,6 +35,8 @@ fun NyummyText(
     overflow: TextOverflow = TextOverflow.Ellipsis,
     onTextLayout: (TextLayoutResult) -> Unit = {},
 ) {
+    val coverage = rememberAccentGlyphCoverage()
+    val safeStyle = remember(text, style, coverage) { style.accentSafe(text, coverage) }
     Text(
         text = text,
         modifier = modifier,
@@ -37,7 +45,7 @@ fun NyummyText(
         maxLines = maxLines,
         overflow = overflow,
         onTextLayout = onTextLayout,
-        style = style,
+        style = safeStyle,
     )
 }
 
@@ -57,6 +65,8 @@ fun NyummyText(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     inlineContent: Map<String, InlineTextContent> = emptyMap(),
 ) {
+    val coverage = rememberAccentGlyphCoverage()
+    val safeStyle = remember(text, style, coverage) { style.accentSafe(text, coverage) }
     Text(
         text = text,
         modifier = modifier,
@@ -66,7 +76,7 @@ fun NyummyText(
         overflow = overflow,
         inlineContent = inlineContent,
         onTextLayout = onTextLayout,
-        style = style,
+        style = safeStyle,
     )
 }
 
