@@ -1,19 +1,16 @@
 package com.dandi.nyummy.common.presentation.designsystem.component
 
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,11 +26,9 @@ import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyum
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
- * 보낸 편지(문의) 행. 앞 52 칸(움푹한 둥근 사각 + send 아이콘), 유형과 시각, 한 줄 제목, 답장 상태.
- * 답장이 왔으면 [status]를 브랜드색으로, 기다리는 중이면 회색으로 쓴다. 아래에 1px 구분선을 긋는다.
- * [isUnread]면 앞 칸 오른쪽 위에 빨간 점을 단다(홈 HUD 안 읽음 점과 같은 모양).
- *
- * 받은 편지(운영 메시지)는 우편함 아이템 탭이 열릴 때 추가한다.
+ * 보낸 편지(문의) 행. 위에 유형 태그와 시각, 가운데 제목(body/l), 아래 답장 상태. 아래에 1px 구분선을 긋는다.
+ * 답장이 왔으면([isStatusEmphasized]) 상태를 브랜드색 굵은 글자와 체크로, 기다리는 중이면 secondary로 쓴다.
+ * [isUnread]면 상태 옆에 빨간 점을 단다(홈 HUD 안 읽음 점과 같은 모양).
  */
 @Composable
 fun NyummyMailRow(
@@ -45,11 +40,11 @@ fun NyummyMailRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isUnread: Boolean = false,
-    @DrawableRes icon: Int = R.drawable.nyummy_ic_send,
 ) {
     val dividerColor = NyummyTheme.colors.border.subtle
     val dividerWidth = NyummyTheme.borderWidth.hairline
-    Row(
+    val content = NyummyTheme.colors.content
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .clickable(
@@ -62,67 +57,41 @@ fun NyummyMailRow(
                 val y = size.height - dividerWidth.toPx() / 2
                 drawLine(dividerColor, Offset(0f, y), Offset(size.width, y), dividerWidth.toPx())
             }
-            .padding(vertical = NyummyComponentDimens.MailRowVerticalPadding),
-        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(vertical = NyummyTheme.spacing.s16),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s6),
     ) {
-        Box(
-            modifier = Modifier
-                .size(NyummyComponentDimens.MailRowLeadingSize)
-                .background(NyummyTheme.colors.bg.surfaceSunken, RoundedCornerShape(NyummyTheme.radius.m)),
-            contentAlignment = Alignment.Center,
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            NyummyBadge(text = type, tone = NyummyBadgeTone.Neutral)
+            Spacer(Modifier.weight(1f))
+            NyummyText(text = time, style = NyummyTheme.typography.bodyS, color = content.tertiary, maxLines = 1)
+        }
+        NyummyText(text = title, style = NyummyTheme.typography.bodyL, maxLines = 1)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-                tint = NyummyTheme.colors.content.secondary,
-                modifier = Modifier.size(NyummyTheme.size.iconL),
+            NyummyText(
+                text = status,
+                style = if (isStatusEmphasized) NyummyTheme.typography.labelS else NyummyTheme.typography.bodyS,
+                color = if (isStatusEmphasized) content.brand else content.secondary,
+                maxLines = 1,
             )
+            if (isStatusEmphasized) {
+                Icon(
+                    painter = painterResource(R.drawable.nyummy_ic_check),
+                    contentDescription = null,
+                    tint = content.brand,
+                    modifier = Modifier.size(NyummyTheme.size.iconXs),
+                )
+            }
             if (isUnread) {
                 Box(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(
-                            x = -NyummyComponentDimens.MailRowUnreadDotInset,
-                            y = NyummyComponentDimens.MailRowUnreadDotInset,
-                        )
+                        .padding(start = NyummyTheme.spacing.s2)
                         .size(NyummyComponentDimens.UnreadDotSize)
-                        .background(NyummyTheme.colors.content.danger, CircleShape)
-                        .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.bg.surface, CircleShape),
+                        .background(content.danger, CircleShape),
                 )
             }
-        }
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2),
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(NyummyComponentDimens.MailRowMetaGap)) {
-                NyummyText(
-                    text = type,
-                    style = NyummyTheme.typography.labelS,
-                    color = NyummyTheme.colors.content.tertiary,
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f),
-                )
-                NyummyText(
-                    text = time,
-                    style = NyummyTheme.typography.labelS,
-                    color = NyummyTheme.colors.content.tertiary,
-                    maxLines = 1,
-                )
-            }
-            NyummyText(
-                text = title,
-                style = NyummyTheme.typography.titleS,
-                color = NyummyTheme.colors.content.secondary,
-                maxLines = 1,
-            )
-            NyummyText(
-                text = status,
-                style = NyummyTheme.typography.labelS,
-                color = if (isStatusEmphasized) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.tertiary,
-                maxLines = 1,
-            )
         }
     }
 }
@@ -145,7 +114,7 @@ private fun NyummyMailRowPreview() {
                 type = "건의",
                 time = "9월 28일",
                 title = "히스토리에서 사진을 크게 보고 싶어요",
-                status = "답장을 기다리는 중",
+                status = "답장을 기다리고 있어요",
                 isStatusEmphasized = false,
                 onClick = {},
             )

@@ -57,13 +57,6 @@ internal object NyummyComponentDimens {
     val ListRowMinHeight = 56.dp
     val ListRowLeadingSize = 40.dp
 
-    /** Mail Row 앞 아이콘 칸과 위아래 여백. */
-    val MailRowLeadingSize = 52.dp
-    val MailRowVerticalPadding = 14.dp
-
-    /** Mail Row 앞 아이콘 칸 모서리에서 안 읽음 점까지. */
-    val MailRowUnreadDotInset = 6.dp
-
     /** 안 읽은 소식을 알리는 빨간 점. 홈 HUD 버튼의 점과 같은 크기다. */
     val UnreadDotSize = 9.dp
 
@@ -72,15 +65,12 @@ internal object NyummyComponentDimens {
     val SwipeActionVerticalInset = 8.dp
     val SwipeRevealDistance = 80.dp
 
-    /** Mail Row 유형과 시각 사이. */
-    val MailRowMetaGap = 6.dp
+    /** Reward Row 앞 그림 칸. */
+    val RewardRowLeadingSize = 48.dp
 
-    /** Reward Row 앞 칸 안 그림. 코인, 아이템은 36, 보상 상자는 48. */
+    /** Reward Row 앞 칸 안 그림. 코인, 아이템은 36, 보상 상자는 칸을 채우는 48. */
     val RewardRowImageSize = 36.dp
     val RewardRowLargeImageSize = 48.dp
-
-    /** Reward Row 오른쪽 시각과 받기 버튼 사이. */
-    val RewardRowTrailingGap = 6.dp
 
     /** HUD Pill 높이와 아이콘, 숫자 사이 간격. */
     val HudPillHeight = 40.dp
