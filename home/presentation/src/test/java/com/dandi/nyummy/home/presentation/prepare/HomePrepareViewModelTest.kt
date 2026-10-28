@@ -10,6 +10,7 @@ import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.home.domain.HomeRepository
 import com.dandi.nyummy.home.domain.PrefetchHomeSummaryUseCase
+import com.dandi.nyummy.home.entity.HomeNoticeVO
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +30,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomePrepareViewModelTest {
@@ -100,6 +102,12 @@ private class FakeHomeRepository : HomeRepository {
     override fun prefetchHomeSummary() {
         prefetchCount++
     }
+
+    override fun getNotices(): List<HomeNoticeVO> = emptyList()
+    override suspend fun getNoticeHiddenDate(): LocalDate? = null
+    override suspend fun setNoticeHiddenDate(date: LocalDate) = Unit
+    override fun isNoticeHandled(): Boolean = false
+    override fun markNoticeHandled() = Unit
 }
 
 private class RecordingNavigationHelper : NavigationHelper {

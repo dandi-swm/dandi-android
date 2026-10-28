@@ -11,6 +11,7 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
+import com.dandi.nyummy.home.entity.HomeNoticeVO
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
@@ -23,6 +24,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
+import java.time.LocalDate
 import kotlin.coroutines.cancellation.CancellationException
 
 class GetHomeSummaryUseCaseTest {
@@ -126,6 +128,11 @@ class GetHomeSummaryUseCaseTest {
     private class FakeHomeRepository(private val block: () -> HomeSummaryVO) : HomeRepository {
         override suspend fun getHomeSummary(): HomeSummaryVO = block()
         override fun prefetchHomeSummary() = Unit
+        override fun getNotices(): List<HomeNoticeVO> = emptyList()
+        override suspend fun getNoticeHiddenDate(): LocalDate? = null
+        override suspend fun setNoticeHiddenDate(date: LocalDate) = Unit
+        override fun isNoticeHandled(): Boolean = false
+        override fun markNoticeHandled() = Unit
     }
 
     private class RecordingNavigationHelper : NavigationHelper {

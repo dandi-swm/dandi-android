@@ -22,6 +22,7 @@ import com.dandi.nyummy.common.entity.remoteconfig.VersionCheckVO
 import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.home.domain.HomeRepository
 import com.dandi.nyummy.home.domain.PrefetchHomeSummaryUseCase
+import com.dandi.nyummy.home.entity.HomeNoticeVO
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.tti.TTIHelper
@@ -40,6 +41,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GetIntroUseCaseTest {
@@ -514,6 +516,12 @@ class GetIntroUseCaseTest {
         override fun prefetchHomeSummary() {
             prefetchCount++
         }
+
+        override fun getNotices(): List<HomeNoticeVO> = emptyList()
+        override suspend fun getNoticeHiddenDate(): LocalDate? = null
+        override suspend fun setNoticeHiddenDate(date: LocalDate) = Unit
+        override fun isNoticeHandled(): Boolean = false
+        override fun markNoticeHandled() = Unit
     }
 
     private class FakePermissionHelper(

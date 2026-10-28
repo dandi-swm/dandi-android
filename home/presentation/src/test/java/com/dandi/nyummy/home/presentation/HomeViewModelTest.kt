@@ -32,6 +32,7 @@ import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.home.domain.GetHomeSummaryUseCase
 import com.dandi.nyummy.home.domain.HomeRepository
 import com.dandi.nyummy.home.domain.tti.HomeTTIPage
+import com.dandi.nyummy.home.entity.HomeNoticeVO
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.meal.domain.MealRecordRepository
 import com.dandi.nyummy.meal.domain.SubmitTutorialMealUseCase
@@ -63,6 +64,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.random.Random
 
@@ -683,6 +685,21 @@ class HomeViewModelTest {
         }
 
         override fun prefetchHomeSummary() = Unit
+
+        var noticeList: List<HomeNoticeVO> = emptyList()
+        var hiddenDate: LocalDate? = null
+        var noticeHandled = false
+
+        override fun getNotices(): List<HomeNoticeVO> = noticeList
+        override suspend fun getNoticeHiddenDate(): LocalDate? = hiddenDate
+        override suspend fun setNoticeHiddenDate(date: LocalDate) {
+            hiddenDate = date
+        }
+
+        override fun isNoticeHandled(): Boolean = noticeHandled
+        override fun markNoticeHandled() {
+            noticeHandled = true
+        }
     }
 
     private class RecordingNavigationHelper : NavigationHelper {
