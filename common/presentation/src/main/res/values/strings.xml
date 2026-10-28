@@ -36,4 +36,5 @@
     <string name="nyummy_not_ready">This feature is coming soon.</string>
     <string name="nyummy_tutorial_name">Nyummy</string>
     <string name="nyummy_tutorial_hint">Tap to continue ›</string>
+    <string name="nyummy_tutorial_skip">Skip</string>
 </resources>

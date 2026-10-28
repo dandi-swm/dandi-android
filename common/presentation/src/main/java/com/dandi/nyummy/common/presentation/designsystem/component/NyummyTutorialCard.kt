@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.dandi.nyummy.common.presentation.R
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import com.dandi.nyummy.common.presentation.reward.rememberReducedMotion
@@ -55,7 +57,8 @@ enum class NyummyTutorialExpression(@DrawableRes internal val drawable: Int) {
  *
  * 카드는 누를 곳에 붙여 꼬리로 가리킨다. 대상이 카드 아래면 [tail]을 [NyummyBubbleTail.Bottom], 위면
  * [NyummyBubbleTail.Top]으로 두고 [tailCenterX]에 대상 가운데의 가로 위치(카드 왼쪽 기준)를 넘긴다. 대상이 없으면 [NyummyBubbleTail.None].
- * 냐미는 꼬리 방향과 상관없이 늘 카드 윗변 위에 있다.
+ * 냐미는 꼬리 방향과 상관없이 늘 카드 윗변 위에 있다. 꼬리가 위로 나고 대상이 냐미 자리(카드 왼쪽)에 있으면
+ * 냐미가 대상을 가리지 않게 카드 가운데로 옮긴다.
  *
  * @param showHint "탭해서 계속"을 보인다. 누를 곳이 있어 카드를 눌러도 넘어가지 않는 단계는 false.
  */
@@ -74,7 +77,7 @@ fun NyummyTutorialCard(
     LaunchedEffect(Unit) {
         if (!reducedMotion) appear.animateTo(1f, spring(dampingRatio = AppearDamping, stiffness = Spring.StiffnessMediumLow))
     }
-    Box(
+    BoxWithConstraints(
         modifier = modifier.graphicsLayer {
             alpha = appear.value
             val scale = lerp(AppearStartScale, 1f, appear.value)
@@ -83,11 +86,12 @@ fun NyummyTutorialCard(
             transformOrigin = TransformOrigin(0.5f, if (tail == NyummyBubbleTail.Top) 0f else 1f)
         },
     ) {
+        val guideOverTarget = tail == NyummyBubbleTail.Top && tailCenterX != null && tailCenterX < GuideStart + GuideSize
         Image(
             painter = painterResource(expression.drawable),
             contentDescription = null,
             modifier = Modifier
-                .padding(start = GuideStart)
+                .padding(start = if (guideOverTarget) (maxWidth - GuideSize) / 2 else GuideStart)
                 .size(GuideSize),
         )
         TutorialCardBody(
@@ -96,7 +100,30 @@ fun NyummyTutorialCard(
             tail = tail,
             tailCenterX = tailCenterX,
             showHint = showHint,
-            modifier = Modifier.padding(top = GuideSize - GuideOverlap),
+            modifier = Modifier.padding(top = TutorialCardBodyTop),
+        )
+    }
+}
+
+/**
+ * 화면 오른쪽 위에 고정하는 튜토리얼 건너뛰기(피그마 `Tutorial / Skip`). 흰 알약에 글자만 있고,
+ * 보이는 높이는 32지만 터치 영역은 48을 지킨다. 누르면 건너뛰기 확인을 띄운다.
+ */
+@Composable
+fun NyummyTutorialSkipButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+    Box(
+        modifier = modifier
+            .heightIn(min = NyummyTheme.size.touchTarget)
+            .nyummyClickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        NyummyText(
+            text = stringResource(R.string.nyummy_tutorial_skip),
+            style = NyummyTheme.typography.labelM,
+            color = NyummyTheme.colors.content.secondary,
+            modifier = Modifier
+                .background(NyummyTheme.colors.bg.surface, RoundedCornerShape(NyummyTheme.radius.full))
+                .padding(horizontal = NyummyTheme.spacing.s10, vertical = NyummyTheme.spacing.s6),
         )
     }
 }
@@ -125,6 +152,12 @@ private fun TutorialCardBody(
             )
         }
         val tailTop = if (tail == NyummyBubbleTail.Top) TailHeight else 0.dp
+        // 위 꼬리가 이름표 자리에 오면 이름표를 꼬리 오른쪽으로 비켜 꼬리가 가려지지 않게 한다.
+        val nameTagStart = if (tail == NyummyBubbleTail.Top && tailOffset < NameTagClearance) {
+            tailOffset + TailSize + NyummyTheme.spacing.s6
+        } else {
+            NyummyTheme.spacing.s16
+        }
         val tailBottom = if (tail == NyummyBubbleTail.Bottom) TailHeight else 0.dp
         Column(
             modifier = Modifier
@@ -160,7 +193,7 @@ private fun TutorialCardBody(
             color = NyummyTheme.colors.content.brand,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .offset(x = NyummyTheme.spacing.s16, y = tailTop - NameTagOverlap)
+                .offset(x = nameTagStart, y = tailTop - NameTagOverlap)
                 .background(NyummyTheme.colors.bg.surface, RoundedCornerShape(NyummyTheme.radius.xs))
                 .padding(horizontal = NyummyTheme.spacing.s6, vertical = NameTagVerticalPadding),
         )
@@ -173,6 +206,9 @@ private val GuideSize = 96.dp
 /** 냐미가 카드 윗변 아래로 겹치는 깊이. 카드 뒤에 그려 고개만 내민다. */
 private val GuideOverlap = 16.dp
 
+/** 안내 카드 맨 위에서 카드 몸통 윗변까지의 거리(냐미가 차지하는 높이). 코치마크가 카드를 대상 아래에 붙일 때 쓴다. */
+internal val TutorialCardBodyTop = GuideSize - GuideOverlap
+
 /** 냐미의 카드 왼쪽 기준 시작 위치. 이름표 바로 위에 온다. */
 private val GuideStart = 2.dp
 
@@ -184,6 +220,9 @@ private val TailHeight = 11.dp
 /** 이름표가 카드 윗변 밖으로 걸치는 깊이. */
 private val NameTagOverlap = 10.dp
 private val NameTagVerticalPadding = 3.dp
+
+/** 이름표가 차지하는 카드 왼쪽 폭. 위 꼬리가 이 안에 오면 이름표를 비킨다. */
+private val NameTagClearance = 56.dp
 
 private const val AppearStartScale = 0.92f
 private const val AppearDamping = 0.6f
