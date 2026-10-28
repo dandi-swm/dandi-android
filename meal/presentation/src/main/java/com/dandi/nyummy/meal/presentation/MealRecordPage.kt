@@ -301,7 +301,7 @@ private fun MealRecordHeader(
                 text = stringResource(R.string.meal_record_title),
                 modifier = Modifier.align(Alignment.Center),
                 color = NyummyTheme.colors.content.primary,
-                style = NyummyTheme.typography.displayM,
+                style = NyummyTheme.typography.titleXl,
             )
         }
         if (showSubtitle) {

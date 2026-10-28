@@ -97,7 +97,7 @@ internal fun HistoryScreen(
             Column(modifier = Modifier.padding(horizontal = NyummyTheme.spacing.gutter)) {
                 NyummyText(
                     text = stringResource(R.string.history_title),
-                    style = NyummyTheme.typography.displayM,
+                    style = NyummyTheme.typography.titleXl,
                 )
                 Spacer(Modifier.height(NyummyTheme.spacing.s4))
                 NyummyText(

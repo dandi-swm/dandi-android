@@ -379,7 +379,7 @@ private fun InventoryCell(
         }
         NyummyText(
             text = item.name,
-            style = if (isInUseBackground) NyummyTheme.typography.labelMStrong else NyummyTheme.typography.labelM,
+            style = NyummyTheme.typography.labelM,
             color = if (isInUseBackground) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.secondary,
             maxLines = 1,
         )
@@ -408,7 +408,7 @@ private fun StateChip(
     ) {
         NyummyText(
             text = text,
-            style = NyummyTheme.typography.labelSStrong,
+            style = NyummyTheme.typography.labelS,
             color = NyummyTheme.colors.content.brand,
             maxLines = 1,
         )

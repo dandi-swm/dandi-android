@@ -29,7 +29,7 @@ Feature screen (presentation)
 |---|---|
 | [`token/NyummyPalette.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/token/NyummyPalette.kt) | 원색 팔레트(회색 사다리, Evergreen, Red, Orange, Gold, 장면 색, 외부 브랜드 색). Figma `Nyummy v2 / 1 Primitive`와 1:1이고, 구글·네이버 색만 소셜 로그인 가이드 때문에 더 둔다. `internal`이라 화면에서 직접 못 쓴다. |
 | [`theme/NyummyColors.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyColors.kt) | 역할 색. `bg`, `content`, `border`, `nav`, `data`, `external` 그룹. Figma `Nyummy v2 / 2 Semantic`과 1:1. |
-| [`theme/NyummyTypography.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyTypography.kt) | 글자 역할 20종(display, title, body, label, voice, number)과 글꼴 4종. |
+| [`theme/NyummyTypography.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyTypography.kt) | 글자 역할 20종(display, title, body, label, voice, number)과 글꼴 2종. Figma `v2/` 텍스트 스타일과 1:1. |
 | [`theme/NyummyDimensions.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyDimensions.kt) | 간격(`s2`~`s48`, `gutter`), 모서리(`xs`, `s`, `m`, `ml`, `l`, `full`), 선 두께, 크기(터치 영역, 아이콘, 캐릭터, 버튼, 하단 내비, 섹션 띠). Figma `Nyummy v2 / 3 Dimension`과 1:1. |
 | [`theme/NyummyElevation.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyElevation.kt) | 그림자 `soft`(일러스트 위 카드), `float`(시트, 떠 있는 요소). 버튼과 카드는 그림자를 쓰지 않는다. |
 | [`theme/NyummyTheme.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyTheme.kt) | 진입점. CompositionLocal 주입과, Material3 기본값이 냐미 토큰을 따르도록 하는 `MaterialTheme` 대응. |
@@ -85,10 +85,13 @@ Modifier
 
 | 역할 | 글꼴 | 쓰는 곳 |
 |---|---|---|
-| Ui | Asta Sans | title, body, label |
-| Display | Jua | display(큰 제목) |
-| Voice | Gowun Dodum | 냐미 말풍선 |
-| Number | Nunito | 숫자 |
+| Ui | Pretendard Medium·Bold | title, body, label. 굵기는 두 가지만 쓴다 |
+| Accent | AndongKaturi(엄마까투리체) | number(숫자), voice(냐미 말투), display(브랜드 문구와 연출 무대 글자) |
+
+- 화면 제목은 `titleXl`(Pretendard 24 Bold)이다. `display`를 화면 제목에 쓰지 않는다.
+- 자간은 Pretendard 글자와 voice가 -3%, 숫자와 display는 0이다. 줄 높이는 피그마 글자 상자 높이를 그대로 고정한다.
+- AndongKaturi는 한글이 2,350자뿐이다. accent 스타일 문장에 이 글꼴에 없는 글자가 있으면 `NyummyText`가 문장 전체를 같은 크기의 Pretendard Medium으로 그린다.
+- 출처: Pretendard는 SIL OFL 1.1, 엄마까투리체는 안동시 공공저작물이다. 앱 안 고지는 설정 > 약관 > 글꼴 출처에 둔다.
 
 ### 캐릭터와 아이콘
 

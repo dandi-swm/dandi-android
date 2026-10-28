@@ -37,6 +37,11 @@
     <string name="settings_section_legal">약관</string>
     <string name="settings_terms">이용약관</string>
     <string name="settings_privacy">개인정보처리방침</string>
+    <string name="settings_font_credit">글꼴 출처</string>
+    <string name="settings_font_credit_pretendard_label">Pretendard</string>
+    <string name="settings_font_credit_pretendard">Copyright (c) 2021, Kil Hyung-jin (https://github.com/orioncactus/pretendard), with Reserved Font Name Pretendard. SIL Open Font License 1.1에 따라 씁니다.</string>
+    <string name="settings_font_credit_katuri_label">엄마까투리체</string>
+    <string name="settings_font_credit_katuri">출처: 안동시. 안동시가 공공저작물로 배포한 글꼴입니다.</string>
     <string name="settings_logout">로그아웃</string>
     <string name="settings_logout_dialog_title">로그아웃할까요?</string>
     <string name="settings_logout_dialog_body">기록은 계정에 안전하게 저장돼 있어요.</string>

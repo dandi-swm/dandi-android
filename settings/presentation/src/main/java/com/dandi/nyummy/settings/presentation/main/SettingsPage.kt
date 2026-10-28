@@ -163,6 +163,10 @@ internal fun SettingsScreen(
             kind = kind, onDismiss = { onIntent(SettingsIntent.DismissNotificationDetail) })
     }
 
+    if (uiState.isFontCreditVisible) {
+        FontCreditSheet(onDismiss = { onIntent(SettingsIntent.DismissFontCredit) })
+    }
+
     if (uiState.isLogoutDialogVisible) {
         NyummyDialog(
             title = stringResource(R.string.settings_logout_dialog_title),
@@ -319,7 +323,7 @@ private fun NotificationDetailSheet(kind: NotificationKind, onDismiss: () -> Uni
                         Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2)) {
                             NyummyText(
                                 text = stringResource(push.name),
-                                style = NyummyTheme.typography.labelMStrong
+                                style = NyummyTheme.typography.labelM
                             )
                             NyummyText(
                                 text = stringResource(push.description),
@@ -333,6 +337,28 @@ private fun NotificationDetailSheet(kind: NotificationKind, onDismiss: () -> Uni
             NyummyDivider()
             DisclosureRow(label = disclosure.optOutLabel) {
                 DisclosureValue(text = stringResource(disclosure.optOut))
+            }
+        }
+        NyummyButton(
+            text = stringResource(R.string.settings_push_detail_confirm),
+            onClick = onDismiss,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/** 앱에 넣은 글꼴의 출처와 라이선스. 엄마까투리체는 출처를 밝히는 조건으로 쓴다. */
+@Composable
+private fun FontCreditSheet(onDismiss: () -> Unit) {
+    NyummyBottomSheet(onDismissRequest = onDismiss) {
+        NyummySheetTitle(text = stringResource(R.string.settings_font_credit))
+        Column {
+            DisclosureRow(label = R.string.settings_font_credit_pretendard_label) {
+                DisclosureValue(text = stringResource(R.string.settings_font_credit_pretendard))
+            }
+            NyummyDivider()
+            DisclosureRow(label = R.string.settings_font_credit_katuri_label) {
+                DisclosureValue(text = stringResource(R.string.settings_font_credit_katuri))
             }
         }
         NyummyButton(
@@ -386,6 +412,10 @@ private fun LegalSection(onIntent: (SettingsIntent) -> Unit) {
     NyummyListRow(
         title = stringResource(R.string.settings_privacy),
         onClick = { onIntent(SettingsIntent.ClickLegal(LegalDocument.PRIVACY)) },
+    )
+    NyummyListRow(
+        title = stringResource(R.string.settings_font_credit),
+        onClick = { onIntent(SettingsIntent.ClickFontCredit) },
     )
 }
 

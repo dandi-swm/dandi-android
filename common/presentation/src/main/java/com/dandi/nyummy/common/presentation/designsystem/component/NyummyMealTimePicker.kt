@@ -61,7 +61,7 @@ fun NyummyMealTimeField(
     ) {
         NyummyText(
             text = stringResource(meal.nyummyLabelRes),
-            style = NyummyTheme.typography.labelMStrong,
+            style = NyummyTheme.typography.labelM,
         )
         NyummyText(
             text = if (time.isSkipped) stringResource(R.string.nyummy_meal_skipped) else nyummyMealTimeText(time),

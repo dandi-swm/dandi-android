@@ -54,7 +54,7 @@ fun NyummyTag(
             )
     }
     val textStyle = when (style) {
-        NyummyTagStyle.Item -> NyummyTheme.typography.labelSStrong
+        NyummyTagStyle.Item -> NyummyTheme.typography.labelS
         NyummyTagStyle.Banner -> NyummyTheme.typography.labelS
     }
     Box(modifier = modifier.then(shapeModifier), contentAlignment = Alignment.Center) {

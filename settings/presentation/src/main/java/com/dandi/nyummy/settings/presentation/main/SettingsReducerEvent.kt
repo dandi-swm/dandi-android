@@ -20,6 +20,7 @@ sealed interface SettingsReducerEvent : ReducerEvent {
     data class DeviceSettingsDialogVisibilityChanged(val visible: Boolean) : SettingsReducerEvent
 
     data class NotificationDetailChanged(val kind: NotificationKind?) : SettingsReducerEvent
+    data class FontCreditVisibilityChanged(val visible: Boolean) : SettingsReducerEvent
     data class LogoutDialogVisibilityChanged(val visible: Boolean) : SettingsReducerEvent
     data object LoggingOut : SettingsReducerEvent
     data class WithdrawDialogVisibilityChanged(val visible: Boolean) : SettingsReducerEvent

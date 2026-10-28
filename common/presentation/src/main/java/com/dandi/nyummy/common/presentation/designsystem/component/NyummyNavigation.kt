@@ -250,7 +250,7 @@ private fun BottomNavCenterAction(
             Spacer(Modifier.height(labelGap))
             NyummyText(
                 text = action.label,
-                style = NyummyTheme.typography.labelSStrong,
+                style = NyummyTheme.typography.labelS,
                 color = NyummyTheme.colors.content.brand,
                 maxLines = 1,
             )
@@ -297,7 +297,7 @@ private fun BottomNavTab(
             )
             NyummyText(
                 text = item.label,
-                style = if (selected) NyummyTheme.typography.labelSStrong else NyummyTheme.typography.labelS,
+                style = NyummyTheme.typography.labelS,
                 color = if (selected) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.tertiary,
                 maxLines = 1,
             )
