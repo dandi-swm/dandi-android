@@ -29,7 +29,6 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomNav
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomNavActionRise
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialog
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialogType
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMainTabs
@@ -145,13 +144,13 @@ fun RootComposable(
         modifier = modifier.fillMaxSize(),
         containerColor = NyummyTheme.colors.bg.canvas,
         snackbarHost = {
-            // Scaffold는 스낵바를 하단 탭 위나 contentWindowInsets의 하단 인셋만큼 올린다. 하단 탭이 있으면 가운데 버튼이
-            // 솟은 만큼 더 올린다. 전체 화면 라우트는 인셋을 0으로 두고 하단 탭도 없어, 직접 올리지 않으면 스낵바가
+            // Scaffold는 스낵바를 하단 탭 위나 contentWindowInsets의 하단 인셋만큼 올린다. 하단 탭이 있으면 탭바 위 12에 둔다.
+            // 전체 화면 라우트는 인셋을 0으로 두고 하단 탭도 없어, 직접 올리지 않으면 스낵바가
             // 시스템 내비게이션 바(3버튼) 뒤에 깔린다.
             // 토스트도 같은 자리에 띄운다.
             Box(
                 modifier = when {
-                    showsBottomBar -> Modifier.padding(bottom = NyummyBottomNavActionRise)
+                    showsBottomBar -> Modifier.padding(bottom = NyummyTheme.spacing.s12)
                     drawsBehindSystemBars -> Modifier.navigationBarsPadding()
                     else -> Modifier
                 },

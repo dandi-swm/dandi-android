@@ -14,6 +14,12 @@ internal object NyummyComponentShadows {
     /** 하단 고정 CTA가 위로 드리우는 옅은 그림자(검정 6%). */
     val BottomCta = NyummyShadow(color = NyummyPalette.Black.copy(alpha = 0x0F / 255f), blur = 16.dp, offsetY = (-4).dp)
 
+    /** 하단 내비가 위로 드리우는 그림자(검정 10%). */
+    val BottomNav = NyummyShadow(color = NyummyPalette.Black.copy(alpha = 0x1A / 255f), blur = 20.dp, offsetY = (-4).dp)
+
+    /** 하단 내비 가운데 초록 버튼 그림자(브랜드 그린 32%). */
+    val BottomNavAction = NyummyShadow(color = NyummyPalette.Evergreen600.copy(alpha = 0x52 / 255f), blur = 12.dp, offsetY = 4.dp)
+
     /** Segmented 고른 칸(검정 8%). */
     val SegmentedOption = NyummyShadow(color = NyummyPalette.Black.copy(alpha = 0x14 / 255f), blur = 4.dp, offsetY = 1.dp)
 

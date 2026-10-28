@@ -95,22 +95,8 @@ internal object NyummyComponentDimens {
     /** Top Bar 높이. */
     val TopBarHeight = 56.dp
 
-    /** Bottom Nav 탭 높이, 선택 상자, 아이콘, 위 여백. 탭 너비는 균등 분할. */
-    val BottomNavTabHeight = 58.dp
-    val BottomNavSelectedWidth = 60.dp
-    val BottomNavSelectedHeight = 56.dp
-    val BottomNavIconSize = 28.dp
-    val BottomNavTopPadding = 6.dp
-
-    /**
-     * Bottom Nav 가운데 동작 버튼. 지름 60 원 + 바깥 테두리 6(내비 바탕색), 아이콘 28.
-     * 테두리 바깥 끝이 내비 위 끝보다 26 솟고, 라벨 위 끝은 내비 위 끝에서 48 아래다.
-     */
-    val BottomNavActionSize = 60.dp
-    val BottomNavActionRing = 6.dp
-    val BottomNavActionIconSize = 28.dp
-    val BottomNavActionRise = 26.dp
-    val BottomNavActionLabelTop = 48.dp
+    /** Bottom Nav 가운데 동작 버튼(바 안의 초록 버튼). */
+    val BottomNavActionSize = 54.dp
 
     /** Tab Item 아래 여백과 밑줄 두께. */
     val TabItemBottomPadding = 10.dp

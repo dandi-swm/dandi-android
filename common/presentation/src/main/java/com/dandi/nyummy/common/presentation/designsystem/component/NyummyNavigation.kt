@@ -1,7 +1,6 @@
 package com.dandi.nyummy.common.presentation.designsystem.component
 
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -10,20 +9,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -40,17 +34,18 @@ import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
-import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyPressScale
+import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentShadows
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyummyInteractionSource
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -121,14 +116,14 @@ private const val TopBarStart = "start"
 private const val TopBarEnd = "end"
 private const val TopBarTitle = "title"
 
-/** 하단 내비 탭 하나. [icon]은 채색 일러스트(nyummy_nav_*), [label]은 접근성 설명도 겸한다. */
+/** 하단 내비 탭 하나. [icon]은 단색 채움 아이콘(nyummy_nav_*)이고 켜짐·꺼짐 색으로 칠한다. [label]은 접근성 설명도 겸한다. */
 @Immutable
 data class NyummyBottomNavItem(
     val label: String,
     @DrawableRes val icon: Int,
 )
 
-/** 하단 내비 가운데 동작 버튼. 탭이 아니라서 선택 상태가 없고, 누르면 바로 그 동작을 한다. [icon]은 선 아이콘(nyummy_ic_*). */
+/** 하단 내비 가운데 동작 버튼. 탭이 아니라서 선택 상태가 없고, 누르면 바로 그 동작을 한다. [label]은 접근성 설명이다. */
 @Immutable
 data class NyummyBottomNavAction(
     val label: String,
@@ -136,12 +131,11 @@ data class NyummyBottomNavAction(
 )
 
 /**
- * 하단 내비. 화면 폭을 채우는 흰 바 + 위 1px 구분선, 그림자와 둥근 모서리 없음.
- * 탭은 아이콘 28 + 라벨 12. 선택된 탭은 60×56 연민트 상자 + 브랜드색 굵은 라벨.
+ * 하단 내비. 화면 폭을 채우는 흰 바, 위쪽 모서리 20, 위로 퍼지는 옅은 그림자.
+ * 탭은 단색 채움 아이콘 24 + 라벨(label/s)이고, 켜진 탭만 브랜드색(nav/icon-on), 나머지는 nav/icon-off다.
  * 내비게이션 바 영역까지 흰 바탕을 이어 그린다.
  *
- * [centerAction]이 있으면 [centerActionIndex]번째 탭 앞에 브랜드색 원 버튼을 둔다. 원은 내비 바탕색 테두리를 두르고
- * 내비 위로 솟아, 바에서 볼록 올라온 모양이 된다(그림자 없음). 솟은 부분은 내비 높이에 넣지 않고 위 화면 위에 겹쳐 그린다.
+ * [centerAction]이 있으면 [centerActionIndex]번째 탭 앞에 54×54 초록 버튼(모서리 16, 초록 그림자)을 바 안에 둔다.
  * 크기는 화면 크기와 상관없이 dp로 고정이다.
  *
  * @param centerActionIndex 가운데 버튼 앞에 올 탭 수. 탭 번호([selectedIndex], [onSelect])는 가운데 버튼을 빼고 센다.
@@ -156,27 +150,22 @@ fun NyummyBottomNav(
     centerActionIndex: Int = (items.size + 1) / 2,
     onCenterActionClick: () -> Unit = {},
 ) {
-    val dimens = NyummyComponentDimens
+    val shape = RoundedCornerShape(topStart = NyummyTheme.radius.ml, topEnd = NyummyTheme.radius.ml)
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(NyummyTheme.colors.bg.surface),
+            .nyummyShadow(shape, NyummyComponentShadows.BottomNav)
+            .background(NyummyTheme.colors.bg.surface, shape),
     ) {
-        NyummyDivider()
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(NyummyTheme.size.bottomNav - NyummyTheme.borderWidth.hairline)
-                .padding(
-                    start = NyummyTheme.spacing.s8,
-                    end = NyummyTheme.spacing.s8,
-                    top = dimens.BottomNavTopPadding - NyummyTheme.borderWidth.hairline,
-                    bottom = NyummyTheme.spacing.s12,
-                )
+                .height(NyummyTheme.size.bottomNav)
+                .padding(horizontal = NyummyTheme.spacing.s12)
                 .selectableGroup(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // 탭과 가운데 버튼은 균등 너비로 나눠 360dp 이하 화면에서도 서로 겹치지 않게 한다(넓은 화면에서는 최대 70dp).
+            // 탭과 가운데 버튼은 균등 너비로 나눠 360dp 이하 화면에서도 서로 겹치지 않게 한다.
             items.forEachIndexed { index, item ->
                 if (centerAction != null && index == centerActionIndex) {
                     BottomNavCenterAction(action = centerAction, onClick = onCenterActionClick, modifier = Modifier.weight(1f))
@@ -196,10 +185,7 @@ fun NyummyBottomNav(
     }
 }
 
-/**
- * 하단 내비 가운데 버튼. 지름 60 브랜드색 원과 흰 아이콘, 바깥에 내비 바탕색 테두리 6을 둘러 내비 위로 솟는다.
- * 원 아래에 브랜드색 굵은 라벨. 원과 라벨을 함께 누를 수 있다.
- */
+/** 하단 내비 가운데 버튼. 바 안의 54×54 초록 버튼(모서리 16)에 흰 채움 아이콘, 아래로 초록 그림자. */
 @Composable
 private fun BottomNavCenterAction(
     action: NyummyBottomNavAction,
@@ -209,50 +195,25 @@ private fun BottomNavCenterAction(
     val dimens = NyummyComponentDimens
     val interactionSource = rememberNyummyInteractionSource()
     val pressed by interactionSource.collectIsPressedAsState()
-    val ringSize = dimens.BottomNavActionSize + dimens.BottomNavActionRing * 2
-    // 칸 위 끝은 내비 위 끝에서 위 여백만큼 아래다. 테두리 바깥 끝이 내비 위로 솟도록 그만큼 끌어올린다.
-    val riseFromSlot = dimens.BottomNavActionRise + dimens.BottomNavTopPadding
-    val labelGap = dimens.BottomNavActionLabelTop + dimens.BottomNavActionRise - ringSize
-    Box(
-        modifier = modifier.height(dimens.BottomNavTabHeight),
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        Column(
+    val shape = RoundedCornerShape(NyummyTheme.radius.m)
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Box(
             modifier = Modifier
-                // 원과 라벨은 칸(높이 58, 좁은 화면에서는 폭도 72보다 작다)보다 커서 칸 크기에 눌려 줄지 않게 잰다.
-                .wrapContentSize(align = Alignment.TopCenter, unbounded = true)
-                .offset(y = -riseFromSlot)
-                .nyummyClickable(
-                    onClick = onClick,
-                    pressedScale = NyummyPressScale.Circle,
-                    interactionSource = interactionSource,
+                .nyummyClickable(onClick = onClick, interactionSource = interactionSource)
+                .semantics { contentDescription = action.label }
+                .size(dimens.BottomNavActionSize)
+                .nyummyShadow(shape, NyummyComponentShadows.BottomNavAction)
+                .background(
+                    color = if (pressed) NyummyTheme.colors.bg.actionPrimaryPressed else NyummyTheme.colors.bg.actionPrimary,
+                    shape = shape,
                 ),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(ringSize)
-                    .background(NyummyTheme.colors.bg.surface, CircleShape)
-                    .padding(dimens.BottomNavActionRing)
-                    .background(
-                        color = if (pressed) NyummyTheme.colors.bg.actionPrimaryPressed else NyummyTheme.colors.bg.actionPrimary,
-                        shape = CircleShape,
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(action.icon),
-                    contentDescription = null,
-                    tint = NyummyTheme.colors.content.onAction,
-                    modifier = Modifier.size(dimens.BottomNavActionIconSize),
-                )
-            }
-            Spacer(Modifier.height(labelGap))
-            NyummyText(
-                text = action.label,
-                style = NyummyTheme.typography.labelS,
-                color = NyummyTheme.colors.content.brand,
-                maxLines = 1,
+            Icon(
+                painter = painterResource(action.icon),
+                contentDescription = null,
+                tint = NyummyTheme.colors.content.onAction,
+                modifier = Modifier.size(NyummyTheme.size.iconL),
             )
         }
     }
@@ -265,10 +226,10 @@ private fun BottomNavTab(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val dimens = NyummyComponentDimens
-    Box(
+    val color = if (selected) NyummyTheme.colors.nav.iconOn else NyummyTheme.colors.nav.iconOff
+    Column(
         modifier = modifier
-            .height(dimens.BottomNavTabHeight)
+            .height(NyummyTheme.size.touchTarget)
             .selectable(
                 selected = selected,
                 interactionSource = rememberNyummyInteractionSource(),
@@ -276,32 +237,16 @@ private fun BottomNavTab(
                 role = Role.Tab,
                 onClick = onClick,
             ),
-        contentAlignment = Alignment.Center,
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier = Modifier
-                .widthIn(max = dimens.BottomNavSelectedWidth)
-                .fillMaxWidth()
-                .height(dimens.BottomNavSelectedHeight)
-                .background(
-                    color = if (selected) NyummyTheme.colors.bg.selected else Color.Transparent,
-                    shape = RoundedCornerShape(NyummyTheme.radius.m),
-                ),
-            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Image(
-                painter = painterResource(item.icon),
-                contentDescription = null,
-                modifier = Modifier.size(dimens.BottomNavIconSize),
-            )
-            NyummyText(
-                text = item.label,
-                style = NyummyTheme.typography.labelS,
-                color = if (selected) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.tertiary,
-                maxLines = 1,
-            )
-        }
+        Icon(
+            painter = painterResource(item.icon),
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(NyummyTheme.size.iconL),
+        )
+        NyummyText(text = item.label, style = NyummyTheme.typography.labelS, color = color, maxLines = 1)
     }
 }
 
@@ -416,9 +361,6 @@ fun NyummyStepIndicator(
  * 냐미 하단 내비 탭(홈, 마이룸, 기록, 상점 순서). 마이룸과 상점은 기능이 켜졌을 때만 앱이 골라 보여 준다.
  * 가운데 식사 기록 버튼([NyummyMealRecordAction])은 기록 탭 앞에 둔다.
  */
-/** 가운데 식사 기록 버튼이 하단 내비 위로 솟는 높이. 내비 위에 띄우는 것(스낵바 등)은 이만큼 더 올린다. */
-val NyummyBottomNavActionRise: Dp = NyummyComponentDimens.BottomNavActionRise
-
 val NyummyMainTabs: ImmutableList<NyummyBottomNavItem> = persistentListOf(
     NyummyBottomNavItem(label = "홈", icon = R.drawable.nyummy_nav_home),
     NyummyBottomNavItem(label = "마이룸", icon = R.drawable.nyummy_nav_my_room),
@@ -427,7 +369,7 @@ val NyummyMainTabs: ImmutableList<NyummyBottomNavItem> = persistentListOf(
 )
 
 /** 하단 내비 가운데 식사 기록 버튼. */
-val NyummyMealRecordAction = NyummyBottomNavAction(label = "식사 기록", icon = R.drawable.nyummy_ic_camera)
+val NyummyMealRecordAction = NyummyBottomNavAction(label = "식사 기록", icon = R.drawable.nyummy_nav_camera)
 
 @Preview(showBackground = true, widthDp = 390)
 @Composable
