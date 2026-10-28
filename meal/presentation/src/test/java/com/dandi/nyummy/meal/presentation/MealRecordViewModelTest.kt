@@ -529,6 +529,8 @@ class MealRecordViewModelTest {
             createError?.let { throw it }
             return created
         }
+
+        override suspend fun createTutorialMeal() = Unit
     }
 
     private class FakeRemoteConfigHelper(private val isMailGiftEnabled: Boolean) : RemoteConfigHelper {

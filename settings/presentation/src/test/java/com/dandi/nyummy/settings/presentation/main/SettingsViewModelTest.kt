@@ -1,9 +1,9 @@
 package com.dandi.nyummy.settings.presentation.main
 
 import com.dandi.nyummy.auth.domain.LogoutUseCase
-import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.legal.domain.LegalPage
 import com.dandi.nyummy.legal.entity.LegalDocument
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
@@ -18,8 +18,11 @@ import com.dandi.nyummy.settings.presentation.FakePushTokenHelper
 import com.dandi.nyummy.settings.presentation.FakeResourceHelper
 import com.dandi.nyummy.settings.presentation.FakeSettingsRepository
 import com.dandi.nyummy.settings.presentation.FakeTTIHelper
+import com.dandi.nyummy.settings.presentation.FakeTutorialHelper
 import com.dandi.nyummy.settings.presentation.RecordingMessageHelper
 import com.dandi.nyummy.settings.presentation.RecordingNavigationHelper
+import java.io.IOException
+import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,8 +38,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.io.IOException
-import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
@@ -56,11 +57,12 @@ class SettingsViewModelTest {
                 navigationHelper,
                 FakeTTIHelper,
             ),
-            logout = LogoutUseCase(FakeAuthRepository, FakePushTokenHelper, FakeCompanionMemoryHelper, navigationHelper),
+            logout = LogoutUseCase(FakeAuthRepository, FakePushTokenHelper, FakeCompanionMemoryHelper, FakeTutorialHelper, navigationHelper),
             withdraw = WithdrawUseCase(
                 repository,
                 FakePushTokenHelper,
                 FakeCompanionMemoryHelper,
+                FakeTutorialHelper,
                 FakeResourceHelper,
                 messageHelper,
                 navigationHelper,

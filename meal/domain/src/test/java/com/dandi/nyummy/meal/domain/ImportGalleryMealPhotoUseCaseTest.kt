@@ -152,6 +152,7 @@ class ImportGalleryMealPhotoUseCaseTest {
         override suspend fun issueImageUploadUrl(photoPath: String) = MealImageUploadVO()
         override suspend fun uploadImage(uploadTarget: MealImageUploadVO, photoPath: String) = Unit
         override suspend fun createMeal(imageKey: String) = CreatedMealVO()
+        override suspend fun createTutorialMeal() = Unit
     }
 
     private class FakeNavigationHelper : NavigationHelper {
