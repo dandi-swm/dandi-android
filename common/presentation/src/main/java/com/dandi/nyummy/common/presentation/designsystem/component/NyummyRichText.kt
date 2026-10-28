@@ -125,7 +125,7 @@ private fun RichTextIconImage(icon: RichTextIcon, tint: Color, modifier: Modifie
  * 서버 글자 토큰 이름을 테마 글자 스타일로 바꾼다. 모르는 이름이면 bodyM.
  * 서버 이름은 백엔드와의 계약이라, v2에서 합친 Strong 이름도 계속 받는다.
  */
-private fun NyummyTypography.styleOf(typeScale: String): TextStyle = when (typeScale) {
+internal fun NyummyTypography.styleOf(typeScale: String): TextStyle = when (typeScale) {
     "displayL" -> displayL
     "displayM" -> displayM
     "titleL" -> titleL
@@ -152,7 +152,7 @@ private fun NyummyTypography.styleOf(typeScale: String): TextStyle = when (typeS
  * 서버 색 토큰 이름(contentPrimary 등)을 테마 글자색으로 바꾼다. 모르는 이름이면 contentPrimary.
  * 서버 이름은 백엔드와의 계약이라, 앱에서 없앤 역할의 이름도 v2의 가까운 색으로 받는다.
  */
-private fun NyummyContentColors.colorOf(color: String): Color = when (color) {
+internal fun NyummyContentColors.colorOf(color: String): Color = when (color) {
     "contentSecondary" -> secondary
     "contentTertiary" -> tertiary
     "contentDisabled" -> disabled
