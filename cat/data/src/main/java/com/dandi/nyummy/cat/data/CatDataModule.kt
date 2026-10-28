@@ -1,13 +1,18 @@
 package com.dandi.nyummy.cat.data
 
+import android.content.Context
+import com.dandi.nyummy.cat.data.line.CatLineRepositoryImpl
+import com.dandi.nyummy.cat.domain.CatLineRepository
 import com.dandi.nyummy.cat.domain.CatRepository
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.domain.coroutine.IoScope
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.serialization.json.Json
 import retrofit2.Retrofit
 import javax.inject.Singleton
 
@@ -32,4 +37,9 @@ object CatDataModule {
         tokenProvider: TokenProvider,
         @IoScope ioScope: CoroutineScope,
     ): CatRepository = CatRepositoryImpl(dataSource, tokenProvider, ioScope)
+
+    @Provides
+    @Singleton
+    fun provideCatLineRepository(@ApplicationContext context: Context, json: Json): CatLineRepository =
+        CatLineRepositoryImpl(context, json)
 }
