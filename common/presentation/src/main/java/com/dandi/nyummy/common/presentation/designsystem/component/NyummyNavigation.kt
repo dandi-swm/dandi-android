@@ -54,6 +54,7 @@ import kotlinx.collections.immutable.persistentListOf
  * 제목은 양옆 요소와 상관없이 화면 가운데에 둔다.
  *
  * @param containerColor 바탕색. 마이룸처럼 그림 위에 띄울 때는 투명으로 둔다.
+ * @param backModifier 뒤로가기 버튼에 덧붙일 Modifier(코치마크 대상 등록 등).
  */
 @Composable
 fun NyummyTopBar(
@@ -62,6 +63,7 @@ fun NyummyTopBar(
     onBackClick: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
     containerColor: Color = NyummyTheme.colors.bg.canvas,
+    backModifier: Modifier = Modifier,
 ) {
     val minSide = NyummyTheme.size.touchTarget
     // 제목은 화면 가운데에 두되, 양옆 슬롯 중 넓은 쪽 너비만큼 양쪽을 비워 겹치지 않게 한다.
@@ -78,6 +80,7 @@ fun NyummyTopBar(
                         icon = R.drawable.nyummy_ic_chevron_left,
                         contentDescription = stringResource(R.string.nyummy_back_description),
                         onClick = onBackClick,
+                        modifier = backModifier,
                     )
                 }
             }

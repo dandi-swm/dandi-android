@@ -36,4 +36,19 @@ sealed interface MailboxIntent : MviIntent {
 
     /** 받은 보상을 본 뒤 계속하기(또는 뒤로 가기). 연출을 닫는다. */
     data object CloseBoxOpening : MailboxIntent
+
+    /** 튜토리얼 소개 카드를 눌렀다. 우편함 단계를 마치고 뒤로가기를 가리킨다. */
+    data object TutorialAdvance : MailboxIntent
+
+    /** 튜토리얼이 가리킨 열기를 눌렀다. 상자 열기 연출이 끝나길 기다린다. 뒤로가기는 버튼이 직접 처리한다. */
+    data object TutorialTargetClicked : MailboxIntent
+
+    /** 화면 오른쪽 위 건너뛰기를 눌렀다. 건너뛰기 확인을 띄운다. */
+    data object TutorialSkip : MailboxIntent
+
+    /** 건너뛰기 확인에서 계속 배우기로 했다(바깥·뒤로 가기 포함). */
+    data object TutorialSkipCancelled : MailboxIntent
+
+    /** 건너뛰기 확인에서 그래도 건너뛰기로 했다. 홈의 냐미 건강 이야기로 돌아간다. */
+    data object TutorialSkipConfirmed : MailboxIntent
 }

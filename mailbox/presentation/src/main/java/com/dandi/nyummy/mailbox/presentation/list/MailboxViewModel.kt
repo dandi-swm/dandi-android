@@ -4,7 +4,12 @@ import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.common.domain.coroutine.IoScope
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
+import com.dandi.nyummy.common.entity.tutorial.TutorialStep
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.common.presentation.time.listTimeLabel
@@ -37,11 +42,14 @@ class MailboxViewModel @Inject constructor(
     private val restoreMail: RestoreMailUseCase,
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
+    private val tutorialHelper: TutorialHelper,
+    private val remoteConfigHelper: RemoteConfigHelper,
     @IoScope private val ioScope: CoroutineScope,
 ) : MviViewModel<MailboxIntent, MailboxUIState, MailboxReducerEvent>(MailboxUIState.empty) {
 
     private var mailLoadJob: Job? = null
     private var mailLoadMoreJob: Job? = null
+    private var tutorialJob: Job? = null
 
     override fun onIntent(intent: MailboxIntent) {
         when (intent) {
@@ -60,13 +68,27 @@ class MailboxViewModel @Inject constructor(
             MailboxIntent.BoxOpeningFailureShown -> finishFailedBoxOpening()
             MailboxIntent.CloseBoxOpening -> if (currentState.boxOpening?.phase == BoxOpeningPhase.Revealed) {
                 dispatch(MailboxReducerEvent.BoxOpeningEnded)
+                // 안내대로 상자를 열어 끝까지 봤다.
+                if (currentState.tutorial?.isWaitingForBox == true) finishMailboxStep()
             }
+            MailboxIntent.TutorialAdvance -> if (currentState.tutorial?.stage == MailboxTutorialStage.Intro) finishMailboxStep()
+            MailboxIntent.TutorialTargetClicked -> currentState.tutorial?.let {
+                dispatch(MailboxReducerEvent.TutorialChanged(it.copy(isWaitingForBox = true)))
+            }
+            MailboxIntent.TutorialSkip -> currentState.tutorial?.let {
+                dispatch(MailboxReducerEvent.TutorialChanged(it.copy(skipConfirm = remainingTutorialLessons())))
+            }
+            MailboxIntent.TutorialSkipCancelled -> currentState.tutorial?.let {
+                dispatch(MailboxReducerEvent.TutorialChanged(it.copy(skipConfirm = null)))
+            }
+            MailboxIntent.TutorialSkipConfirmed -> skipTutorial()
         }
     }
 
     override fun reduce(state: MailboxUIState, event: MailboxReducerEvent): MailboxUIState =
         when (event) {
             is MailboxReducerEvent.BoxOpeningEvent -> state.copy(boxOpening = reduceBoxOpening(state.boxOpening, event))
+            is MailboxReducerEvent.TutorialChanged -> state.copy(tutorial = event.tutorial)
             else -> state.copy(items = reduceItems(state.items, event))
         }
 
@@ -122,7 +144,9 @@ class MailboxViewModel @Inject constructor(
                 val rows = items.mails.filterNot { it.mailId == event.row.mailId }.toPersistentList()
                 items.copy(mails = rows.add(event.index.coerceIn(0, rows.size), event.row))
             }
-            is MailboxReducerEvent.BoxOpeningEvent -> items
+            is MailboxReducerEvent.BoxOpeningEvent,
+            is MailboxReducerEvent.TutorialChanged,
+            -> items
         }
 
     /** 우편 첫 묶음부터 다시 읽는다. 이미 받아 둔 만큼(서버 최대치까지)을 한 번에 읽어 스크롤 위치를 지킨다. */
@@ -137,7 +161,53 @@ class MailboxViewModel @Inject constructor(
             // 실패하면 공통 처리는 UseCase가 하고, 화면은 받아 둔 목록을 그대로 둔다.
             getMails(size = size).onSuccess { page ->
                 dispatch(MailboxReducerEvent.MailsLoaded(page.mails.toMailRowUiModels(), page.nextCursor))
+                updateTutorial()
             }
+        }
+    }
+
+    /**
+     * 우편함 안내가 남아 있으면 띄운다. 받지 않은 상자가 있으면 맨 위 상자의 열기를 가리키고, 없으면 우편함을 소개한다.
+     * 이미 띄워 두었으면 그대로 둔다.
+     */
+    private fun updateTutorial() {
+        if (currentState.tutorial != null || tutorialJob?.isActive == true) return
+        tutorialJob = viewModelScope.launch {
+            if (!tutorialHelper.isPending(TutorialStep.MAILBOX)) return@launch
+            val box = currentState.items.mails.firstOrNull { !it.isClaimed && it.category == MailCategory.REWARD_BOX }
+            val tutorial = if (box != null) {
+                MailboxTutorialUiState(MailboxTutorialStage.OpenBox, boxMailId = box.mailId)
+            } else {
+                MailboxTutorialUiState(MailboxTutorialStage.Intro)
+            }
+            dispatch(MailboxReducerEvent.TutorialChanged(tutorial))
+        }
+    }
+
+    /** 우편함 단계를 마치고, 뒤로가기를 가리켜 홈(마이룸 탭 단계)으로 이끈다. */
+    private fun finishMailboxStep() {
+        val tutorial = MailboxTutorialUiState(
+            stage = MailboxTutorialStage.GoBack,
+            isRoomNext = remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled),
+        )
+        dispatch(MailboxReducerEvent.TutorialChanged(tutorial))
+        tutorialJob = viewModelScope.launch { tutorialHelper.complete(TutorialStep.MAILBOX) }
+    }
+
+    /** 건너뛰기 확인에 보일 남은 안내. 상자를 열기 전이면 상자 열기부터, 꺼진 기능은 빼고 보인다. */
+    private fun remainingTutorialLessons(): ImmutableList<NyummyTutorialLesson> = buildList {
+        if (currentState.tutorial?.stage != MailboxTutorialStage.GoBack) add(NyummyTutorialLesson.OpenBox)
+        if (remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled)) add(NyummyTutorialLesson.DecorateRoom)
+        add(NyummyTutorialLesson.CatHealth)
+    }.toImmutableList()
+
+    /** 건너뛰기를 확정했다. 냐미 건강 이야기만 남기고 홈으로 돌아간다(홈이 건강 이야기를 보인다). */
+    private fun skipTutorial() {
+        if (currentState.tutorial == null) return
+        dispatch(MailboxReducerEvent.TutorialChanged(null))
+        tutorialJob = viewModelScope.launch {
+            tutorialHelper.skipToHealthStory()
+            navigationHelper.navigateToBack()
         }
     }
 
@@ -225,9 +295,17 @@ class MailboxViewModel @Inject constructor(
         when (opening.failure) {
             BoxOpeningFailure.AlreadyGone -> {
                 messageHelper.showSnackBar(messageText = ALREADY_GONE_MESSAGE)
+                // 안내하던 상자가 사라졌다. 목록을 다시 받은 뒤 새로 고른다.
+                if (currentState.tutorial?.isWaitingForBox == true) dispatch(MailboxReducerEvent.TutorialChanged(null))
                 loadMails()
             }
-            else -> messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = CLAIM_FAILED_MESSAGE)
+            else -> {
+                messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = CLAIM_FAILED_MESSAGE)
+                // 받지 못했으니 같은 상자의 열기를 다시 가리킨다.
+                currentState.tutorial?.takeIf { it.isWaitingForBox }?.let {
+                    dispatch(MailboxReducerEvent.TutorialChanged(it.copy(isWaitingForBox = false)))
+                }
+            }
         }
     }
 
