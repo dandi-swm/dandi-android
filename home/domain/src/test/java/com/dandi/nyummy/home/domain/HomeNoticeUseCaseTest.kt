@@ -1,11 +1,13 @@
 package com.dandi.nyummy.home.domain
 
 import com.dandi.nyummy.common.domain.helper.DeviceHelper
+import com.dandi.nyummy.common.domain.helper.ImagePrefetchHelper
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.home.entity.HomeNoticeVO
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -21,6 +23,8 @@ class HomeNoticeUseCaseTest {
 
     private fun getNotices() = GetHomeNoticesUseCase(repository, device)
     private fun close() = CloseHomeNoticeUseCase(repository)
+    private val images = RecordingImagePrefetchHelper()
+    private fun prefetch() = PrefetchHomeNoticesUseCase(repository, device, images)
 
     private fun notice(
         id: String,
@@ -113,6 +117,48 @@ class HomeNoticeUseCaseTest {
         close()(hideToday = true, nowMillis = now)
 
         assertTrue(repository.noticeHandled)
+    }
+
+    @Test
+    fun `미리 받기는 보일 공지의 사진만 한 번씩 받고 이번 실행 다룸은 표시하지 않는다`() = runBlocking {
+        repository.noticeList = listOf(
+            notice("a").copy(imageUrl = "https://cdn/a.webp"),
+            notice("b").copy(imageUrl = "https://cdn/a.webp"),
+            notice("c"),
+            notice("expired", end = now - 1).copy(imageUrl = "https://cdn/x.webp"),
+            notice("new-app", minVersionCode = 211).copy(imageUrl = "https://cdn/y.webp"),
+        )
+
+        prefetch()(now)
+
+        assertEquals(listOf(listOf("https://cdn/a.webp")), images.calls)
+        assertFalse(repository.noticeHandled)
+    }
+
+    @Test
+    fun `이번 실행에 이미 다뤘거나 오늘 숨겼거나 사진이 없으면 받지 않는다`() = runBlocking {
+        repository.noticeList = listOf(notice("a").copy(imageUrl = "https://cdn/a.webp"))
+        repository.noticeHandled = true
+        prefetch()(now)
+
+        repository.noticeHandled = false
+        repository.hiddenDate = today
+        prefetch()(now)
+
+        repository.hiddenDate = null
+        repository.noticeList = listOf(notice("no-image"))
+        prefetch()(now)
+
+        assertTrue(images.calls.isEmpty())
+    }
+
+    private class RecordingImagePrefetchHelper : ImagePrefetchHelper {
+        val calls = mutableListOf<List<String>>()
+
+        override suspend fun prefetchSpriteSheets(urls: List<String>) = Unit
+        override suspend fun prefetchImages(urls: List<String>) {
+            calls += urls
+        }
     }
 
     private class FakeDeviceHelper(override val appVersionCode: Long) : DeviceHelper {

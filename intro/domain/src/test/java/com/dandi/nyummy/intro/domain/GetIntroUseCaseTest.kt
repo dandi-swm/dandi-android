@@ -6,6 +6,7 @@ import com.dandi.nyummy.cat.domain.PrefetchCatAnimationsUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.domain.helper.DeviceHelper
+import com.dandi.nyummy.common.domain.helper.ImagePrefetchHelper
 import com.dandi.nyummy.common.domain.helper.PermissionHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
@@ -21,6 +22,7 @@ import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.remoteconfig.VersionCheckVO
 import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.home.domain.HomeRepository
+import com.dandi.nyummy.home.domain.PrefetchHomeNoticesUseCase
 import com.dandi.nyummy.home.domain.PrefetchHomeSummaryUseCase
 import com.dandi.nyummy.home.entity.HomeNoticeVO
 import com.dandi.nyummy.home.entity.HomeSummaryVO
@@ -51,6 +53,7 @@ class GetIntroUseCaseTest {
     private val ttiHelper = RecordingTTIHelper()
     private val catRepository = FakeCatRepository()
     private val homeRepository = FakeHomeRepository()
+    private val imagePrefetch = RecordingImagePrefetchHelper()
 
     @Test
     fun `버전 통과 후 리프레시 토큰이 있으면 홈을 루트로 이동한다`() = runBlocking {
@@ -446,6 +449,62 @@ class GetIntroUseCaseTest {
         assertEquals(listOf<Page>(HomePage), navigationHelper.rootPages)
     }
 
+    @Test
+    fun `홈으로 가면 띄울 공지의 사진을 미리 받고, 다 받은 뒤에 이동한다`() = runTest {
+        homeRepository.noticeList = listOf(
+            HomeNoticeVO(id = "a", title = "새단장", imageUrl = "https://cdn.example/a.webp"),
+            HomeNoticeVO(id = "b", title = "사진 없음"),
+            HomeNoticeVO(id = "c", title = "아직 안 됨", imageUrl = "https://cdn.example/c.webp", minVersionCode = 99),
+        )
+        val prefetchDone = CompletableDeferred<Unit>()
+        imagePrefetch.gate = prefetchDone
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = true),
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        val job = launch { useCase() }
+        runCurrent()
+        assertEquals(listOf("https://cdn.example/a.webp"), imagePrefetch.imageUrls)
+        assertTrue(navigationHelper.rootPages.isEmpty())
+
+        prefetchDone.complete(Unit)
+        job.join()
+        assertEquals(listOf<Page>(HomePage), navigationHelper.rootPages)
+    }
+
+    @Test
+    fun `온보딩이나 로그인으로 가면 공지 사진을 미리 받지 않는다`() = runBlocking {
+        homeRepository.noticeList = listOf(HomeNoticeVO(id = "a", title = "새단장", imageUrl = "https://cdn.example/a.webp"))
+        val remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3))
+        val deviceHelper = FakeDeviceHelper(appVersionCode = 5)
+
+        buildUseCase(FakeIntroRepository(hasRefreshToken = true, onboardingIncomplete = true), remoteConfigHelper, deviceHelper)()
+        buildUseCase(FakeIntroRepository(hasRefreshToken = false), remoteConfigHelper, deviceHelper)()
+
+        assertTrue(imagePrefetch.imageUrls.isEmpty())
+    }
+
+    @Test
+    fun `공지 사진 받기가 상한을 넘기면 더 기다리지 않고 홈으로 이동한다`() = runTest {
+        homeRepository.noticeList = listOf(HomeNoticeVO(id = "a", title = "새단장", imageUrl = "https://cdn.example/a.webp"))
+        imagePrefetch.gate = CompletableDeferred()
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = true),
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+        )
+
+        val job = launch { useCase() }
+        advanceTimeBy(GetIntroUseCase.CAT_PREFETCH_TIMEOUT_MS - 1)
+        assertTrue(navigationHelper.rootPages.isEmpty())
+
+        advanceTimeBy(2)
+        job.join()
+        assertEquals(listOf<Page>(HomePage), navigationHelper.rootPages)
+    }
+
     private fun versionCheck(
         minimumVersionCode: Long,
         latestVersionUpdateLink: String = "",
@@ -468,6 +527,11 @@ class GetIntroUseCaseTest {
         permissionHelper = permissionHelper,
         prefetchHomeSummary = PrefetchHomeSummaryUseCase(repository = homeRepository),
         prefetchCatAnimations = PrefetchCatAnimationsUseCase(repository = catRepository),
+        prefetchHomeNotices = PrefetchHomeNoticesUseCase(
+            repository = homeRepository,
+            deviceHelper = deviceHelper,
+            imagePrefetchHelper = imagePrefetch,
+        ),
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
@@ -517,11 +581,25 @@ class GetIntroUseCaseTest {
             prefetchCount++
         }
 
-        override fun getNotices(): List<HomeNoticeVO> = emptyList()
+        var noticeList: List<HomeNoticeVO> = emptyList()
+
+        override fun getNotices(): List<HomeNoticeVO> = noticeList
         override suspend fun getNoticeHiddenDate(): LocalDate? = null
         override suspend fun setNoticeHiddenDate(date: LocalDate) = Unit
         override fun isNoticeHandled(): Boolean = false
         override fun markNoticeHandled() = Unit
+    }
+
+    /** 미리 받은 그림 주소를 남긴다. [gate]를 주면 그것이 열릴 때까지 끝나지 않는다. */
+    private class RecordingImagePrefetchHelper : ImagePrefetchHelper {
+        val imageUrls = mutableListOf<String>()
+        var gate: CompletableDeferred<Unit>? = null
+
+        override suspend fun prefetchSpriteSheets(urls: List<String>) = Unit
+        override suspend fun prefetchImages(urls: List<String>) {
+            imageUrls += urls
+            gate?.await()
+        }
     }
 
     private class FakePermissionHelper(
