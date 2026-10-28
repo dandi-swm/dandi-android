@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -55,8 +54,14 @@ internal fun HomeHud(
             .height(HudHeight),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        HomeWalletCard(coinBalance = coinBalance, onClick = onWalletClick)
-        Spacer(Modifier.weight(1f))
+        // 코인 칸은 숫자만큼 넓어지되 오른쪽 버튼과 겹치지 않게 버튼 앞까지만 쓴다. 넘치면 숫자 끝을 줄인다.
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = NyummyTheme.spacing.s8),
+        ) {
+            HomeWalletCard(coinBalance = coinBalance, onClick = onWalletClick)
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
             HomeHudAction(
                 icon = CommonR.drawable.nyummy_ic_mail,
@@ -96,7 +101,7 @@ private fun HomeWalletCard(
             .nyummyShadow(shape, NyummyTheme.elevation.soft)
             .nyummyClickable(onClick = onClick)
             .background(NyummyTheme.colors.bg.surface, shape)
-            .padding(horizontal = NyummyTheme.spacing.s10),
+            .padding(horizontal = NyummyTheme.spacing.s12),
         horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -105,7 +110,7 @@ private fun HomeWalletCard(
             contentDescription = null,
             modifier = Modifier.size(CoinSize),
         )
-        Column {
+        Column(modifier = Modifier.weight(1f, fill = false)) {
             NyummyText(
                 text = stringResource(R.string.home_wallet_label),
                 style = NyummyTheme.typography.labelS,
@@ -195,7 +200,8 @@ internal fun HomeStreakBanner(
     }
 }
 
-internal val HudHeight = 50.dp
+/** 코인 칸 높이. 숫자(number/l, AndongKaturi)가 위아래로 잘리지 않게 내용(38)보다 넉넉히 둔다. */
+internal val HudHeight = 56.dp
 private val HudActionSize = 40.dp
 private val HudIconSize = 22.dp
 private val CoinSize = 24.dp
