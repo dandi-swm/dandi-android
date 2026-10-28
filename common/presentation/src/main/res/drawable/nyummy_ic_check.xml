@@ -1,11 +1,11 @@
-<!-- Lucide check (lucide-static 1.52.0, ISC). 색은 사용처에서 tint로 정한다. -->
+<!-- MingCute 기반 v2 아이콘(피그마 `Icon / UI / Check`). 색은 사용처에서 tint로 정한다. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:pathData="M20 6 9 17l-5 -5"
+        android:pathData="M3.514 11.83L9.171 17.486L20.485 6.172"
         android:strokeColor="#FF000000"
         android:strokeWidth="2"
         android:strokeLineCap="round"

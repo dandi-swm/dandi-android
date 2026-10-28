@@ -1,19 +1,15 @@
-<!-- Lucide eye (lucide-static 1.52.0, ISC). 색은 사용처에서 tint로 정한다. -->
+<!-- MingCute 기반 v2 아이콘(피그마 `Icon / UI / Eye`). 색은 사용처에서 tint로 정한다. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:pathData="M2.062 12.348a1 1 0 0 1 0 -.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1 -19.876 0"
+        android:pathData="M21 12C21 14.5 16.97 19 12 19C7.03 19 3 14.5 3 12C3 9.5 7.03 5 12 5C16.97 5 21 9.5 21 12Z"
         android:strokeColor="#FF000000"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:strokeWidth="2" />
     <path
-        android:pathData="M9,12A3,3 0 1 0 15,12A3,3 0 1 0 9,12Z"
+        android:pathData="M11.012 10.262C11.0739 10.9639 11.3808 11.6216 11.8791 12.1199C12.3773 12.6181 13.0351 12.9251 13.737 12.987C13.5201 13.3721 13.1815 13.6744 12.7743 13.8465C12.3672 14.0185 11.9144 14.0506 11.487 13.9378C11.0597 13.8249 10.6818 13.5734 10.4127 13.2227C10.1436 12.872 9.99845 12.442 10 12C10 11.255 10.408 10.606 11.012 10.262Z"
         android:strokeColor="#FF000000"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:strokeWidth="2" />
 </vector>
