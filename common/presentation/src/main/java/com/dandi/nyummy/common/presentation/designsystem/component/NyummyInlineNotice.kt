@@ -41,12 +41,12 @@ fun NyummyInlineNotice(
     tone: NyummyInlineNoticeTone = NyummyInlineNoticeTone.Info,
 ) {
     val danger = tone == NyummyInlineNoticeTone.Danger
-    val accent = if (danger) NyummyTheme.colors.content.danger else NyummyTheme.colors.content.info
+    val accent = if (danger) NyummyTheme.colors.content.danger else NyummyTheme.colors.content.secondary
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                color = if (danger) NyummyTheme.colors.bg.dangerSubtle else NyummyTheme.colors.bg.infoSubtle,
+                color = if (danger) NyummyTheme.colors.bg.dangerSubtle else NyummyTheme.colors.bg.surfaceSubtle,
                 shape = RoundedCornerShape(NyummyTheme.radius.m),
             )
             .semantics(mergeDescendants = true) { if (danger) liveRegion = LiveRegionMode.Polite }

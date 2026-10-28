@@ -242,7 +242,7 @@ internal fun MealCeremony(
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(NyummyTheme.colors.bg.surfaceInverse),
+                    .background(NyummyTheme.colors.bg.sceneDark),
             )
             TasteReactionCutIn(
                 art = MealCeremonyArt.tasting,

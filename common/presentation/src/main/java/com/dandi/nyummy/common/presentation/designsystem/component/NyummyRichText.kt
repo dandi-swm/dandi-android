@@ -145,19 +145,21 @@ private fun NyummyTypography.styleOf(typeScale: String): TextStyle = when (typeS
     else -> bodyM
 }
 
-/** 서버 색 토큰 이름(contentPrimary 등)을 테마 글자색으로 바꾼다. 모르는 이름이면 contentPrimary. */
+/**
+ * 서버 색 토큰 이름(contentPrimary 등)을 테마 글자색으로 바꾼다. 모르는 이름이면 contentPrimary.
+ * 서버 이름은 백엔드와의 계약이라, 앱에서 없앤 역할의 이름도 v2의 가까운 색으로 받는다.
+ */
 private fun NyummyContentColors.colorOf(color: String): Color = when (color) {
     "contentSecondary" -> secondary
     "contentTertiary" -> tertiary
     "contentDisabled" -> disabled
     "contentOnAction" -> onAction
-    "contentOnCoin" -> onCoin
-    "contentOnInverse" -> onInverse
+    "contentOnInverse" -> onAction
     "contentBrand" -> brand
-    "contentSuccess" -> success
-    "contentWarning" -> warning
+    "contentSuccess" -> brand
+    "contentWarning" -> promo
     "contentDanger" -> danger
-    "contentInfo" -> info
+    "contentInfo" -> secondary
     "contentPromo" -> promo
     else -> primary
 }

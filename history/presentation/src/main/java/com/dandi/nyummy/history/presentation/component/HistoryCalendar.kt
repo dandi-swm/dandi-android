@@ -205,12 +205,12 @@ private fun CalendarHeader(
     }
 }
 
-/** 일요일은 빨강, 토요일은 중립 회색(info), 평일은 옅은 글자로 쓴 요일 줄. */
+/** 요일 줄. 날짜가 주인공이 되도록 모든 요일을 가장 옅은 글자(disabled)로 쓴다. */
 @Composable
 private fun WeekdayRow() {
     val labels = stringArrayResource(R.array.history_weekdays)
     Row(modifier = Modifier.fillMaxWidth()) {
-        labels.forEachIndexed { index, label ->
+        labels.forEach { label ->
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -220,11 +220,7 @@ private fun WeekdayRow() {
                 NyummyText(
                     text = label,
                     style = NyummyTheme.typography.labelS,
-                    color = when (index) {
-                        0 -> NyummyTheme.colors.content.danger
-                        6 -> NyummyTheme.colors.content.info
-                        else -> NyummyTheme.colors.content.tertiary
-                    },
+                    color = NyummyTheme.colors.content.disabled,
                 )
             }
         }

@@ -3,16 +3,16 @@
 ## 기준과 우선순위
 
 - Figma 파일: [Nyummy 냐미](https://www.figma.com/design/olJJrCuFYJypKJCR3RNSn9/Nyummy-%EB%83%90%EB%AF%B8)
-- 디자인 시스템 기준 페이지는 `01 Foundations`(색, 글자, 간격, 모서리, 그림자)부터 `03 Components`(공통 컴포넌트)까지다.
-- 화면 조합과 플로우는 그 뒤 번호의 화면 페이지를 따른다. 화면 페이지는 공통 컴포넌트의 토큰, 크기, variant를 새로 정의하지 않는다.
-- `Legacy`, `Archive`, `Exploration` 표시가 있는 프레임은 구현 기준이 아니다.
+- 디자인 시스템 기준 페이지는 `v2 · 01 Foundations`(색, 글자, 간격, 모서리)와 `v2 · 03 Components`(공통 컴포넌트)다.
+- 화면 조합과 플로우는 그 뒤 번호의 `v2 · ` 화면 페이지를 따른다. 화면 페이지는 공통 컴포넌트의 토큰, 크기, variant를 새로 정의하지 않는다.
+- `99 · LEGACY Archive` 페이지와 `_legacy /` 변수·텍스트 스타일, `Legacy`, `Archive`, `Exploration` 표시가 있는 프레임은 구현 기준이 아니다.
 
 충돌 시 현재 사용자 지시 → 위 디자인 시스템 페이지 → 화면 페이지 → 이 문서 순으로 적용한다. 제품 상태와 데이터 의미는 현재 SRS/API 계약이 우선하며, Figma의 예시 문구나 샘플 데이터로 도메인 enum을 만들지 않는다.
 
 ## 계층과 소비 API
 
 ```text
-Figma variables (palette / 2 Semantic / 3 Dimension) + text & effect styles
+Figma variables (Nyummy v2 / 1 Primitive · 2 Semantic · 3 Dimension · 4 Typography) + v2/ text styles
                     ↓
 NyummyPalette (internal) → NyummyColors, NyummyTypography, NyummyDimensions, NyummyElevation
                     ↓ CompositionLocal
@@ -27,10 +27,10 @@ Feature screen (presentation)
 
 | 경로 | 책임 |
 |---|---|
-| [`token/NyummyPalette.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/token/NyummyPalette.kt) | 원색 팔레트(Gray, Evergreen, Gold, Berry, Sky × 10단계, 외부 브랜드 색). `internal`이라 화면에서 직접 못 쓴다. |
-| [`theme/NyummyColors.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyColors.kt) | 역할 색. `bg`, `content`, `border`, `data`, `external` 그룹. Figma `2 Semantic`과 1:1. |
+| [`token/NyummyPalette.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/token/NyummyPalette.kt) | 원색 팔레트(회색 사다리, Evergreen, Red, Orange, Gold, 장면 색, 외부 브랜드 색). Figma `Nyummy v2 / 1 Primitive`와 1:1이고, 구글·네이버 색만 소셜 로그인 가이드 때문에 더 둔다. `internal`이라 화면에서 직접 못 쓴다. |
+| [`theme/NyummyColors.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyColors.kt) | 역할 색. `bg`, `content`, `border`, `nav`, `data`, `external` 그룹. Figma `Nyummy v2 / 2 Semantic`과 1:1. |
 | [`theme/NyummyTypography.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyTypography.kt) | 글자 역할 20종(display, title, body, label, voice, number)과 글꼴 4종. |
-| [`theme/NyummyDimensions.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyDimensions.kt) | 간격(`s2`~`s48`, `gutter`), 모서리(`xs`~`l`, `full`), 선 두께, 크기(터치 영역, 아이콘, 캐릭터, 버튼, 하단 내비). Figma `3 Dimension`과 1:1. |
+| [`theme/NyummyDimensions.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyDimensions.kt) | 간격(`s2`~`s48`, `gutter`), 모서리(`xs`, `s`, `m`, `ml`, `l`, `full`), 선 두께, 크기(터치 영역, 아이콘, 캐릭터, 버튼, 하단 내비, 섹션 띠). Figma `Nyummy v2 / 3 Dimension`과 1:1. |
 | [`theme/NyummyElevation.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyElevation.kt) | 그림자 `soft`(일러스트 위 카드), `float`(시트, 떠 있는 요소). 버튼과 카드는 그림자를 쓰지 않는다. |
 | [`theme/NyummyTheme.kt`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/theme/NyummyTheme.kt) | 진입점. CompositionLocal 주입과, Material3 기본값이 냐미 토큰을 따르도록 하는 `MaterialTheme` 대응. |
 | [`foundation/`](../../common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/foundation/) | 컴포넌트 내부 전용 고정 치수(`NyummyComponentDimens`), 누름 효과(`nyummyClickable`), 키보드 처리. |
@@ -56,6 +56,30 @@ Modifier
 - 컴포넌트에만 필요한 고정 치수는 토큰에 넣지 않고 `NyummyComponentDimens`에 둔다.
 - 48dp 최소 터치 영역과 disabled/loading semantics는 시각 상태와 별도로 보장한다.
 - 그리기 블록(`Canvas`, `drawBehind`) 안에서는 `NyummyTheme`을 읽을 수 없으니 블록 밖에서 값을 꺼내 둔다.
+
+### 색과 강약
+
+굵기는 "제목·값인지, 내용인지"를 나누고, 색은 "중요한지, 부가 정보인지"를 나눈다.
+
+| 글자색 | 흰 바탕 대비 | 쓰는 곳 |
+|---|---|---|
+| `content.primary` | 15.1:1 | 제목, 이름, 값, 기록 있는 날짜 |
+| `content.secondary` | 5.6:1 | 라벨, 설명, 안내·오류 문구 |
+| `content.tertiary` | 3.1:1 | 메타: 부제, 시각, 끼니 태그, 전체보기 |
+| `content.quiet` | 2.5:1 | 없음·지나감: 기록 없는 날짜, 할인 전 가격, "이미 받았어요" |
+| `content.disabled` | 1.8:1 | 요일 머리, 앞으로 올 날, 다른 달 날짜 |
+| `content.brand` | 4.4:1 | 문장 속 핵심 숫자, 켜진 탭 |
+| `content.voice` | 13.3:1 | 냐미 말투, 코인 숫자 |
+| `content.danger` | 4.1:1 | 할인율, 삭제 |
+
+1. 오류, 안내, 눌러야 하는 글자는 `secondary`보다 연하게 쓰지 않는다.
+2. `tertiary`는 없어도 화면을 이해할 수 있는 부가 정보에만 쓴다.
+3. `quiet`는 "없음·지나감"을 나타낼 때만 쓴다.
+4. 문장 안에서는 핵심 숫자만 `brand` Bold로 강조한다("이번 달 **4일** 기록했어요!"). `brand`와 `danger`를 작은 글자에 쓸 때는 Bold로만 쓴다.
+5. 상태색(`brand`, `danger`, `promo`)은 뜻이 있을 때만 쓴다.
+
+- 버튼, 칩, 썸에 검정(`content.primary` 같은 짙은 회색) 채움을 쓰지 않는다. 주 행동은 `bg.actionPrimary`, 보조는 `bg.actionTonal` 또는 `bg.actionNeutral`이다.
+- 계약 테스트는 역할 묶음마다 대비 하한을 둔다. 본문급 4.5, 굵은 강조·버튼 글자 3.9, 메타·태그 2.9, 없음·지나감 2.4이고 `disabled`는 검사하지 않는다. 하한보다 낮은 조합이 나오면 테스트를 낮추지 말고 디자인을 고친다.
 
 ### 글꼴
 

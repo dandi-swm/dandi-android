@@ -403,13 +403,13 @@ private fun StateChip(
 ) {
     Box(
         modifier = modifier
-            .background(NyummyTheme.colors.bg.surfaceInverse, RoundedCornerShape(NyummyTheme.radius.full))
+            .background(NyummyTheme.colors.bg.brandSubtle, RoundedCornerShape(NyummyTheme.radius.full))
             .padding(horizontal = NyummyTheme.spacing.s8, vertical = StateChipVerticalPadding),
     ) {
         NyummyText(
             text = text,
             style = NyummyTheme.typography.labelSStrong,
-            color = NyummyTheme.colors.content.onInverse,
+            color = NyummyTheme.colors.content.brand,
             maxLines = 1,
         )
     }

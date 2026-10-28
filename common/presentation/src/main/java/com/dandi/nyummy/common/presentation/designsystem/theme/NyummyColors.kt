@@ -60,13 +60,9 @@ class NyummyBackgroundColors internal constructor(
     /** 보상 연출 무대. 상자가 등장할 때 화면을 덮는 진한 그린(88% 불투명으로 쓴다). */
     val sceneRewardStage: Color,
 
-    // v2에 없는 역할. 쓰는 곳을 v2 역할로 옮긴 뒤 지운다(design.md D12 대응표).
-    val surfaceInverse: Color,
-    val scrimStrong: Color,
+    /** 튜토리얼 스택이 머지될 때까지만 남긴다. 값은 [brandSubtle]과 같다. */
+    @Deprecated("v2에 없는 역할이다. bg.brandSubtle을 쓴다.", ReplaceWith("brandSubtle"))
     val voiceCoach: Color,
-    val successSubtle: Color,
-    val warningSubtle: Color,
-    val infoSubtle: Color,
 )
 
 @Immutable
@@ -89,13 +85,6 @@ class NyummyContentColors internal constructor(
     val voice: Color,
     val danger: Color,
     val promo: Color,
-
-    // v2에 없는 역할. 쓰는 곳을 v2 역할로 옮긴 뒤 지운다(design.md D12 대응표).
-    val onCoin: Color,
-    val onInverse: Color,
-    val success: Color,
-    val warning: Color,
-    val info: Color,
 )
 
 @Immutable
@@ -126,12 +115,6 @@ class NyummyDataColors internal constructor(
     /** 코인 채움 전용. 글자색으로 쓰지 않는다. */
     val coin: Color,
     val recordMarker: Color,
-
-    // v2에 없는 역할. 쓰는 곳이 없어 지운다(design.md D12 대응표).
-    val streak: Color,
-    val nutrientCarb: Color,
-    val nutrientProtein: Color,
-    val nutrientFat: Color,
 )
 
 /** 소셜 로그인 버튼처럼 외부 브랜드 가이드를 따라야 하는 곳에서만 쓴다. */
@@ -173,12 +156,7 @@ internal val DefaultNyummyColors = NyummyColors(
         sceneDark = NyummyPalette.Gray900,
         sceneRoomFloor = NyummyPalette.SceneRoomFloor,
         sceneRewardStage = NyummyPalette.SceneRewardStage,
-        surfaceInverse = NyummyPalette.Gray900,
-        scrimStrong = NyummyPalette.Scrim,
         voiceCoach = NyummyPalette.Evergreen100,
-        successSubtle = NyummyPalette.Evergreen100,
-        warningSubtle = NyummyPalette.Orange50,
-        infoSubtle = NyummyPalette.Gray100,
     ),
     content = NyummyContentColors(
         primary = NyummyPalette.Gray900,
@@ -191,11 +169,6 @@ internal val DefaultNyummyColors = NyummyColors(
         voice = NyummyPalette.EvergreenInk,
         danger = NyummyPalette.Red500,
         promo = NyummyPalette.Orange500,
-        onCoin = NyummyPalette.Gray900,
-        onInverse = NyummyPalette.White,
-        success = NyummyPalette.Evergreen600,
-        warning = NyummyPalette.Orange500,
-        info = NyummyPalette.Gray700,
     ),
     border = NyummyBorderColors(
         subtle = NyummyPalette.Gray150,
@@ -215,10 +188,6 @@ internal val DefaultNyummyColors = NyummyColors(
         progressTrack = NyummyPalette.Gray100,
         coin = NyummyPalette.Gold300,
         recordMarker = NyummyPalette.Evergreen600,
-        streak = NyummyPalette.Evergreen600,
-        nutrientCarb = NyummyPalette.Gold300,
-        nutrientProtein = NyummyPalette.Evergreen500,
-        nutrientFat = NyummyPalette.Red500,
     ),
     external = NyummyExternalColors(
         naverGreen = NyummyPalette.ExternalNaverGreen,

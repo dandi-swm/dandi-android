@@ -69,7 +69,7 @@ internal fun OnboardingDialogueBox(
                 .padding(top = if (hasNameTag) NameTagOverlap else 0.dp)
                 .background(
                     color = if (speaker == OnboardingSpeaker.CAT) {
-                        NyummyTheme.colors.bg.voiceCoach
+                        NyummyTheme.colors.bg.surface
                     } else {
                         NyummyTheme.colors.bg.surface
                     },
@@ -134,11 +134,11 @@ private fun NameTag(name: String, isUser: Boolean, modifier: Modifier = Modifier
     NyummyText(
         text = name,
         style = NyummyTheme.typography.labelM,
-        color = if (isUser) NyummyTheme.colors.content.onInverse else NyummyTheme.colors.content.onAction,
+        color = if (isUser) NyummyTheme.colors.content.tertiary else NyummyTheme.colors.content.onAction,
         maxLines = 1,
         modifier = modifier
             .background(
-                color = if (isUser) NyummyTheme.colors.bg.surfaceInverse else NyummyTheme.colors.bg.actionPrimary,
+                color = if (isUser) NyummyTheme.colors.bg.actionNeutral else NyummyTheme.colors.bg.actionPrimary,
                 shape = RoundedCornerShape(NyummyTheme.radius.full),
             )
             .padding(horizontal = NyummyTheme.spacing.s16, vertical = NameTagVerticalPadding),

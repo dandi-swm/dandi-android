@@ -94,7 +94,7 @@ internal fun OnboardingScreen(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .background(NyummyTheme.colors.bg.surfaceInverse)
+            .background(NyummyTheme.colors.bg.sceneDark)
             .clickable(interactionSource = null, indication = null) { onIntent(OnboardingIntent.TapDialogue) },
     ) {
         val density = LocalDensity.current
@@ -210,10 +210,10 @@ private fun SkipButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     NyummyText(
         text = stringResource(R.string.onboarding_skip),
         style = NyummyTheme.typography.labelM,
-        color = NyummyTheme.colors.content.onInverse,
+        color = NyummyTheme.colors.content.secondary,
         modifier = modifier
             .nyummyClickable(onClick = onClick)
-            .background(NyummyTheme.colors.bg.scrim, RoundedCornerShape(NyummyTheme.radius.full))
+            .background(NyummyTheme.colors.bg.surface, RoundedCornerShape(NyummyTheme.radius.full))
             .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s8),
     )
 }

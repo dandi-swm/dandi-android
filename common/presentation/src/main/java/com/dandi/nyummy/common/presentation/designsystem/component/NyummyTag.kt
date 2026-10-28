@@ -38,7 +38,7 @@ fun NyummyTag(
     // Neutral 바탕은 상품 그림 바탕(surfaceSunken) 위에서도 보이게 한 단계 진하게 쓴다.
     val (container, color) = when (tag.tone) {
         TagTone.PROMO -> bg.promoSubtle to content.promo
-        TagTone.SUCCESS -> bg.successSubtle to content.success
+        TagTone.SUCCESS -> bg.brandSubtle to content.brand
         TagTone.NEUTRAL -> bg.actionNeutral to content.secondary
     }
     val shapeModifier = when (style) {
