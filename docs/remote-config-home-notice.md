@@ -25,7 +25,7 @@
       "startAt": "2026-10-28T00:00:00+09:00",
       "endAt": "2026-11-30T23:59:59+09:00",
       "minVersionCode": 6,
-      "imageUrl": "https://link.nyummy.co.kr/notice/2026-10-renewal.webp",
+      "imageUrl": "https://cdn.nyummy.co.kr/notices/2026-10-renewal.webp",
       "title": "냐미가 새단장을 했어요!",
       "body": "화면을 더 보기 편하게 새로 꾸몄어요.\n새로 들어온 기능도 확인해 보세요."
     },
@@ -33,7 +33,7 @@
       "id": "2026-autumn-event",
       "badge": "이벤트",
       "meta": "10월 28일 ~ 11월 10일",
-      "imageUrl": "https://link.nyummy.co.kr/notice/2026-autumn-event.webp",
+      "imageUrl": "https://cdn.nyummy.co.kr/notices/2026-autumn-event.webp",
       "title": "가을 한 상 이벤트가 열렸어요",
       "body": "이벤트 페이지에서 자세히 알아보세요.",
       "cta": { "text": "자세히 보기", "link": "/shop" }
@@ -48,7 +48,7 @@
 | `badge` | | 사진 위 왼쪽 배지 글자. 비우면 배지가 없다. |
 | `startAt` / `endAt` | | 보이는 기간. ISO 8601에 **오프셋을 꼭 붙인다**(`+09:00`, `Z`). 오프셋이 없으면 UTC로 읽는다. 적지 않으면 그쪽 끝이 열려 있다. 읽을 수 없는 값을 적으면 그 공지는 띄우지 않는다. |
 | `minVersionCode` | | 이 versionCode 이상인 앱에만 보인다. 새 기능 소개는 그 기능이 들어간 versionCode를 적는다. |
-| `imageUrl` | | 10:9 사진 주소(`https://link.nyummy.co.kr/notice/…`). 없거나 받지 못하면 연초록 바탕만 보인다. |
+| `imageUrl` | | 10:9 사진 주소(`https://cdn.nyummy.co.kr/notices/…`). 없거나 받지 못하면 연초록 바탕만 보인다. |
 | `meta` | | 제목 위 작은 회색 글(이벤트 기간 등). |
 | `title` | 필수 | 제목. 없으면 그 공지는 띄우지 않는다. |
 | `body` | | 설명. 줄을 바꾸려면 `\n`. |
@@ -82,11 +82,11 @@
 1. 피그마 공지 카드 안의 `Notice image (...)` 레이어를 고른다. 이 프레임만 사진에 들어가고, 배지는 앱이 위에 얹는다.
 2. 오른쪽 아래 Export(PNG 3x)로 내보낸다. 1002×900(10:9)이다.
 3. WebP로 압축한다: `cwebp -q 85 -m 6 2026-10-renewal.png -o 2026-10-renewal.webp`(1MB 남짓 PNG가 100KB 아래로 준다).
-4. 앱 링크 CDN(`link.nyummy.co.kr`, CloudFront → S3) 버킷의 `notice/` 폴더에 올리고, `https://link.nyummy.co.kr/notice/<파일명>`을 `imageUrl`에 넣는다.
+4. 이미지 CDN(`cdn.nyummy.co.kr`, 음식 아이콘·아이템과 같은 곳)의 `notices/` 폴더에 올리고, `https://cdn.nyummy.co.kr/notices/<파일명>`을 `imageUrl`에 넣는다. 콘텐츠 형식은 `image/webp`로 올린다.
 
-- 파일명에 공지 id를 붙여 공지마다 새 이름으로 올린다(예: `2026-10-renewal.webp`). 같은 이름으로 덮어쓰면 CloudFront와 앱의 이미지 캐시에 옛 사진이 남는다. 꼭 덮어써야 하면 CloudFront 캐시 무효화(`/notice/*`)를 돌린다.
-- 이 버킷은 없는 키에 폴백 페이지(`index.html`, 200)를 준다. 주소를 틀리면 사진 대신 연초록 바탕만 보이니, 게시 전에 브라우저(PC)에서 주소가 사진으로 열리는지 본다.
-- `link` 호스트는 앱 링크라, 안드로이드 폰 브라우저에서 사진 주소를 누르면 앱이 열린다. 앱이 사진을 받아 오는 데는 영향이 없다.
+- 파일명에 공지 id를 붙여 공지마다 새 이름으로 올린다(예: `2026-10-renewal.webp`). 같은 이름으로 덮어쓰면 CloudFront와 앱의 이미지 캐시에 옛 사진이 남는다. 꼭 덮어써야 하면 CloudFront 캐시 무효화(`/notices/*`)를 돌린다.
+- 없는 파일은 403으로 답한다. 주소를 틀리면 사진 대신 연초록 바탕만 보이니, 게시 전에 브라우저에서 주소가 사진으로 열리는지 본다.
+- 앱 링크 도메인(`link.nyummy.co.kr`)에는 올리지 않는다. 앱 링크 전용이고, 폰 브라우저에서 사진 주소를 누르면 앱이 열린다.
 
 - 사진은 반드시 **10:9**로 만든다. 앱은 사진 칸을 10:9로 고정하고 화면 폭에 맞춰 줄였다 늘린다. 비율이 다르면 가운데를 기준으로 가장자리가 잘린다.
 - 사진 맨 위 왼쪽(약 64 높이)에는 배지가 얹힌다. 중요한 내용은 그 아래에 둔다.
