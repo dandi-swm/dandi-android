@@ -79,6 +79,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBubbleT
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyChip
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
@@ -90,7 +91,7 @@ import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
 import com.dandi.nyummy.meal.presentation.MealCeremonyStage
 import com.dandi.nyummy.meal.presentation.R
-import java.io.File
+import com.dandi.nyummy.meal.presentation.mealPhotoModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -534,7 +535,7 @@ private fun WaitingScene(
             val serveDistancePx = with(density) { ServeDistance.toPx() }
             val photoShape = RoundedCornerShape(NyummyTheme.radius.m)
             AsyncImage(
-                model = File(photoPath),
+                model = mealPhotoModel(photoPath),
                 contentDescription = stringResource(R.string.meal_record_captured_photo_content_description),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

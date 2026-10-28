@@ -44,4 +44,13 @@ sealed interface MealRecordIntent : MviIntent {
 
     /** 닫기(X) 버튼을 눌렀습니다. */
     data object ClickClose : MealRecordIntent
+
+    /** 식사 기록 튜토리얼에서 화면 오른쪽 위 건너뛰기를 눌렀습니다. 건너뛰기 확인을 띄웁니다. */
+    data object TutorialSkip : MealRecordIntent
+
+    /** 건너뛰기 확인에서 계속 배우기로 했습니다(바깥·뒤로 가기 포함). */
+    data object TutorialSkipCancelled : MealRecordIntent
+
+    /** 건너뛰기 확인에서 그래도 건너뛰기로 했습니다. 튜토리얼 식사를 대신 기록하고 홈의 냐미 건강 이야기로 갑니다. */
+    data object TutorialSkipConfirmed : MealRecordIntent
 }
