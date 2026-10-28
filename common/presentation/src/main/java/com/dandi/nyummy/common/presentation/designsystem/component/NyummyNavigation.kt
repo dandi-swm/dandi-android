@@ -55,7 +55,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 /**
- * 상단 바. 높이 56, 왼쪽 뒤로가기(선택), 가운데 제목(title/m), 오른쪽 슬롯(글자 버튼이나 아이콘 버튼).
+ * 상단 바. 높이 56, 왼쪽 뒤로가기(선택), 가운데 제목(title/s), 오른쪽 슬롯(글자 버튼이나 아이콘 버튼).
  * 제목은 양옆 요소와 상관없이 화면 가운데에 둔다.
  *
  * @param containerColor 바탕색. 마이룸처럼 그림 위에 띄울 때는 투명으로 둔다.
@@ -75,7 +75,7 @@ fun NyummyTopBar(
             .fillMaxWidth()
             .height(NyummyComponentDimens.TopBarHeight)
             .background(containerColor)
-            .padding(horizontal = NyummyTheme.spacing.s4),
+            .padding(start = NyummyTheme.spacing.s8, end = NyummyTheme.spacing.s16),
         content = {
             Box(Modifier.layoutId(TopBarStart)) {
                 if (onBackClick != null) {
@@ -89,7 +89,7 @@ fun NyummyTopBar(
             Box(Modifier.layoutId(TopBarEnd)) { trailing?.invoke() }
             NyummyText(
                 text = title,
-                style = NyummyTheme.typography.titleM,
+                style = NyummyTheme.typography.titleS,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 modifier = Modifier
@@ -382,7 +382,7 @@ fun NyummyStepIndicator(
     val dimens = NyummyComponentDimens
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s6),
     ) {
         NyummyText(
             text = "$currentStep / $totalSteps",

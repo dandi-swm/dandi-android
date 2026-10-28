@@ -39,15 +39,19 @@ internal object NyummyComponentDimens {
     val WheelPickerBandHeight = 46.dp
     val WheelPickerBandInset = 6.dp
 
-    /** Checkbox, Radio 크기와 Checkbox 안 체크 아이콘, Radio 안 점. */
+    /** Radio 크기와 안 점. */
     val SelectionControlSize = 24.dp
-    val CheckboxCheckSize = 16.dp
     val RadioDotSize = 12.dp
 
+    /** Checkbox 크기, 모서리, 안 체크 아이콘. */
+    val CheckboxSize = 22.dp
+    val CheckboxRadius = 6.dp
+    val CheckboxCheckSize = 16.dp
+
     /** Switch 트랙과 썸. */
-    val SwitchWidth = 52.dp
-    val SwitchHeight = 32.dp
-    val SwitchThumbSize = 26.dp
+    val SwitchWidth = 48.dp
+    val SwitchHeight = 28.dp
+    val SwitchThumbSize = 22.dp
     val SwitchThumbInset = 3.dp
 
     /** List Row 최소 높이와 앞 아이콘 칸. */
@@ -113,7 +117,7 @@ internal object NyummyComponentDimens {
     val TabIndicatorHeight = 2.dp
 
     /** Step Indicator 막대 두께와 간격. */
-    val StepBarHeight = 6.dp
+    val StepBarHeight = 4.dp
     val StepBarGap = 6.dp
 
     /** Voice Bubble 꼬리 크기(밑변 20 × 높이 12)와 몸통 모서리에서 꼬리까지 거리. */

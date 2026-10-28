@@ -16,4 +16,7 @@ internal object NyummyComponentShadows {
 
     /** Segmented 고른 칸(검정 8%). */
     val SegmentedOption = NyummyShadow(color = NyummyPalette.Black.copy(alpha = 0x14 / 255f), blur = 4.dp, offsetY = 1.dp)
+
+    /** Switch 흰 썸(검정 15%). */
+    val SwitchThumb = NyummyShadow(color = NyummyPalette.Black.copy(alpha = 0x26 / 255f), blur = 3.dp, offsetY = 1.dp)
 }

@@ -31,12 +31,15 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
+import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentShadows
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyPressScale
 import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyummyInteractionSource
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 
 /**
- * 원형 체크박스(24). 꺼지면 회색 테두리 + 회색 체크, 켜지면 에버그린 채움 + 흰 체크.
+ * 체크박스(22, 모서리 6). 꺼지면 흰 바탕 + 1.5 테두리, 켜지면 초록 채움 + 흰 체크.
+ * 누를 수 없으면 비활성 바탕에 비활성 색 테두리(꺼짐)나 체크(켜짐)를 그린다.
  * [onCheckedChange]가 null이면 상위(List Row 등)가 클릭을 맡는 표시 전용이다.
  */
 @Composable
@@ -46,16 +49,15 @@ fun NyummyCheckbox(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    val bg = NyummyTheme.colors.bg
+    val content = NyummyTheme.colors.content
     val (container, border, check) = when {
-        checked && enabled -> Triple(
-            NyummyTheme.colors.bg.actionPrimary,
-            Color.Transparent,
-            NyummyTheme.colors.content.onAction,
-        )
-        checked -> Triple(NyummyTheme.colors.bg.actionDisabled, Color.Transparent, NyummyTheme.colors.content.disabled)
-        enabled -> Triple(Color.Transparent, NyummyTheme.colors.border.strong, NyummyTheme.colors.border.strong)
-        else -> Triple(Color.Transparent, NyummyTheme.colors.border.subtle, NyummyTheme.colors.border.subtle)
+        checked && enabled -> Triple(bg.actionPrimary, Color.Transparent, content.onAction)
+        checked -> Triple(bg.actionDisabled, Color.Transparent, content.disabled)
+        enabled -> Triple(bg.surface, NyummyTheme.colors.border.strong, Color.Transparent)
+        else -> Triple(bg.actionDisabled, content.disabled, Color.Transparent)
     }
+    val shape = RoundedCornerShape(NyummyComponentDimens.CheckboxRadius)
     val toggle = if (onCheckedChange != null) {
         Modifier
             .toggleable(
@@ -72,9 +74,9 @@ fun NyummyCheckbox(
     Box(
         modifier = modifier
             .then(toggle)
-            .size(NyummyComponentDimens.SelectionControlSize)
-            .background(container, CircleShape)
-            .border(NyummyTheme.borderWidth.bold, border, CircleShape),
+            .size(NyummyComponentDimens.CheckboxSize)
+            .background(container, shape)
+            .border(NyummyComponentDimens.FieldActiveBorderWidth, border, shape),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -133,7 +135,7 @@ fun NyummyRadio(
 }
 
 /**
- * 스위치(52×32). 켜짐 에버그린, 꺼짐 회색, 흰 썸 26, 그림자 없음.
+ * 스위치(48×28). 켜짐 초록, 꺼짐 회색(disabled), 흰 썸 22에 옅은 그림자.
  * 설정처럼 바로 반영되는 토글에 쓴다. [onCheckedChange]가 null이면 표시 전용이다.
  */
 @Composable
@@ -148,7 +150,7 @@ fun NyummySwitch(
         targetValue = when {
             checked && enabled -> NyummyTheme.colors.bg.actionPrimary
             checked -> NyummyTheme.colors.bg.selected
-            enabled -> NyummyTheme.colors.border.strong
+            enabled -> NyummyTheme.colors.content.disabled
             else -> NyummyTheme.colors.bg.actionDisabled
         },
         animationSpec = tween(NyummyPressScale.DurationMillis),
@@ -185,6 +187,7 @@ fun NyummySwitch(
             Modifier
                 .offset(x = thumbOffset)
                 .size(dimens.SwitchThumbSize)
+                .nyummyShadow(CircleShape, NyummyComponentShadows.SwitchThumb)
                 .background(NyummyTheme.colors.bg.surface, CircleShape),
         )
     }
