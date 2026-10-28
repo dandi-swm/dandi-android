@@ -52,6 +52,8 @@ enum class NyummyBubbleTail { Bottom, Left, Top, None }
  * 너비는 글 길이에 맞춰 늘어나고, 최대 너비는 [modifier]로 제한한다.
  *
  * @param typing true면 대사가 바뀔 때마다 미연시처럼 한 글자씩 찍는다. 말풍선 크기는 처음부터 문장 전체에 맞춘다.
+ * @param lineKey 바뀌면 처음부터 다시 찍는다([typing]일 때만)
+ * @param onRevealed 한 글자씩 찍기가 끝났다([typing]일 때만)
  */
 @Composable
 fun NyummyVoiceBubble(
@@ -59,6 +61,8 @@ fun NyummyVoiceBubble(
     modifier: Modifier = Modifier,
     tail: NyummyBubbleTail = NyummyBubbleTail.Bottom,
     typing: Boolean = false,
+    lineKey: Any = text,
+    onRevealed: () -> Unit = {},
 ) {
     val dimens = NyummyComponentDimens
     val cornerRadius = NyummyTheme.radius.m
@@ -84,7 +88,14 @@ fun NyummyVoiceBubble(
             .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s12),
     ) {
         if (typing) {
-            NyummyTypewriterText(text = text, style = NyummyTheme.typography.voiceM, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            NyummyTypewriterText(
+                text = text,
+                style = NyummyTheme.typography.voiceM,
+                lineKey = lineKey,
+                onRevealed = onRevealed,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+            )
         } else {
             NyummyText(text = text, style = NyummyTheme.typography.voiceM, maxLines = 3, overflow = TextOverflow.Ellipsis)
         }

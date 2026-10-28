@@ -1,0 +1,997 @@
+{
+ "animations": [
+  {
+   "state": "HOME_DAY",
+   "frame": {
+    "width": 136,
+    "height": 136,
+    "framesPerRow": 4,
+    "durationMs": 100
+   },
+   "motions": [
+    {
+     "name": "belly",
+     "weight": 8,
+     "clips": [
+      {
+       "src": "trusting/belly/nyummy_trusting_belly_01_roll_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "trusting/belly/nyummy_trusting_belly_02_wiggle_grid_136.webp",
+       "frames": 8,
+       "loop": true
+      },
+      {
+       "src": "trusting/belly/nyummy_trusting_belly_03_return_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "pounce",
+     "weight": 8,
+     "clips": [
+      {
+       "src": "playful/pounce/nyummy_playful_pounce_01_wiggle_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "playful/pounce/nyummy_playful_pounce_02_pounce_grid_136.webp",
+       "frames": 8,
+       "loop": true
+      },
+      {
+       "src": "playful/pounce/nyummy_playful_pounce_03_return_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "roll",
+     "weight": 8,
+     "clips": [
+      {
+       "src": "playful/roll/nyummy_playful_roll_01_roll_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "playful/roll/nyummy_playful_roll_02_return_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "lie_down",
+     "weight": 8,
+     "clips": [
+      {
+       "src": "relaxed/lie_down/nyummy_relaxed_lie_down_01_lie_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "relaxed/lie_down/nyummy_relaxed_lie_down_02_sleep_grid_136.webp",
+       "frames": 8,
+       "loop": true
+      },
+      {
+       "src": "relaxed/lie_down/nyummy_relaxed_lie_down_03_wake_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "stretch",
+     "weight": 8,
+     "clips": [
+      {
+       "src": "relaxed/stretch/nyummy_relaxed_stretch_01_stretch_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "relaxed/stretch/nyummy_relaxed_stretch_02_return_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "doze",
+     "weight": 8,
+     "clips": [
+      {
+       "src": "loaf/doze/nyummy_loaf_doze_01_down_v2_grid_136.webp",
+       "frames": 11
+      },
+      {
+       "src": "loaf/doze/nyummy_loaf_doze_02_doze_v2_grid_136.webp",
+       "frames": 8,
+       "loop": true
+      },
+      {
+       "src": "loaf/doze/nyummy_loaf_doze_03_up_v2_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "scratch",
+     "weight": 8,
+     "clips": [
+      {
+       "src": "this_is_mine/scratch/nyummy_this_is_mine_scratch_01_stand_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "this_is_mine/scratch/nyummy_this_is_mine_scratch_02_scratch_grid_136.webp",
+       "frames": 8,
+       "loop": true
+      },
+      {
+       "src": "this_is_mine/scratch/nyummy_this_is_mine_scratch_03_return_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "spin",
+     "weight": 8,
+     "clips": [
+      {
+       "src": "excited/spin/nyummy_excited_spin_01_spin_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "tail_chase",
+     "weight": 8,
+     "clips": [
+      {
+       "src": "daily/tail_chase/nyummy_daily_tail_chase_01_chase_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "shake",
+     "weight": 8,
+     "clips": [
+      {
+       "src": "daily/shake/nyummy_daily_shake_01_shake_grid_136.webp",
+       "frames": 11
+      }
+     ]
+    },
+    {
+     "name": "sniff",
+     "weight": 8,
+     "clips": [
+      {
+       "src": "interested/sniff/nyummy_interested_sniff_01_lean_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "interested/sniff/nyummy_interested_sniff_02_sniff_grid_136.webp",
+       "frames": 8,
+       "loop": true
+      },
+      {
+       "src": "interested/sniff/nyummy_interested_sniff_03_return_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "peek",
+     "weight": 8,
+     "clips": [
+      {
+       "src": "interested/peek/nyummy_interested_peek_01_rise_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "interested/peek/nyummy_interested_peek_02_return_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "tail_up",
+     "weight": 8,
+     "clips": [
+      {
+       "src": "friendly/tail_up/nyummy_friendly_tail_up_01_hop_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "friendly/tail_up/nyummy_friendly_tail_up_02_settle_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "groom",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "content/groom/nyummy_content_groom_01_lick_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "face_wash",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "daily/face_wash/nyummy_daily_face_wash_01_wash_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "knead",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "daily/knead/nyummy_daily_knead_01_knead_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "bat_air",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "daily/bat_air/nyummy_daily_bat_air_01_bat_v2_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "ear_scratch",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "daily/ear_scratch/nyummy_daily_ear_scratch_01_scratch_v2_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "wiggle",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "daily/wiggle/nyummy_daily_wiggle_01_wiggle_grid_136.webp",
+       "frames": 11
+      }
+     ]
+    },
+    {
+     "name": "sniff_floor",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "daily/sniff_floor/nyummy_daily_sniff_floor_01_sniff_grid_136.webp",
+       "frames": 11
+      }
+     ]
+    },
+    {
+     "name": "doze_startle",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "daily/doze_startle/nyummy_daily_doze_startle_01_startle_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "paw_swat",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "playful/paw_swat/nyummy_playful_paw_swat_01_swat_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "yawn",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "relaxed/yawn/nyummy_relaxed_yawn_01_yawn_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "call",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "meow/call/nyummy_meow_call_01_call_grid_136.webp",
+       "frames": 11
+      }
+     ]
+    },
+    {
+     "name": "head_bump",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "friendly_relaxed/head_bump/nyummy_friendly_relaxed_head_bump_01_bump_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "slow_blink",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "friendly_relaxed/slow_blink/nyummy_friendly_relaxed_slow_blink_01_blink_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "purr_sway",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "friendly_relaxed/purr_sway/nyummy_friendly_relaxed_purr_sway_01_sway_grid_136.webp",
+       "frames": 9,
+       "loop": true
+      }
+     ]
+    },
+    {
+     "name": "purr",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "content/purr/nyummy_content_purr_01_purr_grid_136.webp",
+       "frames": 9,
+       "loop": true
+      }
+     ]
+    },
+    {
+     "name": "lean_in",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "trusting/lean_in/nyummy_trusting_lean_in_01_cheek_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "listen",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "attentive/listen/nyummy_attentive_listen_01_ears_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "look_around",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "attentive/look_around/nyummy_attentive_look_around_01_scan_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "nod",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "attentive/nod/nyummy_attentive_nod_01_nod_grid_136.webp",
+       "frames": 9
+      }
+     ]
+    },
+    {
+     "name": "perk",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "interested/perk/nyummy_interested_perk_01_ears_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "nuzzle",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "friendly/nuzzle/nyummy_friendly_nuzzle_01_blink_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "cheek_rub",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "this_is_mine/cheek_rub/nyummy_this_is_mine_cheek_rub_01_rub_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "sit_proud",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "this_is_mine/sit_proud/nyummy_this_is_mine_sit_proud_01_proud_grid_136.webp",
+       "frames": 9
+      }
+     ]
+    },
+    {
+     "name": "blink",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "idle/blink/nyummy_idle_blink_01_blink_grid_136.webp",
+       "frames": 9
+      }
+     ]
+    },
+    {
+     "name": "head_tilt",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "daily/head_tilt/nyummy_daily_head_tilt_01_tilt_v2_grid_136.webp",
+       "frames": 9
+      }
+     ]
+    },
+    {
+     "name": "daydream",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "daily/daydream/nyummy_daily_daydream_01_dream_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "state": "HOME_DROWSY",
+   "frame": {
+    "width": 136,
+    "height": 136,
+    "framesPerRow": 4,
+    "durationMs": 100
+   },
+   "motions": [
+    {
+     "name": "lie_down",
+     "weight": 50,
+     "clips": [
+      {
+       "src": "relaxed/lie_down/nyummy_relaxed_lie_down_01_lie_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "relaxed/lie_down/nyummy_relaxed_lie_down_02_sleep_grid_136.webp",
+       "frames": 8,
+       "loop": true,
+       "loopTimes": 4
+      },
+      {
+       "src": "relaxed/lie_down/nyummy_relaxed_lie_down_03_wake_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "doze",
+     "weight": 30,
+     "clips": [
+      {
+       "src": "loaf/doze/nyummy_loaf_doze_01_down_v2_grid_136.webp",
+       "frames": 11
+      },
+      {
+       "src": "loaf/doze/nyummy_loaf_doze_02_doze_v2_grid_136.webp",
+       "frames": 8,
+       "loop": true,
+       "loopTimes": 4
+      },
+      {
+       "src": "loaf/doze/nyummy_loaf_doze_03_up_v2_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "belly",
+     "weight": 8,
+     "clips": [
+      {
+       "src": "trusting/belly/nyummy_trusting_belly_01_roll_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "trusting/belly/nyummy_trusting_belly_02_wiggle_grid_136.webp",
+       "frames": 8,
+       "loop": true
+      },
+      {
+       "src": "trusting/belly/nyummy_trusting_belly_03_return_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "yawn",
+     "weight": 6,
+     "clips": [
+      {
+       "src": "relaxed/yawn/nyummy_relaxed_yawn_01_yawn_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "doze_startle",
+     "weight": 6,
+     "clips": [
+      {
+       "src": "daily/doze_startle/nyummy_daily_doze_startle_01_startle_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "stretch",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "relaxed/stretch/nyummy_relaxed_stretch_01_stretch_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "relaxed/stretch/nyummy_relaxed_stretch_02_return_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "slow_blink",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "friendly_relaxed/slow_blink/nyummy_friendly_relaxed_slow_blink_01_blink_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "knead",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "daily/knead/nyummy_daily_knead_01_knead_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "daydream",
+     "weight": 5,
+     "clips": [
+      {
+       "src": "daily/daydream/nyummy_daily_daydream_01_dream_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "state": "HOME_NIGHT",
+   "frame": {
+    "width": 136,
+    "height": 136,
+    "framesPerRow": 4,
+    "durationMs": 100
+   },
+   "motions": [
+    {
+     "name": "lie_down",
+     "weight": 60,
+     "clips": [
+      {
+       "src": "relaxed/lie_down/nyummy_relaxed_lie_down_01_lie_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "relaxed/lie_down/nyummy_relaxed_lie_down_02_sleep_grid_136.webp",
+       "frames": 8,
+       "loop": true,
+       "loopTimes": 4
+      },
+      {
+       "src": "relaxed/lie_down/nyummy_relaxed_lie_down_03_wake_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "doze",
+     "weight": 40,
+     "clips": [
+      {
+       "src": "loaf/doze/nyummy_loaf_doze_01_down_v2_grid_136.webp",
+       "frames": 11
+      },
+      {
+       "src": "loaf/doze/nyummy_loaf_doze_02_doze_v2_grid_136.webp",
+       "frames": 8,
+       "loop": true,
+       "loopTimes": 4
+      },
+      {
+       "src": "loaf/doze/nyummy_loaf_doze_03_up_v2_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "yawn",
+     "weight": 10,
+     "clips": [
+      {
+       "src": "relaxed/yawn/nyummy_relaxed_yawn_01_yawn_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "slow_blink",
+     "weight": 10,
+     "clips": [
+      {
+       "src": "friendly_relaxed/slow_blink/nyummy_friendly_relaxed_slow_blink_01_blink_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "state": "HOME_TAP",
+   "frame": {
+    "width": 136,
+    "height": 136,
+    "framesPerRow": 4,
+    "durationMs": 100
+   },
+   "motions": [
+    {
+     "name": "pop",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "tap_react/pop/nyummy_tap_react_pop_01_pop_grid_136.webp",
+       "frames": 7
+      }
+     ]
+    },
+    {
+     "name": "paw_swat",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "playful/paw_swat/nyummy_playful_paw_swat_01_swat_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "head_bump",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "friendly_relaxed/head_bump/nyummy_friendly_relaxed_head_bump_01_bump_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "wiggle",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "daily/wiggle/nyummy_daily_wiggle_01_wiggle_grid_136.webp",
+       "frames": 11
+      }
+     ]
+    },
+    {
+     "name": "head_tilt",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "daily/head_tilt/nyummy_daily_head_tilt_01_tilt_v2_grid_136.webp",
+       "frames": 9
+      }
+     ]
+    },
+    {
+     "name": "call",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "meow/call/nyummy_meow_call_01_call_grid_136.webp",
+       "frames": 11
+      }
+     ]
+    },
+    {
+     "name": "purr",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "content/purr/nyummy_content_purr_01_purr_grid_136.webp",
+       "frames": 9,
+       "loop": true
+      }
+     ]
+    },
+    {
+     "name": "nuzzle",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "friendly/nuzzle/nyummy_friendly_nuzzle_01_blink_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "roll",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "playful/roll/nyummy_playful_roll_01_roll_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "playful/roll/nyummy_playful_roll_02_return_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "bounce",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "excited/bounce/nyummy_excited_bounce_01_bounce_grid_136.webp",
+       "frames": 9,
+       "loop": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "state": "HOME_TAP_BURST",
+   "frame": {
+    "width": 136,
+    "height": 136,
+    "framesPerRow": 4,
+    "durationMs": 100
+   },
+   "motions": [
+    {
+     "name": "tail_thump",
+     "weight": 3,
+     "clips": [
+      {
+       "src": "irritated/tail_thump/nyummy_irritated_tail_thump_01_thump_grid_136.webp",
+       "frames": 9,
+       "loop": true
+      }
+     ]
+    },
+    {
+     "name": "glare",
+     "weight": 2,
+     "clips": [
+      {
+       "src": "irritated/glare/nyummy_irritated_glare_01_glare_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "ears_back",
+     "weight": 3,
+     "clips": [
+      {
+       "src": "conflicted_cautious/ears_back/nyummy_conflicted_cautious_ears_back_01_airplane_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "recoil",
+     "weight": 3,
+     "clips": [
+      {
+       "src": "disgusted/recoil/nyummy_disgusted_recoil_01_recoil_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "disgusted/recoil/nyummy_disgusted_recoil_02_return_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "state": "HOME_GREET",
+   "frame": {
+    "width": 136,
+    "height": 136,
+    "framesPerRow": 4,
+    "durationMs": 100
+   },
+   "motions": [
+    {
+     "name": "greet",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "friendly/greet/nyummy_friendly_greet_01_wave_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "state": "HOME_WELCOME_BACK",
+   "frame": {
+    "width": 136,
+    "height": 136,
+    "framesPerRow": 4,
+    "durationMs": 100
+   },
+   "motions": [
+    {
+     "name": "bounce",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "excited/bounce/nyummy_excited_bounce_01_bounce_grid_136.webp",
+       "frames": 9,
+       "loop": true
+      }
+     ]
+    },
+    {
+     "name": "spin",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "excited/spin/nyummy_excited_spin_01_spin_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "paws_up",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "excited/paws_up/nyummy_excited_paws_up_01_stand_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "excited/paws_up/nyummy_excited_paws_up_02_return_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "state": "HOME_AFTER_MEAL",
+   "frame": {
+    "width": 136,
+    "height": 136,
+    "framesPerRow": 4,
+    "durationMs": 100
+   },
+   "motions": [
+    {
+     "name": "eat",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "content/eat/nyummy_content_eat_01_eat_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "state": "ROOM_IDLE",
+   "frame": {
+    "width": 136,
+    "height": 136,
+    "framesPerRow": 4,
+    "durationMs": 100
+   },
+   "motions": [
+    {
+     "name": "paw_swat",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "playful/paw_swat/nyummy_playful_paw_swat_01_swat_grid_136.webp",
+       "frames": 13
+      }
+     ]
+    },
+    {
+     "name": "pounce",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "playful/pounce/nyummy_playful_pounce_01_wiggle_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "playful/pounce/nyummy_playful_pounce_02_pounce_grid_136.webp",
+       "frames": 8,
+       "loop": true
+      },
+      {
+       "src": "playful/pounce/nyummy_playful_pounce_03_return_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    },
+    {
+     "name": "roll",
+     "weight": 1,
+     "clips": [
+      {
+       "src": "playful/roll/nyummy_playful_roll_01_roll_grid_136.webp",
+       "frames": 9
+      },
+      {
+       "src": "playful/roll/nyummy_playful_roll_02_return_grid_136.webp",
+       "frames": 8
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

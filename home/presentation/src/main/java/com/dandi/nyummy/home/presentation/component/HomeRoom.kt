@@ -62,6 +62,8 @@ internal fun HomeRoom(
     speech: String,
     showSpeech: Boolean,
     modifier: Modifier = Modifier,
+    speechKey: Any = speech,
+    onSpeechRevealed: () -> Unit = {},
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -105,6 +107,8 @@ internal fun HomeRoom(
             NyummyVoiceBubble(
                 text = speech,
                 typing = true,
+                lineKey = speechKey,
+                onRevealed = onSpeechRevealed,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(horizontal = NyummyTheme.spacing.gutter)
@@ -136,6 +140,7 @@ private fun HomeNyummy(
     NyummySpriteSequenceView(
         clips = motion.clips,
         restMillis = motion.restMillis,
+        loopTimes = motion.loopTimes ?: DefaultCatLoopTimes,
         onFinished = onMotionFinished,
         displayWidth = displayWidth,
         playId = motion.playId,
@@ -177,6 +182,9 @@ private fun HomeFallbackNyummy(
         )
     }
 }
+
+/** 되풀이 조각을 몇 번 돌지 따로 정하지 않은 동작의 기본값(재생 컴포넌트 기본과 같음). */
+private const val DefaultCatLoopTimes = 3
 
 /** 고양이방. 테스트가 방 크기를 잴 때 찾는다. */
 internal const val RoomCardTag = "home_room_card"

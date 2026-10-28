@@ -6,8 +6,10 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.common.data.preference.AppPreferenceProviderImpl
+import com.dandi.nyummy.common.data.preference.CompanionMemoryHelperImpl
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.data.token.TokenProviderImpl
+import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -62,4 +64,10 @@ object LocalStorageModule {
     fun provideAppPreferenceProvider(
         @AppPreferenceDataStore dataStore: DataStore<Preferences>,
     ): AppPreferenceProvider = AppPreferenceProviderImpl(dataStore)
+
+    @Provides
+    @Singleton
+    fun provideCompanionMemoryHelper(
+        @AppPreferenceDataStore dataStore: DataStore<Preferences>,
+    ): CompanionMemoryHelper = CompanionMemoryHelperImpl(dataStore)
 }

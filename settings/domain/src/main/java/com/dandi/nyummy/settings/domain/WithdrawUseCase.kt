@@ -2,6 +2,7 @@ package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.HttpResponseException
+import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.PushTokenHelper
@@ -14,13 +15,14 @@ import javax.inject.Inject
 /**
  * 회원 탈퇴하고 첫 화면으로 돌아간다. 되돌릴 수 없다.
  *
- * 탈퇴되면 이 기기의 로그인 토큰과 푸시 토큰을 지운 뒤 첫 화면으로 간다. 로그아웃과 같은 순서로, 다시 가입하거나
+ * 탈퇴되면 이 기기의 로그인 토큰과 푸시 토큰, 냐미가 기억한 값(마지막 방문, 체형)을 지운 뒤 첫 화면으로 간다. 로그아웃과 같은 순서로, 다시 가입하거나
  * 로그인할 때의 토큰 등록이 지우기보다 먼저 실행되지 않게 한다.
  * 실패하면 회원은 그대로이므로 오류 스낵바만 띄우고 실패를 돌려준다. 로그인 만료(401)와 5xx는 공통 안내가 맡는다.
  */
 class WithdrawUseCase @Inject constructor(
     private val repository: SettingsRepository,
     private val pushTokenHelper: PushTokenHelper,
+    private val companionMemory: CompanionMemoryHelper,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -45,6 +47,7 @@ class WithdrawUseCase @Inject constructor(
             return Result.failure(e)
         }
         pushTokenHelper.deleteToken()
+        companionMemory.clear()
         messageHelper.showSnackBar(iconType = IconType.SUCCESS, messageText = WITHDRAWN_MESSAGE)
         navigationHelper.navigateToInitial()
         return Result.success(Unit)
