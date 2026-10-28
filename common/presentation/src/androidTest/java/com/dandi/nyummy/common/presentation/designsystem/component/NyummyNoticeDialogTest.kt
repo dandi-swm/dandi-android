@@ -82,6 +82,20 @@ class NyummyNoticeDialogTest {
     }
 
     @Test
+    fun 옆으로_밀어도_점은_카드_맨_아래_같은_자리에_있다() {
+        setContent(persistentListOf(update, event))
+        val before = composeRule.onNodeWithTag(NoticeDotsTestTag).getUnclippedBoundsInRoot()
+
+        composeRule.onNodeWithText(UpdateTitle).performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText(EventTitle).assertIsDisplayed()
+        assertEquals(before, composeRule.onNodeWithTag(NoticeDotsTestTag).getUnclippedBoundsInRoot())
+        // 버튼이 있는 장에서는 점이 버튼 아래에 온다.
+        assertTrue(composeRule.onNodeWithText(CtaText).getUnclippedBoundsInRoot().bottom <= before.top)
+    }
+
+    @Test
     fun 공지가_하나면_점이_없다() {
         setContent(persistentListOf(update))
 
