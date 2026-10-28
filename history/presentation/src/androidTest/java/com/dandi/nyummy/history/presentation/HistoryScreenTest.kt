@@ -94,7 +94,7 @@ class HistoryScreenTest {
         composeRule.waitForIdle()
 
         assertTrue(intents.none { it is HistoryIntent.ChangeMonth && it.month > october })
-        composeRule.onNodeWithText("2026년 10월").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("2026년 10월").assertIsDisplayed()
     }
 
     @Test
@@ -192,7 +192,8 @@ class HistoryScreenTest {
         setScreen(state(meals = meals)) { intents += it }
 
         composeRule.onNodeWithText(text(R.string.history_day_summary, 1)).performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("첫 끼 오전 8:10").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("첫 끼").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("오전 8:10").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.history_analysis_pending_title)).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.history_analysis_retry)).performScrollTo().performClick()
         composeRule.onNodeWithText(text(R.string.history_analysis_delete)).performScrollTo().performClick()
