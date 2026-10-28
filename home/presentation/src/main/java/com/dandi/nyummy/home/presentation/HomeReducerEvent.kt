@@ -1,5 +1,6 @@
 package com.dandi.nyummy.home.presentation
 
+import com.dandi.nyummy.cat.domain.CatMood
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
 import com.dandi.nyummy.home.entity.HomeSummaryVO
@@ -27,9 +28,16 @@ sealed interface HomeReducerEvent : ReducerEvent {
     /** 냐미 상태나 동작이 바뀌었다. [motion]은 애니메이션을 아직 받지 못했으면 null이다. */
     data class CatMotionChanged(
         val state: CatState,
-        val group: Int,
         val playId: Int,
         val line: String?,
         val motion: HomeCatMotion?,
+        val debugMotion: String? = null,
+        val debugLabel: String? = null,
     ) : HomeReducerEvent
+
+    /** 말풍선이 [lineId] 대사를 끝까지 다 찍었다. */
+    data class CatLineRevealed(val lineId: Int) : HomeReducerEvent
+
+    /** 냐미 기분이 바뀌었다. 지금 동작은 끊지 않고 다음 동작부터 새 기분으로 고른다. */
+    data class CatMoodChanged(val mood: CatMood, val debugLabel: String?) : HomeReducerEvent
 }

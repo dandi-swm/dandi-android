@@ -23,8 +23,17 @@ sealed interface HomeIntent : MviIntent {
     /** 눈 버튼. 코인, 연속 기록, 말풍선, 하단 내비를 숨기고 냐미와 방만 보여 준다. 다시 누르면 돌아온다. */
     data object ToggleUiHidden : HomeIntent
 
-    /** 냐미를 눌렀다. 같은 상태의 다른 동작과 새 대사를 보여 준다. */
+    /** 홈이 화면에서 사라졌다. 마지막 방문 시각을 남긴다. */
+    data object ScreenPaused : HomeIntent
+
+    /** 냐미를 눌렀다. 바로 짧게 반응하고, 대사가 다 찍힌 뒤라면 다음 대사로 넘어간다. 연타하면 살짝 귀찮아한다. */
     data object ClickCat : HomeIntent
+
+    /** 말풍선이 [lineId] 대사를 끝까지 다 찍었다. */
+    data class CatLineRevealed(val lineId: Int) : HomeIntent
+
+    /** debug 상태 표시를 눌렀다. 냐미 기분을 차례로 고정해 본다. */
+    data object ClickCatDebug : HomeIntent
 
     /**
      * 냐미 동작 하나가 끝나고 쉬는 시간도 지났다.

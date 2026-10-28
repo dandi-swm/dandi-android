@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,6 +28,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.helper.HideBottomBarEffect
 import com.dandi.nyummy.common.presentation.room.fitRoomCard
@@ -52,7 +55,7 @@ fun HomePage(
     // 식사를 기록하고 돌아오면 숫자가 바뀌어야 하므로 화면이 보일 때마다 다시 읽는다.
     LifecycleResumeEffect(Unit) {
         viewModel.onIntent(HomeIntent.ScreenResumed)
-        onPauseOrDispose { }
+        onPauseOrDispose { viewModel.onIntent(HomeIntent.ScreenPaused) }
     }
 
     HomeScreen(uiState = uiState, onIntent = viewModel::onIntent)
@@ -89,6 +92,8 @@ internal fun HomeScreen(
             onCatMotionFinished = { playId -> onIntent(HomeIntent.CatMotionFinished(playId)) },
             onCatShown = { onIntent(HomeIntent.CatShown) },
             speech = uiState.catLine ?: fallbackSpeech,
+            speechKey = uiState.catLineId,
+            onSpeechRevealed = { onIntent(HomeIntent.CatLineRevealed(uiState.catLineId)) },
             showSpeech = !uiState.isUiHidden,
             modifier = Modifier
                 .fillMaxSize()
@@ -132,6 +137,20 @@ internal fun HomeScreen(
                 style = NyummyIconButtonStyle.Filled,
                 modifier = Modifier.align(Alignment.End),
             )
+            // debug 빌드에만: 냐미가 지금 어떤 기분으로 무슨 동작을 하는지 보이고, 누르면 기분을 차례로 고정한다.
+            uiState.catDebugLabel?.let { label ->
+                Spacer(Modifier.height(NyummyTheme.spacing.s8))
+                NyummyText(
+                    text = label,
+                    style = NyummyTheme.typography.labelS,
+                    color = NyummyTheme.colors.content.secondary,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .background(NyummyTheme.colors.bg.surface, RoundedCornerShape(NyummyTheme.radius.full))
+                        .nyummyClickable(onClick = { onIntent(HomeIntent.ClickCatDebug) })
+                        .padding(horizontal = NyummyTheme.spacing.s12, vertical = NyummyTheme.spacing.s4),
+                )
+            }
         }
     }
 }

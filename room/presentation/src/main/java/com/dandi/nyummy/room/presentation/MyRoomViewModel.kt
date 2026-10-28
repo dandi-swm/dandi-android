@@ -108,13 +108,13 @@ class MyRoomViewModel @Inject constructor(
     }
 
     /**
-     * 방에 앉힐 냐미 애니메이션을 받는다. 홈과 같은 내 고양이 애니메이션에서 마이룸 꾸미기 상태(PLAYFUL)를 쓴다.
+     * 방에 앉힐 냐미 애니메이션을 읽는다. 홈과 같은 내 고양이 애니메이션에서 마이룸 상황(ROOM_IDLE)을 쓴다.
      * 실패하면 냐미 없이 꾸미기만 한다(안내는 UseCase가 필요할 때만 한다).
      */
     private fun loadCat() {
         viewModelScope.launch {
             getCatAnimations().onSuccess { set ->
-                catAnimation = set.animationFor(CatState.PLAYFUL)
+                catAnimation = set.animations[CatState.ROOM_IDLE]
                 startCatMotion()
             }
         }
@@ -124,7 +124,7 @@ class MyRoomViewModel @Inject constructor(
     private fun startCatMotion() {
         val animation = catAnimation ?: return
         val previous = currentState.catMotion
-        val group = catMotionPicker.nextGroup(animation.groups.size, previous?.group)
+        val group = catMotionPicker.nextGroup(animation.motions.size, previous?.group)
         val playId = (previous?.playId ?: 0) + 1
         dispatch(MyRoomReducerEvent.CatMotionChanged(animation.toRoomCatMotion(group, playId, catMotionPicker.restMillis())))
     }
