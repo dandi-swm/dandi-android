@@ -4,16 +4,14 @@ import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 
 interface CatRepository {
     /**
-     * 내 고양이 체형에 맞는 상태별 애니메이션을 조회한다. [prefetchAnimations]로 받아 둔 결과가 있으면 그것을 넘겨주고,
-     * 미리 받기가 실패했으면 다시 받지 않고 그 실패를 던진다.
+     * 마지막으로 알던 체형(모르면 NORMAL)의 상황별 애니메이션. 네트워크 없이 앱 에셋에서 읽고, 체형마다 한 번만 읽는다.
+     * 그 체형의 에셋이 없으면 NORMAL을 쓴다.
      */
     suspend fun getAnimations(): CatAnimationSetVO
 
     /**
-     * 애니메이션을 미리 받아 둔다. 받은 결과는 다음 [getAnimations] 한 번만 이어받고, 그 뒤 조회는 다시 새로 받는다.
-     * 받기는 앱 전역에서 돌아, 기다리던 쪽이 먼저 끝나도 끊기지 않는다. 이미 받는 중이면 그 요청을 기다리고,
-     * 이전 미리 받기가 끝나 있으면 새로 받는다. 받은 결과를 돌려주며, 로그인 전이라 받지 않았으면 null이다.
-     * 받지 못했으면 그 실패를 던진다.
+     * 고양이 조회로 체형을 새로 읽어 기억한다. 그리는 체형이 바뀌었으면 true다. 로그인 전이면 조회하지 않고 false다.
+     * 조회에 실패하면 그 실패를 던진다.
      */
-    suspend fun prefetchAnimations(): CatAnimationSetVO?
+    suspend fun refreshWeight(): Boolean
 }
