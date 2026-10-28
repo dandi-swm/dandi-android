@@ -1,7 +1,5 @@
 package com.dandi.nyummy.common.presentation.designsystem.component
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,22 +42,14 @@ fun NyummySelectField(
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(NyummyComponentDimens.FieldLabelGap),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
     ) {
-        NyummyText(text = label, style = NyummyTheme.typography.labelM, color = NyummyTheme.colors.content.secondary)
+        NyummyText(text = label, style = NyummyTheme.typography.labelM)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(NyummyComponentDimens.TextFieldHeight)
-                .background(
-                    if (enabled) NyummyTheme.colors.bg.surface else NyummyTheme.colors.bg.surfaceSunken,
-                    shape,
-                )
-                .border(
-                    NyummyTheme.borderWidth.bold,
-                    fieldBorderColor(enabled = enabled, isError = false, focused = false),
-                    shape,
-                )
+                .fieldSurface(fieldSurface(enabled = enabled, isError = false, focused = false), shape)
                 .clickable(
                     interactionSource = rememberNyummyInteractionSource(),
                     indication = null,
@@ -72,7 +62,7 @@ fun NyummySelectField(
                     stateDescription = value
                 }
                 .padding(horizontal = NyummyTheme.spacing.s16),
-            horizontalArrangement = Arrangement.spacedBy(NyummyComponentDimens.TextFieldIconGap),
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             NyummyText(
@@ -86,7 +76,7 @@ fun NyummySelectField(
                 painter = painterResource(R.drawable.nyummy_ic_chevron_down),
                 contentDescription = null,
                 tint = contentColor,
-                modifier = Modifier.size(NyummyTheme.size.iconL),
+                modifier = Modifier.size(NyummyTheme.size.iconM),
             )
         }
     }

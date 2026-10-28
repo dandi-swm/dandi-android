@@ -14,6 +14,7 @@ import com.dandi.nyummy.settings.entity.NotificationSettingsVO
  * @property isDeviceNotificationRequested 앱 알림을 켜려고 했다. 화면이 시스템 알림 권한 팝업을 띄우고 결과를 알린다.
  * @property isDeviceSettingsDialogVisible 팝업으로 허용받지 못해 기기 설정에서 켜도록 안내하는 다이얼로그.
  * @property notificationDetail "자세히 보기" 시트로 보여 줄 알림 묶음. 닫혀 있으면 null.
+ * @property isFontCreditVisible "글꼴 출처" 시트가 열려 있다.
  * @property mealTimes 평소 식사 시각. 서버에서 읽기 전이거나 한 번도 읽지 못했으면 null이고, 요약 줄을 비운다.
  * @property isLoggingOut 로그아웃 요청 중. 다이얼로그 버튼을 막는다.
  * @property isWithdrawing 탈퇴 요청 중. 다이얼로그 버튼을 막는다.
@@ -26,6 +27,7 @@ data class SettingsUIState(
     val isDeviceNotificationRequested: Boolean = false,
     val isDeviceSettingsDialogVisible: Boolean = false,
     val notificationDetail: NotificationKind? = null,
+    val isFontCreditVisible: Boolean = false,
     val isLogoutDialogVisible: Boolean = false,
     val isLoggingOut: Boolean = false,
     val isWithdrawDialogVisible: Boolean = false,

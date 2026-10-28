@@ -1,6 +1,7 @@
 package com.dandi.nyummy.common.presentation.designsystem.component
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -43,11 +45,11 @@ import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyum
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
- * 한 줄 입력칸. 라벨은 항상 보이고, 높이 52, 2px 테두리.
+ * 한 줄 입력칸. 라벨(label/m)은 항상 보이고, 높이 52, 평소엔 옅은 바탕에 테두리가 없다.
  *
- * - Focused: focus 테두리
- * - Error([errorMessage] != null): 빨강 테두리 + 아래에 원인과 해결 방법
- * - Disabled: 움푹한 바탕 + 옅은 테두리
+ * - Focused: 흰 바탕 + focus 테두리 1.5
+ * - Error([errorMessage] != null): 흰 바탕 + 빨강 테두리 1.5 + 아래에 원인과 해결 방법
+ * - Disabled: 움푹한 바탕
  *
  * [trailing]에는 비밀번호 보기 같은 24dp 아이콘 버튼을 넣는다.
  */
@@ -71,14 +73,14 @@ fun NyummyTextField(
     val focused by interactionSource.collectIsFocusedAsState()
     val isError = errorMessage != null
     val shape = RoundedCornerShape(NyummyTheme.radius.s)
-    val borderColor = fieldBorderColor(enabled = enabled, isError = isError, focused = focused)
+    val surface = fieldSurface(enabled = enabled, isError = isError, focused = focused)
     val textColor = if (enabled) NyummyTheme.colors.content.primary else NyummyTheme.colors.content.disabled
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(NyummyComponentDimens.FieldLabelGap),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
     ) {
-        NyummyText(text = label, style = NyummyTheme.typography.labelM, color = NyummyTheme.colors.content.secondary)
+        NyummyText(text = label, style = NyummyTheme.typography.labelM)
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -101,13 +103,9 @@ fun NyummyTextField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(NyummyComponentDimens.TextFieldHeight)
-                        .background(
-                            if (enabled) NyummyTheme.colors.bg.surface else NyummyTheme.colors.bg.surfaceSunken,
-                            shape,
-                        )
-                        .border(NyummyTheme.borderWidth.bold, borderColor, shape)
+                        .fieldSurface(surface, shape)
                         .padding(horizontal = NyummyTheme.spacing.s16),
-                    horizontalArrangement = Arrangement.spacedBy(NyummyComponentDimens.TextFieldIconGap),
+                    horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (leadingIcon != null) {
@@ -149,22 +147,32 @@ fun NyummyTextField(
                 color = when {
                     !enabled -> NyummyTheme.colors.content.disabled
                     isError -> NyummyTheme.colors.content.danger
-                    else -> NyummyTheme.colors.content.tertiary
+                    else -> NyummyTheme.colors.content.secondary
                 },
             )
         }
     }
 }
 
+/** 입력칸 바탕과 테두리. 테두리가 없으면 [border]가 null이다. */
+internal class FieldSurface(val background: Color, val border: BorderStroke?)
+
+/** 평소엔 옅은 바탕에 테두리 없음, 입력 중·오류일 때만 흰 바탕 + 1.5 테두리, 비활성은 움푹한 바탕. */
 @Composable
-internal fun fieldBorderColor(enabled: Boolean, isError: Boolean, focused: Boolean): Color {
-    val border = NyummyTheme.colors.border
+internal fun fieldSurface(enabled: Boolean, isError: Boolean, focused: Boolean): FieldSurface {
+    val colors = NyummyTheme.colors
+    val activeWidth = NyummyComponentDimens.FieldActiveBorderWidth
     return when {
-        !enabled -> border.subtle
-        isError -> border.danger
-        focused -> border.focus
-        else -> border.default
+        !enabled -> FieldSurface(colors.bg.surfaceSunken, border = null)
+        isError -> FieldSurface(colors.bg.surface, BorderStroke(activeWidth, colors.border.danger))
+        focused -> FieldSurface(colors.bg.surface, BorderStroke(activeWidth, colors.border.focus))
+        else -> FieldSurface(colors.bg.surfaceSubtle, border = null)
     }
+}
+
+internal fun Modifier.fieldSurface(surface: FieldSurface, shape: Shape): Modifier {
+    val filled = background(surface.background, shape)
+    return if (surface.border != null) filled.border(surface.border, shape) else filled
 }
 
 /**

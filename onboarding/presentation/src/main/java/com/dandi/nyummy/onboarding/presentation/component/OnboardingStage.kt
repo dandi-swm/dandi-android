@@ -57,8 +57,8 @@ internal fun OnboardingStage(
 ) {
     val background = painterResource(R.drawable.onboarding_bg_alley_night)
     val backgroundRatio = background.intrinsicSize.height / background.intrinsicSize.width
-    val shadowColor = NyummyTheme.colors.bg.surfaceInverse
-    val gradientColor = NyummyTheme.colors.bg.surfaceInverse
+    val shadowColor = NyummyTheme.colors.bg.sceneDark
+    val gradientColor = NyummyTheme.colors.bg.sceneDark
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val backgroundHeight = max(maxHeight, maxWidth * backgroundRatio)

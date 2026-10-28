@@ -301,7 +301,7 @@ private fun MealRecordHeader(
                 text = stringResource(R.string.meal_record_title),
                 modifier = Modifier.align(Alignment.Center),
                 color = NyummyTheme.colors.content.primary,
-                style = NyummyTheme.typography.displayM,
+                style = NyummyTheme.typography.titleXl,
             )
         }
         if (showSubtitle) {
@@ -349,7 +349,7 @@ private fun PermissionDeniedContent(
             text = stringResource(
                 if (isBlocked) R.string.meal_record_permission_open_settings else R.string.meal_record_permission_retry,
             ),
-            style = NyummyButtonStyle.Secondary,
+            style = NyummyButtonStyle.Neutral,
             size = NyummyButtonSize.M,
             onClick = onActionClick,
         )
@@ -386,7 +386,7 @@ private fun PreviewActionBar(
         )
         NyummyButton(
             text = stringResource(R.string.meal_record_cancel),
-            style = NyummyButtonStyle.Secondary,
+            style = NyummyButtonStyle.Neutral,
             size = NyummyButtonSize.L,
             onClick = onCancelClick,
         )
@@ -416,7 +416,7 @@ private fun CapturedActionBar(
     ) {
         NyummyButton(
             text = stringResource(R.string.meal_record_retake),
-            style = NyummyButtonStyle.Secondary,
+            style = NyummyButtonStyle.Neutral,
             size = NyummyButtonSize.L,
             onClick = onRetakeClick,
         )

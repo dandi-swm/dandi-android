@@ -1,0 +1,11 @@
+<!-- v2 하단 탭 아이콘(피그마 `Icon / Nav / Shop`, 단색 채움). 켜짐·꺼짐 색은 사용처에서 tint로 정한다. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M4.66667 2H19.3333L22 8.42857C22 10.8095 20.8889 12 18.6667 12C17.3333 12 16.4444 11.2857 16 9.85714C15.1111 11.2857 13.7778 12 12 12C10.2222 12 8.88889 11.2857 8 9.85714C7.55556 11.2857 6.66667 12 5.33333 12C3.11111 12 2 10.8095 2 8.42857L4.66667 2ZM4 13.4286H20V22H4V13.4286ZM8 15.5714V19.8571H16V15.5714H8Z"
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd" />
+</vector>

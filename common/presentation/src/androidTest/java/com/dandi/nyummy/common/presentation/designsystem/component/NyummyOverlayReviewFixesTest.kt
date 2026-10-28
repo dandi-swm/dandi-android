@@ -52,7 +52,7 @@ class NyummyOverlayReviewFixesTest {
         val area = composeRule.onNodeWithTag("area").getBoundsInRoot()
         val confirm = composeRule.onNodeWithText("확인").getBoundsInRoot()
         assertTrue("확인 버튼 아래 ${confirm.bottom} <= 영역 아래 ${area.bottom}", confirm.bottom <= area.bottom)
-        composeRule.onNodeWithText("확인").assertHeightIsEqualTo(48.dp)
+        composeRule.onNodeWithText("확인").assertHeightIsEqualTo(56.dp)
     }
 
     @Test

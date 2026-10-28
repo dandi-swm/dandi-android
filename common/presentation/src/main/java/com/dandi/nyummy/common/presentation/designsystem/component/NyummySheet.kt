@@ -122,7 +122,7 @@ internal fun NyummySheetContent(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .size(NyummyComponentDimens.SheetHandleWidth, NyummyComponentDimens.SheetHandleHeight)
-                .background(NyummyTheme.colors.border.default, RoundedCornerShape(NyummyTheme.radius.full)),
+                .background(NyummyTheme.colors.border.strong, RoundedCornerShape(NyummyTheme.radius.full)),
         )
         content()
     }
@@ -131,7 +131,7 @@ internal fun NyummySheetContent(
 /** 시트 제목(title/l, 왼쪽 정렬). [NyummyBottomSheet] 안에서 쓴다. */
 @Composable
 fun NyummySheetTitle(text: String, modifier: Modifier = Modifier) {
-    NyummyText(text = text, style = NyummyTheme.typography.titleL, modifier = modifier.fillMaxWidth())
+    NyummyText(text = text, style = NyummyTheme.typography.titleM, modifier = modifier.fillMaxWidth())
 }
 
 /**
@@ -219,13 +219,13 @@ internal fun NyummyConfirmSheetContent(
             }
             NyummyText(
                 text = title,
-                style = NyummyTheme.typography.titleL,
+                style = NyummyTheme.typography.titleM,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().padding(top = NyummyTheme.spacing.s16),
             )
             NyummyText(
                 text = body,
-                style = NyummyTheme.typography.bodyL,
+                style = NyummyTheme.typography.bodyM,
                 color = NyummyTheme.colors.content.secondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().padding(top = NyummyTheme.spacing.s8),
@@ -269,7 +269,7 @@ private fun ConfirmSheetSecondaryAction(text: String, onClick: () -> Unit, destr
                 onClick = onClick,
             )
             .height(NyummyTheme.size.buttonL)
-            .background(if (pressed) NyummyTheme.colors.bg.actionSecondary else Color.Transparent, shape),
+            .background(if (pressed) NyummyTheme.colors.bg.actionNeutral else Color.Transparent, shape),
         contentAlignment = Alignment.Center,
     ) {
         NyummyText(

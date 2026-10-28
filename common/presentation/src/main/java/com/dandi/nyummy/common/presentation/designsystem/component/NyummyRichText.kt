@@ -29,6 +29,8 @@ import com.dandi.nyummy.common.entity.richText.RichText
 import com.dandi.nyummy.common.entity.richText.RichTextVO
 import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
+import com.dandi.nyummy.common.presentation.designsystem.foundation.accentSafe
+import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberAccentGlyphCoverage
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyContentColors
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTypography
@@ -53,12 +55,14 @@ fun NyummyRichText(
     val iconSize = NyummyTheme.size.iconXs
     val pieces = richText.filter { !it.isIcon || RichTextIcon.of(it.icon) != null }
     val inlineContent = mutableMapOf<String, InlineTextContent>()
+    val coverage = rememberAccentGlyphCoverage()
 
     val text = buildAnnotatedString {
         pieces.forEachIndexed { index, piece ->
             val icon = RichTextIcon.of(piece.icon)
             if (icon == null) {
-                val style = typography.styleOf(piece.typeScale).toSpanStyle().copy(
+                // 조각마다 스타일이 달라, 엄마까투리체에 없는 글자 처리도 조각 단위로 한다.
+                val style = typography.styleOf(piece.typeScale).accentSafe(piece.text, coverage).toSpanStyle().copy(
                     color = content.colorOf(piece.color),
                     textDecoration = if (piece.strike) TextDecoration.LineThrough else null,
                 )
@@ -121,8 +125,11 @@ private fun RichTextIconImage(icon: RichTextIcon, tint: Color, modifier: Modifie
     }
 }
 
-/** 서버 글자 토큰 이름을 테마 글자 스타일로 바꾼다. 모르는 이름이면 bodyM. */
-private fun NyummyTypography.styleOf(typeScale: String): TextStyle = when (typeScale) {
+/**
+ * 서버 글자 토큰 이름을 테마 글자 스타일로 바꾼다. 모르는 이름이면 bodyM.
+ * 서버 이름은 백엔드와의 계약이라, v2에서 합친 Strong 이름도 계속 받는다.
+ */
+internal fun NyummyTypography.styleOf(typeScale: String): TextStyle = when (typeScale) {
     "displayL" -> displayL
     "displayM" -> displayM
     "titleL" -> titleL
@@ -132,9 +139,9 @@ private fun NyummyTypography.styleOf(typeScale: String): TextStyle = when (typeS
     "bodyS" -> bodyS
     "labelL" -> labelL
     "labelM" -> labelM
-    "labelMStrong" -> labelMStrong
+    "labelMStrong" -> labelM
     "labelS" -> labelS
-    "labelSStrong" -> labelSStrong
+    "labelSStrong" -> labelS
     "voiceM" -> voiceM
     "voiceS" -> voiceS
     "numberXl" -> numberXl
@@ -145,19 +152,21 @@ private fun NyummyTypography.styleOf(typeScale: String): TextStyle = when (typeS
     else -> bodyM
 }
 
-/** 서버 색 토큰 이름(contentPrimary 등)을 테마 글자색으로 바꾼다. 모르는 이름이면 contentPrimary. */
-private fun NyummyContentColors.colorOf(color: String): Color = when (color) {
+/**
+ * 서버 색 토큰 이름(contentPrimary 등)을 테마 글자색으로 바꾼다. 모르는 이름이면 contentPrimary.
+ * 서버 이름은 백엔드와의 계약이라, 앱에서 없앤 역할의 이름도 v2의 가까운 색으로 받는다.
+ */
+internal fun NyummyContentColors.colorOf(color: String): Color = when (color) {
     "contentSecondary" -> secondary
     "contentTertiary" -> tertiary
     "contentDisabled" -> disabled
     "contentOnAction" -> onAction
-    "contentOnCoin" -> onCoin
-    "contentOnInverse" -> onInverse
+    "contentOnInverse" -> onAction
     "contentBrand" -> brand
-    "contentSuccess" -> success
-    "contentWarning" -> warning
+    "contentSuccess" -> brand
+    "contentWarning" -> promo
     "contentDanger" -> danger
-    "contentInfo" -> info
+    "contentInfo" -> secondary
     "contentPromo" -> promo
     else -> primary
 }

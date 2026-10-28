@@ -26,8 +26,8 @@ enum class NyummyNutrient(@StringRes internal val label: Int, @DrawableRes inter
 }
 
 /**
- * 영양소 한 칸. 일러스트 아이콘 32 + 이름(body/s, tertiary) + 그램(number/s).
- * 상자 없이 세 칸을 균등하게 나란히 두는 용도라 너비는 호출하는 쪽이 정한다.
+ * 영양소 한 칸. 위에서부터 일러스트 아이콘 24, 이름(body/s, secondary), 그램(number/m)을 가운데로 쌓는다.
+ * 세 칸을 균등하게 나란히 두는 용도라 너비는 호출하는 쪽이 정한다.
  */
 @Composable
 fun NyummyNutrientStat(
@@ -37,25 +37,23 @@ fun NyummyNutrientStat(
 ) {
     val label = stringResource(nutrient.label)
     val value = stringResource(R.string.nyummy_nutrient_grams, grams)
-    Row(
+    Column(
         modifier = modifier.semantics(mergeDescendants = true) {},
-        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Image(
             painter = painterResource(nutrient.icon),
             contentDescription = null,
             modifier = Modifier.size(NyummyComponentDimens.NutrientIconSize),
         )
-        Column {
-            NyummyText(
-                text = label,
-                style = NyummyTheme.typography.bodyS,
-                color = NyummyTheme.colors.content.tertiary,
-                maxLines = 1,
-            )
-            NyummyText(text = value, style = NyummyTheme.typography.numberS, maxLines = 1)
-        }
+        NyummyText(
+            text = label,
+            style = NyummyTheme.typography.bodyS,
+            color = NyummyTheme.colors.content.secondary,
+            maxLines = 1,
+        )
+        NyummyText(text = value, style = NyummyTheme.typography.numberM, maxLines = 1)
     }
 }
 

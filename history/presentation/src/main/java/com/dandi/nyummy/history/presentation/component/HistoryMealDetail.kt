@@ -175,7 +175,7 @@ private fun MealDetailContent(
             NyummyButton(
                 text = stringResource(R.string.history_detail_edit_name),
                 onClick = onEditName,
-                style = NyummyButtonStyle.Secondary,
+                style = NyummyButtonStyle.Neutral,
                 icon = CommonR.drawable.nyummy_ic_pencil,
                 modifier = Modifier.weight(1f),
             )

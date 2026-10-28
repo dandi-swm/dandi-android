@@ -52,7 +52,7 @@ fun NyummyMealTimeField(
             .height(MealRowHeight)
             .nyummyClickable(onClick = onClick, enabled = enabled, interactionSource = interactionSource)
             .background(
-                color = if (pressed) NyummyTheme.colors.bg.actionSecondaryPressed else NyummyTheme.colors.bg.surfaceSunken,
+                color = if (pressed) NyummyTheme.colors.bg.actionNeutralPressed else NyummyTheme.colors.bg.surfaceSunken,
                 shape = RoundedCornerShape(NyummyTheme.radius.s),
             )
             .padding(start = NyummyTheme.spacing.s16, end = NyummyTheme.spacing.s12),
@@ -61,7 +61,7 @@ fun NyummyMealTimeField(
     ) {
         NyummyText(
             text = stringResource(meal.nyummyLabelRes),
-            style = NyummyTheme.typography.labelMStrong,
+            style = NyummyTheme.typography.labelM,
         )
         NyummyText(
             text = if (time.isSkipped) stringResource(R.string.nyummy_meal_skipped) else nyummyMealTimeText(time),

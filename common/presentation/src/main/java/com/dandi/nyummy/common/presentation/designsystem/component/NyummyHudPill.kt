@@ -30,7 +30,7 @@ import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyum
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
 /**
- * 홈 HUD의 코인 알약. 숫자는 Number 서체(number/m).
+ * 홈 HUD의 코인 알약. 숫자는 Number 서체(number/l).
  * [onAddClick]이 있으면 오른쪽에 + 버튼이 붙고 알약 전체가 충전 진입점이 된다.
  */
 @Composable
@@ -58,7 +58,7 @@ fun NyummyCoinPill(
         endPadding = if (onAddClick != null) NyummyTheme.spacing.s8 else NyummyComponentDimens.HudPillEndPadding,
     ) {
         HudAsset(R.drawable.nyummy_asset_coin)
-        NyummyText(text = coins, style = NyummyTheme.typography.numberM, maxLines = 1)
+        NyummyText(text = coins, style = NyummyTheme.typography.numberL, maxLines = 1)
         if (onAddClick != null) {
             Box(
                 modifier = Modifier
@@ -91,7 +91,7 @@ fun NyummyStreakPill(
         HudAsset(R.drawable.nyummy_asset_streak)
         NyummyText(
             text = days.toString(),
-            style = NyummyTheme.typography.numberM,
+            style = NyummyTheme.typography.numberL,
             color = NyummyTheme.colors.content.brand,
             maxLines = 1,
         )
@@ -117,7 +117,7 @@ private fun HudPillSurface(
             .background(NyummyTheme.colors.bg.surface, shape)
             .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, shape)
             .padding(start = NyummyTheme.spacing.s8, end = endPadding),
-        horizontalArrangement = Arrangement.spacedBy(NyummyComponentDimens.HudPillGap),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s6),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         content()

@@ -248,13 +248,13 @@ private fun InquiryImageField(
                         modifier = Modifier
                             .padding(RemoveButtonInset)
                             .size(RemoveButtonSize)
-                            .background(NyummyTheme.colors.bg.scrimStrong, CircleShape),
+                            .background(NyummyTheme.colors.bg.scrim, CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             painter = painterResource(CommonR.drawable.nyummy_ic_x),
                             contentDescription = stringResource(R.string.inquiry_write_image_remove),
-                            tint = NyummyTheme.colors.content.onInverse,
+                            tint = NyummyTheme.colors.content.onAction,
                             modifier = Modifier.size(NyummyTheme.size.iconXs),
                         )
                     }

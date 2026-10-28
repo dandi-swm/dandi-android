@@ -379,7 +379,7 @@ private fun InventoryCell(
         }
         NyummyText(
             text = item.name,
-            style = if (isInUseBackground) NyummyTheme.typography.labelMStrong else NyummyTheme.typography.labelM,
+            style = NyummyTheme.typography.labelM,
             color = if (isInUseBackground) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.secondary,
             maxLines = 1,
         )
@@ -403,13 +403,13 @@ private fun StateChip(
 ) {
     Box(
         modifier = modifier
-            .background(NyummyTheme.colors.bg.surfaceInverse, RoundedCornerShape(NyummyTheme.radius.full))
+            .background(NyummyTheme.colors.bg.brandSubtle, RoundedCornerShape(NyummyTheme.radius.full))
             .padding(horizontal = NyummyTheme.spacing.s8, vertical = StateChipVerticalPadding),
     ) {
         NyummyText(
             text = text,
-            style = NyummyTheme.typography.labelSStrong,
-            color = NyummyTheme.colors.content.onInverse,
+            style = NyummyTheme.typography.labelS,
+            color = NyummyTheme.colors.content.brand,
             maxLines = 1,
         )
     }

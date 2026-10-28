@@ -30,33 +30,40 @@ import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyPressa
 import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyummyInteractionSource
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 
+/** 버튼 위계. 주 > 톤 > 회색 > 글자 순으로 약해진다. 검정 채움 버튼은 쓰지 않는다. */
 enum class NyummyButtonStyle {
-    /** 에버그린 채움. 화면당 1개만 둔다. */
+    /** 초록 채움. 화면의 주 행동 하나에만 쓴다. */
     Primary,
 
-    /** 연회색 채움, 테두리와 그림자 없음. */
-    Secondary,
+    /** 연초록 채움, 초록 글자. 목록 행 안의 행동("받기")에 쓴다. */
+    Tonal,
 
-    /** 빨강 채움. 파괴적 행동을 확정할 때만 쓴다. */
+    /** 회색 채움, 회색 글자. 보조 행동에 쓴다. */
+    Neutral,
+
+    /** 배경 없음, 회색 글자. 가장 약한 행동에 쓴다. */
+    Text,
+
+    /** 빨강 채움. 삭제·탈퇴처럼 되돌릴 수 없는 행동을 확정할 때만 쓴다. */
     Danger,
-
-    /** 배경 없음, 브랜드색 글자. */
-    Ghost,
 }
 
 enum class NyummyButtonSize {
-    /** 높이 56, radius 16, label/l, 아이콘 24. */
+    /** 큰 버튼. 높이 56, radius 16, 좌우 20, label/l, 아이콘 24. */
     L,
 
-    /** 높이 48, radius 12, label/m, 아이콘 20. */
+    /**
+     * 높이 48, radius 12, 좌우 20, label/m, 아이콘 20.
+     * v2 디자인에는 없는 크기다. 쓰는 화면을 v2에 맞출 때 L이나 S로 옮기고, 다 옮기면 지운다.
+     */
     M,
 
-    /** 높이 36, radius 8, label/m, 아이콘 16. 목록 행 안의 작은 행동용. 터치 영역은 48로 넓힌다. */
+    /** 작은 버튼. 높이 32, radius 8, 좌우 12, label/m, 아이콘 16. 목록 행 안의 작은 행동용. */
     S,
 }
 
 /**
- * 냐미 기본 버튼. 그림자 없는 플랫 버튼이고, 눌리면 검정 8%를 덮고(Secondary는 gray/200) 0.96배로 줄어든다.
+ * 냐미 기본 버튼. 그림자 없는 플랫 버튼이고, 눌리면 위계마다 정해진 눌림색으로 바뀌고 0.96배로 줄어든다.
  * 너비는 내용에 맞춘다. 꽉 채우려면 `Modifier.fillMaxWidth()`를 넘긴다.
  */
 @Composable
@@ -86,7 +93,6 @@ fun NyummyButton(
             .height(spec.height)
             .clip(shape)
             .background(colors.container)
-            .background(colors.overlay)
             .padding(horizontal = spec.horizontalPadding),
         horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
@@ -117,51 +123,48 @@ private fun buttonSizeSpec(size: NyummyButtonSize): ButtonSizeSpec {
         NyummyButtonSize.L -> ButtonSizeSpec(
             height = NyummyTheme.size.buttonL,
             radius = NyummyTheme.radius.m,
-            horizontalPadding = NyummyTheme.spacing.s24,
+            horizontalPadding = NyummyTheme.spacing.s20,
             iconSize = NyummyTheme.size.iconL,
             textStyle = NyummyTheme.typography.labelL,
         )
         NyummyButtonSize.M -> ButtonSizeSpec(
             height = NyummyTheme.size.buttonM,
             radius = NyummyTheme.radius.s,
-            horizontalPadding = NyummyTheme.spacing.s24,
+            horizontalPadding = NyummyTheme.spacing.s20,
             iconSize = NyummyTheme.size.iconM,
             textStyle = NyummyTheme.typography.labelM,
         )
         NyummyButtonSize.S -> ButtonSizeSpec(
-            height = NyummyComponentDimens.CompactControlHeight,
+            height = NyummyComponentDimens.ButtonSmallHeight,
             radius = NyummyTheme.radius.xs,
-            horizontalPadding = NyummyComponentDimens.CompactControlHorizontalPadding,
+            horizontalPadding = NyummyTheme.spacing.s12,
             iconSize = NyummyTheme.size.iconS,
             textStyle = NyummyTheme.typography.labelM,
         )
     }
 }
 
-private class ButtonColors(val container: Color, val overlay: Color, val content: Color)
+private class ButtonColors(val container: Color, val content: Color)
 
 @Composable
 private fun buttonColors(style: NyummyButtonStyle, enabled: Boolean, pressed: Boolean): ButtonColors {
     val bg = NyummyTheme.colors.bg
     val content = NyummyTheme.colors.content
     if (!enabled) {
-        val container = if (style == NyummyButtonStyle.Ghost) Color.Transparent else bg.actionDisabled
-        return ButtonColors(container = container, overlay = Color.Transparent, content = content.disabled)
+        val container = if (style == NyummyButtonStyle.Text) Color.Transparent else bg.actionDisabled
+        return ButtonColors(container = container, content = content.disabled)
     }
-    val overlay = if (pressed) bg.pressedOverlay else Color.Transparent
     return when (style) {
-        NyummyButtonStyle.Primary -> ButtonColors(bg.actionPrimary, overlay, content.onAction)
-        NyummyButtonStyle.Danger -> ButtonColors(bg.actionDanger, overlay, content.onAction)
-        NyummyButtonStyle.Secondary -> ButtonColors(
-            container = if (pressed) bg.actionSecondaryPressed else bg.actionSecondary,
-            overlay = Color.Transparent,
-            content = content.primary,
-        )
-        NyummyButtonStyle.Ghost -> ButtonColors(
-            container = if (pressed) bg.actionSecondary else Color.Transparent,
-            overlay = Color.Transparent,
-            content = content.brand,
-        )
+        NyummyButtonStyle.Primary ->
+            ButtonColors(if (pressed) bg.actionPrimaryPressed else bg.actionPrimary, content.onAction)
+        NyummyButtonStyle.Tonal ->
+            ButtonColors(if (pressed) bg.actionTonalPressed else bg.actionTonal, content.brand)
+        NyummyButtonStyle.Neutral ->
+            ButtonColors(if (pressed) bg.actionNeutralPressed else bg.actionNeutral, content.secondary)
+        NyummyButtonStyle.Text ->
+            ButtonColors(if (pressed) bg.surfaceSunken else Color.Transparent, content.secondary)
+        NyummyButtonStyle.Danger ->
+            ButtonColors(if (pressed) bg.actionDangerPressed else bg.actionDanger, content.onAction)
     }
 }
 
@@ -181,7 +184,7 @@ private fun NyummyButtonPreview() {
                 }
             }
             NyummyButton(text = "밥 주기", onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth())
-            NyummyButton(text = "사진 추가", onClick = {}, icon = R.drawable.nyummy_ic_image_plus, style = NyummyButtonStyle.Secondary)
+            NyummyButton(text = "사진 추가", onClick = {}, icon = R.drawable.nyummy_ic_image_plus, style = NyummyButtonStyle.Neutral)
         }
     }
 }

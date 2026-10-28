@@ -56,6 +56,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonS
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCard
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCheckbox
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyChip
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyInfoChip
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgress
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCircularProgressSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCoachCard
@@ -80,6 +81,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPoseIma
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRadio
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionCaption
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionHeader
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionBand
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionHeaderWithMeta
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySegmentedControl
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySelectField
@@ -163,6 +165,7 @@ private val CatalogEntries = listOf(
     CatalogEntry("Bottom Nav") { BottomNavSection() },
     CatalogEntry("Pose") { PoseSection() },
     CatalogEntry("Voice") { VoiceSection() },
+    CatalogEntry("Accent Font") { AccentFontSection() },
     CatalogEntry("Sprite") { SpriteSection() },
     CatalogEntry("Overlays") { OverlaySection() },
     CatalogEntry("State Surface") { StateSurfaceSection() },
@@ -206,10 +209,10 @@ private fun ButtonSection() {
             horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
             verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
         ) {
-            NyummyButtonSize.entries.forEach { size ->
+            listOf(NyummyButtonSize.L, NyummyButtonSize.S).forEach { size ->
                 NyummyButton(text = "밥 주기", onClick = {}, style = style, size = size)
             }
-            NyummyButton(text = "밥 주기", onClick = {}, style = style, size = NyummyButtonSize.M, enabled = false)
+            NyummyButton(text = "밥 주기", onClick = {}, style = style, size = NyummyButtonSize.S, enabled = false)
         }
     }
     NyummyButton(
@@ -247,12 +250,15 @@ private fun ChipSection() {
         listOf("아침", "점심", "저녁").forEach { meal ->
             NyummyChip(text = meal, selected = meal == selected, onClick = { selected = meal })
         }
+        NyummyChip(text = "간식", selected = true, onClick = {}, enabled = false)
     }
+    NyummyInfoChip(text = "이번 달 4일 기록했어요!", highlight = "4일")
 }
 
 @Composable
 private fun BottomCtaSection() {
     NyummyBottomCta(primaryText = "확인", onPrimaryClick = {})
+    NyummyBottomCta(primaryText = "보내기", onPrimaryClick = {}, caption = "답장은 설정의 문의하기에서 볼 수 있어요")
     NyummyBottomCta(primaryText = "확인", onPrimaryClick = {}, secondaryText = "닫기")
 }
 
@@ -557,6 +563,7 @@ private fun StructureSection() {
         NyummySectionHeader(title = "오늘의 식사", actionText = "전체보기")
         NyummySectionCaption(title = "오늘의 식사", actionText = "전체보기")
         NyummySectionHeaderWithMeta(title = "오늘의 식사", meta = "6시간 남음")
+        NyummySectionBand()
     }
     NyummyDivider()
     Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16)) {
@@ -610,6 +617,14 @@ private fun VoiceSection() {
     NyummyCoachCard(text = "채소 가득한 비빔밥이네! 오늘 첫 끼 최고였어. 다음 끼니도 같이 먹자. 내일은 단백질도 조금 더 챙겨 보자")
     NyummyCoachCard(text = "오늘 첫 끼 최고였어")
     NyummyVoiceToast(text = "기록 완료! 냐미가 맛있게 먹었어")
+}
+
+/** 엄마까투리체에 없는 글자("똠")가 든 문장은 문장 전체가 Pretendard Medium으로 바뀐다. */
+@Composable
+private fun AccentFontSection() {
+    NyummyText(text = "기다리고 있었어요! 오늘도 냠냠", style = NyummyTheme.typography.voiceM)
+    NyummyText(text = "똠양꿍도 맛있게 먹었어요!", style = NyummyTheme.typography.voiceM)
+    NyummyText(text = "1,224 kcal", style = NyummyTheme.typography.numberXl)
 }
 
 /**
@@ -681,7 +696,7 @@ private fun OverlaySection() {
             NyummyButton(
                 text = overlay.name,
                 onClick = { open = overlay },
-                style = NyummyButtonStyle.Secondary,
+                style = NyummyButtonStyle.Neutral,
                 size = NyummyButtonSize.S,
             )
         }
@@ -692,7 +707,7 @@ private fun OverlaySection() {
     NyummyButton(
         text = "스낵바 띄우기",
         onClick = { scope.launch { hostState.showSnackbar("식사 기록을 삭제했어요", actionLabel = "실행 취소") } },
-        style = NyummyButtonStyle.Secondary,
+        style = NyummyButtonStyle.Neutral,
         size = NyummyButtonSize.M,
     )
     NyummySnackbarHost(hostState = hostState)
@@ -701,7 +716,7 @@ private fun OverlaySection() {
     NyummyButton(
         text = "토스트 띄우기",
         onClick = { toastHostState.show("준비 중인 기능이에요.") },
-        style = NyummyButtonStyle.Secondary,
+        style = NyummyButtonStyle.Neutral,
         size = NyummyButtonSize.M,
     )
     NyummyToastHost(hostState = toastHostState)

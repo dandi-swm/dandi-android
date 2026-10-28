@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
+import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentShadows
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyPressable
 import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyummyInteractionSource
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -53,13 +54,13 @@ fun NyummySnackbar(
         modifier = modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = dimens.SnackbarHeight)
-            .nyummyShadow(shape, NyummyTheme.elevation.float)
+            .nyummyShadow(shape, NyummyComponentShadows.Snackbar)
             .background(NyummyTheme.colors.bg.surface, shape)
             .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, shape)
             .semantics { liveRegion = LiveRegionMode.Polite }
             .padding(
                 start = NyummyTheme.spacing.s20,
-                end = NyummyTheme.spacing.s12,
+                end = NyummyTheme.spacing.s16,
                 top = NyummyTheme.spacing.s8,
                 bottom = NyummyTheme.spacing.s8,
             ),

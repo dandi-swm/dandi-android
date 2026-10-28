@@ -89,7 +89,7 @@ internal fun EmailLoginContent(
             NyummyButton(
                 text = stringResource(R.string.auth_signup_button),
                 onClick = { onIntent(EmailLoginIntent.ClickSignUp) },
-                style = NyummyButtonStyle.Secondary,
+                style = NyummyButtonStyle.Neutral,
                 enabled = enabled,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -140,7 +140,7 @@ internal fun EmailLoginContent(
             NyummyButton(
                 text = stringResource(R.string.auth_forgot_password),
                 onClick = { onIntent(EmailLoginIntent.ClickForgotPassword) },
-                style = NyummyButtonStyle.Ghost,
+                style = NyummyButtonStyle.Text,
                 size = NyummyButtonSize.M,
                 enabled = enabled,
             )
@@ -252,7 +252,7 @@ private fun AuthFormBottom(content: @Composable ColumnScope.() -> Unit) {
 /** 인증 화면 제목(display/m) + 부제(body/m). 아래 28을 띄운다. */
 @Composable
 internal fun AuthFormHeader(title: String, subtitle: String) {
-    NyummyText(text = title, style = NyummyTheme.typography.displayM)
+    NyummyText(text = title, style = NyummyTheme.typography.titleXl)
     Spacer(Modifier.height(NyummyTheme.spacing.s8))
     NyummyText(text = subtitle, style = NyummyTheme.typography.bodyM, color = NyummyTheme.colors.content.secondary)
     Spacer(Modifier.height(HeaderBottomGap))

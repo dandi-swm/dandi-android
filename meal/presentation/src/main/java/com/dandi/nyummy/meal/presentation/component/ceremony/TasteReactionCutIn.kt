@@ -119,7 +119,7 @@ internal fun TasteReactionCutIn(
         expand.animateTo(1f, tween(ExpandMillis, easing = FastOutSlowInEasing))
     }
 
-    val page = NyummyTheme.colors.bg.surfaceInverse
+    val page = NyummyTheme.colors.bg.sceneDark
     val white = NyummyTheme.colors.bg.surface
     val outline = NyummyTheme.colors.content.brand
 

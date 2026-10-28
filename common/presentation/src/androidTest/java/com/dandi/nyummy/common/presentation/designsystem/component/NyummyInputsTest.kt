@@ -119,7 +119,7 @@ class NyummyInputsTest {
         composeRule.onNode(hasSetTextAction()).performTextInput("냐미랑밥먹자")
 
         assertEquals("냐미랑밥먹", latest)
-        composeRule.onNodeWithText("5/5").assertIsDisplayed()
+        composeRule.onNodeWithText("5 / 5").assertIsDisplayed()
     }
 
     @Test
@@ -128,7 +128,7 @@ class NyummyInputsTest {
             NyummyTheme { NyummyTextArea(value = "", onValueChange = {}, label = "문의 내용") }
         }
 
-        composeRule.onNodeWithText("0/1,000").assertIsDisplayed()
+        composeRule.onNodeWithText("0 / 1,000").assertIsDisplayed()
     }
 
     @Test

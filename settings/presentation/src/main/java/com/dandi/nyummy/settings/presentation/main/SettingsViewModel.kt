@@ -67,6 +67,8 @@ class SettingsViewModel @Inject constructor(
             SettingsIntent.ClickMealTime -> whenLoaded { navigationHelper.navigateTo(MealTimeSettingPage) }
             SettingsIntent.ClickInquiry -> navigationHelper.navigateTo(InquiryListPage)
             is SettingsIntent.ClickLegal -> navigationHelper.navigateTo(LegalPage(intent.document))
+            SettingsIntent.ClickFontCredit -> dispatch(SettingsReducerEvent.FontCreditVisibilityChanged(visible = true))
+            SettingsIntent.DismissFontCredit -> dispatch(SettingsReducerEvent.FontCreditVisibilityChanged(visible = false))
             SettingsIntent.ClickLogout -> dispatch(SettingsReducerEvent.LogoutDialogVisibilityChanged(visible = true))
             SettingsIntent.DismissLogoutDialog ->
                 if (!currentState.isLoggingOut) dispatch(SettingsReducerEvent.LogoutDialogVisibilityChanged(visible = false))
@@ -90,6 +92,7 @@ class SettingsViewModel @Inject constructor(
         is SettingsReducerEvent.DeviceNotificationRequestChanged -> state.copy(isDeviceNotificationRequested = event.requested)
         is SettingsReducerEvent.DeviceSettingsDialogVisibilityChanged -> state.copy(isDeviceSettingsDialogVisible = event.visible)
         is SettingsReducerEvent.NotificationDetailChanged -> state.copy(notificationDetail = event.kind)
+        is SettingsReducerEvent.FontCreditVisibilityChanged -> state.copy(isFontCreditVisible = event.visible)
         is SettingsReducerEvent.LogoutDialogVisibilityChanged -> state.copy(isLogoutDialogVisible = event.visible)
         SettingsReducerEvent.LoggingOut -> state.copy(isLoggingOut = true)
         is SettingsReducerEvent.WithdrawDialogVisibilityChanged -> state.copy(isWithdrawDialogVisible = event.visible)

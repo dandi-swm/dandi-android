@@ -47,7 +47,7 @@ fun NyummyComingSoonPage(
         ) {
             NyummyText(
                 text = title,
-                style = NyummyTheme.typography.displayM,
+                style = NyummyTheme.typography.titleXl,
                 modifier = Modifier.semantics { heading() },
             )
             Column(

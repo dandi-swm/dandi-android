@@ -1,37 +1,12 @@
-<!-- Lucide trash-2 (lucide-static 1.52.0, ISC). 색은 사용처에서 tint로 정한다. -->
+<!-- MingCute 기반 v2 아이콘(피그마 `Icon / UI / Delete`). 색은 사용처에서 tint로 정한다. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:pathData="M10 11v6"
+        android:pathData="M5 6L5.876 19.133C5.90972 19.639 6.13442 20.1133 6.50462 20.4599C6.87481 20.8066 7.36286 20.9996 7.87 21H16.128C16.6353 20.9999 17.1236 20.8069 17.494 20.4603C17.8644 20.1136 18.0893 19.6392 18.123 19.133L19 6M8 6L8.772 3.684C8.83835 3.48479 8.96572 3.31153 9.13605 3.18876C9.30638 3.06599 9.51104 2.99995 9.721 3H14.279C14.489 2.99995 14.6936 3.06599 14.864 3.18876C15.0343 3.31153 15.1617 3.48479 15.228 3.684L16 6M10 11V16M14 11V16M4 6H20"
         android:strokeColor="#FF000000"
         android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
-    <path
-        android:pathData="M14 11v6"
-        android:strokeColor="#FF000000"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
-    <path
-        android:pathData="M19 6v14a2 2 0 0 1 -2 2H7a2 2 0 0 1 -2 -2V6"
-        android:strokeColor="#FF000000"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
-    <path
-        android:pathData="M3 6h18"
-        android:strokeColor="#FF000000"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
-    <path
-        android:pathData="M8 6V4a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v2"
-        android:strokeColor="#FF000000"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:strokeLineCap="round" />
 </vector>

@@ -138,6 +138,7 @@ private fun MailItemsContent(
                         top = ListTopGap,
                         bottom = NyummyTheme.spacing.s24,
                     ),
+                    verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
                 ) {
                     items(items.mails, key = { it.mailId }) { row ->
                         NyummySwipeToDelete(

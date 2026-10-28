@@ -334,7 +334,7 @@ val shape = RoundedCornerShape(NyummyTheme.radius.l)
             Icon(
                 painter = painterResource(CommonR.drawable.nyummy_ic_lightbulb),
                 contentDescription = null,
-                tint = NyummyTheme.colors.content.warning,
+                tint = NyummyTheme.colors.content.promo,
                 modifier = Modifier.size(NyummyTheme.size.iconXs),
             )
             NyummyText(

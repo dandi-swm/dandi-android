@@ -242,7 +242,7 @@ internal fun MealCeremony(
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(NyummyTheme.colors.bg.surfaceInverse),
+                    .background(NyummyTheme.colors.bg.sceneDark),
             )
             TasteReactionCutIn(
                 art = MealCeremonyArt.tasting,
@@ -645,7 +645,7 @@ private fun AteCelebration(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = NyummyTheme.spacing.s20),
-                        style = NyummyButtonStyle.Secondary,
+                        style = NyummyButtonStyle.Neutral,
                         size = NyummyButtonSize.L,
                         onClick = onDoneClick,
                     )

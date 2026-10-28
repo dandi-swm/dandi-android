@@ -52,6 +52,11 @@ sealed interface SettingsIntent : MviIntent {
     /** 약관 행을 눌렀다. 앱 안의 약관 화면으로 간다. */
     data class ClickLegal(val document: LegalDocument) : SettingsIntent
 
+    /** "글꼴 출처"를 눌렀다. 앱에 넣은 글꼴의 출처와 라이선스를 시트로 보여 준다. */
+    data object ClickFontCredit : SettingsIntent
+
+    data object DismissFontCredit : SettingsIntent
+
     data object ClickLogout : SettingsIntent
 
     data object DismissLogoutDialog : SettingsIntent

@@ -1,7 +1,6 @@
 package com.dandi.nyummy.common.presentation.designsystem.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -78,7 +77,6 @@ fun NyummyWheelPickerFrame(
         Modifier
             .clip(shape)
             .background(NyummyTheme.colors.bg.surface)
-            .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.border.default, shape)
     } else {
         Modifier
     }
@@ -93,7 +91,7 @@ fun NyummyWheelPickerFrame(
                 .fillMaxWidth()
                 .padding(horizontal = NyummyComponentDimens.WheelPickerBandInset)
                 .height(NyummyComponentDimens.WheelPickerBandHeight)
-                .background(NyummyTheme.colors.bg.selected, RoundedCornerShape(NyummyTheme.radius.s)),
+                .background(NyummyTheme.colors.bg.surfaceSubtle, RoundedCornerShape(NyummyTheme.radius.s)),
         )
         Row(modifier = Modifier.fillMaxSize(), content = content)
     }
@@ -192,7 +190,7 @@ fun NyummyWheelColumn(
                 Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4)) {
                     NyummyText(
                         text = item,
-                        style = if (centered) NyummyTheme.typography.numberM else NyummyTheme.typography.numberS,
+                        style = if (centered) NyummyTheme.typography.titleL else NyummyTheme.typography.bodyL,
                         color = if (centered) {
                             NyummyTheme.colors.content.primary
                         } else {
