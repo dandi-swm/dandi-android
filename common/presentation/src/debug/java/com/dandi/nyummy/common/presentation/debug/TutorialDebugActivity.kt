@@ -19,6 +19,12 @@ import com.dandi.nyummy.common.presentation.coachmark.CoachMark
 import com.dandi.nyummy.common.presentation.coachmark.CoachMarkContent
 import com.dandi.nyummy.common.presentation.coachmark.CoachMarkKey
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBubbleTail
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyHealthStoryDialog
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyHealthStoryPage
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialFinishDialog
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialSkipDialog
+import kotlinx.collections.immutable.toImmutableList
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialCard
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialExpression
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -30,7 +36,7 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
  * adb shell am start -n com.dandi.nyummy/com.dandi.nyummy.common.presentation.debug.TutorialDebugActivity --es scene cards
  *
  * - scene: cards(안내 카드 꼬리 세 가지), intro(대상 없는 소개), bottom(바텀 네비 카메라), mail(오른쪽 위 우편 버튼,
- *   건너뛰기 숨김), back(왼쪽 위 뒤로 가기, 냐미 가운데)
+ *   건너뛰기 숨김), back(왼쪽 위 뒤로 가기, 냐미 가운데), skip(건너뛰기 확인), story0~story2(냐미 건강 이야기), finish(마침)
  */
 class TutorialDebugActivity : ComponentActivity() {
 
@@ -41,6 +47,7 @@ class TutorialDebugActivity : ComponentActivity() {
             NyummyTheme {
                 when (scene) {
                     SCENE_CARDS -> CardsScene()
+                    "skip", "finish", "story0", "story1", "story2" -> DialogScene(scene)
                     else -> CoachMarkScene(scene)
                 }
             }
@@ -122,5 +129,40 @@ private fun CoachMarkScene(scene: String) {
     }
     Box(Modifier.fillMaxSize().background(NyummyTheme.colors.bg.surfaceSunken)) {
         CoachMarkContent(mark = mark, targetBounds = bounds, anchorBounds = null, onTargetClick = {})
+    }
+}
+
+@Composable
+private fun DialogScene(scene: String) {
+    Box(Modifier.fillMaxSize().background(NyummyTheme.colors.bg.surfaceSunken)) {
+        when (scene) {
+            "skip" -> NyummyTutorialSkipDialog(
+                remaining = NyummyTutorialLesson.entries.toImmutableList(),
+                onContinue = {},
+                onSkip = {},
+            )
+            "finish" -> NyummyTutorialFinishDialog(
+                title = "이제 준비 끝!\n다음 끼니를 기다릴게",
+                body = "밥 먹을 때 가운데 카메라 버튼만 눌러 줘.\n기록할 때마다 보상 상자가 우편함으로 가.",
+                buttonText = "시작하기",
+                onStart = {},
+            )
+            else -> {
+                val index = scene.removePrefix("story").toInt()
+                val (title, body) = listOf(
+                    "꾸준히 기록하면\n우리 둘 다 건강해!" to "집사가 끼니를 기록할 때마다 나도 같이 먹어.\n잘 챙겨 주면 지금처럼 딱 좋은 몸이야.",
+                    "끼니를 거르면\n내가 홀쭉해져" to "집사가 밥을 굶으면 나도 같이 굶어서\n점점 말라 가. 다시 챙겨 주면 금방 돌아와!",
+                    "너무 많이 먹으면\n통통 뚱냥이가 돼" to "집사가 과식하면 나도 같이 많이 먹어서\n동글동글해져. 알맞게 먹는 게 둘 다 좋아.",
+                )[index]
+                NyummyHealthStoryDialog(
+                    page = NyummyHealthStoryPage.entries[index],
+                    pageIndex = index,
+                    title = title,
+                    body = body,
+                    buttonText = if (index == 2) "알겠어!" else "다음",
+                    onNext = {},
+                )
+            }
+        }
     }
 }
