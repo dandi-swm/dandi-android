@@ -6,7 +6,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
@@ -88,6 +87,7 @@ fun CoachMarkLayer(host: CoachMarkHost, modifier: Modifier = Modifier) {
  * 건너뛰기는 화면 오른쪽 위(상태바 아래 상단 바 줄)에 고정하고, 비운 곳과 겹치면 그리지 않는다.
  * 덮개는 모든 터치를 받고, 비운 곳을 누를 때만 [onTargetClick]을 부른다. 영역을 아직 모르면 비우지 않고 카드만 보인다.
  * [CoachMark.blocksTouches]가 false면 덮개를 그리지 않고 터치도 받지 않는다. 대상의 빛 링·발바닥과 카드만 보인다.
+ * 이때 터치를 받는 건 카드 몸통과 보이는 건너뛰기뿐이다. 숨긴 건너뛰기나 카드 위 냐미 자리는 아래 화면에 그대로 넘긴다.
  */
 @Composable
 internal fun CoachMarkContent(
@@ -207,12 +207,13 @@ internal fun CoachMarkContent(
             tail = tail,
             tailCenterX = spot?.let { with(density) { it.center.x.toDp() } - gutter },
             showHint = !mark.waitsForTarget,
+            clickEnabled = !mark.waitsForTarget,
+            onClick = mark.onAdvance,
             modifier = Modifier
                 .offset { IntOffset(0, cardTop.roundToInt()) }
                 .padding(horizontal = gutter)
                 .fillMaxWidth()
-                .onSizeChanged { cardHeight = it.height }
-                .clickable(interactionSource = null, indication = null, enabled = !mark.waitsForTarget, onClick = mark.onAdvance),
+                .onSizeChanged { cardHeight = it.height },
         )
         val onSkip = mark.onSkip
         if (onSkip != null) {
