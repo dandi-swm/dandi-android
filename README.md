@@ -1,175 +1,118 @@
-# 냐미(Nyummy) Android
+# 냐미 Android
 
-단디(Dandi) 팀의 AI 식사 기록 앱 **냐미(Nyummy)** 안드로이드 저장소입니다. 사진 한 장으로 식사를 기록하면(원샷 촬영) AI가 영양 정보를 분석해 참고용으로 보여주고, 고양이 캐릭터 냐미를 돌보는 경험으로 기록 습관을 만드는 앱입니다. 멀티모듈 클린 아키텍처(4레이어) + MVI + Navigation3 기반이며, 새 기능은 feature당 4개 모듈로 추가합니다.
+사진 한 장으로 식사를 기록하고, 고양이 냐미를 돌보며 기록 습관을 만드는 앱입니다.
 
-> 2026-08-31 기준 현행화. 초기의 "빈 아키텍처 템플릿" 서술(appRoutes 빈 목록, feature 모듈 없음)은 폐기되었습니다. 아래 표가 실제 구현 상태입니다.
+<p align="center">
+  <img src="docs/readme/hero.png" width="600" alt="냐미">
+</p>
 
-## 현재 모듈 (총 31개)
+[Google Play](https://play.google.com/store/apps/details?id=com.dandi.nyummy)
 
-| 모듈 | 역할 | 상태 |
+## 냐미는
+
+식단 기록 앱은 입력이 번거로워서 며칠 쓰다 멈추기 쉽습니다. 냐미는 기록을 사진 한 장으로 줄이고, 기록할 때마다 냐미가 반응하고 보상을 주는 흐름으로 다시 앱을 열 이유를 만듭니다.
+
+```mermaid
+flowchart LR
+  A[식사 사진 촬영] --> B[냐미가 맛보며 AI 영양 분석]
+  B --> C[보상 상자가 우편함으로]
+  C --> D[아이템으로 마이룸 꾸미기]
+  D -. 다음 끼니 알림 .-> A
+```
+
+## 화면
+
+<table>
+  <tr><td align="center"><b>시작하기</b></td><td align="center"><b>홈</b></td><td align="center"><b>식사 기록</b></td><td align="center"><b>마이룸</b></td></tr>
+  <tr><td align="center"><img src="docs/readme/onboarding.gif" width="200" height="444" alt="시작하기"></td><td align="center"><img src="docs/readme/home.gif" width="200" height="444" alt="홈"></td><td align="center"><img src="docs/readme/meal.gif" width="200" height="444" alt="식사 기록"></td><td align="center"><img src="docs/readme/myroom.gif" width="200" height="444" alt="마이룸"></td></tr>
+  <tr><td align="center"><sub>골목에서 냐미를 만나는 온보딩</sub></td><td align="center"><sub>꾸민 방에서 말을 거는 냐미</sub></td><td align="center"><sub>촬영, 냐미가 먹는 연출, 보상 상자</sub></td><td align="center"><sub>아이템을 꺼내고 옮겨 방 꾸미기</sub></td></tr>
+  <tr><td align="center"><b>우편함</b></td><td align="center"><b>기록 돌아보기</b></td><td align="center"><b>설정</b></td></tr>
+  <tr><td align="center"><img src="docs/readme/mailbox.gif" width="200" height="444" alt="우편함"></td><td align="center"><img src="docs/readme/history.gif" width="200" height="444" alt="기록 돌아보기"></td><td align="center"><img src="docs/readme/settings.gif" width="200" height="444" alt="설정"></td></tr>
+  <tr><td align="center"><sub>보상 상자 열기, 모두 받기</sub></td><td align="center"><sub>캘린더, 하루 영양, 식사 상세</sub></td><td align="center"><sub>식사 시간 알림, 문의 내역</sub></td></tr>
+</table>
+
+## 기능
+
+| 기능 | 하는 일 | 모듈 |
 |---|---|---|
-| :app | Application, Manifest, 전체 Hilt 그래프 조립 | 동작 |
-| :common:entity / :common:domain / :common:data / :common:presentation | 공통 값·상수, BaseUseCase·오류·네비게이션 계약, Retrofit/OkHttp/Json·BaseRemoteDataSource, MVI 기반·디자인 시스템·JankStats | 동작 |
-| :main:domain / :main:presentation | Navigation3 앱 셸, AppRouteRegistry, 딥링크 매칭 | 동작 |
-| :main:entity / :main:data | (내용 없음) | 빈 스캐폴드 |
-| :intro:entity / :intro:domain / :intro:data / :intro:presentation | 인트로: RemoteConfig 버전 체크, 권한 요청, refreshToken 자동 로그인 | 실동작 (실 API) |
-| :auth:entity / :auth:domain / :auth:data / :auth:presentation | 이메일 로그인, 회원가입 3단계 퍼널, 이메일 인증코드 | 실동작 (실 API) |
-| :home:entity / :home:domain / :home:presentation | 홈(마이룸): 고양이 스프라이트, 코인·스트릭·오늘 kcal 게이지 | 목업 (HomeMockData) |
-| :home:data | (내용 없음) | 빈 스캐폴드 |
-| :meal:entity / :meal:domain / :meal:presentation | 식사 기록: CameraX 촬영 → 확인 | 부분 동작 (제출 미연동) |
-| :meal:data | (내용 없음) | 빈 스캐폴드 |
-| :history:entity / :history:domain / :history:data / :history:presentation | 월간 캘린더 42칸, 일별 영양 카드, 식사 상세·이름 수정·삭제 | 실동작 (실 API) |
-| :tti | 플랫폼 비의존 TTI 계측 | 동작 |
-| :baselineprofile | Baseline Profile 수집과 콜드 스타트 Macrobenchmark | 동작 |
+| 시작하기 | 온보딩 스토리, 이메일·카카오·구글 로그인, 비밀번호 재설정, 자동 로그인 | `intro` `onboarding` `auth` |
+| 식사 기록 | CameraX 원샷 촬영, 업로드 후 AI 영양 분석, 기록 완료 연출 | `meal` |
+| 홈 | 냐미 상태와 대사, 오늘의 식사 요약 | `home` `cat` |
+| 마이룸 | 받은 아이템으로 방 꾸미기 | `room` |
+| 우편함 | 식사 보상 상자와 아이템 수령 | `mailbox` |
+| 기록 돌아보기 | 월간 캘린더, 하루 영양 요약, 식사 이름 수정·삭제, 분석 평가 | `history` |
+| 설정 | 식사 시간 알림, 문의하기, 약관, 회원탈퇴 | `settings` `legal` |
+| 알림과 링크 | FCM 푸시, `link.nyummy.co.kr` 앱 링크로 화면 바로 열기 | `app` `main` |
 
-등록 상태의 단일 기준은 [settings.gradle.kts](settings.gradle.kts)입니다.
+마이룸, 우편함 아이템 탭 같은 기능은 Firebase Remote Config 플래그로 켜고 끕니다. 앱 버전 체크와 강제 업데이트, 홈 진입 시 띄우는 앱 공지도 같은 방식입니다.
 
-새 feature는 반드시 다음 의존 방향의 4개 모듈로 만듭니다.
+## 기술 선택
 
-~~~text
-<feature>:presentation ──▶ <feature>:domain ──▶ <feature>:entity
-<feature>:data ──────────▶ <feature>:domain ──▶ <feature>:entity
-~~~
-
-presentation과 data는 서로 직접 의존하지 않습니다. entity와 domain은 Android에 의존하지 않는 Kotlin/JVM 모듈입니다.
-
-## 등록 라우트
-
-[AppRouteRegistry.kt](main/presentation/src/main/java/com/dandi/nyummy/main/presentation/navigation/AppRouteRegistry.kt) 기준입니다.
-
-| 경로 | 화면 | 하단 탭 |
+| 영역 | 사용 | 이유 |
 |---|---|---|
-| `""` (루트) | 인트로 (버전 체크·자동 로그인) | - |
-| `/login` | 로그인 수단 선택 | - |
-| `/login/email` | 이메일 로그인 | - |
-| `/signup` | 회원가입 3단계 퍼널 | - |
-| `/signup/social` | 소셜 로그인 신규 회원 프로필 입력 | - |
-| `/home` | 홈 (마이룸) | O |
-| `/meal/record` | 식사 기록 (카메라) | - |
-| `/history` | 히스토리 (월간 캘린더) | O |
+| UI | Jetpack Compose, Material3, Coil3 | 선언형 UI와 자체 디자인 시스템(`NyummyTheme`) |
+| 내비게이션 | Navigation3 | 라우트 레지스트리 하나로 화면, 딥링크, 앱 링크 경로를 함께 관리 |
+| 상태 관리 | MVI, Coroutines, Flow | 입력은 `onIntent` 하나, 상태 변경은 `reduce`에서만 |
+| 네트워크 | Retrofit3, OkHttp5, kotlinx.serialization | 서버 응답이 일정하지 않을 때를 대비해 DTO 필드를 모두 nullable로 받고 VO로 변환 |
+| DI | Hilt, KSP | 멀티모듈 전체를 `:app`에서 조립 |
+| 저장 | DataStore | 토큰과 로컬 설정 |
+| 카메라 | CameraX | 촬영 화면 직접 구성 |
+| 원격 설정 | Firebase Remote Config | 서버와 앱의 배포 속도 차이를 기능 플래그로 흡수하고, 강제 업데이트와 홈 진입 시 앱 공지(JSON)도 같은 경로로 내려받음. 키마다 타입, 직렬화기, 기본값을 묶은 제네릭 `RemoteConfigKey<T>`로 설계해 Boolean 플래그부터 JSON 공지까지 같은 방식으로 읽음 |
+| 로그 | Firebase Analytics, Crashlytics, Performance, Meta 앱 이벤트 | 출시 지표 측정과 크래시 추적 |
+| 성능 | TTI 계측, JankStats | 화면이 쓸 수 있게 되기까지 걸린 시간과 프레임 드랍을 숫자로 확인 |
+| 로그인 | Kakao SDK, Credential Manager | 카카오, 구글 소셜 로그인 |
+| CI | GitHub Actions | PR마다 `assembleDebug`, `lintDebug` |
 
-하단 탭 바는 5칸(홈·히스토리·퀘스트·컬렉션·상점)이지만 실제 라우팅되는 탭은 홈·히스토리 2개뿐이며, 퀘스트·컬렉션·상점은 post-중간평가 백로그입니다.
+## 구조
 
-## 구현 현황 (2026-08-31)
+기능마다 `entity` / `domain` / `data` / `presentation` 네 모듈로 나눕니다. `entity`와 `domain`은 Android에 의존하지 않고, `presentation`과 `data`는 서로를 모릅니다.
 
-### 실동작 (실 API 연동)
+```mermaid
+flowchart LR
+  presentation --> domain --> entity
+  data --> domain
+```
 
-- **인트로**: RemoteConfig 버전 체크, 권한 요청, refreshToken 자동 로그인.
-- **인증(auth)**: 이메일 로그인·회원가입 3단계 퍼널·이메일 인증코드. `AuthApiService` 5개 엔드포인트(login / signup / email-verification / email-verification/confirm / refresh). 단, signup·인증코드 confirm은 서버 쪽이 아직 스텁입니다(앱 연동 자체는 완료).
-- **히스토리(history)**: 월간 캘린더, 일별 영양 카드, 식사 상세·이름 수정·삭제. `HistoryApiService` 5개 엔드포인트(monthly / daily / 상세 GET / 이름 PUT / DELETE). 낙관적 갱신과 경쟁 조건 처리 포함.
-- **디자인 시스템**: [designsystem 패키지](common/presentation/src/main/java/com/dandi/nyummy/common/presentation/designsystem/) 토큰(`NyummyTheme`)과 공통 컴포넌트. Figma 디자인 시스템 변수와 계약 테스트로 대조. 구조는 [design-system.md](docs/architecture/design-system.md).
+### common
 
-### 목업 / 부분 동작
+여러 기능이 함께 쓰는 기반입니다. 기능과 같은 네 모듈로 나뉘고, 각 기능 모듈은 같은 층의 common 모듈에 의존합니다.
 
-- **홈은 100% 목업**입니다. 코인·스트릭·말풍선 등 모든 데이터가 `HomeMockData`에서 나오며 home:data는 빈 모듈입니다. 고양이는 자체 스프라이트 렌더러(`NyummySpriteView`, doze/sleep_loop/wake 시퀀스)로 움직이지만 식사 데이터와 연결되어 있지 않습니다.
-- **식사 기록은 CameraX 촬영 → 확인까지만 동작**합니다. 제출(ClickSubmit)은 미연동이며 meal:data는 빈 모듈입니다. 서버 측 업로드·분석 API(presigned-url → S3 PUT → `POST /meals` → Gemini 분석)는 구현 완료 상태이므로, `MealRecordViewModel.kt`의 "백엔드 미구현" TODO 주석은 낡은 서술입니다. 앱 쪽 연동이 중간평가 백로그입니다.
-
-### 미구현
-
-- 네이버 로그인: 보류. 로그인 화면에 버튼을 두지 않습니다(카카오·구글은 동작).
-- 비밀번호 찾기.
-- 알려진 버그: 캘린더 `foodIconIds`가 서버 `List<Long>` ↔ 앱 문자열 키 불일치로 항상 salad 폴백. 캘린더 마커를 "기록 여부만"으로 단일화하는 결정에 따라 계약 자체가 폐기 예정입니다.
-
-## 기술 기반
-
-| 영역 | 현재 구성 |
+| 모듈 | 역할 |
 |---|---|
-| 언어·빌드 | Kotlin 2.3.21, AGP 9.2.1, JDK 17 |
-| Android | compileSdk/targetSdk 37, minSdk 24 |
-| UI | Jetpack Compose, Material3, Navigation3 |
-| DI | Hilt + KSP |
-| 비동기 | Coroutines, Flow |
-| 네트워크 | Retrofit 3, OkHttp 5, kotlinx.serialization |
-| 카메라 | CameraX 1.5.1 |
-| 상태 안정성 | kotlinx.collections.immutable, Compose stability 설정 |
-| 성능 | TTI, AndroidX JankStats, Macrobenchmark, Baseline Profile |
+| `common:entity` | 여러 기능이 같이 쓰는 값과 상수 (시간, 태그, 원격 설정 값 등) |
+| `common:domain` | `BaseUseCase`, 공통 오류 처리, 화면 이동 계약, 원격 설정 키(`RemoteConfigKey<T>`), 분석 이벤트 |
+| `common:data` | Retrofit, OkHttp, Json 설정과 `BaseRemoteDataSource`, 토큰 저장, 이미지 업로드, 푸시 토큰, 원격 설정 구현 |
+| `common:presentation` | MVI 기반 클래스, 디자인 시스템(`NyummyTheme`), 코치마크, JankStats |
 
-버전의 단일 기준은 [gradle/libs.versions.toml](gradle/libs.versions.toml)입니다.
+### 기능 모듈이 아닌 모듈
 
-## 아키텍처 문서
+```mermaid
+flowchart TD
+  app[":app"] --> main[":main"]
+  main --> feature["기능 모듈<br/>auth, home, meal, room ..."]
+  feature --> common[":common"]
+  common --> tti[":tti"]
+```
 
-| 문서 | 내용 |
+| 모듈 | 역할 |
 |---|---|
-| [모듈 구조](docs/architecture/module-structure.md) | 현재 모듈과 새 feature 배선 |
-| [MVI](docs/architecture/mvi.md) | Intent, UIState, ReducerEvent, ViewModel 계약 |
-| [Navigation3](docs/architecture/navigation.md) | Page/NavRoute, 레지스트리, 딥링크와 백스택 |
-| [데이터 레이어](docs/architecture/data-layer.md) | DTO/VO, BaseRemoteDataSource, Retrofit/Hilt |
-| [에러 핸들링](docs/architecture/error-handling.md) | HttpResponseException과 BaseUseCase 처리 경계 |
-| [디자인 시스템](docs/architecture/design-system.md) | Figma 토큰, 색상·타이포 소비 규칙 |
-| [성능 계측](docs/architecture/performance.md) | TTI, JankStats, Baseline Profile |
+| `:app` | Application, 전체 Hilt 그래프 조립, FCM 메시지 수신. 조립을 위해 모든 모듈에 의존합니다. |
+| `:main` | `MainActivity`와 Navigation3 앱 셸. 모든 화면을 `AppRouteRegistry`에 등록하고, 딥링크와 앱 링크를 화면으로 연결합니다. |
+| `:tti` | 화면이 쓸 수 있게 되기까지 걸린 시간(TTI)을 재는 모듈. Android에 의존하지 않는 Kotlin/JVM 모듈입니다. |
 
-일부 문서의 코드 예시는 템플릿 시절 레거시 예시이며 문서 내 주석으로 표기되어 있습니다. 실제 패턴은 auth·history·intro 모듈을 우선 참고합니다. 디자인 스펙에서 기능을 구현할 때는 [디자인 스펙 → 코드 가이드](docs/DESIGN_TO_CODE_GUIDE.md)를 먼저 확인합니다.
+## 부딪힌 문제들
 
-## 핵심 계약
+개발하며 부딪힌 문제와 해결 과정은 [트러블 슈팅](https://app.notion.com/p/3f23c5cd24f48018bee8c6b2f20a9117#3f23c5cd24f480688debfec0a8c80d5d)에 정리했습니다.
 
-- 화면 입력은 ViewModel의 onIntent(Intent) 하나로 들어갑니다.
-- 상태는 dispatch(ReducerEvent) → reduce()에서만 변경합니다.
-- UIState 컬렉션은 ImmutableList 또는 ImmutableSet을 사용합니다.
-- 화면 이동은 NavigationHelper.navigateTo(Page)로 요청하고, 모든 렌더 라우트는 AppRouteRegistry에 등록합니다.
-- DTO는 @Serializable이며 모든 필드를 nullable로 둡니다. VO는 비-nullable 기본값을 가지며 변환은 data의 toVO()에서만 수행합니다.
-- HTTP 실패는 data에서 HttpResponseException으로 올리고, 공통/기능별 처리는 domain UseCase가 담당합니다.
-- 화면의 색상과 타이포는 NyummyTheme 토큰과 NyummyText를 사용합니다. raw hex와 raw sp를 화면 코드에 두지 않습니다.
+## 문서
 
-## 로컬 설정
+- [개발 가이드](docs/DEVELOPMENT.md): 모듈 규칙, 로컬 설정, 빌드와 테스트
+- [아키텍처 문서](docs/architecture/): MVI, Navigation3, 데이터 레이어, 에러 처리, 디자인 시스템, 성능 계측
 
-[common/data/build.gradle.kts](common/data/build.gradle.kts)가 아래 값을 local.properties에서 BuildConfig로 주입합니다.
+## 팀
 
-~~~properties
-API_KEY=
-API_BASE_URL_DEV=
-API_BASE_URL_PROD=
-~~~
+팀 단디 (소프트웨어 마에스트로 17기)
 
-[auth/presentation/build.gradle.kts](auth/presentation/build.gradle.kts)는 카카오 로그인 네이티브 앱 키를 BuildConfig와 매니페스트(리다이렉트 스킴 `kakao{키}://oauth`)로 주입합니다. 없으면 환경변수 `KAKAO_NATIVE_APP_KEY`를 쓰고, 둘 다 없으면 SDK 초기화를 건너뛰어 카카오 버튼은 "준비 중" 안내만 띄웁니다.
-
-~~~properties
-KAKAO_NATIVE_APP_KEY=
-~~~
-
-카카오 디벨로퍼스 콘솔에는 Android 플랫폼(패키지 `com.dandi.nyummy`)과 빌드에 쓰는 서명 키의 키 해시를 등록하고, 카카오 로그인과 OpenID Connect를 활성화해야 합니다(ID 토큰을 서버가 검증). 디버그 키 해시는 PC마다 다르므로 각자 등록합니다.
-
-~~~bash
-keytool -exportcert -alias androiddebugkey -keystore ~/.android/debug.keystore -storepass android | openssl sha1 -binary | openssl base64
-~~~
-
-[app/build.gradle.kts](app/build.gradle.kts)는 Meta 광고 설치 측정(facebook-core 앱 이벤트)의 앱 ID와 클라이언트 토큰을 문자열 리소스로 주입합니다. 앱 ID는 Meta 개발자 콘솔의 앱 설정 > 기본 설정, 클라이언트 토큰은 고급 설정 > 보안에 있습니다. 설치, 실행 자동 기록과 광고 ID 수집은 release 빌드에서만 켜지고, release 빌드는 두 값이 없으면 실패합니다. debug는 값이 없어도 빌드되고 SDK 초기화만 건너뜁니다.
-
-~~~properties
-META_APP_ID=
-META_CLIENT_TOKEN=
-~~~
-
-debug 빌드는 `API_BASE_URL_DEV`(개발 서버), release 빌드는 `API_BASE_URL_PROD`(운영 서버)를 씁니다. local.properties에 없으면 같은 이름의 환경변수를 읽습니다. debug는 예전 키 `API_BASE_URL`도 받지만, release가 개발 서버에 붙지 않도록 운영 값은 다른 키로 대신하지 않습니다. 저장소에는 실제 키·주소를 기록하지 않습니다. 값이 없으면 빌드 가능한 placeholder(`https://example.com/`)가 사용되므로, 네트워크 기능 검증 전에는 환경별 값을 주입해야 합니다.
-
-## 빌드와 테스트
-
-시스템 JDK가 없으면 Android Studio의 JBR을 지정합니다.
-
-~~~bash
-export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-./gradlew :app:assembleDebug
-./gradlew test
-~~~
-
-단위 테스트는 auth(검증기·Repository·ApiService·소셜 로그인/가입 UseCase·로그인 ViewModel), history(ViewModel·캘린더 그리드·UseCase), intro(UseCase), main(라우트 매칭)에 있고, 디자인 시스템 토큰 계약 테스트(NyummyTokenContractTest, NyummyTypographyContractTest)는 common:presentation 단위 테스트에, 컴포넌트 UI 테스트는 androidTest에 있습니다.
-
-Kotlin/Gradle 코드를 수정한 작업은 최소 :app:assembleDebug 성공 후 종료합니다. PR 전에는 다음 검증도 권장합니다.
-
-~~~bash
-./gradlew :app:lintDebug
-~~~
-
-성능 수집은 API 28 이상 디바이스 또는 에뮬레이터가 필요합니다.
-
-~~~bash
-./gradlew :app:generateBaselineProfile
-./gradlew :baselineprofile:connectedBenchmarkAndroidTest
-~~~
-
-현재 Baseline Profile 시나리오는 앱 콜드 스타트만 수집합니다. 핵심 사용자 흐름(로그인·홈·히스토리)이 안정화되면 시나리오와 검증 조건도 함께 확장해야 합니다.
-
-## 남은 빈 지점
-
-- main:entity, main:data, home:data, meal:data는 빈 스캐폴드입니다. 특히 meal:data 채우기(식사 기록 E2E 연동)가 중간평가 구현 백로그 1순위입니다.
-- TTIReporter와 release TTI/Jank sink는 외부 관측 도구가 연결되기 전까지 no-op입니다.
-- 새 기능은 [make-new-feature-module 스킬](.agents/skills/make-new-feature-module/SKILL.md)로 4모듈 구조를 만든 뒤 라우트와 앱 의존성을 추가합니다.
+| Android |
+|:---:|
+| <a href="https://github.com/nonani"><img src="https://avatars.githubusercontent.com/u/30969164?v=4" width="100" alt="nonani"><br><sub>nonani</sub></a> |
