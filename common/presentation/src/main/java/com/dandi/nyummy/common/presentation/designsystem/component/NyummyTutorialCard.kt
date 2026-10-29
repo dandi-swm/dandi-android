@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -60,7 +61,11 @@ enum class NyummyTutorialExpression(@DrawableRes internal val drawable: Int) {
  * 냐미는 꼬리 방향과 상관없이 늘 카드 윗변 위에 있다. 꼬리가 위로 나고 대상이 냐미 자리(카드 왼쪽)에 있으면
  * 냐미가 대상을 가리지 않게 카드 가운데로 옮긴다.
  *
+ * 터치는 말풍선 몸통만 받는다. 냐미가 고개를 내민 윗부분은 대부분 비어 있어서, 그 아래 화면(카드가 가리키는 대상 등)에 그대로 닿는다.
+ *
  * @param showHint "탭해서 계속"을 보인다. 누를 곳이 있어 카드를 눌러도 넘어가지 않는 단계는 false.
+ * @param clickEnabled false면 몸통을 눌러도 [onClick]을 부르지 않는다. 몸통은 그래도 터치를 받아 아래 화면에 넘기지 않는다.
+ * @param onClick 몸통을 눌렀다(대사 넘김).
  */
 @Composable
 fun NyummyTutorialCard(
@@ -71,6 +76,8 @@ fun NyummyTutorialCard(
     tail: NyummyBubbleTail = NyummyBubbleTail.None,
     tailCenterX: Dp? = null,
     showHint: Boolean = false,
+    clickEnabled: Boolean = false,
+    onClick: () -> Unit = {},
 ) {
     val reducedMotion = rememberReducedMotion()
     val appear = remember { Animatable(if (reducedMotion) 1f else 0f) }
@@ -100,7 +107,9 @@ fun NyummyTutorialCard(
             tail = tail,
             tailCenterX = tailCenterX,
             showHint = showHint,
-            modifier = Modifier.padding(top = TutorialCardBodyTop),
+            modifier = Modifier
+                .padding(top = TutorialCardBodyTop)
+                .clickable(interactionSource = null, indication = null, enabled = clickEnabled, onClick = onClick),
         )
     }
 }
@@ -108,13 +117,16 @@ fun NyummyTutorialCard(
 /**
  * 화면 오른쪽 위에 고정하는 튜토리얼 건너뛰기(피그마 `Tutorial / Skip`). 흰 알약에 글자만 있고,
  * 보이는 높이는 32지만 터치 영역은 48을 지킨다. 누르면 건너뛰기 확인을 띄운다.
+ *
+ * @param enabled false면 터치를 아예 받지 않고 아래 화면에 넘긴다. 대상과 겹쳐 숨길 때 쓴다.
  */
 @Composable
 fun NyummyTutorialSkipButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     Box(
         modifier = modifier
             .heightIn(min = NyummyTheme.size.touchTarget)
-            .nyummyClickable(enabled = enabled, onClick = onClick),
+            // 꺼진 clickable도 탭을 받아 버리므로, 끌 때는 붙이지 않는다.
+            .then(if (enabled) Modifier.nyummyClickable(onClick = onClick) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         NyummyText(
