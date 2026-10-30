@@ -30,6 +30,8 @@ sealed interface MealCameraPhase {
         val source: MealPhotoSource,
         val submit: MealSubmitStatus = MealSubmitStatus.Uploading,
         val stage: MealCeremonyStage = MealCeremonyStage.Serving,
+        /** 접수되면 틀 맛보기 컷신. 접수될 때 정해 두어, 화면이 다시 만들어져도 같은 컷신을 이어 튼다. */
+        val cutscene: MealCutscene = MealCutscene.Tiyot,
     ) : MealCameraPhase
 }
 
@@ -88,8 +90,12 @@ fun MealCameraPhase.Ceremony.sendsRewardBox(isMailGiftEnabled: Boolean): Boolean
     isMailGiftEnabled && rewardBoxGrade != RewardBoxGrade.NONE
 
 /** 접수 결과를 싣습니다. 응답을 기다리던 중이면 곧장 맛 리액션으로, 사진 카드가 올라오는 중이면 그 장면이 끝난 뒤 넘어갑니다. */
-fun MealCameraPhase.Ceremony.accepted(rewardBoxGrade: RewardBoxGrade): MealCameraPhase.Ceremony = copy(
+fun MealCameraPhase.Ceremony.accepted(
+    rewardBoxGrade: RewardBoxGrade,
+    cutscene: MealCutscene = MealCutscene.Tiyot,
+): MealCameraPhase.Ceremony = copy(
     submit = MealSubmitStatus.Accepted(rewardBoxGrade),
+    cutscene = cutscene,
     stage = if (stage == MealCeremonyStage.Waiting) MealCeremonyStage.Reaction else stage,
 )
 

@@ -10,6 +10,7 @@ import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.meal.domain.ImportGalleryMealPhotoUseCase
@@ -17,6 +18,7 @@ import com.dandi.nyummy.meal.domain.SubmitMealUseCase
 import com.dandi.nyummy.meal.domain.SubmitTutorialMealUseCase
 import com.dandi.nyummy.meal.domain.TutorialMealResult
 import com.dandi.nyummy.meal.entity.MealPhotoSource
+import com.dandi.nyummy.meal.entity.RewardBoxGrade
 import com.dandi.nyummy.room.domain.GetRoomBackgroundUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
@@ -186,7 +188,7 @@ class MealRecordViewModel @Inject constructor(
                 } ?: state
 
             is MealRecordReducerEvent.SubmitSucceeded ->
-                state.updateCeremony { it.accepted(event.rewardBoxGrade) }
+                state.updateCeremony { it.accepted(event.rewardBoxGrade, event.cutscene) }
 
             MealRecordReducerEvent.SubmitFailed ->
                 state.updateCeremony { it.copy(submit = MealSubmitStatus.Failed) }
@@ -252,7 +254,7 @@ class MealRecordViewModel @Inject constructor(
         viewModelScope.launch {
             submitMeal(phase.photoPath, phase.source)
                 .onSuccess { created ->
-                    dispatch(MealRecordReducerEvent.SubmitSucceeded(created.rewardBoxGrade))
+                    dispatch(submitSucceeded(created.rewardBoxGrade))
                     analyticsHelper.logEvent(
                         AnalyticsEvent.MealSubmitSuccess(source = source, durationSec = openedAt.elapsedNow().inWholeSeconds),
                     )
@@ -292,7 +294,7 @@ class MealRecordViewModel @Inject constructor(
                     when (result) {
                         is TutorialMealResult.Accepted -> {
                             delay((TUTORIAL_MIN_WAIT_MILLIS - startedAt.elapsedNow().inWholeMilliseconds).coerceAtLeast(0L))
-                            dispatch(MealRecordReducerEvent.SubmitSucceeded(result.meal.rewardBoxGrade))
+                            dispatch(submitSucceeded(result.meal.rewardBoxGrade))
                         }
                         TutorialMealResult.AlreadyCompleted -> finishRecord()
                     }
@@ -308,6 +310,10 @@ class MealRecordViewModel @Inject constructor(
      * 연출 장면 [finished] 의 움직임이 끝나면 다음 장면으로 넘긴다. 다음 장면이 없으면 연출을 마치고 홈으로 간다.
      * 화면이 다시 만들어지며 늦게 온 지난 장면의 알림은 무시한다.
      */
+    /** 접수되면 이번에 틀 컷신을 함께 정한다. 아침인지는 기기 타임존 기준이다. */
+    private fun submitSucceeded(rewardBoxGrade: RewardBoxGrade) =
+        MealRecordReducerEvent.SubmitSucceeded(rewardBoxGrade, pickMealCutscene(DeviceTime.now().hour))
+
     private fun advanceCeremony(finished: MealCeremonyStage) {
         val ceremony = currentState.phase as? MealCameraPhase.Ceremony ?: return
         if (ceremony.stage != finished) return
