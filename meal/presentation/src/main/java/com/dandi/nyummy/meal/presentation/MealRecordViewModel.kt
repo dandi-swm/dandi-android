@@ -139,6 +139,8 @@ class MealRecordViewModel @Inject constructor(
 
             MealRecordIntent.ClickSkipCeremony -> skipCeremony()
 
+            is MealRecordIntent.DeviceNotificationChecked -> dispatch(MealRecordReducerEvent.DeviceNotificationChanged(intent.isEnabled))
+
             MealRecordIntent.TutorialSkip -> if (currentState.phase.isTutorial && currentState.phase is MealCameraPhase.Captured) {
                 dispatch(MealRecordReducerEvent.TutorialSkipConfirmChanged(remainingTutorialLessons()))
             }
@@ -199,6 +201,8 @@ class MealRecordViewModel @Inject constructor(
             MealRecordReducerEvent.FinishStarted -> state.copy(isFinishing = true)
 
             is MealRecordReducerEvent.RoomBackgroundLoaded -> state.copy(roomBackgroundItemId = event.itemId)
+
+            is MealRecordReducerEvent.DeviceNotificationChanged -> state.copy(isDeviceNotificationEnabled = event.isEnabled)
 
             is MealRecordReducerEvent.TutorialSkipConfirmChanged -> state.copy(tutorialSkipConfirm = event.remaining)
 

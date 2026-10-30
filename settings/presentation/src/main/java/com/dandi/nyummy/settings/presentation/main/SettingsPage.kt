@@ -1,10 +1,5 @@
 package com.dandi.nyummy.settings.presentation.main
 
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
-import android.provider.Settings
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -59,6 +54,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.component.nyummyMealTimeText
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.permission.openAppNotificationSettings
 import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
 import com.dandi.nyummy.legal.entity.LegalDocument
 import com.dandi.nyummy.settings.presentation.R
@@ -95,7 +91,7 @@ fun SettingsPage(
     SettingsScreen(
         uiState = uiState,
         onIntent = viewModel::onIntent,
-        onOpenDeviceSettings = { openNotificationSettings(context) },
+        onOpenDeviceSettings = { context.openAppNotificationSettings() },
         modifier = modifier,
     )
 }
@@ -455,21 +451,6 @@ private fun mealTimesSummary(mealTimes: MealTimesVO): String {
     val times = Meal.entries.map { mealTimes[it] }.filterNot { it.isSkipped }
     if (times.isEmpty()) return stringResource(R.string.settings_meal_time_none)
     return times.map { nyummyMealTimeText(it) }.joinToString(", ")
-}
-
-/** 이 앱의 기기 알림 설정 화면을 연다. Android 8 미만은 앱 정보 화면으로 간다. */
-private fun openNotificationSettings(context: Context) {
-    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(
-            Settings.EXTRA_APP_PACKAGE, context.packageName
-        )
-    } else {
-        Intent(
-            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            Uri.fromParts("package", context.packageName, null)
-        )
-    }
-    runCatching { context.startActivity(intent) }
 }
 
 private val ContentMaxWidth = 480.dp

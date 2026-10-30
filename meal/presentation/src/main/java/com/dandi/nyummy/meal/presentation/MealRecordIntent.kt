@@ -39,6 +39,9 @@ sealed interface MealRecordIntent : MviIntent {
     /** 연출 장면 [stage] 의 움직임이 끝났습니다. 다음 장면으로 넘어가거나 연출을 마칩니다. */
     data class CeremonyStageFinished(val stage: MealCeremonyStage) : MealRecordIntent
 
+    /** 화면이 보일 때마다 기기에서 이 앱의 알림을 허용했는지([isEnabled]) 다시 읽었습니다. */
+    data class DeviceNotificationChecked(val isEnabled: Boolean) : MealRecordIntent
+
     /** 연출 중 `건너뛰기` 칩을 눌렀습니다. */
     data object ClickSkipCeremony : MealRecordIntent
 
