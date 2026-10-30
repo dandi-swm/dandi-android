@@ -6,9 +6,9 @@ enum class CatNameError {
     TOO_LONG,
 }
 
-/** 고양이 이름 규칙: 앞뒤 공백을 뺀 1~[MAX_LENGTH]자. */
+/** 고양이 이름 규칙: 앞뒤 공백을 뺀 1~[MAX_LENGTH]자. 서버도 같은 길이로 막는다. */
 object CatNameValidator {
-    const val MAX_LENGTH = 10
+    const val MAX_LENGTH = 8
 
     fun validate(name: String): CatNameError? {
         val trimmed = name.trim()
