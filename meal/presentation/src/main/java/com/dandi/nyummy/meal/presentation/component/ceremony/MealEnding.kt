@@ -8,6 +8,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -73,6 +75,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.meal.presentation.MealCutscene
 import com.dandi.nyummy.meal.presentation.R
@@ -90,6 +93,7 @@ import kotlin.math.roundToInt
  * 2. 아래 큰 칸에 배부른 냐미가 박힙니다.
  * 3. 사진 위에 냐미 발도장이 쾅 찍힙니다(진동, 짧은 흔들림 한 번).
  * 4. "냐미가 맛있게 먹었어요!" 내레이션 상자가 위 칸 경계에, 영양 분석 안내 상자가 아래 칸 경계에 차례로 박힙니다.
+ *    기기 알림이 꺼져 있으면([notificationsOff]) 그 아래에 알림을 켜 달라는 안내가 뜨고, 누르면 기기 알림 설정을 엽니다.
  *    [showDone] 이면 완료 버튼이 나옵니다.
  *
  * 컷신과 같은 무대([CutsceneStage])와 칸([CutscenePanelView])을 쓰고, 섬광이나 빛줄기는 쓰지 않습니다.
@@ -105,7 +109,9 @@ internal fun MealEnding(
     @StringRes title: Int,
     showDone: Boolean,
     playIntro: Boolean,
+    notificationsOff: Boolean,
     onFinaleShown: () -> Unit,
+    onNotificationSettingsClick: () -> Unit,
     onDoneClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -119,6 +125,7 @@ internal fun MealEnding(
     val noteIn = remember { Animatable(start) }
     val shake = remember { Animatable(0f) }
     var finaleShown by remember { mutableStateOf(start == 1f) }
+    var noteLanded by remember { mutableStateOf(start == 1f) }
     val latestOnFinaleShown by rememberUpdatedState(onFinaleShown)
     val finale = cutscene.spec.finale
     val stamp = painterResource(R.drawable.meal_ending_paw_stamp)
@@ -140,6 +147,7 @@ internal fun MealEnding(
         captionIn.animateTo(1f, spring(dampingRatio = SlamDamping, stiffness = Spring.StiffnessMedium))
         delay(NoteDelayMillis)
         noteIn.animateTo(1f, spring(dampingRatio = SlamDamping, stiffness = Spring.StiffnessMedium))
+        noteLanded = true
     }
 
     CutsceneStage(backdrop = { paper }, modifier = modifier) { frame ->
@@ -243,6 +251,7 @@ internal fun MealEnding(
                 textScale = NoteTextScale,
                 appear = { noteIn.value },
             )
+            NotificationOffNotice(frame = frame, visible = notificationsOff && noteLanded, onClick = onNotificationSettingsClick)
         }
         EndingDoneButton(visible = showDone, onClick = onDoneClick)
     }
@@ -293,6 +302,36 @@ private fun EndingCaption(
     }
 }
 
+/** 기기 알림이 꺼져 있으면 영양 분석 결과를 받지 못하니 켜 달라고 안내한다. 누르면 기기 알림 설정을 연다. */
+@Composable
+private fun NotificationOffNotice(frame: CutsceneFrame, visible: Boolean, onClick: () -> Unit) {
+    val base = NyummyTheme.typography.labelM
+    val style = base.copy(fontSize = base.fontSize * frame.canvasScale)
+    val inkDp = with(LocalDensity.current) { frame.inkPx.toDp() }
+    val shape = RoundedCornerShape(NyummyTheme.radius.full)
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(tween(NoticeFadeMillis)),
+        exit = fadeOut(tween(NoticeFadeMillis)),
+        modifier = Modifier.topCenteredAt { frame.point(NoticeX, NoticeY) },
+    ) {
+        Box(
+            modifier = Modifier
+                .background(NyummyTheme.colors.bg.surface, shape)
+                .border(inkDp, NyummyTheme.colors.content.danger, shape)
+                .nyummyClickable(onClick = onClick)
+                .padding(horizontal = NyummyTheme.spacing.s16 * frame.canvasScale, vertical = NyummyTheme.spacing.s8 * frame.canvasScale),
+        ) {
+            NyummyText(
+                text = stringResource(R.string.meal_ending_notification_off),
+                style = style,
+                color = NyummyTheme.colors.content.danger,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
 @Composable
 private fun BoxScope.EndingDoneButton(visible: Boolean, onClick: () -> Unit) {
     AnimatedVisibility(
@@ -311,6 +350,15 @@ private fun BoxScope.EndingDoneButton(visible: Boolean, onClick: () -> Unit) {
             size = NyummyButtonSize.L,
             onClick = onClick,
         )
+    }
+}
+
+/** 재고 나면 위 가운데가 [anchor] 에 오게 놓는다. */
+private fun Modifier.topCenteredAt(anchor: () -> Offset) = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
+    layout(placeable.width, placeable.height) {
+        val a = anchor()
+        placeable.place((a.x - placeable.width / 2f).roundToInt(), a.y.roundToInt())
     }
 }
 
@@ -357,6 +405,11 @@ private const val NoteEndX = 346f
 private const val NoteY = 556f
 private const val NoteTiltDegrees = 1.5f
 private const val NoteTextScale = 0.72f
+
+/** 알림 꺼짐 안내 위 가운데 자리(캔버스 단위). 영양 분석 안내 상자 아래, 완료 버튼 위다. */
+private const val NoticeX = 180f
+private const val NoticeY = 618f
+private const val NoticeFadeMillis = 220
 
 private const val FoldMillis = 450
 

@@ -100,6 +100,8 @@ import kotlinx.coroutines.flow.first
  *
  * @param rewardBoxGrade 접수된 기록의 보상 상자 등급. 접수 전이면 [RewardBoxGrade.NONE] 이다.
  * @param sendsRewardBox 상자를 우편함으로 보내는 장면까지 보여 줄지
+ * @param notificationsOff 기기에서 이 앱의 알림이 꺼져 있는지. 마무리 장면에서 알림을 켜 달라고 안내한다.
+ * @param onNotificationSettingsClick 그 안내를 눌렀다. 기기 알림 설정을 연다.
  */
 @Composable
 internal fun MealCeremony(
@@ -109,7 +111,9 @@ internal fun MealCeremony(
     rewardBoxGrade: RewardBoxGrade,
     sendsRewardBox: Boolean,
     roomBackgroundUrl: String?,
+    notificationsOff: Boolean,
     onStageFinished: (MealCeremonyStage) -> Unit,
+    onNotificationSettingsClick: () -> Unit,
     onSkipClick: () -> Unit,
     onCloseClick: () -> Unit,
     onDoneClick: () -> Unit,
@@ -215,7 +219,9 @@ internal fun MealCeremony(
                 title = if (giftDelivered) R.string.meal_ceremony_box_sent else R.string.meal_record_done_title,
                 showDone = stage == MealCeremonyStage.Finished,
                 playIntro = !reducedMotion && stage == MealCeremonyStage.Ate,
+                notificationsOff = notificationsOff,
                 onFinaleShown = { holdsCutscene = false },
+                onNotificationSettingsClick = onNotificationSettingsClick,
                 onDoneClick = onDoneClick,
                 modifier = Modifier.fillMaxSize(),
             )

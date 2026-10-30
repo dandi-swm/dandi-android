@@ -20,6 +20,7 @@
     <string name="meal_ceremony_waiting">%1$s(이)가 맛보는 중이야…!!</string>
     <string name="meal_ceremony_reaction_word">띠욧!!</string>
     <string name="meal_ceremony_analysis_pending">영양소 분석 결과는 잠시 뒤 알려줄게</string>
+    <string name="meal_ending_notification_off">알림이 꺼져있어, 설정에서 알림을 꼭 켜줘!</string>
     <string name="meal_ceremony_box_bronze">선물 상자!</string>
     <string name="meal_ceremony_box_silver">반짝 상자!</string>
     <string name="meal_ceremony_box_gold">금빛 상자!</string>

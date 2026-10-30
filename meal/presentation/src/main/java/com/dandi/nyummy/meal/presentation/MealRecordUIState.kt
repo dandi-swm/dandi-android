@@ -139,6 +139,8 @@ enum class MealCameraPermission { Requesting, Granted, Denied, Blocked }
  * @property isTutorialChecked 식사 기록 튜토리얼로 열지 확인을 마쳤는지. 마치기 전에는 카메라 권한을 묻지 않습니다
  * (튜토리얼은 예시 사진을 쓰므로 권한을 묻지 않습니다).
  * @property tutorialSkipConfirm 식사 기록 튜토리얼의 건너뛰기 확인에 보일 남은 안내. 확인이 닫혀 있으면 null입니다.
+ * @property isDeviceNotificationEnabled 기기에서 이 앱의 알림을 허용했는지. 꺼져 있으면 마무리 장면에서 영양 분석 결과 알림을 받도록 켜 달라고 안내합니다.
+ * 읽기 전에는 켜진 것으로 두어 안내가 잠깐 비치지 않게 합니다.
  */
 data class MealRecordUIState(
     val phase: MealCameraPhase = MealCameraPhase.Preview,
@@ -150,6 +152,7 @@ data class MealRecordUIState(
     val roomBackgroundItemId: Long? = null,
     val isTutorialChecked: Boolean = false,
     val tutorialSkipConfirm: ImmutableList<NyummyTutorialLesson>? = null,
+    val isDeviceNotificationEnabled: Boolean = true,
 ) : UiState {
 
     /** 기록이 접수됐는지. 접수된 뒤에만 연출 중 닫기·백으로 화면을 마칠 수 있습니다. */

@@ -8,14 +8,18 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.image.NyummyCdn
+import com.dandi.nyummy.common.presentation.permission.openAppNotificationSettings
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
 import com.dandi.nyummy.meal.presentation.MealCameraPhase
@@ -44,6 +48,7 @@ import kotlinx.coroutines.launch
  *   --es grade GOLD --ez gift true --el delay 2500 --ez fail false --el bg 1 --es cutscene CosmicTaste
  *
  * `cutscene` 는 [MealCutscene] 이름이다. 없으면 실제 화면처럼 지금 시각으로 고른다.
+ * 마무리 장면의 알림 안내는 실제 화면처럼 기기 알림이 꺼져 있을 때 뜬다. `notification_off` 를 켜면 켜져 있어도 띄운다.
  */
 class MealCeremonyDebugActivity : ComponentActivity() {
 
@@ -55,12 +60,19 @@ class MealCeremonyDebugActivity : ComponentActivity() {
         val fails = intent.getBooleanExtra(EXTRA_FAIL, false)
         val roomBackgroundUrl = intent.getLongExtra(EXTRA_BACKGROUND, 0L).takeIf { it > 0L }?.let(NyummyCdn::itemUrl)
         val cutscene = intent.getStringExtra(EXTRA_CUTSCENE)?.let { name -> MealCutscene.entries.firstOrNull { it.name == name } }
+        val forcesNotificationOff = intent.getBooleanExtra(EXTRA_NOTIFICATION_OFF, false)
         val viewModel = ViewModelProvider(this)[CeremonyDebugViewModel::class.java]
         viewModel.start(copySamplePhoto(), grade, responseDelay, fails, cutscene)
 
         setContent {
             NyummyTheme {
                 val ceremony = viewModel.ceremony
+                // 실제 화면처럼 보일 때마다 기기 알림 허용 여부를 다시 읽는다. notification_off 는 꺼진 것처럼 띄워 볼 때만 쓴다.
+                var notificationsEnabled by remember { mutableStateOf(true) }
+                LifecycleResumeEffect(Unit) {
+                    notificationsEnabled = NotificationManagerCompat.from(this@MealCeremonyDebugActivity).areNotificationsEnabled()
+                    onPauseOrDispose { }
+                }
                 // 실제 화면처럼 기록하지 못하면 곧장 닫는다.
                 if (ceremony.submit == MealSubmitStatus.Failed) {
                     LaunchedEffect(Unit) { finish() }
@@ -72,6 +84,8 @@ class MealCeremonyDebugActivity : ComponentActivity() {
                     rewardBoxGrade = ceremony.rewardBoxGrade,
                     sendsRewardBox = ceremony.sendsRewardBox(sendsGift),
                     roomBackgroundUrl = roomBackgroundUrl,
+                    notificationsOff = forcesNotificationOff || !notificationsEnabled,
+                    onNotificationSettingsClick = { openAppNotificationSettings() },
                     onStageFinished = { if (!viewModel.advance(it, sendsGift)) finish() },
                     onSkipClick = { if (!viewModel.skip(sendsGift)) finish() },
                     onCloseClick = { if (ceremony.isAccepted) finish() },
@@ -100,6 +114,7 @@ class MealCeremonyDebugActivity : ComponentActivity() {
         const val EXTRA_FAIL = "fail"
         const val EXTRA_BACKGROUND = "bg"
         const val EXTRA_CUTSCENE = "cutscene"
+        const val EXTRA_NOTIFICATION_OFF = "notification_off"
         const val DEFAULT_DELAY_MILLIS = 2_500L
         const val SAMPLE_PHOTO = "meal_ceremony_sample.png"
     }
