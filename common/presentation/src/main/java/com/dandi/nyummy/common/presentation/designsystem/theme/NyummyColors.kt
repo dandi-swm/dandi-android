@@ -59,6 +59,10 @@ class NyummyBackgroundColors internal constructor(
     val sceneRoomFloor: Color,
     /** 보상 연출 무대. 상자가 등장할 때 화면을 덮는 진한 그린(88% 불투명으로 쓴다). */
     val sceneRewardStage: Color,
+    /** 만화 컷신 바탕. 사진 카드가 놓이는 종이, 아침 컷신의 새벽, 우주 컷신의 밤. */
+    val sceneCutscenePaper: Color,
+    val sceneCutsceneDawn: Color,
+    val sceneCutsceneNight: Color,
 
 )
 
@@ -153,6 +157,9 @@ internal val DefaultNyummyColors = NyummyColors(
         sceneDark = NyummyPalette.Gray900,
         sceneRoomFloor = NyummyPalette.SceneRoomFloor,
         sceneRewardStage = NyummyPalette.SceneRewardStage,
+        sceneCutscenePaper = NyummyPalette.SceneCutscenePaper,
+        sceneCutsceneDawn = NyummyPalette.SceneCutsceneDawn,
+        sceneCutsceneNight = NyummyPalette.SceneCutsceneNight,
     ),
     content = NyummyContentColors(
         primary = NyummyPalette.Gray900,
