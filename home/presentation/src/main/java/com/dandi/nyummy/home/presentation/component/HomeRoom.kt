@@ -16,12 +16,12 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpritePrefetch
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSequenceView
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
@@ -136,7 +136,7 @@ private fun HomeNyummy(
 ) {
     // 같은 상태의 다른 동작으로 넘어갈 때 시트를 받느라 멈칫하지 않게 상태의 모든 시트를 미리 받아 둔다.
     NyummySpritePrefetch(urls = motion.sheetUrls)
-    val description = stringResource(R.string.home_character_description)
+    val description = catNameStringResource(R.string.home_character_description)
     NyummySpriteSequenceView(
         clips = motion.clips,
         restMillis = motion.restMillis,
@@ -178,7 +178,7 @@ private fun HomeFallbackNyummy(
             onAnimationEnd = { if (sheet == DozeSheet) lyingDown = false },
             // 서버 냐미와 같이 카드 크기에 비례한 자리 크기 그대로 그린다.
             integerScale = false,
-            contentDescription = if (describe) stringResource(R.string.home_character_description) else null,
+            contentDescription = if (describe) catNameStringResource(R.string.home_character_description) else null,
         )
     }
 }

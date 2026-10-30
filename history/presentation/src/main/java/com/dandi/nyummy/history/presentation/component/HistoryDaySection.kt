@@ -35,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBadge
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
@@ -133,7 +134,7 @@ internal fun HistoryDaySection(
             isLoading -> DayLoading()
             meals.isEmpty() && isToday -> DayState(
                 title = stringResource(R.string.history_empty_today_title),
-                body = stringResource(R.string.history_empty_today_body),
+                body = catNameStringResource(R.string.history_empty_today_body),
                 action = stringResource(R.string.history_empty_today_action) to onRecordMeal,
             )
             meals.isEmpty() -> DayState(
@@ -281,7 +282,7 @@ private fun AnalyzingMealCard(meal: MealHistoryVO) {
     ) {
         StatusTexts(
             time = meridiemTimeOf(meal.recordedAt),
-            title = stringResource(R.string.history_analysis_pending_title),
+            title = catNameStringResource(R.string.history_analysis_pending_title),
             body = stringResource(R.string.history_analysis_pending_body),
         )
     }

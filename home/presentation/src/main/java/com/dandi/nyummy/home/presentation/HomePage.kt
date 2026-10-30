@@ -26,6 +26,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
+import com.dandi.nyummy.common.presentation.cat.withCatName
 import com.dandi.nyummy.common.presentation.coachmark.coachMarkTarget
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
@@ -96,7 +98,7 @@ internal fun HomeScreen(
             onCatClick = { onIntent(HomeIntent.ClickCat) },
             onCatMotionFinished = { playId -> onIntent(HomeIntent.CatMotionFinished(playId)) },
             onCatShown = { onIntent(HomeIntent.CatShown) },
-            speech = uiState.catLine ?: fallbackSpeech,
+            speech = uiState.catLine?.let { withCatName(it) } ?: fallbackSpeech,
             speechKey = uiState.catLineId,
             onSpeechRevealed = { onIntent(HomeIntent.CatLineRevealed(uiState.catLineId)) },
             showSpeech = !uiState.isUiHidden,
@@ -136,7 +138,7 @@ internal fun HomeScreen(
             Spacer(Modifier.height(NyummyTheme.spacing.s10))
             NyummyIconButton(
                 icon = if (uiState.isUiHidden) CommonR.drawable.nyummy_ic_eye_off else CommonR.drawable.nyummy_ic_eye,
-                contentDescription = stringResource(
+                contentDescription = catNameStringResource(
                     if (uiState.isUiHidden) R.string.home_show_ui else R.string.home_hide_ui,
                 ),
                 onClick = { onIntent(HomeIntent.ToggleUiHidden) },

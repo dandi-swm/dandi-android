@@ -5,7 +5,7 @@
     <string name="meal_record_capture">담기</string>
     <string name="meal_record_gallery_content_description">갤러리에서 사진 선택</string>
     <string name="meal_record_retake">다시 찍기</string>
-    <string name="meal_record_submit">냐미에게 주기</string>
+    <string name="meal_record_submit">%1$s에게 주기</string>
     <string name="meal_record_permission_denied_title">카메라 권한이 필요해요</string>
     <string name="meal_record_permission_denied_body">식사를 기록하려면 카메라를 허용해주세요.\n계속 꺼져 있으면 설정 &gt; 앱 &gt; 권한에서 켜주세요.</string>
     <string name="meal_record_permission_retry">다시 허용하기</string>
@@ -14,10 +14,10 @@
     <string name="meal_record_capture_failed">사진을 찍지 못했어요. 다시 시도해주세요.</string>
     <string name="meal_record_submit_interrupted">기록됐는지 확인하지 못했어요. 기록 탭에서 확인해 주세요.</string>
     <string name="meal_record_captured_photo_content_description">촬영한 음식 사진</string>
-    <string name="meal_record_cat_content_description">냐미</string>
-    <string name="meal_record_done_title">냐미가 맛있게 먹었어요!</string>
+    <string name="meal_record_cat_content_description">%1$s</string>
+    <string name="meal_record_done_title">%1$s(이)가 맛있게 먹었어요!</string>
     <string name="meal_record_done">완료</string>
-    <string name="meal_ceremony_waiting">냐미가 맛보는 중이야…!!</string>
+    <string name="meal_ceremony_waiting">%1$s(이)가 맛보는 중이야…!!</string>
     <string name="meal_ceremony_reaction_word">띠욧!!</string>
     <string name="meal_ceremony_analysis_pending">꼼꼼히 맛보고 알려 줄게!</string>
     <string name="meal_ceremony_box_bronze">선물 상자!</string>

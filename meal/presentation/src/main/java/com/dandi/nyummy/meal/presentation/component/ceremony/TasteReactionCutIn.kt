@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.meal.presentation.R
@@ -191,7 +192,7 @@ internal fun TasteReactionCutIn(
                 CeremonyArtView(
                     art = art,
                     width = screenWidth * ArtWidthFraction,
-                    contentDescription = stringResource(R.string.meal_record_cat_content_description),
+                    contentDescription = catNameStringResource(R.string.meal_record_cat_content_description),
                     frame = artFrame,
                     // 화면보다 조금 넓게 그려 좌우로 넘치게 하고, 아래 끝은 화면 밖에 둬 그림 끝이 보이지 않게 한다.
                     modifier = Modifier

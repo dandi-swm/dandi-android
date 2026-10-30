@@ -41,6 +41,7 @@ import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.entity.meal.Meal
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDialog
@@ -192,7 +193,7 @@ internal fun SettingsScreen(
     if (uiState.isWithdrawDialogVisible) {
         NyummyDialog(
             title = stringResource(R.string.settings_withdraw_dialog_title),
-            body = stringResource(R.string.settings_withdraw_dialog_body),
+            body = catNameStringResource(R.string.settings_withdraw_dialog_body),
             confirmText = stringResource(R.string.settings_withdraw_dialog_confirm),
             onConfirm = { onIntent(SettingsIntent.ConfirmWithdraw) },
             onDismissRequest = { onIntent(SettingsIntent.DismissWithdrawDialog) },

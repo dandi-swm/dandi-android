@@ -63,6 +63,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.coachmark.coachMarkTarget
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
@@ -439,7 +440,7 @@ private fun CapturedActionBar(
             )
         }
         NyummyButton(
-            text = stringResource(R.string.meal_record_submit),
+            text = catNameStringResource(R.string.meal_record_submit),
             modifier = Modifier
                 .weight(1f)
                 .then(submitModifier),

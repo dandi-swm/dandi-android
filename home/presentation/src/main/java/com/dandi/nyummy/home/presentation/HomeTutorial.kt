@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.res.stringResource
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.coachmark.CoachMark
 import com.dandi.nyummy.common.presentation.coachmark.CoachMarkKey
 import com.dandi.nyummy.common.presentation.coachmark.MainCoachMarkKeys
@@ -123,7 +124,7 @@ internal object HomeTutorialScript {
 internal fun HomeTutorialCoachMark(tutorial: HomeTutorialUiState?, onIntent: (HomeIntent) -> Unit) {
     val mark = tutorial?.line?.let { line ->
         CoachMark(
-            title = stringResource(line.title),
+            title = catNameStringResource(line.title),
             body = stringResource(line.body),
             expression = line.expression,
             target = line.target,

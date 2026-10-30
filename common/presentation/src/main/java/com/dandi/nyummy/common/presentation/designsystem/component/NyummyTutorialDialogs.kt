@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.R
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import kotlinx.collections.immutable.ImmutableList
@@ -71,7 +72,7 @@ private fun TutorialSkipCard(
         expression = NyummyTutorialExpression.Surprise,
         guideSize = SkipGuideSize,
         title = title,
-        body = stringResource(R.string.nyummy_tutorial_skip_body),
+        body = catNameStringResource(R.string.nyummy_tutorial_skip_body),
     ) {
         if (remaining.isNotEmpty()) {
             Column(
@@ -103,7 +104,7 @@ private fun TutorialSkipCard(
                                 color = NyummyTheme.colors.content.onAction,
                             )
                         }
-                        NyummyText(text = stringResource(lesson.label), style = NyummyTheme.typography.bodyM)
+                        NyummyText(text = catNameStringResource(lesson.label), style = NyummyTheme.typography.bodyM)
                     }
                 }
             }
@@ -190,7 +191,7 @@ private fun HealthStoryCard(
         verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s20),
     ) {
         NyummyText(
-            text = stringResource(R.string.nyummy_health_story_chip, pageIndex + 1, pageCount),
+            text = catNameStringResource(R.string.nyummy_health_story_chip, pageIndex + 1, pageCount),
             style = NyummyTheme.typography.labelS,
             color = NyummyTheme.colors.content.brand,
             modifier = Modifier

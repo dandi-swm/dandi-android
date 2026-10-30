@@ -45,7 +45,7 @@
 
     <!-- 6. 이름을 받은 고양이 -->
     <string name="onboarding_line_named_1">「%1$s」…!</string>
-    <string name="onboarding_line_named_2">마음에 들어! 오늘부터 난 %1$s야.</string>
+    <string name="onboarding_line_named_2">마음에 들어! 오늘부터 난 %1$s(이)야.</string>
     <string name="onboarding_line_named_3">앞으로 잘 부탁해, 집사!</string>
     <string name="onboarding_start">함께 시작하기</string>
 

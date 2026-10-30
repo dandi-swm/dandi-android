@@ -6,14 +6,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.metrics.performance.JankStats
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
+import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
+import com.dandi.nyummy.common.presentation.cat.LocalCatName
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
@@ -45,6 +50,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var remoteConfigHelper: RemoteConfigHelper
+
+    @Inject
+    lateinit var companionMemory: CompanionMemoryHelper
 
     private var jankStats: JankStats? = null
 
@@ -79,10 +87,13 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
+            // 사용자가 지어 준 고양이 이름. 화면 문구의 냐미 자리에 들어가고, 바뀌면(로그인, 고양이 조회) 바로 다시 그린다.
+            val catName by remember { companionMemory.catName() }.collectAsState(initial = null)
             CompositionLocalProvider(
                 LocalNavigationHelper provides navigationHelper,
                 LocalMessageHelper provides messageHelper,
                 LocalJankReporter provides jankReporter,
+                LocalCatName provides catName,
             ) {
                 // 새 디자인 시스템 값(색, 글자, 간격 등)은 여기서 한 번만 공급하고, 화면은 NyummyTheme.colors처럼 읽기만 한다.
                 NyummyTheme {

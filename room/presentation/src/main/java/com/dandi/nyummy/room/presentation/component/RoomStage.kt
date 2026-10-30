@@ -42,6 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpritePrefetch
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSequenceView
@@ -380,7 +381,7 @@ private fun RoomCat(
         playId = motion.playId,
         // 홈 냐미와 같이 카드 크기에 비례한 자리 크기 그대로 그린다(정수배로 반올림하면 자리보다 커진다).
         integerScale = false,
-        contentDescription = stringResource(R.string.my_room_character_description),
+        contentDescription = catNameStringResource(R.string.my_room_character_description),
         modifier = Modifier.placeAt(rect),
     )
 }

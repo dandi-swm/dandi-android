@@ -75,6 +75,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBubbleTail
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
@@ -466,7 +467,7 @@ private fun WaitingScene(
                 CeremonyArtView(
                     art = waitingArt,
                     width = catWidth,
-                    contentDescription = stringResource(R.string.meal_record_cat_content_description),
+                    contentDescription = catNameStringResource(R.string.meal_record_cat_content_description),
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = catBottom)
@@ -522,7 +523,7 @@ private fun WaitingScene(
                 )
                 // 말풍선은 꼬리가 냐미 머리 바로 위에 오게 놓고, 냐미와 함께 들썩인다.
                 NyummyVoiceBubble(
-                    text = stringResource(R.string.meal_ceremony_waiting),
+                    text = catNameStringResource(R.string.meal_ceremony_waiting),
                     tail = NyummyBubbleTail.Bottom,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -569,7 +570,7 @@ private fun CheeringNyummy(width: Dp, animate: Boolean, modifier: Modifier = Mod
     CeremonyArtView(
         art = MealCeremonyArt.cheering,
         width = width,
-        contentDescription = stringResource(R.string.meal_record_cat_content_description),
+        contentDescription = catNameStringResource(R.string.meal_record_cat_content_description),
         modifier = modifier.graphicsLayer {
             if (animate) {
                 translationY = -JumpHeight.toPx() * hop
@@ -633,7 +634,7 @@ private fun AteCelebration(
             CheeringNyummy(width = AteCheerWidth, animate = animate)
             Spacer(Modifier.height(NyummyTheme.spacing.s24))
             OutlinedTitle(
-                text = stringResource(title),
+                text = catNameStringResource(title),
                 modifier = Modifier.padding(horizontal = NyummyTheme.spacing.s24),
             )
             Spacer(Modifier.weight(AteBottomWeight))

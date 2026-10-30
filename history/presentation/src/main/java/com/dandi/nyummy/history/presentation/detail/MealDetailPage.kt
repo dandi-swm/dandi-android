@@ -59,6 +59,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
@@ -217,7 +218,7 @@ private fun MealDetailContent(
                     )
                     NyummyText(text = name, style = NyummyTheme.typography.titleXl)
                 }
-                CatCommentCard(comment = meal.catComment.ifBlank { stringResource(R.string.history_detail_cat_comment_empty) })
+                CatCommentCard(comment = meal.catComment.ifBlank { catNameStringResource(R.string.history_detail_cat_comment_empty) })
                 MealNutrition(meal = meal)
                 // 평가 카드는 수정·삭제 위에 둔다. 나타나거나 펼쳐지면 카드 끝까지 내려 보여 준다.
                 AnalysisFeedbackSection(
@@ -343,7 +344,7 @@ private fun CatCommentCard(comment: String) {
             ) {
                 NyummyPoseImage(pose = NyummyPose.Hello, size = AvatarSize)
             }
-            NyummyText(text = stringResource(R.string.history_detail_cat_comment_title), style = NyummyTheme.typography.labelM)
+            NyummyText(text = catNameStringResource(R.string.history_detail_cat_comment_title), style = NyummyTheme.typography.labelM)
         }
         NyummyText(
             text = comment,
@@ -501,9 +502,9 @@ private fun AnalysisFeedbackCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2),
             ) {
-                NyummyText(text = stringResource(R.string.history_feedback_title), style = NyummyTheme.typography.titleS)
+                NyummyText(text = catNameStringResource(R.string.history_feedback_title), style = NyummyTheme.typography.titleS)
                 NyummyText(
-                    text = stringResource(R.string.history_feedback_subtitle),
+                    text = catNameStringResource(R.string.history_feedback_subtitle),
                     style = NyummyTheme.typography.bodyS,
                     color = NyummyTheme.colors.content.secondary,
                 )

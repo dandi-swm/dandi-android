@@ -48,7 +48,7 @@
     <string name="settings_logout_dialog_confirm">로그아웃하기</string>
     <string name="settings_withdraw">회원 탈퇴</string>
     <string name="settings_withdraw_dialog_title">정말 탈퇴할까요?</string>
-    <string name="settings_withdraw_dialog_body">탈퇴하면 계정 정보, 프로필, 식사 사진, 문의 내역이 바로 삭제되고 되돌릴 수 없어요.\n\n같은 계정으로 다시 가입해도 지금까지의 기록과 냐미는 이어지지 않아요.</string>
+    <string name="settings_withdraw_dialog_body">탈퇴하면 계정 정보, 프로필, 식사 사진, 문의 내역이 바로 삭제되고 되돌릴 수 없어요.\n\n같은 계정으로 다시 가입해도 지금까지의 기록과 %1$s(은)는 이어지지 않아요.</string>
     <string name="settings_withdraw_dialog_confirm">탈퇴하기</string>
     <string name="settings_meal_time_title">식사 시간</string>
     <string name="settings_meal_time_save">저장</string>
