@@ -483,20 +483,36 @@ class MealRecordViewModelTest {
     }
 
     @Test
-    fun `튜토리얼 식사는 응답이 빨리 와도 잠깐 기다린 뒤 접수 결과를 반영한다`() = runTest(testDispatcher) {
+    fun `튜토리얼 식사는 응답이 빨리 와도 3초를 기다린 뒤 접수 결과를 반영한다`() = runTest(testDispatcher) {
         tutorialHelper.mealRequired = true
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         viewModel.onIntent(MealRecordIntent.ClickSubmit)
-        advanceTimeBy(2_000L)
+        advanceTimeBy(2_900L)
 
         assertEquals(1, mealRepository.tutorialCount)
         assertEquals(MealSubmitStatus.Uploading, viewModel.ceremony().submit)
 
-        advanceTimeBy(600L)
+        advanceTimeBy(200L)
 
         assertEquals(MealSubmitStatus.Accepted(RewardBoxGrade.GOLD), viewModel.ceremony().submit)
+    }
+
+    @Test
+    fun `평소 기록도 응답이 빨리 오면 3초를 기다린 뒤 접수 결과를 반영한다`() = runTest(testDispatcher) {
+        mealRepository.created = CreatedMealVO(mealId = 1, rewardBoxGrade = RewardBoxGrade.SILVER)
+        val viewModel = createViewModel()
+        capture(viewModel)
+
+        viewModel.onIntent(MealRecordIntent.ClickSubmit)
+        advanceTimeBy(2_900L)
+
+        assertEquals(MealSubmitStatus.Uploading, viewModel.ceremony().submit)
+
+        advanceTimeBy(200L)
+
+        assertEquals(MealSubmitStatus.Accepted(RewardBoxGrade.SILVER), viewModel.ceremony().submit)
     }
 
     @Test

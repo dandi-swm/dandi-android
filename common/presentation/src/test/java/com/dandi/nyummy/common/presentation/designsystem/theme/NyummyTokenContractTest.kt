@@ -55,9 +55,12 @@ class NyummyTokenContractTest {
             "color/external/kakao-symbol" to (NyummyPalette.ExternalKakaoSymbol to "#FF000000"),
             "color/scene/reward-stage" to (NyummyPalette.SceneRewardStage to "#FF173221"),
             "color/scene/room-floor" to (NyummyPalette.SceneRoomFloor to "#FFC57D33"),
+            "color/scene/cutscene-paper" to (NyummyPalette.SceneCutscenePaper to "#FFF6ECDC"),
+            "color/scene/cutscene-dawn" to (NyummyPalette.SceneCutsceneDawn to "#FFE4E1F2"),
+            "color/scene/cutscene-night" to (NyummyPalette.SceneCutsceneNight to "#FF222B57"),
         )
 
-        assertEquals("Figma Primitive 35개를 모두 대조한다", 35, expected.size)
+        assertEquals("Figma Primitive 38개를 모두 대조한다", 38, expected.size)
         expected.forEach { (name, pair) ->
             val (actual, hex) = pair
             assertEquals(name, hex, actual.toHex())
@@ -91,6 +94,9 @@ class NyummyTokenContractTest {
             "bg/scene/dark" to (colors.bg.sceneDark to "#FF262626"),
             "bg/scene/room-floor" to (colors.bg.sceneRoomFloor to "#FFC57D33"),
             "bg/scene/reward-stage" to (colors.bg.sceneRewardStage to "#FF173221"),
+            "bg/scene/cutscene-paper" to (colors.bg.sceneCutscenePaper to "#FFF6ECDC"),
+            "bg/scene/cutscene-dawn" to (colors.bg.sceneCutsceneDawn to "#FFE4E1F2"),
+            "bg/scene/cutscene-night" to (colors.bg.sceneCutsceneNight to "#FF222B57"),
             "content/primary" to (colors.content.primary to "#FF262626"),
             "content/secondary" to (colors.content.secondary to "#FF686868"),
             "content/tertiary" to (colors.content.tertiary to "#FF939393"),
@@ -116,7 +122,7 @@ class NyummyTokenContractTest {
             "data/record-marker" to (colors.data.recordMarker to "#FF43855D"),
         )
 
-        assertEquals("Figma Semantic 47개를 모두 대조한다", 47, expected.size)
+        assertEquals("Figma Semantic 50개를 모두 대조한다", 50, expected.size)
         expected.forEach { (name, pair) ->
             val (actual, hex) = pair
             assertEquals(name, hex, actual.toHex())
