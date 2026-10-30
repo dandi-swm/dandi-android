@@ -9,7 +9,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -164,6 +166,42 @@ class CoachMarkLayerTest {
         assertEquals(1, underneathClicks)
         assertEquals(1, targetClicks)
         assertEquals(0, markTargetClicks)
+    }
+
+    @Test
+    fun 탭에_작은_움직임이_섞여도_소개_카드가_넘어간다() {
+        setLayer(pointing(waitsForTarget = false))
+
+        composeRule.onNodeWithText(PointTitle).performTouchInput { jitteryTap() }
+
+        assertEquals(1, advances)
+    }
+
+    @Test
+    fun 탭에_작은_움직임이_섞여도_건너뛰기가_눌린다() {
+        setLayer(pointing())
+        val skip = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.nyummy_tutorial_skip)
+
+        composeRule.onNodeWithText(skip).performTouchInput { jitteryTap() }
+
+        assertEquals(1, skips)
+    }
+
+    @Test
+    fun 탭에_작은_움직임이_섞여도_비운_곳이_눌린다() {
+        setLayer(pointing())
+
+        composeRule.onNodeWithTag(TargetTag).performTouchInput { jitteryTap() }
+
+        assertEquals(1, targetClicks)
+        assertEquals(1, markTargetClicks)
+    }
+
+    /** 실제 기기처럼 누르는 사이 손가락이 1px 움직이는 탭. */
+    private fun TouchInjectionScope.jitteryTap() {
+        down(center)
+        moveBy(Offset(1f, 1f))
+        up()
     }
 
     private companion object {
