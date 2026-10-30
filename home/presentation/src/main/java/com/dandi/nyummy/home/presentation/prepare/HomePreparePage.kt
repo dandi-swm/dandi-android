@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyLinearProgress
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -154,7 +155,7 @@ private fun PrepareTitle(compact: Boolean, modifier: Modifier = Modifier) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             NyummyText(
-                text = stringResource(R.string.home_prepare_headline_line1),
+                text = catNameStringResource(R.string.home_prepare_headline_line1),
                 style = headline,
                 textAlign = TextAlign.Center,
             )
@@ -231,7 +232,7 @@ private fun PrepareProgressCard(
                 modifier = Modifier.size(NyummyTheme.size.iconXs),
             )
             NyummyText(
-                text = stringResource(R.string.home_prepare_tip),
+                text = catNameStringResource(R.string.home_prepare_tip),
                 style = NyummyTheme.typography.bodyS,
                 color = NyummyTheme.colors.content.tertiary,
             )

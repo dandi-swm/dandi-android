@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.dandi.nyummy.common.presentation.R
+import com.dandi.nyummy.common.presentation.cat.catName
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
@@ -200,7 +201,7 @@ private fun TutorialCardBody(
             }
         }
         NyummyText(
-            text = stringResource(R.string.nyummy_tutorial_name),
+            text = catName(),
             style = NyummyTheme.typography.labelS,
             color = NyummyTheme.colors.content.brand,
             modifier = Modifier

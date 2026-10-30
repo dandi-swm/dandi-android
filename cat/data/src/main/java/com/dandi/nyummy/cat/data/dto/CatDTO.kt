@@ -3,7 +3,7 @@ package com.dandi.nyummy.cat.data.dto
 import kotlinx.serialization.Serializable
 
 /**
- * GET /api/v1/cats 응답. 앱은 체형만 쓴다.
+ * GET /api/v1/cats 응답. 앱은 체형과 이름만 쓴다.
  *
  * @property id 고양이 id
  * @property name 이름

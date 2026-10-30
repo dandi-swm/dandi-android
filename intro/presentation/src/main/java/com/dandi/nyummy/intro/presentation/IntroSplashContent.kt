@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyLinearProgress
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -338,7 +339,7 @@ val shape = RoundedCornerShape(NyummyTheme.radius.l)
                 modifier = Modifier.size(NyummyTheme.size.iconXs),
             )
             NyummyText(
-                text = stringResource(R.string.intro_splash_tip),
+                text = catNameStringResource(R.string.intro_splash_tip),
                 style = NyummyTheme.typography.bodyS,
                 color = NyummyTheme.colors.content.tertiary,
             )

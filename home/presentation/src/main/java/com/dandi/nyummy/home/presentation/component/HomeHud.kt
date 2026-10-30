@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -196,7 +197,7 @@ internal fun HomeStreakBanner(
             maxLines = 1,
         )
         NyummyText(
-            text = stringResource(R.string.home_streak_message),
+            text = catNameStringResource(R.string.home_streak_message),
             style = NyummyTheme.typography.labelM,
             maxLines = 1,
         )

@@ -10,7 +10,7 @@ interface CatRepository {
     suspend fun getAnimations(): CatAnimationSetVO
 
     /**
-     * 고양이 조회로 체형을 새로 읽어 기억한다. 그리는 체형이 바뀌었으면 true다. 로그인 전이면 조회하지 않고 false다.
+     * 고양이 조회로 체형과 이름을 새로 읽어 기억한다. 그리는 체형이 바뀌었으면 true다. 로그인 전이면 조회하지 않고 false다.
      * 조회에 실패하면 그 실패를 던진다.
      */
     suspend fun refreshWeight(): Boolean

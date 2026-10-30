@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.domain.helper.AppPermission
+import com.dandi.nyummy.common.entity.cat.CatName
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMealTimeSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
@@ -136,7 +137,7 @@ internal fun OnboardingScreen(
             OnboardingDialogueBox(
                 speaker = line.speaker,
                 speakerName = speakerName,
-                text = stringResource(line.textRes, uiState.catName),
+                text = CatName.resolveParticles(stringResource(line.textRes, uiState.catName)),
                 lineKey = Triple(uiState.sceneIndex, uiState.choiceIndex, uiState.lineIndex),
                 revealed = uiState.isLineRevealed,
                 showContinueHint = uiState.isContinueHintVisible,

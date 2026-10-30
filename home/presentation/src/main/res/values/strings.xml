@@ -5,22 +5,22 @@
     <string name="home_action_notice">Notice</string>
     <string name="home_action_settings">Settings</string>
     <string name="home_streak_days">Day %1$d</string>
-    <string name="home_streak_message">You fed Nyummy!</string>
-    <string name="home_character_description">Nyummy</string>
+    <string name="home_streak_message">You fed %1$s!</string>
+    <string name="home_character_description">%1$s</string>
     <string name="home_speech_waiting">Zzz… waiting for your first meal</string>
     <string name="home_speech_recorded">Yum! Thanks for taking care of me today</string>
     <!-- %1$s: AM/PM, %2$d: hour (1-12), %3$02d: minute -->
-    <string name="home_hide_ui">Show only Nyummy</string>
+    <string name="home_hide_ui">Show only %1$s</string>
     <string name="home_show_ui">Show the screen again</string>
     <!-- Room preparation screen shown right after login -->
-    <string name="home_prepare_headline_line1">Nyummy is</string>
+    <string name="home_prepare_headline_line1">%1$s is</string>
     <string name="home_prepare_headline_line2">tidying up the room!</string>
     <string name="home_prepare_subtitle">Getting ready to welcome you</string>
     <string name="home_prepare_progress_label">Decorating the room…</string>
     <string name="home_prepare_progress_complete">All set! Heading to the room</string>
     <string name="home_prepare_progress_percent">%1$d%%</string>
-    <string name="home_prepare_tip">Tap Nyummy to hear something new</string>
-    <string name="home_tutorial_hello_title">Hi! I\'m Nyummy</string>
+    <string name="home_prepare_tip">Tap %1$s to hear something new</string>
+    <string name="home_tutorial_hello_title">Hi! I\'m %1$s</string>
     <string name="home_tutorial_hello_body">When you record a meal, I get to eat too</string>
     <string name="home_tutorial_reward_title">Recording meals earns reward boxes</string>
     <string name="home_tutorial_reward_body">Boxes arrive in your mailbox</string>

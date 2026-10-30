@@ -2,12 +2,15 @@ package com.dandi.nyummy.history.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.HttpResponseException
+import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.entity.cat.CatName
 import com.dandi.nyummy.history.entity.AnalysisFeedbackReason
 import com.dandi.nyummy.tti.TTIHelper
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -16,10 +19,11 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  * 별점은 반 칸 수([ratingHalfSteps], 1~10 = 0.5~5.0점)로 받는다. 이유는 고른 아쉬운 점과 직접 쓴 글을 합쳐 하나로 보내고,
  * 둘 다 없으면 보내지 않는다. 다른 기기에서 이미 평가했으면(409) 평가는 끝난 것이므로 성공으로 본다.
- * 성공하면 고맙다는 스낵바를, 실패하면 오류 스낵바를 띄운다. 범위를 벗어난 별점은 보내지 않고 다시 고르라고 안내한다.
+ * 성공하면 사용자가 지어 준 고양이 이름으로 고맙다는 스낵바를, 실패하면 오류 스낵바를 띄운다. 범위를 벗어난 별점은 보내지 않고 다시 고르라고 안내한다.
  */
 class SubmitAnalysisFeedbackUseCase @Inject constructor(
     private val repository: HistoryRepository,
+    private val companionMemory: CompanionMemoryHelper,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -69,8 +73,9 @@ class SubmitAnalysisFeedbackUseCase @Inject constructor(
         }
     }
 
-    private fun showThanks() {
-        messageHelper.showSnackBar(iconType = IconType.SUCCESS, messageText = THANKS_MESSAGE)
+    private suspend fun showThanks() {
+        val catName = companionMemory.catName().first() ?: CatName.DEFAULT
+        messageHelper.showSnackBar(iconType = IconType.SUCCESS, messageText = CatName.fill(THANKS_MESSAGE, catName))
     }
 
     private fun showError(message: String) {
@@ -85,7 +90,7 @@ class SubmitAnalysisFeedbackUseCase @Inject constructor(
         const val REASON_MAX_LENGTH = 500
 
         private const val SUBMIT_FAILED_MESSAGE = "평가를 보내지 못했어요. 잠시 후 다시 시도해 주세요."
-        private const val THANKS_MESSAGE = "고마워요! 냐미가 더 잘 알아볼게요"
+        private const val THANKS_MESSAGE = "고마워요! {name}(이)가 더 잘 알아볼게요"
     }
 }
 

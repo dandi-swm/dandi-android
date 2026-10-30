@@ -3,6 +3,7 @@ package com.dandi.nyummy.room.presentation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.res.stringResource
+import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.coachmark.CoachMark
 import com.dandi.nyummy.common.presentation.coachmark.CoachMarkKey
 import com.dandi.nyummy.common.presentation.coachmark.ShowCoachMark
@@ -71,7 +72,7 @@ internal fun MyRoomTutorialCoachMark(tutorial: MyRoomTutorialUiState?, onIntent:
         MyRoomTutorialPhase.Intro -> {
             val (title, body) = MyRoomTutorialUiState.IntroLines[tutorial.introIndex]
             CoachMark(
-                title = stringResource(title),
+                title = catNameStringResource(title),
                 body = stringResource(body),
                 expression = if (tutorial.isLastIntro) NyummyTutorialExpression.Cheer else NyummyTutorialExpression.Greet,
                 anchor = RoomInventoryCoachMarkKey,

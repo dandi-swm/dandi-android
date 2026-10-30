@@ -5,22 +5,22 @@
     <string name="home_action_notice">공지</string>
     <string name="home_action_settings">설정</string>
     <string name="home_streak_days">%1$d일째</string>
-    <string name="home_streak_message">냐미에게 밥을 챙겼어요!</string>
-    <string name="home_character_description">냐미</string>
+    <string name="home_streak_message">%1$s에게 밥을 챙겼어요!</string>
+    <string name="home_character_description">%1$s</string>
     <string name="home_speech_waiting">쿨쿨… 첫 끼를 기다리는 중이야</string>
     <string name="home_speech_recorded">냠냠! 오늘도 챙겨줘서 고마워</string>
     <!-- %1$s: 오전/오후, %2$d: 시(1~12), %3$02d: 분 -->
-    <string name="home_hide_ui">냐미만 보기</string>
+    <string name="home_hide_ui">%1$s만 보기</string>
     <string name="home_show_ui">화면 다시 보기</string>
     <!-- 로그인 직후 냐미 방 준비 화면 -->
-    <string name="home_prepare_headline_line1">냐미가 방을</string>
+    <string name="home_prepare_headline_line1">%1$s(이)가 방을</string>
     <string name="home_prepare_headline_line2">정리하는 중이야!</string>
     <string name="home_prepare_subtitle">집사를 맞을 준비를 하고 있어요</string>
     <string name="home_prepare_progress_label">방을 꾸미는 중…</string>
     <string name="home_prepare_progress_complete">준비 완료! 방으로 들어갈게요</string>
     <string name="home_prepare_progress_percent">%1$d%%</string>
-    <string name="home_prepare_tip">냐미를 누르면 새로운 이야기를 들려줘요</string>
-    <string name="home_tutorial_hello_title">안녕, 집사! 나는 냐미야</string>
+    <string name="home_prepare_tip">%1$s(을)를 누르면 새로운 이야기를 들려줘요</string>
+    <string name="home_tutorial_hello_title">안녕, 집사! 나는 %1$s(이)야</string>
     <string name="home_tutorial_hello_body">집사가 밥을 기록하면 나도 같이 먹을 수 있어</string>
     <string name="home_tutorial_reward_title">밥을 기록하면 보상 상자도 받아</string>
     <string name="home_tutorial_reward_body">상자는 우편함으로 도착해</string>

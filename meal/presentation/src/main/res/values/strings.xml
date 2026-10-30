@@ -5,7 +5,7 @@
     <string name="meal_record_capture">Capture</string>
     <string name="meal_record_gallery_content_description">Choose from gallery</string>
     <string name="meal_record_retake">Retake</string>
-    <string name="meal_record_submit">Give to Nyummy</string>
+    <string name="meal_record_submit">Give to %1$s</string>
     <string name="meal_record_permission_denied_title">Camera permission needed</string>
     <string name="meal_record_permission_denied_body">Allow camera access to record your meal.\nIf it stays off, enable it in Settings &gt; Apps &gt; Permissions.</string>
     <string name="meal_record_permission_retry">Allow camera</string>
@@ -14,10 +14,10 @@
     <string name="meal_record_capture_failed">Couldn\'t take the photo. Please try again.</string>
     <string name="meal_record_submit_interrupted">We couldn\'t confirm your meal was saved. Please check your history.</string>
     <string name="meal_record_captured_photo_content_description">Captured food photo</string>
-    <string name="meal_record_cat_content_description">Nyummy</string>
-    <string name="meal_record_done_title">Nyummy loved the meal!</string>
+    <string name="meal_record_cat_content_description">%1$s</string>
+    <string name="meal_record_done_title">%1$s loved the meal!</string>
     <string name="meal_record_done">Done</string>
-    <string name="meal_ceremony_waiting">Nyummy is tasting…!!</string>
+    <string name="meal_ceremony_waiting">%1$s is tasting…!!</string>
     <string name="meal_ceremony_reaction_word">Boing!!</string>
     <string name="meal_ceremony_analysis_pending">I\'ll taste it carefully and let you know!</string>
     <string name="meal_ceremony_box_bronze">Gift box!</string>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="my_room_title">마이룸</string>
-    <string name="my_room_character_description">방에 있는 냐미</string>
+    <string name="my_room_character_description">방에 있는 %1$s</string>
     <string name="my_room_save">저장</string>
     <string name="my_room_undo">되돌리기</string>
     <string name="my_room_category_background">배경</string>
@@ -21,7 +21,7 @@
     <string name="my_room_sheet_expand">보관함 펼치기</string>
     <string name="my_room_sheet_collapse">보관함 접기</string>
 
-    <string name="my_room_tutorial_intro_title">여긴 냐미 방이야</string>
+    <string name="my_room_tutorial_intro_title">여긴 %1$s 방이야</string>
     <string name="my_room_tutorial_intro_body">보관함 아이템을 눌러 방을 꾸밀 수 있어</string>
     <string name="my_room_tutorial_box_title">아이템은 보상 상자에서 나와</string>
     <string name="my_room_tutorial_box_body">밥을 기록하고 상자를 열어 모아 보자</string>
