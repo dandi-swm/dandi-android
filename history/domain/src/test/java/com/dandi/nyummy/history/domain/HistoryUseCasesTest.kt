@@ -2,6 +2,7 @@ package com.dandi.nyummy.history.domain
 
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.HttpResponseStatus
+import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -26,6 +27,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
@@ -468,6 +470,15 @@ class HistoryUseCasesTest {
     }
 
     @Test
+    fun `평가 고맙다는 스낵바는 사용자가 지어 준 고양이 이름으로 말한다`() = runBlocking {
+        val useCase = submitFeedbackUseCase(FakeHistoryRepository(), FakeCompanionMemory(name = "달봉"))
+
+        useCase(7L, ratingHalfSteps = 10, reason = AnalysisFeedbackReason.WRONG_PORTION, comment = "")
+
+        assertEquals("고마워요! 달봉이 더 잘 알아볼게요", messageHelper.snackBars.single().messageText)
+    }
+
+    @Test
     fun `다른 기기에서 이미 평가한 식사면 성공으로 보고 고맙다는 스낵바를 띄운다`() = runBlocking {
         val useCase = submitFeedbackUseCase(
             ThrowingHistoryRepository(httpException(409, "api.meal.analysisFeedbackAlreadyExists")),
@@ -623,8 +634,11 @@ class HistoryUseCasesTest {
         repository, FakeResourceHelper(), messageHelper, navigationHelper, FakeTTIHelper(),
     )
 
-    private fun submitFeedbackUseCase(repository: HistoryRepository) = SubmitAnalysisFeedbackUseCase(
-        repository, FakeResourceHelper(), messageHelper, navigationHelper, FakeTTIHelper(),
+    private fun submitFeedbackUseCase(
+        repository: HistoryRepository,
+        companionMemory: CompanionMemoryHelper = FakeCompanionMemory(),
+    ) = SubmitAnalysisFeedbackUseCase(
+        repository, companionMemory, FakeResourceHelper(), messageHelper, navigationHelper, FakeTTIHelper(),
     )
 
     /** 취소는 `Result.failure`로 바꾸지 않고 그대로 던져야 하고, 실패 안내도 띄우지 않아야 한다. */
@@ -709,6 +723,17 @@ class HistoryUseCasesTest {
         }
 
         override fun navigateToExternalLink(url: String) = Unit
+    }
+
+    /** 기기에 기억한 고양이 이름만 쓴다. */
+    private class FakeCompanionMemory(var name: String? = null) : CompanionMemoryHelper {
+        override suspend fun lastSeenAtMillis(): Long? = null
+        override suspend fun setLastSeenAtMillis(millis: Long) = Unit
+        override suspend fun lastCatWeight(): String? = null
+        override suspend fun setLastCatWeight(weight: String) = Unit
+        override fun catName(): Flow<String?> = flowOf(name)
+        override suspend fun setCatName(name: String) = Unit
+        override suspend fun clear() = Unit
     }
 
     private class FakeResourceHelper : ResourceHelper {

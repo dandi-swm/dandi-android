@@ -13,14 +13,15 @@ class CatNameValidatorTest {
     }
 
     @Test
-    fun `앞뒤 공백을 빼고 10자까지 허용한다`() {
+    fun `앞뒤 공백을 빼고 8자까지 허용한다`() {
         assertNull(CatNameValidator.validate("냐"))
-        assertNull(CatNameValidator.validate("  가나다라마바사아자차  "))
-        assertEquals(CatNameError.TOO_LONG, CatNameValidator.validate("가나다라마바사아자차카"))
+        assertNull(CatNameValidator.validate("  가나다라마바사아  "))
+        assertEquals(CatNameError.TOO_LONG, CatNameValidator.validate("가나다라마바사아자"))
     }
 
     @Test
     fun `이모지는 한 글자로 센다`() {
-        assertNull(CatNameValidator.validate("냐미🐱🐱🐱🐱🐱🐱🐱🐱"))
+        assertNull(CatNameValidator.validate("냐미🐱🐱🐱🐱🐱🐱"))
+        assertEquals(CatNameError.TOO_LONG, CatNameValidator.validate("냐미🐱🐱🐱🐱🐱🐱🐱"))
     }
 }

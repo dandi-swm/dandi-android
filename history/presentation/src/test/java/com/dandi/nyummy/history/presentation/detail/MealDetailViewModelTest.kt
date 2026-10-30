@@ -6,6 +6,7 @@ import com.dandi.nyummy.history.domain.SubmitAnalysisFeedbackUseCase
 import com.dandi.nyummy.history.domain.UpdateMealNameUseCase
 import com.dandi.nyummy.history.entity.AnalysisFeedbackReason
 import com.dandi.nyummy.history.entity.MealHistoryVO
+import com.dandi.nyummy.history.presentation.FakeCompanionMemoryHelper
 import com.dandi.nyummy.history.presentation.FakeHistoryRepository
 import com.dandi.nyummy.history.presentation.FakeMessageHelper
 import com.dandi.nyummy.history.presentation.FakeNavigationHelper
@@ -288,7 +289,7 @@ class MealDetailViewModelTest {
             updateMealName = UpdateMealNameUseCase(repository, resourceHelper, messageHelper, navigationHelper, ttiHelper),
             deleteMeal = DeleteMealUseCase(repository, resourceHelper, messageHelper, navigationHelper, ttiHelper),
             submitAnalysisFeedback = SubmitAnalysisFeedbackUseCase(
-                repository, resourceHelper, messageHelper, navigationHelper, ttiHelper,
+                repository, FakeCompanionMemoryHelper(), resourceHelper, messageHelper, navigationHelper, ttiHelper,
             ),
             navigationHelper = navigationHelper,
         )
