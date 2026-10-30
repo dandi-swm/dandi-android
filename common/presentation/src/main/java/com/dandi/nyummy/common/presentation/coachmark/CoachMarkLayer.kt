@@ -141,8 +141,10 @@ internal fun CoachMarkContent(
                             down.consume()
                             var released = false
                             do {
+                                // 이어지는 이벤트는 소비하지 않는다. 덮개 안의 카드·건너뛰기는 누르는 사이 움직임이 소비되면
+                                // 클릭을 취소해서, 탭에 작은 움직임이 섞이는 기기에서는 눌리지 않는다.
+                                // 아래 화면은 이 처리기가 있는 것만으로 막힌다.
                                 val event = awaitPointerEvent()
-                                event.changes.forEach { it.consume() }
                                 val up = event.changes.firstOrNull { it.changedToUpIgnoreConsumed() }
                                 if (up != null) released = spot?.contains(down.position) == true && spot.contains(up.position)
                             } while (event.changes.any { it.pressed })
