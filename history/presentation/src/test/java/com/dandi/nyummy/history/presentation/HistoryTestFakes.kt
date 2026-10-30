@@ -2,6 +2,7 @@ package com.dandi.nyummy.history.presentation
 
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.HttpResponseStatus
+import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -26,6 +27,7 @@ import com.dandi.nyummy.tti.TTIPage
 import com.dandi.nyummy.tti.TimelineCategory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 
 /** 기록·식사 상세 ViewModel 테스트가 함께 쓰는 가짜 객체. */
 internal class FakeHistoryRepository : HistoryRepository {
@@ -98,6 +100,17 @@ internal class FakeNavigationHelper : NavigationHelper {
 
 internal class FakeResourceHelper : ResourceHelper {
     override fun getString(resource: StringResource): String = ""
+}
+
+/** 기기에 기억한 고양이 이름이 없는 상태. */
+internal class FakeCompanionMemoryHelper : CompanionMemoryHelper {
+    override suspend fun lastSeenAtMillis(): Long? = null
+    override suspend fun setLastSeenAtMillis(millis: Long) = Unit
+    override suspend fun lastCatWeight(): String? = null
+    override suspend fun setLastCatWeight(weight: String) = Unit
+    override fun catName(): Flow<String?> = flowOf(null)
+    override suspend fun setCatName(name: String) = Unit
+    override suspend fun clear() = Unit
 }
 
 internal class FakeMessageHelper : MessageHelper {

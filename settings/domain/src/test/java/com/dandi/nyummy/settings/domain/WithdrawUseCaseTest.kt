@@ -7,6 +7,8 @@ import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -35,6 +37,8 @@ class WithdrawUseCaseTest {
         override suspend fun setLastSeenAtMillis(millis: Long) = Unit
         override suspend fun lastCatWeight(): String? = null
         override suspend fun setLastCatWeight(weight: String) = Unit
+        override fun catName(): Flow<String?> = flowOf(null)
+        override suspend fun setCatName(name: String) = Unit
         override suspend fun clear() {
             clearCount++
         }

@@ -14,6 +14,8 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.dandi.nyummy.common.entity.cat.CatName
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
@@ -38,6 +40,10 @@ class HistoryScreenTest {
     private val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
 
     private fun text(id: Int, vararg args: Any): String = context.getString(id, *args)
+
+    /** 고양이 이름이 든 문구. 이름을 공급하지 않으면 화면은 기본 이름을 쓴다. */
+    private fun catText(id: Int): String =
+        CatName.resolveParticles(context.getString(id, context.getString(CommonR.string.nyummy_cat_default_name)))
 
     private val today = HistoryDateVO(2026, 10, 8)
     private val october = HistoryMonth(2026, 10)
@@ -194,7 +200,7 @@ class HistoryScreenTest {
         composeRule.onNodeWithText(text(R.string.history_day_summary, 1)).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("첫 끼").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("오전 8:10").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText(text(R.string.history_analysis_pending_title)).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(catText(R.string.history_analysis_pending_title)).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.history_analysis_retry)).performScrollTo().performClick()
         composeRule.onNodeWithText(text(R.string.history_analysis_delete)).performScrollTo().performClick()
         composeRule.onNodeWithText("비빔밥").performScrollTo().performClick()

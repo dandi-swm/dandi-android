@@ -31,6 +31,7 @@ import com.dandi.nyummy.tti.TTIPage
 import com.dandi.nyummy.tti.TimelineCategory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 
 /** 식사 시각 읽기를 요청마다 따로 정할 수 있는 가짜 저장소. 정해 둔 응답이 없으면 [mealTimes]를 바로 준다. */
 internal class FakeSettingsRepository : SettingsRepository {
@@ -199,6 +200,8 @@ internal object FakeCompanionMemoryHelper : CompanionMemoryHelper {
     override suspend fun setLastSeenAtMillis(millis: Long) = Unit
     override suspend fun lastCatWeight(): String? = null
     override suspend fun setLastCatWeight(weight: String) = Unit
+    override fun catName(): Flow<String?> = flowOf(null)
+    override suspend fun setCatName(name: String) = Unit
     override suspend fun clear() = Unit
 }
 

@@ -4,6 +4,8 @@ import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.PushTokenHelper
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -26,6 +28,8 @@ class LogoutUseCaseTest {
             override suspend fun setLastSeenAtMillis(millis: Long) = Unit
             override suspend fun lastCatWeight(): String? = null
             override suspend fun setLastCatWeight(weight: String) = Unit
+            override fun catName(): Flow<String?> = flowOf(null)
+            override suspend fun setCatName(name: String) = Unit
             override suspend fun clear() {
                 calls += "companion"
             }

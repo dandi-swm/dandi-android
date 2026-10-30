@@ -53,6 +53,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -772,6 +773,8 @@ class HomeViewModelTest {
 
         override suspend fun lastCatWeight(): String? = null
         override suspend fun setLastCatWeight(weight: String) = Unit
+        override fun catName(): Flow<String?> = flowOf(null)
+        override suspend fun setCatName(name: String) = Unit
         override suspend fun clear() = Unit
     }
 

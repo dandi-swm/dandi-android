@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.dandi.nyummy.common.entity.cat.CatName
 import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import kotlinx.collections.immutable.persistentListOf
@@ -21,6 +22,10 @@ class NyummyTutorialDialogsTest {
     val composeRule = createComposeRule()
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+    /** 이름을 공급하지 않으면 화면은 기본 이름을 쓴다. */
+    private val catName: String get() = context.getString(R.string.nyummy_cat_default_name)
+
     private var continues = 0
     private var skips = 0
     private var nexts = 0
@@ -42,7 +47,7 @@ class NyummyTutorialDialogsTest {
         setSkipDialog()
 
         composeRule.onNodeWithText(context.getString(R.string.nyummy_tutorial_lesson_box)).assertIsDisplayed()
-        composeRule.onNodeWithText(context.getString(R.string.nyummy_tutorial_lesson_health)).assertIsDisplayed()
+        composeRule.onNodeWithText(CatName.resolveParticles(context.getString(R.string.nyummy_tutorial_lesson_health, catName))).assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.nyummy_tutorial_lesson_record)).assertDoesNotExist()
     }
 
@@ -81,7 +86,7 @@ class NyummyTutorialDialogsTest {
             }
         }
 
-        composeRule.onNodeWithText(context.getString(R.string.nyummy_health_story_chip, 2, 3)).assertIsDisplayed()
+        composeRule.onNodeWithText(context.getString(R.string.nyummy_health_story_chip, catName, 2, 3)).assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.nyummy_health_gauge_lean)).assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.nyummy_health_gauge_plump)).assertIsDisplayed()
         composeRule.onNodeWithText(StoryTitle).assertIsDisplayed()

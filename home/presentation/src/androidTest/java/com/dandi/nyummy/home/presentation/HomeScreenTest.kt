@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.dandi.nyummy.cat.entity.CatState
+import com.dandi.nyummy.common.entity.cat.CatName
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSheet
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -36,6 +38,10 @@ class HomeScreenTest {
     private val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
     private fun text(id: Int, vararg args: Any): String = context.getString(id, *args)
 
+    /** 고양이 이름이 든 문구. 이름을 공급하지 않으면 화면은 기본 이름을 쓴다. */
+    private fun catText(id: Int): String =
+        CatName.resolveParticles(context.getString(id, context.getString(CommonR.string.nyummy_cat_default_name)))
+
     private val recordedSummary = HomeSummaryVO(
         coinBalance = 1240,
         streakDays = 7,
@@ -54,7 +60,7 @@ class HomeScreenTest {
 
         composeRule.onNodeWithText(NumberFormat.getIntegerInstance().format(1240), useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.home_streak_days, 7), useUnmergedTree = true).assertIsDisplayed()
-        composeRule.onNodeWithText(text(R.string.home_streak_message), useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText(catText(R.string.home_streak_message), useUnmergedTree = true).assertIsDisplayed()
     }
 
     // 테스트에서는 시트를 받지 못해 기본 냐미로 대신 그려진다.
@@ -90,7 +96,7 @@ class HomeScreenTest {
 
         composeRule.onNodeWithText("이제 느긋하게 쉬어도 돼").assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.home_speech_recorded)).assertDoesNotExist()
-        composeRule.onNodeWithContentDescription(text(R.string.home_character_description)).performClick()
+        composeRule.onNodeWithContentDescription(catText(R.string.home_character_description)).performClick()
 
         // 냐미를 그리면 홈 TTI용 CatShown, 대사를 다 찍으면 CatLineRevealed도 보내므로 누른 의도만 본다.
         assertEquals(
@@ -103,7 +109,7 @@ class HomeScreenTest {
     fun 냐미_애니메이션을_받지_못하면_기본_냐미와_기본_대사를_보여준다() {
         setScreen(HomeUIState(summary = recordedSummary.copy(todayRecordedCount = 0), isCatAnimationFailed = true))
 
-        composeRule.onNodeWithContentDescription(text(R.string.home_character_description)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(catText(R.string.home_character_description)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.home_speech_waiting)).assertIsDisplayed()
     }
 
@@ -111,7 +117,7 @@ class HomeScreenTest {
     fun 냐미_애니메이션을_받는_중에는_냐미를_그리지_않는다() {
         setScreen(HomeUIState(summary = recordedSummary))
 
-        composeRule.onNodeWithContentDescription(text(R.string.home_character_description)).assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(catText(R.string.home_character_description)).assertDoesNotExist()
     }
 
     @Test
