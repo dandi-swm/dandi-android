@@ -70,21 +70,6 @@ internal object MealCeremonyArt {
     )
 
     /**
-     * 띠욧 클로즈업(6프레임). 장면이 프레임을 직접 고른다.
-     * 0, 1 = 눈 감고 오물오물 / 2 = 멈칫 눈 뜸 / 3 = 별눈 펑 / 4, 5 = 별눈 반짝 반복.
-     */
-    val tasting = CeremonyArt.Frames(
-        resId = R.drawable.meal_ceremony_nyummy_tiyot_grid,
-        cellWidth = 491,
-        cellHeight = 471,
-        frameCount = 6,
-        frameMillis = 120,
-    )
-
-    /** 만세하며 펄쩍 뛰는 냐미. 뛰기는 화면 코드가 붙인다. */
-    val cheering: CeremonyArt = CeremonyArt.Still(R.drawable.meal_ceremony_nyummy_cheer)
-
-    /**
      * 기다리는 냐미 앞을 가리는 나무 식탁 앞면. 윗판 아래로 판자가 길게 이어져, 윗선부터 화면 아래 끝까지 덮는다.
      * 냐미가 앉는 높이는 윗판과 첫 판자까지의 높이([TableFrontAspect])로 정한다.
      */

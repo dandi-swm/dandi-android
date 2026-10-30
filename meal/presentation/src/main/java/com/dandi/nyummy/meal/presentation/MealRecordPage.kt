@@ -176,6 +176,7 @@ private fun MealRecordScreen(
         MealCeremony(
             photoPath = phase.photoPath,
             stage = phase.stage,
+            cutscene = phase.cutscene,
             rewardBoxGrade = phase.rewardBoxGrade,
             sendsRewardBox = phase.sendsRewardBox(uiState.isMailGiftEnabled),
             roomBackgroundUrl = uiState.roomBackgroundItemId?.let(NyummyCdn::itemUrl),
