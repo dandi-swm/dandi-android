@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 식사 기록 마무리의 냐미 발도장. 두 겹 동그라미 안에 발바닥이 찍힌 모양이고, 색은 코드에서 입힌다. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="128dp"
+    android:height="128dp"
+    android:viewportWidth="128"
+    android:viewportHeight="128">
+    <path
+        android:pathData="M8,64a56,56 0,1 1,112,0a56,56 0,1 1,-112,0Z"
+        android:strokeWidth="5"
+        android:strokeColor="#FFFFFFFF" />
+    <path
+        android:pathData="M16,64a48,48 0,1 1,96,0a48,48 0,1 1,-96,0Z"
+        android:strokeWidth="2"
+        android:strokeColor="#FFFFFFFF" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M43,76a21,17 0,1 1,42,0a21,17 0,1 1,-42,0ZM28.5,54a8.5,10.5 0,1 1,17.0,0a8.5,10.5 0,1 1,-17.0,0ZM45.5,39a8.5,10.5 0,1 1,17.0,0a8.5,10.5 0,1 1,-17.0,0ZM65.5,39a8.5,10.5 0,1 1,17.0,0a8.5,10.5 0,1 1,-17.0,0ZM82.5,54a8.5,10.5 0,1 1,17.0,0a8.5,10.5 0,1 1,-17.0,0Z" />
+</vector>
