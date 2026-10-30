@@ -8,8 +8,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,7 +17,6 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -51,7 +48,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import coil3.compose.rememberAsyncImagePainter
@@ -73,12 +69,10 @@ import com.dandi.nyummy.common.presentation.cutscene.rememberCutsceneImages
 import com.dandi.nyummy.common.presentation.cutscene.shakeSpec
 import com.dandi.nyummy.common.presentation.cutscene.sizeF
 import com.dandi.nyummy.common.presentation.cutscene.toPath
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBubbleTail
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyVoiceBubble
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.meal.presentation.MealCutscene
 import com.dandi.nyummy.meal.presentation.R
@@ -95,13 +89,13 @@ import kotlin.math.roundToInt
  *    마지막 그림을 다 읽은 뒤에 접기 시작하고, 그때 [onFinaleShown] 으로 알립니다. 그 전까지는 컷신이 마지막 화면으로 위를 덮고 있습니다.
  * 2. 아래 큰 칸에 배부른 냐미가 박힙니다.
  * 3. 사진 위에 냐미 발도장이 쾅 찍힙니다(진동, 짧은 흔들림 한 번).
- * 4. "냐미가 맛있게 먹었어요!" 내레이션 상자가 박히고 냐미가 말합니다. [showDone] 이면 완료 버튼이 나옵니다.
+ * 4. "냐미가 맛있게 먹었어요!" 내레이션 상자가 위 칸 경계에, 영양 분석 안내 상자가 아래 칸 경계에 차례로 박힙니다.
+ *    [showDone] 이면 완료 버튼이 나옵니다.
  *
  * 컷신과 같은 무대([CutsceneStage])와 칸([CutscenePanelView])을 쓰고, 섬광이나 빛줄기는 쓰지 않습니다.
  * 사진은 칸에 맞춰 자를 뿐 다른 변형은 하지 않습니다.
  *
  * @param title 내레이션 상자 글. 상자가 우편함에 들어가면 "우편함에 쏙!"으로 바뀐다.
- * @param showLine 냐미가 말하는 중인지(먹었어요 장면).
  * @param playIntro 처음부터 재생할지. 처음 그릴 때만 본다. 아니면 끝난 모습으로 둔다.
  */
 @Composable
@@ -109,7 +103,6 @@ internal fun MealEnding(
     photoPath: String,
     cutscene: MealCutscene,
     @StringRes title: Int,
-    showLine: Boolean,
     showDone: Boolean,
     playIntro: Boolean,
     onFinaleShown: () -> Unit,
@@ -123,8 +116,8 @@ internal fun MealEnding(
     val epilogueIn = remember { Animatable(start) }
     val stampIn = remember { Animatable(start) }
     val captionIn = remember { Animatable(start) }
+    val noteIn = remember { Animatable(start) }
     val shake = remember { Animatable(0f) }
-    var captionLanded by remember { mutableStateOf(start == 1f) }
     var finaleShown by remember { mutableStateOf(start == 1f) }
     val latestOnFinaleShown by rememberUpdatedState(onFinaleShown)
     val finale = cutscene.spec.finale
@@ -145,7 +138,8 @@ internal fun MealEnding(
         launch { stampIn.animateTo(1f, spring(dampingRatio = StampDamping, stiffness = Spring.StiffnessMedium)) }
         delay(CaptionDelayMillis)
         captionIn.animateTo(1f, spring(dampingRatio = SlamDamping, stiffness = Spring.StiffnessMedium))
-        captionLanded = true
+        delay(NoteDelayMillis)
+        noteIn.animateTo(1f, spring(dampingRatio = SlamDamping, stiffness = Spring.StiffnessMedium))
     }
 
     CutsceneStage(backdrop = { paper }, modifier = modifier) { frame ->
@@ -229,43 +223,67 @@ internal fun MealEnding(
             )
         }
 
-        // 4. 내레이션 상자와 냐미의 말.
+        // 4. 내레이션 상자 둘. 위 칸 경계 왼쪽에 먹었다는 말, 아래 칸 경계 오른쪽에 영양 분석 안내.
         CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 1f)) {
             EndingCaption(
                 text = catNameStringResource(title),
                 frame = frame,
+                anchor = Offset(CaptionX, CaptionY),
+                alignEnd = false,
+                tiltDegrees = CaptionTiltDegrees,
+                textScale = CaptionTextScale,
                 appear = { captionIn.value },
             )
-        }
-        AnimatedVisibility(
-            visible = showLine && captionLanded,
-            enter = fadeIn() + scaleIn(initialScale = PopInScale),
-            exit = fadeOut(),
-            modifier = Modifier.bottomCenteredAt { frame.point(BalloonX, BalloonBottom) },
-        ) {
-            NyummyVoiceBubble(text = stringResource(R.string.meal_ceremony_analysis_pending), tail = NyummyBubbleTail.Bottom)
+            EndingCaption(
+                text = stringResource(R.string.meal_ceremony_analysis_pending),
+                frame = frame,
+                anchor = Offset(NoteEndX, NoteY),
+                alignEnd = true,
+                tiltDegrees = NoteTiltDegrees,
+                textScale = NoteTextScale,
+                appear = { noteIn.value },
+            )
         }
         EndingDoneButton(visible = showDone, onClick = onDoneClick)
     }
 }
 
-/** 만화 내레이션 상자. 흰 바탕에 먹선을 두르고 살짝 기울여 칸 경계에 걸쳐 박힌다. */
+/**
+ * 만화 내레이션 상자. 흰 바탕에 먹선을 두르고 살짝 기울여 칸 경계에 걸쳐 박힌다.
+ *
+ * @param anchor 상자 윗변의 기준 자리(캔버스 단위). [alignEnd] 면 오른쪽 끝, 아니면 왼쪽 끝이 여기에 온다.
+ */
 @Composable
-private fun EndingCaption(text: String, frame: CutsceneFrame, appear: () -> Float) {
+private fun EndingCaption(
+    text: String,
+    frame: CutsceneFrame,
+    anchor: Offset,
+    alignEnd: Boolean,
+    tiltDegrees: Float,
+    textScale: Float,
+    appear: () -> Float,
+) {
     val base = NyummyTheme.typography.displayL
-    val style = base.copy(fontSize = base.fontSize * CaptionTextScale * frame.canvasScale)
+    val style = base.copy(fontSize = base.fontSize * textScale * frame.canvasScale)
     val inkDp = with(LocalDensity.current) { frame.inkPx.toDp() }
     Box(
         modifier = Modifier
-            .offset { frame.point(CaptionX, CaptionY).round() }
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
+                layout(placeable.width, placeable.height) {
+                    val at = frame.point(anchor.x, anchor.y)
+                    val x = if (alignEnd) at.x - placeable.width else at.x
+                    placeable.place(x.roundToInt(), at.y.roundToInt())
+                }
+            }
             .graphicsLayer {
                 val a = appear()
                 val scale = lerp(CaptionFromScale, 1f, a)
                 scaleX = scale
                 scaleY = scale
-                rotationZ = CaptionTiltDegrees
+                rotationZ = tiltDegrees
                 alpha = (a * StampAlphaSpeed).coerceIn(0f, 1f)
-                transformOrigin = TransformOrigin(0f, 0.5f)
+                transformOrigin = TransformOrigin(if (alignEnd) 1f else 0f, 0.5f)
             }
             .background(NyummyTheme.colors.bg.surface)
             .border(inkDp, NyummyTheme.colors.content.primary)
@@ -305,19 +323,9 @@ private fun Modifier.centeredAt(center: () -> Offset) = layout { measurable, con
     }
 }
 
-/** 재고 나면 아래 가운데가 [anchor] 에 오게 놓는다. 말풍선 꼬리 끝을 냐미 머리 위에 맞출 때 쓴다. */
-private fun Modifier.bottomCenteredAt(anchor: () -> Offset) = layout { measurable, constraints ->
-    val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
-    layout(placeable.width, placeable.height) {
-        val a = anchor()
-        placeable.place((a.x - placeable.width / 2f).roundToInt(), (a.y - placeable.height).roundToInt())
-    }
-}
 
-private fun Offset.round() = IntOffset(x.roundToInt(), y.roundToInt())
-
-/** 마무리 장면이 다 박히고 말풍선을 읽을 만큼 머무는 시간. 이 뒤에 상자 장면이나 완료 버튼으로 넘어간다. */
-internal const val MealEndingMillis = 2_300L
+/** 마무리 장면이 다 박히고 영양 분석 안내를 읽을 만큼 머무는 시간. 이 뒤에 상자 장면이나 완료 버튼으로 넘어간다. */
+internal const val MealEndingMillis = 2_800L
 
 // 페이지: 위 칸은 음식 사진(4:3에 가깝게), 아래 칸은 배부른 냐미(3:2에 가깝게). 그 아래는 완료 버튼 자리로 비운다.
 private val PhotoBottom = Seam(300f, 284f)
@@ -344,9 +352,11 @@ private const val CaptionTiltDegrees = -1.5f
 private const val CaptionTextScale = 1.1f
 private const val CaptionFromScale = 1.15f
 
-/** 말풍선 꼬리 끝 자리(캔버스 단위). 배부른 냐미 머리 위다. */
-private const val BalloonX = 236f
-private const val BalloonBottom = 384f
+/** 영양 분석 안내 상자 오른쪽 위 자리(캔버스 단위). 배부른 냐미 칸 아래 경계에 걸친다. 글이 길어 조금 작게 쓴다. */
+private const val NoteEndX = 346f
+private const val NoteY = 556f
+private const val NoteTiltDegrees = 1.5f
+private const val NoteTextScale = 0.72f
 
 private const val FoldMillis = 450
 
@@ -354,6 +364,6 @@ private const val FoldMillis = 450
 private const val SwapAt = 0.5f
 private const val StampDelayMillis = 450L
 private const val CaptionDelayMillis = 300L
+private const val NoteDelayMillis = 150L
 private const val SlamDamping = 0.6f
-private const val PopInScale = 0.85f
 private const val ButtonFadeMillis = 220

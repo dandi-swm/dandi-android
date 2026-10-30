@@ -19,7 +19,7 @@
     <string name="meal_record_done">Done</string>
     <string name="meal_ceremony_waiting">%1$s is tasting…!!</string>
     <string name="meal_ceremony_reaction_word">Boing!!</string>
-    <string name="meal_ceremony_analysis_pending">I\'ll taste it carefully and let you know!</string>
+    <string name="meal_ceremony_analysis_pending">I\'ll share your nutrition results in a moment</string>
     <string name="meal_ceremony_box_bronze">Gift box!</string>
     <string name="meal_ceremony_box_silver">Sparkly box!</string>
     <string name="meal_ceremony_box_gold">Golden box!</string>

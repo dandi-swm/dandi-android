@@ -213,7 +213,6 @@ internal fun MealCeremony(
                 photoPath = photoPath,
                 cutscene = cutscene,
                 title = if (giftDelivered) R.string.meal_ceremony_box_sent else R.string.meal_record_done_title,
-                showLine = stage == MealCeremonyStage.Ate,
                 showDone = stage == MealCeremonyStage.Finished,
                 playIntro = !reducedMotion && stage == MealCeremonyStage.Ate,
                 onFinaleShown = { holdsCutscene = false },
