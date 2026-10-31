@@ -58,6 +58,11 @@ internal object NyummyPalette {
     val SceneRewardStage = Color(0xFF173221)
     val SceneRoomFloor = Color(0xFFC57D33)
 
+    /** 컷신 바탕. 종이(크림), 새벽(라벤더), 밤(남색). */
+    val SceneCutscenePaper = Color(0xFFF6ECDC)
+    val SceneCutsceneDawn = Color(0xFFE4E1F2)
+    val SceneCutsceneNight = Color(0xFF222B57)
+
     // 외부 브랜드 색. 피그마 v2에는 카카오 노랑·심볼만 있고, 나머지는 소셜 로그인 버튼 가이드를 따르려고 남긴다.
     val ExternalNaverGreen = Color(0xFF03C75A)
     val ExternalGoogleBlue = Color(0xFF4285F4)

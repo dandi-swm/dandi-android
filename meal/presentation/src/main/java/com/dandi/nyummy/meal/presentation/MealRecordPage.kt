@@ -56,6 +56,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -76,6 +77,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.image.NyummyCdn
+import com.dandi.nyummy.common.presentation.permission.openAppNotificationSettings
 import com.dandi.nyummy.common.presentation.permission.rememberPermissionRequester
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.meal.presentation.component.MealCameraOverlay
@@ -115,6 +117,11 @@ fun MealRecordPage(
         if (isRejected && granted) viewModel.onIntent(MealRecordIntent.PermissionResult(granted = true))
         onPauseOrDispose { }
     }
+    // 마무리 장면의 알림 안내는 기기 설정에서 알림을 켜고 돌아오면 바로 사라져야 하므로 보일 때마다 다시 읽는다.
+    LifecycleResumeEffect(Unit) {
+        viewModel.onIntent(MealRecordIntent.DeviceNotificationChecked(NotificationManagerCompat.from(context).areNotificationsEnabled()))
+        onPauseOrDispose { }
+    }
     // 진입 직후(초기 상태 Requesting)와 거부 화면의 재요청 모두 이 한 곳에서 시스템 팝업을 띄운다.
     // 이미 허용된 상태면 팝업 없이 즉시 허용 콜백이 온다. 앱이 종료됐다 사진 확인이나 연출 단계로 되살아났으면
     // 카메라가 필요 없으니, 다시 찍으러 프리뷰로 돌아갈 때 묻는다.
@@ -138,6 +145,7 @@ fun MealRecordPage(
         uiState = uiState,
         onIntent = viewModel::onIntent,
         onOpenAppSettings = { openAppSettings(context) },
+        onOpenNotificationSettings = { context.openAppNotificationSettings() },
         onGalleryClick = {
             if (!isGalleryPickerOpen) {
                 isGalleryPickerOpen = true
@@ -157,6 +165,7 @@ private fun MealRecordScreen(
     onGalleryClick: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenAppSettings: () -> Unit = {},
+    onOpenNotificationSettings: () -> Unit = {},
 ) {
     // 촬영본 확인 중의 시스템 백은 이탈 대신 재촬영 복귀로, 연출 중에는 닫기와 같게 처리한다
     // (접수되기 전에는 ViewModel 이 무시한다).
@@ -176,10 +185,13 @@ private fun MealRecordScreen(
         MealCeremony(
             photoPath = phase.photoPath,
             stage = phase.stage,
+            cutscene = phase.cutscene,
             rewardBoxGrade = phase.rewardBoxGrade,
             sendsRewardBox = phase.sendsRewardBox(uiState.isMailGiftEnabled),
             roomBackgroundUrl = uiState.roomBackgroundItemId?.let(NyummyCdn::itemUrl),
+            notificationsOff = !uiState.isDeviceNotificationEnabled,
             onStageFinished = { onIntent(MealRecordIntent.CeremonyStageFinished(it)) },
+            onNotificationSettingsClick = onOpenNotificationSettings,
             onSkipClick = { onIntent(MealRecordIntent.ClickSkipCeremony) },
             onCloseClick = { onIntent(MealRecordIntent.ClickClose) },
             onDoneClick = { onIntent(MealRecordIntent.ClickDone) },

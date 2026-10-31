@@ -7,32 +7,24 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -44,7 +36,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -54,9 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
@@ -70,17 +59,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.cat.catNameStringResource
+import com.dandi.nyummy.common.presentation.cutscene.CutscenePlayer
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBubbleTail
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyChip
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
@@ -91,11 +75,11 @@ import com.dandi.nyummy.common.presentation.room.RoomBackgroundImage
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
 import com.dandi.nyummy.meal.presentation.MealCeremonyStage
+import com.dandi.nyummy.meal.presentation.MealCutscene
 import com.dandi.nyummy.meal.presentation.R
 import com.dandi.nyummy.meal.presentation.mealPhotoModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 
 /**
  * 식사 기록 연출 화면입니다. 사진을 제출한 순간부터 끝날 때까지 한 화면에서 이어집니다.
@@ -116,15 +100,20 @@ import kotlinx.coroutines.launch
  *
  * @param rewardBoxGrade 접수된 기록의 보상 상자 등급. 접수 전이면 [RewardBoxGrade.NONE] 이다.
  * @param sendsRewardBox 상자를 우편함으로 보내는 장면까지 보여 줄지
+ * @param notificationsOff 기기에서 이 앱의 알림이 꺼져 있는지. 마무리 장면에서 알림을 켜 달라고 안내한다.
+ * @param onNotificationSettingsClick 그 안내를 눌렀다. 기기 알림 설정을 연다.
  */
 @Composable
 internal fun MealCeremony(
     photoPath: String,
     stage: MealCeremonyStage,
+    cutscene: MealCutscene,
     rewardBoxGrade: RewardBoxGrade,
     sendsRewardBox: Boolean,
     roomBackgroundUrl: String?,
+    notificationsOff: Boolean,
     onStageFinished: (MealCeremonyStage) -> Unit,
+    onNotificationSettingsClick: () -> Unit,
     onSkipClick: () -> Unit,
     onCloseClick: () -> Unit,
     onDoneClick: () -> Unit,
@@ -132,7 +121,6 @@ internal fun MealCeremony(
 ) {
     val haptic = LocalHapticFeedback.current
     val density = LocalDensity.current
-    val scope = rememberCoroutineScope()
     val reducedMotion = rememberReducedMotion()
     val latestOnStageFinished by rememberUpdatedState(onStageFinished)
 
@@ -144,10 +132,11 @@ internal fun MealCeremony(
     // 상자와 우편 아이콘 자리는 창 기준으로 잰다. 이 화면이 창 맨 위에서 시작하지 않으면(시스템 바를 피해 놓이는 등)
     // 그만큼 빼야 이 화면 안에 그리는 날아가는 상자가 우편 아이콘에 닿는다.
     var originInRoot by remember { mutableStateOf(Offset.Zero) }
+    // 마무리는 컷신 마지막 그림을 다시 읽어야 해서, 넘어가는 순간 한두 프레임 빈 페이지가 비친다.
+    // 이번에 컷신을 틀었다면 마무리가 그 그림을 그릴 때까지 컷신의 마지막 화면을 위에 남겨 둔다.
+    var holdsCutscene by remember { mutableStateOf(false) }
 
     val serve = remember { Animatable(if (reducedMotion || stage != MealCeremonyStage.Serving) 1f else 0f) }
-    val flash = remember { Animatable(0f) }
-    val shake = remember { Animatable(0f) }
     val mailGulp = remember { Animatable(1f) }
 
     // 장면마다 그 장면의 움직임만 재생하고, 끝나면 알린다. 다음 장면은 ViewModel 이 정한다.
@@ -162,15 +151,14 @@ internal fun MealCeremony(
             // 응답이 올 때까지 두근두근. 접수되면 ViewModel 이 띠욧으로 넘긴다.
             MealCeremonyStage.Waiting -> return@LaunchedEffect
 
-            // 2. 띠욧! 컷인. 터지는 순간의 섬광과 흔들림은 컷인이 onPop 으로 알려 준다. 애니메이션을 끄면 곧장 넘어간다.
-            MealCeremonyStage.Reaction -> if (!reducedMotion) delay(TasteReactionTotalMillis)
-
-            // 3. 냐미가 맛있게 먹었어요. 띠욧을 건너뛰었으면 섬광과 흔들림이 남지 않게 걷는다.
-            MealCeremonyStage.Ate -> {
-                flash.snapTo(0f)
-                shake.snapTo(0f)
-                delay(AteMillis)
+            // 2. 맛보기 컷신. 접수될 때 정한 컷신을 끝까지 튼다. 애니메이션을 끄면 곧장 넘어간다.
+            MealCeremonyStage.Reaction -> if (!reducedMotion) {
+                holdsCutscene = true
+                delay(cutscene.spec.totalMillis)
             }
+
+            // 3. 마무리: 마지막 그림이 사진 칸으로 접히고, 배부른 냐미와 발도장이 박힌다.
+            MealCeremonyStage.Ate -> delay(if (reducedMotion) AteMillis else MealEndingMillis)
 
             // 4. 상자 등장과 승급 → 우편함에 쏙 → 곧장 홈으로. 따로 끝 화면을 두지 않는다.
             MealCeremonyStage.BoxReveal -> delay(if (reducedMotion) ReducedRevealMillis else rewardBoxGrade.stageMillis())
@@ -195,15 +183,12 @@ internal fun MealCeremony(
         }
     }
 
-    val shakePx = with(density) { ShakeDistance.toPx() }
-
     Box(
         modifier = modifier
             .fillMaxSize()
             // 빛줄기, 상자 무대의 빛, 색종이처럼 자기 영역보다 크게 그리는 효과가 상태 바와 내비게이션 바 위로 새지 않게 자른다.
             .clipToBounds()
             .background(NyummyTheme.colors.bg.surface)
-            .graphicsLayer { translationX = shake.value * shakePx }
             .onGloballyPositioned { originInRoot = it.positionInRoot() },
     ) {
         when (stage) {
@@ -223,44 +208,29 @@ internal fun MealCeremony(
             else -> Unit
         }
 
-        // 먹었어요: 띠욧 배경이 차분해지며 이어진다. 상자를 보낼 때는 상자 무대가 이 위를 덮고,
-        // 상자가 우편 아이콘에 쏙 들어가면 제목만 "우편함에 쏙!"으로 바뀐 뒤 홈으로 간다.
+        // 마무리: 컷신 마지막 그림에서 이어져 만화 마지막 페이지로 끝난다. 상자를 보낼 때는 상자 무대가 이 위를 덮고,
+        // 상자가 우편 아이콘에 쏙 들어가면 내레이션만 "우편함에 쏙!"으로 바뀐 뒤 홈으로 간다.
         val showsAte = stage == MealCeremonyStage.Ate || stage == MealCeremonyStage.BoxReveal ||
             stage == MealCeremonyStage.BoxSend || stage == MealCeremonyStage.Finished
         if (showsAte) {
-            AteCelebration(
+            MealEnding(
+                photoPath = photoPath,
+                cutscene = cutscene,
                 title = if (giftDelivered) R.string.meal_ceremony_box_sent else R.string.meal_record_done_title,
-                showLine = stage == MealCeremonyStage.Ate,
                 showDone = stage == MealCeremonyStage.Finished,
-                animate = !reducedMotion,
+                playIntro = !reducedMotion && stage == MealCeremonyStage.Ate,
+                notificationsOff = notificationsOff,
+                onFinaleShown = { holdsCutscene = false },
+                onNotificationSettingsClick = onNotificationSettingsClick,
                 onDoneClick = onDoneClick,
                 modifier = Modifier.fillMaxSize(),
             )
         }
 
-        // 애니메이션을 끄면 띠욧 장면은 곧장 지나가므로 그리지 않는다.
-        if (stage == MealCeremonyStage.Reaction && !reducedMotion) {
-            // 만화 페이지 바탕은 시스템 바 뒤까지 깔고, 컷은 시스템 바를 피해 놓는다.
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(NyummyTheme.colors.bg.sceneDark),
-            )
-            TasteReactionCutIn(
-                art = MealCeremonyArt.tasting,
-                onPop = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    scope.launch {
-                        // 섬광은 한 번만, 불투명도를 70%로 묶어 눈부시지 않게 한다.
-                        flash.snapTo(FlashAlpha)
-                        flash.animateTo(0f, tween(FlashMillis))
-                    }
-                    scope.launch { shake.animateTo(0f, shakeSpec()) }
-                },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .systemBarsPadding(),
-            )
+        // 애니메이션을 끄면 컷신은 곧장 지나가므로 그리지 않는다. 컷신 바탕은 시스템 바 뒤까지 깔린다.
+        val showsCutscene = stage == MealCeremonyStage.Reaction || (stage == MealCeremonyStage.Ate && holdsCutscene)
+        if (showsCutscene && !reducedMotion) {
+            CutscenePlayer(spec = cutscene.spec, modifier = Modifier.fillMaxSize())
         }
 
         if (sendsRewardBox && (stage == MealCeremonyStage.BoxReveal || stage == MealCeremonyStage.BoxSend)) {
@@ -319,13 +289,6 @@ internal fun MealCeremony(
             }
         }
 
-        val flashColor = NyummyTheme.colors.bg.surface
-        Box(
-            Modifier
-                .fillMaxSize()
-                .graphicsLayer { alpha = flash.value }
-                .background(flashColor),
-        )
     }
 }
 
@@ -557,160 +520,9 @@ private fun WaitingScene(
     }
 }
 
-/** 만세하며 통통 뛰는 냐미. 뛰어오를 때는 위로 뜨고, 바닥에 닿는 순간 살짝 눌린다. */
-@Composable
-private fun CheeringNyummy(width: Dp, animate: Boolean, modifier: Modifier = Modifier) {
-    val jump = rememberInfiniteTransition(label = "CheerJump")
-    val hop by jump.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(jumpSpec()),
-        label = "cheerHop",
-    )
-    CeremonyArtView(
-        art = MealCeremonyArt.cheering,
-        width = width,
-        contentDescription = catNameStringResource(R.string.meal_record_cat_content_description),
-        modifier = modifier.graphicsLayer {
-            if (animate) {
-                translationY = -JumpHeight.toPx() * hop
-                val squash = if (hop < LandingWindow) 1f - (LandingWindow - hop) * LandingSquash else 1f
-                scaleY = squash
-                scaleX = 2f - squash
-            }
-            transformOrigin = TransformOrigin(0.5f, 1f)
-        },
-    )
-}
-
-/**
- * 냐미가 맛있게 먹었어요. 띠욧과 같은 에버그린 빛 배경을 더 차분하게 깔고, 만세하며 뛰는 냐미 위에
- * 말풍선, 아래에 흰 글자에 그린 테두리를 두른 제목을 둡니다. 우편함 연출이 꺼져 있으면 여기서 [완료] 로 끝냅니다.
- * 영양 분석은 접수 뒤에 진행되므로 말풍선([showLine])은 꼼꼼히 맛보고 알려 주겠다고 말합니다.
- */
-@Composable
-private fun AteCelebration(
-    title: Int,
-    showLine: Boolean,
-    showDone: Boolean,
-    animate: Boolean,
-    onDoneClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val appear = remember { Animatable(if (animate) 0f else 1f) }
-    LaunchedEffect(Unit) {
-        appear.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow))
-    }
-    Box(modifier = modifier) {
-        GlowBurstBackground(
-            modifier = Modifier.fillMaxSize(),
-            focus = Offset(0.5f, AteFocusY),
-            intensity = AteGlowIntensity,
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer {
-                    alpha = appear.value.coerceIn(0f, 1f)
-                    val scale = AteStartScale + (1f - AteStartScale) * appear.value
-                    scaleX = scale
-                    scaleY = scale
-                },
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Spacer(Modifier.weight(AteTopWeight))
-            Box(Modifier.height(BubbleSlotHeight), contentAlignment = Alignment.BottomCenter) {
-                androidx.compose.animation.AnimatedVisibility(
-                    visible = showLine,
-                    enter = fadeIn() + scaleIn(initialScale = PopInScale),
-                    exit = fadeOut(),
-                ) {
-                    NyummyVoiceBubble(
-                        text = stringResource(R.string.meal_ceremony_analysis_pending),
-                        tail = NyummyBubbleTail.Bottom,
-                    )
-                }
-            }
-            CheeringNyummy(width = AteCheerWidth, animate = animate)
-            Spacer(Modifier.height(NyummyTheme.spacing.s24))
-            OutlinedTitle(
-                text = catNameStringResource(title),
-                modifier = Modifier.padding(horizontal = NyummyTheme.spacing.s24),
-            )
-            Spacer(Modifier.weight(AteBottomWeight))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .height(ButtonAreaHeight),
-                contentAlignment = Alignment.Center,
-            ) {
-                androidx.compose.animation.AnimatedVisibility(visible = showDone, enter = fadeIn(tween(ButtonFadeMillis))) {
-                    NyummyButton(
-                        text = stringResource(R.string.meal_record_done),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = NyummyTheme.spacing.s20),
-                        style = NyummyButtonStyle.Neutral,
-                        size = NyummyButtonSize.L,
-                        onClick = onDoneClick,
-                    )
-                }
-            }
-        }
-    }
-}
-
-/** 흰 글자에 그린 테두리를 두른 큰 제목. 띠욧, 먹었어요처럼 에버그린 배경 위에 쓴다. */
-@Composable
-private fun OutlinedTitle(text: String, modifier: Modifier = Modifier) {
-    val style = NyummyTheme.typography.displayL
-    val strokePx = with(LocalDensity.current) { TitleStroke.toPx() }
-    Box(modifier = modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
-        NyummyText(
-            text = text,
-            style = style.copy(drawStyle = Stroke(width = strokePx, join = StrokeJoin.Round)),
-            color = NyummyTheme.colors.content.brand,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-        )
-        NyummyText(
-            text = text,
-            style = style,
-            color = NyummyTheme.colors.bg.surface,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-        )
-    }
-}
-
-/** 화면 전체를 좌우로 짧게 흔든다. 값은 [ShakeDistance] 배율이다. */
-private fun shakeSpec() = keyframes {
-    durationMillis = ShakeMillis
-    1f at ShakeMillis / 6
-    -1f at ShakeMillis * 2 / 6
-    0.7f at ShakeMillis * 3 / 6
-    -0.5f at ShakeMillis * 4 / 6
-    0.2f at ShakeMillis * 5 / 6
-    0f at ShakeMillis
-}
-
-/** 통통 뛰기 한 번: 0 이 바닥, 1 이 가장 높은 곳. 바닥에서 잠깐 쉰다. */
-private fun jumpSpec() = keyframes {
-    durationMillis = JumpMillis
-    0f at 0
-    0f at JumpRestMillis
-    1f at JumpRestMillis + (JumpMillis - JumpRestMillis) / 2 using FastOutSlowInEasing
-    0f at JumpMillis
-}
-
 private const val ServeDamping = 0.62f
 private val ServeDistance = 260.dp
 
-private const val FlashAlpha = 0.5f
-private const val FlashMillis = 180
-private const val ShakeMillis = 320
-private val ShakeDistance = 7.dp
 
 private const val AteMillis = 1_400L
 private const val ReducedRevealMillis = 900L
@@ -742,26 +554,7 @@ private const val TwinkleMillis = 650
 private val SparkleSize = 22.dp
 private val SparkleSpread = 96.dp
 private val SparkleRise = 90.dp
-private const val PopInScale = 0.85f
-
 
 /** 기다리는 냐미 그림에서 머리 꼭대기가 있는 높이(그림 높이 대비 비율). 말풍선을 그 위에 놓는다. */
 private const val WaitingHeadTop = 30f / 405f
 private val BubbleGap = 4.dp
-
-private val BubbleSlotHeight = 64.dp
-private val JumpHeight = 22.dp
-private const val JumpMillis = 900
-private const val JumpRestMillis = 240
-private const val LandingWindow = 0.08f
-private const val LandingSquash = 1.2f
-private val ButtonAreaHeight = 148.dp
-private const val ButtonFadeMillis = 220
-
-private const val AteFocusY = 0.42f
-private const val AteGlowIntensity = 0.85f
-private const val AteStartScale = 0.92f
-private const val AteTopWeight = 1f
-private const val AteBottomWeight = 0.6f
-private val AteCheerWidth = 220.dp
-private val TitleStroke = 5.dp

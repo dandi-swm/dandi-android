@@ -36,7 +36,7 @@ sealed interface MealRecordReducerEvent : ReducerEvent {
     data object SubmitStarted : MealRecordReducerEvent
 
     /** 기록이 접수되어 연출이 맛 리액션으로 넘어갑니다. */
-    data class SubmitSucceeded(val rewardBoxGrade: RewardBoxGrade) : MealRecordReducerEvent
+    data class SubmitSucceeded(val rewardBoxGrade: RewardBoxGrade, val cutscene: MealCutscene) : MealRecordReducerEvent
 
     /** 제출이 실패했습니다. 안내 후 곧장 홈으로 돌아갑니다. */
     data object SubmitFailed : MealRecordReducerEvent
@@ -49,6 +49,9 @@ sealed interface MealRecordReducerEvent : ReducerEvent {
 
     /** 지금 마이룸에 깔린 배경을 읽었습니다. 연출의 고양이방을 이 배경으로 그립니다. */
     data class RoomBackgroundLoaded(val itemId: Long) : MealRecordReducerEvent
+
+    /** 기기에서 이 앱의 알림을 허용했는지 다시 읽었습니다. */
+    data class DeviceNotificationChanged(val isEnabled: Boolean) : MealRecordReducerEvent
 
     /** 식사 기록 튜토리얼로 열지 확인했습니다. 튜토리얼이면 예시 사진 확인 단계에서 시작합니다. */
     data class TutorialChecked(val isTutorial: Boolean) : MealRecordReducerEvent

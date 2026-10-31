@@ -30,6 +30,8 @@ sealed interface MealCameraPhase {
         val source: MealPhotoSource,
         val submit: MealSubmitStatus = MealSubmitStatus.Uploading,
         val stage: MealCeremonyStage = MealCeremonyStage.Serving,
+        /** 접수되면 틀 맛보기 컷신. 접수될 때 정해 두어, 화면이 다시 만들어져도 같은 컷신을 이어 튼다. */
+        val cutscene: MealCutscene = MealCutscene.Tiyot,
     ) : MealCameraPhase
 }
 
@@ -88,8 +90,12 @@ fun MealCameraPhase.Ceremony.sendsRewardBox(isMailGiftEnabled: Boolean): Boolean
     isMailGiftEnabled && rewardBoxGrade != RewardBoxGrade.NONE
 
 /** 접수 결과를 싣습니다. 응답을 기다리던 중이면 곧장 맛 리액션으로, 사진 카드가 올라오는 중이면 그 장면이 끝난 뒤 넘어갑니다. */
-fun MealCameraPhase.Ceremony.accepted(rewardBoxGrade: RewardBoxGrade): MealCameraPhase.Ceremony = copy(
+fun MealCameraPhase.Ceremony.accepted(
+    rewardBoxGrade: RewardBoxGrade,
+    cutscene: MealCutscene = MealCutscene.Tiyot,
+): MealCameraPhase.Ceremony = copy(
     submit = MealSubmitStatus.Accepted(rewardBoxGrade),
+    cutscene = cutscene,
     stage = if (stage == MealCeremonyStage.Waiting) MealCeremonyStage.Reaction else stage,
 )
 
@@ -133,6 +139,8 @@ enum class MealCameraPermission { Requesting, Granted, Denied, Blocked }
  * @property isTutorialChecked 식사 기록 튜토리얼로 열지 확인을 마쳤는지. 마치기 전에는 카메라 권한을 묻지 않습니다
  * (튜토리얼은 예시 사진을 쓰므로 권한을 묻지 않습니다).
  * @property tutorialSkipConfirm 식사 기록 튜토리얼의 건너뛰기 확인에 보일 남은 안내. 확인이 닫혀 있으면 null입니다.
+ * @property isDeviceNotificationEnabled 기기에서 이 앱의 알림을 허용했는지. 꺼져 있으면 마무리 장면에서 영양 분석 결과 알림을 받도록 켜 달라고 안내합니다.
+ * 읽기 전에는 켜진 것으로 두어 안내가 잠깐 비치지 않게 합니다.
  */
 data class MealRecordUIState(
     val phase: MealCameraPhase = MealCameraPhase.Preview,
@@ -144,6 +152,7 @@ data class MealRecordUIState(
     val roomBackgroundItemId: Long? = null,
     val isTutorialChecked: Boolean = false,
     val tutorialSkipConfirm: ImmutableList<NyummyTutorialLesson>? = null,
+    val isDeviceNotificationEnabled: Boolean = true,
 ) : UiState {
 
     /** 기록이 접수됐는지. 접수된 뒤에만 연출 중 닫기·백으로 화면을 마칠 수 있습니다. */

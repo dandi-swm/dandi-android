@@ -10,6 +10,7 @@ import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.meal.domain.ImportGalleryMealPhotoUseCase
@@ -17,6 +18,7 @@ import com.dandi.nyummy.meal.domain.SubmitMealUseCase
 import com.dandi.nyummy.meal.domain.SubmitTutorialMealUseCase
 import com.dandi.nyummy.meal.domain.TutorialMealResult
 import com.dandi.nyummy.meal.entity.MealPhotoSource
+import com.dandi.nyummy.meal.entity.RewardBoxGrade
 import com.dandi.nyummy.room.domain.GetRoomBackgroundUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
@@ -137,6 +139,8 @@ class MealRecordViewModel @Inject constructor(
 
             MealRecordIntent.ClickSkipCeremony -> skipCeremony()
 
+            is MealRecordIntent.DeviceNotificationChecked -> dispatch(MealRecordReducerEvent.DeviceNotificationChanged(intent.isEnabled))
+
             MealRecordIntent.TutorialSkip -> if (currentState.phase.isTutorial && currentState.phase is MealCameraPhase.Captured) {
                 dispatch(MealRecordReducerEvent.TutorialSkipConfirmChanged(remainingTutorialLessons()))
             }
@@ -186,7 +190,7 @@ class MealRecordViewModel @Inject constructor(
                 } ?: state
 
             is MealRecordReducerEvent.SubmitSucceeded ->
-                state.updateCeremony { it.accepted(event.rewardBoxGrade) }
+                state.updateCeremony { it.accepted(event.rewardBoxGrade, event.cutscene) }
 
             MealRecordReducerEvent.SubmitFailed ->
                 state.updateCeremony { it.copy(submit = MealSubmitStatus.Failed) }
@@ -197,6 +201,8 @@ class MealRecordViewModel @Inject constructor(
             MealRecordReducerEvent.FinishStarted -> state.copy(isFinishing = true)
 
             is MealRecordReducerEvent.RoomBackgroundLoaded -> state.copy(roomBackgroundItemId = event.itemId)
+
+            is MealRecordReducerEvent.DeviceNotificationChanged -> state.copy(isDeviceNotificationEnabled = event.isEnabled)
 
             is MealRecordReducerEvent.TutorialSkipConfirmChanged -> state.copy(tutorialSkipConfirm = event.remaining)
 
@@ -242,20 +248,25 @@ class MealRecordViewModel @Inject constructor(
      * 촬영본을 업로드해 식사를 생성한다. 성공 알림은 연출 화면이 담당한다.
      *
      * 응답이 오면 기록이 접수된 것이라 연출이 맛 리액션으로 넘어간다. 영양 분석은 접수 뒤에 진행되므로 기다리지 않는다.
+     * 응답이 빨라도 접수 결과는 [MIN_WAIT_MILLIS]가 지난 뒤에 반영해, 냐미가 숟가락을 들고 기다리는 장면을 보여 준다.
+     * 서버가 기록을 비동기로 받아 바로 응답하게 바뀌어도 이 장면이 줄지 않는다.
      * 기록하지 못하면 UseCase 가 안내 스낵바를 띄우고, 연출을 멈추고 곧장 홈으로 간다.
      */
     private fun submitCapturedMeal() {
         val phase = currentState.phase as? MealCameraPhase.Captured ?: return
         dispatch(MealRecordReducerEvent.SubmitStarted)
+        val startedAt = TimeSource.Monotonic.markNow()
         val source = phase.source.analyticsName
         analyticsHelper.logEvent(AnalyticsEvent.MealSubmit(source))
         viewModelScope.launch {
             submitMeal(phase.photoPath, phase.source)
                 .onSuccess { created ->
-                    dispatch(MealRecordReducerEvent.SubmitSucceeded(created.rewardBoxGrade))
+                    // 걸린 시간은 기다림을 더하기 전, 실제 응답 기준으로 남긴다.
                     analyticsHelper.logEvent(
                         AnalyticsEvent.MealSubmitSuccess(source = source, durationSec = openedAt.elapsedNow().inWholeSeconds),
                     )
+                    waitMinimum(startedAt)
+                    dispatch(submitSucceeded(created.rewardBoxGrade))
                 }
                 .onFailure {
                     dispatch(MealRecordReducerEvent.SubmitFailed)
@@ -279,8 +290,7 @@ class MealRecordViewModel @Inject constructor(
     /**
      * 냐미가 준비한 예시 사진으로 튜토리얼 식사를 기록한다. 사진은 올리지 않는다.
      * 접수되면 평소처럼 연출을 이어 가고, 이미 했다고 하면 연출 없이 홈으로 간다. 실패하면 UseCase 가 안내하고 홈으로 간다.
-     * 사진을 올리지 않아 응답이 바로 오므로, 접수 결과는 [TUTORIAL_MIN_WAIT_MILLIS]가 지난 뒤에 반영한다.
-     * 그래야 사진 카드가 올라오고 냐미가 두근두근 기다리는 장면을 보고 띠욧으로 넘어간다.
+     * 사진을 올리지 않아 응답이 바로 오므로, 평소 기록처럼 접수 결과는 [MIN_WAIT_MILLIS]가 지난 뒤에 반영한다.
      */
     private fun submitTutorial() {
         if (currentState.phase !is MealCameraPhase.Captured) return
@@ -291,8 +301,8 @@ class MealRecordViewModel @Inject constructor(
                 .onSuccess { result ->
                     when (result) {
                         is TutorialMealResult.Accepted -> {
-                            delay((TUTORIAL_MIN_WAIT_MILLIS - startedAt.elapsedNow().inWholeMilliseconds).coerceAtLeast(0L))
-                            dispatch(MealRecordReducerEvent.SubmitSucceeded(result.meal.rewardBoxGrade))
+                            waitMinimum(startedAt)
+                            dispatch(submitSucceeded(result.meal.rewardBoxGrade))
                         }
                         TutorialMealResult.AlreadyCompleted -> finishRecord()
                     }
@@ -303,6 +313,15 @@ class MealRecordViewModel @Inject constructor(
                 }
         }
     }
+
+    /** 기록을 보낸 지 [MIN_WAIT_MILLIS]가 될 때까지 기다린다. 이미 지났으면 곧장 돌아온다. */
+    private suspend fun waitMinimum(startedAt: TimeSource.Monotonic.ValueTimeMark) {
+        delay((MIN_WAIT_MILLIS - startedAt.elapsedNow().inWholeMilliseconds).coerceAtLeast(0L))
+    }
+
+    /** 접수되면 이번에 틀 컷신을 함께 정한다. 시간대는 기기 타임존 기준이다. */
+    private fun submitSucceeded(rewardBoxGrade: RewardBoxGrade) =
+        MealRecordReducerEvent.SubmitSucceeded(rewardBoxGrade, pickMealCutscene(DeviceTime.now().hour))
 
     /**
      * 연출 장면 [finished] 의 움직임이 끝나면 다음 장면으로 넘긴다. 다음 장면이 없으면 연출을 마치고 홈으로 간다.
@@ -406,5 +425,8 @@ private val MealRecordUIState.analyticsStage: String
         is MealCameraPhase.Ceremony -> if (phase.submit == MealSubmitStatus.Failed) "failed" else "uploading"
     }
 
-/** 튜토리얼 식사 접수 결과를 반영하기까지 기다리는 최소 시간. 사진 카드가 올라오고(약 1초) 두근두근을 잠깐 보여 준다. */
-private const val TUTORIAL_MIN_WAIT_MILLIS = 2_500L
+/**
+ * 기록을 보내고 접수 결과를 반영하기까지 기다리는 최소 시간. 사진 카드가 올라오고(약 1초)
+ * 냐미가 숟가락을 들고 두근두근 기다리는 장면을 2초쯤 보여 준다.
+ */
+private const val MIN_WAIT_MILLIS = 3_000L
