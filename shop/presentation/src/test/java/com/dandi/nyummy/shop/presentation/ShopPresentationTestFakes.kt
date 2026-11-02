@@ -125,7 +125,15 @@ internal class FakeShopRepository : ShopRepository {
     override suspend fun updateCartItemQuantity(productId: Long, quantity: Int): CartVO = cart(CartCall.Quantity(productId, quantity))
     override suspend fun updateCartSelection(productIds: List<Long>): CartVO = cart(CartCall.Selection(productIds))
     override suspend fun deleteCartItems(productIds: List<Long>): CartVO = cart(CartCall.Delete(productIds))
-    override suspend fun purchase(idempotencyKey: String, products: List<PurchaseProductVO>) = PurchaseResultVO()
+    val purchaseRequests = mutableListOf<List<PurchaseProductVO>>()
+
+    /** 구매 요청마다 돌려줄 결과. 예외를 던지면 그 요청이 실패한다. */
+    var purchaseHandler: suspend (List<PurchaseProductVO>) -> PurchaseResultVO = { PurchaseResultVO() }
+
+    override suspend fun purchase(idempotencyKey: String, products: List<PurchaseProductVO>): PurchaseResultVO {
+        purchaseRequests += products
+        return purchaseHandler(products)
+    }
     override suspend fun getCoinHistories(cursor: Long?, size: Int): CoinHistoryPageVO = CoinHistoryPageVO()
 }
 
