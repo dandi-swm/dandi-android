@@ -45,7 +45,7 @@ Nyummy의 공통 쉘은 `Scaffold(bottomBar = …)`로 바텀 네비게이션을
 | domain (pure JVM) | `NavRoute(path, args: Map<String,String>)` | The single navigation unit. `args` are **all String**. |
 | domain | `interface Page { fun toRoute(): NavRoute }` | Each screen's typed entry point (in `<feature>/domain`). |
 | domain | `sealed interface NavSignal { GoToDestPage / DeepLink / Back }` | What flows through the nav channel. |
-| domain | `interface NavigationHelper` | `navigateTo(Page)` (recommended) / `navigateByRoute` / `navigateDeepLink` / `navigateToBack`. The only thing domain knows. |
+| domain | `interface NavigationHelper` | `navigateTo(Page)` (recommended) / `navigateByRoute` / `navigateToAppLink(link)` / `navigateToBack`. The only thing domain knows. |
 | **main/domain** (pure JVM) | `deeplink/RoutePattern.kt`, `deeplink/RouteMatcher.kt` (`matchRoute`) | Pure route matching — template `{param}` extraction + exact/template resolution. **Unit-tested here** (project convention: tests live in `domain`). |
 | host | `GenericNavKey(@Serializable path, args)` : `NavKey` | **The one and only back-stack entry type.** Every destination is this; the screen is chosen by `path`. |
 | host | `AppRoute(path, isBottomTab, syntheticStack, render)` | Per-route host metadata. |
@@ -69,7 +69,7 @@ A screen's identity is its **`path`**. The same path drives in-app navigation, t
 
 - **In-app** (tab click, list-item click): `navigateTo(Page)` → `NavSignal.GoToDestPage` → `handleNavRoute` → **push** (with `bringToFront` dedup). Navigating to a bottom-tab root (currently only `Home`) is handled by `handleNavRoute`, which brings the tab root to front instead of duplicating it.
 - **Deep link, cold start** (`MainActivity.onCreate`): `resolveStartStack(intent.data)` → 매칭된 라우트의 `syntheticStack`이 **전체 부모 체인**을 구성하고, URI 없음·미매칭이면 Nyummy에서는 `HomePage` 단일 스택으로 fallback한다. `rememberNavBackStack` 전에 구성한다.
-- **Deep link, warm start** (`MainActivity.onNewIntent`, `singleTop`): `resolveNewIntentRoute` → `navigateDeepLink` → `NavSignal.DeepLink` → `handleDeepLink`:
+- **App link, warm start and in-app** (`MainActivity.onNewIntent` with `singleTop`, server SDUI actions, home notice CTA): `navigateToAppLink(link)` → `NavSignal.AppLink` → `handleAppLink` → `appLinkToRoute` (same `Uri.resolveRoute()` as cold start; non app-link hosts are ignored):
   - **leaf screen** → **bring-to-front**: keep the user's current stack, surface only the target key. (Preserving context is intended.)
   - **tab root** (`isBottomTab` — Nyummy에서는 `RootComposable`의 `Scaffold(bottomBar = …)`가 바텀 네비게이션을 표시한다) → `handleNavRoute`에 위임해 탭 루트 시맨틱을 유지한다.
 

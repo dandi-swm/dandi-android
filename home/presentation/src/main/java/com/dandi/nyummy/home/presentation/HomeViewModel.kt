@@ -15,7 +15,7 @@ import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
-import com.dandi.nyummy.common.domain.navigation.NavRoute
+import com.dandi.nyummy.common.domain.navigation.AppLinks
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.time.DeviceTime
@@ -161,8 +161,14 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.NoticeCtaClicked -> {
                 val link = currentState.notice?.links?.getOrNull(intent.index)
                 closeNotice()
-                // 앱 경로만 연다. 앱에 없는 경로면 이동 쪽이 무시하고 홈에 머문다.
-                if (link != null && link.startsWith("/")) navigationHelper.navigateDeepLink(NavRoute(link))
+                // 앱 경로("/shop")나 앱 링크만 연다. 앱에 없는 경로면 이동 쪽이 무시하고 홈에 머문다.
+                val appLink = when {
+                    link == null -> null
+                    link.startsWith("/") -> AppLinks.BASE_URL + link
+                    link.startsWith(AppLinks.BASE_URL + "/") -> link
+                    else -> null
+                }
+                if (appLink != null) navigationHelper.navigateToAppLink(appLink)
             }
         }
     }

@@ -11,7 +11,9 @@ import kotlinx.coroutines.flow.Flow
  * 호출부는 다음 중 하나로 사용한다.
  * - [navigateByRoute] — 직접 [NavRoute] 를 구성해서 전진 이동(앱 내 push).
  * - [navigateTo] — 각 feature 가 정의한 [Page] 객체를 그대로 전달 (권장).
- * - [navigateDeepLink] — 앱 실행 중 도착한 deep-link 를 호스트로 전달(웜 스타트 bring-to-front 정책).
+ * - [navigateToAppLink] — 앱 링크(`https://link.nyummy.co.kr/...`)를 연다. 푸시·외부 앱 링크(웜 스타트)와
+ *   서버 SDUI 액션·홈 공지 CTA가 쓴다. 호스트가 외부 앱 링크와 같은 해석기로 라우트를 찾고 bring-to-front 한다.
+ *   앱 링크가 아니거나 등록된 화면이 없으면 무시한다.
  * - [navigateToBack] — 하드웨어 백 키와 동일하게 한 단계 뒤로 이동.
  * - [navigateToAsRoot] — 백스택을 전부 비우고 대상 페이지만 루트로 남긴다 (로그인/가입 완료 → 홈 전환).
  * - [navigateToInitial] — 세션 만료(401) 등으로 인한 초기 화면 이동 신호를 전달한다.
@@ -21,7 +23,7 @@ interface NavigationHelper {
     val navigationFlow: Flow<NavSignal>
     fun navigateByRoute(route: NavRoute)
     fun navigateTo(page: Page)
-    fun navigateDeepLink(route: NavRoute)
+    fun navigateToAppLink(link: String)
     fun navigateToBack()
     fun navigateToAsRoot(page: Page)
     fun navigateToInitial()

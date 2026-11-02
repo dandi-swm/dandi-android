@@ -22,6 +22,7 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.common.presentation.jank.JankPageEffect
+import com.dandi.nyummy.main.presentation.deeplink.appLinkToRoute
 
 @Composable
 fun AppNavHost(
@@ -35,7 +36,7 @@ fun AppNavHost(
         navigationHelper.navigationFlow.collect { signal ->
             when (signal) {
                 is NavSignal.GoToDestPage -> handleNavRoute(signal.route, backStack)
-                is NavSignal.DeepLink -> handleDeepLink(signal.route, backStack)
+                is NavSignal.AppLink -> handleAppLink(signal.link, backStack)
                 NavSignal.Back -> backStack.popUnlessRoot()
                 is NavSignal.ResetToPage -> handleResetTo(signal.route, backStack)
                 NavSignal.BackToInitialPage -> navigateToInitialStack(backStack)
@@ -113,8 +114,9 @@ fun handleNavRoute(route: NavRoute, backStack: NavBackStack<NavKey>) {
 }
 
 /**
- * 웜 스타트 deep-link 처리.
+ * 앱 링크 처리. 푸시·외부 앱 링크(웜 스타트)와 앱 안 링크(서버 SDUI 액션, 홈 공지 CTA)가 모두 여기로 온다.
  *
+ * 링크는 콜드 스타트와 같은 해석기([appLinkToRoute])로 라우트가 된다. 앱 링크가 아니거나 미매칭이면 무시한다.
  * - 대상이 **bottom-tab 루트**면 콜드/in-app 과 동일한 탭 루트 시맨틱으로 처리한다
  *   ([handleNavRoute] 위임). 탭을 단순 bring-to-front 하면 탭이 루트에서 밀려나
  *   Back 동작/탭 루트가 깨지므로, 이 분기로 세 경로(콜드·웜·in-app)의 탭 백스택 형태를 일치시킨다.
@@ -122,13 +124,14 @@ fun handleNavRoute(route: NavRoute, backStack: NavBackStack<NavKey>) {
  *   ([com.dandi.nyummy.main.presentation.deeplink.resolveStartStack])과 달리, 이미 떠 있는
  *   사용자의 스택은 보존하고 대상 키만 최전면으로 올린다(동일 키는 중복 없이 최상단으로).
  *
- * 예) 스택이 `[Home]` 인 상태에서 leaf deep-link 가 도착하면, 기존 맥락을 유지한 채
+ * 예) 스택이 `[Home]` 인 상태에서 leaf 앱 링크가 도착하면, 기존 맥락을 유지한 채
  * 대상만 전면에 노출된다.
  */
-fun handleDeepLink(route: NavRoute, backStack: NavBackStack<NavKey>) {
+fun handleAppLink(link: String, backStack: NavBackStack<NavKey>) {
+    val route = appLinkToRoute(link) ?: return
     val appRoute = appRouteByPath[route.path]
     if (appRoute == null) {
-        Log.w(TAG, "Unhandled deep-link route: ${route.path}")
+        Log.w(TAG, "Unhandled app link route: ${route.path}")
         return
     }
     if (appRoute.isBottomTab) {
@@ -139,7 +142,7 @@ fun handleDeepLink(route: NavRoute, backStack: NavBackStack<NavKey>) {
     val target = GenericNavKey.of(route)
     if (backStack.lastOrNull() == target) return   // 이미 최전면 — no-op.
     backStack.bringToFront(target)
-    Log.d(TAG, "deepLink bringToFront: $target")
+    Log.d(TAG, "appLink bringToFront: $target")
 }
 
 /**

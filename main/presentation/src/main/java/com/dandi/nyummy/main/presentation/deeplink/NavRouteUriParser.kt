@@ -2,7 +2,9 @@ package com.dandi.nyummy.main.presentation.deeplink
 
 import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.navigation3.runtime.NavKey
+import com.dandi.nyummy.common.domain.navigation.AppLinks
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.intro.domain.IntroPage
 import com.dandi.nyummy.main.domain.deeplink.matchRoute
@@ -11,7 +13,7 @@ import com.dandi.nyummy.main.presentation.navigation.appLinkAliases
 import com.dandi.nyummy.main.presentation.navigation.appRouteByPath
 import com.dandi.nyummy.main.presentation.navigation.appRoutePatterns
 
-private const val TAG = "[DeepLink]"
+private const val TAG = "[AppLink]"
 
 /**
  * App Link [Uri] 를 등록된 라우트로 해석한다.
@@ -61,17 +63,21 @@ fun resolveStartStack(uri: Uri?, notificationId: String? = null): List<NavKey> {
 }
 
 /**
- * 앱 실행 중(웜 스타트) 도착한 deep-link 를 [NavRoute] 로 해석한다.
+ * 앱 실행 중 여는 앱 링크([com.dandi.nyummy.common.domain.navigation.NavSignal.AppLink])를 [NavRoute] 로 해석한다.
  *
- * 콜드 스타트와 달리 synthetic 부모 체인을 만들지 않는다 — 실제 dispatch 는 호스트의
- * bring-to-front 정책([com.dandi.nyummy.main.presentation.navigation.handleDeepLink])이
- * 담당하여 사용자의 현재 스택을 보존한다. 미매칭이면 null(호출부가 무시).
+ * 푸시·외부 앱 링크(웜 스타트)와 앱 안 링크(서버 SDUI 액션, 홈 공지 CTA)가 모두 여기를 지나며, 콜드 스타트와
+ * 같은 [resolveRoute] 로 푼다. 앱 링크 호스트([AppLinks.HOST])의 http(s) 링크만 받고, 아니거나 미매칭이면 null.
  */
-fun resolveNewIntentRoute(uri: Uri, notificationId: String? = null): NavRoute? {
-    val route = uri.resolveRoute()?.withNotificationId(notificationId)
-    if (route == null) {
-        Log.w(TAG, "onNewIntent: unhandled uri=$uri")
+fun appLinkToRoute(link: String): NavRoute? {
+    val uri = link.trim().toUri()
+    val isAppLink = (uri.scheme.equals("https", ignoreCase = true) || uri.scheme.equals("http", ignoreCase = true)) &&
+        uri.host.equals(AppLinks.HOST, ignoreCase = true)
+    if (!isAppLink) {
+        Log.w(TAG, "Not an app link: $link")
         return null
     }
-    return route
+    return uri.resolveRoute() ?: run {
+        Log.w(TAG, "No matching route for app link: $link")
+        null
+    }
 }

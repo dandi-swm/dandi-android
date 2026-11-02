@@ -691,7 +691,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `버튼을 누르면 공지를 닫고 그 장의 앱 경로로 간다`() = runTest(testDispatcher) {
+    fun `버튼을 누르면 공지를 닫고 그 장의 앱 경로를 앱 링크로 연다`() = runTest(testDispatcher) {
         homeRepository.noticeList = listOf(renewal, event)
         resumeWith(afterTutorialMeal)
 
@@ -699,7 +699,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertNull(state.notice)
-        assertEquals(listOf("/shop"), navigationHelper.deepLinks)
+        assertEquals(listOf("https://link.nyummy.co.kr/shop"), navigationHelper.appLinks)
     }
 
     @Test
@@ -711,7 +711,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertNull(state.notice)
-        assertTrue(navigationHelper.deepLinks.isEmpty())
+        assertTrue(navigationHelper.appLinks.isEmpty())
     }
 
     // endregion
@@ -834,10 +834,10 @@ class HomeViewModelTest {
             pages += page
         }
 
-        val deepLinks = mutableListOf<String>()
+        val appLinks = mutableListOf<String>()
 
-        override fun navigateDeepLink(route: NavRoute) {
-            deepLinks += route.path
+        override fun navigateToAppLink(link: String) {
+            appLinks += link
         }
 
         override fun navigateToBack() = Unit

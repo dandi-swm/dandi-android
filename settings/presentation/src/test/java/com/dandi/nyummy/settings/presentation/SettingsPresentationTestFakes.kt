@@ -139,7 +139,7 @@ internal class RecordingNavigationHelper : NavigationHelper {
         pages += page
     }
 
-    override fun navigateDeepLink(route: NavRoute) = Unit
+    override fun navigateToAppLink(link: String) = Unit
     override fun navigateToBack() {
         backCount++
     }

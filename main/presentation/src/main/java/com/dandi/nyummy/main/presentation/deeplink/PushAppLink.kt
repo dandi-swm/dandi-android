@@ -26,3 +26,10 @@ fun Intent.pushNotificationId(): String? =
 /** 알림에서 열린 링크면 그 알림의 식별자를 라우트 인자에 싣는다. 같은 링크라도 알림마다 다른 키가 된다. */
 fun NavRoute.withNotificationId(notificationId: String?): NavRoute =
     if (notificationId == null) this else copy(args = args + (LinkArgs.NOTIFICATION_ID to notificationId))
+
+/**
+ * 알림에서 열린 앱 링크면 그 알림의 식별자를 쿼리로 붙인다. 앱 링크 해석 때 쿼리는 라우트 인자가 되므로
+ * 콜드 스타트의 [NavRoute.withNotificationId]와 같은 인자가 실린다.
+ */
+fun Uri.withNotificationId(notificationId: String?): Uri =
+    if (notificationId == null) this else buildUpon().appendQueryParameter(LinkArgs.NOTIFICATION_ID, notificationId).build()

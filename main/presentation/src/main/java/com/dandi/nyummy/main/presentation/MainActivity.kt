@@ -26,8 +26,8 @@ import com.dandi.nyummy.common.presentation.jank.JankReporter
 import com.dandi.nyummy.common.presentation.jank.LocalJankReporter
 import com.dandi.nyummy.main.presentation.deeplink.appLinkUri
 import com.dandi.nyummy.main.presentation.deeplink.pushNotificationId
-import com.dandi.nyummy.main.presentation.deeplink.resolveNewIntentRoute
 import com.dandi.nyummy.main.presentation.deeplink.resolveStartStack
+import com.dandi.nyummy.main.presentation.deeplink.withNotificationId
 import com.dandi.nyummy.main.presentation.navigation.MainTabFlags
 import com.dandi.nyummy.main.presentation.navigation.RootComposable
 import dagger.hilt.android.AndroidEntryPoint
@@ -113,17 +113,16 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * launchMode 가 singleTop / singleTask 인 경우, 앱 실행 중 들어오는 새 딥링크를 처리한다.
-     * URI 를 NavRoute 로 해석만 하고, 실제 dispatch 는 NavigationHelper 의 deep-link 플로우가 담당한다.
-     * 웜 스타트는 콜드 스타트의 synthetic 스택과 달리 기존 스택을 보존하고 대상만 최전면으로 올린다
-     * (bring-to-front, [com.dandi.nyummy.main.presentation.navigation.handleDeepLink]).
+     * launchMode 가 singleTop / singleTask 인 경우, 앱 실행 중 들어오는 새 앱 링크(푸시 포함)를 처리한다.
+     * 링크를 그대로 NavigationHelper 의 앱 링크 플로우로 넘기고, 해석과 이동은 호스트가 맡는다
+     * ([com.dandi.nyummy.main.presentation.navigation.handleAppLink]). 앱 안 링크와 같은 길이다.
+     * 웜 스타트는 콜드 스타트의 synthetic 스택과 달리 기존 스택을 보존하고 대상만 최전면으로 올린다.
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
 
         val uri = intent.appLinkUri() ?: return
-        val route = resolveNewIntentRoute(uri, intent.pushNotificationId()) ?: return
-        navigationHelper.navigateDeepLink(route)
+        navigationHelper.navigateToAppLink(uri.withNotificationId(intent.pushNotificationId()).toString())
     }
 }

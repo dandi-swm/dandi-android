@@ -758,7 +758,7 @@ class MealRecordViewModelTest {
         override fun navigateTo(page: Page) {
             calls += "to:${page.toRoute().path}"
         }
-        override fun navigateDeepLink(route: NavRoute) = Unit
+        override fun navigateToAppLink(link: String) = Unit
         override fun navigateToBack() {
             calls += "back"
         }
