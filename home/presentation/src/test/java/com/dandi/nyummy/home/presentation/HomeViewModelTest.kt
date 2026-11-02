@@ -45,6 +45,7 @@ import com.dandi.nyummy.meal.entity.MealImageUploadVO
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.entity.RoomPlacementVO
+import com.dandi.nyummy.shop.domain.ShopCoinHistoryPage
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -89,6 +90,7 @@ class HomeViewModelTest {
 
     /** 원격 구성 우편함 아이템 플래그. 읽을 때마다 이 값을 돌려준다. */
     private var isMailEnabled = false
+    private var isShopEnabled = false
 
     private val tutorialHelper = FakeTutorialHelper()
     private val mealRepository = FakeMealRecordRepository()
@@ -135,6 +137,7 @@ class HomeViewModelTest {
                 override fun <T> get(key: RemoteConfigKey<T>): T = when (key) {
                     RemoteConfigKey.MyRoomEnabled -> isMyRoomEnabled as T
                     RemoteConfigKey.MailItemTabEnabled -> isMailEnabled as T
+                    RemoteConfigKey.ShopEnabled -> isShopEnabled as T
                     else -> key.defaultValue
                 }
             },
@@ -460,6 +463,22 @@ class HomeViewModelTest {
 
         assertEquals(HomeTutorialStage.Intro, state.tutorial?.stage)
         assertEquals(2, state.tutorial?.index)
+    }
+
+    @Test
+    fun `상점이 켜져 있으면 지갑 버튼이 코인 내역을 연다`() = runTest(testDispatcher) {
+        isShopEnabled = true
+
+        viewModel.onIntent(HomeIntent.ClickWallet)
+
+        assertEquals(listOf<Page>(ShopCoinHistoryPage), navigationHelper.pages)
+    }
+
+    @Test
+    fun `상점이 꺼져 있으면 지갑 버튼은 이동하지 않는다`() = runTest(testDispatcher) {
+        viewModel.onIntent(HomeIntent.ClickWallet)
+
+        assertTrue(navigationHelper.pages.isEmpty())
     }
 
     @Test

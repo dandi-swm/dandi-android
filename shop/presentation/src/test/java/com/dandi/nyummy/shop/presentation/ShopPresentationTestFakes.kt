@@ -134,7 +134,15 @@ internal class FakeShopRepository : ShopRepository {
         purchaseRequests += products
         return purchaseHandler(products)
     }
-    override suspend fun getCoinHistories(cursor: Long?, size: Int): CoinHistoryPageVO = CoinHistoryPageVO()
+    val coinHistoryRequests = mutableListOf<Long?>()
+
+    /** 코인 내역 요청마다 돌려줄 묶음. 예외를 던지면 그 요청이 실패한다. */
+    var coinHistoryHandler: suspend (cursor: Long?) -> CoinHistoryPageVO = { CoinHistoryPageVO() }
+
+    override suspend fun getCoinHistories(cursor: Long?, size: Int): CoinHistoryPageVO {
+        coinHistoryRequests += cursor
+        return coinHistoryHandler(cursor)
+    }
 }
 
 internal class RecordingMessageHelper : MessageHelper {
