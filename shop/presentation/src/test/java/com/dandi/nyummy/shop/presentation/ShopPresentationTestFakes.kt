@@ -103,10 +103,28 @@ internal class FakeShopRepository : ShopRepository {
         return AddedCartItemVO(productId = productId, quantity = quantity)
     }
 
-    override suspend fun getCart(): CartVO = CartVO()
-    override suspend fun updateCartItemQuantity(productId: Long, quantity: Int): CartVO = CartVO()
-    override suspend fun updateCartSelection(productIds: List<Long>): CartVO = CartVO()
-    override suspend fun deleteCartItems(productIds: List<Long>): CartVO = CartVO()
+    /** 장바구니 요청 한 번. */
+    sealed interface CartCall {
+        data object Get : CartCall
+        data class Quantity(val productId: Long, val quantity: Int) : CartCall
+        data class Selection(val productIds: List<Long>) : CartCall
+        data class Delete(val productIds: List<Long>) : CartCall
+    }
+
+    val cartCalls = mutableListOf<CartCall>()
+
+    /** 장바구니 요청마다 돌려줄 장바구니. 예외를 던지면 그 요청이 실패한다. */
+    var cartHandler: suspend (CartCall) -> CartVO = { CartVO() }
+
+    private suspend fun cart(call: CartCall): CartVO {
+        cartCalls += call
+        return cartHandler(call)
+    }
+
+    override suspend fun getCart(): CartVO = cart(CartCall.Get)
+    override suspend fun updateCartItemQuantity(productId: Long, quantity: Int): CartVO = cart(CartCall.Quantity(productId, quantity))
+    override suspend fun updateCartSelection(productIds: List<Long>): CartVO = cart(CartCall.Selection(productIds))
+    override suspend fun deleteCartItems(productIds: List<Long>): CartVO = cart(CartCall.Delete(productIds))
     override suspend fun purchase(idempotencyKey: String, products: List<PurchaseProductVO>) = PurchaseResultVO()
     override suspend fun getCoinHistories(cursor: Long?, size: Int): CoinHistoryPageVO = CoinHistoryPageVO()
 }
