@@ -55,4 +55,17 @@
     <string name="shop_cart_browse">상점 구경하기</string>
     <string name="shop_cart_recommend_title">이런 가구는 어때요?</string>
     <string name="shop_cart_see_all">전체보기</string>
+    <string name="shop_purchase_confirm_title">아이템 %1$d개를 살까요?</string>
+    <string name="shop_purchase_no_refund">코인으로 산 아이템은 구매를 취소할 수 없어요</string>
+    <string name="shop_purchase_cancel">취소</string>
+    <string name="shop_purchase_confirm">구매하기</string>
+    <string name="shop_purchase_short_title">코인이 %1$s개 모자라요</string>
+    <string name="shop_purchase_record_meal">식사 기록하기</string>
+    <string name="shop_purchase_record_meal_body">기록하면 코인 상자를 받아요</string>
+    <string name="shop_purchase_close">닫기</string>
+    <string name="shop_purchase_done_title">아이템 %1$d개를 샀어요</string>
+    <string name="shop_purchase_done_body">산 아이템은 우편함으로 보냈어요</string>
+    <string name="shop_purchase_balance_left">남은 코인</string>
+    <string name="shop_purchase_go_to_mailbox">우편함 가기</string>
+    <string name="shop_purchase_more_shopping">상점 더 둘러보기</string>
 </resources>

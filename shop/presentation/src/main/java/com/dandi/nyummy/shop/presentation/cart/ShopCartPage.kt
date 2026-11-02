@@ -1,5 +1,6 @@
 package com.dandi.nyummy.shop.presentation.cart
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -82,6 +83,17 @@ fun ShopCartPage(viewModel: ShopCartViewModel = hiltViewModel()) {
 
 @Composable
 private fun ShopCartScreen(uiState: ShopCartUIState, onIntent: (ShopCartIntent) -> Unit) {
+    val completion = uiState.completion
+    if (completion != null) {
+        // 완료 화면에서 뒤로 가면 장바구니가 아니라 상점으로 간다.
+        BackHandler { onIntent(ShopCartIntent.ClickBack) }
+        PurchaseCompletionScreen(
+            completion = completion,
+            onGoToMailbox = { onIntent(ShopCartIntent.ClickGoToMailbox) },
+            onMoreShopping = { onIntent(ShopCartIntent.ClickMoreShopping) },
+        )
+        return
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -106,7 +118,11 @@ private fun ShopCartScreen(uiState: ShopCartUIState, onIntent: (ShopCartIntent) 
             uiState.isEmpty -> EmptyCart(uiState = uiState, onIntent = onIntent, modifier = bodyModifier)
             else -> {
                 CartList(uiState = uiState, onIntent = onIntent, modifier = bodyModifier)
-                PurchaseBar(summary = uiState.summary, enabled = uiState.selectedItemCount > 0)
+                PurchaseBar(
+                    summary = uiState.summary,
+                    enabled = uiState.purchasingItems.isNotEmpty() && !uiState.isPurchasing,
+                    onPurchase = { onIntent(ShopCartIntent.ClickPurchase) },
+                )
             }
         }
     }
@@ -117,6 +133,22 @@ private fun ShopCartScreen(uiState: ShopCartUIState, onIntent: (ShopCartIntent) 
             onAdd = { onIntent(ShopCartIntent.AddRecommendation(item)) },
             onDismiss = { onIntent(ShopCartIntent.DismissDetail) },
         )
+    }
+    when (uiState.sheet) {
+        ShopCartSheet.Confirm -> PurchaseConfirmSheet(
+            items = uiState.purchasingItems.map { it.shopItem },
+            summary = uiState.summary,
+            isPurchasing = uiState.isPurchasing,
+            onConfirm = { onIntent(ShopCartIntent.ConfirmPurchase) },
+            onDismiss = { onIntent(ShopCartIntent.DismissSheet) },
+        )
+        ShopCartSheet.InsufficientBalance -> InsufficientBalanceSheet(
+            summary = uiState.summary,
+            shortage = uiState.shortage,
+            onRecordMeal = { onIntent(ShopCartIntent.ClickRecordMeal) },
+            onDismiss = { onIntent(ShopCartIntent.DismissSheet) },
+        )
+        null -> Unit
     }
 }
 
@@ -328,9 +360,9 @@ private fun SummaryRow(
     }
 }
 
-/** 하단 구매 바: 결제할 코인과 "n개 구매하기". 선택이 없으면 끈다. 구매 흐름은 다음 단계에서 붙인다. */
+/** 하단 구매 바: 결제할 코인과 "n개 구매하기". 선택이 없거나 구매 중이면 끈다. */
 @Composable
-private fun PurchaseBar(summary: CartSummaryVO, enabled: Boolean) {
+private fun PurchaseBar(summary: CartSummaryVO, enabled: Boolean, onPurchase: () -> Unit) {
     Column {
         NyummyDivider()
         Row(
@@ -350,7 +382,7 @@ private fun PurchaseBar(summary: CartSummaryVO, enabled: Boolean) {
             }
             NyummyButton(
                 text = stringResource(R.string.shop_cart_purchase, summary.quantity),
-                onClick = {},
+                onClick = onPurchase,
                 enabled = enabled,
                 size = NyummyButtonSize.L,
                 modifier = Modifier.width(PurchaseButtonWidth),

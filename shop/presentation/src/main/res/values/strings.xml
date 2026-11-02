@@ -55,4 +55,17 @@
     <string name="shop_cart_browse">Browse the shop</string>
     <string name="shop_cart_recommend_title">How about these?</string>
     <string name="shop_cart_see_all">See all</string>
+    <string name="shop_purchase_confirm_title">Buy %1$d items?</string>
+    <string name="shop_purchase_no_refund">Items bought with coins can\'t be refunded</string>
+    <string name="shop_purchase_cancel">Cancel</string>
+    <string name="shop_purchase_confirm">Buy</string>
+    <string name="shop_purchase_short_title">You need %1$s more coins</string>
+    <string name="shop_purchase_record_meal">Record a meal</string>
+    <string name="shop_purchase_record_meal_body">Record to get a coin box</string>
+    <string name="shop_purchase_close">Close</string>
+    <string name="shop_purchase_done_title">You bought %1$d items</string>
+    <string name="shop_purchase_done_body">Sent to your mailbox</string>
+    <string name="shop_purchase_balance_left">Coins left</string>
+    <string name="shop_purchase_go_to_mailbox">Go to mailbox</string>
+    <string name="shop_purchase_more_shopping">Keep shopping</string>
 </resources>

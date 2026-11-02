@@ -8,10 +8,14 @@ import com.dandi.nyummy.common.presentation.mvi.MviIntent
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
 import com.dandi.nyummy.common.presentation.mvi.UiState
+import com.dandi.nyummy.mailbox.domain.MailboxPage
+import com.dandi.nyummy.meal.domain.MealRecordPage
 import com.dandi.nyummy.shop.domain.AddToCartUseCase
 import com.dandi.nyummy.shop.domain.DeleteCartItemsUseCase
 import com.dandi.nyummy.shop.domain.GetCartUseCase
 import com.dandi.nyummy.shop.domain.GetShopProductsUseCase
+import com.dandi.nyummy.shop.domain.PurchaseOutcome
+import com.dandi.nyummy.shop.domain.PurchaseUseCase
 import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.shop.domain.UpdateCartQuantityUseCase
 import com.dandi.nyummy.shop.domain.UpdateCartSelectionUseCase
@@ -19,6 +23,7 @@ import com.dandi.nyummy.shop.entity.CartItemVO
 import com.dandi.nyummy.shop.entity.CartSummaryVO
 import com.dandi.nyummy.shop.entity.CartVO
 import com.dandi.nyummy.shop.entity.ProductSort
+import com.dandi.nyummy.shop.entity.PurchaseProductVO
 import com.dandi.nyummy.shop.entity.ShopItemVO
 import com.dandi.nyummy.shop.entity.ShopTab
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -51,12 +56,43 @@ data class ShopCartUIState(
     val recommendations: ImmutableList<ShopItemVO> = persistentListOf(),
     val detailItem: ShopItemVO? = null,
     val addingProductIds: ImmutableSet<Long> = persistentSetOf(),
+    val sheet: ShopCartSheet? = null,
+    val isPurchasing: Boolean = false,
+    val completion: ShopPurchaseCompletion? = null,
 ) : UiState {
     val isEmpty: Boolean get() = !isLoading && !isLoadFailed && items.isEmpty()
+
+    /** 이번에 살 항목: 골랐고 살 수 있다. */
+    val purchasingItems: List<CartItemVO> get() = items.filter { it.isSelected && it.canPurchase }
+
+    /** 모자란 코인. 결제할 코인이 내 코인보다 크면 양수다. */
+    val shortage: Int get() = (summary.purchasePrice - summary.balance).coerceAtLeast(0)
 
     /** 전체 선택 체크: 살 수 있는 항목이 있고 모두 골랐다. */
     val isAllSelected: Boolean get() = items.any { it.canPurchase } && items.filter { it.canPurchase }.all { it.isSelected }
 }
+
+/** 장바구니 위에 뜨는 구매 시트. */
+enum class ShopCartSheet {
+    /** "아이템 n개를 살까요?"(피그마 `Shop · 21`). */
+    Confirm,
+
+    /** "코인이 n개 모자라요"(피그마 `Shop · 21b`). */
+    InsufficientBalance,
+}
+
+/**
+ * 구매 완료 화면(피그마 `Shop · 22`) 값.
+ *
+ * @property items 산 상품(그림). 구매 요청에 보낸 항목이다
+ * @property quantity 산 개수 합
+ * @property balance 구매 뒤 남은 코인
+ */
+data class ShopPurchaseCompletion(
+    val items: ImmutableList<ShopItemVO>,
+    val quantity: Int,
+    val balance: Int,
+)
 
 sealed interface ShopCartIntent : MviIntent {
     data object Enter : ShopCartIntent
@@ -80,6 +116,22 @@ sealed interface ShopCartIntent : MviIntent {
     data class ClickRecommendation(val item: ShopItemVO) : ShopCartIntent
     data object DismissDetail : ShopCartIntent
     data class AddRecommendation(val item: ShopItemVO) : ShopCartIntent
+
+    /** 하단 "n개 구매하기". 코인이 모자라면 부족 시트, 아니면 확인 시트를 연다. */
+    data object ClickPurchase : ShopCartIntent
+    data object DismissSheet : ShopCartIntent
+
+    /** 확인 시트의 "구매하기". */
+    data object ConfirmPurchase : ShopCartIntent
+
+    /** 코인 부족 시트의 "식사 기록하기". */
+    data object ClickRecordMeal : ShopCartIntent
+
+    /** 완료 화면의 "우편함 가기". */
+    data object ClickGoToMailbox : ShopCartIntent
+
+    /** 완료 화면의 "상점 더 둘러보기". */
+    data object ClickMoreShopping : ShopCartIntent
 }
 
 sealed interface ShopCartReducerEvent : ReducerEvent {
@@ -94,13 +146,18 @@ sealed interface ShopCartReducerEvent : ReducerEvent {
     data object DetailClosed : ShopCartReducerEvent
     data class AddStarted(val productId: Long) : ShopCartReducerEvent
     data class AddFinished(val productId: Long, val added: Boolean) : ShopCartReducerEvent
+    data class SheetChanged(val sheet: ShopCartSheet?) : ShopCartReducerEvent
+    data object PurchaseStarted : ShopCartReducerEvent
+
+    /** 구매 요청이 끝났다. [completion]이 있으면 완료 화면을, [sheet]가 있으면 그 시트를 보인다. */
+    data class PurchaseFinished(val completion: ShopPurchaseCompletion?, val sheet: ShopCartSheet?) : ShopCartReducerEvent
 }
 
 /**
  * 장바구니. 조회·수량·선택·빼기 요청을 누른 순서대로 하나씩 보내고(서버도 그 순서로 처리한다), 가장 최근 요청의 응답만
  * 화면에 반영한다. 그래서 마지막 입력이 서버와 화면 모두에 남는다. 바꾸는 요청이 실패하면 장바구니를 다시 읽고, 그것도
  * 실패하면 화면 값이 서버와 다를 수 있으니 다시 시도 안내를 보인다(수량 거절 토스트는 UseCase가 띄운다).
- * 장바구니가 비면 인기 인테리어 6개를 추천한다.
+ * 장바구니가 비면 인기 인테리어 6개를 추천한다. 구매(확인·코인 부족 시트, 완료 화면)도 이 화면이 맡는다.
  */
 @HiltViewModel
 class ShopCartViewModel @Inject constructor(
@@ -111,6 +168,7 @@ class ShopCartViewModel @Inject constructor(
     private val deleteCartItems: DeleteCartItemsUseCase,
     private val getShopProducts: GetShopProductsUseCase,
     private val addToCart: AddToCartUseCase,
+    private val purchase: PurchaseUseCase,
 ) : MviViewModel<ShopCartIntent, ShopCartUIState, ShopCartReducerEvent>(ShopCartUIState()) {
 
     private var entered = false
@@ -125,7 +183,8 @@ class ShopCartViewModel @Inject constructor(
                 reload()
             }
             ShopCartIntent.Retry -> reload()
-            ShopCartIntent.ClickBack -> navigationHelper.navigateToBack()
+            // 완료 화면에서 뒤로 가면 장바구니가 아니라 상점으로 간다.
+            ShopCartIntent.ClickBack -> if (currentState.completion != null) leaveTo(ShopPage) else navigationHelper.navigateToBack()
             is ShopCartIntent.ChangeQuantity -> changeQuantity(intent.productId, intent.quantity)
             is ShopCartIntent.ToggleSelect -> toggleSelect(intent.productId)
             ShopCartIntent.ToggleSelectAll -> toggleSelectAll()
@@ -136,6 +195,15 @@ class ShopCartViewModel @Inject constructor(
             is ShopCartIntent.ClickRecommendation -> dispatch(ShopCartReducerEvent.DetailOpened(intent.item))
             ShopCartIntent.DismissDetail -> dispatch(ShopCartReducerEvent.DetailClosed)
             is ShopCartIntent.AddRecommendation -> addRecommendation(intent.item)
+            ShopCartIntent.ClickPurchase -> openPurchaseSheet()
+            ShopCartIntent.DismissSheet -> dispatch(ShopCartReducerEvent.SheetChanged(null))
+            ShopCartIntent.ConfirmPurchase -> confirmPurchase()
+            ShopCartIntent.ClickRecordMeal -> {
+                dispatch(ShopCartReducerEvent.SheetChanged(null))
+                navigationHelper.navigateTo(MealRecordPage)
+            }
+            ShopCartIntent.ClickGoToMailbox -> leaveTo(MailboxPage)
+            ShopCartIntent.ClickMoreShopping -> leaveTo(ShopPage)
         }
     }
 
@@ -223,6 +291,50 @@ class ShopCartViewModel @Inject constructor(
         }
     }
 
+    private fun openPurchaseSheet() {
+        val state = currentState
+        if (state.purchasingItems.isEmpty() || state.isPurchasing) return
+        val sheet = if (state.summary.balanceAfter < 0) ShopCartSheet.InsufficientBalance else ShopCartSheet.Confirm
+        dispatch(ShopCartReducerEvent.SheetChanged(sheet))
+    }
+
+    /**
+     * 확인 시트의 "구매하기". 요청 중에는 다시 보내지 않는다. 막힘(다이얼로그는 UseCase가 띄움)·결과 모름이면 장바구니를
+     * 다시 읽고, 코인이 모자라면 부족 시트를 보인 뒤 다시 읽는다.
+     */
+    private fun confirmPurchase() {
+        val state = currentState
+        if (state.isPurchasing) return
+        val buying = state.purchasingItems
+        if (buying.isEmpty()) return
+        dispatch(ShopCartReducerEvent.PurchaseStarted)
+        viewModelScope.launch {
+            val products = buying.map {
+                PurchaseProductVO(productId = it.shopItem.productId, quantity = it.quantity, purchasePrice = it.purchasePrice)
+            }
+            when (val outcome = purchase(products)) {
+                is PurchaseOutcome.Completed -> dispatch(
+                    ShopCartReducerEvent.PurchaseFinished(
+                        completion = ShopPurchaseCompletion(
+                            items = buying.map { it.shopItem }.toImmutableList(),
+                            quantity = outcome.result.quantity,
+                            balance = outcome.result.balance,
+                        ),
+                        sheet = null,
+                    ),
+                )
+                PurchaseOutcome.InsufficientBalance -> {
+                    dispatch(ShopCartReducerEvent.PurchaseFinished(completion = null, sheet = ShopCartSheet.InsufficientBalance))
+                    reload()
+                }
+                PurchaseOutcome.Blocked, PurchaseOutcome.Unknown -> {
+                    dispatch(ShopCartReducerEvent.PurchaseFinished(completion = null, sheet = null))
+                    reload()
+                }
+            }
+        }
+    }
+
     /** 장바구니를 닫고 상점 탭을 연다. 상점에서 뒤로 가도 이 화면으로 돌아오지 않는다. */
     private fun leaveTo(page: Page) {
         navigationHelper.navigateToBack()
@@ -270,6 +382,13 @@ class ShopCartViewModel @Inject constructor(
         is ShopCartReducerEvent.AddFinished -> state.copy(
             addingProductIds = (state.addingProductIds - event.productId).toPersistentSet(),
             detailItem = if (event.added) null else state.detailItem,
+        )
+        is ShopCartReducerEvent.SheetChanged -> state.copy(sheet = event.sheet)
+        ShopCartReducerEvent.PurchaseStarted -> state.copy(isPurchasing = true)
+        is ShopCartReducerEvent.PurchaseFinished -> state.copy(
+            isPurchasing = false,
+            sheet = event.sheet,
+            completion = event.completion,
         )
     }
 

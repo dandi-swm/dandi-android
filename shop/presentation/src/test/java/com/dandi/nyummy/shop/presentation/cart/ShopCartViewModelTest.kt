@@ -4,6 +4,7 @@ import com.dandi.nyummy.shop.domain.AddToCartUseCase
 import com.dandi.nyummy.shop.domain.DeleteCartItemsUseCase
 import com.dandi.nyummy.shop.domain.GetCartUseCase
 import com.dandi.nyummy.shop.domain.GetShopProductsUseCase
+import com.dandi.nyummy.shop.domain.PurchaseUseCase
 import com.dandi.nyummy.shop.domain.ShopErrorType
 import com.dandi.nyummy.shop.domain.ShopMessages
 import com.dandi.nyummy.shop.domain.ShopPage
@@ -71,6 +72,7 @@ class ShopCartViewModelTest {
             deleteCartItems = DeleteCartItemsUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
             getShopProducts = GetShopProductsUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
             addToCart = AddToCartUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
+            purchase = PurchaseUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
         )
 
     @Test

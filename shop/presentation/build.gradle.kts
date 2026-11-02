@@ -58,6 +58,9 @@ dependencies {
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
     implementation(project(":shop:domain"))
     implementation(project(":shop:entity"))
+    // 구매 흐름의 "식사 기록하기"·"우편함 가기" 이동(홈과 같은 방식).
+    implementation(project(":meal:domain"))
+    implementation(project(":mailbox:domain"))
     implementation(project(":common:presentation"))
 
     implementation(libs.androidx.lifecycle.runtime.compose)
