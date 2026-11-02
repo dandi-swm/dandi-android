@@ -1,6 +1,5 @@
 <resources>
     <string name="shop_title">Shop</string>
-    <string name="shop_coming_title">The shop is on its way</string>
     <string name="shop_item_owned">Owned</string>
     <string name="shop_item_owned_count">Owned %1$d</string>
     <string name="shop_item_owned_price">Owned</string>
@@ -68,4 +67,12 @@
     <string name="shop_purchase_balance_left">Coins left</string>
     <string name="shop_purchase_go_to_mailbox">Go to mailbox</string>
     <string name="shop_purchase_more_shopping">Keep shopping</string>
+    <string name="shop_coin_title">Coin history</string>
+    <string name="shop_coin_date_pattern">MMM d</string>
+    <string name="shop_coin_balance_after">%1$s coins left</string>
+    <string name="shop_coin_empty_title">No coin history yet</string>
+    <string name="shop_coin_empty_body">Record meals to get coins from reward boxes</string>
+    <string name="shop_coin_how_to_title">How to get coins</string>
+    <string name="shop_coin_how_to_meal">Record your meals</string>
+    <string name="shop_coin_how_to_meal_body">Get a reward box for every meal</string>
 </resources>

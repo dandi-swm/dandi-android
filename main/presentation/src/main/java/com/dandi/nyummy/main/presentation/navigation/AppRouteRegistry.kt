@@ -48,7 +48,7 @@ import com.dandi.nyummy.shop.domain.ShopCoinHistoryPage
 import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.shop.domain.ShopPromotionPage
 import com.dandi.nyummy.shop.presentation.ShopPage
-import com.dandi.nyummy.shop.presentation.ShopPlaceholderPage
+import com.dandi.nyummy.shop.presentation.coin.ShopCoinHistoryPage as ShopCoinHistoryScreenPage
 import com.dandi.nyummy.shop.presentation.cart.ShopCartPage as ShopCartScreenPage
 import com.dandi.nyummy.shop.presentation.promotion.ShopPromotionPage as ShopPromotionScreenPage
 
@@ -219,7 +219,7 @@ val appRoutes: List<AppRoute> = listOf(
                 GenericNavKey(ShopCoinHistoryPage.PATH, args),
             )
         },
-        render = { ShopPlaceholderPage() },
+        render = { ShopCoinHistoryScreenPage() },
     ),
     AppRoute(
         path = MailboxPage.PATH,

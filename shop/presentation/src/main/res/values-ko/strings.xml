@@ -1,6 +1,5 @@
 <resources>
     <string name="shop_title">상점</string>
-    <string name="shop_coming_title">상점을 준비하고 있어요</string>
     <string name="shop_item_owned">보유</string>
     <string name="shop_item_owned_count">%1$d개 보유</string>
     <string name="shop_item_owned_price">보유 중</string>
@@ -68,4 +67,12 @@
     <string name="shop_purchase_balance_left">남은 코인</string>
     <string name="shop_purchase_go_to_mailbox">우편함 가기</string>
     <string name="shop_purchase_more_shopping">상점 더 둘러보기</string>
+    <string name="shop_coin_title">코인 내역</string>
+    <string name="shop_coin_date_pattern">M월 d일</string>
+    <string name="shop_coin_balance_after">남은 코인 %1$s</string>
+    <string name="shop_coin_empty_title">아직 코인 내역이 없어요</string>
+    <string name="shop_coin_empty_body">식사를 기록하면 보상 상자에서 코인이 나와요</string>
+    <string name="shop_coin_how_to_title">코인 모으는 법</string>
+    <string name="shop_coin_how_to_meal">식사를 기록해요</string>
+    <string name="shop_coin_how_to_meal_body">끼니마다 보상 상자를 받아요</string>
 </resources>
