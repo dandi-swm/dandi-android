@@ -27,7 +27,8 @@
 - 우편함: 받은 보상·코인·아이템 목록, 하나/모두 받기, 받은 우편만 밀어서 삭제(되돌리기로 복구), 보상 상자 열기 연출(`RewardBoxOpening`).
 - 마이룸: 보관함 시트에서 아이템을 방에 놓고, 끌어 옮기고, 두 손가락으로 크기를 바꾸고, 한 단계씩 되돌린 뒤 저장하면 홈으로 간다.
 - 설정: 알림(앱 알림 = 기기 알림 권한, 서비스·마케팅 알림 = 서버 값, 식사 시간), 약관, 로그아웃, 회원 탈퇴, 문의하기(목록·작성·상세·삭제·복구). 약관(`legal`)은 GitHub Pages 정책 페이지를 WebView로 연다.
-- "준비 중" 플레이스홀더 화면: 컬렉션·상점·퀘스트·업적. 상점은 entity·domain·data를 채우는 중이고 화면은 아직 준비 중이다. 나머지 3개 feature의 entity·data는 비어 있고 domain에는 Page만 있다. 그 밖의 빈 모듈은 `main:entity` `main:data` `legal:data` `intro:entity` `onboarding:entity`.
+- 상점(`android_shop_enabled`): 상단 바(코인 칩 → 코인 내역, 장바구니 배지)와 추천(서버 SDUI, 칸마다 따로 해석)·인테리어·방 배경 탭(`/shop/{tab}?sort=` 링크는 탭·정렬로 연다). 담기는 늘 1개(카드 담기 버튼, 수량 선택 없는 상세 시트). 프로모션 `/shop/promotions/{id}`, 장바구니 `/shop/cart`(마지막 요청만 반영, 구매 확인·코인 부족 시트·완료 화면, 같은 구매 키 1회 재시도), 코인 내역 `/shop/coins`(홈 지갑 버튼도 연다). 결정은 `openspec/changes/add-shop/design.md`.
+- "준비 중" 플레이스홀더 화면: 컬렉션·퀘스트·업적. 이 3개 feature의 entity·data는 비어 있고 domain에는 Page만 있다. 그 밖의 빈 모듈은 `main:entity` `main:data` `legal:data` `intro:entity` `onboarding:entity`.
 - 소셜 로그인: 카카오·구글 동작(카카오 SDK / Credential Manager로 OIDC ID 토큰 → `SocialLoginUseCase` 서버 검증 → 기존 회원 redirectUrl 분기 / 신규 회원 `/signup/social` 프로필 입력). 제공자 추가는 `auth/presentation/.../social/SocialLoginClient` 구현 후 `socialLoginClientOf`에 등록. 네이버 로그인은 보류(로그인 화면에 버튼 없음, `SocialLoginType.NAVER`만 남김). 로그인 화면은 원형 버튼 3개(카카오 축약형·구글·이메일). 비밀번호 찾기(`/login/password-reset`)는 이메일 → 인증 코드 → 임시 비밀번호 메일 발송 순서로 한 라우트 안에서 진행한다. 테스트 계정 로그인 버튼은 debug 빌드에서 `local.properties`의 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`가 있을 때만 노출 — 자격 증명을 소스에 하드코딩 금지(공개 저장소).
 
 ## 빌드 / 테스트
