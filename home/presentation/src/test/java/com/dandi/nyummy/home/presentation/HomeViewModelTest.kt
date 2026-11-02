@@ -703,6 +703,18 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `앱 링크로 적힌 버튼도 그대로 앱 링크로 연다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(event.copy(ctaLink = "https://link.nyummy.co.kr/shop/promotions/12"))
+        resumeWith(afterTutorialMeal)
+
+        viewModel.onIntent(HomeIntent.NoticeCtaClicked(0))
+        advanceUntilIdle()
+
+        assertNull(state.notice)
+        assertEquals(listOf("https://link.nyummy.co.kr/shop/promotions/12"), navigationHelper.appLinks)
+    }
+
+    @Test
     fun `앱 경로가 아닌 링크는 공지만 닫고 이동하지 않는다`() = runTest(testDispatcher) {
         homeRepository.noticeList = listOf(event.copy(ctaLink = "https://nyummy.co.kr/event"))
         resumeWith(afterTutorialMeal)
