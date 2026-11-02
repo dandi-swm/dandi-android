@@ -49,6 +49,7 @@ import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.shop.domain.ShopPromotionPage
 import com.dandi.nyummy.shop.presentation.ShopPage
 import com.dandi.nyummy.shop.presentation.ShopPlaceholderPage
+import com.dandi.nyummy.shop.presentation.promotion.ShopPromotionPage as ShopPromotionScreenPage
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
@@ -193,7 +194,9 @@ val appRoutes: List<AppRoute> = listOf(
                 GenericNavKey(ShopPromotionPage.PATH, args),
             )
         },
-        render = { ShopPlaceholderPage() },
+        render = { args ->
+            ShopPromotionScreenPage(promotionId = args[ShopPromotionPage.ARG_PROMOTION_ID]?.toLongOrNull() ?: 0L)
+        },
     ),
     AppRoute(
         // 장바구니. 구매 확인·완료도 이 화면 안에서 보인다.
