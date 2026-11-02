@@ -182,7 +182,7 @@ val appRoutes: List<AppRoute> = listOf(
         // 상점 탭. 기능이 꺼져 있으면 하단 내비에 탭이 없고, 링크로 들어오면 내비 없이 이 화면만 보인다.
         path = ShopPage.PATH,
         isBottomTab = true,
-        render = { ShopPage() },
+        render = { args -> ShopPage(tab = args[ShopPage.ARG_TAB], sort = args[ShopPage.ARG_SORT]) },
     ),
     AppRoute(
         // 프로모션 상품 모음. 추천 탭 배너나 링크로 들어오며, 링크로 바로 열면 뒤로 가기가 상점 탭이다.

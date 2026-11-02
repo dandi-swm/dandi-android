@@ -6,4 +6,9 @@
     <string name="shop_item_owned_price">Owned</string>
     <string name="shop_item_add">Add</string>
     <string name="shop_item_add_to_cart">Add to cart</string>
+    <string name="shop_tab_recommend">For you</string>
+    <string name="shop_tab_interior">Interior</string>
+    <string name="shop_tab_background">Rooms</string>
+    <string name="shop_cart_description">Cart</string>
+    <string name="shop_cart_description_count">Cart, %1$d items</string>
 </resources>

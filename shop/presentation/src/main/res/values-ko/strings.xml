@@ -6,4 +6,9 @@
     <string name="shop_item_owned_price">보유 중</string>
     <string name="shop_item_add">담기</string>
     <string name="shop_item_add_to_cart">장바구니에 담기</string>
+    <string name="shop_tab_recommend">추천</string>
+    <string name="shop_tab_interior">인테리어</string>
+    <string name="shop_tab_background">방 배경</string>
+    <string name="shop_cart_description">장바구니</string>
+    <string name="shop_cart_description_count">장바구니, 상품 %1$d개</string>
 </resources>
