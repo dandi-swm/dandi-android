@@ -14,8 +14,10 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.shop.entity.ShopTab
 import com.dandi.nyummy.shop.presentation.component.ShopHeader
 import com.dandi.nyummy.shop.presentation.component.ShopItemDetailSheet
+import com.dandi.nyummy.shop.presentation.recommend.ShopRecommendTab
 
 /**
  * 상점 화면. 상단 머리(상단 바·탭) 아래에 선택한 탭 내용을 그리고, 상품을 누르면 상세 시트를 띄운다.
@@ -58,12 +60,18 @@ private fun ShopScreen(
             onCartClick = { onIntent(ShopIntent.ClickCart) },
             onCoinsClick = { onIntent(ShopIntent.ClickCoins) },
         )
-        // 탭 내용(추천 SDUI, 인테리어·방 배경 목록)은 탭 ViewModel과 함께 다음 단계에서 채운다.
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-        )
+        val tabModifier = Modifier
+            .fillMaxWidth()
+            .weight(1f)
+        when (uiState.selectedTab) {
+            ShopTab.RECOMMEND -> ShopRecommendTab(
+                onItemClick = { onIntent(ShopIntent.ClickItem(it)) },
+                onAction = { onIntent(ShopIntent.ClickAction(it)) },
+                modifier = tabModifier,
+            )
+            // 인테리어·방 배경 목록은 탭 ViewModel과 함께 다음 단계에서 채운다.
+            ShopTab.INTERIOR, ShopTab.BACKGROUND -> Box(modifier = tabModifier)
+        }
     }
     uiState.detailItem?.let { item ->
         ShopItemDetailSheet(

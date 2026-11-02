@@ -11,4 +11,9 @@
     <string name="shop_tab_background">Rooms</string>
     <string name="shop_cart_description">Cart</string>
     <string name="shop_cart_description_count">Cart, %1$d items</string>
+    <string name="shop_load_failed_voice">I couldn\'t open the shop</string>
+    <string name="shop_load_failed_body">Please try again in a moment.</string>
+    <string name="shop_retry">Try again</string>
+    <string name="shop_loading">Loading the shop</string>
+    <string name="shop_banner_index">%1$d / %2$d</string>
 </resources>
