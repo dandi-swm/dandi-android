@@ -9,17 +9,17 @@
 - 바텀 네비 4탭(홈·마이룸·기록·상점, v2 단색 채움 아이콘) + 기록 탭 앞 바 안의 초록 카메라 버튼(식사 기록 진입) — `NyummyNavigation.kt`의 `NyummyMainTabs`/`RootComposable.kt`. 마이룸·상점은 기능 플래그가 꺼져 있으면 탭을 눌렀을 때 "준비 중"이라고 알린다.
 - 기능 플래그(Firebase Remote Config, `common/domain/.../remoteconfig/RemoteConfigKey.kt`): `android_mail_item_tab_enabled`(우편함 아이템 탭 + 식사 기록 뒤 상자를 우편함으로 보내는 연출), `android_my_room_enabled`, `android_shop_enabled`. 기본값은 모두 false이고 debug 빌드는 키 뒤에 `_debug`를 붙여 읽는다. 강제 업데이트 키는 `docs/remote-config-force-update.md`.
 - App Links: `https://link.nyummy.co.kr/<라우트 path>` (autoVerify, S3+CloudFront 서빙, 검증 완료). `assetlinks.json`·폴백 페이지·지문 추가/검증 절차는 `docs/app-links/`. 푸시는 FCM(`app/.../push/`)으로 받고, 디바이스 토큰을 서버에 등록하며, 알림을 탭하면 서버가 준 App Link로 들어간다.
-- API 계약은 dev 서버 Swagger(`https://ddanddi.nyummy.co.kr/swagger-ui/index.html`)가 기준이다. ApiService 14개:
+- API 계약은 dev 서버 Swagger(`https://ddanddi.nyummy.co.kr/swagger-ui/index.html`)가 기준이다. ApiService 17개:
   - `AuthApiService`: 로그인, 소셜 로그인, 회원가입, 이메일 인증 발송·확인, 비밀번호 재설정, 토큰 재발급, 로그아웃
   - `OnboardingApiService`: 고양이 생성 `POST /api/v1/cats`(이름과 평소 식사 시각을 한 번에 보냄, 성공은 본문 없는 201)
   - `CatApiService`: 냐미 상태별 애니메이션 / `HomeApiService`: 홈 요약
   - `MealRecordApiService`: 식사 생성 / `HistoryApiService`: 월간·일별·상세 조회, 이름 수정, 삭제, 영양 분석 재시도·평가
   - `MailboxApiService`: 우편 목록, 하나 받기, 모두 받기, 받은 우편 삭제·복구
   - `RoomApiService`: 마이룸 조회, 보유 아이템 목록, 꾸민 방 저장
-  - `ShopApiService`: 추천 탭 SDUI(칸마다 따로 해석, 모르는 칸은 버림), 인테리어·방 배경 상품 목록, 프로모션 상품 모음, 상단 바(잔액·장바구니 종류 수)
+  - `ShopApiService`: 추천 탭 SDUI(칸마다 따로 해석, 모르는 칸은 버림), 인테리어·방 배경 상품 목록, 프로모션 상품 모음, 상단 바(잔액·장바구니 종류 수) / `CartApiService`: 장바구니 조회·담기·수량·선택·빼기 / `PurchaseApiService`: 구매(`Idempotency-Key` 헤더) / `CoinApiService`: 코인 내역
   - `SettingsApiService`: 내 프로필, 끼니 시각, 알림 수신 설정 조회·변경, 회원 탈퇴 / `InquiryApiService`: 문의 목록·상세·작성·삭제·복구
   - `common:data`: `ImageUploadApiService`(presigned URL 발급), `ImageStorageApiService`(S3 직접 PUT, `@NoAuthApi`), `DeviceTokenApiService`(푸시 토큰 등록)
-- Swagger에는 있지만 앱이 아직 쓰지 않는 API: `GET /api/v1/cats`, `GET /api/v1/meals/{mealId}/analysis`, `PATCH /api/v1/users/me/password`, `PUT /api/v1/inquiries/{inquiryId}`, `DELETE /api/v1/rooms/owned-items/{ownedRoomItemId}`, `POST /api/v1/rooms/owned-items/{ownedRoomItemId}/restore`, 상점 장바구니·구매(`/api/v1/shop/cart/...`, `POST /api/v1/shop/purchases`)와 코인 내역(`GET /api/v1/coins/histories`, 구현 중). 컬렉션·퀘스트·업적 API는 아직 Swagger에 없다.
+- Swagger에는 있지만 앱이 아직 쓰지 않는 API: `GET /api/v1/cats`, `GET /api/v1/meals/{mealId}/analysis`, `PATCH /api/v1/users/me/password`, `PUT /api/v1/inquiries/{inquiryId}`, `DELETE /api/v1/rooms/owned-items/{ownedRoomItemId}`, `POST /api/v1/rooms/owned-items/{ownedRoomItemId}/restore`. 컬렉션·퀘스트·업적 API는 아직 Swagger에 없다.
 - 로그인 직후 이동은 응답 `redirectUrl`(앱 링크)을 스택을 비우고 연다(`openAfterLogin`, `navigateToAppLink(asRoot = true)`). 홈이면 앱 링크 대신 방 준비 화면 `/home/prepare`를 거쳐 홈으로 간다. 앱 안 이동·푸시·외부 앱 링크는 모두 `navigateToAppLink` → `handleAppLink` 한 길이다. 회원가입 직후는 항상 온보딩. 온보딩은 미연시형 냥줍 대본(`OnboardingScript`) → 이름 짓기(앱에서 검사만) → 평소 식사 시각 → 고양이 생성(`FinishOnboardingUseCase`) → 방 준비 → 홈. 방 준비 화면과, 자동 로그인으로 홈에 가는 인트로(`GetIntroUseCase`)는 냐미 애니메이션과 시트를 미리 받고(`PrefetchCatAnimationsUseCase`, 최대 3초 대기) 홈으로 간다. 홈 요약도 같이 받기 시작하지만 기다리지 않고, 홈의 첫 조회가 그 요청을 이어받는다(`PrefetchHomeSummaryUseCase`).
 - 홈: 꾸민 방(`HomeRoomMapper`) 위에 냐미가 상태별 애니메이션으로 살고, 위에 지갑·우편·설정, 연속 기록 배너, 눈 버튼(화면 요소를 숨기고 방만 보기)이 뜬다. 화면이 보일 때마다 홈 요약을 다시 읽는다.
 - 식사 기록: 촬영(또는 갤러리 첨부 — EXIF 촬영일이 기기 타임존 기준 오늘인 사진만, `ImportGalleryMealPhotoUseCase`) → 확인 → 제출(`SubmitMealUseCase`) → 연출(`MealCeremonyStage`: 띠욧 컷신 → 맛 리액션 → 먹었어요 → 보상 상자가 우편함으로) → 홈. 건너뛰기는 띠욧 컷신만 건너뛴다. 앱이 종료됐다 돌아와도 찍은 사진과 연출 단계를 되살리고(`MealRecordSnapshot`), 업로드 중 종료됐으면 다시 보내지 않고 확인하라고 안내한다. 접수에 실패하면 안내 스낵바와 함께 곧장 홈으로 간다.

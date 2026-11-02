@@ -20,8 +20,27 @@ object ShopDataModule {
 
     @Provides
     @Singleton
-    fun provideShopDataSource(apiService: ShopApiService): ShopDataSource =
-        ShopDataSource(apiService)
+    fun provideCartApiService(retrofit: Retrofit): CartApiService =
+        retrofit.create(CartApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun providePurchaseApiService(retrofit: Retrofit): PurchaseApiService =
+        retrofit.create(PurchaseApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideCoinApiService(retrofit: Retrofit): CoinApiService =
+        retrofit.create(CoinApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideShopDataSource(
+        apiService: ShopApiService,
+        cartApiService: CartApiService,
+        purchaseApiService: PurchaseApiService,
+        coinApiService: CoinApiService,
+    ): ShopDataSource = ShopDataSource(apiService, cartApiService, purchaseApiService, coinApiService)
 
     @Provides
     @Singleton

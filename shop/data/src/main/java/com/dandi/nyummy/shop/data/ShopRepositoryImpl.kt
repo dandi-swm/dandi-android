@@ -1,6 +1,9 @@
 package com.dandi.nyummy.shop.data
 
 import android.util.Log
+import com.dandi.nyummy.shop.data.dto.CartDTO
+import com.dandi.nyummy.shop.data.dto.PurchaseRequestDTO
+import com.dandi.nyummy.shop.data.dto.toDTO
 import com.dandi.nyummy.shop.domain.ShopRepository
 import com.dandi.nyummy.shop.entity.AddedCartItemVO
 import com.dandi.nyummy.shop.entity.CartVO
@@ -20,11 +23,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 
 /**
  * 상점 저장소. 싱글턴이라 상단 바 값([summary])을 상점 화면들이 같이 본다.
- * 장바구니·구매·코인 내역은 다음 단계(`feat/shop-data-cart`)에서 채운다. 그 전에는 부르는 화면이 없다.
+ * 상단 바 조회, 담기, 장바구니(항목 수·잔액), 구매(잔액·종류 수) 응답이 올 때마다 [summary]를 바꾼다.
  */
 class ShopRepositoryImpl(
     private val dataSource: ShopDataSource,
@@ -54,23 +58,38 @@ class ShopRepositoryImpl(
     override suspend fun getPromotionProducts(promotionId: Long, cursor: Long?, size: Int): ShopPromotionPageVO =
         dataSource.getPromotionProducts(promotionId, cursor, size).toVO()
 
-    override suspend fun addToCart(productId: Long, quantity: Int): AddedCartItemVO = TODO(NEXT_STEP)
+    override suspend fun addToCart(productId: Long, quantity: Int): AddedCartItemVO =
+        dataSource.addCartItem(productId, quantity).toVO().also { added ->
+            summaryState.update { it.copy(cartItemCount = added.cartItemCount) }
+        }
 
-    override suspend fun getCart(): CartVO = TODO(NEXT_STEP)
+    override suspend fun getCart(): CartVO = dataSource.getCart().applyToSummary()
 
-    override suspend fun updateCartItemQuantity(productId: Long, quantity: Int): CartVO = TODO(NEXT_STEP)
+    override suspend fun updateCartItemQuantity(productId: Long, quantity: Int): CartVO =
+        dataSource.updateCartItemQuantity(productId, quantity).applyToSummary()
 
-    override suspend fun updateCartSelection(productIds: List<Long>): CartVO = TODO(NEXT_STEP)
+    override suspend fun updateCartSelection(productIds: List<Long>): CartVO =
+        dataSource.updateCartSelection(productIds).applyToSummary()
 
-    override suspend fun deleteCartItems(productIds: List<Long>): CartVO = TODO(NEXT_STEP)
+    override suspend fun deleteCartItems(productIds: List<Long>): CartVO =
+        dataSource.deleteCartItems(productIds).applyToSummary()
 
-    override suspend fun purchase(idempotencyKey: String, products: List<PurchaseProductVO>): PurchaseResultVO =
-        TODO(NEXT_STEP)
+    override suspend fun purchase(idempotencyKey: String, products: List<PurchaseProductVO>): PurchaseResultVO {
+        val result = dataSource.purchase(idempotencyKey, PurchaseRequestDTO(products.map { it.toDTO() })).toVO()
+        summaryState.value = ShopSummaryVO(balance = result.balance, cartItemCount = result.cartItemCount)
+        purchaseCompletedEvents.tryEmit(Unit)
+        return result
+    }
 
-    override suspend fun getCoinHistories(cursor: Long?, size: Int): CoinHistoryPageVO = TODO(NEXT_STEP)
+    override suspend fun getCoinHistories(cursor: Long?, size: Int): CoinHistoryPageVO =
+        dataSource.getCoinHistories(cursor, size).toVO()
+
+    /** 장바구니 응답의 항목 수(서버 기준)와 잔액으로 상단 바를 맞춘다. */
+    private fun CartDTO.applyToSummary(): CartVO = toVO().also { cart ->
+        summaryState.value = ShopSummaryVO(balance = cart.summary.balance, cartItemCount = cartItems.orEmpty().size)
+    }
 
     private companion object {
         const val TAG = "ShopRepository"
-        const val NEXT_STEP = "feat/shop-data-cart에서 구현"
     }
 }
