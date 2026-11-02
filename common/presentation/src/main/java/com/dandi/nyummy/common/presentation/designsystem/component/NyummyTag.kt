@@ -36,8 +36,9 @@ fun NyummyTag(
     val bg = NyummyTheme.colors.bg
     val content = NyummyTheme.colors.content
     // Neutral 바탕은 상품 그림 바탕(surfaceSunken) 위에서도 보이게 한 단계 진하게 쓴다.
+    // 상품 태그(Item)의 Promo 글자는 피그마 `v2 / Shop / Tag`처럼 베리(danger)다. 배너 배지는 그대로 promo다.
     val (container, color) = when (tag.tone) {
-        TagTone.PROMO -> bg.promoSubtle to content.promo
+        TagTone.PROMO -> bg.promoSubtle to if (style == NyummyTagStyle.Item) content.danger else content.promo
         TagTone.SUCCESS -> bg.brandSubtle to content.brand
         TagTone.NEUTRAL -> bg.actionNeutral to content.secondary
     }

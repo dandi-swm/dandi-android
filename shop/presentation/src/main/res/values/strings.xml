@@ -1,4 +1,9 @@
 <resources>
     <string name="shop_title">Shop</string>
     <string name="shop_coming_title">The shop is on its way</string>
+    <string name="shop_item_owned">Owned</string>
+    <string name="shop_item_owned_count">Owned %1$d</string>
+    <string name="shop_item_owned_price">Owned</string>
+    <string name="shop_item_add">Add</string>
+    <string name="shop_item_add_to_cart">Add to cart</string>
 </resources>

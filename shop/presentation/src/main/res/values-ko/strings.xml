@@ -1,4 +1,9 @@
 <resources>
     <string name="shop_title">상점</string>
     <string name="shop_coming_title">상점을 준비하고 있어요</string>
+    <string name="shop_item_owned">보유</string>
+    <string name="shop_item_owned_count">%1$d개 보유</string>
+    <string name="shop_item_owned_price">보유 중</string>
+    <string name="shop_item_add">담기</string>
+    <string name="shop_item_add_to_cart">장바구니에 담기</string>
 </resources>
