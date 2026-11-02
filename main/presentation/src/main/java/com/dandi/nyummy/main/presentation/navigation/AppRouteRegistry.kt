@@ -49,6 +49,7 @@ import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.shop.domain.ShopPromotionPage
 import com.dandi.nyummy.shop.presentation.ShopPage
 import com.dandi.nyummy.shop.presentation.ShopPlaceholderPage
+import com.dandi.nyummy.shop.presentation.cart.ShopCartPage as ShopCartScreenPage
 import com.dandi.nyummy.shop.presentation.promotion.ShopPromotionPage as ShopPromotionScreenPage
 
 /**
@@ -207,7 +208,7 @@ val appRoutes: List<AppRoute> = listOf(
                 GenericNavKey(ShopCartPage.PATH, args),
             )
         },
-        render = { ShopPlaceholderPage() },
+        render = { ShopCartScreenPage() },
     ),
     AppRoute(
         // 코인 내역. 상점 코인 칩과 홈 지갑 버튼이 연다.

@@ -1,0 +1,255 @@
+package com.dandi.nyummy.shop.presentation.cart
+
+import androidx.lifecycle.viewModelScope
+import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.navigation.Page
+import com.dandi.nyummy.common.presentation.mvi.MviIntent
+import com.dandi.nyummy.common.presentation.mvi.MviViewModel
+import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
+import com.dandi.nyummy.common.presentation.mvi.UiState
+import com.dandi.nyummy.shop.domain.AddToCartUseCase
+import com.dandi.nyummy.shop.domain.DeleteCartItemsUseCase
+import com.dandi.nyummy.shop.domain.GetCartUseCase
+import com.dandi.nyummy.shop.domain.GetShopProductsUseCase
+import com.dandi.nyummy.shop.domain.ShopPage
+import com.dandi.nyummy.shop.domain.UpdateCartQuantityUseCase
+import com.dandi.nyummy.shop.domain.UpdateCartSelectionUseCase
+import com.dandi.nyummy.shop.entity.CartItemVO
+import com.dandi.nyummy.shop.entity.CartSummaryVO
+import com.dandi.nyummy.shop.entity.CartVO
+import com.dandi.nyummy.shop.entity.ProductSort
+import com.dandi.nyummy.shop.entity.ShopItemVO
+import com.dandi.nyummy.shop.entity.ShopTab
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toPersistentSet
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+/**
+ * 장바구니 화면 상태. [items]·[selectedItemCount]·[summary]는 서버 장바구니이고, 수량·선택은 누르자마자 먼저 바꿔
+ * 보인 뒤 마지막 요청의 응답으로 맞춘다.
+ *
+ * @property recommendations 빈 장바구니의 인기 인테리어 추천. 불러오지 못하면 비어 있고 칸을 숨긴다
+ */
+data class ShopCartUIState(
+    val items: ImmutableList<CartItemVO> = persistentListOf(),
+    val selectedItemCount: Int = 0,
+    val summary: CartSummaryVO = CartSummaryVO(),
+    val isLoading: Boolean = true,
+    val isLoadFailed: Boolean = false,
+    val recommendations: ImmutableList<ShopItemVO> = persistentListOf(),
+    val detailItem: ShopItemVO? = null,
+    val addingProductIds: ImmutableSet<Long> = persistentSetOf(),
+) : UiState {
+    val isEmpty: Boolean get() = !isLoading && !isLoadFailed && items.isEmpty()
+
+    /** 전체 선택 체크: 살 수 있는 항목이 있고 모두 골랐다. */
+    val isAllSelected: Boolean get() = items.any { it.canPurchase } && items.filter { it.canPurchase }.all { it.isSelected }
+}
+
+sealed interface ShopCartIntent : MviIntent {
+    data object Enter : ShopCartIntent
+    data object Retry : ShopCartIntent
+    data object ClickBack : ShopCartIntent
+
+    /** −/+. [quantity]는 바꾼 뒤 수량이다(1 ~ 최대 수량으로 자른다). */
+    data class ChangeQuantity(val productId: Long, val quantity: Int) : ShopCartIntent
+    data class ToggleSelect(val productId: Long) : ShopCartIntent
+    data object ToggleSelectAll : ShopCartIntent
+
+    /** 줄의 ✕. */
+    data class DeleteItem(val productId: Long) : ShopCartIntent
+    data object DeleteSelected : ShopCartIntent
+
+    /** 빈 장바구니의 "상점 구경하기". */
+    data object ClickBrowseShop : ShopCartIntent
+
+    /** 빈 장바구니 추천의 "전체보기"(인테리어 인기순). */
+    data object ClickSeeAllRecommendations : ShopCartIntent
+    data class ClickRecommendation(val item: ShopItemVO) : ShopCartIntent
+    data object DismissDetail : ShopCartIntent
+    data class AddRecommendation(val item: ShopItemVO) : ShopCartIntent
+}
+
+sealed interface ShopCartReducerEvent : ReducerEvent {
+    data object LoadStarted : ShopCartReducerEvent
+    data class CartLoaded(val cart: CartVO) : ShopCartReducerEvent
+    data object LoadFailed : ShopCartReducerEvent
+    data class QuantityShown(val productId: Long, val quantity: Int) : ShopCartReducerEvent
+    data class SelectionShown(val productIds: Set<Long>) : ShopCartReducerEvent
+    data class RecommendationsLoaded(val items: List<ShopItemVO>) : ShopCartReducerEvent
+    data class DetailOpened(val item: ShopItemVO) : ShopCartReducerEvent
+    data object DetailClosed : ShopCartReducerEvent
+    data class AddStarted(val productId: Long) : ShopCartReducerEvent
+    data class AddFinished(val productId: Long, val added: Boolean) : ShopCartReducerEvent
+}
+
+/**
+ * 장바구니. 조회·수량·선택·빼기 요청마다 번호를 붙이고 가장 최근 요청의 응답만 화면에 반영한다(응답 순서가 뒤바뀌어도
+ * 마지막으로 보낸 값이 남는다). 바꾸는 요청이 실패하면 장바구니를 다시 읽는다(수량 거절 토스트는 UseCase가 띄운다).
+ * 장바구니가 비면 인기 인테리어 6개를 추천한다.
+ */
+@HiltViewModel
+class ShopCartViewModel @Inject constructor(
+    private val navigationHelper: NavigationHelper,
+    private val getCart: GetCartUseCase,
+    private val updateCartQuantity: UpdateCartQuantityUseCase,
+    private val updateCartSelection: UpdateCartSelectionUseCase,
+    private val deleteCartItems: DeleteCartItemsUseCase,
+    private val getShopProducts: GetShopProductsUseCase,
+    private val addToCart: AddToCartUseCase,
+) : MviViewModel<ShopCartIntent, ShopCartUIState, ShopCartReducerEvent>(ShopCartUIState()) {
+
+    private var entered = false
+    private var latestRequestId = 0
+
+    override fun onIntent(intent: ShopCartIntent) {
+        when (intent) {
+            ShopCartIntent.Enter -> if (!entered) {
+                entered = true
+                reload()
+            }
+            ShopCartIntent.Retry -> reload()
+            ShopCartIntent.ClickBack -> navigationHelper.navigateToBack()
+            is ShopCartIntent.ChangeQuantity -> changeQuantity(intent.productId, intent.quantity)
+            is ShopCartIntent.ToggleSelect -> toggleSelect(intent.productId)
+            ShopCartIntent.ToggleSelectAll -> toggleSelectAll()
+            is ShopCartIntent.DeleteItem -> mutate { deleteCartItems(listOf(intent.productId)) }
+            ShopCartIntent.DeleteSelected -> deleteSelected()
+            ShopCartIntent.ClickBrowseShop -> leaveTo(ShopPage)
+            ShopCartIntent.ClickSeeAllRecommendations -> leaveTo(ShopPage.of(ShopTab.INTERIOR, ProductSort.POPULAR))
+            is ShopCartIntent.ClickRecommendation -> dispatch(ShopCartReducerEvent.DetailOpened(intent.item))
+            ShopCartIntent.DismissDetail -> dispatch(ShopCartReducerEvent.DetailClosed)
+            is ShopCartIntent.AddRecommendation -> addRecommendation(intent.item)
+        }
+    }
+
+    private fun reload() {
+        if (currentState.items.isEmpty()) dispatch(ShopCartReducerEvent.LoadStarted)
+        send(request = { getCart() }, onFailure = { dispatch(ShopCartReducerEvent.LoadFailed) })
+    }
+
+    /** 장바구니를 바꾸는 요청. 실패하면 서버 값으로 되돌리려고 다시 읽는다. */
+    private fun mutate(request: suspend () -> Result<CartVO>) {
+        send(request = request, onFailure = { reload() })
+    }
+
+    private fun send(request: suspend () -> Result<CartVO>, onFailure: () -> Unit) {
+        val requestId = ++latestRequestId
+        viewModelScope.launch {
+            val result = request()
+            if (requestId != latestRequestId) return@launch
+            result
+                .onSuccess { cart ->
+                    dispatch(ShopCartReducerEvent.CartLoaded(cart))
+                    if (cart.items.isEmpty()) loadRecommendations()
+                }
+                .onFailure { onFailure() }
+        }
+    }
+
+    private fun changeQuantity(productId: Long, quantity: Int) {
+        val item = currentState.items.firstOrNull { it.shopItem.productId == productId } ?: return
+        if (!item.canPurchase) return
+        val clamped = quantity.coerceIn(1, item.maxQuantity.coerceAtLeast(1))
+        if (clamped == item.quantity) return
+        dispatch(ShopCartReducerEvent.QuantityShown(productId, clamped))
+        mutate { updateCartQuantity(productId, clamped) }
+    }
+
+    private fun toggleSelect(productId: Long) {
+        val items = currentState.items
+        val item = items.firstOrNull { it.shopItem.productId == productId } ?: return
+        if (!item.canPurchase) return
+        val selected = items.filter { it.isSelected }.map { it.shopItem.productId }.toMutableSet()
+        if (!selected.remove(productId)) selected += productId
+        sendSelection(selected)
+    }
+
+    private fun toggleSelectAll() {
+        val state = currentState
+        val purchasable = state.items.filter { it.canPurchase }.map { it.shopItem.productId }
+        if (purchasable.isEmpty()) return
+        sendSelection(if (state.isAllSelected) emptySet() else purchasable.toSet())
+    }
+
+    private fun sendSelection(productIds: Set<Long>) {
+        dispatch(ShopCartReducerEvent.SelectionShown(productIds))
+        // 서버에는 장바구니 순서대로 보낸다.
+        val ordered = currentState.items.map { it.shopItem.productId }.filter { it in productIds }
+        mutate { updateCartSelection(ordered) }
+    }
+
+    private fun deleteSelected() {
+        val selected = currentState.items.filter { it.isSelected }.map { it.shopItem.productId }
+        if (selected.isEmpty()) return
+        mutate { deleteCartItems(selected) }
+    }
+
+    private fun loadRecommendations() {
+        viewModelScope.launch {
+            val items = getShopProducts(ShopTab.INTERIOR, category = null, sort = ProductSort.POPULAR, size = RECOMMENDATION_SIZE)
+                .getOrNull()?.items.orEmpty()
+            dispatch(ShopCartReducerEvent.RecommendationsLoaded(items.take(RECOMMENDATION_SIZE)))
+        }
+    }
+
+    private fun addRecommendation(item: ShopItemVO) {
+        val productId = item.productId
+        if (productId in currentState.addingProductIds) return
+        dispatch(ShopCartReducerEvent.AddStarted(productId))
+        viewModelScope.launch {
+            val added = addToCart(productId).isSuccess
+            dispatch(ShopCartReducerEvent.AddFinished(productId, added))
+            if (added) reload()
+        }
+    }
+
+    /** 장바구니를 닫고 상점 탭을 연다. 상점에서 뒤로 가도 이 화면으로 돌아오지 않는다. */
+    private fun leaveTo(page: Page) {
+        navigationHelper.navigateToBack()
+        navigationHelper.navigateTo(page)
+    }
+
+    override fun reduce(state: ShopCartUIState, event: ShopCartReducerEvent): ShopCartUIState = when (event) {
+        ShopCartReducerEvent.LoadStarted -> state.copy(isLoading = true, isLoadFailed = false)
+        is ShopCartReducerEvent.CartLoaded -> state.copy(
+            items = event.cart.items.toImmutableList(),
+            selectedItemCount = event.cart.selectedItemCount,
+            summary = event.cart.summary,
+            isLoading = false,
+            isLoadFailed = false,
+            recommendations = if (event.cart.items.isEmpty()) state.recommendations else persistentListOf(),
+        )
+        ShopCartReducerEvent.LoadFailed ->
+            state.copy(isLoading = false, isLoadFailed = state.items.isEmpty())
+        is ShopCartReducerEvent.QuantityShown -> state.copy(
+            items = state.items.map {
+                if (it.shopItem.productId == event.productId) it.copy(quantity = event.quantity) else it
+            }.toImmutableList(),
+        )
+        is ShopCartReducerEvent.SelectionShown -> state.copy(
+            items = state.items.map { it.copy(isSelected = it.shopItem.productId in event.productIds) }.toImmutableList(),
+            selectedItemCount = event.productIds.size,
+        )
+        is ShopCartReducerEvent.RecommendationsLoaded -> state.copy(recommendations = event.items.toImmutableList())
+        is ShopCartReducerEvent.DetailOpened -> state.copy(detailItem = event.item)
+        ShopCartReducerEvent.DetailClosed -> state.copy(detailItem = null)
+        is ShopCartReducerEvent.AddStarted ->
+            state.copy(addingProductIds = (state.addingProductIds + event.productId).toPersistentSet())
+        is ShopCartReducerEvent.AddFinished -> state.copy(
+            addingProductIds = (state.addingProductIds - event.productId).toPersistentSet(),
+            detailItem = if (event.added) null else state.detailItem,
+        )
+    }
+
+    companion object {
+        /** 빈 장바구니 추천 개수(3열 2줄). */
+        const val RECOMMENDATION_SIZE = 6
+    }
+}

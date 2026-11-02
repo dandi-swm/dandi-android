@@ -36,4 +36,23 @@
     <string name="shop_promotion_ended_voice">Look forward to the next one</string>
     <string name="shop_promotion_ended_body">This promotion has ended</string>
     <string name="shop_promotion_go_to_shop">Back to the shop</string>
+    <string name="shop_cart_title">Cart</string>
+    <string name="shop_cart_select_all">Select all %1$d/%2$d</string>
+    <string name="shop_cart_delete_selected">Delete selected</string>
+    <string name="shop_cart_remove">Remove from cart</string>
+    <string name="shop_cart_decrease">Decrease</string>
+    <string name="shop_cart_increase">Increase</string>
+    <string name="shop_cart_summary_title">Payment</string>
+    <string name="shop_cart_list_price">Items (%1$d)</string>
+    <string name="shop_cart_discount">Discount</string>
+    <string name="shop_cart_total">Coins to pay</string>
+    <string name="shop_cart_balance">My coins</string>
+    <string name="shop_cart_balance_after">Coins left after purchase</string>
+    <string name="shop_cart_notice">Purchased items are sent to your mailbox. Items bought with coins can\'t be refunded.</string>
+    <string name="shop_cart_purchase">Buy %1$d</string>
+    <string name="shop_cart_empty_title">Your cart is empty</string>
+    <string name="shop_cart_empty_body">Items you add will gather here</string>
+    <string name="shop_cart_browse">Browse the shop</string>
+    <string name="shop_cart_recommend_title">How about these?</string>
+    <string name="shop_cart_see_all">See all</string>
 </resources>
