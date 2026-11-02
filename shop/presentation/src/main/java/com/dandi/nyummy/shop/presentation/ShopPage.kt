@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.shop.entity.ShopTab
+import com.dandi.nyummy.shop.presentation.catalog.ShopCatalogTab
 import com.dandi.nyummy.shop.presentation.component.ShopHeader
 import com.dandi.nyummy.shop.presentation.component.ShopItemDetailSheet
 import com.dandi.nyummy.shop.presentation.recommend.ShopRecommendTab
@@ -41,21 +42,26 @@ fun ShopPage(
         onPauseOrDispose { }
     }
     ShopScreen(uiState = uiState, onIntent = viewModel::onIntent) { tab, tabModifier ->
-        ShopTabContent(tab = tab, onIntent = viewModel::onIntent, modifier = tabModifier)
+        ShopTabContent(tab = tab, sortRequest = uiState.sortRequest, onIntent = viewModel::onIntent, modifier = tabModifier)
     }
 }
 
 /** 탭 하나의 내용. 탭마다 자기 ViewModel을 쓰므로 미리보기에서는 [ShopScreen]에 다른 내용을 넣는다. */
 @Composable
-private fun ShopTabContent(tab: ShopTab, onIntent: (ShopIntent) -> Unit, modifier: Modifier) {
+private fun ShopTabContent(tab: ShopTab, sortRequest: ShopSortRequest?, onIntent: (ShopIntent) -> Unit, modifier: Modifier) {
     when (tab) {
         ShopTab.RECOMMEND -> ShopRecommendTab(
             onItemClick = { onIntent(ShopIntent.ClickItem(it)) },
             onAction = { onIntent(ShopIntent.ClickAction(it)) },
             modifier = modifier,
         )
-        // 인테리어·방 배경 목록은 탭 ViewModel과 함께 다음 단계에서 채운다.
-        ShopTab.INTERIOR, ShopTab.BACKGROUND -> Box(modifier = modifier)
+        ShopTab.INTERIOR, ShopTab.BACKGROUND -> ShopCatalogTab(
+            tab = tab,
+            sortRequest = sortRequest,
+            onItemClick = { onIntent(ShopIntent.ClickItem(it)) },
+            onAdd = { onIntent(ShopIntent.AddToCart(it)) },
+            modifier = modifier,
+        )
     }
 }
 

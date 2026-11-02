@@ -14,6 +14,7 @@ import com.dandi.nyummy.shop.entity.ShopRecommendPageVO
 import com.dandi.nyummy.shop.entity.ShopSummaryVO
 import com.dandi.nyummy.shop.entity.ShopTab
 import com.dandi.nyummy.tti.TTIHelper
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
@@ -23,6 +24,13 @@ class ObserveShopSummaryUseCase @Inject constructor(
     private val repository: ShopRepository,
 ) {
     operator fun invoke(): StateFlow<ShopSummaryVO> = repository.summary
+}
+
+/** 구매가 끝날 때마다 한 번 받는다. 상품 목록은 산 상품이 바로 "n개 보유"로 보이게 처음부터 다시 읽는다. */
+class ObservePurchaseCompletedUseCase @Inject constructor(
+    private val repository: ShopRepository,
+) {
+    operator fun invoke(): Flow<Unit> = repository.purchaseCompleted
 }
 
 /**

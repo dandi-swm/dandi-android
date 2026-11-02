@@ -16,4 +16,18 @@
     <string name="shop_retry">Try again</string>
     <string name="shop_loading">Loading the shop</string>
     <string name="shop_banner_index">%1$d / %2$d</string>
+    <string name="shop_catalog_hide_owned">Hide owned</string>
+    <string name="shop_catalog_empty_voice">Nothing here yet</string>
+    <string name="shop_catalog_empty_body">Try another category or sort.</string>
+    <string name="shop_category_all">All</string>
+    <string name="shop_category_limited">Limited</string>
+    <string name="shop_category_bed">Beds</string>
+    <string name="shop_category_cat_wheel">Cat wheels</string>
+    <string name="shop_category_rug">Rugs</string>
+    <string name="shop_category_etc">Decor</string>
+    <string name="shop_sort_title">Sort</string>
+    <string name="shop_sort_new">Newest</string>
+    <string name="shop_sort_popular">Popular</string>
+    <string name="shop_sort_price_asc">Price: low to high</string>
+    <string name="shop_sort_price_desc">Price: high to low</string>
 </resources>

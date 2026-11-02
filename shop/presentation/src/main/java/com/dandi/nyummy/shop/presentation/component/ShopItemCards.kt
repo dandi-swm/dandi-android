@@ -133,7 +133,8 @@ fun ShopBackgroundCard(
 private fun ShopCardInfo(item: ShopItemVO) {
     Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2)) {
         NyummyText(text = item.name, style = NyummyTheme.typography.labelM, maxLines = 1)
-        ShopItemPrice(item)
+        // 카드는 좁아서 할인 가격(할인율·결제가·취소선 정가)이 한 줄에 다 안 들어가면 잘리지 않고 다음 줄로 넘긴다.
+        ShopItemPrice(item, maxLines = CardPriceMaxLines)
     }
 }
 
@@ -142,7 +143,7 @@ private fun ShopCardInfo(item: ShopItemVO) {
  * 인테리어는 여러 개 가질 수 있어 보유해도 가격을 보인다.
  */
 @Composable
-fun ShopItemPrice(item: ShopItemVO, modifier: Modifier = Modifier) {
+fun ShopItemPrice(item: ShopItemVO, modifier: Modifier = Modifier, maxLines: Int = 1) {
     if (item.isBackground && item.isOwned) {
         NyummyText(
             text = stringResource(R.string.shop_item_owned_price),
@@ -152,7 +153,7 @@ fun ShopItemPrice(item: ShopItemVO, modifier: Modifier = Modifier) {
             maxLines = 1,
         )
     } else {
-        NyummyRichText(richText = item.price, modifier = modifier, maxLines = 1)
+        NyummyRichText(richText = item.price, modifier = modifier, maxLines = maxLines)
     }
 }
 
@@ -204,6 +205,7 @@ private const val ItemImageFraction = 0.7778f
 /** 방 배경 그림 비율(9:16). */
 private const val BackgroundAspectRatio = 9f / 16f
 
+private const val CardPriceMaxLines = 2
 
 internal val PreviewPrice = listOf(RichTextVO(icon = "coin"), RichTextVO("900", "numberS", "contentPrimary"))
 internal val PreviewSalePrice = listOf(

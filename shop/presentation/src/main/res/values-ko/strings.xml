@@ -16,4 +16,18 @@
     <string name="shop_retry">다시 시도</string>
     <string name="shop_loading">상점을 불러오고 있어요</string>
     <string name="shop_banner_index">%1$d / %2$d</string>
+    <string name="shop_catalog_hide_owned">보유 숨기기</string>
+    <string name="shop_catalog_empty_voice">여긴 아직 비어 있어요</string>
+    <string name="shop_catalog_empty_body">다른 분류나 정렬로 둘러봐 주세요.</string>
+    <string name="shop_category_all">전체</string>
+    <string name="shop_category_limited">기간 한정</string>
+    <string name="shop_category_bed">침대</string>
+    <string name="shop_category_cat_wheel">캣휠</string>
+    <string name="shop_category_rug">러그</string>
+    <string name="shop_category_etc">소품</string>
+    <string name="shop_sort_title">정렬</string>
+    <string name="shop_sort_new">신상품순</string>
+    <string name="shop_sort_popular">인기순</string>
+    <string name="shop_sort_price_asc">낮은 가격순</string>
+    <string name="shop_sort_price_desc">높은 가격순</string>
 </resources>
