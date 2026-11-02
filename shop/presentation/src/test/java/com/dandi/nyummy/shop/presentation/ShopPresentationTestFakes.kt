@@ -56,7 +56,16 @@ internal class FakeShopRepository : ShopRepository {
         return summaryState.value
     }
 
-    override suspend fun getRecommendPage(): ShopRecommendPageVO = ShopRecommendPageVO()
+    var recommendPage = ShopRecommendPageVO()
+    /** 추천 탭 조회만 실패시킨다. 꺼내 쓰면 비워진다(다음 조회는 성공). */
+    var recommendError: Exception? = null
+    var recommendCount = 0
+
+    override suspend fun getRecommendPage(): ShopRecommendPageVO {
+        recommendCount++
+        recommendError?.let { recommendError = null; throw it }
+        return recommendPage
+    }
 
     override suspend fun getProducts(
         tab: ShopTab,
