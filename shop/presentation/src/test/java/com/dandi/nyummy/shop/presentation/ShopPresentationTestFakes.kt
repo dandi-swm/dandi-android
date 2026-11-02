@@ -67,13 +67,24 @@ internal class FakeShopRepository : ShopRepository {
         return recommendPage
     }
 
+    data class ProductRequest(val tab: ShopTab, val category: ShopCategory?, val sort: ProductSort, val cursor: Long?)
+
+    val productRequests = mutableListOf<ProductRequest>()
+
+    /** 상품 목록 요청마다 돌려줄 묶음. 기본은 빈 마지막 묶음이다. */
+    var productsHandler: suspend (ProductRequest) -> ShopItemPageVO = { ShopItemPageVO() }
+
     override suspend fun getProducts(
         tab: ShopTab,
         category: ShopCategory?,
         sort: ProductSort,
         cursor: Long?,
         size: Int,
-    ): ShopItemPageVO = ShopItemPageVO()
+    ): ShopItemPageVO {
+        val request = ProductRequest(tab, category, sort, cursor)
+        productRequests += request
+        return productsHandler(request)
+    }
 
     override suspend fun getPromotionProducts(promotionId: Long, cursor: Long?, size: Int) = ShopPromotionPageVO()
 
