@@ -23,8 +23,8 @@ class NavigationHelperImpl : NavigationHelper {
         emit(NavSignal.GoToDestPage(route))
     }
 
-    override fun navigateToAppLink(link: String) {
-        emit(NavSignal.AppLink(link))
+    override fun navigateToAppLink(link: String, asRoot: Boolean) {
+        emit(NavSignal.AppLink(link, asRoot))
     }
 
     override fun navigateToBack() {

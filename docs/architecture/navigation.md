@@ -16,7 +16,7 @@ data class NavRoute(val path: String, val args: Map<String, String> = emptyMap()
 interface Page { fun toRoute(): NavRoute }            // feature/domain이 구현
 sealed interface NavSignal {
     GoToDestPage(route)      // 앱 내 전진 이동(push)
-    AppLink(link)            // 앱 링크(푸시·외부 웜 스타트, 앱 안 SDUI·공지) — 해석 후 bring-to-front
+    AppLink(link, asRoot)    // 앱 링크(푸시·외부 웜 스타트, 앱 안 SDUI·공지·로그인 뒤) — 해석 후 bring-to-front, asRoot면 스택 비우고 그 화면만
     Back                     // 한 단계 뒤로
     ResetToPage(route)       // 스택을 비우고 대상만 루트로 (로그인/가입 완료 → 홈)
     BackToInitialPage        // 세션 만료(401) — 초기 화면 단독으로 교체, 목적지는 NavHost가 정한다
@@ -26,7 +26,7 @@ interface NavigationHelper {
     val navigationFlow: Flow<NavSignal>
     fun navigateTo(page: Page)              // 권장 진입점 (앱 내 push)
     fun navigateByRoute(route: NavRoute)    // NavRoute 직접 구성해서 push
-    fun navigateToAppLink(link: String)     // 앱 링크 — 콜드 스타트와 같은 해석기로 풀고 bring-to-front (탭 대상은 탭 루트 시맨틱)
+    fun navigateToAppLink(link: String, asRoot: Boolean = false)  // 앱 링크 — 콜드 스타트와 같은 해석기로 풀고 bring-to-front (탭 대상은 탭 루트 시맨틱, asRoot면 리셋)
     fun navigateToBack()
     fun navigateToAsRoot(page: Page)        // → ResetToPage
     fun navigateToInitial()                 // → BackToInitialPage

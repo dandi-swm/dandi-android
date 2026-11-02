@@ -36,7 +36,7 @@ fun AppNavHost(
         navigationHelper.navigationFlow.collect { signal ->
             when (signal) {
                 is NavSignal.GoToDestPage -> handleNavRoute(signal.route, backStack)
-                is NavSignal.AppLink -> handleAppLink(signal.link, backStack)
+                is NavSignal.AppLink -> handleAppLink(signal.link, signal.asRoot, backStack)
                 NavSignal.Back -> backStack.popUnlessRoot()
                 is NavSignal.ResetToPage -> handleResetTo(signal.route, backStack)
                 NavSignal.BackToInitialPage -> navigateToInitialStack(backStack)
@@ -126,12 +126,19 @@ fun handleNavRoute(route: NavRoute, backStack: NavBackStack<NavKey>) {
  *
  * 예) 스택이 `[Home]` 인 상태에서 leaf 앱 링크가 도착하면, 기존 맥락을 유지한 채
  * 대상만 전면에 노출된다.
+ *
+ * [asRoot]면 위 규칙 대신 스택을 비우고 그 화면만 남긴다([handleResetTo], 로그인 뒤 이동).
  */
-fun handleAppLink(link: String, backStack: NavBackStack<NavKey>) {
+fun handleAppLink(link: String, asRoot: Boolean, backStack: NavBackStack<NavKey>) {
     val route = appLinkToRoute(link) ?: return
     val appRoute = appRouteByPath[route.path]
     if (appRoute == null) {
         Log.w(TAG, "Unhandled app link route: ${route.path}")
+        return
+    }
+    if (asRoot) {
+        // 로그인 뒤 이동처럼 이전 화면으로 돌아가면 안 될 때. 스택을 비우고 그 화면만 남긴다.
+        handleResetTo(route, backStack)
         return
     }
     if (appRoute.isBottomTab) {

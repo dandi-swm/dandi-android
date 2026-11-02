@@ -836,7 +836,7 @@ class HomeViewModelTest {
 
         val appLinks = mutableListOf<String>()
 
-        override fun navigateToAppLink(link: String) {
+        override fun navigateToAppLink(link: String, asRoot: Boolean) {
             appLinks += link
         }
 
