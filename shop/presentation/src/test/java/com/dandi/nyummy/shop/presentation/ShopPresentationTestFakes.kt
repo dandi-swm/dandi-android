@@ -86,7 +86,15 @@ internal class FakeShopRepository : ShopRepository {
         return productsHandler(request)
     }
 
-    override suspend fun getPromotionProducts(promotionId: Long, cursor: Long?, size: Int) = ShopPromotionPageVO()
+    val promotionRequests = mutableListOf<Pair<Long, Long?>>()
+
+    /** 프로모션 요청마다 돌려줄 묶음. 예외를 던지면 그 요청이 실패한다. */
+    var promotionHandler: suspend (promotionId: Long, cursor: Long?) -> ShopPromotionPageVO = { _, _ -> ShopPromotionPageVO() }
+
+    override suspend fun getPromotionProducts(promotionId: Long, cursor: Long?, size: Int): ShopPromotionPageVO {
+        promotionRequests += promotionId to cursor
+        return promotionHandler(promotionId, cursor)
+    }
 
     override suspend fun addToCart(productId: Long, quantity: Int): AddedCartItemVO {
         addRequests += productId
