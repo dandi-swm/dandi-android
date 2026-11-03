@@ -149,10 +149,16 @@ internal class RecordingNavigationHelper : NavigationHelper {
     val appLinks = mutableListOf<String>()
     var backCount = 0
 
+    /** 뒤로 가기와 화면 이동을 부른 순서대로 남긴다. 뒤로 가기는 [Back]이다. */
+    val events = mutableListOf<Any>()
+
+    object Back
+
     override val navigationFlow: Flow<NavSignal> = emptyFlow()
     override fun navigateByRoute(route: NavRoute) = Unit
     override fun navigateTo(page: Page) {
         pages += page
+        events += page
     }
 
     override fun navigateToAppLink(link: String, asRoot: Boolean) {
@@ -161,6 +167,7 @@ internal class RecordingNavigationHelper : NavigationHelper {
 
     override fun navigateToBack() {
         backCount++
+        events += Back
     }
 
     override fun navigateToAsRoot(page: Page) = Unit

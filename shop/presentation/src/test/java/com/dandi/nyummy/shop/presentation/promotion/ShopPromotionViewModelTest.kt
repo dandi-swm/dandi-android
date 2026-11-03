@@ -18,6 +18,8 @@ import com.dandi.nyummy.shop.presentation.RecordingMessageHelper
 import com.dandi.nyummy.shop.presentation.RecordingNavigationHelper
 import com.dandi.nyummy.shop.presentation.httpException
 import com.dandi.nyummy.shop.presentation.shopItem
+import java.io.IOException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -32,7 +34,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ShopPromotionViewModelTest {
@@ -86,6 +87,49 @@ class ShopPromotionViewModelTest {
     }
 
     @Test
+    fun `이어 받기에 실패해도 더 보기로 같은 커서부터 다시 받는다`() = runTest(testDispatcher) {
+        var failNext = true
+        repository.promotionHandler = { _, cursor ->
+            when {
+                cursor == null -> ShopPromotionPageVO(banner, listOf(shopItem(1)), nextCursor = 2)
+                failNext -> throw IOException("offline")
+                else -> ShopPromotionPageVO(banner, listOf(shopItem(2)), nextCursor = null)
+            }
+        }
+        val viewModel = createViewModel()
+        viewModel.onIntent(ShopPromotionIntent.Enter(12))
+        advanceUntilIdle()
+
+        viewModel.onIntent(ShopPromotionIntent.LoadMore)
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isLoadFailed)
+        assertTrue(viewModel.uiState.value.hasNext)
+
+        failNext = false
+        viewModel.onIntent(ShopPromotionIntent.LoadMore)
+        advanceUntilIdle()
+
+        assertEquals(listOf(12L to null, 12L to 2L, 12L to 2L), repository.promotionRequests)
+        assertEquals(listOf(1L, 2L), viewModel.uiState.value.items.map { it.productId })
+    }
+
+    @Test
+    fun `시트를 바꾼 뒤 늦게 온 앞 상품의 담기 응답은 지금 시트를 닫지 않는다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+        val gate = CompletableDeferred<Unit>().also { repository.addGate = it }
+
+        viewModel.onIntent(ShopPromotionIntent.ClickItem(shopItem(1)))
+        viewModel.onIntent(ShopPromotionIntent.AddToCart(shopItem(1), fromSheet = true))
+        advanceUntilIdle()
+        viewModel.onIntent(ShopPromotionIntent.DismissDetail)
+        viewModel.onIntent(ShopPromotionIntent.ClickItem(shopItem(2)))
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(shopItem(2), viewModel.uiState.value.detailItem)
+    }
+
+    @Test
     fun `끝난 프로모션이면 안내 화면을 보이고 상점으로 돌아가기는 이 화면을 닫고 상점을 연다`() = runTest(testDispatcher) {
         repository.promotionHandler = { _, _ -> throw httpException(404, ShopErrorType.PROMOTION_NOT_FOUND.type) }
         val viewModel = createViewModel()
@@ -96,8 +140,8 @@ class ShopPromotionViewModelTest {
 
         assertTrue(viewModel.uiState.value.isEnded)
         assertTrue(messageHelper.dialogs.isEmpty())
-        assertEquals(1, navigationHelper.backCount)
-        assertEquals(listOf(ShopPage), navigationHelper.pages)
+        // 상점을 먼저 열고 뒤로 가면 끝난 프로모션 화면이 다시 드러나므로, 닫기가 먼저여야 한다.
+        assertEquals(listOf(RecordingNavigationHelper.Back, ShopPage), navigationHelper.events)
     }
 
     @Test
@@ -152,6 +196,7 @@ class ShopPromotionViewModelTest {
         val viewModel = createViewModel()
 
         viewModel.onIntent(ShopPromotionIntent.Enter(12))
+        advanceUntilIdle()
         viewModel.onIntent(ShopPromotionIntent.Enter(12))
         advanceUntilIdle()
         viewModel.onIntent(ShopPromotionIntent.ClickCart)
