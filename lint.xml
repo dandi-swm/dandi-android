@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    모든 모듈이 함께 쓰는 lint 설정. 모듈 lint.xml이 없으면 lint가 위로 올라가며 이 파일을 찾는다.
+
+    UnsafeOptInUsageError: Android Studio의 K2 모드가 @Serializable 클래스에 kotlinx.serialization의
+    InternalSerializationApi opt-in 오류를 잘못 표시한다(KTIJ-31549). 컴파일과 Gradle lint는 문제없다.
+    검사 전체를 끄면 androidx 실험 API를 잘못 쓰는 경우까지 놓치므로, 이 표시 하나만 opt-in한 것으로 친다.
+-->
+<lint>
+    <issue id="UnsafeOptInUsageError">
+        <option name="opt-in" value="kotlinx.serialization.InternalSerializationApi" />
+    </issue>
+</lint>
