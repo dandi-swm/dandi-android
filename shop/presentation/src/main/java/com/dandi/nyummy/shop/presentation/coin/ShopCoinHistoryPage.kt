@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,6 +30,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCard
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRow
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRowTrailing
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPose
@@ -103,12 +103,10 @@ private fun ShopCoinHistoryScreen(
 /** "내 코인" 카드. */
 @Composable
 private fun BalanceCard(balance: Int, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(NyummyTheme.colors.bg.actionNeutral, RoundedCornerShape(NyummyTheme.radius.m))
-            .padding(NyummyTheme.spacing.s20),
-        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
+    NyummyCard(
+        modifier = modifier.fillMaxWidth(),
+        containerColor = NyummyTheme.colors.bg.actionNeutral,
+        spacing = NyummyTheme.spacing.s8,
     ) {
         NyummyText(text = stringResource(R.string.shop_cart_balance), style = NyummyTheme.typography.labelS, color = NyummyTheme.colors.content.secondary)
         Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s6), verticalAlignment = Alignment.CenterVertically) {
@@ -218,12 +216,13 @@ private fun EmptyHistory(onRecordMeal: () -> Unit, modifier: Modifier) {
                 color = NyummyTheme.colors.content.secondary,
                 modifier = Modifier.padding(top = NyummyTheme.spacing.s8),
             )
-            Column(
+            NyummyCard(
                 modifier = Modifier
                     .padding(top = NyummyTheme.spacing.s24)
-                    .fillMaxWidth()
-                    .background(NyummyTheme.colors.bg.surfaceSubtle, RoundedCornerShape(NyummyTheme.radius.m))
-                    .padding(vertical = NyummyTheme.spacing.s8),
+                    .fillMaxWidth(),
+                // 안의 제목과 List Row가 좌우 여백을 가지므로 카드는 위아래만 비운다.
+                contentPadding = PaddingValues(vertical = NyummyTheme.spacing.s8),
+                spacing = 0.dp,
             ) {
                 NyummyText(
                     text = stringResource(R.string.shop_coin_how_to_title),
