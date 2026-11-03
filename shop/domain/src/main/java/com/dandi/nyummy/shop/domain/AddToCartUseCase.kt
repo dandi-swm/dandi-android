@@ -2,6 +2,7 @@ package com.dandi.nyummy.shop.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.HttpResponseException
+import com.dandi.nyummy.common.domain.error.registeredErrorType
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -15,7 +16,7 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  * 성공하면 "장바구니에 담았어요"를 띄우고, 저장소가 상단 바의 장바구니 종류 수를 바꾼다.
  * 서버가 거절하면 장바구니가 가득 찬 경우만 "장바구니가 가득 찼어요", 그 밖(상품당 수량·구매 한도·판매 종료·
- * 이미 가진 방 배경·없는 상품)은 "더 이상 담을 수 없어요"를 띄운다. 로그인 만료·서버 오류는 공통 안내다.
+ * 이미 가진 방 배경·없는 상품, 코드 없는 404 포함)은 "더 이상 담을 수 없어요"를 띄운다. 로그인 만료·서버 오류는 공통 안내다.
  */
 class AddToCartUseCase @Inject constructor(
     private val repository: ShopRepository,
@@ -30,11 +31,16 @@ class AddToCartUseCase @Inject constructor(
         messageHelper.showToast(ShopMessages.ADDED_TO_CART)
         Result.success(added)
     } catch (e: HttpResponseException) {
-        handleHttpError<ShopErrorType>(
-            e,
-            onDomainError = { messageHelper.showToast(rejectionMessageOf(it)) },
-            onUnknownError = { messageHelper.showToast(ShopMessages.CANNOT_ADD_MORE) },
-        )
+        if (e.rawCode == HTTP_NOT_FOUND && e.registeredErrorType<ShopErrorType>() == null) {
+            // 코드 없는 404도 상품이 사라진 경우로 본다. 공통 처리("준비 중" 다이얼로그 뒤 뒤로 가기)로 보내지 않는다.
+            messageHelper.showToast(ShopMessages.CANNOT_ADD_MORE)
+        } else {
+            handleHttpError<ShopErrorType>(
+                e,
+                onDomainError = { messageHelper.showToast(rejectionMessageOf(it)) },
+                onUnknownError = { messageHelper.showToast(ShopMessages.CANNOT_ADD_MORE) },
+            )
+        }
         Result.failure(e)
     } catch (e: CancellationException) {
         throw e
@@ -50,5 +56,6 @@ class AddToCartUseCase @Inject constructor(
     private companion object {
         /** 담기는 늘 1개다. */
         const val QUANTITY = 1
+        const val HTTP_NOT_FOUND = 404
     }
 }
