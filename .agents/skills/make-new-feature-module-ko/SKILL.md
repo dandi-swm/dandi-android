@@ -821,7 +821,7 @@ AppRoute(
 ),
 ```
 
-계층 / `{param}` 라우트 — `articleList → articlePage` 처럼. `syntheticStack` 이 콜드 스타트용 **부모 체인 전체**를 깐다. 딥링크는 템플릿이 자동 매칭된다(추가 등록 불필요). 콜드 = `[Home, Parent, X(args)]`, 웜 딥링크 = bring-to-front(`handleDeepLink` 담당 — 여기서 재구현하지 말 것).
+계층 / `{param}` 라우트 — `articleList → articlePage` 처럼. `syntheticStack` 이 콜드 스타트용 **부모 체인 전체**를 깐다. 딥링크는 템플릿이 자동 매칭된다(추가 등록 불필요). 콜드 = `[Home, Parent, X(args)]`, 웜·앱 안 앱 링크 = bring-to-front(`handleAppLink` 담당 — 여기서 재구현하지 말 것).
 
 ```kotlin
 import com.jongchan.androidarchi.<parentFeature>.domain.<ParentUpper>Page   // 부모 라우트(기존 또는 형제)
@@ -842,7 +842,7 @@ AppRoute(
 ),
 ```
 
-> **단일 출처:** 콜드 스타트 백스택은 오직 이 `syntheticStack` 에서만 정의한다. 웜 딥링크 경로(`AppNavHost.kt` 의 `handleDeepLink`)는 대상만 최전면으로 올릴 뿐, 거기서 스택을 재정의하지 않는다.
+> **단일 출처:** 콜드 스타트 백스택은 오직 이 `syntheticStack` 에서만 정의한다. 웜·앱 안 앱 링크 경로(`AppNavHost.kt` 의 `handleAppLink`)는 대상만 최전면으로 올릴 뿐, 거기서 스택을 재정의하지 않는다.
 >
 > 부모(`<ParentUpper>Page`)도 등록된 라우트여야 한다. 부모가 같은 feature 안의 **새 형제 화면**이면 두 번째 `Page` 객체 + Composable + registry 항목을 추가한다 — feature 모듈 하나가 여러 화면(리스트 + 상세)을 가질 수 있다.
 

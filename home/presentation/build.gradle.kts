@@ -63,6 +63,7 @@ dependencies {
     implementation(project(":cat:entity"))
     implementation(project(":mailbox:domain"))
     implementation(project(":meal:domain"))
+    implementation(project(":shop:domain"))
     implementation(project(":room:domain"))
     implementation(project(":settings:domain"))
     implementation(project(":common:presentation"))

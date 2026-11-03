@@ -16,7 +16,7 @@ data class NavRoute(val path: String, val args: Map<String, String> = emptyMap()
 interface Page { fun toRoute(): NavRoute }            // feature/domain이 구현
 sealed interface NavSignal {
     GoToDestPage(route)      // 앱 내 전진 이동(push)
-    DeepLink(route)          // 웜 딥링크 — bring-to-front
+    AppLink(link, asRoot)    // 앱 링크(푸시·외부 웜 스타트, 앱 안 SDUI·공지·로그인 뒤) — 해석 후 bring-to-front, asRoot면 스택 비우고 그 화면만
     Back                     // 한 단계 뒤로
     ResetToPage(route)       // 스택을 비우고 대상만 루트로 (로그인/가입 완료 → 홈)
     BackToInitialPage        // 세션 만료(401) — 초기 화면 단독으로 교체, 목적지는 NavHost가 정한다
@@ -26,7 +26,7 @@ interface NavigationHelper {
     val navigationFlow: Flow<NavSignal>
     fun navigateTo(page: Page)              // 권장 진입점 (앱 내 push)
     fun navigateByRoute(route: NavRoute)    // NavRoute 직접 구성해서 push
-    fun navigateDeepLink(route: NavRoute)   // 웜 딥링크 — bring-to-front (탭 대상은 탭 루트 시맨틱)
+    fun navigateToAppLink(link: String, asRoot: Boolean = false)  // 앱 링크 — 콜드 스타트와 같은 해석기로 풀고 bring-to-front (탭 대상은 탭 루트 시맨틱, asRoot면 리셋)
     fun navigateToBack()
     fun navigateToAsRoot(page: Page)        // → ResetToPage
     fun navigateToInitial()                 // → BackToInitialPage
@@ -54,7 +54,7 @@ data class InquiryDetailPage(val inquiryId: Long) : Page {
 |---|---|
 | [AppRoute.kt](../../main/presentation/src/main/java/com/dandi/nyummy/main/presentation/navigation/AppRoute.kt) | path / isBottomTab / drawsBehindSystemBars / drawsBehindBottomBar / usesLightSystemBarIcons / syntheticStack / render(Composable) |
 | [AppRouteRegistry.kt](../../main/presentation/src/main/java/com/dandi/nyummy/main/presentation/navigation/AppRouteRegistry.kt) | **모든 라우트의 단일 등록처** — 새 화면은 여기에 항목 추가. 외부 링크 별칭 `appLinkAliases`도 여기 |
-| [AppNavHost.kt](../../main/presentation/src/main/java/com/dandi/nyummy/main/presentation/navigation/AppNavHost.kt) | `navigationFlow` collect → 신호별 처리(`handleNavRoute` / `handleDeepLink` / `handleResetTo` / `navigateToInitialStack` / `openExternalLink`), `NavDisplay` + `entry<GenericNavKey>` 렌더 |
+| [AppNavHost.kt](../../main/presentation/src/main/java/com/dandi/nyummy/main/presentation/navigation/AppNavHost.kt) | `navigationFlow` collect → 신호별 처리(`handleNavRoute` / `handleAppLink` / `handleResetTo` / `navigateToInitialStack` / `openExternalLink`), `NavDisplay` + `entry<GenericNavKey>` 렌더 |
 | [GenericNavKey.kt](../../main/presentation/src/main/java/com/dandi/nyummy/main/presentation/navigation/GenericNavKey.kt) | `@Serializable (path, args)` — 백스택 엔트리 단일 타입 |
 | [RootComposable.kt](../../main/presentation/src/main/java/com/dandi/nyummy/main/presentation/navigation/RootComposable.kt) | Scaffold + 하단 내비(`NyummyBottomNav`) + SnackbarHost/ToastHost |
 
@@ -123,7 +123,7 @@ AppRoute(
   - 해석된 `NavRoute.path`는 항상 **템플릿 path**(= `GenericNavKey` 식별자, in-app path와 동일). 동적 값은 args에 들어가므로 렌더 dispatch(`appRouteByPath[path]`)와 직렬화/복원은 그대로 O(1)·안전하게 동작.
 - **푸시 알림 진입**: [PushAppLink.kt](../../main/presentation/src/main/java/com/dandi/nyummy/main/presentation/deeplink/PushAppLink.kt). 링크는 App Link면 `Intent.data`로, OS가 띄운 푸시면 extras의 `appLink`로 들어온다. 알림 식별자는 `LinkArgs.NOTIFICATION_ID`로 라우트 args에 실어서, 같은 링크라도 알림마다 다른 키가 되고 화면은 같은 알림을 한 번만 처리한다.
 - **콜드 스타트** `resolveStartStack`: 매칭 라우트의 `syntheticStack` 전체를 깐다 → 부모 체인 포함. 미매칭 → 인트로 폴백.
-- **웜 스타트** `resolveNewIntentRoute` → `navigateDeepLink(route)` → `NavSignal.DeepLink` → [handleDeepLink](../../main/presentation/src/main/java/com/dandi/nyummy/main/presentation/navigation/AppNavHost.kt). 미매칭이면 무시한다(인트로로 가지 않는다).
+- **웜 스타트·앱 안 링크** `navigateToAppLink(link)` → `NavSignal.AppLink` → [handleAppLink](../../main/presentation/src/main/java/com/dandi/nyummy/main/presentation/navigation/AppNavHost.kt) → `appLinkToRoute`(콜드 스타트와 같은 `Uri.resolveRoute()`). 푸시는 알림 식별자를 쿼리로 붙여 넘긴다(`Uri.withNotificationId`). 앱 링크 호스트(`AppLinks.HOST`)가 아니거나 미매칭이면 무시한다(인트로로 가지 않는다). 서버가 주는 화면 링크는 모두 앱 링크라, 앱 안에서도 OS를 거치지 않고 이 길로 연다(OS를 거치면 "지원되는 링크 열기"가 꺼진 기기에서 브라우저로 빠진다).
   - **leaf 화면**: **bring-to-front** — 기존 스택은 보존하고 대상 키(path+args)만 최전면으로(동일 키는 `removeAll` 후 최상단 → 중복 키 금지). 사용자의 현재 맥락 유지가 의도된 동작.
   - **탭 루트**(`isBottomTab`): 단순 bring-to-front 하면 탭이 루트에서 밀려 Back 동작이 깨지므로, 콜드/in-app 과 동일한 **탭 루트 시맨틱**(`handleNavRoute` 위임)으로 처리.
   - in-app 전진 이동(`GoToDestPage`, push)과는 신호 자체가 분리되어 서로 영향을 주지 않는다.

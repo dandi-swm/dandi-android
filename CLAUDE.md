@@ -4,29 +4,31 @@
 
 ## 현재 구현 현황 (2026-10-26)
 
-- 등록 라우트 22개(`AppRouteRegistry.kt` 기준): `""`(인트로 루트) `/onboarding` `/login` `/login/email` `/login/password-reset` `/signup` `/signup/social` `/home` `/home/prepare`(로그인 직후 냐미 방 준비) `/meal/record` `/history` `/history/meals/{mealId}`(식사 상세) `/shop` `/mailbox` `/room` `/settings` `/settings/meal-time` `/settings/inquiry` `/mailbox/inquiry/write` `/mailbox/inquiry/{inquiryId}` `/legal/terms` `/legal/privacy`. 컬렉션·퀘스트·업적은 Page만 있고 등록하지 않았다. 문의는 설정으로 옮겼지만 작성·상세 경로는 `/mailbox/inquiry/...` 그대로다.
+- 등록 라우트 25개(`AppRouteRegistry.kt` 기준): `""`(인트로 루트) `/onboarding` `/login` `/login/email` `/login/password-reset` `/signup` `/signup/social` `/home` `/home/prepare`(로그인 직후 냐미 방 준비) `/meal/record` `/history` `/history/meals/{mealId}`(식사 상세) `/shop` `/shop/promotions/{promotionId}` `/shop/cart` `/shop/coins` `/mailbox` `/room` `/settings` `/settings/meal-time` `/settings/inquiry` `/mailbox/inquiry/write` `/mailbox/inquiry/{inquiryId}` `/legal/terms` `/legal/privacy`. 링크 별칭은 `/meals/{mealId}`·`/inquiries/{inquiryId}`·`/shop/{tab}`(→ `/shop` 탭·정렬 인자). 컬렉션·퀘스트·업적은 Page만 있고 등록하지 않았다. 문의는 설정으로 옮겼지만 작성·상세 경로는 `/mailbox/inquiry/...` 그대로다.
 - 디자인은 피그마 v2(외주 정리안 기반, `v2 · 01 Foundations`~) 기준이다. 글꼴은 Pretendard(UI)와 AndongKaturi(냐미 말투·강조)이고, AndongKaturi에 모양이 없는 글자가 든 문장은 통째로 Pretendard로 그린다(`foundation/NyummyAccentFallback.kt`). 글꼴 출처는 설정 > 약관의 "글꼴 출처".
 - 바텀 네비 4탭(홈·마이룸·기록·상점, v2 단색 채움 아이콘) + 기록 탭 앞 바 안의 초록 카메라 버튼(식사 기록 진입) — `NyummyNavigation.kt`의 `NyummyMainTabs`/`RootComposable.kt`. 마이룸·상점은 기능 플래그가 꺼져 있으면 탭을 눌렀을 때 "준비 중"이라고 알린다.
 - 기능 플래그(Firebase Remote Config, `common/domain/.../remoteconfig/RemoteConfigKey.kt`): `android_mail_item_tab_enabled`(우편함 아이템 탭 + 식사 기록 뒤 상자를 우편함으로 보내는 연출), `android_my_room_enabled`, `android_shop_enabled`. 기본값은 모두 false이고 debug 빌드는 키 뒤에 `_debug`를 붙여 읽는다. 강제 업데이트 키는 `docs/remote-config-force-update.md`.
 - App Links: `https://link.nyummy.co.kr/<라우트 path>` (autoVerify, S3+CloudFront 서빙, 검증 완료). `assetlinks.json`·폴백 페이지·지문 추가/검증 절차는 `docs/app-links/`. 푸시는 FCM(`app/.../push/`)으로 받고, 디바이스 토큰을 서버에 등록하며, 알림을 탭하면 서버가 준 App Link로 들어간다.
-- API 계약은 dev 서버 Swagger(`https://ddanddi.nyummy.co.kr/swagger-ui/index.html`)가 기준이다. ApiService 13개:
+- API 계약은 dev 서버 Swagger(`https://ddanddi.nyummy.co.kr/swagger-ui/index.html`)가 기준이다. ApiService 17개:
   - `AuthApiService`: 로그인, 소셜 로그인, 회원가입, 이메일 인증 발송·확인, 비밀번호 재설정, 토큰 재발급, 로그아웃
   - `OnboardingApiService`: 고양이 생성 `POST /api/v1/cats`(이름과 평소 식사 시각을 한 번에 보냄, 성공은 본문 없는 201)
   - `CatApiService`: 냐미 상태별 애니메이션 / `HomeApiService`: 홈 요약
   - `MealRecordApiService`: 식사 생성 / `HistoryApiService`: 월간·일별·상세 조회, 이름 수정, 삭제, 영양 분석 재시도·평가
   - `MailboxApiService`: 우편 목록, 하나 받기, 모두 받기, 받은 우편 삭제·복구
   - `RoomApiService`: 마이룸 조회, 보유 아이템 목록, 꾸민 방 저장
+  - `ShopApiService`: 추천 탭 SDUI(칸마다 따로 해석, 모르는 칸은 버림), 인테리어·방 배경 상품 목록, 프로모션 상품 모음, 상단 바(잔액·장바구니 종류 수) / `CartApiService`: 장바구니 조회·담기·수량·선택·빼기 / `PurchaseApiService`: 구매(`Idempotency-Key` 헤더) / `CoinApiService`: 코인 내역
   - `SettingsApiService`: 내 프로필, 끼니 시각, 알림 수신 설정 조회·변경, 회원 탈퇴 / `InquiryApiService`: 문의 목록·상세·작성·삭제·복구
   - `common:data`: `ImageUploadApiService`(presigned URL 발급), `ImageStorageApiService`(S3 직접 PUT, `@NoAuthApi`), `DeviceTokenApiService`(푸시 토큰 등록)
-- Swagger에는 있지만 앱이 아직 쓰지 않는 API: `GET /api/v1/cats`, `GET /api/v1/meals/{mealId}/analysis`, `PATCH /api/v1/users/me/password`, `PUT /api/v1/inquiries/{inquiryId}`, `DELETE /api/v1/rooms/owned-items/{ownedRoomItemId}`, `POST /api/v1/rooms/owned-items/{ownedRoomItemId}/restore`. 상점·컬렉션·퀘스트·업적 API는 아직 Swagger에 없다.
-- 로그인 직후 이동은 응답 `redirectUrl`의 path로 결정(`PostLoginDestination`: `/onboarding`이면 온보딩, 그 외 방 준비 화면 `/home/prepare`를 거쳐 홈). 회원가입 직후는 항상 온보딩. 온보딩은 미연시형 냥줍 대본(`OnboardingScript`) → 이름 짓기(앱에서 검사만) → 평소 식사 시각 → 고양이 생성(`FinishOnboardingUseCase`) → 방 준비 → 홈. 방 준비 화면과, 자동 로그인으로 홈에 가는 인트로(`GetIntroUseCase`)는 냐미 애니메이션과 시트를 미리 받고(`PrefetchCatAnimationsUseCase`, 최대 3초 대기) 홈으로 간다. 홈 요약도 같이 받기 시작하지만 기다리지 않고, 홈의 첫 조회가 그 요청을 이어받는다(`PrefetchHomeSummaryUseCase`).
+- Swagger에는 있지만 앱이 아직 쓰지 않는 API: `GET /api/v1/cats`, `GET /api/v1/meals/{mealId}/analysis`, `PATCH /api/v1/users/me/password`, `PUT /api/v1/inquiries/{inquiryId}`, `DELETE /api/v1/rooms/owned-items/{ownedRoomItemId}`, `POST /api/v1/rooms/owned-items/{ownedRoomItemId}/restore`. 컬렉션·퀘스트·업적 API는 아직 Swagger에 없다.
+- 로그인 직후 이동은 응답 `redirectUrl`(앱 링크)을 스택을 비우고 연다(`openAfterLogin`, `navigateToAppLink(asRoot = true)`). 홈이면 앱 링크 대신 방 준비 화면 `/home/prepare`를 거쳐 홈으로 간다. 앱 안 이동·푸시·외부 앱 링크는 모두 `navigateToAppLink` → `handleAppLink` 한 길이다. 회원가입 직후는 항상 온보딩. 온보딩은 미연시형 냥줍 대본(`OnboardingScript`) → 이름 짓기(앱에서 검사만) → 평소 식사 시각 → 고양이 생성(`FinishOnboardingUseCase`) → 방 준비 → 홈. 방 준비 화면과, 자동 로그인으로 홈에 가는 인트로(`GetIntroUseCase`)는 냐미 애니메이션과 시트를 미리 받고(`PrefetchCatAnimationsUseCase`, 최대 3초 대기) 홈으로 간다. 홈 요약도 같이 받기 시작하지만 기다리지 않고, 홈의 첫 조회가 그 요청을 이어받는다(`PrefetchHomeSummaryUseCase`).
 - 홈: 꾸민 방(`HomeRoomMapper`) 위에 냐미가 상태별 애니메이션으로 살고, 위에 지갑·우편·설정, 연속 기록 배너, 눈 버튼(화면 요소를 숨기고 방만 보기)이 뜬다. 화면이 보일 때마다 홈 요약을 다시 읽는다.
 - 식사 기록: 촬영(또는 갤러리 첨부 — EXIF 촬영일이 기기 타임존 기준 오늘인 사진만, `ImportGalleryMealPhotoUseCase`) → 확인 → 제출(`SubmitMealUseCase`) → 연출(`MealCeremonyStage`: 띠욧 컷신 → 맛 리액션 → 먹었어요 → 보상 상자가 우편함으로) → 홈. 건너뛰기는 띠욧 컷신만 건너뛴다. 앱이 종료됐다 돌아와도 찍은 사진과 연출 단계를 되살리고(`MealRecordSnapshot`), 업로드 중 종료됐으면 다시 보내지 않고 확인하라고 안내한다. 접수에 실패하면 안내 스낵바와 함께 곧장 홈으로 간다.
 - 기록: 월간 캘린더 → 일별 목록 → 식사 상세 페이지 `/history/meals/{mealId}`(이름 수정, 삭제, 영양 분석 평가, `MealDetailViewModel`). 분석 실패 줄의 재시도·삭제는 목록에서 한다.
 - 우편함: 받은 보상·코인·아이템 목록, 하나/모두 받기, 받은 우편만 밀어서 삭제(되돌리기로 복구), 보상 상자 열기 연출(`RewardBoxOpening`).
 - 마이룸: 보관함 시트에서 아이템을 방에 놓고, 끌어 옮기고, 두 손가락으로 크기를 바꾸고, 한 단계씩 되돌린 뒤 저장하면 홈으로 간다.
 - 설정: 알림(앱 알림 = 기기 알림 권한, 서비스·마케팅 알림 = 서버 값, 식사 시간), 약관, 로그아웃, 회원 탈퇴, 문의하기(목록·작성·상세·삭제·복구). 약관(`legal`)은 GitHub Pages 정책 페이지를 WebView로 연다.
-- "준비 중" 플레이스홀더 화면: 컬렉션·상점·퀘스트·업적. 이 4개 feature의 entity·data는 비어 있고 domain에는 Page만 있다. 그 밖의 빈 모듈은 `main:entity` `main:data` `legal:data` `intro:entity` `onboarding:entity`.
+- 상점(`android_shop_enabled`): 상단 바(코인 칩 → 코인 내역, 장바구니 배지)와 추천(서버 SDUI, 칸마다 따로 해석)·인테리어·방 배경 탭(`/shop/{tab}?sort=` 링크는 탭·정렬로 연다). 담기는 늘 1개(카드 담기 버튼, 수량 선택 없는 상세 시트). 프로모션 `/shop/promotions/{id}`, 장바구니 `/shop/cart`(요청은 누른 순서대로 하나씩 보내고 마지막 응답만 반영, 응답을 다 받기 전에는 구매를 막음, 구매 확인·코인 부족 시트·완료 화면, 같은 구매 키 1회 재시도), 코인 내역 `/shop/coins`(홈 지갑 버튼도 연다, 화면이 보일 때마다 새로 읽음).
+- "준비 중" 플레이스홀더 화면: 컬렉션·퀘스트·업적. 이 3개 feature의 entity·data는 비어 있고 domain에는 Page만 있다. 그 밖의 빈 모듈은 `main:entity` `main:data` `legal:data` `intro:entity` `onboarding:entity`.
 - 소셜 로그인: 카카오·구글 동작(카카오 SDK / Credential Manager로 OIDC ID 토큰 → `SocialLoginUseCase` 서버 검증 → 기존 회원 redirectUrl 분기 / 신규 회원 `/signup/social` 프로필 입력). 제공자 추가는 `auth/presentation/.../social/SocialLoginClient` 구현 후 `socialLoginClientOf`에 등록. 네이버 로그인은 보류(로그인 화면에 버튼 없음, `SocialLoginType.NAVER`만 남김). 로그인 화면은 원형 버튼 3개(카카오 축약형·구글·이메일). 비밀번호 찾기(`/login/password-reset`)는 이메일 → 인증 코드 → 임시 비밀번호 메일 발송 순서로 한 라우트 안에서 진행한다. 테스트 계정 로그인 버튼은 debug 빌드에서 `local.properties`의 `TEST_LOGIN_EMAIL`/`TEST_LOGIN_PASSWORD`가 있을 때만 노출 — 자격 증명을 소스에 하드코딩 금지(공개 저장소).
 
 ## 빌드 / 테스트

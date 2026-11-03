@@ -45,6 +45,7 @@ import com.dandi.nyummy.meal.entity.MealImageUploadVO
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.entity.RoomPlacementVO
+import com.dandi.nyummy.shop.domain.ShopCoinHistoryPage
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -89,6 +90,7 @@ class HomeViewModelTest {
 
     /** 원격 구성 우편함 아이템 플래그. 읽을 때마다 이 값을 돌려준다. */
     private var isMailEnabled = false
+    private var isShopEnabled = false
 
     private val tutorialHelper = FakeTutorialHelper()
     private val mealRepository = FakeMealRecordRepository()
@@ -135,6 +137,7 @@ class HomeViewModelTest {
                 override fun <T> get(key: RemoteConfigKey<T>): T = when (key) {
                     RemoteConfigKey.MyRoomEnabled -> isMyRoomEnabled as T
                     RemoteConfigKey.MailItemTabEnabled -> isMailEnabled as T
+                    RemoteConfigKey.ShopEnabled -> isShopEnabled as T
                     else -> key.defaultValue
                 }
             },
@@ -463,6 +466,22 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `상점이 켜져 있으면 지갑 버튼이 코인 내역을 연다`() = runTest(testDispatcher) {
+        isShopEnabled = true
+
+        viewModel.onIntent(HomeIntent.ClickWallet)
+
+        assertEquals(listOf<Page>(ShopCoinHistoryPage), navigationHelper.pages)
+    }
+
+    @Test
+    fun `상점이 꺼져 있으면 지갑 버튼은 이동하지 않는다`() = runTest(testDispatcher) {
+        viewModel.onIntent(HomeIntent.ClickWallet)
+
+        assertTrue(navigationHelper.pages.isEmpty())
+    }
+
+    @Test
     fun `튜토리얼 식사 뒤에는 우편 버튼을 가리키고 누르면 그 단계를 마친다`() = runTest(testDispatcher) {
         isMailEnabled = true
         tutorialHelper.startAfterMeal()
@@ -691,7 +710,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `버튼을 누르면 공지를 닫고 그 장의 앱 경로로 간다`() = runTest(testDispatcher) {
+    fun `버튼을 누르면 공지를 닫고 그 장의 앱 경로를 앱 링크로 연다`() = runTest(testDispatcher) {
         homeRepository.noticeList = listOf(renewal, event)
         resumeWith(afterTutorialMeal)
 
@@ -699,7 +718,19 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertNull(state.notice)
-        assertEquals(listOf("/shop"), navigationHelper.deepLinks)
+        assertEquals(listOf("https://link.nyummy.co.kr/shop"), navigationHelper.appLinks)
+    }
+
+    @Test
+    fun `앱 링크로 적힌 버튼도 그대로 앱 링크로 연다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(event.copy(ctaLink = "https://link.nyummy.co.kr/shop/promotions/12"))
+        resumeWith(afterTutorialMeal)
+
+        viewModel.onIntent(HomeIntent.NoticeCtaClicked(0))
+        advanceUntilIdle()
+
+        assertNull(state.notice)
+        assertEquals(listOf("https://link.nyummy.co.kr/shop/promotions/12"), navigationHelper.appLinks)
     }
 
     @Test
@@ -711,7 +742,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertNull(state.notice)
-        assertTrue(navigationHelper.deepLinks.isEmpty())
+        assertTrue(navigationHelper.appLinks.isEmpty())
     }
 
     // endregion
@@ -834,10 +865,10 @@ class HomeViewModelTest {
             pages += page
         }
 
-        val deepLinks = mutableListOf<String>()
+        val appLinks = mutableListOf<String>()
 
-        override fun navigateDeepLink(route: NavRoute) {
-            deepLinks += route.path
+        override fun navigateToAppLink(link: String, asRoot: Boolean) {
+            appLinks += link
         }
 
         override fun navigateToBack() = Unit

@@ -2,7 +2,6 @@ package com.dandi.nyummy.auth.domain
 
 import com.dandi.nyummy.auth.entity.AuthTokenVO
 import com.dandi.nyummy.home.domain.HomePreparePage
-import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -25,13 +24,14 @@ class LoginUseCaseTest {
     )
 
     @Test
-    fun `redirectUrl 이 온보딩이면 온보딩을 루트로 이동한다`() = runBlocking {
-        repository.loginResult = AuthTokenVO("access", "refresh", redirectUrl = "/onboarding")
+    fun `redirectUrl 이 온보딩이면 그 앱 링크를 스택을 비우고 연다`() = runBlocking {
+        repository.loginResult = AuthTokenVO("access", "refresh", redirectUrl = "https://link.nyummy.co.kr/onboarding")
 
         val result = useCase.login("test@dandi.app", "pw1234")
 
         assertTrue(result.isSuccess)
-        assertEquals(listOf<Any>(OnboardingPage), navigationHelper.rootPages)
+        assertEquals(listOf("https://link.nyummy.co.kr/onboarding" to true), navigationHelper.appLinks)
+        assertTrue(navigationHelper.rootPages.isEmpty())
         assertTrue(repository.onboardingIncomplete)
     }
 

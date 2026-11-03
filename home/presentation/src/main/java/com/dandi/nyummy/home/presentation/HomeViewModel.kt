@@ -15,7 +15,7 @@ import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
-import com.dandi.nyummy.common.domain.navigation.NavRoute
+import com.dandi.nyummy.common.domain.navigation.AppLinks
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.time.DeviceTime
@@ -31,6 +31,7 @@ import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.mailbox.domain.MailboxPage
 import com.dandi.nyummy.meal.domain.SubmitTutorialMealUseCase
 import com.dandi.nyummy.settings.domain.SettingsPage
+import com.dandi.nyummy.shop.domain.ShopCoinHistoryPage
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TimelineCategory
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -124,8 +125,12 @@ class HomeViewModel @Inject constructor(
                 prepareGreeting()
             }
             HomeIntent.ScreenPaused -> rememberLastSeen()
-            // 지갑 화면이 생기기 전까지는 눌러도 반응이 있게 준비 중이라고 알린다.
-            HomeIntent.ClickWallet -> messageHelper.showToast(CommonR.string.nyummy_not_ready)
+            // 지갑은 코인 내역을 연다. 상점이 꺼져 있으면 준비 중이라고 알린다.
+            HomeIntent.ClickWallet -> if (remoteConfigHelper.get(RemoteConfigKey.ShopEnabled)) {
+                navigationHelper.navigateTo(ShopCoinHistoryPage)
+            } else {
+                messageHelper.showToast(CommonR.string.nyummy_not_ready)
+            }
             // 우편함은 받을 아이템만 있는 곳이라, 아이템 기능이 꺼져 있으면 들어가지 않고 준비 중이라고 알린다.
             HomeIntent.ClickMail -> if (remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)) {
                 navigationHelper.navigateTo(MailboxPage)
@@ -161,8 +166,14 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.NoticeCtaClicked -> {
                 val link = currentState.notice?.links?.getOrNull(intent.index)
                 closeNotice()
-                // 앱 경로만 연다. 앱에 없는 경로면 이동 쪽이 무시하고 홈에 머문다.
-                if (link != null && link.startsWith("/")) navigationHelper.navigateDeepLink(NavRoute(link))
+                // 앱 경로("/shop")나 앱 링크만 연다. 앱에 없는 경로면 이동 쪽이 무시하고 홈에 머문다.
+                val appLink = when {
+                    link == null -> null
+                    link.startsWith("/") -> AppLinks.BASE_URL + link
+                    link.startsWith(AppLinks.BASE_URL + "/") -> link
+                    else -> null
+                }
+                if (appLink != null) navigationHelper.navigateToAppLink(appLink)
             }
         }
     }

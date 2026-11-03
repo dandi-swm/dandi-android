@@ -821,7 +821,7 @@ AppRoute(
 ),
 ```
 
-Nested / `{param}` route — like `articleList → articlePage`. The `syntheticStack` lays the **full parent chain** for cold start; deep links match the template automatically (no extra registration). Cold = `[Home, Parent, X(args)]`; warm deep-link = bring-to-front (handled by `handleDeepLink`, don't re-implement here).
+Nested / `{param}` route — like `articleList → articlePage`. The `syntheticStack` lays the **full parent chain** for cold start; deep links match the template automatically (no extra registration). Cold = `[Home, Parent, X(args)]`; warm/in-app app link = bring-to-front (handled by `handleAppLink`, don't re-implement here).
 
 ```kotlin
 import com.jongchan.androidarchi.<parentFeature>.domain.<ParentUpper>Page   // parent route (existing or sibling)
@@ -842,7 +842,7 @@ AppRoute(
 ),
 ```
 
-> **Single source of truth:** the cold-start back stack is defined ONLY in this `syntheticStack`. The warm deep-link path (`handleDeepLink` in `AppNavHost.kt`) brings only the target to front — never redefine the stack there.
+> **Single source of truth:** the cold-start back stack is defined ONLY in this `syntheticStack`. The warm/in-app app link path (`handleAppLink` in `AppNavHost.kt`) brings only the target to front — never redefine the stack there.
 >
 > The parent (`<ParentUpper>Page`) must be a registered route too. If the parent is a **new sibling screen** in the same feature, add a second `Page` object + Composable + registry entry — one feature module can host multiple screens (list + detail).
 

@@ -127,7 +127,12 @@ internal class RecordingNavigationHelper : NavigationHelper {
         pages += page
     }
 
-    override fun navigateDeepLink(route: NavRoute) = Unit
+    /** (링크, 스택 비우기) */
+    val appLinks = mutableListOf<Pair<String, Boolean>>()
+
+    override fun navigateToAppLink(link: String, asRoot: Boolean) {
+        appLinks += link to asRoot
+    }
     override fun navigateToBack() {
         backCount++
     }

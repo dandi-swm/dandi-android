@@ -43,8 +43,14 @@ import com.dandi.nyummy.settings.presentation.inquiry.list.InquiryListPage
 import com.dandi.nyummy.settings.presentation.inquiry.write.InquiryWritePage
 import com.dandi.nyummy.settings.presentation.main.SettingsPage
 import com.dandi.nyummy.settings.presentation.mealtime.MealTimeSettingPage
+import com.dandi.nyummy.shop.domain.ShopCartPage
+import com.dandi.nyummy.shop.domain.ShopCoinHistoryPage
 import com.dandi.nyummy.shop.domain.ShopPage
+import com.dandi.nyummy.shop.domain.ShopPromotionPage
 import com.dandi.nyummy.shop.presentation.ShopPage
+import com.dandi.nyummy.shop.presentation.coin.ShopCoinHistoryPage as ShopCoinHistoryScreenPage
+import com.dandi.nyummy.shop.presentation.cart.ShopCartPage as ShopCartScreenPage
+import com.dandi.nyummy.shop.presentation.promotion.ShopPromotionPage as ShopPromotionScreenPage
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
@@ -178,7 +184,42 @@ val appRoutes: List<AppRoute> = listOf(
         // 상점 탭. 기능이 꺼져 있으면 하단 내비에 탭이 없고, 링크로 들어오면 내비 없이 이 화면만 보인다.
         path = ShopPage.PATH,
         isBottomTab = true,
-        render = { ShopPage() },
+        render = { args -> ShopPage(tab = args[ShopPage.ARG_TAB], sort = args[ShopPage.ARG_SORT]) },
+    ),
+    AppRoute(
+        // 프로모션 상품 모음. 추천 탭 배너나 링크로 들어오며, 링크로 바로 열면 뒤로 가기가 상점 탭이다.
+        path = ShopPromotionPage.PATH,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(ShopPage.PATH),
+                GenericNavKey(ShopPromotionPage.PATH, args),
+            )
+        },
+        render = { args ->
+            ShopPromotionScreenPage(promotionId = args[ShopPromotionPage.ARG_PROMOTION_ID]?.toLongOrNull() ?: 0L)
+        },
+    ),
+    AppRoute(
+        // 장바구니. 구매 확인·완료도 이 화면 안에서 보인다.
+        path = ShopCartPage.PATH,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(ShopPage.PATH),
+                GenericNavKey(ShopCartPage.PATH, args),
+            )
+        },
+        render = { ShopCartScreenPage() },
+    ),
+    AppRoute(
+        // 코인 내역. 상점 코인 칩과 홈 지갑 버튼이 연다.
+        path = ShopCoinHistoryPage.PATH,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(ShopPage.PATH),
+                GenericNavKey(ShopCoinHistoryPage.PATH, args),
+            )
+        },
+        render = { ShopCoinHistoryScreenPage() },
     ),
     AppRoute(
         path = MailboxPage.PATH,
@@ -286,6 +327,9 @@ val appLinkAliases: List<LinkAlias> = listOf(
     LinkAlias("/meals/{${MealDetailRoute.ARG_MEAL_ID}}", targetPath = MealDetailRoute.PATH),
     // 문의 답장 푸시의 문의 링크 → 그 문의 상세(뒤로 가면 설정의 문의 목록)
     LinkAlias("/inquiries/{${InquiryDetailRoute.ARG_INQUIRY_ID}}", targetPath = InquiryDetailRoute.PATH),
+    // 상점 서버 링크 `/shop/interior?sort=POPULAR`·`/shop/background` → 상점 탭(탭·정렬은 인자로).
+    // `/shop/cart`·`/shop/coins`는 리터럴 라우트라 이 별칭보다 먼저 매칭된다.
+    LinkAlias("/shop/{${ShopPage.ARG_TAB}}", targetPath = ShopPage.PATH),
 )
 
 /**

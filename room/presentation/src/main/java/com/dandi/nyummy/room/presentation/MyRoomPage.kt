@@ -83,9 +83,10 @@ internal fun MyRoomScreen(
         val stageLeft = (maxWidth - stage.width) / 2
         val stageTop = maxHeight - stage.height
         val sheetTop = maxHeight - with(density) { sheetState.heightPx.toDp() }
-        // 시트를 펼치면 펼친 만큼 방도 같이 올라가서 냐미와 바닥 아이템이 시트에 가리지 않는다.
-        // 그래서 방 아래쪽은 다 접은 시트만큼만 늘 덮이고, 덮인 곳에는 아이템을 끌어 놓지 않는다.
-        val covered = with(density) { sheetState.collapsedHeightPx.toDp() }.coerceIn(0.dp, stage.height)
+        // 시트를 펼치면 펼친 칸만큼 방도 같이 올라가서 냐미와 바닥 아이템이 시트에 가리지 않는다.
+        // 그래서 방 아래쪽은 손잡이와 탭만큼만 덮이고, 덮인 곳에는 아이템을 끌어 놓지 않는다.
+        // 시트를 끝까지 내려 숨기면 손잡이만 남아 방 아래쪽까지 놓을 수 있다.
+        val covered = with(density) { sheetState.coveredHeightPx.toDp() }.coerceIn(0.dp, stage.height)
         val frame = remember(stage, covered, density) { RoomFrame.of(stage.width, stage.height, covered, density) }
         RoomStage(
             frame = frame,
@@ -101,7 +102,7 @@ internal fun MyRoomScreen(
             modifier = Modifier
                 // 끄는 동안 매 프레임 바뀌는 값이라 배치 단계에서만 읽는다.
                 .offset {
-                    val lift = sheetState.heightPx - sheetState.collapsedHeightPx
+                    val lift = sheetState.liftPx
                     IntOffset(stageLeft.roundToPx(), stageTop.roundToPx() - lift)
                 }
                 .size(stage),

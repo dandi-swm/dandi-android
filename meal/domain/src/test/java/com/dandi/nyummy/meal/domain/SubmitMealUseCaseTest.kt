@@ -135,7 +135,7 @@ class SubmitMealUseCaseTest {
         override val navigationFlow: Flow<NavSignal> = emptyFlow()
         override fun navigateByRoute(route: NavRoute) = Unit
         override fun navigateTo(page: Page) = Unit
-        override fun navigateDeepLink(route: NavRoute) = Unit
+        override fun navigateToAppLink(link: String, asRoot: Boolean) = Unit
         override fun navigateToBack() = Unit
         override fun navigateToAsRoot(page: Page) = Unit
         override fun navigateToInitial() = Unit

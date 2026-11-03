@@ -10,7 +10,6 @@ import com.dandi.nyummy.common.domain.error.handlingErrorOnUseCase
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
-import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.tti.TTIHelper
 import java.io.IOException
 import java.util.concurrent.CancellationException
@@ -44,12 +43,9 @@ class SocialLoginUseCase @Inject constructor(
             val result = repository.socialLogin(credential)
             when {
                 result.isLoggedIn -> {
-                    val destination = PostLoginDestination.from(result.token.redirectUrl)
-                    repository.setOnboardingIncomplete(
-                        destination == OnboardingPage,
-                    )
+                    repository.setOnboardingIncomplete(result.token.redirectUrl.isOnboardingRedirect())
                     analyticsHelper.logEvent(AnalyticsEvent.Login(method = credential.type.name.lowercase()))
-                    navigationHelper.navigateToAsRoot(destination)
+                    navigationHelper.openAfterLogin(result.token.redirectUrl)
                 }
                 result.isSignUpRequired -> {
                     socialSignUpSession.start(result.verifiedToken)
