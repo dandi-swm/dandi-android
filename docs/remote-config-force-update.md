@@ -91,6 +91,11 @@ qa 환경은 따로 두지 않기로 했다. 앱은 빌드 타입이 release인�
 
 `android_home_notice`(debug는 `_debug`)에 공지 JSON을 넣는다. 형식과 게시 순서는 [remote-config-home-notice.md](remote-config-home-notice.md)를 본다.
 
+### 코인 충전 이벤트 키
+
+`android_coin_charge_event`(debug는 `_debug`)에 A/B 그룹별 이벤트 JSON을 넣는다. Firebase A/B Testing 실험이 그룹마다 다른 값을 준다.
+형식, 실험 만드는 법, 측정 이벤트는 [remote-config-coin-charge-event.md](remote-config-coin-charge-event.md)를 본다.
+
 ### 남은 일
 
 - [x] qa와 debug를 구분하는 방식 결정: qa 없이 release / 그 밖의 빌드 두 갈래
