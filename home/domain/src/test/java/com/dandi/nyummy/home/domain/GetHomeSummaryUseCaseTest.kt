@@ -24,7 +24,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
-import java.time.LocalDate
 import kotlin.coroutines.cancellation.CancellationException
 
 class GetHomeSummaryUseCaseTest {
@@ -129,8 +128,8 @@ class GetHomeSummaryUseCaseTest {
         override suspend fun getHomeSummary(): HomeSummaryVO = block()
         override fun prefetchHomeSummary() = Unit
         override fun getNotices(): List<HomeNoticeVO> = emptyList()
-        override suspend fun getNoticeHiddenDate(): LocalDate? = null
-        override suspend fun setNoticeHiddenDate(date: LocalDate) = Unit
+        override suspend fun getHiddenNoticeKeys(): Set<String> = emptySet()
+        override suspend fun hideNotices(keys: Set<String>) = Unit
         override fun isNoticeHandled(): Boolean = false
         override fun markNoticeHandled() = Unit
     }

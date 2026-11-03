@@ -31,10 +31,10 @@ class NyummyNoticeDialogTest {
     val composeRule = createComposeRule()
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val hideToday get() = context.getString(R.string.nyummy_notice_hide_today)
+    private val dontShowAgain get() = context.getString(R.string.nyummy_notice_dont_show_again)
     private val close get() = context.getString(R.string.nyummy_dialog_dismiss)
 
-    private var todayChanges = mutableListOf<Boolean>()
+    private var dontShowAgainChanges = mutableListOf<Boolean>()
     private var closes = 0
     private var ctaPages = mutableListOf<Int>()
 
@@ -50,7 +50,7 @@ class NyummyNoticeDialogTest {
 
     private fun setContent(
         pages: ImmutableList<NyummyNoticePage>,
-        todayChecked: Boolean = false,
+        dontShowAgainChecked: Boolean = false,
         modifier: Modifier = Modifier.size(width = 334.dp, height = 760.dp),
     ) {
         composeRule.setContent {
@@ -58,8 +58,8 @@ class NyummyNoticeDialogTest {
                 Box(modifier) {
                     NyummyNoticeContent(
                         pages = pages,
-                        todayChecked = todayChecked,
-                        onTodayCheckedChange = { todayChanges += it },
+                        dontShowAgainChecked = dontShowAgainChecked,
+                        onDontShowAgainChange = { dontShowAgainChanges += it },
                         onClose = { closes++ },
                         onCtaClick = { ctaPages += it },
                     )
@@ -130,13 +130,13 @@ class NyummyNoticeDialogTest {
     }
 
     @Test
-    fun 오늘_하루_보지_않기는_체크를_바꾸고_닫기는_닫는다() {
-        setContent(persistentListOf(update), todayChecked = false)
+    fun 다시_보지_않기는_체크를_바꾸고_닫기는_닫는다() {
+        setContent(persistentListOf(update), dontShowAgainChecked = false)
 
-        composeRule.onNodeWithText(hideToday).performClick()
+        composeRule.onNodeWithText(dontShowAgain).performClick()
         composeRule.onNodeWithText(close).performClick()
 
-        assertEquals(listOf(true), todayChanges)
+        assertEquals(listOf(true), dontShowAgainChanges)
         assertEquals(1, closes)
     }
 

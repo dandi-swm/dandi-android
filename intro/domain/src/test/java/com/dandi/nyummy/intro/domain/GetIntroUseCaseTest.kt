@@ -43,7 +43,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GetIntroUseCaseTest {
@@ -584,8 +583,8 @@ class GetIntroUseCaseTest {
         var noticeList: List<HomeNoticeVO> = emptyList()
 
         override fun getNotices(): List<HomeNoticeVO> = noticeList
-        override suspend fun getNoticeHiddenDate(): LocalDate? = null
-        override suspend fun setNoticeHiddenDate(date: LocalDate) = Unit
+        override suspend fun getHiddenNoticeKeys(): Set<String> = emptySet()
+        override suspend fun hideNotices(keys: Set<String>) = Unit
         override fun isNoticeHandled(): Boolean = false
         override fun markNoticeHandled() = Unit
     }

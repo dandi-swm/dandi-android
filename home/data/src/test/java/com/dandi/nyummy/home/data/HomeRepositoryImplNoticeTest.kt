@@ -9,11 +9,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.Retrofit
-import java.time.LocalDate
 
 class HomeRepositoryImplNoticeTest {
 
@@ -56,21 +54,15 @@ class HomeRepositoryImplNoticeTest {
     }
 
     @Test
-    fun `오늘 하루 숨긴 날을 기기 날짜로 저장하고 읽는다`() = runBlocking {
+    fun `다시 보지 않기로 숨긴 공지를 기기에 쌓아 두고 읽는다`() = runBlocking {
         val repository = repository()
-        assertNull(repository.getNoticeHiddenDate())
+        assertTrue(repository.getHiddenNoticeKeys().isEmpty())
 
-        repository.setNoticeHiddenDate(LocalDate.of(2026, 10, 29))
+        repository.hideNotices(setOf("2026-10-renewal"))
+        repository.hideNotices(setOf("2026-autumn-event"))
 
-        assertEquals("2026-10-29", preferences.hiddenDate)
-        assertEquals(LocalDate.of(2026, 10, 29), repository.getNoticeHiddenDate())
-    }
-
-    @Test
-    fun `저장된 날짜를 읽을 수 없으면 숨기지 않은 것으로 본다`() = runBlocking {
-        preferences.hiddenDate = "어제"
-
-        assertNull(repository().getNoticeHiddenDate())
+        assertEquals(setOf("2026-10-renewal", "2026-autumn-event"), preferences.hiddenIds)
+        assertEquals(setOf("2026-10-renewal", "2026-autumn-event"), repository.getHiddenNoticeKeys())
     }
 
     @Test
@@ -94,15 +86,15 @@ class HomeRepositoryImplNoticeTest {
     }
 
     private class FakeAppPreferenceProvider : AppPreferenceProvider {
-        var hiddenDate: String? = null
+        var hiddenIds: Set<String> = emptySet()
 
         override suspend fun hasShownPermissionNotice(): Boolean = false
         override suspend fun markPermissionNoticeShown() = Unit
         override suspend fun isOnboardingIncomplete(): Boolean = false
         override suspend fun setOnboardingIncomplete(incomplete: Boolean) = Unit
-        override suspend fun homeNoticeHiddenDate(): String? = hiddenDate
-        override suspend fun setHomeNoticeHiddenDate(date: String) {
-            hiddenDate = date
+        override suspend fun homeNoticeHiddenIds(): Set<String> = hiddenIds
+        override suspend fun addHomeNoticeHiddenIds(ids: Set<String>) {
+            hiddenIds = hiddenIds + ids
         }
     }
 }
