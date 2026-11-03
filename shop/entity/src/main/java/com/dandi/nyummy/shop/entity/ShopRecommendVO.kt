@@ -65,9 +65,14 @@ sealed interface SduiComponentVO {
     data class ItemList(val items: List<ShopItemVO> = emptyList()) : SduiComponentVO
 }
 
-/** 추천 탭 한 장. */
+/**
+ * 추천 탭 한 장.
+ *
+ * @property layoutVariant 이 칸 목록을 받을 때 보낸 배치 그룹(A, B). 서버는 그룹마다 칸 순서를 다르게 준다
+ */
 data class ShopRecommendPageVO(
     val components: List<SduiComponentVO> = emptyList(),
+    val layoutVariant: String = "A",
 )
 
 /**

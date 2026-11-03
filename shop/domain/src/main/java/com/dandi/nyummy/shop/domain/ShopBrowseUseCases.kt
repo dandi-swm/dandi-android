@@ -6,6 +6,8 @@ import com.dandi.nyummy.common.domain.error.isSessionExpired
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.shop.entity.ProductSort
 import com.dandi.nyummy.shop.entity.ShopCategory
 import com.dandi.nyummy.shop.entity.ShopItemPageVO
@@ -57,9 +59,14 @@ class RefreshShopSummaryUseCase @Inject constructor(
     }
 }
 
-/** 추천 탭 SDUI 칸 목록. 실패하면 공통 오류를 안내하고 실패를 돌려준다(화면은 다시 시도 안내). */
+/**
+ * 추천 탭 SDUI 칸 목록. 원격 구성의 배치 그룹(A/B 실험)을 서버에 보내 그 그룹의 칸 순서로 받고, 그룹을 사용자 속성으로 남긴다.
+ * 실패하면 공통 오류를 안내하고 실패를 돌려준다(화면은 다시 시도 안내).
+ */
 class GetShopRecommendPageUseCase @Inject constructor(
     private val repository: ShopRepository,
+    private val remoteConfigHelper: RemoteConfigHelper,
+    private val tracker: ShopTracker,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -67,7 +74,9 @@ class GetShopRecommendPageUseCase @Inject constructor(
 ) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
 
     suspend operator fun invoke(): Result<ShopRecommendPageVO> = try {
-        Result.success(repository.getRecommendPage())
+        val layoutVariant = ShopLayoutVariant.of(remoteConfigHelper.get(RemoteConfigKey.ShopLayoutVariant))
+        tracker.rememberLayoutGroup(layoutVariant)
+        Result.success(repository.getRecommendPage(layoutVariant))
     } catch (e: HttpResponseException) {
         handleHttpError<ShopErrorType>(e, onDomainError = {})
         Result.failure(e)

@@ -161,6 +161,54 @@ sealed class AnalyticsEvent(
         coinCharge(eventId, group) + mapOf(PARAM_STAGE to stage),
     )
 
+    // ---- 상점(추천 탭 배치 A/B, docs/remote-config-shop-layout-variant.md) ----
+    // 배치 그룹은 사용자 속성 shop_layout_group으로도 남는다. 실험의 주 측정항목은 shop_purchase다.
+
+    /**
+     * 추천 탭 칸을 받아 그렸다(추천 탭 화면마다 한 번). [layoutGroup]은 보낸 배치 그룹이고,
+     * [sections]는 받은 칸 종류를 위에서부터 쉼표로 이은 것이다(예: hero_banner,item_list,ranking).
+     */
+    class ShopRecommendView(layoutGroup: String, sections: String) : AnalyticsEvent(
+        "shop_recommend_view",
+        mapOf(PARAM_LAYOUT_GROUP to layoutGroup, "sections" to sections.take(MAX_VALUE_LENGTH)),
+    )
+
+    /**
+     * 추천 탭에서 상품이나 배너를 눌렀다. [section]은 칸 종류(hero_banner, item_grid, ranking, item_list),
+     * [sectionOrder]는 제목 줄을 뺀 칸 중 몇 번째인지(1부터), [position]은 칸 안에서 몇 번째인지(1부터)다.
+     * 상품이면 [productId], 배너면 [bannerId]가 있다.
+     */
+    class ShopRecommendItemClick(
+        layoutGroup: String,
+        section: String,
+        sectionOrder: Int,
+        position: Int,
+        productId: Long?,
+        bannerId: Long?,
+    ) : AnalyticsEvent(
+        "shop_recommend_item_click",
+        mapOf(PARAM_LAYOUT_GROUP to layoutGroup, "section" to section),
+        buildMap {
+            put("section_order", sectionOrder.toLong())
+            put("position", position.toLong())
+            productId?.let { put(PARAM_PRODUCT_ID, it) }
+            bannerId?.let { put("banner_id", it) }
+        },
+    )
+
+    /** 장바구니에 담았다(성공했을 때). [source]는 담은 곳(recommend, interior, background, promotion, cart)이다. */
+    class ShopAddToCart(source: String, productId: Long) : AnalyticsEvent(
+        "shop_add_to_cart",
+        mapOf(PARAM_SOURCE to source),
+        mapOf(PARAM_PRODUCT_ID to productId),
+    )
+
+    /** 코인으로 샀다(서버가 구매를 마쳤을 때). [itemCount]는 산 개수 합, [coins]는 차감한 코인이다. */
+    class ShopPurchase(itemCount: Int, coins: Int) : AnalyticsEvent(
+        "shop_purchase",
+        numberParams = mapOf("item_count" to itemCount.toLong(), PARAM_COINS to coins.toLong()),
+    )
+
     private companion object {
         const val PARAM_METHOD = "method"
         const val PARAM_STEP = "step"
@@ -169,6 +217,11 @@ sealed class AnalyticsEvent(
         const val PARAM_PACKAGE_ID = "package_id"
         const val PARAM_PRICE = "price"
         const val PARAM_COINS = "coins"
+        const val PARAM_LAYOUT_GROUP = "layout_group"
+        const val PARAM_PRODUCT_ID = "product_id"
+
+        /** GA4 매개변수 값 길이 한도. */
+        const val MAX_VALUE_LENGTH = 100
 
         /** 코인 충전 이벤트 단계마다 붙는 매개변수. */
         fun coinCharge(eventId: String, group: String): Map<String, String> = mapOf("event_id" to eventId, "ab_group" to group)

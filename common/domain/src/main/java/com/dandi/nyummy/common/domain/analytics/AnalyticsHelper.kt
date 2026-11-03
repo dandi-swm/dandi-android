@@ -25,5 +25,8 @@ interface AnalyticsHelper {
     object UserProperty {
         /** 코인 충전 이벤트에서 이 기기가 받은 A/B 그룹(원격 구성 값의 `group`, 예: A, B). */
         const val COIN_CHARGE_GROUP = "coin_charge_group"
+
+        /** 상점 추천 탭 배치 A/B 그룹(원격 구성 `android_shop_layout_variant`, A 또는 B). */
+        const val SHOP_LAYOUT_GROUP = "shop_layout_group"
     }
 }

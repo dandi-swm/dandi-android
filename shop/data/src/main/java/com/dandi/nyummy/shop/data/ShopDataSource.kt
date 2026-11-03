@@ -23,8 +23,8 @@ class ShopDataSource(
     private val coinApiService: CoinApiService,
 ) : BaseRemoteDataSource() {
 
-    suspend fun getRecommendPage(): ShopPageDTO =
-        checkResponse(apiService.getRecommendPage())
+    suspend fun getRecommendPage(layoutVariant: String): ShopPageDTO =
+        checkResponse(apiService.getRecommendPage(layoutVariant))
 
     suspend fun getProducts(tab: String, category: String?, sort: String, cursor: Long?, size: Int): ShopItemsDTO =
         checkResponse(apiService.getProducts(tab, category, sort, cursor, size))
