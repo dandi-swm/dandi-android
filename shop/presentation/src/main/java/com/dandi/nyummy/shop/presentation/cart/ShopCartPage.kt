@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,6 +43,8 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonS
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCheckbox
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyDivider
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPose
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPoseImage
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySectionBand
@@ -55,7 +56,6 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonTone
-import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.shop.entity.CartItemVO
 import com.dandi.nyummy.shop.entity.CartSummaryVO
@@ -210,13 +210,12 @@ private fun CartRow(item: CartItemVO, onIntent: (ShopCartIntent) -> Unit) {
                         NyummyTag(TagVO(stringResource(R.string.shop_item_owned_count, item.shopItem.ownedCount), TagTone.SUCCESS))
                     }
                 }
-                Icon(
-                    painter = painterResource(CommonR.drawable.nyummy_ic_x),
+                NyummyIconButton(
+                    icon = CommonR.drawable.nyummy_ic_x,
                     contentDescription = stringResource(R.string.shop_cart_remove),
+                    onClick = { onIntent(ShopCartIntent.DeleteItem(productId)) },
+                    size = NyummyIconButtonSize.Inline,
                     tint = NyummyTheme.colors.content.tertiary,
-                    modifier = Modifier
-                        .size(NyummyTheme.size.iconM)
-                        .nyummyClickable(onClick = { onIntent(ShopCartIntent.DeleteItem(productId)) }),
                 )
             }
             NyummyText(
@@ -256,11 +255,12 @@ private fun QuantityStepper(quantity: Int, max: Int, onChange: (Int) -> Unit) {
             .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.border.default, RoundedCornerShape(NyummyTheme.radius.xs)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        StepperButton(
+        NyummyIconButton(
             icon = CommonR.drawable.nyummy_ic_minus,
-            description = stringResource(R.string.shop_cart_decrease),
-            enabled = quantity > 1,
+            contentDescription = stringResource(R.string.shop_cart_decrease),
             onClick = { onChange(quantity - 1) },
+            size = NyummyIconButtonSize.S,
+            enabled = quantity > 1,
         )
         NyummyText(
             text = quantity.toString(),
@@ -268,28 +268,12 @@ private fun QuantityStepper(quantity: Int, max: Int, onChange: (Int) -> Unit) {
             textAlign = TextAlign.Center,
             modifier = Modifier.width(StepperValueWidth),
         )
-        StepperButton(
+        NyummyIconButton(
             icon = CommonR.drawable.nyummy_ic_plus,
-            description = stringResource(R.string.shop_cart_increase),
-            enabled = quantity < max,
+            contentDescription = stringResource(R.string.shop_cart_increase),
             onClick = { onChange(quantity + 1) },
-        )
-    }
-}
-
-@Composable
-private fun StepperButton(icon: Int, description: String, enabled: Boolean, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(StepperHeight)
-            .nyummyClickable(onClick = onClick, enabled = enabled),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painter = painterResource(icon),
-            contentDescription = description,
-            tint = if (enabled) NyummyTheme.colors.content.primary else NyummyTheme.colors.content.disabled,
-            modifier = Modifier.size(NyummyTheme.size.iconS),
+            size = NyummyIconButtonSize.S,
+            enabled = quantity < max,
         )
     }
 }
