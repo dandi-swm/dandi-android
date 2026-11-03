@@ -10,6 +10,7 @@ import com.dandi.nyummy.common.domain.error.handlingErrorOnUseCase
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.tti.TTIHelper
 import java.io.IOException
 import java.util.concurrent.CancellationException
@@ -26,6 +27,7 @@ class SocialLoginUseCase @Inject constructor(
     private val repository: AuthRepository,
     private val socialSignUpSession: SocialSignUpSession,
     private val analyticsHelper: AnalyticsHelper,
+    private val widgetHelper: WidgetHelper,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -33,7 +35,8 @@ class SocialLoginUseCase @Inject constructor(
 ) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
 
     /**
-     * 기존 회원은 redirectUrl 이 가리키는 화면(온보딩 또는 홈)으로, 신규 회원은 검증 완료 토큰을 [SocialSignUpSession] 에 보관한 뒤
+     * 기존 회원은 기기 홈 화면 위젯에 남은 앞 계정의 기록을 지우고 redirectUrl 이 가리키는 화면(온보딩 또는 홈)으로,
+     * 신규 회원은 검증 완료 토큰을 [SocialSignUpSession] 에 보관한 뒤
      * 프로필 입력 화면([SocialSignUpPage])으로 이동한다. 실패는 안내 후 [Result.failure] 로 돌려준다.
      */
     suspend fun login(credential: SocialCredentialVO): Result<Unit> {
@@ -44,6 +47,7 @@ class SocialLoginUseCase @Inject constructor(
             when {
                 result.isLoggedIn -> {
                     repository.setOnboardingIncomplete(result.token.redirectUrl.isOnboardingRedirect())
+                    widgetHelper.clear()
                     analyticsHelper.logEvent(AnalyticsEvent.Login(method = credential.type.name.lowercase()))
                     navigationHelper.openAfterLogin(result.token.redirectUrl)
                 }

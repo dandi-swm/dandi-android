@@ -10,6 +10,7 @@ import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.tti.TTIHelper
 import java.io.IOException
@@ -20,6 +21,7 @@ class SignUpUseCase @Inject constructor(
     private val repository: AuthRepository,
     private val socialSignUpSession: SocialSignUpSession,
     private val analyticsHelper: AnalyticsHelper,
+    private val widgetHelper: WidgetHelper,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -29,7 +31,7 @@ class SignUpUseCase @Inject constructor(
     /**
      * 이메일 회원가입. 성공 시 로그인 상태가 되어 고양이 이름을 짓는 온보딩으로 이동한다.
      *
-     * 발급 토큰 저장은 data 레이어에서 담당한다.
+     * 발급 토큰 저장은 data 레이어에서 담당한다. 가입이 되면 기기 홈 화면 위젯에 남은 앞 계정의 기록을 지운다.
      *
      * @param emailVerifiedToken 이메일 인증 완료 토큰
      * @param birth 생년월일 (`yyyy-MM-dd` 형식, 선택)
@@ -57,6 +59,7 @@ class SignUpUseCase @Inject constructor(
             weight = weight,
         )
         repository.setOnboardingIncomplete(incomplete = true)
+        widgetHelper.clear()
         analyticsHelper.logEvent(AnalyticsEvent.SignUp(method = "email"))
         navigationHelper.navigateToAsRoot(OnboardingPage)
         Result.success(Unit)
@@ -98,6 +101,7 @@ class SignUpUseCase @Inject constructor(
             )
             repository.setOnboardingIncomplete(incomplete = true)
             socialSignUpSession.clear()
+            widgetHelper.clear()
             analyticsHelper.logEvent(AnalyticsEvent.SignUp(method = "social"))
             navigationHelper.navigateToAsRoot(OnboardingPage)
             Result.success(Unit)

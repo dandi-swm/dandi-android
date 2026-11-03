@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.tti.TTIHelper
 import java.io.IOException
 import javax.inject.Inject
@@ -15,6 +16,7 @@ import kotlin.coroutines.cancellation.CancellationException
 class LoginUseCase @Inject constructor(
     private val repository: AuthRepository,
     private val analyticsHelper: AnalyticsHelper,
+    private val widgetHelper: WidgetHelper,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -24,11 +26,12 @@ class LoginUseCase @Inject constructor(
     /**
      * 이메일 로그인. 성공 시 응답의 redirectUrl 이 가리키는 화면(온보딩 미완료면 온보딩, 그 외 홈)으로 이동한다.
      *
-     * 발급 토큰 저장은 data 레이어에서 담당한다.
+     * 발급 토큰 저장은 data 레이어에서 담당한다. 기기 홈 화면 위젯에 남은 앞 계정의 기록은 지운다.
      */
     suspend fun login(email: String, password: String): Result<Unit> = try {
         val token = repository.login(email = email, password = password)
         repository.setOnboardingIncomplete(token.redirectUrl.isOnboardingRedirect())
+        widgetHelper.clear()
         analyticsHelper.logEvent(AnalyticsEvent.Login(method = "email"))
         navigationHelper.openAfterLogin(token.redirectUrl)
         Result.success(Unit)
