@@ -17,6 +17,7 @@ import com.dandi.nyummy.shop.domain.GetShopProductsUseCase
 import com.dandi.nyummy.shop.domain.PurchaseOutcome
 import com.dandi.nyummy.shop.domain.PurchaseUseCase
 import com.dandi.nyummy.shop.domain.ShopPage
+import com.dandi.nyummy.shop.domain.ShopTracker
 import com.dandi.nyummy.shop.domain.UpdateCartQuantityUseCase
 import com.dandi.nyummy.shop.domain.UpdateCartSelectionUseCase
 import com.dandi.nyummy.shop.entity.CartItemVO
@@ -27,6 +28,8 @@ import com.dandi.nyummy.shop.entity.PurchaseProductVO
 import com.dandi.nyummy.shop.entity.ShopItemVO
 import com.dandi.nyummy.shop.entity.ShopTab
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.UUID
+import javax.inject.Inject
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
@@ -36,8 +39,6 @@ import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.UUID
-import javax.inject.Inject
 
 /**
  * 장바구니 화면 상태. [items]·[selectedItemCount]·[summary]는 서버 장바구니이고, 수량·선택은 누르자마자 먼저 바꿔
@@ -308,7 +309,7 @@ class ShopCartViewModel @Inject constructor(
         if (productId in currentState.addingProductIds) return
         dispatch(ShopCartReducerEvent.AddStarted(productId))
         viewModelScope.launch {
-            val added = addToCart(productId).isSuccess
+            val added = addToCart(productId, ShopTracker.Source.CART).isSuccess
             dispatch(ShopCartReducerEvent.AddFinished(productId, added))
             if (added) reload()
         }

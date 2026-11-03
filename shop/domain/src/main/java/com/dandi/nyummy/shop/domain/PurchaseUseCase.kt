@@ -36,9 +36,11 @@ sealed interface PurchaseOutcome {
  *
  * 부를 때마다 구매 키를 새로 만든다. 응답을 받지 못하면(시간 초과·연결 끊김) 서버가 샀는지 모르므로 같은 키로
  * 한 번만 다시 보낸다. 이미 샀다면 서버가 처음 결과를 돌려줘서 두 번 결제되지 않는다. 새 키로 자동 재요청하지 않는다.
+ * 구매를 마치면 산 개수와 차감한 코인을 분석 이벤트로 남긴다(추천 탭 배치 A/B의 주 측정항목).
  */
 class PurchaseUseCase @Inject constructor(
     private val repository: ShopRepository,
+    private val tracker: ShopTracker,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -49,7 +51,9 @@ class PurchaseUseCase @Inject constructor(
     suspend operator fun invoke(products: List<PurchaseProductVO>): PurchaseOutcome {
         val idempotencyKey = UUID.randomUUID().toString()
         return try {
-            PurchaseOutcome.Completed(purchaseWithOneRetry(idempotencyKey, products))
+            val result = purchaseWithOneRetry(idempotencyKey, products)
+            tracker.purchase(result)
+            PurchaseOutcome.Completed(result)
         } catch (e: HttpResponseException) {
             outcomeOf(e)
         } catch (e: CancellationException) {

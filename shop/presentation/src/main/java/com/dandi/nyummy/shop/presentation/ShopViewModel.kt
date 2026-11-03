@@ -10,6 +10,7 @@ import com.dandi.nyummy.shop.domain.ObserveShopSummaryUseCase
 import com.dandi.nyummy.shop.domain.RefreshShopSummaryUseCase
 import com.dandi.nyummy.shop.domain.ShopCartPage
 import com.dandi.nyummy.shop.domain.ShopCoinHistoryPage
+import com.dandi.nyummy.shop.domain.ShopTracker
 import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.shop.domain.ShopTabLink
 import com.dandi.nyummy.shop.entity.ShopActionVO
@@ -91,7 +92,7 @@ class ShopViewModel @Inject constructor(
         if (productId in currentState.addingProductIds) return
         dispatch(ShopReducerEvent.AddStarted(productId))
         viewModelScope.launch {
-            val added = addToCart(productId).isSuccess
+            val added = addToCart(productId, ShopTracker.Source.of(currentState.selectedTab)).isSuccess
             dispatch(ShopReducerEvent.AddFinished(productId, closeDetail = fromSheet && added))
         }
     }

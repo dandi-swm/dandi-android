@@ -45,7 +45,7 @@ import kotlinx.collections.immutable.toImmutableList
 
 /**
  * 추천 탭(서버 SDUI). 서버가 준 칸을 순서대로 그리고, 추천 탭 상품에는 담기 버튼이 없다(누르면 상세 시트).
- * 상품 누름과 서버 액션은 상점 화면으로 올린다.
+ * 상품 누름과 서버 액션은 상점 화면으로 올리고, 어느 칸의 몇 번째를 눌렀는지는 추천 탭이 분석 이벤트로 남긴다.
  */
 @Composable
 fun ShopRecommendTab(
@@ -60,7 +60,14 @@ fun ShopRecommendTab(
     ShopRecommendContent(
         uiState = uiState,
         listState = listState,
-        onItemClick = onItemClick,
+        onItemClick = { componentIndex, position, item ->
+            viewModel.onIntent(ShopRecommendIntent.ItemClicked(componentIndex, position, item.productId))
+            onItemClick(item)
+        },
+        onBannerAction = { componentIndex, action ->
+            viewModel.onIntent(ShopRecommendIntent.BannerClicked(componentIndex, action))
+            onAction(action)
+        },
         onAction = onAction,
         onRetry = { viewModel.onIntent(ShopRecommendIntent.Retry) },
         modifier = modifier,
@@ -70,7 +77,8 @@ fun ShopRecommendTab(
 @Composable
 private fun ShopRecommendContent(
     uiState: ShopRecommendUIState,
-    onItemClick: (ShopItemVO) -> Unit,
+    onItemClick: (componentIndex: Int, position: Int, item: ShopItemVO) -> Unit,
+    onBannerAction: (componentIndex: Int, action: ShopActionVO) -> Unit,
     onAction: (ShopActionVO) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
@@ -96,7 +104,7 @@ private fun ShopRecommendContent(
                 contentPadding = PaddingValues(top = NyummyTheme.spacing.s16, bottom = NyummyTheme.spacing.s32),
             ) {
                 uiState.components.forEachIndexed { index, component ->
-                    sduiComponent(index, component, gutter, onItemClick, onAction)
+                    sduiComponent(index, component, gutter, onItemClick, onBannerAction, onAction)
                 }
             }
         }
@@ -108,32 +116,34 @@ private fun LazyListScope.sduiComponent(
     index: Int,
     component: SduiComponentVO,
     gutterWidth: Dp,
-    onItemClick: (ShopItemVO) -> Unit,
+    onItemClick: (componentIndex: Int, position: Int, item: ShopItemVO) -> Unit,
+    onBannerAction: (componentIndex: Int, action: ShopActionVO) -> Unit,
     onAction: (ShopActionVO) -> Unit,
 ) {
     val gutter = Modifier.padding(horizontal = gutterWidth)
     when (component) {
         is SduiComponentVO.HeroBanner -> item(key = "hero-$index") {
-            ShopHeroBanner(banners = component.banners.toImmutableList(), onAction = onAction)
+            ShopHeroBanner(banners = component.banners.toImmutableList(), onAction = { onBannerAction(index, it) })
         }
         is SduiComponentVO.SectionHeader -> item(key = "header-$index") {
             ShopSectionHeader(header = component, onAction = onAction, modifier = gutter)
         }
         is SduiComponentVO.Ranking -> itemsIndexed(component.items, key = { _, item -> "rank-$index-${item.productId}" }) { rank, item ->
-            ShopRankRow(rank = rank + 1, item = item, onClick = { onItemClick(item) }, modifier = gutter.fillMaxWidth())
+            ShopRankRow(rank = rank + 1, item = item, onClick = { onItemClick(index, rank, item) }, modifier = gutter.fillMaxWidth())
         }
-        is SduiComponentVO.ItemList -> itemsIndexed(component.items, key = { _, item -> "list-$index-${item.productId}" }) { _, item ->
-            ShopItemRow(item = item, onClick = { onItemClick(item) }, modifier = gutter.fillMaxWidth())
+        is SduiComponentVO.ItemList -> itemsIndexed(component.items, key = { _, item -> "list-$index-${item.productId}" }) { position, item ->
+            ShopItemRow(item = item, onClick = { onItemClick(index, position, item) }, modifier = gutter.fillMaxWidth())
         }
         is SduiComponentVO.ItemGrid -> {
             val rows = component.items.chunked(GridColumns)
-            itemsIndexed(rows, key = { row, _ -> "grid-$index-$row" }) { _, row ->
+            itemsIndexed(rows, key = { row, _ -> "grid-$index-$row" }) { rowIndex, row ->
                 Row(
                     modifier = gutter.fillMaxWidth().padding(vertical = NyummyTheme.spacing.s8),
                     horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
                 ) {
-                    row.forEach { item ->
-                        ShopItemCard(item = item, onClick = { onItemClick(item) }, modifier = Modifier.weight(1f))
+                    row.forEachIndexed { column, item ->
+                        val position = rowIndex * GridColumns + column
+                        ShopItemCard(item = item, onClick = { onItemClick(index, position, item) }, modifier = Modifier.weight(1f))
                     }
                     repeat(GridColumns - row.size) { Spacer(Modifier.weight(1f)) }
                 }
@@ -202,7 +212,8 @@ private fun ShopRecommendContentPreview() {
                     SduiComponentVO.ItemGrid(List(4) { item.copy(productId = 10L + it) }),
                 ),
             ),
-            onItemClick = {},
+            onItemClick = { _, _, _ -> },
+            onBannerAction = { _, _ -> },
             onAction = {},
             onRetry = {},
         )

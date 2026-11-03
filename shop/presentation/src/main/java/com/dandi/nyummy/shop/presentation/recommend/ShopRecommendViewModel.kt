@@ -6,7 +6,10 @@ import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
 import com.dandi.nyummy.common.presentation.mvi.UiState
 import com.dandi.nyummy.shop.domain.GetShopRecommendPageUseCase
+import com.dandi.nyummy.shop.domain.ShopTracker
 import com.dandi.nyummy.shop.entity.SduiComponentVO
+import com.dandi.nyummy.shop.entity.ShopActionVO
+import com.dandi.nyummy.shop.entity.ShopRecommendPageVO
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -28,6 +31,12 @@ data class ShopRecommendUIState(
 
 sealed interface ShopRecommendIntent : MviIntent {
     data object Retry : ShopRecommendIntent
+
+    /** [componentIndex]번째 칸의 [position]번째(0부터) 상품을 눌렀다. 분석 이벤트만 남긴다(상세 시트는 상점 화면이 연다). */
+    data class ItemClicked(val componentIndex: Int, val position: Int, val productId: Long) : ShopRecommendIntent
+
+    /** [componentIndex]번째 배너 칸의 배너를 눌렀다. 분석 이벤트만 남긴다(이동은 상점 화면이 한다). */
+    data class BannerClicked(val componentIndex: Int, val action: ShopActionVO) : ShopRecommendIntent
 }
 
 sealed interface ShopRecommendReducerEvent : ReducerEvent {
@@ -36,13 +45,20 @@ sealed interface ShopRecommendReducerEvent : ReducerEvent {
     data object LoadFailed : ShopRecommendReducerEvent
 }
 
-/** 추천 탭. 처음 보일 때 SDUI 칸을 읽고, 실패하면 다시 시도로 다시 읽는다. 상품 누름·액션은 상점 화면이 맡는다. */
+/**
+ * 추천 탭. 처음 보일 때 SDUI 칸을 읽고, 실패하면 다시 시도로 다시 읽는다. 상품 누름·액션은 상점 화면이 맡는다.
+ * 배치 A/B 측정을 위해 칸을 받아 그린 것과 칸별 누름(칸 종류, 몇 번째 칸, 칸 안 몇 번째)을 분석 이벤트로 남긴다.
+ */
 @HiltViewModel
 class ShopRecommendViewModel @Inject constructor(
     private val getShopRecommendPage: GetShopRecommendPageUseCase,
+    private val tracker: ShopTracker,
 ) : MviViewModel<ShopRecommendIntent, ShopRecommendUIState, ShopRecommendReducerEvent>(ShopRecommendUIState()) {
 
     private var loadJob: Job? = null
+
+    /** 지금 그린 추천 탭. 누름 이벤트에 배치 그룹과 칸 정보를 붙이는 데 쓴다. */
+    private var page: ShopRecommendPageVO? = null
 
     init {
         load()
@@ -51,6 +67,16 @@ class ShopRecommendViewModel @Inject constructor(
     override fun onIntent(intent: ShopRecommendIntent) {
         when (intent) {
             ShopRecommendIntent.Retry -> load()
+            is ShopRecommendIntent.ItemClicked -> page?.let {
+                tracker.recommendItemClick(it, intent.componentIndex, intent.position, productId = intent.productId, bannerId = null)
+            }
+            is ShopRecommendIntent.BannerClicked -> page?.let { page ->
+                val banners = (page.components.getOrNull(intent.componentIndex) as? SduiComponentVO.HeroBanner)?.banners.orEmpty()
+                val position = banners.indexOfFirst { it.action == intent.action }
+                if (position >= 0) {
+                    tracker.recommendItemClick(page, intent.componentIndex, position, productId = null, bannerId = banners[position].bannerId)
+                }
+            }
         }
     }
 
@@ -59,7 +85,11 @@ class ShopRecommendViewModel @Inject constructor(
         dispatch(ShopRecommendReducerEvent.LoadStarted)
         loadJob = viewModelScope.launch {
             getShopRecommendPage()
-                .onSuccess { dispatch(ShopRecommendReducerEvent.Loaded(it.components)) }
+                .onSuccess {
+                    page = it
+                    dispatch(ShopRecommendReducerEvent.Loaded(it.components))
+                    tracker.recommendView(it)
+                }
                 .onFailure { dispatch(ShopRecommendReducerEvent.LoadFailed) }
         }
     }
