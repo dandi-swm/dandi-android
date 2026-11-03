@@ -1,5 +1,6 @@
 package com.dandi.nyummy.shop.data.dto
 
+import com.dandi.nyummy.shop.entity.CoinChargeGrantVO
 import com.dandi.nyummy.shop.entity.CoinChargePackageVO
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -17,58 +18,67 @@ class CoinChargeEventDTOTest {
         {
           "eventId": "2026-11-coin-charge",
           "group": "A",
-          "grantCoins": 3000,
           "notice": {
             "badge": "상점 오픈",
             "imageUrl": "https://cdn.nyummy.co.kr/notices/2026-11-shop-open.webp",
             "title": "냐미 상점이 문을 열었어요!",
             "body": "코인을 충전하고 냐미 방을 꾸밀\n가구와 배경을 골라 보세요.",
             "cta": "코인 충전하기"
-          },
-          "packages": [
-            { "id": "coin_300", "coins": 300, "price": 1000 },
-            { "id": "coin_1500", "coins": 1500, "price": 5000 },
-            { "id": "coin_3000", "coins": 3000, "price": 10000 }
-          ],
-          "unknownField": true
+          }
         }
     """.trimIndent()
 
     @Test
-    fun `운영 문서 예시 JSON을 그룹, 지급 코인, 공지, 묶음으로 읽는다`() {
+    fun `운영 문서 예시 JSON을 그룹과 공지로 읽고, 묶음은 앱에 고정된 A 그룹 표를 쓴다`() {
         val event = parse(groupA)!!
 
         assertEquals("2026-11-coin-charge", event.eventId)
         assertEquals("A", event.group)
-        assertEquals(3000, event.grantCoins)
         assertEquals("코인 충전하기", event.notice?.ctaText)
         assertEquals(
             listOf(
-                CoinChargePackageVO("coin_300", 300, 1000, imageId = 1),
-                CoinChargePackageVO("coin_1500", 1500, 5000, imageId = 2),
-                CoinChargePackageVO("coin_3000", 3000, 10000, imageId = 3),
+                CoinChargePackageVO(coinPackageId = 1, coins = 300, price = 1000, imageId = 1),
+                CoinChargePackageVO(coinPackageId = 2, coins = 1500, price = 5000, imageId = 2),
+                CoinChargePackageVO(coinPackageId = 3, coins = 3000, price = 10000, imageId = 3),
             ),
             event.packages,
         )
     }
 
     @Test
-    fun `그룹이 없으면 분석에서 나눌 수 없어 이벤트를 버린다`() {
+    fun `B 그룹은 코인 수와 묶음 번호는 같고 가격만 1,500 · 7,500 · 15,000원이다`() {
+        val event = parse(groupA.replace("\"group\": \"A\"", "\"group\": \"B\""))!!
+
+        assertEquals("B", event.group)
+        assertEquals(listOf(1L, 2L, 3L), event.packages.map { it.coinPackageId })
+        assertEquals(listOf(300, 1500, 3000), event.packages.map { it.coins })
+        assertEquals(listOf(1500, 7500, 15000), event.packages.map { it.price })
+    }
+
+    @Test
+    fun `그룹은 앞뒤 공백과 대소문자를 맞춰 읽는다`() {
+        assertEquals("B", parse(groupA.replace("\"group\": \"A\"", "\"group\": \" b \""))?.group)
+    }
+
+    @Test
+    fun `그룹이 없거나 A·B 밖이면 서버가 거부하므로 이벤트를 버린다`() {
         assertNull(parse(groupA.replace("\"group\": \"A\",", "")))
+        assertNull(parse(groupA.replace("\"group\": \"A\"", "\"group\": \"C\"")))
     }
 
     @Test
-    fun `지급 코인이 0 이하면 이벤트를 버린다`() {
-        assertNull(parse(groupA.replace("\"grantCoins\": 3000", "\"grantCoins\": 0")))
+    fun `회차 구분값이 없으면 이벤트를 버린다`() {
+        assertNull(parse(groupA.replace("\"eventId\": \"2026-11-coin-charge\",", "")))
     }
 
     @Test
-    fun `형식이 틀린 묶음만 빼고, 맞는 묶음이 하나도 없으면 이벤트를 버린다`() {
-        val oneBroken = parse(groupA.replace("{ \"id\": \"coin_1500\", \"coins\": 1500, \"price\": 5000 }", "{ \"id\": \"coin_1500\", \"coins\": 1500 }"))!!
-        assertEquals(listOf("coin_300", "coin_3000"), oneBroken.packages.map { it.id })
+    fun `예전 형식의 grantCoins와 packages가 남아 있어도 읽지 않고 고정 표를 쓴다`() {
+        val old = groupA.replace(
+            "\"group\": \"A\",",
+            "\"group\": \"A\", \"grantCoins\": 10, \"packages\": [ { \"id\": \"coin_1\", \"coins\": 1, \"price\": 1 } ],",
+        )
 
-        val noPackages = """{ "eventId": "e", "group": "B", "grantCoins": 3000, "packages": [ { "id": "", "coins": 1, "price": 1 } ] }"""
-        assertNull(parse(noPackages))
+        assertEquals(listOf(1000, 5000, 10000), parse(old)!!.packages.map { it.price })
     }
 
     @Test
@@ -80,22 +90,10 @@ class CoinChargeEventDTOTest {
     }
 
     @Test
-    fun `그림 번호를 적은 묶음은 그 그림을 쓰고, 넷째 묶음부터는 마지막 그림을 쓴다`() {
-        val raw = """
-            { "eventId": "e", "group": "B", "grantCoins": 3000, "packages": [
-              { "id": "a", "coins": 1, "price": 1, "imageId": 3 },
-              { "id": "b", "coins": 1, "price": 1 },
-              { "id": "c", "coins": 1, "price": 1 },
-              { "id": "d", "coins": 1, "price": 1 }
-            ] }
-        """.trimIndent()
+    fun `선물 코인 받기 응답의 코인 수와 잔액을 읽는다`() {
+        val dto = json.decodeFromString(CoinGiftDTO.serializer(), """{ "coinQuantity": 3000, "balance": 3860 }""")
 
-        assertEquals(listOf(3L, 2L, 3L, 3L), parse(raw)!!.packages.map { it.imageId })
-    }
-
-    @Test
-    fun `지급 응답에 코인 수가 없으면 이벤트의 지급 코인을 쓴다`() {
-        assertEquals(3000, CoinChargeGrantDTO().toVO(fallbackCoins = 3000).grantedCoins)
-        assertEquals(500, CoinChargeGrantDTO(grantedCoins = 500, balance = 1740).toVO(fallbackCoins = 3000).grantedCoins)
+        assertEquals(CoinChargeGrantVO(grantedCoins = 3000, balance = 3860), dto.toVO())
+        assertEquals("""{"coinPackageId":2}""", json.encodeToString(CoinGiftRequestDTO.serializer(), CoinGiftRequestDTO(2)))
     }
 }

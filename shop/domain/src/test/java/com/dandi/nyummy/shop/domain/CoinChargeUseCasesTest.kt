@@ -5,7 +5,6 @@ import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.shop.entity.CoinChargeEventVO
 import com.dandi.nyummy.shop.entity.CoinChargeGrantVO
 import com.dandi.nyummy.shop.entity.CoinChargeNoticeVO
-import com.dandi.nyummy.shop.entity.CoinChargePackageVO
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -14,14 +13,13 @@ import org.junit.Test
 
 class CoinChargeUseCasesTest {
 
-    private val pack = CoinChargePackageVO(id = "coin_300", coins = 300, price = 1000)
     private val event = CoinChargeEventVO(
         eventId = "2026-11-coin-charge",
         group = "B",
-        grantCoins = 3000,
         notice = CoinChargeNoticeVO(title = "냐미 상점이 문을 열었어요!", ctaText = "코인 충전하기"),
-        packages = listOf(pack),
+        packages = CoinChargePackages.of("B"),
     )
+    private val pack = event.packages.first()
 
     private val repository = FakeCoinChargeRepository(event)
     private val shopRepository = FakeShopRepository()
@@ -62,13 +60,13 @@ class CoinChargeUseCasesTest {
     fun `받으면 기기에 받음을 남기고 잔액을 다시 읽고 받은 코인 수를 남긴다`() = runBlocking {
         val result = claim()(event, pack)
 
-        assertEquals(CoinChargeClaimResult.Granted(CoinChargeGrantVO(grantedCoins = 3000)), result)
+        assertEquals(CoinChargeClaimResult.Granted(CoinChargeGrantVO(grantedCoins = 3000, balance = 3860)), result)
         assertEquals(setOf(event.eventId), repository.claimed)
-        assertEquals(listOf("coin_300"), repository.claimRequests)
+        assertEquals(listOf(1L), repository.claimRequests)
         assertEquals(1, shopRepository.refreshCount)
         val granted = analytics.events.single()
         assertEquals("coin_charge_granted", granted.name)
-        assertEquals(mapOf("event_id" to event.eventId, "ab_group" to "B", "package_id" to "coin_300"), granted.params)
+        assertEquals(mapOf("event_id" to event.eventId, "ab_group" to "B", "package_id" to "1"), granted.params)
         assertEquals(mapOf("coins" to 3000L), granted.numberParams)
     }
 
@@ -82,17 +80,28 @@ class CoinChargeUseCasesTest {
     }
 
     @Test
-    fun `서버가 이미 받았다고 하면 기기에도 남기고 이미 받았다고 한다`() = runBlocking {
-        repository.claimError = httpException(409, ShopErrorType.COIN_CHARGE_ALREADY_CLAIMED.type)
+    fun `묶음 번호가 없다는 404면 다시 눌러 달라고 알리고 package_not_found로 남긴다`() = runBlocking {
+        repository.claimError = httpException(404, ShopErrorType.COIN_PACKAGE_NOT_FOUND.type)
 
-        assertEquals(CoinChargeClaimResult.AlreadyClaimed, claim()(event, pack))
-        assertEquals(setOf(event.eventId), repository.claimed)
-        assertEquals("already_claimed", analytics.events.single().params["reason"])
+        assertEquals(CoinChargeClaimResult.Failed, claim()(event, pack))
+        assertEquals(listOf(ShopMessages.COIN_CHARGE_FAILED), messageHelper.toasts)
+        assertTrue(messageHelper.dialogs.isEmpty())
+        assertTrue(repository.claimed.isEmpty())
+        assertEquals("package_not_found", analytics.events.single().params["reason"])
     }
 
     @Test
-    fun `지급이 막히면 다시 눌러 달라고 알리고 까닭을 남긴다`() = runBlocking {
-        repository.claimError = IllegalStateException("지급 API가 아직 없다")
+    fun `그룹 헤더가 틀렸다는 400이면 다시 눌러 달라고 알리고 invalid_request로 남긴다`() = runBlocking {
+        repository.claimError = httpException(400, "api.common.invalidInputValue")
+
+        assertEquals(CoinChargeClaimResult.Failed, claim()(event, pack))
+        assertEquals(listOf(ShopMessages.COIN_CHARGE_FAILED), messageHelper.toasts)
+        assertEquals("invalid_request", analytics.events.single().params["reason"])
+    }
+
+    @Test
+    fun `응답을 받지 못하면 다시 눌러 달라고 알리고 까닭을 남긴다`() = runBlocking {
+        repository.claimError = java.io.IOException("offline")
 
         assertEquals(CoinChargeClaimResult.Failed, claim()(event, pack))
         assertEquals(listOf(ShopMessages.COIN_CHARGE_FAILED), messageHelper.toasts)
@@ -136,13 +145,14 @@ class CoinChargeUseCasesTest {
             assertTrue("${it.name} 이름은 40자 안", it.name.length <= 40)
         }
         val pay = analytics.events.first { it.name == "coin_charge_pay_click" }
-        assertEquals(mapOf("price" to 1000L, "coins" to 300L), pay.numberParams)
+        assertEquals("1", pay.params["package_id"])
+        assertEquals(mapOf("price" to 1500L, "coins" to 300L), pay.numberParams)
     }
 }
 
 internal class FakeCoinChargeRepository(var current: CoinChargeEventVO?) : CoinChargeRepository {
     val claimed = mutableSetOf<String>()
-    val claimRequests = mutableListOf<String>()
+    val claimRequests = mutableListOf<Long>()
     var claimError: Exception? = null
 
     override fun getEvent(): CoinChargeEventVO? = current
@@ -151,10 +161,10 @@ internal class FakeCoinChargeRepository(var current: CoinChargeEventVO?) : CoinC
         claimed += eventId
     }
 
-    override suspend fun claim(event: CoinChargeEventVO, packageId: String): CoinChargeGrantVO {
-        claimRequests += packageId
+    override suspend fun claim(event: CoinChargeEventVO, coinPackageId: Long): CoinChargeGrantVO {
+        claimRequests += coinPackageId
         claimError?.let { throw it }
-        return CoinChargeGrantVO(grantedCoins = event.grantCoins)
+        return CoinChargeGrantVO(grantedCoins = 3000, balance = 3860)
     }
 }
 
@@ -169,5 +179,21 @@ internal class RecordingCoinChargeAnalytics : AnalyticsHelper {
 
     override fun setUserProperty(name: String, value: String?) {
         userProperties += name to value
+    }
+}
+
+class CoinChargePackagesTest {
+
+    @Test
+    fun `서버와 같은 묶음표 - 묶음 번호 1~3에 300·1,500·3,000코인, 가격은 그룹마다 다르다`() {
+        assertEquals(listOf(1000, 5000, 10000), CoinChargePackages.of("A").map { it.price })
+        assertEquals(listOf(1500, 7500, 15000), CoinChargePackages.of("B").map { it.price })
+        assertEquals(listOf(1L, 2L, 3L), CoinChargePackages.of("B").map { it.coinPackageId })
+        assertTrue(CoinChargePackages.of("C").isEmpty())
+    }
+
+    @Test
+    fun `그룹은 A·B만 받고 공백과 대소문자는 맞춘다`() {
+        assertEquals(listOf("A", "B", null, null), listOf("A", " b", "C", null).map(CoinChargePackages::groupOf))
     }
 }

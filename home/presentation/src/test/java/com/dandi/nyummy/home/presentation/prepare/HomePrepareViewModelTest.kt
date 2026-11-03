@@ -201,7 +201,7 @@ private fun noCoinChargeNoticePrefetch(imagePrefetchHelper: ImagePrefetchHelper)
                 override fun getEvent(): CoinChargeEventVO? = null
                 override suspend fun isClaimed(eventId: String): Boolean = false
                 override suspend fun markClaimed(eventId: String) = Unit
-                override suspend fun claim(event: CoinChargeEventVO, packageId: String): CoinChargeGrantVO = error("지급하지 않는다")
+                override suspend fun claim(event: CoinChargeEventVO, coinPackageId: Long): CoinChargeGrantVO = error("지급하지 않는다")
             },
             tracker = CoinChargeTracker(
                 object : AnalyticsHelper {

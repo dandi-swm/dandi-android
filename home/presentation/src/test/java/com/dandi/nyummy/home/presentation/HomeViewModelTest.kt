@@ -115,7 +115,7 @@ class HomeViewModelTest {
             claimedCoinCharges += eventId
         }
 
-        override suspend fun claim(event: CoinChargeEventVO, packageId: String): CoinChargeGrantVO = error("홈은 지급하지 않는다")
+        override suspend fun claim(event: CoinChargeEventVO, coinPackageId: Long): CoinChargeGrantVO = error("홈은 지급하지 않는다")
     }
 
     private val state get() = viewModel.uiState.value
@@ -774,9 +774,8 @@ class HomeViewModelTest {
     private val coinCharge = CoinChargeEventVO(
         eventId = "2026-11-coin-charge",
         group = "A",
-        grantCoins = 3000,
         notice = CoinChargeNoticeVO(badge = "상점 오픈", title = "냐미 상점이 문을 열었어요!", body = "코인을 충전해 보세요.", ctaText = "코인 충전하기"),
-        packages = listOf(CoinChargePackageVO(id = "coin_300", coins = 300, price = 1000)),
+        packages = listOf(CoinChargePackageVO(coinPackageId = 1, coins = 300, price = 1000)),
     )
 
     private val coinChargeEvents get() = analytics.events.filter { it.name.startsWith("coin_charge_") }

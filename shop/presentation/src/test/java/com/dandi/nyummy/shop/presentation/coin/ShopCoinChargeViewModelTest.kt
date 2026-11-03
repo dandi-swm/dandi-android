@@ -44,10 +44,10 @@ class ShopCoinChargeViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val packs = listOf(
-        CoinChargePackageVO(id = "coin_300", coins = 300, price = 1500, imageId = 1),
-        CoinChargePackageVO(id = "coin_1500", coins = 1500, price = 7500, imageId = 2),
+        CoinChargePackageVO(coinPackageId = 1, coins = 300, price = 1500, imageId = 1),
+        CoinChargePackageVO(coinPackageId = 2, coins = 1500, price = 7500, imageId = 2),
     )
-    private val event = CoinChargeEventVO(eventId = "2026-11-coin-charge", group = "B", grantCoins = 3000, packages = packs)
+    private val event = CoinChargeEventVO(eventId = "2026-11-coin-charge", group = "B", packages = packs)
 
     private val shopRepository = FakeShopRepository()
     private val coinChargeRepository = FakeCoinChargeRepository(event)
@@ -132,7 +132,7 @@ class ShopCoinChargeViewModelTest {
         viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "notice"))
         advanceUntilIdle()
 
-        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage("coin_1500"))
+        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage(2L))
         assertEquals(packs[1], viewModel.uiState.value.sheetPackage)
 
         viewModel.onIntent(ShopCoinChargeIntent.DismissSheet)
@@ -140,7 +140,7 @@ class ShopCoinChargeViewModelTest {
 
         assertEquals(listOf("coin_charge_view", "coin_charge_package_click", "coin_charge_sheet_close"), names)
         val click = analytics.events[1]
-        assertEquals("coin_1500", click.params["package_id"])
+        assertEquals("2", click.params["package_id"])
         assertEquals(mapOf("price" to 7500L, "coins" to 1500L), click.numberParams)
     }
 
@@ -149,7 +149,7 @@ class ShopCoinChargeViewModelTest {
         val viewModel = createViewModel()
         viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "notice"))
         advanceUntilIdle()
-        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage("coin_300"))
+        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage(1L))
 
         val gate = CompletableDeferred<Unit>()
         coinChargeRepository.claimGate = gate
@@ -171,7 +171,7 @@ class ShopCoinChargeViewModelTest {
             listOf("coin_charge_view", "coin_charge_package_click", "coin_charge_pay_click", "coin_charge_granted"),
             names,
         )
-        assertEquals(listOf("coin_300"), coinChargeRepository.claimRequests)
+        assertEquals(listOf(1L), coinChargeRepository.claimRequests)
     }
 
     @Test
@@ -181,7 +181,7 @@ class ShopCoinChargeViewModelTest {
         val viewModel = createViewModel()
         viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "notice"))
         advanceUntilIdle()
-        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage("coin_300"))
+        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage(1L))
 
         viewModel.onIntent(ShopCoinChargeIntent.ClickPay)
         advanceUntilIdle()
@@ -194,7 +194,7 @@ class ShopCoinChargeViewModelTest {
         val viewModel = createViewModel()
         viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "notice"))
         advanceUntilIdle()
-        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage("coin_300"))
+        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage(1L))
         viewModel.onIntent(ShopCoinChargeIntent.ClickPay)
         advanceUntilIdle()
 
@@ -213,7 +213,7 @@ class ShopCoinChargeViewModelTest {
         viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "link"))
         advanceUntilIdle()
 
-        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage("coin_300"))
+        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage(1L))
 
         val state = viewModel.uiState.value
         assertTrue(state.showsClaimedDialog)
@@ -227,7 +227,7 @@ class ShopCoinChargeViewModelTest {
         val viewModel = createViewModel()
         viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "notice"))
         advanceUntilIdle()
-        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage("coin_300"))
+        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage(1L))
         coinChargeRepository.claimed += event.eventId
 
         viewModel.onIntent(ShopCoinChargeIntent.ClickPay)
@@ -244,7 +244,7 @@ class ShopCoinChargeViewModelTest {
         val viewModel = createViewModel()
         viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "notice"))
         advanceUntilIdle()
-        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage("coin_300"))
+        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage(1L))
 
         clear(viewModel)
 
@@ -269,7 +269,7 @@ class ShopCoinChargeViewModelTest {
 
 private class FakeCoinChargeRepository(var current: CoinChargeEventVO?) : CoinChargeRepository {
     val claimed = mutableSetOf<String>()
-    val claimRequests = mutableListOf<String>()
+    val claimRequests = mutableListOf<Long>()
     var claimGate: CompletableDeferred<Unit>? = null
     var grantBalance: Int? = null
 
@@ -279,10 +279,10 @@ private class FakeCoinChargeRepository(var current: CoinChargeEventVO?) : CoinCh
         claimed += eventId
     }
 
-    override suspend fun claim(event: CoinChargeEventVO, packageId: String): CoinChargeGrantVO {
-        claimRequests += packageId
+    override suspend fun claim(event: CoinChargeEventVO, coinPackageId: Long): CoinChargeGrantVO {
+        claimRequests += coinPackageId
         claimGate?.await()
-        return CoinChargeGrantVO(grantedCoins = event.grantCoins, balance = grantBalance)
+        return CoinChargeGrantVO(grantedCoins = 3000, balance = grantBalance)
     }
 }
 
