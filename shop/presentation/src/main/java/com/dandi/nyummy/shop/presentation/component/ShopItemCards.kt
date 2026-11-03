@@ -69,11 +69,20 @@ fun ShopItemCard(
                     .align(Alignment.Center)
                     .fillMaxSize(ItemImageFraction),
             )
-            shopItemTag(item)?.let { tag ->
-                NyummyTag(tag = tag, modifier = Modifier.align(Alignment.TopStart).padding(NyummyTheme.spacing.s8))
-            }
-            if (onAdd != null) {
-                ShopAddButton(onClick = onAdd, modifier = Modifier.align(Alignment.TopEnd).padding(NyummyTheme.spacing.s8))
+            // 태그와 담기 버튼을 한 줄에 둔다. 버튼 자리를 먼저 잡고 태그는 남은 너비 안에서 말줄임한다(좁은 카드·큰 글자).
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(NyummyTheme.spacing.s8),
+                horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    shopItemTag(item)?.let { tag -> NyummyTag(tag = tag) }
+                }
+                if (onAdd != null) {
+                    ShopAddButton(onClick = onAdd)
+                }
             }
         }
         ShopCardInfo(item)
