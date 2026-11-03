@@ -326,4 +326,37 @@ class ShopCartViewModelTest {
         assertFalse(viewModel.uiState.value.isLoadFailed)
         assertEquals(1, viewModel.uiState.value.items.size)
     }
+
+    @Test
+    fun `놓아보기는 담은 아이템이 있을 때만 열리고 닫아도 장바구니를 다시 읽지 않는다`() = runTest(testDispatcher) {
+        repository.cartHandler = { cartOf(row(1), row(2, selected = false)) }
+        val viewModel = createViewModel()
+        viewModel.onIntent(ShopCartIntent.Enter)
+        advanceUntilIdle()
+        val readsBefore = repository.cartCalls.size
+
+        viewModel.onIntent(ShopCartIntent.OpenTryOn)
+        assertTrue(viewModel.uiState.value.isTryOnOpen)
+
+        viewModel.onIntent(ShopCartIntent.CloseTryOn)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isTryOnOpen)
+        assertEquals(readsBefore, repository.cartCalls.size)
+        // 장바구니 값(선택 포함)은 그대로다.
+        assertEquals(listOf(true, false), state.items.map { it.isSelected })
+    }
+
+    @Test
+    fun `빈 장바구니에서는 놓아보기가 열리지 않는다`() = runTest(testDispatcher) {
+        repository.cartHandler = { CartVO() }
+        val viewModel = createViewModel()
+        viewModel.onIntent(ShopCartIntent.Enter)
+        advanceUntilIdle()
+
+        viewModel.onIntent(ShopCartIntent.OpenTryOn)
+
+        assertFalse(viewModel.uiState.value.isTryOnOpen)
+    }
 }
