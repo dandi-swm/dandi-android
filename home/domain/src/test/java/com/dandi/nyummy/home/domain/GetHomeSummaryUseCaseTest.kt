@@ -32,9 +32,11 @@ class GetHomeSummaryUseCaseTest {
     private val messageHelper = RecordingMessageHelper()
     private val tti = RecordingTTIHelper()
 
+    private val widgetHelper = RecordingWidgetHelper()
+
     private fun useCase(repository: HomeRepository) = GetHomeSummaryUseCase(
         repository = repository,
-        widgetHelper = NoOpWidgetHelper,
+        widgetHelper = widgetHelper,
         resourceHelper = FakeResourceHelper,
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
@@ -50,6 +52,22 @@ class GetHomeSummaryUseCaseTest {
         assertEquals(Result.success(summary), result)
         assertTrue(messageHelper.snackBars.isEmpty())
         assertTrue(messageHelper.dialogs.isEmpty())
+    }
+
+    @Test
+    fun `받으면 연속 기록일과 오늘 기록 수를 위젯에 넘긴다`() = runBlocking {
+        useCase(FakeHomeRepository { HomeSummaryVO(streakDays = 7, todayRecordedCount = 2) })()
+
+        assertEquals(listOf<WidgetCall>(WidgetCall.HomeSummary(streakDays = 7, todayRecordedCount = 2)), widgetHelper.calls)
+    }
+
+    @Test
+    fun `받지 못하면 위젯에 넘기지 않는다`() = runBlocking {
+        useCase(FakeHomeRepository { throw httpException(401) })()
+        useCase(FakeHomeRepository { throw httpException(400) })()
+        useCase(FakeHomeRepository { throw IOException("offline") })()
+
+        assertTrue(widgetHelper.calls.isEmpty())
     }
 
     @Test

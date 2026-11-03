@@ -16,10 +16,11 @@ class SaveMealTimesUseCaseTest {
     private val messageHelper = RecordingMessageHelper()
     private val navigationHelper = RecordingNavigationHelper()
     private var retryCount = 0
+    private val widgetHelper = RecordingWidgetHelper()
 
     private val useCase = SaveMealTimesUseCase(
         repository = repository,
-        widgetHelper = NoOpWidgetHelper,
+        widgetHelper = widgetHelper,
         resourceHelper = FakeResourceHelper,
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
@@ -38,6 +39,18 @@ class SaveMealTimesUseCaseTest {
         assertEquals(listOf(mealTimes), repository.savedMealTimes)
         assertTrue(messageHelper.snackBars.isEmpty())
         assertTrue(messageHelper.dialogs.isEmpty())
+        assertEquals(listOf<WidgetCall>(WidgetCall.MealTimesSaved(mealTimes)), widgetHelper.calls)
+    }
+
+    @Test
+    fun `저장하지 못하면 위젯에 새 시각을 넘기지 않는다`() = runBlocking {
+        save(MealTimesVO(breakfast = MealTimeVO(hour = 12), lunch = MealTimeVO(hour = 12)))
+        repository.saveMealTimesError = IOException("offline")
+        save(MealTimesVO.default)
+        repository.saveMealTimesError = httpException(401, "api.auth.tokenExpired")
+        save(MealTimesVO.default)
+
+        assertTrue(widgetHelper.calls.isEmpty())
     }
 
     @Test

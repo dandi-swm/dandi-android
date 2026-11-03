@@ -60,12 +60,16 @@ class WithdrawUseCaseTest {
         override suspend fun setMealTutorialRequired(required: Boolean) = Unit
     }
 
+    /** 위젯 기록을 지운 시점에 첫 화면으로 몇 번 갔는지 기록한다. */
+    private val initialCountsAtWidgetClear = mutableListOf<Int>()
+    private val widgetHelper = RecordingWidgetHelper(onCall = { initialCountsAtWidgetClear += navigationHelper.initialCount })
+
     private val useCase = WithdrawUseCase(
         repository = repository,
         pushTokenHelper = pushTokenHelper,
         companionMemory = companionMemory,
         tutorialHelper = tutorialHelper,
-        widgetHelper = NoOpWidgetHelper,
+        widgetHelper = widgetHelper,
         resourceHelper = FakeResourceHelper,
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
@@ -81,6 +85,8 @@ class WithdrawUseCaseTest {
         assertEquals(1, companionMemory.clearCount)
         assertEquals(1, tutorialHelper.clearCount)
         assertEquals(listOf(0), pushTokenHelper.initialCountsAtDelete)
+        assertEquals(listOf<WidgetCall>(WidgetCall.Clear), widgetHelper.calls)
+        assertEquals(listOf(0), initialCountsAtWidgetClear)
         assertEquals(1, navigationHelper.initialCount)
         val snackBar = messageHelper.snackBars.single()
         assertEquals(IconType.SUCCESS, snackBar.iconType)
@@ -95,6 +101,7 @@ class WithdrawUseCaseTest {
 
         assertTrue(result.isFailure)
         assertTrue(pushTokenHelper.initialCountsAtDelete.isEmpty())
+        assertTrue(widgetHelper.calls.isEmpty())
         assertEquals(0, navigationHelper.initialCount)
         val snackBar = messageHelper.snackBars.single()
         assertEquals(IconType.ERROR, snackBar.iconType)
