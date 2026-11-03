@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -39,13 +40,33 @@ fun ShopPage(
         viewModel.onIntent(ShopIntent.ScreenResumed)
         onPauseOrDispose { }
     }
-    ShopScreen(uiState = uiState, onIntent = viewModel::onIntent)
+    ShopScreen(uiState = uiState, onIntent = viewModel::onIntent) { tab, tabModifier ->
+        ShopTabContent(tab = tab, onIntent = viewModel::onIntent, modifier = tabModifier)
+    }
 }
 
+/** 탭 하나의 내용. 탭마다 자기 ViewModel을 쓰므로 미리보기에서는 [ShopScreen]에 다른 내용을 넣는다. */
+@Composable
+private fun ShopTabContent(tab: ShopTab, onIntent: (ShopIntent) -> Unit, modifier: Modifier) {
+    when (tab) {
+        ShopTab.RECOMMEND -> ShopRecommendTab(
+            onItemClick = { onIntent(ShopIntent.ClickItem(it)) },
+            onAction = { onIntent(ShopIntent.ClickAction(it)) },
+            modifier = modifier,
+        )
+        // 인테리어·방 배경 목록은 탭 ViewModel과 함께 다음 단계에서 채운다.
+        ShopTab.INTERIOR, ShopTab.BACKGROUND -> Box(modifier = modifier)
+    }
+}
+
+/**
+ * @param tabContent 고른 탭의 내용. 탭마다 저장 상태(스크롤 위치·배너 쪽)를 따로 보관해, 다른 탭에 갔다 와도 보던 자리로 돌아온다
+ */
 @Composable
 private fun ShopScreen(
     uiState: ShopUIState,
     onIntent: (ShopIntent) -> Unit,
+    tabContent: @Composable (tab: ShopTab, modifier: Modifier) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -63,14 +84,9 @@ private fun ShopScreen(
         val tabModifier = Modifier
             .fillMaxWidth()
             .weight(1f)
-        when (uiState.selectedTab) {
-            ShopTab.RECOMMEND -> ShopRecommendTab(
-                onItemClick = { onIntent(ShopIntent.ClickItem(it)) },
-                onAction = { onIntent(ShopIntent.ClickAction(it)) },
-                modifier = tabModifier,
-            )
-            // 인테리어·방 배경 목록은 탭 ViewModel과 함께 다음 단계에서 채운다.
-            ShopTab.INTERIOR, ShopTab.BACKGROUND -> Box(modifier = tabModifier)
+        val tabStateHolder = rememberSaveableStateHolder()
+        tabStateHolder.SaveableStateProvider(uiState.selectedTab.name) {
+            tabContent(uiState.selectedTab, tabModifier)
         }
     }
     uiState.detailItem?.let { item ->
@@ -87,6 +103,8 @@ private fun ShopScreen(
 @Composable
 private fun ShopScreenPreview() {
     NyummyTheme {
-        ShopScreen(uiState = ShopUIState(balance = 1240, cartItemCount = 2), onIntent = {})
+        ShopScreen(uiState = ShopUIState(balance = 1240, cartItemCount = 2), onIntent = {}) { _, tabModifier ->
+            Box(modifier = tabModifier)
+        }
     }
 }

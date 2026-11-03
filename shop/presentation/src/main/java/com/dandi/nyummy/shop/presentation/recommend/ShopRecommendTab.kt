@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -27,6 +29,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateAc
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateSurface
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.jank.JankScrollWatcher
 import com.dandi.nyummy.shop.entity.SduiComponentVO
 import com.dandi.nyummy.shop.entity.ShopActionVO
 import com.dandi.nyummy.shop.entity.ShopBannerVO
@@ -52,8 +55,11 @@ fun ShopRecommendTab(
     viewModel: ShopRecommendViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
+    JankScrollWatcher(listState)
     ShopRecommendContent(
         uiState = uiState,
+        listState = listState,
         onItemClick = onItemClick,
         onAction = onAction,
         onRetry = { viewModel.onIntent(ShopRecommendIntent.Retry) },
@@ -68,6 +74,7 @@ private fun ShopRecommendContent(
     onAction: (ShopActionVO) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState(),
 ) {
     when {
         uiState.isLoadFailed -> Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -84,6 +91,7 @@ private fun ShopRecommendContent(
         else -> {
             val gutter = NyummyTheme.spacing.gutter
             LazyColumn(
+                state = listState,
                 modifier = modifier.fillMaxSize(),
                 contentPadding = PaddingValues(top = NyummyTheme.spacing.s16, bottom = NyummyTheme.spacing.s32),
             ) {
