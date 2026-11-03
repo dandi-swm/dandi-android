@@ -14,21 +14,23 @@ import com.dandi.nyummy.shop.presentation.RecordingMessageHelper
 import com.dandi.nyummy.shop.presentation.RecordingNavigationHelper
 import com.dandi.nyummy.shop.presentation.ShopSortRequest
 import com.dandi.nyummy.shop.presentation.shopItem
+import java.io.IOException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ShopCatalogViewModelTest {
@@ -137,7 +139,8 @@ class ShopCatalogViewModelTest {
         val slowAll = CompletableDeferred<Unit>()
         repository.productsHandler = { request ->
             if (request.category == null) {
-                slowAll.await()
+                // 조건을 바꿀 때 조회 작업이 취소돼도 앞 응답이 실제로 늦게 돌아오게 한다(세대 검사가 버리는지 본다).
+                withContext(NonCancellable) { slowAll.await() }
                 ShopItemPageVO(items = listOf(shopItem(1)))
             } else {
                 ShopItemPageVO(items = listOf(shopItem(2)))
@@ -192,13 +195,54 @@ class ShopCatalogViewModelTest {
     }
 
     @Test
+    fun `보유 숨기기로 이어 받는 동안 대기 표시를 유지한다`() = runTest(testDispatcher) {
+        val secondPage = CompletableDeferred<Unit>()
+        repository.productsHandler = { request ->
+            val index = (request.cursor ?: 0L).toInt()
+            if (index == 1) secondPage.await()
+            ShopItemPageVO(items = List(3) { shopItem(index * 100L + it).copy(ownedCount = 1) }, nextCursor = index + 1L)
+        }
+        val viewModel = createViewModel()
+        viewModel.onIntent(ShopCatalogIntent.ToggleHideOwned)
+        viewModel.onIntent(ShopCatalogIntent.Enter(ShopTab.INTERIOR))
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.visibleItems.isEmpty())
+        assertTrue(viewModel.uiState.value.isLoadingMore)
+
+        secondPage.complete(Unit)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isLoadingMore)
+    }
+
+    @Test
+    fun `이어 받기가 묶음 한도에서 멈추면 더 보기로 다음 묶음을 받는다`() = runTest(testDispatcher) {
+        repository.productsHandler = pages(pageCount = 10, owned = true)
+        val viewModel = createViewModel()
+        viewModel.onIntent(ShopCatalogIntent.ToggleHideOwned)
+        viewModel.onIntent(ShopCatalogIntent.Enter(ShopTab.INTERIOR))
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.hasNext)
+        assertFalse(viewModel.uiState.value.isLoadingMore)
+
+        viewModel.onIntent(ShopCatalogIntent.LoadMore)
+        advanceUntilIdle()
+
+        assertEquals(listOf(null, 1L, 2L, 3L, 4L, 5L), repository.productRequests.map { it.cursor })
+    }
+
+    @Test
     fun `링크 정렬은 이 탭 것만 한 번 반영한다`() = runTest(testDispatcher) {
         val viewModel = createViewModel()
         viewModel.onIntent(ShopCatalogIntent.Enter(ShopTab.INTERIOR))
         advanceUntilIdle()
 
         viewModel.onIntent(ShopCatalogIntent.ApplySortRequest(ShopSortRequest(ShopTab.INTERIOR, ProductSort.POPULAR, id = 1)))
+        advanceUntilIdle()
         viewModel.onIntent(ShopCatalogIntent.ApplySortRequest(ShopSortRequest(ShopTab.INTERIOR, ProductSort.POPULAR, id = 1)))
+        advanceUntilIdle()
         viewModel.onIntent(ShopCatalogIntent.ApplySortRequest(ShopSortRequest(ShopTab.BACKGROUND, ProductSort.PRICE_DESC, id = 2)))
         advanceUntilIdle()
 
