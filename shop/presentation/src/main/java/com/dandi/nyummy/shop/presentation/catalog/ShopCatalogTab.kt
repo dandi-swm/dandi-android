@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -27,6 +28,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,9 +40,12 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpinner
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateAction
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateSurface
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonTone
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyLoadMoreEffect
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.jank.JankScrollWatcher
 import com.dandi.nyummy.shop.entity.ProductSort
 import com.dandi.nyummy.shop.entity.ShopCategory
 import com.dandi.nyummy.shop.entity.ShopItemVO
@@ -68,8 +74,11 @@ fun ShopCatalogTab(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(tab) { viewModel.onIntent(ShopCatalogIntent.Enter(tab)) }
     LaunchedEffect(sortRequest) { sortRequest?.let { viewModel.onIntent(ShopCatalogIntent.ApplySortRequest(it)) } }
+    val listState = rememberLazyListState()
+    JankScrollWatcher(listState)
     ShopCatalogContent(
         uiState = uiState,
+        listState = listState,
         onIntent = viewModel::onIntent,
         onItemClick = onItemClick,
         onAdd = onAdd,
@@ -84,8 +93,8 @@ private fun ShopCatalogContent(
     onItemClick: (ShopItemVO) -> Unit,
     onAdd: (ShopItemVO) -> Unit,
     modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState(),
 ) {
-    val listState = rememberLazyListState()
     val rows = uiState.visibleItems.chunked(GridColumns)
     NyummyLoadMoreEffect(listState = listState, itemCount = rows.size) { onIntent(ShopCatalogIntent.LoadMore) }
     LazyColumn(
@@ -128,7 +137,19 @@ private fun ShopCatalogContent(
                 itemsIndexed(rows, key = { index, _ -> "row-$index" }) { _, row ->
                     CatalogRow(tab = uiState.tab, row = row, onItemClick = onItemClick, onAdd = onAdd)
                 }
-                if (uiState.isLoadingMore) item(key = "loading-more") { CatalogSpinner() }
+                when {
+                    uiState.isLoadingMore -> item(key = "loading-more") { CatalogSpinner() }
+                    // 끝에 닿아도 이어 받지 못한 경우(보유 숨기기로 새로 보인 상품이 없거나 이어 받기 실패) 직접 더 받는다.
+                    uiState.hasNext -> item(key = "load-more") {
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            NyummyTextButton(
+                                text = stringResource(R.string.shop_load_more),
+                                onClick = { onIntent(ShopCatalogIntent.LoadMore) },
+                                tone = NyummyTextButtonTone.Neutral,
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -179,7 +200,7 @@ private fun CatalogMeta(
         val hideColor = if (hideOwned) NyummyTheme.colors.content.brand else secondary
         Row(
             modifier = Modifier
-                .semantics { selected = hideOwned }
+                .semantics { toggleableState = ToggleableState(hideOwned) }
                 .nyummyClickable(onClick = onToggleHideOwned, role = Role.Checkbox),
             horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2),
             verticalAlignment = Alignment.CenterVertically,

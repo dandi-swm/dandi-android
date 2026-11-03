@@ -192,7 +192,10 @@ class ShopCatalogViewModel @Inject constructor(
             val now = currentState
             val newlyVisible = now.visibleItems.size - visibleBefore
             if (!now.hideOwned || newlyVisible >= MIN_VISIBLE_PER_TRIGGER || !now.hasNext) return
+            if (fetched == MAX_PAGES_PER_TRIGGER - 1) return
             next = now.nextCursor
+            // 이어 받는 동안 대기 표시를 유지한다. 보이는 상품이 아직 없을 때 헤더 아래가 비지 않게 한다.
+            dispatch(ShopCatalogReducerEvent.NextPageStarted)
         }
     }
 
