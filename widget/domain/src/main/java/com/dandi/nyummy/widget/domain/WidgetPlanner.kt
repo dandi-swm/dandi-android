@@ -42,17 +42,17 @@ object WidgetPlanner {
         val nextChange = nextChangeAt(snapshot.mealTimes, today, zone, nowMillis)
         val record = LastRecord.of(snapshot, zone)
 
-        if (record.atMillis == null) {
+        val lastDate = record.date
+        if (lastDate == null) {
             // 이 기기 기록도, 기록을 알려 주는 홈 요약도 없다.
             if (record.brokenAsOf != null) {
-                // 홈 요약을 받은 날 이미 연속이 끊겨 있었다. 며칠째인지는 최솟값만 안다.
+                // 홈 요약으로 연속이 끊긴 것을 처음 본 날부터 센다. 며칠째인지는 최솟값만 안다.
                 val days = ChronoUnit.DAYS.between(record.brokenAsOf, today).toInt() + 1
                 return away(days.coerceAtLeast(1), isExact = false, today = today, nextChange = nextChange)
             }
             return intraday(snapshot, record, today, zone, nowMillis, nextChange)
         }
 
-        val lastDate = Instant.ofEpochMilli(record.atMillis).atZone(zone).toLocalDate()
         val daysSince = ChronoUnit.DAYS.between(lastDate, today).toInt().coerceAtLeast(0)
         if (daysSince >= 2) {
             return away(daysSince - 1, isExact = true, today = today, nextChange = nextChange)
@@ -80,10 +80,10 @@ object WidgetPlanner {
         nextChange: Long,
     ): WidgetPlanVO {
         val slots = slotsOf(snapshot.mealTimes, today, zone)
-        val lastDate = record.atMillis?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
+        val lastDate = record.date
         val recordedToday = lastDate == today
-        // 오늘 기록만 오늘 끼니를 덮는다. 기다림 시작이 마지막 기록보다 이르거나 같은 끼니는 먹은 것으로 본다.
-        val coveredUntil = if (recordedToday) record.atMillis else null
+        // 오늘 기록만 오늘 끼니를 덮는다. 기다림 시작이 덮는 시각보다 이르거나 같은 끼니는 먹은 것으로 본다.
+        val coveredUntil = if (recordedToday) record.coveredUntilMillis else null
         fun Slot.isCovered() = coveredUntil != null && coveredUntil >= waitStart
 
         val streakDays = if (lastDate == null) 0 else record.streakFor(lastDate)
@@ -120,12 +120,17 @@ object WidgetPlanner {
             }
         }
 
-        if (recordedToday && record.atMillis != null) {
-            val isReunion = snapshot.reunionRecordedAtMillis > 0L &&
-                snapshot.reunionRecordedAtMillis == record.atMillis
+        if (recordedToday) {
+            val localAt = record.localAtMillis
+            val isReunion = localAt != null && snapshot.reunionRecordedAtMillis == localAt
             return base.copy(
                 stage = if (isReunion) WidgetStage.REUNION else WidgetStage.FULL,
-                episodeKey = (if (isReunion) "R:" else "F:") + record.atMillis,
+                // 이 기기 접수 하나가 한 회차다. 다른 기기 기록(홈 요약)만 알면 그날을 한 회차로 본다.
+                episodeKey = when {
+                    isReunion -> "R:$localAt"
+                    localAt != null -> "F:$localAt"
+                    else -> "F:$today"
+                },
             )
         }
 
@@ -172,14 +177,21 @@ object WidgetPlanner {
     )
 
     /**
-     * 마지막 기록. 이 기기 기록과 홈 요약 힌트 중 늦은 쪽이다(design.md D2).
+     * 마지막 기록(design.md D2). 날짜는 이 기기 기록과 홈 요약 힌트 중 늦은 쪽이다.
      *
-     * @property atMillis 마지막 기록 순간. 힌트가 "전날 기록"만 알려 주면 그날 0시로 둔다(날짜만 쓴다).
-     * @property brokenAsOf 홈 요약을 받은 날 연속이 끊겨 있었다면 그 날짜
+     * 그날 끼니를 덮는 시각은 그 날짜에 이 기기 접수가 있으면 그 접수 시각이다. 홈 요약을 받은 시각은 식사 시각이 아니라서
+     * (홈은 볼 때마다 요약을 다시 받는다), 이 기기 기록 없이 다른 기기에서 기록한 날에만 "받기 전까지는 먹었다"로 쓴다.
+     *
+     * @property date 마지막 기록 날짜. 힌트가 "전날 기록"만 알려 주면 전날이다.
+     * @property coveredUntilMillis 그날 끼니를 덮는 시각. 기다림 시작이 이 시각보다 이르거나 같은 끼니는 먹은 것으로 본다.
+     * @property localAtMillis 그날의 이 기기 접수 시각. 재회와 배빵빵 회차를 가른다. 다른 기기 기록만 알면 null이다.
+     * @property brokenAsOf 홈 요약으로 연속 끊김을 처음 확인한 날짜
      * @property anchor 서버 연속 기록일이 가리키는 날짜와 일수. 마지막 기록 날짜와 견줘 보일 연속일을 정한다.
      */
     private class LastRecord(
-        val atMillis: Long?,
+        val date: LocalDate?,
+        val coveredUntilMillis: Long?,
+        val localAtMillis: Long?,
         val brokenAsOf: LocalDate?,
         private val anchor: Pair<LocalDate, Int>?,
     ) {
@@ -195,28 +207,52 @@ object WidgetPlanner {
 
         companion object {
             fun of(snapshot: WidgetSnapshotVO, zone: ZoneId): LastRecord {
-                val hint = snapshot.homeHint
                 val local = snapshot.lastRecordedAtMillis.takeIf { it > 0L }
-                if (hint.isEmpty) return LastRecord(atMillis = local, brokenAsOf = null, anchor = null)
+                val localDate = local?.toDate(zone)
+                val hint = snapshot.homeHint
+                if (hint.isEmpty) {
+                    return LastRecord(localDate, local, local, brokenAsOf = null, anchor = null)
+                }
 
-                val fetchedDate = Instant.ofEpochMilli(hint.fetchedAtMillis).atZone(zone).toLocalDate()
-                val (hintAt, anchor) = when {
-                    hint.todayRecordedCount > 0 ->
-                        hint.fetchedAtMillis to (fetchedDate to hint.streakDays.coerceAtLeast(1))
-
-                    hint.streakDays > 0 -> {
-                        val yesterday = fetchedDate.minusDays(1)
-                        yesterday.startMillis(zone) to (yesterday to hint.streakDays)
+                val fetchedDate = hint.fetchedAtMillis.toDate(zone)
+                var hintDate: LocalDate? = null
+                var hintCoveredUntil: Long? = null
+                var anchor: Pair<LocalDate, Int>? = null
+                when {
+                    hint.todayRecordedCount > 0 -> {
+                        hintDate = fetchedDate
+                        hintCoveredUntil = hint.fetchedAtMillis
+                        anchor = fetchedDate to hint.streakDays.coerceAtLeast(1)
                     }
 
-                    else -> null to null
+                    hint.streakDays > 0 -> {
+                        hintDate = fetchedDate.minusDays(1)
+                        anchor = hintDate to hint.streakDays
+                    }
                 }
-                val broken = if (hint.todayRecordedCount <= 0 && hint.streakDays <= 0) fetchedDate else null
-                val atMillis = listOfNotNull(local, hintAt).maxOrNull()
-                return LastRecord(atMillis = atMillis, brokenAsOf = broken, anchor = anchor)
+                val brokenAsOf = if (hint.isBroken) {
+                    (hint.brokenSinceMillis.takeIf { it > 0L } ?: hint.fetchedAtMillis).toDate(zone)
+                } else {
+                    null
+                }
+                val date = when {
+                    localDate == null -> hintDate
+                    hintDate == null || !hintDate.isAfter(localDate) -> localDate
+                    else -> hintDate
+                }
+                val fromLocal = localDate != null && localDate == date
+                return LastRecord(
+                    date = date,
+                    coveredUntilMillis = if (fromLocal) local else hintCoveredUntil,
+                    localAtMillis = if (fromLocal) local else null,
+                    brokenAsOf = brokenAsOf,
+                    anchor = anchor,
+                )
             }
         }
     }
+
+    private fun Long.toDate(zone: ZoneId): LocalDate = Instant.ofEpochMilli(this).atZone(zone).toLocalDate()
 
     private fun LocalDate.startMillis(zone: ZoneId): Long = atStartOfDay(zone).toInstant().toEpochMilli()
 

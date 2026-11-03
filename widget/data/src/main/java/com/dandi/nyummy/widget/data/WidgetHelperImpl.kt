@@ -36,12 +36,21 @@ class WidgetHelperImpl(
     }
 
     override suspend fun onHomeSummary(streakDays: Int, todayRecordedCount: Int) = change {
-        val hint = WidgetHomeHintVO(
-            fetchedAtMillis = nowMillis(),
-            streakDays = streakDays.coerceAtLeast(0),
-            todayRecordedCount = todayRecordedCount.coerceAtLeast(0),
-        )
-        repository.update { it.copy(homeHint = hint) }
+        val now = nowMillis()
+        repository.update { snapshot ->
+            val hint = WidgetHomeHintVO(
+                fetchedAtMillis = now,
+                streakDays = streakDays.coerceAtLeast(0),
+                todayRecordedCount = todayRecordedCount.coerceAtLeast(0),
+            )
+            // 끊긴 요약을 이어 받으면 처음 끊긴 순간을 지킨다. 매번 지금으로 덮으면 일 단위 날수가 1에 멈춘다.
+            val brokenSince = when {
+                !hint.isBroken -> 0L
+                snapshot.homeHint.brokenSinceMillis > 0L -> snapshot.homeHint.brokenSinceMillis
+                else -> now
+            }
+            snapshot.copy(homeHint = hint.copy(brokenSinceMillis = brokenSince))
+        }
     }
 
     override suspend fun onMealTimesSaved(mealTimes: MealTimesVO) = change {

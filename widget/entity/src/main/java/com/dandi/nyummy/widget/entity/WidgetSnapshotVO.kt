@@ -29,13 +29,19 @@ data class WidgetSnapshotVO(
  * @property fetchedAtMillis 받은 순간. 0이면 받은 적이 없다.
  * @property streakDays 서버 연속 기록일. 오늘이나 어제까지 이어졌으면 그 일수, 그 전에 끊겼으면 0이다.
  * @property todayRecordedCount 받은 날(서버 기준) 기록한 식사 수. 삭제한 식사는 빠진다.
+ * @property brokenSinceMillis 연속이 끊긴 요약(연속일·오늘 기록 수 모두 0)을 처음 받은 순간. 끊긴 요약을 이어 받는 동안
+ * 그대로 두어, 기록 없이 홈만 열어도 일 단위 날수가 다시 1로 돌아가지 않게 한다. 0이면 끊기지 않았다.
  */
 data class WidgetHomeHintVO(
     val fetchedAtMillis: Long = 0L,
     val streakDays: Int = 0,
     val todayRecordedCount: Int = 0,
+    val brokenSinceMillis: Long = 0L,
 ) {
     val isEmpty: Boolean get() = fetchedAtMillis <= 0L
+
+    /** 받은 날 연속이 끊겨 있었는지. */
+    val isBroken: Boolean get() = !isEmpty && streakDays <= 0 && todayRecordedCount <= 0
 }
 
 /**

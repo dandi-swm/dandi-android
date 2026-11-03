@@ -15,6 +15,7 @@ import kotlinx.serialization.Serializable
  * @property homeFetchedAtMillis 홈 요약을 받은 순간
  * @property homeStreakDays 홈 요약의 연속 기록일
  * @property homeTodayRecordedCount 홈 요약의 오늘 기록 수
+ * @property homeBrokenSinceMillis 연속이 끊긴 홈 요약을 처음 받은 순간
  * @property breakfast 저장한 아침 시각
  * @property lunch 저장한 점심 시각
  * @property dinner 저장한 저녁 시각
@@ -27,6 +28,7 @@ data class WidgetSnapshotDTO(
     val homeFetchedAtMillis: Long? = null,
     val homeStreakDays: Int? = null,
     val homeTodayRecordedCount: Int? = null,
+    val homeBrokenSinceMillis: Long? = null,
     val breakfast: WidgetMealTimeDTO? = null,
     val lunch: WidgetMealTimeDTO? = null,
     val dinner: WidgetMealTimeDTO? = null,
@@ -39,6 +41,7 @@ data class WidgetSnapshotDTO(
             fetchedAtMillis = homeFetchedAtMillis ?: 0L,
             streakDays = homeStreakDays ?: 0,
             todayRecordedCount = homeTodayRecordedCount ?: 0,
+            brokenSinceMillis = homeBrokenSinceMillis ?: 0L,
         ),
         mealTimes = MealTimesVO(
             breakfast = breakfast.toVO(MealTimesVO.DefaultBreakfast),
@@ -55,6 +58,7 @@ data class WidgetSnapshotDTO(
             homeFetchedAtMillis = vo.homeHint.fetchedAtMillis,
             homeStreakDays = vo.homeHint.streakDays,
             homeTodayRecordedCount = vo.homeHint.todayRecordedCount,
+            homeBrokenSinceMillis = vo.homeHint.brokenSinceMillis,
             breakfast = WidgetMealTimeDTO.from(vo.mealTimes.breakfast),
             lunch = WidgetMealTimeDTO.from(vo.mealTimes.lunch),
             dinner = WidgetMealTimeDTO.from(vo.mealTimes.dinner),
