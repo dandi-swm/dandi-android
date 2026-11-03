@@ -36,6 +36,8 @@
     <string name="shop_promotion_ended_body">This promotion has ended</string>
     <string name="shop_promotion_go_to_shop">Back to the shop</string>
     <string name="shop_cart_title">Cart</string>
+    <string name="shop_cart_try_on_title">Try it in my room</string>
+    <string name="shop_cart_try_on_body">See your cart items in your room before you buy</string>
     <string name="shop_cart_select_all">Select all %1$d/%2$d</string>
     <string name="shop_cart_delete_selected">Delete selected</string>
     <string name="shop_cart_remove">Remove from cart</string>
