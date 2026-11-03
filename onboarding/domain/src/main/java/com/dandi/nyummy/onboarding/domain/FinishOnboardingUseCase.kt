@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.home.domain.HomePreparePage
@@ -23,10 +24,12 @@ import kotlin.coroutines.cancellation.CancellationException
  * 이미 고양이가 있는 회원(409)은 만들어진 것으로 보고 마친다. 고양이를 만든 뒤 완료를 기록하기 전에 앱이 꺼져
  * 온보딩을 다시 하면 이렇게 된다.
  * 만들지 못하면 안내 후 [Result.failure]를 돌려주고, 화면은 식사 시각 장면에 머물러 다시 누를 수 있다.
+ * 만들면 고른 식사 시각을 기기 홈 화면 위젯에도 넘긴다.
  */
 class FinishOnboardingUseCase @Inject constructor(
     private val repository: OnboardingRepository,
     private val analyticsHelper: AnalyticsHelper,
+    private val widgetHelper: WidgetHelper,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -40,6 +43,7 @@ class FinishOnboardingUseCase @Inject constructor(
             return Result.failure(IllegalArgumentException(DUPLICATE_MEAL_TIMES_MESSAGE))
         }
         createCat(catName.trim(), mealTimes).onFailure { return Result.failure(it) }
+        widgetHelper.onMealTimesSaved(mealTimes)
 
         // 기기 저장이 실패해도 홈으로 간다. 고양이는 이미 만들었다. 식사 시각은 고양이와 함께 서버에 저장했다.
         runIgnoringFailure { repository.markOnboardingComplete() }

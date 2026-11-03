@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.meal.entity.CreatedMealVO
 import com.dandi.nyummy.meal.entity.MealPhotoSource
@@ -20,10 +21,12 @@ import javax.inject.Inject
  * 식사 생성(분석 시작)을 순서대로 수행하며, 어느 단계에서 실패해도 실패 안내 후
  * [Result.failure] 를 돌려준다. 식사 생성 응답이 오면 기록이 접수된 것이고, 기록하지 못한 경우는
  * 에러 코드로 와서 [MealErrorType] 으로 안내한다.
+ * 접수되면 그 순간을 마지막 기록으로 기기 홈 화면 위젯에 넘긴다(튜토리얼 식사는 [SubmitTutorialMealUseCase]라 넘기지 않는다).
  */
 class SubmitMealUseCase @Inject constructor(
     private val repository: MealRecordRepository,
     private val analyticsHelper: AnalyticsHelper,
+    private val widgetHelper: WidgetHelper,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -34,7 +37,9 @@ class SubmitMealUseCase @Inject constructor(
         repository.prepareUploadImage(photoPath, source)
         val uploadTarget = repository.issueImageUploadUrl(photoPath)
         repository.uploadImage(uploadTarget, photoPath)
-        Result.success(repository.createMeal(uploadTarget.imageKey))
+        val created = repository.createMeal(uploadTarget.imageKey)
+        widgetHelper.onMealRecorded()
+        Result.success(created)
     } catch (e: MealPhotoInvalidException) {
         logBlocked("invalid_photo")
         messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = e.message)
