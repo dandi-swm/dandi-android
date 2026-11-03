@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,37 +47,45 @@ fun ShopItemDetailSheet(
 /** 시트 안 내용. 창 없이 그려 프리뷰에서 쓴다. */
 @Composable
 internal fun ColumnScope.ShopItemDetailContent(item: ShopItemVO, isAdding: Boolean, onAdd: () -> Unit) {
-    Box(
+    // 큰 글자·분할 화면처럼 높이가 모자라면 그림과 설명만 스크롤하고, 담기 버튼은 늘 시트 아래에 보이게 둔다.
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(StageHeight)
-            .clip(RoundedCornerShape(NyummyTheme.radius.m))
-            .background(NyummyTheme.colors.bg.surfaceSunken),
+            .weight(1f, fill = false)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16),
     ) {
-        if (item.isBackground) {
-            ShopItemImage(
-                itemId = item.itemId,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(width = BackgroundImageWidth, height = StageHeight),
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(StageHeight)
+                .clip(RoundedCornerShape(NyummyTheme.radius.m))
+                .background(NyummyTheme.colors.bg.surfaceSunken),
+        ) {
+            if (item.isBackground) {
+                ShopItemImage(
+                    itemId = item.itemId,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(width = BackgroundImageWidth, height = StageHeight),
+                )
+            } else {
+                ShopItemImage(itemId = item.itemId, modifier = Modifier.align(Alignment.Center).size(ImageSize))
+            }
+            shopItemTag(item)?.let { tag ->
+                NyummyTag(tag = tag, modifier = Modifier.align(Alignment.TopStart).padding(NyummyTheme.spacing.s12))
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2)) {
+            NyummyText(text = item.name, style = NyummyTheme.typography.titleM)
+            NyummyText(
+                text = item.categoryName,
+                style = NyummyTheme.typography.bodyS,
+                color = NyummyTheme.colors.content.tertiary,
             )
-        } else {
-            ShopItemImage(itemId = item.itemId, modifier = Modifier.align(Alignment.Center).size(ImageSize))
         }
-        shopItemTag(item)?.let { tag ->
-            NyummyTag(tag = tag, modifier = Modifier.align(Alignment.TopStart).padding(NyummyTheme.spacing.s12))
-        }
+        ShopItemPrice(item)
     }
-    Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2)) {
-        NyummyText(text = item.name, style = NyummyTheme.typography.titleM)
-        NyummyText(
-            text = item.categoryName,
-            style = NyummyTheme.typography.bodyS,
-            color = NyummyTheme.colors.content.tertiary,
-        )
-    }
-    ShopItemPrice(item)
     NyummyButton(
         text = stringResource(R.string.shop_item_add_to_cart),
         onClick = onAdd,

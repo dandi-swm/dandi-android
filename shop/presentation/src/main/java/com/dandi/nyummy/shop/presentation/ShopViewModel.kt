@@ -108,7 +108,8 @@ class ShopViewModel @Inject constructor(
         is ShopReducerEvent.AddStarted -> state.copy(addingProductIds = (state.addingProductIds + event.productId).toPersistentSet())
         is ShopReducerEvent.AddFinished -> state.copy(
             addingProductIds = (state.addingProductIds - event.productId).toPersistentSet(),
-            detailItem = if (event.closeDetail) null else state.detailItem,
+            // 늦게 온 다른 상품의 담기 응답이 지금 열린 시트를 닫지 않게, 같은 상품일 때만 닫는다.
+            detailItem = if (event.closeDetail && state.detailItem?.productId == event.productId) null else state.detailItem,
         )
     }
 }
