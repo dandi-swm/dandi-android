@@ -19,9 +19,9 @@ interface AppPreferenceProvider {
     /** 온보딩 진행 상태를 기록한다. */
     suspend fun setOnboardingIncomplete(incomplete: Boolean)
 
-    /** 홈 새 소식 공지를 "오늘 하루 보지 않기"로 닫은 날(기기 날짜, ISO `yyyy-MM-dd`). 없으면 null. */
-    suspend fun homeNoticeHiddenDate(): String?
+    /** 홈 새 소식 공지 중 "다시 보지 않기"로 닫은 공지의 구분값들. 없으면 빈 집합이다. */
+    suspend fun homeNoticeHiddenIds(): Set<String>
 
-    /** 홈 새 소식 공지를 [date](기기 날짜, ISO `yyyy-MM-dd`) 하루 동안 띄우지 않게 기록한다. */
-    suspend fun setHomeNoticeHiddenDate(date: String)
+    /** [ids] 공지를 다시 띄우지 않게 기록한다. 이미 숨긴 공지에 더한다. */
+    suspend fun addHomeNoticeHiddenIds(ids: Set<String>)
 }

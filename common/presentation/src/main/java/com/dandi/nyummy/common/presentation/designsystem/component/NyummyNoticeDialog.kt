@@ -36,7 +36,7 @@ import kotlin.math.min
  * 새 소식 공지 다이얼로그(피그마 `v2 · 20 Home & My Room`의 Notice · 01~03).
  * 카드 하나에 10:9 사진(위 왼쪽 배지), 제목, 설명, 버튼(있는 장만)을 두고, 장이 여럿이면 카드는 그대로 둔 채 사진과 글만
  * 가로로 넘긴다. 몇 번째 장인지 보이는 점은 카드 맨 아래에 고정해 넘겨도 움직이지 않는다. 카드 높이는 가장 긴 장에 맞춰
- * 넘겨도 바뀌지 않는다. 카드 위 닫기(X)는 없고, 카드 아래에 "오늘 하루 보지 않기" 체크와 "닫기"를 둔다. 바깥을 누르거나 뒤로 가기를 하면 [onClose]다.
+ * 넘겨도 바뀌지 않는다. 카드 위 닫기(X)는 없고, 카드 아래에 "다시 보지 않기" 체크와 "닫기"를 둔다. 바깥을 누르거나 뒤로 가기를 하면 [onClose]다.
  *
  * 폭은 최대 334다. 세로가 모자라면 사진을 자르지 않고 폭을 줄이고(사진이 10:9라 함께 작아진다), 최소 폭(240)에서도
  * 모자라면 사진 아래 글만 스크롤한다.
@@ -44,8 +44,8 @@ import kotlin.math.min
 @Composable
 fun NyummyNoticeDialog(
     pages: ImmutableList<NyummyNoticePage>,
-    todayChecked: Boolean,
-    onTodayCheckedChange: (Boolean) -> Unit,
+    dontShowAgainChecked: Boolean,
+    onDontShowAgainChange: (Boolean) -> Unit,
     onClose: () -> Unit,
     onCtaClick: (pageIndex: Int) -> Unit,
 ) {
@@ -53,8 +53,8 @@ fun NyummyNoticeDialog(
     NyummyDialogWindow(onDismissRequest = onClose, screenMargin = NyummyComponentDimens.NoticeDialogScreenMargin) {
         NyummyNoticeContent(
             pages = pages,
-            todayChecked = todayChecked,
-            onTodayCheckedChange = onTodayCheckedChange,
+            dontShowAgainChecked = dontShowAgainChecked,
+            onDontShowAgainChange = onDontShowAgainChange,
             onClose = onClose,
             onCtaClick = onCtaClick,
         )
@@ -65,8 +65,8 @@ fun NyummyNoticeDialog(
 @Composable
 internal fun NyummyNoticeContent(
     pages: ImmutableList<NyummyNoticePage>,
-    todayChecked: Boolean,
-    onTodayCheckedChange: (Boolean) -> Unit,
+    dontShowAgainChecked: Boolean,
+    onDontShowAgainChange: (Boolean) -> Unit,
     onClose: () -> Unit,
     onCtaClick: (pageIndex: Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -118,8 +118,8 @@ internal fun NyummyNoticeContent(
                 pagerState = pagerState,
                 imageHeight = imageHeight(width).toDp(),
                 bodyHeight = fittedBody.toDp(),
-                todayChecked = todayChecked,
-                onTodayCheckedChange = onTodayCheckedChange,
+                dontShowAgainChecked = dontShowAgainChecked,
+                onDontShowAgainChange = onDontShowAgainChange,
                 onClose = onClose,
                 onCtaClick = onCtaClick,
             )
@@ -134,8 +134,8 @@ private fun NoticeCardWithDismissRow(
     pagerState: PagerState,
     imageHeight: Dp,
     bodyHeight: Dp,
-    todayChecked: Boolean,
-    onTodayCheckedChange: (Boolean) -> Unit,
+    dontShowAgainChecked: Boolean,
+    onDontShowAgainChange: (Boolean) -> Unit,
     onClose: () -> Unit,
     onCtaClick: (pageIndex: Int) -> Unit,
 ) {
@@ -165,7 +165,7 @@ private fun NoticeCardWithDismissRow(
             if (pages.size > 1) NoticeDots(count = pages.size, current = current)
         }
         Spacer(Modifier.height(NyummyComponentDimens.NoticeDismissRowGap))
-        NoticeDismissRow(todayChecked = todayChecked, onTodayCheckedChange = onTodayCheckedChange, onClose = onClose)
+        NoticeDismissRow(dontShowAgainChecked = dontShowAgainChecked, onDontShowAgainChange = onDontShowAgainChange, onClose = onClose)
     }
 }
 
@@ -202,8 +202,8 @@ private fun NyummyNoticeDialogPreview() {
                         ctaText = "자세히 보기",
                     ),
                 ),
-                todayChecked = false,
-                onTodayCheckedChange = {},
+                dontShowAgainChecked = false,
+                onDontShowAgainChange = {},
                 onClose = {},
                 onCtaClick = {},
             )

@@ -212,7 +212,7 @@ internal object NyummyComponentDimens {
     /** 새 소식 카드의 글 칸(버튼)과 맨 아래 고정 점 사이. */
     val NoticeFooterGap = 14.dp
 
-    /** 새 소식 카드와 아래 "오늘 하루 보지 않기" 줄 사이, 그 줄의 높이와 체크박스. */
+    /** 새 소식 카드와 아래 "다시 보지 않기" 줄 사이, 그 줄의 높이와 체크박스. */
     val NoticeDismissRowGap = 14.dp
     val NoticeDismissRowHeight = 44.dp
     val NoticeCheckboxSize = 20.dp

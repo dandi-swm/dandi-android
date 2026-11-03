@@ -182,7 +182,7 @@ private fun DialogScene(scene: String) {
 
 @Composable
 private fun NoticeScene(single: Boolean, images: List<String>) {
-    var todayChecked by remember { mutableStateOf(false) }
+    var dontShowAgainChecked by remember { mutableStateOf(false) }
     val pages = listOf(
         NyummyNoticePage(
             badge = "업데이트",
@@ -208,8 +208,8 @@ private fun NoticeScene(single: Boolean, images: List<String>) {
     Box(Modifier.fillMaxSize().background(NyummyTheme.colors.bg.surfaceSunken)) {
         NyummyNoticeDialog(
             pages = pages,
-            todayChecked = todayChecked,
-            onTodayCheckedChange = { todayChecked = it },
+            dontShowAgainChecked = dontShowAgainChecked,
+            onDontShowAgainChange = { dontShowAgainChecked = it },
             onClose = {},
             onCtaClick = {},
         )

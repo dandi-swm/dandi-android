@@ -11,8 +11,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.serialization.json.Json
-import java.time.LocalDate
-import java.time.format.DateTimeParseException
 
 /**
  * 미리 받은 요약은 조회 한 번만 넘겨준다. 그 뒤 조회는 매번 새로 받아, 식사를 기록하고 돌아오면 바뀐 숫자를 읽는다.
@@ -57,17 +55,10 @@ class HomeRepositoryImpl(
         return runCatching { json.decodeFromString<HomeNoticeListDTO>(raw).toVO() }.getOrDefault(emptyList())
     }
 
-    override suspend fun getNoticeHiddenDate(): LocalDate? =
-        appPreferenceProvider.homeNoticeHiddenDate()?.let {
-            try {
-                LocalDate.parse(it)
-            } catch (_: DateTimeParseException) {
-                null
-            }
-        }
+    override suspend fun getHiddenNoticeKeys(): Set<String> = appPreferenceProvider.homeNoticeHiddenIds()
 
-    override suspend fun setNoticeHiddenDate(date: LocalDate) {
-        appPreferenceProvider.setHomeNoticeHiddenDate(date.toString())
+    override suspend fun hideNotices(keys: Set<String>) {
+        appPreferenceProvider.addHomeNoticeHiddenIds(keys)
     }
 
     override fun isNoticeHandled(): Boolean = noticeHandled
