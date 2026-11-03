@@ -227,6 +227,55 @@ class RoomTryOnViewModelTest {
     }
 
     @Test
+    fun `놓았다 뺀 아이템을 장바구니에서 지우면 되돌리기로 되살아나지 않는다`() = runTest(testDispatcher) {
+        val viewModel = openedViewModel()
+        val lamp = viewModel.cell("플로어 조명")
+        val cushion = viewModel.cell("발바닥 방석")
+        viewModel.onIntent(RoomTryOnIntent.ClickInteriorCell(cushion.id, x = 0.5f, y = 0.75f))
+        viewModel.onIntent(RoomTryOnIntent.ClickInteriorCell(lamp.id, x = 0.3f, y = 0.6f))
+        viewModel.onIntent(RoomTryOnIntent.PutSelectedAway)
+        assertTrue(viewModel.uiState.value.room.items.none { it.roomItemId == lamp.id })
+
+        // 방에는 조명이 없지만 되돌리기 기록에는 있다. 장바구니에서 조명을 뺀다.
+        viewModel.onIntent(RoomTryOnIntent.ItemsChanged(cartItems.filterNot { it.name == "플로어 조명" }))
+        repeat(3) { viewModel.onIntent(RoomTryOnIntent.Undo) }
+
+        val state = viewModel.uiState.value
+        assertTrue("빠진 칸의 조명이 되살아나면 안 된다", state.room.items.none { it.roomItemId == lamp.id })
+        assertFalse(state.canUndo)
+        // 방은 그대로다.
+        assertEquals(listOf(cushion.id), state.room.items.map { it.roomItemId })
+    }
+
+    @Test
+    fun `원래 배경으로 돌린 뒤 그 배경을 장바구니에서 지우면 되돌리기로 되살아나지 않는다`() = runTest(testDispatcher) {
+        val viewModel = openedViewModel()
+        val mint = viewModel.cell("민트 체크 방")
+        viewModel.onIntent(RoomTryOnIntent.ClickBackgroundCell(mint.id))
+        viewModel.onIntent(RoomTryOnIntent.ClickBackgroundCell(mint.id))
+        assertEquals(100L, viewModel.uiState.value.room.background?.roomItemId)
+
+        viewModel.onIntent(RoomTryOnIntent.ItemsChanged(cartItems.filterNot { it.name == "민트 체크 방" }))
+        viewModel.onIntent(RoomTryOnIntent.Undo)
+
+        val state = viewModel.uiState.value
+        assertEquals("빠진 칸의 민트 체크 방이 되살아나면 안 된다", 100L, state.room.background?.roomItemId)
+        assertFalse(state.canUndo)
+    }
+
+    @Test
+    fun `방과 되돌리기 기록에 없던 칸이 빠지면 되돌리기는 그대로다`() = runTest(testDispatcher) {
+        val viewModel = openedViewModel()
+        val cushion = viewModel.cell("발바닥 방석")
+        viewModel.onIntent(RoomTryOnIntent.ClickInteriorCell(cushion.id, x = 0.5f, y = 0.75f))
+
+        // 한 번도 놓지 않은 단풍 러그를 장바구니에서 뺀다.
+        viewModel.onIntent(RoomTryOnIntent.ItemsChanged(cartItems.filterNot { it.name == "단풍 러그" }))
+
+        assertTrue(viewModel.uiState.value.canUndo)
+    }
+
+    @Test
     fun `수량이 줄면 마지막 칸만 없어진다`() = runTest(testDispatcher) {
         val viewModel = openedViewModel()
         val second = viewModel.uiState.value.cells.filter { it.name == "발바닥 방석" }[1]

@@ -79,7 +79,7 @@ class RoomTryOnViewModel @Inject constructor(
             is RoomTryOnReducerEvent.CellsChanged -> state.copy(
                 cells = event.cells.toImmutableList(),
                 room = event.room,
-                undoStack = if (event.isRoomTrimmed) persistentListOf() else state.undoStack,
+                undoStack = if (event.clearsUndo) persistentListOf() else state.undoStack,
                 selectedItemId = state.selectedItemId?.takeIf { id -> event.room.items.any { it.roomItemId == id } },
             ).withPlacedMarks()
             is RoomTryOnReducerEvent.RoomChanged -> state.copy(
@@ -135,7 +135,8 @@ class RoomTryOnViewModel @Inject constructor(
 
     /**
      * 칸을 새로 만든다. 배경이 먼저, 그다음 받은 순서다. 없어진 칸의 아이템은 방에서 빼고, 깔려 있던 놓아 본 배경이
-     * 없어졌으면 원래 배경으로 돌린다.
+     * 없어졌으면 원래 배경으로 돌린다. 지금 방이나 되돌리기 기록에 없어진 칸이 있으면 되돌리기를 비운다
+     * (놓았다 뺀 아이템이나 원래대로 돌린 배경을 장바구니에서 지운 뒤 되돌리기로 되살리지 않게).
      */
     private fun changeItems(items: List<RoomTryOnItemVO>) {
         val cells = items
@@ -162,7 +163,9 @@ class RoomTryOnViewModel @Inject constructor(
         }
         val trimmed = keptItems.size != state.room.items.size || keptBackground != background
         val room = if (trimmed) RoomDraft(background = keptBackground, items = keptItems.toImmutableList()) else state.room
-        dispatch(RoomTryOnReducerEvent.CellsChanged(cells = cells, room = room, isRoomTrimmed = trimmed))
+        val removedIds = state.cells.mapTo(HashSet()) { it.id } - liveIds
+        val undoHasRemoved = removedIds.isNotEmpty() && state.undoStack.any { it.refersToAny(removedIds) }
+        dispatch(RoomTryOnReducerEvent.CellsChanged(cells = cells, room = room, clearsUndo = trimmed || undoHasRemoved))
     }
 
     private fun clickInteriorCell(intent: RoomTryOnIntent.ClickInteriorCell) {
@@ -221,6 +224,10 @@ class RoomTryOnViewModel @Inject constructor(
         const val MAX_UNDO = 50
     }
 }
+
+/** 이 방이 [ids] 중 하나를 배경이나 아이템으로 쓴다. */
+private fun RoomDraft.refersToAny(ids: Set<Long>): Boolean =
+    background?.roomItemId in ids || items.any { it.roomItemId in ids }
 
 /** 놓아 본 배경이다(칸 id는 음수, 서버 아이템 id는 양수). */
 private fun RoomBackgroundUiModel.isTryOn(): Boolean = roomItemId < 0

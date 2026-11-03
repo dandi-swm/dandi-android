@@ -13,13 +13,13 @@ sealed interface RoomTryOnReducerEvent : ReducerEvent {
     data object LoadFailed : RoomTryOnReducerEvent
 
     /**
-     * 담은 아이템 칸이 바뀌었다. [room]은 없어진 칸의 아이템을 뺀 방이고, [isRoomTrimmed]면 되돌리기를 비우고
-     * 고른 아이템이 빠졌으면 고르기를 푼다(되돌리기로 없는 칸이 되살아나지 않게).
+     * 담은 아이템 칸이 바뀌었다. [room]은 없어진 칸의 아이템을 뺀 방이다. 고른 아이템이 빠졌으면 고르기를 푼다.
+     * [clearsUndo]면 되돌리기를 비운다(지금 방이나 되돌리기 기록에 없어진 칸이 있어 되돌리기로 되살아나지 않게).
      */
     data class CellsChanged(
         val cells: List<RoomTryOnCellUiModel>,
         val room: RoomDraft,
-        val isRoomTrimmed: Boolean,
+        val clearsUndo: Boolean,
     ) : RoomTryOnReducerEvent
 
     /** 방이 바뀌었다. 바뀌기 전 방은 되돌리기 목록에 쌓인다. */
