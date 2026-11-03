@@ -38,6 +38,12 @@ enum class ShopErrorType(
     /** 화면에서 본 가격과 서버 결제가가 다르다(409). */
     PRICE_CHANGED("api.shop.priceChanged"),
 
+    /**
+     * 이번 회차 이벤트 코인을 이미 받았다(코인 충전 이벤트). 지급 API가 아직 없어 code는 미확정이다.
+     * 백엔드가 API를 만들면 실제 code로 맞춘다.
+     */
+    COIN_CHARGE_ALREADY_CLAIMED("api.coinCharge.alreadyClaimed"),
+
     /** 코인이 모자란다(409). */
     INSUFFICIENT_BALANCE("api.shop.insufficientBalance"),
 
