@@ -75,10 +75,99 @@ sealed class AnalyticsEvent(
     /** 저장하지 않고 식사 기록 화면을 떠났다. [stage]는 떠난 단계(camera, confirm, uploading, failed)다. */
     class MealRecordExit(stage: String) : AnalyticsEvent("meal_record_exit", mapOf(PARAM_STAGE to stage))
 
+    // ---- 코인 충전 이벤트(가짜 결제 A/B 테스트, docs/remote-config-coin-charge-event.md) ----
+    // 모든 단계에 이벤트 구분값(event_id)과 A/B 그룹(ab_group)을 붙인다. 그룹은 사용자 속성 coin_charge_group으로도 남는다.
+    // 퍼널: notice_view → notice_click → view → package_click → pay_click → granted. 핵심 지표는 view 대비 pay_click 비율이다.
+
+    /** 홈에서 코인 충전 이벤트 공지가 떴다. */
+    class CoinChargeNoticeView(eventId: String, group: String) : AnalyticsEvent(
+        "coin_charge_notice_view",
+        coinCharge(eventId, group),
+    )
+
+    /** 이벤트 공지의 "코인 충전하기"를 눌렀다. */
+    class CoinChargeNoticeClick(eventId: String, group: String) : AnalyticsEvent(
+        "coin_charge_notice_click",
+        coinCharge(eventId, group),
+    )
+
+    /** 이벤트 공지를 버튼을 누르지 않고 닫았다(닫기, 바깥 누름, 뒤로 가기, 다른 장의 버튼). [dontShowAgain]은 "다시 보지 않기"를 체크했는지. */
+    class CoinChargeNoticeClose(eventId: String, group: String, dontShowAgain: Boolean) : AnalyticsEvent(
+        "coin_charge_notice_close",
+        coinCharge(eventId, group) + mapOf("dont_show_again" to dontShowAgain.toString()),
+    )
+
+    /**
+     * 코인 충전 화면이 보였다(화면에 들어올 때 한 번). [source]는 notice(홈 공지 버튼) 또는 link(그 밖의 링크)이고,
+     * [claimed]는 이미 이벤트 코인을 받은 사람인지다.
+     */
+    class CoinChargeView(eventId: String, group: String, source: String, claimed: Boolean) : AnalyticsEvent(
+        "coin_charge_view",
+        coinCharge(eventId, group) + mapOf(PARAM_SOURCE to source, "claimed" to claimed.toString()),
+    )
+
+    /** 묶음 하나를 눌렀다(충전 확인 시트가 뜬다). [price]는 원, [coins]는 묶음의 코인 수다. */
+    class CoinChargePackageClick(eventId: String, group: String, packageId: String, price: Int, coins: Int) : AnalyticsEvent(
+        "coin_charge_package_click",
+        coinCharge(eventId, group) + mapOf(PARAM_PACKAGE_ID to packageId),
+        mapOf(PARAM_PRICE to price.toLong(), PARAM_COINS to coins.toLong()),
+    )
+
+    /** 충전 확인 시트를 결제하지 않고 닫았다(취소, 바깥 누름, 뒤로 가기). */
+    class CoinChargeSheetClose(eventId: String, group: String, packageId: String) : AnalyticsEvent(
+        "coin_charge_sheet_close",
+        coinCharge(eventId, group) + mapOf(PARAM_PACKAGE_ID to packageId),
+    )
+
+    /** 시트의 "n원 결제하기"를 눌렀다. 이 실험의 핵심 지표(돈을 내고 사려는 사람)다. 지급 성공 여부와 상관없이 누르면 남는다. */
+    class CoinChargePayClick(eventId: String, group: String, packageId: String, price: Int, coins: Int) : AnalyticsEvent(
+        "coin_charge_pay_click",
+        coinCharge(eventId, group) + mapOf(PARAM_PACKAGE_ID to packageId),
+        mapOf(PARAM_PRICE to price.toLong(), PARAM_COINS to coins.toLong()),
+    )
+
+    /** 이벤트 코인을 받았다(결제 대신 무료 지급). [coins]는 실제로 받은 코인 수다(그룹·묶음과 상관없이 같다). */
+    class CoinChargeGranted(eventId: String, group: String, packageId: String, coins: Int) : AnalyticsEvent(
+        "coin_charge_granted",
+        coinCharge(eventId, group) + mapOf(PARAM_PACKAGE_ID to packageId),
+        mapOf(PARAM_COINS to coins.toLong()),
+    )
+
+    /** 이벤트 코인을 받지 못했다. [reason]은 already_claimed, server_error, network_or_unknown이다. */
+    class CoinChargeGrantFailed(eventId: String, group: String, packageId: String, reason: String) : AnalyticsEvent(
+        "coin_charge_grant_failed",
+        coinCharge(eventId, group) + mapOf(PARAM_PACKAGE_ID to packageId, "reason" to reason),
+    )
+
+    /** 이미 받은 사람이 묶음을 다시 눌렀다(시트 없이 안내만 뜬다). 더 사고 싶은 사람을 센다. */
+    class CoinChargeRepeatClick(eventId: String, group: String, packageId: String, price: Int) : AnalyticsEvent(
+        "coin_charge_repeat_click",
+        coinCharge(eventId, group) + mapOf(PARAM_PACKAGE_ID to packageId),
+        mapOf(PARAM_PRICE to price.toLong()),
+    )
+
+    /** 받은 뒤 화면에서 고른 행동. [action]은 shop(상점 둘러보기), home(홈으로), back(뒤로 가기)이다. */
+    class CoinChargeResultAction(eventId: String, group: String, action: String) : AnalyticsEvent(
+        "coin_charge_result_action",
+        coinCharge(eventId, group) + mapOf("action" to action),
+    )
+
+    /** 코인 충전 화면을 떠났다. [stage]는 떠날 때 보던 곳(list 묶음 목록, sheet 확인 시트, result 받은 뒤 화면)이다. */
+    class CoinChargeExit(eventId: String, group: String, stage: String) : AnalyticsEvent(
+        "coin_charge_exit",
+        coinCharge(eventId, group) + mapOf(PARAM_STAGE to stage),
+    )
+
     private companion object {
         const val PARAM_METHOD = "method"
         const val PARAM_STEP = "step"
         const val PARAM_SOURCE = "source"
         const val PARAM_STAGE = "stage"
+        const val PARAM_PACKAGE_ID = "package_id"
+        const val PARAM_PRICE = "price"
+        const val PARAM_COINS = "coins"
+
+        /** 코인 충전 이벤트 단계마다 붙는 매개변수. */
+        fun coinCharge(eventId: String, group: String): Map<String, String> = mapOf("event_id" to eventId, "ab_group" to group)
     }
 }

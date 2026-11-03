@@ -13,4 +13,17 @@ interface AnalyticsHelper {
 
     /** 사용자 행동 하나를 남긴다. 이벤트 이름과 매개변수는 [AnalyticsEvent]에서만 정한다. */
     fun logEvent(event: AnalyticsEvent)
+
+    /**
+     * 사용자 속성 하나를 남긴다. 이후 이 기기의 이벤트에 함께 붙어 GA4에서 이 값으로 사용자를 나눠 볼 수 있다(A/B 그룹 등).
+     * 이름은 [UserProperty]에서만 정한다. 값은 36자 안이고 개인 정보는 넣지 않는다. null이면 지운다.
+     * 기본 구현은 아무것도 하지 않는다(사용자 속성을 보지 않는 테스트 대역용).
+     */
+    fun setUserProperty(name: String, value: String?) = Unit
+
+    /** 사용자 속성 이름. GA4 규칙상 영문 소문자와 밑줄로 24자 안이다. */
+    object UserProperty {
+        /** 코인 충전 이벤트에서 이 기기가 받은 A/B 그룹(원격 구성 값의 `group`, 예: A, B). */
+        const val COIN_CHARGE_GROUP = "coin_charge_group"
+    }
 }
