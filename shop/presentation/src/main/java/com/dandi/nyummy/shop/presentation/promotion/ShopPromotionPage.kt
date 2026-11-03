@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -24,8 +25,11 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpinner
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateAction
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateSurface
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonTone
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyLoadMoreEffect
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.jank.JankScrollWatcher
 import com.dandi.nyummy.shop.presentation.R
 import com.dandi.nyummy.shop.presentation.component.ShopBanner
 import com.dandi.nyummy.shop.presentation.component.ShopItemDetailSheet
@@ -47,13 +51,16 @@ fun ShopPromotionPage(
         viewModel.onIntent(ShopPromotionIntent.ScreenResumed)
         onPauseOrDispose { }
     }
-    ShopPromotionScreen(uiState = uiState, onIntent = viewModel::onIntent)
+    val listState = rememberLazyListState()
+    JankScrollWatcher(listState)
+    ShopPromotionScreen(uiState = uiState, onIntent = viewModel::onIntent, listState = listState)
 }
 
 @Composable
 private fun ShopPromotionScreen(
     uiState: ShopPromotionUIState,
     onIntent: (ShopPromotionIntent) -> Unit,
+    listState: LazyListState = rememberLazyListState(),
 ) {
     Column(
         modifier = Modifier
@@ -90,7 +97,7 @@ private fun ShopPromotionScreen(
             uiState.isLoading -> Box(modifier = bodyModifier, contentAlignment = Alignment.Center) {
                 NyummySpinner(contentDescription = stringResource(R.string.shop_loading))
             }
-            else -> PromotionList(uiState = uiState, onIntent = onIntent, modifier = bodyModifier)
+            else -> PromotionList(uiState = uiState, onIntent = onIntent, listState = listState, modifier = bodyModifier)
         }
     }
     uiState.detailItem?.let { item ->
@@ -107,9 +114,9 @@ private fun ShopPromotionScreen(
 private fun PromotionList(
     uiState: ShopPromotionUIState,
     onIntent: (ShopPromotionIntent) -> Unit,
+    listState: LazyListState,
     modifier: Modifier = Modifier,
 ) {
-    val listState = rememberLazyListState()
     NyummyLoadMoreEffect(listState = listState, itemCount = uiState.items.size) { onIntent(ShopPromotionIntent.LoadMore) }
     LazyColumn(
         state = listState,
@@ -141,10 +148,20 @@ private fun PromotionList(
                     .padding(horizontal = NyummyTheme.spacing.gutter),
             )
         }
-        if (uiState.isLoadingMore) {
-            item(key = "loading-more") {
+        when {
+            uiState.isLoadingMore -> item(key = "loading-more") {
                 Box(modifier = Modifier.fillMaxWidth().padding(NyummyTheme.spacing.s24), contentAlignment = Alignment.Center) {
                     NyummySpinner(contentDescription = stringResource(R.string.shop_loading))
+                }
+            }
+            // 다음 묶음이 남았는데 자동 이어 받기가 멈추면(받은 묶음에 보일 상품이 없음·이어 받기 실패) 직접 더 받는다.
+            uiState.hasNext -> item(key = "load-more") {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    NyummyTextButton(
+                        text = stringResource(R.string.shop_load_more),
+                        onClick = { onIntent(ShopPromotionIntent.LoadMore) },
+                        tone = NyummyTextButtonTone.Neutral,
+                    )
                 }
             }
         }
