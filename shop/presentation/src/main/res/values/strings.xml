@@ -77,4 +77,27 @@
     <string name="shop_coin_how_to_title">How to get coins</string>
     <string name="shop_coin_how_to_meal">Record your meals</string>
     <string name="shop_coin_how_to_meal_body">Get a reward box for every meal</string>
+    <!-- 코인 충전 이벤트(가짜 결제 A/B 테스트, 피그마 v2 · 40 Shop · 60) -->
+    <string name="shop_charge_title">Get coins</string>
+    <string name="shop_charge_heading">Pick a coin pack</string>
+    <string name="shop_charge_coin_unit">coins</string>
+    <string name="shop_charge_price">₩%1$s</string>
+    <string name="shop_charge_pack_description">%1$s coins</string>
+    <string name="shop_charge_note">Use coins to buy furniture and room backgrounds in the Nyummy shop.</string>
+    <string name="shop_charge_sheet_title">Get %1$s coins?</string>
+    <string name="shop_charge_sheet_price">Total</string>
+    <string name="shop_charge_sheet_balance_after">Coins after</string>
+    <string name="shop_charge_sheet_caption">Coins are added to your balance right away</string>
+    <string name="shop_charge_sheet_pay">Pay ₩%1$s</string>
+    <string name="shop_charge_done_title">Free, just this once!</string>
+    <string name="shop_charge_done_body">Payments aren\'t ready yet, so you weren\'t charged.\nWe added %1$s coins as a gift instead.</string>
+    <string name="shop_charge_done_balance">My coins</string>
+    <string name="shop_charge_done_go_shop">Browse the shop</string>
+    <string name="shop_charge_done_go_home">Go home</string>
+    <string name="shop_charge_claimed_title">Payments aren\'t ready yet</string>
+    <string name="shop_charge_claimed_body">Event coins are given only once.\nPlease come back when payments open.</string>
+    <string name="shop_charge_claimed_confirm">OK</string>
+    <string name="shop_charge_ended_voice">The coin event has ended</string>
+    <string name="shop_charge_ended_body">Record meals to get coins</string>
+    <string name="shop_charge_ended_go_shop">Go to the shop</string>
 </resources>

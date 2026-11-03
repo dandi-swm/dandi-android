@@ -77,4 +77,27 @@
     <string name="shop_coin_how_to_title">코인 모으는 법</string>
     <string name="shop_coin_how_to_meal">식사를 기록해요</string>
     <string name="shop_coin_how_to_meal_body">끼니마다 보상 상자를 받아요</string>
+    <!-- 코인 충전 이벤트(가짜 결제 A/B 테스트, 피그마 v2 · 40 Shop · 60) -->
+    <string name="shop_charge_title">코인 충전</string>
+    <string name="shop_charge_heading">충전할 코인을 골라 주세요</string>
+    <string name="shop_charge_coin_unit">코인</string>
+    <string name="shop_charge_price">%1$s원</string>
+    <string name="shop_charge_pack_description">코인 %1$s개</string>
+    <string name="shop_charge_note">충전한 코인은 냐미 상점에서 가구와 방 배경을 살 때 써요.</string>
+    <string name="shop_charge_sheet_title">%1$s 코인을 충전할까요?</string>
+    <string name="shop_charge_sheet_price">결제할 금액</string>
+    <string name="shop_charge_sheet_balance_after">충전 후 내 코인</string>
+    <string name="shop_charge_sheet_caption">충전한 코인은 바로 내 코인에 더해져요</string>
+    <string name="shop_charge_sheet_pay">%1$s원 결제하기</string>
+    <string name="shop_charge_done_title">이번 한 번만 무료예요!</string>
+    <string name="shop_charge_done_body">결제는 아직 준비 중이라 돈은 나가지 않았어요.\n대신 %1$s 코인을 선물로 바로 넣어 드렸어요.</string>
+    <string name="shop_charge_done_balance">내 코인</string>
+    <string name="shop_charge_done_go_shop">상점 둘러보기</string>
+    <string name="shop_charge_done_go_home">홈으로</string>
+    <string name="shop_charge_claimed_title">결제는 아직 준비 중이에요</string>
+    <string name="shop_charge_claimed_body">이벤트 코인은 한 번만 드려요.\n결제가 열리면 그때 충전해 주세요.</string>
+    <string name="shop_charge_claimed_confirm">확인</string>
+    <string name="shop_charge_ended_voice">충전 이벤트가 끝났어요</string>
+    <string name="shop_charge_ended_body">코인은 식사를 기록하면 받을 수 있어요</string>
+    <string name="shop_charge_ended_go_shop">상점 가기</string>
 </resources>
