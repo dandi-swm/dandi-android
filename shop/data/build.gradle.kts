@@ -48,6 +48,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.retrofit)
     implementation(libs.kotlinx.serialization.json)
+    // 코인 충전 이벤트 받음 기록(app_prefs DataStore, CoinChargeLocalDataSource)
+    implementation(libs.androidx.datastore.preferences)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
