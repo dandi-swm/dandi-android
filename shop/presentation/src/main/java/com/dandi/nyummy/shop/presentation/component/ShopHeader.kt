@@ -1,38 +1,30 @@
 package com.dandi.nyummy.shop.presentation.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCoinPill
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTabs
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.shop.entity.ShopTab
 import com.dandi.nyummy.shop.presentation.R
-import kotlinx.collections.immutable.toImmutableList
 import java.text.NumberFormat
 import java.util.Locale
+import kotlinx.collections.immutable.toImmutableList
 import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
@@ -91,42 +83,14 @@ fun ShopCartButton(count: Int, onClick: () -> Unit, modifier: Modifier = Modifie
     } else {
         stringResource(R.string.shop_cart_description)
     }
-    Box(
-        modifier = modifier
-            .size(CartButtonSize)
-            .semantics { contentDescription = description }
-            .nyummyClickable(onClick = onClick),
-    ) {
-        Icon(
-            painter = painterResource(CommonR.drawable.nyummy_ic_cart),
-            contentDescription = null,
-            tint = NyummyTheme.colors.content.primary,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(NyummyTheme.size.iconL),
-        )
-        if (count > 0) {
-            val shape = RoundedCornerShape(NyummyTheme.radius.full)
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset(x = BadgeOffsetX, y = BadgeOffsetY)
-                    .height(BadgeSize)
-                    .defaultMinSize(minWidth = BadgeSize)
-                    .background(NyummyTheme.colors.bg.actionDanger, shape)
-                    .border(NyummyTheme.borderWidth.bold, NyummyTheme.colors.bg.surface, shape)
-                    .padding(horizontal = NyummyTheme.spacing.s4),
-                contentAlignment = Alignment.Center,
-            ) {
-                NyummyText(
-                    text = count.toString(),
-                    style = NyummyTheme.typography.labelXs,
-                    color = NyummyTheme.colors.content.onAction,
-                    maxLines = 1,
-                )
-            }
-        }
-    }
+    NyummyIconButton(
+        icon = CommonR.drawable.nyummy_ic_cart,
+        contentDescription = description,
+        onClick = onClick,
+        modifier = modifier,
+        size = NyummyIconButtonSize.M,
+        badgeCount = count,
+    )
 }
 
 private val ShopTab.labelRes: Int
@@ -136,10 +100,6 @@ private val ShopTab.labelRes: Int
         ShopTab.BACKGROUND -> R.string.shop_tab_background
     }
 
-private val CartButtonSize = 40.dp
-private val BadgeSize = 18.dp
-private val BadgeOffsetX = 22.dp
-private val BadgeOffsetY = 3.dp
 
 @Preview(showBackground = true, widthDp = 390)
 @Composable
