@@ -339,14 +339,14 @@ private suspend fun PointerInputScope.detectRoomGestures(
             val target = placements.first { it.roomItemId == current.roomItemId }
             val scale = RoomCardLayout.clampItemScale(current.scale * zoom)
             val height = frame.itemRect(target.copy(scale = scale), aspectOf(target.imageUrl)).height / frame.roomRect.height
-            // 바닥 점이 놓을 수 있는 영역(어느 기기에서나 보이는 안전 지대, 시트에 가리지 않는 곳) 안에 있고,
+            // 바닥 점이 놓을 수 있는 영역(시트에 가리지 않는 곳) 안에 있고, 위쪽이 가장 많이 잘리는 화면 비율에서도
             // 아이템이 절반 넘게 위로 잘리지 않게 한다.
             val position = RoomGeometry.clampPosition(
                 x = current.x + pan.x / frame.roomRect.width,
                 y = current.y + pan.y / frame.roomRect.height,
                 minX = frame.placeLeft,
                 maxX = frame.placeRight,
-                minY = max(frame.placeTop, frame.visibleTop + height / 2f),
+                minY = RoomGeometry.minBaseY(frame.placeTop, frame.visibleTop, height),
                 maxY = frame.placeBottom,
             )
             moving = current.copy(x = position.x, y = position.y, scale = scale, hasMoved = true)
