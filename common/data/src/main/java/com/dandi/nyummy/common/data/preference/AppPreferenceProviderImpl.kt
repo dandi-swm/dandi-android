@@ -34,7 +34,8 @@ class AppPreferenceProviderImpl(
 
     override suspend fun addHomeNoticeHiddenIds(ids: Set<String>) {
         if (ids.isEmpty()) return
-        write(KEY_HOME_NOTICE_HIDDEN_IDS, homeNoticeHiddenIds() + ids)
+        // 읽기와 쓰기를 한 트랜잭션에서 해야 동시에 숨긴 다른 공지가 덮여 사라지지 않는다.
+        editAtomically { prefs -> prefs[KEY_HOME_NOTICE_HIDDEN_IDS] = prefs[KEY_HOME_NOTICE_HIDDEN_IDS].orEmpty() + ids }
     }
 
     companion object {
