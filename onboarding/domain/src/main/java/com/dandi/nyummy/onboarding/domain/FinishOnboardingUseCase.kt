@@ -24,7 +24,8 @@ import kotlin.coroutines.cancellation.CancellationException
  * 이미 고양이가 있는 회원(409)은 만들어진 것으로 보고 마친다. 고양이를 만든 뒤 완료를 기록하기 전에 앱이 꺼져
  * 온보딩을 다시 하면 이렇게 된다.
  * 만들지 못하면 안내 후 [Result.failure]를 돌려주고, 화면은 식사 시각 장면에 머물러 다시 누를 수 있다.
- * 만들면 고른 식사 시각을 기기 홈 화면 위젯에도 넘긴다.
+ * 새로 만들었을 때만 고른 식사 시각을 기기 홈 화면 위젯에도 넘긴다. 이미 있던 고양이(409)면 서버에는 예전 시각이 남아 있어
+ * 이번 입력을 넘기지 않는다.
  */
 class FinishOnboardingUseCase @Inject constructor(
     private val repository: OnboardingRepository,
@@ -42,8 +43,8 @@ class FinishOnboardingUseCase @Inject constructor(
             messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = DUPLICATE_MEAL_TIMES_MESSAGE)
             return Result.failure(IllegalArgumentException(DUPLICATE_MEAL_TIMES_MESSAGE))
         }
-        createCat(catName.trim(), mealTimes).onFailure { return Result.failure(it) }
-        widgetHelper.onMealTimesSaved(mealTimes)
+        val created = createCat(catName.trim(), mealTimes).getOrElse { return Result.failure(it) }
+        if (created) widgetHelper.onMealTimesSaved(mealTimes)
 
         // 기기 저장이 실패해도 홈으로 간다. 고양이는 이미 만들었다. 식사 시각은 고양이와 함께 서버에 저장했다.
         runIgnoringFailure { repository.markOnboardingComplete() }
@@ -52,9 +53,10 @@ class FinishOnboardingUseCase @Inject constructor(
         return Result.success(Unit)
     }
 
-    private suspend fun createCat(name: String, mealTimes: MealTimesVO): Result<Unit> = try {
+    /** 고양이를 만든다. 성공 값은 이번에 새로 만들었는지다(이미 있으면 false, 실패가 아니다). */
+    private suspend fun createCat(name: String, mealTimes: MealTimesVO): Result<Boolean> = try {
         repository.createCat(name, mealTimes)
-        Result.success(Unit)
+        Result.success(true)
     } catch (e: CancellationException) {
         throw e
     } catch (e: HttpResponseException) {
@@ -69,7 +71,7 @@ class FinishOnboardingUseCase @Inject constructor(
             },
             onUnknownError = { messageHelper.showOneButtonDialog(descText = TEMPORARY_ERROR_MESSAGE) },
         )
-        if (alreadyExists) Result.success(Unit) else Result.failure(e)
+        if (alreadyExists) Result.success(false) else Result.failure(e)
     } catch (e: Exception) {
         messageHelper.showOneButtonDialog(descText = TEMPORARY_ERROR_MESSAGE)
         Result.failure(e)
