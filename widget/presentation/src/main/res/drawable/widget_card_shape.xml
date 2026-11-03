@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 위젯 카드 모양. 색은 그릴 때 상태 색으로 칠한다. Android 12 미만은 피그마와 같은 24dp. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="24dp" />
+    <solid android:color="#FFFFFFFF" />
+</shape>

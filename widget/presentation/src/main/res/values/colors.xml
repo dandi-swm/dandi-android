@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  기기 홈 화면 위젯 전용 색. 위젯 배경은 앱 디자인 토큰의 예외다(2026-10-08 사용자 결정).
+  값은 피그마 `v2 · 60 Widget` > `Widget · 20 사용 시안 · 상태별`의 카드 배경색이다.
+-->
+<resources>
+    <color name="widget_bg_dawn">#2B6CB0</color>
+    <color name="widget_bg_sky">#3E8ED0</color>
+    <color name="widget_bg_orange">#E07B39</color>
+    <color name="widget_bg_pink">#D85F86</color>
+    <color name="widget_bg_mustard">#B8862B</color>
+    <color name="widget_bg_coral">#EF6F5E</color>
+    <color name="widget_bg_purple">#7A5BD0</color>
+    <color name="widget_bg_teal">#1F8A84</color>
+    <color name="widget_bg_navy">#2D3A7A</color>
+    <color name="widget_bg_magenta">#B03A6E</color>
+    <color name="widget_bg_slate">#3D5A80</color>
+    <color name="widget_bg_brick">#C8553D</color>
+    <color name="widget_bg_taupe">#7A6A5C</color>
+    <color name="widget_bg_green">#2B6E4A</color>
+    <color name="widget_bg_forest">#1F3E2B</color>
+    <color name="widget_bg_midnight">#2A2550</color>
+</resources>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  냐미 위젯(4x2). 치수는 피그마 `Widget / Card`(356×192)를 따른다.
+  - 배경: 둥근 모양을 상태 색으로 칠한다(widget_card, setColorFilter).
+  - 문구: 왼쪽 위(22, 24). 런처가 레이아웃의 앱 글꼴을 불러오지 않아서, 앱이 까투리로 그린 비트맵을 넣는다(NyamiWidgetTextPainter).
+  - 냐미: 오른쪽 아래 188 정사각, 카드 밖으로 살짝 걸친다. 뒤에 원형 빛.
+  - 스트릭 줄: 왼쪽 아래(22, 아래 14), 아이콘 19 + 글자(비트맵).
+  여기 적힌 기본값(점심 기다림 B)은 위젯 고르기 화면 미리보기와 첫 그리기 전 화면에 쓰인다.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_card_outline"
+    android:clipToOutline="true">
+
+    <!-- 위젯은 런처가 AppCompat 없이 프레임워크 ImageView로 그려서 app:tint가 먹지 않는다. -->
+    <ImageView
+        android:id="@+id/widget_card"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="@null"
+        android:scaleType="fitXY"
+        android:src="@drawable/widget_card_shape"
+        android:tint="@color/widget_bg_sky"
+        tools:ignore="UseAppTint" />
+
+    <ImageView
+        android:id="@+id/widget_glow"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="-54dp"
+        android:layout_marginEnd="-60dp"
+        android:contentDescription="@null"
+        android:src="@drawable/widget_glow" />
+
+    <ImageView
+        android:id="@+id/widget_character"
+        android:layout_width="188dp"
+        android:layout_height="188dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="-2dp"
+        android:layout_marginBottom="-8dp"
+        android:contentDescription="@null"
+        android:scaleType="fitCenter"
+        android:src="@drawable/widget_nyami_wait_b" />
+
+    <ImageView
+        android:id="@+id/widget_copy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="22dp"
+        android:layout_marginTop="24dp"
+        android:contentDescription="@null"
+        android:src="@drawable/widget_preview_copy" />
+
+    <LinearLayout
+        android:id="@+id/widget_streak"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_marginStart="22dp"
+        android:layout_marginBottom="14dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/widget_streak_icon"
+            android:layout_width="19dp"
+            android:layout_height="19dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_streak_icon" />
+
+        <ImageView
+            android:id="@+id/widget_streak_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="7dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_preview_streak" />
+    </LinearLayout>
+
+</FrameLayout>
