@@ -1,5 +1,6 @@
 package com.dandi.nyummy.room.presentation.component
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -82,6 +83,7 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  * @param frame 무대 크기와 그 안의 방 그림 자리, 보이는 영역. 무대 크기와 같게 [modifier]로 크기를 정해 넘긴다.
  * @param cat 냐미가 지금 하는 동작. null이면 냐미를 그리지 않는다.
  * @param onCatMotionFinished 냐미 동작 하나가 끝났다(재생 번호를 넘긴다).
+ * @param putAwayLabel 도구 모음의 빼기 버튼 설명(마이룸은 "보관함에 넣기").
  */
 @Composable
 internal fun RoomStage(
@@ -96,6 +98,7 @@ internal fun RoomStage(
     onBringToFront: () -> Unit,
     onPutAway: () -> Unit,
     modifier: Modifier = Modifier,
+    @StringRes putAwayLabel: Int = R.string.my_room_put_away,
 ) {
     Box(
         modifier = modifier
@@ -178,6 +181,7 @@ internal fun RoomStage(
                     stageWidth = frame.stageWidth,
                     onBringToFront = onBringToFront,
                     onPutAway = onPutAway,
+                    putAwayLabel = putAwayLabel,
                 )
             }
         }
@@ -418,7 +422,7 @@ private fun SelectionFrame(rect: Rect) {
 }
 
 /**
- * 고른 아이템 위 도구 모음(맨 앞으로, 보관함에 넣기). 아이템 가운데 위에 띄우고, 위로 자리가 없으면 아래에 둔다.
+ * 고른 아이템 위 도구 모음(맨 앞으로, 빼기). 아이템 가운데 위에 띄우고, 위로 자리가 없으면 아래에 둔다.
  * 무대 좌우 밖으로는 나가지 않는다.
  */
 @Composable
@@ -427,6 +431,7 @@ private fun ItemToolbar(
     stageWidth: Float,
     onBringToFront: () -> Unit,
     onPutAway: () -> Unit,
+    @StringRes putAwayLabel: Int,
 ) {
     val shape = RoundedCornerShape(NyummyTheme.radius.full)
     val selectionInset = SelectionPadding
@@ -454,7 +459,7 @@ private fun ItemToolbar(
         )
         NyummyIconButton(
             icon = CommonR.drawable.nyummy_ic_archive,
-            contentDescription = stringResource(R.string.my_room_put_away),
+            contentDescription = stringResource(putAwayLabel),
             onClick = onPutAway,
         )
     }

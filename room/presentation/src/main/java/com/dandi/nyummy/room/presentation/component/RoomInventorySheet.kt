@@ -3,7 +3,6 @@ package com.dandi.nyummy.room.presentation.component
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -17,8 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyListState
@@ -40,29 +37,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.coachmark.coachMarkTarget
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpinner
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTabs
-import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonTone
-import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import com.dandi.nyummy.common.presentation.jank.JankScrollWatcher
@@ -209,9 +194,6 @@ internal fun RoomInventorySheet(
     val scope = rememberCoroutineScope()
     val shape = RoundedCornerShape(topStart = NyummyTheme.radius.l, topEnd = NyummyTheme.radius.l)
     val dragState = rememberDraggableState { state.dragBy(it) }
-    val toggleDescription = stringResource(
-        if (state.isExpanded) R.string.my_room_sheet_collapse else R.string.my_room_sheet_expand,
-    )
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -232,30 +214,9 @@ internal fun RoomInventorySheet(
                 ),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(HandleTouchHeight)
-                    .nyummyClickable(onClick = { scope.launch { state.animateTo(if (state.isExpanded) 0f else 1f) } })
-                    .semantics { contentDescription = toggleDescription },
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(width = HandleWidth, height = HandleHeight)
-                        .background(NyummyTheme.colors.border.default, RoundedCornerShape(HandleHeight / 2)),
-                )
-            }
+            RoomSheetHandle(state = state)
             // 탭 영역: 숨기는 만큼 아래부터 잘려 시트와 함께 내려간다. 크기는 그대로 잰다.
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clipToBounds()
-                    .layout { measurable, constraints ->
-                        val placeable = measurable.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
-                        layout(placeable.width, state.visibleTabsHeightPx(placeable.height)) { placeable.place(0, 0) }
-                    },
-            ) {
+            Box(modifier = Modifier.roomSheetReveal(state::visibleTabsHeightPx)) {
                 NyummyTabs(
                     tabs = tabs.map { tab -> tab.name.ifBlank { tab.category.fallbackLabel() } }.toImmutableList(),
                     selectedIndex = tabs.indexOfFirst { it.category == selectedCategory }.coerceAtLeast(0),
@@ -267,22 +228,13 @@ internal fun RoomInventorySheet(
                         .onSizeChanged { state.tabsHeightPx = it.height }
                         .fillMaxWidth()
                         .wrapContentWidth(Alignment.CenterHorizontally)
-                        .widthIn(max = ContentMaxWidth)
+                        .widthIn(max = RoomSheetContentMaxWidth)
                         .padding(horizontal = NyummyTheme.spacing.gutter),
                 )
             }
         }
         // 칸 영역: 펼친 만큼만 보인다. 접혀도 크기는 그대로 재고 위에서부터 잘라 보여 준다.
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clipToBounds()
-                .layout { measurable, constraints ->
-                    val placeable = measurable.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
-                    val visibleHeight = state.visibleBodyHeightPx(placeable.height)
-                    layout(placeable.width, visibleHeight) { placeable.place(0, 0) }
-                },
-        ) {
+        Box(modifier = Modifier.roomSheetReveal(state::visibleBodyHeightPx)) {
             val items = tabs.firstOrNull { it.category == selectedCategory }?.items ?: persistentListOf()
             // 칸 줄은 화면 끝까지 넘어가게 좌우 여백 없이 두고, 줄 안쪽 여백으로 첫 칸을 맞춘다.
             Box(
@@ -290,8 +242,8 @@ internal fun RoomInventorySheet(
                     .onSizeChanged { state.bodyHeightPx = it.height }
                     .fillMaxWidth()
                     .wrapContentWidth(Alignment.CenterHorizontally)
-                    .widthIn(max = ContentMaxWidth)
-                    .padding(top = NyummyTheme.spacing.s12, bottom = SheetBottomPadding)
+                    .widthIn(max = RoomSheetContentMaxWidth)
+                    .padding(top = NyummyTheme.spacing.s12, bottom = RoomSheetBottomPadding)
                     .height(ContentHeight),
             ) {
                 when {
@@ -299,13 +251,13 @@ internal fun RoomInventorySheet(
                         contentDescription = stringResource(R.string.my_room_loading),
                         modifier = Modifier.align(Alignment.Center),
                     )
-                    loadState == MyRoomLoadState.FAILED -> InventoryMessage(
+                    loadState == MyRoomLoadState.FAILED -> RoomSheetMessage(
                         message = stringResource(R.string.my_room_load_failed),
                         actionText = stringResource(R.string.my_room_retry),
                         onAction = onRetry,
                         modifier = Modifier.align(Alignment.Center),
                     )
-                    items.isEmpty() -> InventoryMessage(
+                    items.isEmpty() -> RoomSheetMessage(
                         message = stringResource(R.string.my_room_empty),
                         actionText = stringResource(R.string.my_room_go_shop),
                         onAction = onShopClick,
@@ -356,93 +308,19 @@ private fun InventoryRow(
         state = listState,
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = NyummyTheme.spacing.gutter),
-        horizontalArrangement = Arrangement.spacedBy(CellGap),
+        horizontalArrangement = Arrangement.spacedBy(RoomCellGap),
     ) {
         items(items, key = { it.roomItemId }) { item ->
             val onCellClick = { onClick(item.roomItemId) }
-            InventoryCell(
-                item = item,
+            RoomItemCell(
+                name = item.name,
+                imageUrl = item.imageUrl,
                 isBackground = isBackground,
+                isPlaced = item.isPlaced,
                 onClick = onCellClick,
                 modifier = if (item.roomItemId == tutorialItemId) Modifier.coachMarkTarget(RoomItemCoachMarkKey, onCellClick) else Modifier,
             )
         }
-    }
-}
-
-/**
- * 보관함 칸. 위에 그림, 아래에 이름. 모든 종류가 같은 크기라 탭을 바꿔도 줄 높이가 같다.
- * - 인테리어: 그림을 가운데에 맞춰 보여 주고, 방에 놓였으면 흐리게 하고 "배치됨"을 붙인다.
- * - 배경: 방 그림을 칸에 꽉 채워 바닥 기준으로 보여 주고, 깔렸으면 브랜드색 테두리와 "사용 중", 이름도 브랜드색으로 굵게.
- */
-@Composable
-private fun InventoryCell(
-    item: InventoryItemUiModel,
-    isBackground: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val stateText = stringResource(if (isBackground) R.string.my_room_background_in_use else R.string.my_room_item_placed)
-    val shape = RoundedCornerShape(NyummyTheme.radius.m)
-    val isInUseBackground = isBackground && item.isPlaced
-    Column(
-        modifier = modifier
-            .width(CellSize)
-            .nyummyClickable(onClick = onClick)
-            // 이름과 "배치됨"/"사용 중" 글자를 한 칸으로 묶어 읽는다.
-            .semantics(mergeDescendants = true) { selected = item.isPlaced },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(CellLabelGap),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(CellSize)
-                .clip(shape)
-                .background(NyummyTheme.colors.bg.surfaceSunken, shape)
-                .then(
-                    if (isInUseBackground) {
-                        Modifier.border(BackgroundSelectedBorder, NyummyTheme.colors.bg.actionPrimary, shape)
-                    } else {
-                        Modifier
-                    },
-                ),
-        ) {
-            if (isBackground) {
-                AsyncImage(
-                    model = item.imageUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    alignment = Alignment.BottomCenter,
-                    filterQuality = FilterQuality.None,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            } else {
-                AsyncImage(
-                    model = item.imageUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    filterQuality = FilterQuality.None,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(InteriorImageSize)
-                        .alpha(if (item.isPlaced) PlacedImageAlpha else 1f),
-                )
-            }
-            if (item.isPlaced) {
-                StateChip(
-                    text = stateText,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = CellChipBottom),
-                )
-            }
-        }
-        NyummyText(
-            text = item.name,
-            style = NyummyTheme.typography.bodyS,
-            color = NyummyTheme.colors.content.secondary,
-            maxLines = 1,
-        )
     }
 }
 
@@ -453,48 +331,6 @@ private fun RoomItemCategory.fallbackLabel(): String = when (key) {
     BED_KEY -> stringResource(R.string.my_room_category_bed)
     RoomItemCategory.ETC.key -> stringResource(R.string.my_room_category_etc)
     else -> key
-}
-
-/** 칸 위 상태 표시(배치됨, 사용 중). 진한 바탕에 흰 글자. */
-@Composable
-private fun StateChip(
-    text: String,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier
-            .background(NyummyTheme.colors.bg.brandSubtle, RoundedCornerShape(NyummyTheme.radius.full))
-            .padding(horizontal = NyummyTheme.spacing.s8, vertical = StateChipVerticalPadding),
-    ) {
-        NyummyText(
-            text = text,
-            style = NyummyTheme.typography.labelS,
-            color = NyummyTheme.colors.content.brand,
-            maxLines = 1,
-        )
-    }
-}
-
-/** 보관함이 비었거나 불러오지 못했을 때. 안내 한 줄과 글자 버튼. */
-@Composable
-private fun InventoryMessage(
-    message: String,
-    actionText: String,
-    onAction: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
-    ) {
-        NyummyText(text = message, style = NyummyTheme.typography.titleS)
-        NyummyTextButton(
-            text = actionText,
-            onClick = onAction,
-            trailingIcon = CommonR.drawable.nyummy_ic_chevron_right,
-        )
-    }
 }
 
 /** 보관함 끝에서 [LOAD_MORE_THRESHOLD]칸 안쪽까지 보이면 다음 묶음을 부른다. */
@@ -523,22 +359,5 @@ private const val LOAD_MORE_THRESHOLD = 4
 /** 침대 종류 값. 서버가 이름을 주지 않았을 때 앱의 이름을 붙이려고만 쓴다. */
 private const val BED_KEY = "BED"
 
-/** 방에 놓인 아이템 칸의 그림 불투명도. */
-private const val PlacedImageAlpha = 0.35f
-
-private val ContentMaxWidth = 480.dp
-
 /** 보관함 칸 영역 높이. 칸 한 줄과 상점 버튼이 들어가고, 탭을 바꾸거나 비어 있어도 같다. */
 private val ContentHeight = 150.dp
-/** 손잡이 영역 높이(위 여백 10 + 손잡이 4 + 탭까지 12). 누르면 시트를 펴고 접는다. */
-private val HandleTouchHeight = 26.dp
-private val SheetBottomPadding = 28.dp
-private val HandleWidth = 40.dp
-private val HandleHeight = 4.dp
-private val CellSize = 80.dp
-private val CellGap = 10.dp
-private val CellLabelGap = 6.dp
-private val CellChipBottom = 6.dp
-private val InteriorImageSize = 56.dp
-private val BackgroundSelectedBorder = 3.dp
-private val StateChipVerticalPadding = 3.dp
