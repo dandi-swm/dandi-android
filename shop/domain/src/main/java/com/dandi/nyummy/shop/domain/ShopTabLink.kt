@@ -22,26 +22,31 @@ object ShopTabLink {
      */
     data class Target(val tab: ShopTab, val sort: ProductSort?)
 
-    /** 앱 링크 문자열을 읽는다. 앱 링크가 아니거나 상점 탭 링크가 아니면 null. */
+    /**
+     * 앱 링크 문자열을 읽는다. 앱 링크가 아니거나 상점 탭 링크가 아니면 null.
+     *
+     * 별칭 `/shop/{tab}`과 같은 규칙으로 읽는다: 경로 구간을 하나씩 디코딩한 뒤 `/shop/{tab}`이면 tab을 인자로 옮겨 [parse]에 넘긴다.
+     * 그래서 같은 링크가 별칭을 거친 상점 라우트와 같은 결과가 된다(인코딩된 구간이나 추천 탭 링크도).
+     */
     fun parseLink(link: String): Target? {
         val uri = runCatching { URI(link.trim()) }.getOrNull() ?: return null
         val isAppLink = (uri.scheme.equals("https", ignoreCase = true) || uri.scheme.equals("http", ignoreCase = true)) &&
             uri.host.equals(AppLinks.HOST, ignoreCase = true)
         if (!isAppLink) return null
-        val path = uri.rawPath.orEmpty().trimEnd('/')
-        return parse(NavRoute(path = path, args = parseQuery(uri.rawQuery)))
-    }
-
-    /** 상점 라우트(또는 경로·쿼리로 나눈 링크)를 읽는다. 상점 탭 링크가 아니면 null. */
-    fun parse(route: NavRoute): Target? {
-        val tab = when {
-            route.path == ShopPage.PATH -> ShopTab.fromLinkSegment(route.args[ShopPage.ARG_TAB]) ?: return null
-            route.path.startsWith(ShopPage.PATH + "/") -> {
-                val segment = route.path.removePrefix(ShopPage.PATH + "/")
-                ShopTab.fromLinkSegment(segment)?.takeIf { it != ShopTab.RECOMMEND } ?: return null
-            }
+        val segments = uri.rawPath.orEmpty().split('/').filter { it.isNotEmpty() }.map(::decodePathSegment)
+        val args = parseQuery(uri.rawQuery)
+        val route = when {
+            segments == listOf(SHOP_SEGMENT) -> NavRoute(ShopPage.PATH, args)
+            segments.size == 2 && segments[0] == SHOP_SEGMENT -> NavRoute(ShopPage.PATH, args + (ShopPage.ARG_TAB to segments[1]))
             else -> return null
         }
+        return parse(route)
+    }
+
+    /** 상점 라우트(별칭을 거친 링크 포함)를 읽는다. 상점 탭 링크가 아니면 null. */
+    fun parse(route: NavRoute): Target? {
+        if (route.path != ShopPage.PATH) return null
+        val tab = ShopTab.fromLinkSegment(route.args[ShopPage.ARG_TAB]) ?: return null
         val sort = route.args[ShopPage.ARG_SORT]?.let(ProductSort::fromOrDefault)
         return Target(tab = tab, sort = sort)
     }
@@ -58,4 +63,9 @@ object ShopTabLink {
 
     private fun decode(value: String): String =
         runCatching { URLDecoder.decode(value, Charsets.UTF_8.name()) }.getOrDefault(value)
+
+    // 경로의 `+`는 공백이 아니므로 그대로 둔다(URLDecoder는 쿼리 규칙이라 `+`를 공백으로 바꾼다).
+    private fun decodePathSegment(segment: String): String = decode(segment.replace("+", "%2B"))
+
+    private val SHOP_SEGMENT = ShopPage.PATH.removePrefix("/")
 }
