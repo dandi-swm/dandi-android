@@ -37,9 +37,25 @@ class ShopTabLinkTest {
     }
 
     @Test
+    fun `인코딩된 경로 구간은 디코딩해서 읽는다`() {
+        assertEquals(
+            ShopTabLink.Target(ShopTab.INTERIOR, ProductSort.POPULAR),
+            parse("https://link.nyummy.co.kr/shop/%69nterior?sort=POPULAR"),
+        )
+        assertNull(parse("https://link.nyummy.co.kr/shop%2Finterior"))
+    }
+
+    @Test
+    fun `추천 탭 링크는 별칭을 거친 라우트와 같이 추천 탭이다`() {
+        val viaAlias = ShopTabLink.parse(NavRoute(ShopPage.PATH, mapOf(ShopPage.ARG_TAB to "recommend")))
+
+        assertEquals(ShopTabLink.Target(ShopTab.RECOMMEND, null), parse("https://link.nyummy.co.kr/shop/recommend"))
+        assertEquals(viaAlias, parse("https://link.nyummy.co.kr/shop/recommend"))
+    }
+
+    @Test
     fun `상점 탭이 아닌 링크는 null이다`() {
         assertNull(parse("https://link.nyummy.co.kr/shop"))
-        assertNull(parse("https://link.nyummy.co.kr/shop/recommend"))
         assertNull(parse("https://link.nyummy.co.kr/shop/cart"))
         assertNull(parse("https://link.nyummy.co.kr/shop/promotions/12"))
         assertNull(parse("https://link.nyummy.co.kr/home"))
