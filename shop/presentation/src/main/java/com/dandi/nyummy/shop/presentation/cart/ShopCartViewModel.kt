@@ -45,6 +45,7 @@ import javax.inject.Inject
  *
  * @property isSyncing 보낸 요청의 응답을 아직 다 받지 못했다. 화면 값이 서버와 다를 수 있다
  * @property recommendations 빈 장바구니의 인기 인테리어 추천. 불러오지 못하면 비어 있고 칸을 숨긴다
+ * @property isTryOnOpen 놓아보기가 장바구니 위를 덮고 있다(라우트가 아니라 이 화면의 상태다)
  */
 data class ShopCartUIState(
     val items: ImmutableList<CartItemVO> = persistentListOf(),
@@ -59,6 +60,7 @@ data class ShopCartUIState(
     val sheet: ShopCartSheet? = null,
     val isPurchasing: Boolean = false,
     val completion: ShopPurchaseCompletion? = null,
+    val isTryOnOpen: Boolean = false,
 ) : UiState {
     val isEmpty: Boolean get() = !isLoading && !isLoadFailed && items.isEmpty()
 
@@ -67,6 +69,9 @@ data class ShopCartUIState(
 
     /** 모자란 코인. 결제할 코인이 내 코인보다 크면 양수다. */
     val shortage: Int get() = (summary.purchasePrice - summary.balance).coerceAtLeast(0)
+
+    /** 하단 "n개 구매하기"를 누를 수 있다: 살 항목이 있고, 구매 중도 아니고, 보낸 요청의 응답을 다 받았다. */
+    val canPurchase: Boolean get() = purchasingItems.isNotEmpty() && !isPurchasing && !isSyncing
 
     /** 전체 선택 체크: 살 수 있는 항목이 있고 모두 골랐다. */
     val isAllSelected: Boolean get() = items.any { it.canPurchase } && items.filter { it.canPurchase }.all { it.isSelected }
@@ -132,6 +137,12 @@ sealed interface ShopCartIntent : MviIntent {
 
     /** 완료 화면의 "상점 더 둘러보기". */
     data object ClickMoreShopping : ShopCartIntent
+
+    /** 맨 위 "내 방에 놓아 보기" 카드. 놓아보기가 장바구니 위를 덮는다. */
+    data object OpenTryOn : ShopCartIntent
+
+    /** 놓아보기의 뒤로 가기나 "n개 구매하기". 확인 없이 장바구니로 돌아간다. */
+    data object CloseTryOn : ShopCartIntent
 }
 
 sealed interface ShopCartReducerEvent : ReducerEvent {
@@ -151,6 +162,8 @@ sealed interface ShopCartReducerEvent : ReducerEvent {
 
     /** 구매 요청이 끝났다. [completion]이 있으면 완료 화면을, [sheet]가 있으면 그 시트를 보인다. */
     data class PurchaseFinished(val completion: ShopPurchaseCompletion?, val sheet: ShopCartSheet?) : ShopCartReducerEvent
+
+    data class TryOnChanged(val isOpen: Boolean) : ShopCartReducerEvent
 }
 
 /**
@@ -207,6 +220,9 @@ class ShopCartViewModel @Inject constructor(
             }
             ShopCartIntent.ClickGoToMailbox -> leaveTo(MailboxPage)
             ShopCartIntent.ClickMoreShopping -> leaveTo(ShopPage)
+            // 담은 아이템이 있을 때만 카드가 보인다. 장바구니는 다시 읽지 않는다(놓아보기 동안 바뀌지 않는다).
+            ShopCartIntent.OpenTryOn -> if (currentState.items.isNotEmpty()) dispatch(ShopCartReducerEvent.TryOnChanged(true))
+            ShopCartIntent.CloseTryOn -> dispatch(ShopCartReducerEvent.TryOnChanged(false))
         }
     }
 
@@ -400,6 +416,7 @@ class ShopCartViewModel @Inject constructor(
             sheet = event.sheet,
             completion = event.completion,
         )
+        is ShopCartReducerEvent.TryOnChanged -> state.copy(isTryOnOpen = event.isOpen)
     }
 
     companion object {

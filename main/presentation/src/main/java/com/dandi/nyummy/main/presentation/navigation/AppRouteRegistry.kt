@@ -33,6 +33,7 @@ import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.onboarding.presentation.OnboardingPage
 import com.dandi.nyummy.room.domain.MyRoomPage
 import com.dandi.nyummy.room.presentation.MyRoomPage
+import com.dandi.nyummy.room.presentation.tryon.RoomTryOnPage
 import com.dandi.nyummy.settings.domain.InquiryDetailPage as InquiryDetailRoute
 import com.dandi.nyummy.settings.domain.InquiryListPage as InquiryListRoute
 import com.dandi.nyummy.settings.domain.InquiryWritePage
@@ -208,7 +209,14 @@ val appRoutes: List<AppRoute> = listOf(
                 GenericNavKey(ShopCartPage.PATH, args),
             )
         },
-        render = { ShopCartScreenPage() },
+        // 놓아보기가 마이룸처럼 시스템 바 뒤까지 덮으므로 장바구니도 시스템 바 뒤까지 그리고 인셋을 스스로 처리한다.
+        drawsBehindSystemBars = true,
+        // 놓아보기는 장바구니 화면의 상태다. 장바구니와 마이룸 화면은 서로 모르고, 여기서 마이룸의 놓아보기를 꽂는다.
+        render = {
+            ShopCartScreenPage(
+                tryOnContent = { items, footer, onClose -> RoomTryOnPage(items = items, footer = footer, onClose = onClose) },
+            )
+        },
     ),
     AppRoute(
         // 코인 내역. 상점 코인 칩과 홈 지갑 버튼이 연다.

@@ -68,6 +68,7 @@ class RoomInventorySheetTest {
                         loadState = MyRoomLoadState.LOADED,
                         tabs = tabs(bedCount),
                         selectedCategory = selectedCategory,
+                        tutorialItemId = null,
                         onSelectTab = { selectedTabs += it },
                         onInteriorClick = { interiorClicks += it },
                         onBackgroundClick = { backgroundClicks += it },
@@ -102,9 +103,10 @@ class RoomInventorySheetTest {
     fun 손잡이를_아래로_밀면_접히고_위로_밀면_펼쳐진다() {
         setSheet()
 
-        // 손잡이는 낮아서 손잡이 밖까지 길게 민다(실제로 시트를 끌어내리는 것처럼).
+        // 칸 영역 높이만큼 천천히 민다. 더 길게 밀거나 빠르게 튕기면 탭까지 내려가 숨김 단계가 된다.
+        val bodyHeight = sheetState.bodyHeightPx.toFloat()
         composeRule.onNodeWithContentDescription("보관함 접기").performTouchInput {
-            swipe(start = center, end = center + Offset(0f, height * 12f), durationMillis = 300)
+            swipe(start = center, end = center + Offset(0f, bodyHeight), durationMillis = 1_500)
         }
         composeRule.waitForIdle()
         assertEquals(0f, sheetState.expansion)

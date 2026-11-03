@@ -28,6 +28,8 @@ data ──────────▶ domain ──▶ entity
 (presentation ↔ data 직접 의존 금지 — domain 인터페이스로만 통신)
 ```
 
+**feature 화면끼리 잇기**: feature의 presentation은 다른 feature의 presentation을 의존하지 않는다(다른 feature의 `domain`·`entity`만 쓴다). 모든 화면을 아는 곳은 `main`(`AppRouteRegistry`의 `render`)뿐이다. 한 화면 안에 다른 feature의 화면을 겹쳐야 하면, 띄우는 쪽이 `@Composable` 함수 타입 슬롯을 받고 `main`이 그 자리에 다른 feature의 공개 Composable을 꽂는다. 두 화면이 주고받는 모델은 그리는 쪽 feature의 `entity`에 둔다. 예: 장바구니(`shop`)는 `ShopTryOnContent` 슬롯만 알고, `main`이 마이룸(`room`)의 `RoomTryOnPage`를 꽂는다(모델 `RoomTryOnItemVO`는 `room:entity`).
+
 - `entity`/`domain`/`tti` = 순수 Kotlin/JVM (`kotlin-jvm` 플러그인, Android 의존 금지)
 - `data`/`presentation` = `com.android.library` (presentation은 `buildFeatures { buildConfig = true; compose = true }`)
 - 모든 모듈 공통: JVM 17, `-Xexplicit-backing-fields`

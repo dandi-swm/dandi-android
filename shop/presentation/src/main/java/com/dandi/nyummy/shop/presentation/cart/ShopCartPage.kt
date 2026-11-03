@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -29,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -71,33 +74,69 @@ import java.util.Locale
 import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
- * 장바구니 화면(피그마 `Shop · 20`·`20b`). 전체 선택, 장바구니 줄, 결제 정보, 하단 구매 바. 비어 있으면 안내와
- * 인기 인테리어 추천을 보인다.
+ * 장바구니 화면(피그마 `Shop · 20`·`20b`·`20c`). 놓아보기 카드, 전체 선택, 장바구니 줄, 결제 정보, 하단 구매 바.
+ * 비어 있으면 안내와 인기 인테리어 추천을 보인다.
+ *
+ * 놓아보기는 라우트가 아니라 이 화면의 상태다. 열리면 장바구니는 그대로 두고(스크롤·선택 유지) 그 위를 [tryOnContent]가
+ * 덮는다. 놓아보기 시트 맨 아래에는 장바구니와 같은 결제 바를 넘기고, 그 버튼은 놓아보기를 닫는다(구매는 장바구니에서만).
+ *
+ * @param tryOnContent 놓아보기 화면. `main`이 마이룸의 놓아보기를 꽂는다. 기본값은 아무것도 그리지 않는다(프리뷰·테스트).
  */
 @Composable
-fun ShopCartPage(viewModel: ShopCartViewModel = hiltViewModel()) {
+fun ShopCartPage(
+    tryOnContent: ShopTryOnContent = { _, _, _ -> },
+    viewModel: ShopCartViewModel = hiltViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onIntent(ShopCartIntent.Enter) }
-    ShopCartScreen(uiState = uiState, onIntent = viewModel::onIntent)
+    val isTryOnOpen = uiState.isTryOnOpen && uiState.completion == null
+    Box(modifier = Modifier.fillMaxSize()) {
+        ShopCartScreen(
+            uiState = uiState,
+            onIntent = viewModel::onIntent,
+            // 놓아보기가 덮는 동안 아래 장바구니는 화면 낭독기에서 숨긴다.
+            modifier = if (isTryOnOpen) Modifier.clearAndSetSemantics {} else Modifier,
+        )
+        if (isTryOnOpen) {
+            val tryOnItems = remember(uiState.items) { uiState.items.toTryOnItems() }
+            val onIntent = viewModel::onIntent
+            tryOnContent(
+                tryOnItems,
+                {
+                    PurchaseBar(
+                        summary = uiState.summary,
+                        enabled = uiState.canPurchase,
+                        onPurchase = { onIntent(ShopCartIntent.CloseTryOn) },
+                    )
+                },
+                { onIntent(ShopCartIntent.CloseTryOn) },
+            )
+        }
+    }
 }
 
 @Composable
-private fun ShopCartScreen(uiState: ShopCartUIState, onIntent: (ShopCartIntent) -> Unit) {
+private fun ShopCartScreen(uiState: ShopCartUIState, onIntent: (ShopCartIntent) -> Unit, modifier: Modifier = Modifier) {
     val completion = uiState.completion
     if (completion != null) {
         // 완료 화면에서 뒤로 가면 장바구니가 아니라 상점으로 간다.
         BackHandler { onIntent(ShopCartIntent.ClickBack) }
-        PurchaseCompletionScreen(
-            completion = completion,
-            onGoToMailbox = { onIntent(ShopCartIntent.ClickGoToMailbox) },
-            onMoreShopping = { onIntent(ShopCartIntent.ClickMoreShopping) },
-        )
+        // 라우트가 시스템 바 뒤까지 그리므로(놓아보기가 덮는 화면) 바 높이만큼 스스로 민다.
+        Box(modifier = modifier.background(NyummyTheme.colors.bg.canvas).systemBarsPadding()) {
+            PurchaseCompletionScreen(
+                completion = completion,
+                onGoToMailbox = { onIntent(ShopCartIntent.ClickGoToMailbox) },
+                onMoreShopping = { onIntent(ShopCartIntent.ClickMoreShopping) },
+            )
+        }
         return
     }
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
-            .background(NyummyTheme.colors.bg.canvas),
+            .background(NyummyTheme.colors.bg.canvas)
+            // 라우트가 시스템 바 뒤까지 그리므로(놓아보기가 덮는 화면) 바 높이만큼 스스로 민다.
+            .systemBarsPadding(),
     ) {
         ShopTopBar(title = stringResource(R.string.shop_cart_title), onBack = { onIntent(ShopCartIntent.ClickBack) })
         NyummyDivider()
@@ -120,7 +159,7 @@ private fun ShopCartScreen(uiState: ShopCartUIState, onIntent: (ShopCartIntent) 
                 CartList(uiState = uiState, onIntent = onIntent, modifier = bodyModifier)
                 PurchaseBar(
                     summary = uiState.summary,
-                    enabled = uiState.purchasingItems.isNotEmpty() && !uiState.isPurchasing && !uiState.isSyncing,
+                    enabled = uiState.canPurchase,
                     onPurchase = { onIntent(ShopCartIntent.ClickPurchase) },
                 )
             }
@@ -155,6 +194,17 @@ private fun ShopCartScreen(uiState: ShopCartUIState, onIntent: (ShopCartIntent) 
 @Composable
 private fun CartList(uiState: ShopCartUIState, onIntent: (ShopCartIntent) -> Unit, modifier: Modifier) {
     LazyColumn(modifier = modifier, contentPadding = PaddingValues(bottom = NyummyTheme.spacing.s32)) {
+        item(key = "try-on") {
+            TryOnEntryCard(
+                onClick = { onIntent(ShopCartIntent.OpenTryOn) },
+                modifier = Modifier.padding(
+                    start = NyummyTheme.spacing.gutter,
+                    end = NyummyTheme.spacing.gutter,
+                    top = NyummyTheme.spacing.s16,
+                    bottom = NyummyTheme.spacing.s8,
+                ),
+            )
+        }
         item(key = "select-all") {
             Row(
                 modifier = Modifier

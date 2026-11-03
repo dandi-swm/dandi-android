@@ -12,7 +12,6 @@ import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
-import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.room.domain.GetOwnedRoomItemsUseCase
@@ -24,7 +23,14 @@ import com.dandi.nyummy.room.entity.OwnedRoomItemVO
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.entity.RoomPlacementVO
 import com.dandi.nyummy.room.entity.RoomVO
+import com.dandi.nyummy.room.presentation.model.toItemImageUrl
 import com.dandi.nyummy.room.presentation.model.toRoomCatMotion
+import com.dandi.nyummy.room.presentation.model.toRoomDraft
+import com.dandi.nyummy.room.presentation.model.withBackground
+import com.dandi.nyummy.room.presentation.model.withItemInFront
+import com.dandi.nyummy.room.presentation.model.withItemMoved
+import com.dandi.nyummy.room.presentation.model.withItemPlaced
+import com.dandi.nyummy.room.presentation.model.withItemRemoved
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -232,58 +238,39 @@ class MyRoomViewModel @Inject constructor(
             .filter { it.category != RoomItemCategory.BACKGROUND }
             .firstNotNullOfOrNull { tab -> tab.items.firstOrNull { it.roomItemId == intent.roomItemId } }
             ?: return
-        val placed = RoomPlacementUiModel(
-            roomItemId = item.roomItemId,
-            imageUrl = item.imageUrl,
-            x = intent.x.coerceIn(0f, 1f),
-            y = intent.y.coerceIn(0f, 1f),
-            scale = 1f,
-        )
-        changeRoom(state.room.copy(items = (state.room.items + placed).toImmutableList()), selectedItemId = item.roomItemId)
+        val room = state.room.withItemPlaced(item.roomItemId, item.imageUrl, intent.x, intent.y) ?: return
+        changeRoom(room, selectedItemId = item.roomItemId)
     }
 
     private fun changeBackground(roomItemId: Long) {
         val state = currentState
-        if (state.room.background?.roomItemId == roomItemId) return
         val background = state.tabOf(RoomItemCategory.BACKGROUND)?.items?.firstOrNull { it.roomItemId == roomItemId } ?: return
-        changeRoom(
-            state.room.copy(background = RoomBackgroundUiModel(background.roomItemId, background.imageUrl)),
-            selectedItemId = state.selectedItemId,
-        )
+        val room = state.room.withBackground(RoomBackgroundUiModel(background.roomItemId, background.imageUrl)) ?: return
+        changeRoom(room, selectedItemId = state.selectedItemId)
     }
 
-    /** 옮기거나 크기를 바꾼 아이템은 맨 앞으로 온다(가장 최근에 만진 아이템이 위에 보인다). */
     private fun moveItem(intent: MyRoomIntent.MoveItem) {
         val state = currentState
-        val target = state.room.items.firstOrNull { it.roomItemId == intent.roomItemId } ?: return
-        val moved = target.copy(x = intent.x, y = intent.y, scale = RoomCardLayout.clampItemScale(intent.scale))
-        if (moved == target) {
+        val room = state.room.withItemMoved(intent.roomItemId, intent.x, intent.y, intent.scale) ?: return
+        if (room == state.room) {
             dispatch(MyRoomReducerEvent.ItemSelected(intent.roomItemId))
             return
         }
-        changeRoom(
-            state.room.copy(items = (state.room.items - target + moved).toImmutableList()),
-            selectedItemId = intent.roomItemId,
-        )
+        changeRoom(room, selectedItemId = intent.roomItemId)
     }
 
     private fun bringSelectedToFront() {
         val state = currentState
-        val selected = state.room.items.firstOrNull { it.roomItemId == state.selectedItemId } ?: return
-        if (state.room.items.last() == selected) return
-        changeRoom(
-            state.room.copy(items = (state.room.items - selected + selected).toImmutableList()),
-            selectedItemId = selected.roomItemId,
-        )
+        val selectedId = state.selectedItemId ?: return
+        val room = state.room.withItemInFront(selectedId) ?: return
+        changeRoom(room, selectedItemId = selectedId)
     }
 
     private fun putSelectedAway() {
         val state = currentState
         val selectedId = state.selectedItemId ?: return
-        changeRoom(
-            state.room.copy(items = state.room.items.filterNot { it.roomItemId == selectedId }.toImmutableList()),
-            selectedItemId = null,
-        )
+        // 고른 아이템이 방에 없어도 고르기는 푼다(예전과 같다).
+        changeRoom(state.room.withItemRemoved(selectedId) ?: state.room, selectedItemId = null)
     }
 
     private fun changeRoom(room: RoomDraft, selectedItemId: Long?) {
@@ -357,7 +344,7 @@ class MyRoomViewModel @Inject constructor(
  * 처음 불러왔거나 보던 탭이 없어졌으면 첫 탭을 보여 준다(다시 불러와도 보던 탭이 남아 있으면 그대로 둔다).
  */
 private fun loadedState(state: MyRoomUIState, room: RoomVO): MyRoomUIState {
-    val draft = room.placements.toDraft()
+    val draft = room.placements.toRoomDraft()
     // 종류 값이 빠진 묶음은 기타로 모이므로 같은 종류 묶음이 여럿일 수 있다. 다음 묶음은 첫 묶음의 cursor로 받는다.
     val tabs = room.categories.groupBy { it.category }.map { (category, pages) ->
         InventoryTabUiModel(
@@ -419,30 +406,6 @@ private fun MyRoomUIState.withPlacedMarks(): MyRoomUIState {
 }
 
 /**
- * 서버의 놓인 아이템을 꾸미는 방으로 바꾼다. 배경은 하나만 쓴다. 좌표는 저장값(그림 왼쪽 아래 기준 퍼센트)을
- * 그리는 좌표로 바꾸고, 좌표와 크기는 허용 범위로 맞춘다(범위를 벗어난 값이 와도 방 안에 보이게).
- */
-private fun List<RoomPlacementVO>.toDraft(): RoomDraft {
-    val background = firstOrNull { it.category == RoomItemCategory.BACKGROUND }
-    return RoomDraft(
-        background = background?.let { RoomBackgroundUiModel(it.roomItemId, it.itemId.toItemImageUrl()) },
-        items = filter { it.category != RoomItemCategory.BACKGROUND }
-            .sortedBy { it.zIndex }
-            .map {
-                val position = RoomCardLayout.fromSavedPosition(it.x, it.y)
-                RoomPlacementUiModel(
-                    roomItemId = it.roomItemId,
-                    imageUrl = it.itemId.toItemImageUrl(),
-                    x = position.x,
-                    y = position.y,
-                    scale = RoomCardLayout.clampItemScale(it.scale),
-                )
-            }
-            .toImmutableList(),
-    )
-}
-
-/**
  * 저장할 놓인 아이템 전체. 배경이 맨 뒤(zIndex 0)이고 인테리어는 1부터 그리는 순서대로다. 좌표는 저장 규칙으로 바꿔 보낸다.
  * 저장 요청에는 그림이 필요 없어서 아이템 id는 넣지 않는다.
  */
@@ -471,6 +434,3 @@ private fun OwnedRoomItemVO.toInventoryItem(category: RoomItemCategory) = Invent
     imageUrl = itemId.toItemImageUrl(),
     isPlaced = false,
 )
-
-/** 아이템 그림 주소. 아이템 id를 CDN 아이템 경로에 붙인다. id가 없으면 빈 값(받지 못한 그림처럼 보인다). */
-private fun Long?.toItemImageUrl(): String = this?.let(NyummyCdn::itemUrl).orEmpty()

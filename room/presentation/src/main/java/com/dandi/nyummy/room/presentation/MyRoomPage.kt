@@ -227,7 +227,7 @@ private fun MyRoomEmptyPreview() {
 
 /** 방 위에 뜨는 흰 알약(옅은 그림자). */
 @Composable
-private fun Modifier.roomPill(): Modifier {
+internal fun Modifier.roomPill(): Modifier {
     val shape = RoundedCornerShape(NyummyTheme.radius.full)
     return nyummyShadow(shape, NyummyTheme.elevation.soft).background(NyummyTheme.colors.bg.surface, shape)
 }
