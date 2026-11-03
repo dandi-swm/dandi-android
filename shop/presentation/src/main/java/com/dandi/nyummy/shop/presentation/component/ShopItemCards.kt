@@ -188,10 +188,11 @@ fun ShopItemImage(
     itemId: Long,
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Fit,
+    contentDescription: String? = null,
 ) {
     AsyncImage(
         model = NyummyCdn.itemUrl(itemId),
-        contentDescription = null,
+        contentDescription = contentDescription,
         contentScale = contentScale,
         alignment = if (contentScale == ContentScale.Crop) Alignment.BottomCenter else Alignment.Center,
         filterQuality = FilterQuality.None,

@@ -120,7 +120,7 @@ private fun ShopCartScreen(uiState: ShopCartUIState, onIntent: (ShopCartIntent) 
                 CartList(uiState = uiState, onIntent = onIntent, modifier = bodyModifier)
                 PurchaseBar(
                     summary = uiState.summary,
-                    enabled = uiState.purchasingItems.isNotEmpty() && !uiState.isPurchasing,
+                    enabled = uiState.purchasingItems.isNotEmpty() && !uiState.isPurchasing && !uiState.isSyncing,
                     onPurchase = { onIntent(ShopCartIntent.ClickPurchase) },
                 )
             }

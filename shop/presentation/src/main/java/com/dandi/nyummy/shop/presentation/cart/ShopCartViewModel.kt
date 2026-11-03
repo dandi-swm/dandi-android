@@ -176,6 +176,9 @@ class ShopCartViewModel @Inject constructor(
     private var pendingRequests = 0
     private val requestMutex = Mutex()
 
+    /** 서버가 코인 부족이라고 했다. 장바구니를 다시 받은 뒤 최신 금액으로 부족 시트를 연다. */
+    private var openShortageAfterReload = false
+
     override fun onIntent(intent: ShopCartIntent) {
         when (intent) {
             ShopCartIntent.Enter -> if (!entered) {
@@ -229,6 +232,10 @@ class ShopCartViewModel @Inject constructor(
                 .onSuccess { cart ->
                     dispatch(ShopCartReducerEvent.CartLoaded(cart))
                     if (cart.items.isEmpty()) loadRecommendations()
+                    if (openShortageAfterReload) {
+                        openShortageAfterReload = false
+                        if (currentState.summary.balanceAfter < 0) dispatch(ShopCartReducerEvent.SheetChanged(ShopCartSheet.InsufficientBalance))
+                    }
                 }
                 .onFailure { onFailure() }
         }
@@ -291,20 +298,21 @@ class ShopCartViewModel @Inject constructor(
         }
     }
 
+    /** 수량·선택 요청의 응답을 다 받기 전에는 열지 않는다. 화면의 항목과 서버 요약이 어긋난 채 금액을 확인하지 않게 한다. */
     private fun openPurchaseSheet() {
         val state = currentState
-        if (state.purchasingItems.isEmpty() || state.isPurchasing) return
+        if (state.purchasingItems.isEmpty() || state.isPurchasing || state.isSyncing) return
         val sheet = if (state.summary.balanceAfter < 0) ShopCartSheet.InsufficientBalance else ShopCartSheet.Confirm
         dispatch(ShopCartReducerEvent.SheetChanged(sheet))
     }
 
     /**
      * 확인 시트의 "구매하기". 요청 중에는 다시 보내지 않는다. 막힘(다이얼로그는 UseCase가 띄움)·결과 모름이면 장바구니를
-     * 다시 읽고, 코인이 모자라면 부족 시트를 보인 뒤 다시 읽는다.
+     * 다시 읽고, 코인이 모자라면 장바구니를 다시 읽은 뒤 최신 금액으로 부족 시트를 보인다.
      */
     private fun confirmPurchase() {
         val state = currentState
-        if (state.isPurchasing) return
+        if (state.isPurchasing || state.isSyncing) return
         val buying = state.purchasingItems
         if (buying.isEmpty()) return
         dispatch(ShopCartReducerEvent.PurchaseStarted)
@@ -324,7 +332,9 @@ class ShopCartViewModel @Inject constructor(
                     ),
                 )
                 PurchaseOutcome.InsufficientBalance -> {
-                    dispatch(ShopCartReducerEvent.PurchaseFinished(completion = null, sheet = ShopCartSheet.InsufficientBalance))
+                    // 지금 요약은 잔액이 넉넉했던 옛 값이다. 다시 받은 뒤 최신 금액으로 부족 시트를 연다(받는 동안은 대기 표시).
+                    dispatch(ShopCartReducerEvent.PurchaseFinished(completion = null, sheet = null))
+                    openShortageAfterReload = true
                     reload()
                 }
                 PurchaseOutcome.Blocked, PurchaseOutcome.Unknown -> {
