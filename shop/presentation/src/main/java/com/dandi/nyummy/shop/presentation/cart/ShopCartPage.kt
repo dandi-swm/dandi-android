@@ -29,6 +29,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -128,13 +130,15 @@ private fun CartList(uiState: ShopCartUIState, onIntent: (ShopCartIntent) -> Uni
                     .padding(horizontal = NyummyTheme.spacing.gutter, vertical = NyummyTheme.spacing.s12),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                val selectAllLabel = stringResource(R.string.shop_cart_select_all, uiState.selectedItemCount, uiState.items.size)
                 NyummyCheckbox(
                     checked = uiState.isAllSelected,
                     onCheckedChange = { onIntent(ShopCartIntent.ToggleSelectAll) },
                     enabled = uiState.items.any { it.canPurchase },
+                    modifier = Modifier.semantics { contentDescription = selectAllLabel },
                 )
                 NyummyText(
-                    text = stringResource(R.string.shop_cart_select_all, uiState.selectedItemCount, uiState.items.size),
+                    text = selectAllLabel,
                     style = NyummyTheme.typography.labelM,
                     modifier = Modifier
                         .weight(1f)
@@ -173,6 +177,8 @@ private fun CartRow(item: CartItemVO, onIntent: (ShopCartIntent) -> Unit) {
             checked = item.isSelected && item.canPurchase,
             onCheckedChange = { onIntent(ShopCartIntent.ToggleSelect(productId)) },
             enabled = item.canPurchase,
+            // 상품명은 따로 그린 글자라 체크박스만으로는 무엇을 고르는지 알 수 없다(TalkBack).
+            modifier = Modifier.semantics { contentDescription = item.shopItem.name },
         )
         Box(
             modifier = Modifier

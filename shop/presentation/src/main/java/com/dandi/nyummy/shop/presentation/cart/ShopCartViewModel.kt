@@ -2,6 +2,7 @@ package com.dandi.nyummy.shop.presentation.cart
 
 import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.presentation.mvi.MviIntent
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
@@ -28,12 +29,16 @@ import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.UUID
 import javax.inject.Inject
 
 /**
  * 장바구니 화면 상태. [items]·[selectedItemCount]·[summary]는 서버 장바구니이고, 수량·선택은 누르자마자 먼저 바꿔
  * 보인 뒤 마지막 요청의 응답으로 맞춘다.
  *
+ * @property isSyncing 보낸 요청의 응답을 아직 다 받지 못했다. 화면 값이 서버와 다를 수 있다
  * @property recommendations 빈 장바구니의 인기 인테리어 추천. 불러오지 못하면 비어 있고 칸을 숨긴다
  */
 data class ShopCartUIState(
@@ -42,6 +47,7 @@ data class ShopCartUIState(
     val summary: CartSummaryVO = CartSummaryVO(),
     val isLoading: Boolean = true,
     val isLoadFailed: Boolean = false,
+    val isSyncing: Boolean = false,
     val recommendations: ImmutableList<ShopItemVO> = persistentListOf(),
     val detailItem: ShopItemVO? = null,
     val addingProductIds: ImmutableSet<Long> = persistentSetOf(),
@@ -80,6 +86,7 @@ sealed interface ShopCartReducerEvent : ReducerEvent {
     data object LoadStarted : ShopCartReducerEvent
     data class CartLoaded(val cart: CartVO) : ShopCartReducerEvent
     data object LoadFailed : ShopCartReducerEvent
+    data class SyncChanged(val isSyncing: Boolean) : ShopCartReducerEvent
     data class QuantityShown(val productId: Long, val quantity: Int) : ShopCartReducerEvent
     data class SelectionShown(val productIds: Set<Long>) : ShopCartReducerEvent
     data class RecommendationsLoaded(val items: List<ShopItemVO>) : ShopCartReducerEvent
@@ -90,8 +97,9 @@ sealed interface ShopCartReducerEvent : ReducerEvent {
 }
 
 /**
- * 장바구니. 조회·수량·선택·빼기 요청마다 번호를 붙이고 가장 최근 요청의 응답만 화면에 반영한다(응답 순서가 뒤바뀌어도
- * 마지막으로 보낸 값이 남는다). 바꾸는 요청이 실패하면 장바구니를 다시 읽는다(수량 거절 토스트는 UseCase가 띄운다).
+ * 장바구니. 조회·수량·선택·빼기 요청을 누른 순서대로 하나씩 보내고(서버도 그 순서로 처리한다), 가장 최근 요청의 응답만
+ * 화면에 반영한다. 그래서 마지막 입력이 서버와 화면 모두에 남는다. 바꾸는 요청이 실패하면 장바구니를 다시 읽고, 그것도
+ * 실패하면 화면 값이 서버와 다를 수 있으니 다시 시도 안내를 보인다(수량 거절 토스트는 UseCase가 띄운다).
  * 장바구니가 비면 인기 인테리어 6개를 추천한다.
  */
 @HiltViewModel
@@ -107,6 +115,8 @@ class ShopCartViewModel @Inject constructor(
 
     private var entered = false
     private var latestRequestId = 0
+    private var pendingRequests = 0
+    private val requestMutex = Mutex()
 
     override fun onIntent(intent: ShopCartIntent) {
         when (intent) {
@@ -122,7 +132,7 @@ class ShopCartViewModel @Inject constructor(
             is ShopCartIntent.DeleteItem -> mutate { deleteCartItems(listOf(intent.productId)) }
             ShopCartIntent.DeleteSelected -> deleteSelected()
             ShopCartIntent.ClickBrowseShop -> leaveTo(ShopPage)
-            ShopCartIntent.ClickSeeAllRecommendations -> leaveTo(ShopPage.of(ShopTab.INTERIOR, ProductSort.POPULAR))
+            ShopCartIntent.ClickSeeAllRecommendations -> leaveTo(ShopPage.of(ShopTab.INTERIOR, ProductSort.POPULAR).asNewEntry())
             is ShopCartIntent.ClickRecommendation -> dispatch(ShopCartReducerEvent.DetailOpened(intent.item))
             ShopCartIntent.DismissDetail -> dispatch(ShopCartReducerEvent.DetailClosed)
             is ShopCartIntent.AddRecommendation -> addRecommendation(intent.item)
@@ -130,7 +140,7 @@ class ShopCartViewModel @Inject constructor(
     }
 
     private fun reload() {
-        if (currentState.items.isEmpty()) dispatch(ShopCartReducerEvent.LoadStarted)
+        if (currentState.items.isEmpty() || currentState.isLoadFailed) dispatch(ShopCartReducerEvent.LoadStarted)
         send(request = { getCart() }, onFailure = { dispatch(ShopCartReducerEvent.LoadFailed) })
     }
 
@@ -141,8 +151,11 @@ class ShopCartViewModel @Inject constructor(
 
     private fun send(request: suspend () -> Result<CartVO>, onFailure: () -> Unit) {
         val requestId = ++latestRequestId
+        if (pendingRequests++ == 0) dispatch(ShopCartReducerEvent.SyncChanged(true))
         viewModelScope.launch {
-            val result = request()
+            // 앞 요청이 끝난 뒤 보낸다. 병렬로 보내면 서버가 다른 순서로 처리해 마지막 응답이 마지막 입력과 어긋날 수 있다.
+            val result = requestMutex.withLock { request() }
+            if (--pendingRequests == 0) dispatch(ShopCartReducerEvent.SyncChanged(false))
             if (requestId != latestRequestId) return@launch
             result
                 .onSuccess { cart ->
@@ -216,6 +229,17 @@ class ShopCartViewModel @Inject constructor(
         navigationHelper.navigateTo(page)
     }
 
+    /**
+     * 같은 인자의 상점 탭 엔트리가 이미 있으면 키가 같아 그 화면이 그대로 앞으로 온다(사용자가 바꾼 탭에 머문다).
+     * 요청마다 다른 인자를 붙여 새 엔트리로 열어, 요청한 탭과 정렬이 늘 적용되게 한다(알림 링크의 식별자와 같은 방식).
+     */
+    private fun Page.asNewEntry(): Page {
+        val route = toRoute().let { it.copy(args = it.args + (ARG_REQUEST_KEY to UUID.randomUUID().toString())) }
+        return object : Page {
+            override fun toRoute(): NavRoute = route
+        }
+    }
+
     override fun reduce(state: ShopCartUIState, event: ShopCartReducerEvent): ShopCartUIState = when (event) {
         ShopCartReducerEvent.LoadStarted -> state.copy(isLoading = true, isLoadFailed = false)
         is ShopCartReducerEvent.CartLoaded -> state.copy(
@@ -226,8 +250,9 @@ class ShopCartViewModel @Inject constructor(
             isLoadFailed = false,
             recommendations = if (event.cart.items.isEmpty()) state.recommendations else persistentListOf(),
         )
-        ShopCartReducerEvent.LoadFailed ->
-            state.copy(isLoading = false, isLoadFailed = state.items.isEmpty())
+        // 장바구니가 있어도 서버 값을 다시 받지 못했으면 화면 값을 믿을 수 없으니 다시 시도 안내를 보인다.
+        ShopCartReducerEvent.LoadFailed -> state.copy(isLoading = false, isLoadFailed = true)
+        is ShopCartReducerEvent.SyncChanged -> state.copy(isSyncing = event.isSyncing)
         is ShopCartReducerEvent.QuantityShown -> state.copy(
             items = state.items.map {
                 if (it.shopItem.productId == event.productId) it.copy(quantity = event.quantity) else it
@@ -251,5 +276,8 @@ class ShopCartViewModel @Inject constructor(
     companion object {
         /** 빈 장바구니 추천 개수(3열 2줄). */
         const val RECOMMENDATION_SIZE = 6
+
+        /** 상점 탭을 새 엔트리로 열려고 붙이는 인자. 화면은 읽지 않는다. */
+        private const val ARG_REQUEST_KEY = "request"
     }
 }
