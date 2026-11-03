@@ -4,12 +4,14 @@ import com.dandi.nyummy.auth.domain.LoginPage
 import com.dandi.nyummy.cat.domain.CatRepository
 import com.dandi.nyummy.cat.domain.PrefetchCatAnimationsUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
+import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.domain.helper.DeviceHelper
 import com.dandi.nyummy.common.domain.helper.ImagePrefetchHelper
-import com.dandi.nyummy.common.domain.helper.PermissionHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.helper.PermissionHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
@@ -27,6 +29,13 @@ import com.dandi.nyummy.home.domain.PrefetchHomeSummaryUseCase
 import com.dandi.nyummy.home.entity.HomeNoticeVO
 import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
+import com.dandi.nyummy.shop.domain.CoinChargeRepository
+import com.dandi.nyummy.shop.domain.CoinChargeTracker
+import com.dandi.nyummy.shop.domain.GetCoinChargeNoticeUseCase
+import com.dandi.nyummy.shop.domain.GetCoinChargeOfferUseCase
+import com.dandi.nyummy.shop.domain.PrefetchCoinChargeNoticeUseCase
+import com.dandi.nyummy.shop.entity.CoinChargeEventVO
+import com.dandi.nyummy.shop.entity.CoinChargeGrantVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -531,6 +540,7 @@ class GetIntroUseCaseTest {
             deviceHelper = deviceHelper,
             imagePrefetchHelper = imagePrefetch,
         ),
+        prefetchCoinChargeNotice = noCoinChargeNoticePrefetch(imagePrefetch),
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
@@ -749,3 +759,24 @@ class GetIntroUseCaseTest {
         }
     }
 }
+
+/** 코인 충전 이벤트가 없는 원격 구성. 공지 사진을 받지 않는다. */
+private fun noCoinChargeNoticePrefetch(imagePrefetchHelper: ImagePrefetchHelper) = PrefetchCoinChargeNoticeUseCase(
+    getNotice = GetCoinChargeNoticeUseCase(
+        GetCoinChargeOfferUseCase(
+            repository = object : CoinChargeRepository {
+                override fun getEvent(): CoinChargeEventVO? = null
+                override suspend fun isClaimed(eventId: String): Boolean = false
+                override suspend fun markClaimed(eventId: String) = Unit
+                override suspend fun claim(event: CoinChargeEventVO, packageId: String): CoinChargeGrantVO = error("지급하지 않는다")
+            },
+            tracker = CoinChargeTracker(
+                object : AnalyticsHelper {
+                    override fun logScreenView(screenName: String) = Unit
+                    override fun logEvent(event: AnalyticsEvent) = Unit
+                },
+            ),
+        ),
+    ),
+    imagePrefetchHelper = imagePrefetchHelper,
+)

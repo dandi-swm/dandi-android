@@ -54,7 +54,10 @@ internal class FakeShopRepository(
     val purchaseRequests = mutableListOf<Pair<String, List<PurchaseProductVO>>>()
     val purchaseErrors = ArrayDeque<Exception>()
 
+    var refreshCount = 0
+
     override suspend fun refreshSummary(): ShopSummaryVO {
+        refreshCount++
         error?.let { throw it }
         return summaryState.value
     }

@@ -13,6 +13,8 @@ import com.dandi.nyummy.cat.entity.CatMotionVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.cat.entity.SpriteClipVO
 import com.dandi.nyummy.cat.entity.SpriteFrameVO
+import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.DeviceHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
@@ -44,7 +46,15 @@ import com.dandi.nyummy.meal.entity.MealImageUploadVO
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.entity.RoomPlacementVO
+import com.dandi.nyummy.shop.domain.CoinChargeRepository
+import com.dandi.nyummy.shop.domain.CoinChargeTracker
+import com.dandi.nyummy.shop.domain.GetCoinChargeNoticeUseCase
+import com.dandi.nyummy.shop.domain.GetCoinChargeOfferUseCase
 import com.dandi.nyummy.shop.domain.ShopCoinHistoryPage
+import com.dandi.nyummy.shop.entity.CoinChargeEventVO
+import com.dandi.nyummy.shop.entity.CoinChargeGrantVO
+import com.dandi.nyummy.shop.entity.CoinChargeNoticeVO
+import com.dandi.nyummy.shop.entity.CoinChargePackageVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -92,6 +102,21 @@ class HomeViewModelTest {
 
     private val tutorialHelper = FakeTutorialHelper()
     private val mealRepository = FakeMealRecordRepository()
+
+    /** 원격 구성의 코인 충전 이벤트. null이면 이벤트가 없다. */
+    private var coinChargeEvent: CoinChargeEventVO? = null
+    private val claimedCoinCharges = mutableSetOf<String>()
+    private val analytics = RecordingAnalyticsHelper()
+    private val coinChargeTracker = CoinChargeTracker(analytics)
+    private val coinChargeRepository = object : CoinChargeRepository {
+        override fun getEvent(): CoinChargeEventVO? = coinChargeEvent
+        override suspend fun isClaimed(eventId: String): Boolean = eventId in claimedCoinCharges
+        override suspend fun markClaimed(eventId: String) {
+            claimedCoinCharges += eventId
+        }
+
+        override suspend fun claim(event: CoinChargeEventVO, packageId: String): CoinChargeGrantVO = error("홈은 지급하지 않는다")
+    }
 
     private val state get() = viewModel.uiState.value
 
@@ -157,6 +182,8 @@ class HomeViewModelTest {
                 },
             ),
             closeHomeNotice = CloseHomeNoticeUseCase(repository = homeRepository),
+            getCoinChargeNotice = GetCoinChargeNoticeUseCase(GetCoinChargeOfferUseCase(coinChargeRepository, coinChargeTracker)),
+            coinChargeTracker = coinChargeTracker,
         )
     }
 
@@ -744,7 +771,102 @@ class HomeViewModelTest {
         assertTrue(navigationHelper.appLinks.isEmpty())
     }
 
+    private val coinCharge = CoinChargeEventVO(
+        eventId = "2026-11-coin-charge",
+        group = "A",
+        grantCoins = 3000,
+        notice = CoinChargeNoticeVO(badge = "상점 오픈", title = "냐미 상점이 문을 열었어요!", body = "코인을 충전해 보세요.", ctaText = "코인 충전하기"),
+        packages = listOf(CoinChargePackageVO(id = "coin_300", coins = 300, price = 1000)),
+    )
+
+    private val coinChargeEvents get() = analytics.events.filter { it.name.startsWith("coin_charge_") }
+
+    @Test
+    fun `코인 충전 이벤트가 있으면 공지 맨 앞 장에 띄우고 공지가 떴다고 남긴다`() = runTest(testDispatcher) {
+        coinChargeEvent = coinCharge
+        homeRepository.noticeList = listOf(renewal)
+
+        resumeWith(afterTutorialMeal)
+
+        assertEquals(listOf("냐미 상점이 문을 열었어요!", "냐미가 새단장을 했어요!"), state.notice?.pages?.map { it.title })
+        assertEquals("/shop/coins/charge?source=notice", state.notice?.links?.first())
+        val view = coinChargeEvents.single()
+        assertEquals("coin_charge_notice_view", view.name)
+        assertEquals(mapOf("event_id" to coinCharge.eventId, "ab_group" to "A"), view.params)
+    }
+
+    @Test
+    fun `이벤트 장의 버튼을 누르면 공지 클릭을 남기고 충전 화면을 연다`() = runTest(testDispatcher) {
+        coinChargeEvent = coinCharge
+        resumeWith(afterTutorialMeal)
+
+        viewModel.onIntent(HomeIntent.NoticeCtaClicked(0))
+        advanceUntilIdle()
+
+        assertEquals(listOf("coin_charge_notice_view", "coin_charge_notice_click"), coinChargeEvents.map { it.name })
+        assertEquals(listOf("https://link.nyummy.co.kr/shop/coins/charge?source=notice"), navigationHelper.appLinks)
+    }
+
+    @Test
+    fun `다른 장의 버튼으로 나가면 이벤트 공지는 닫혔다고 남긴다`() = runTest(testDispatcher) {
+        coinChargeEvent = coinCharge
+        homeRepository.noticeList = listOf(event)
+        resumeWith(afterTutorialMeal)
+
+        viewModel.onIntent(HomeIntent.NoticeCtaClicked(1))
+        advanceUntilIdle()
+
+        assertEquals(listOf("coin_charge_notice_view", "coin_charge_notice_close"), coinChargeEvents.map { it.name })
+    }
+
+    @Test
+    fun `다시 보지 않기로 닫으면 닫음을 남기고 그 회차는 다음에 띄우지 않는다`() = runTest(testDispatcher) {
+        coinChargeEvent = coinCharge
+        resumeWith(afterTutorialMeal)
+
+        viewModel.onIntent(HomeIntent.NoticeDontShowAgainChanged(true))
+        viewModel.onIntent(HomeIntent.NoticeClosed)
+        advanceUntilIdle()
+
+        val close = coinChargeEvents.last()
+        assertEquals("coin_charge_notice_close", close.name)
+        assertEquals("true", close.params["dont_show_again"])
+        assertEquals(setOf(coinCharge.eventId), homeRepository.hiddenKeys)
+    }
+
+    @Test
+    fun `다시 보지 않기로 숨긴 회차는 띄우지 않고 떴다고 남기지도 않는다`() = runTest(testDispatcher) {
+        coinChargeEvent = coinCharge
+        homeRepository.hiddenKeys = mutableSetOf(coinCharge.eventId)
+        homeRepository.noticeList = listOf(renewal)
+
+        resumeWith(afterTutorialMeal)
+
+        assertEquals(listOf("냐미가 새단장을 했어요!"), state.notice?.pages?.map { it.title })
+        assertTrue(coinChargeEvents.isEmpty())
+    }
+
+    @Test
+    fun `이미 코인을 받은 사람에게는 이벤트 공지를 띄우지 않는다`() = runTest(testDispatcher) {
+        coinChargeEvent = coinCharge
+        claimedCoinCharges += coinCharge.eventId
+
+        resumeWith(afterTutorialMeal)
+
+        assertNull(state.notice)
+        assertTrue(coinChargeEvents.isEmpty())
+    }
+
     // endregion
+
+    private class RecordingAnalyticsHelper : AnalyticsHelper {
+        val events = mutableListOf<AnalyticsEvent>()
+
+        override fun logScreenView(screenName: String) = Unit
+        override fun logEvent(event: AnalyticsEvent) {
+            events += event
+        }
+    }
 
     private class FakeTutorialHelper : TutorialHelper {
         val pending = mutableSetOf<TutorialStep>()
