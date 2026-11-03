@@ -62,6 +62,14 @@ class ShopRepositoryImplTest {
     }
 
     @Test
+    fun `추천 탭은 배치 그룹을 헤더로 보내고 받은 칸에 그 그룹을 적는다`() = runBlocking {
+        val page = repository.getRecommendPage("B")
+
+        assertEquals(listOf("B"), shopApi.recommendVariants)
+        assertEquals("B", page.layoutVariant)
+    }
+
+    @Test
     fun `상단 바 조회는 잔액과 장바구니 종류 수를 공유 상태로 둔다`() = runBlocking {
         shopApi.me = ShopMeDTO(balance = 1240, cartItemCount = 3)
 
@@ -181,7 +189,11 @@ class ShopRepositoryImplTest {
 
     private class FakeShopApi : ShopApiService {
         var me = ShopMeDTO()
-        override suspend fun getRecommendPage(): Response<ShopPageDTO> = Response.success(ShopPageDTO())
+        val recommendVariants = mutableListOf<String>()
+        override suspend fun getRecommendPage(layoutVariant: String): Response<ShopPageDTO> {
+            recommendVariants += layoutVariant
+            return Response.success(ShopPageDTO())
+        }
         override suspend fun getProducts(tab: String, category: String?, sort: String, cursor: Long?, size: Int) =
             Response.success(ShopItemsDTO())
         override suspend fun getPromotionProducts(promotionId: Long, cursor: Long?, size: Int) =

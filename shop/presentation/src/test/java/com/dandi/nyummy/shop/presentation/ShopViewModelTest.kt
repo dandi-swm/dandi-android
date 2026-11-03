@@ -49,7 +49,7 @@ class ShopViewModelTest {
         messageHelper = messageHelper,
         observeShopSummary = ObserveShopSummaryUseCase(repository),
         refreshShopSummary = RefreshShopSummaryUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
-        addToCart = AddToCartUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
+        addToCart = AddToCartUseCase(repository, shopTracker(), FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
     )
 
     @Test

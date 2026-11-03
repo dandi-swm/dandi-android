@@ -17,6 +17,7 @@ class PurchaseUseCaseTest {
     private val messageHelper = RecordingMessageHelper()
     private val purchase = PurchaseUseCase(
         repository,
+        shopTracker(),
         FakeResourceHelper,
         messageHelper,
         RecordingNavigationHelper(),
@@ -106,6 +107,7 @@ class PurchaseUseCaseTest {
             val status = if (error == ShopErrorType.PRODUCT_NOT_FOUND) 404 else 409
             val useCase = PurchaseUseCase(
                 FakeShopRepository().apply { purchaseErrors += httpException(status, error.type) },
+                shopTracker(),
                 FakeResourceHelper,
                 messages,
                 RecordingNavigationHelper(),
@@ -136,7 +138,7 @@ class PurchaseUseCaseTest {
         for (error in listOf(ShopErrorType.PURCHASE_IN_PROGRESS, ShopErrorType.IDEMPOTENCY_KEY_REUSED)) {
             val repository = FakeShopRepository().apply { purchaseErrors += httpException(409, error.type) }
             val messages = RecordingMessageHelper()
-            val useCase = PurchaseUseCase(repository, FakeResourceHelper, messages, RecordingNavigationHelper(), FakeTTIHelper)
+            val useCase = PurchaseUseCase(repository, shopTracker(), FakeResourceHelper, messages, RecordingNavigationHelper(), FakeTTIHelper)
 
             val outcome = runBlocking { useCase(products) }
 
@@ -152,6 +154,7 @@ class PurchaseUseCaseTest {
             val messages = RecordingMessageHelper()
             val useCase = PurchaseUseCase(
                 FakeShopRepository().apply { purchaseErrors += error },
+                shopTracker(),
                 FakeResourceHelper,
                 messages,
                 RecordingNavigationHelper(),

@@ -18,7 +18,7 @@ import com.dandi.nyummy.shop.presentation.RecordingMessageHelper
 import com.dandi.nyummy.shop.presentation.RecordingNavigationHelper
 import com.dandi.nyummy.shop.presentation.httpException
 import com.dandi.nyummy.shop.presentation.shopItem
-import java.io.IOException
+import com.dandi.nyummy.shop.presentation.shopTracker
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,6 +34,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ShopPromotionViewModelTest {
@@ -59,7 +60,7 @@ class ShopPromotionViewModelTest {
         getShopPromotion = GetShopPromotionUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
         observeShopSummary = ObserveShopSummaryUseCase(repository),
         refreshShopSummary = RefreshShopSummaryUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
-        addToCart = AddToCartUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
+        addToCart = AddToCartUseCase(repository, shopTracker(), FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
     )
 
     @Test

@@ -18,7 +18,7 @@ class ShopBrowseUseCasesTest {
     private val messageHelper = RecordingMessageHelper()
     private val navigationHelper = RecordingNavigationHelper()
 
-    private val addToCart = AddToCartUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper)
+    private val addToCart = AddToCartUseCase(repository, shopTracker(), FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper)
     private val getPromotion = GetShopPromotionUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper)
     private val getProducts = GetShopProductsUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper)
 
@@ -26,7 +26,7 @@ class ShopBrowseUseCasesTest {
     fun `담기는 늘 1개를 담고 성공을 알린다`() = runBlocking {
         repository.added = AddedCartItemVO(productId = 7L, quantity = 2, cartItemCount = 3)
 
-        val result = addToCart(7L)
+        val result = addToCart(7L, ShopTracker.Source.of(ShopTab.RECOMMEND))
 
         assertEquals(listOf(7L to 1), repository.addRequests)
         assertEquals(AddedCartItemVO(productId = 7L, quantity = 2, cartItemCount = 3), result.getOrNull())
@@ -37,7 +37,7 @@ class ShopBrowseUseCasesTest {
     fun `장바구니가 가득 차서 거절되면 가득 찼다고 알린다`() = runBlocking {
         repository.error = httpException(409, ShopErrorType.CART_FULL.type)
 
-        val result = addToCart(7L)
+        val result = addToCart(7L, ShopTracker.Source.of(ShopTab.RECOMMEND))
 
         assertTrue(result.isFailure)
         assertEquals(listOf(ShopMessages.CART_FULL), messageHelper.toasts)
@@ -56,13 +56,14 @@ class ShopBrowseUseCasesTest {
             val messages = RecordingMessageHelper()
             val useCase = AddToCartUseCase(
                 FakeShopRepository(error = httpException(status, error.type)),
+                shopTracker(),
                 FakeResourceHelper,
                 messages,
                 RecordingNavigationHelper(),
                 FakeTTIHelper,
             )
 
-            runBlocking { useCase(7L) }
+            runBlocking { useCase(7L, ShopTracker.Source.of(ShopTab.RECOMMEND)) }
 
             assertEquals("$error", listOf(ShopMessages.CANNOT_ADD_MORE), messages.toasts)
             assertTrue("$error", messages.dialogs.isEmpty())
@@ -73,7 +74,7 @@ class ShopBrowseUseCasesTest {
     fun `모르는 4xx도 더 이상 담을 수 없다고 알린다`() = runBlocking {
         repository.error = httpException(400, "api.common.invalidInputValue")
 
-        addToCart(7L)
+        addToCart(7L, ShopTracker.Source.of(ShopTab.RECOMMEND))
 
         assertEquals(listOf(ShopMessages.CANNOT_ADD_MORE), messageHelper.toasts)
     }
@@ -82,7 +83,7 @@ class ShopBrowseUseCasesTest {
     fun `코드 없는 404도 준비 중 안내 대신 더 이상 담을 수 없다고 알린다`() = runBlocking {
         repository.error = httpException(404)
 
-        addToCart(7L)
+        addToCart(7L, ShopTracker.Source.of(ShopTab.RECOMMEND))
 
         assertEquals(listOf(ShopMessages.CANNOT_ADD_MORE), messageHelper.toasts)
         assertTrue(messageHelper.dialogs.isEmpty())
@@ -92,7 +93,7 @@ class ShopBrowseUseCasesTest {
     fun `응답 전에 끊기면 다시 담아 달라고 알린다`() = runBlocking {
         repository.error = IOException("offline")
 
-        val result = addToCart(7L)
+        val result = addToCart(7L, ShopTracker.Source.of(ShopTab.RECOMMEND))
 
         assertTrue(result.isFailure)
         assertEquals(listOf(ShopMessages.ADD_FAILED), messageHelper.toasts)
@@ -102,7 +103,7 @@ class ShopBrowseUseCasesTest {
     fun `서버 오류는 토스트 대신 공통 오류로 안내한다`() = runBlocking {
         repository.error = httpException(500)
 
-        addToCart(7L)
+        addToCart(7L, ShopTracker.Source.of(ShopTab.RECOMMEND))
 
         assertTrue(messageHelper.toasts.isEmpty())
         assertEquals(1, messageHelper.dialogs.size)
