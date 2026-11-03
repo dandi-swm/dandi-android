@@ -11,17 +11,21 @@ import kotlin.coroutines.cancellation.CancellationException
  * 한 실행에 한 번만 고른다. 부르는 순간 이번 실행은 다룬 것으로 표시해, 홈에 다시 들어오거나 홈 화면이 새로 만들어져도
  * 다시 띄우지 않는다. "다시 보지 않기"로 닫은 공지는 고르지 않는다.
  * 남은 공지는 JSON 순서를 지키며, 지금이 기간 안이고 앱 versionCode가 최소 버전 이상인 것만 고른다(적지 않은 조건은 보지 않는다).
+ * [leading]은 다른 기능이 맨 앞 장에 끼우는 공지(코인 충전 이벤트 등)이고, 같은 조건으로 거른다.
  */
 class GetHomeNoticesUseCase @Inject constructor(
     private val repository: HomeRepository,
     private val deviceHelper: DeviceHelper,
 ) {
-    suspend operator fun invoke(nowMillis: Long = System.currentTimeMillis()): List<HomeNoticeVO> {
+    suspend operator fun invoke(
+        nowMillis: Long = System.currentTimeMillis(),
+        leading: List<HomeNoticeVO> = emptyList(),
+    ): List<HomeNoticeVO> {
         if (repository.isNoticeHandled()) return emptyList()
         repository.markNoticeHandled()
         val hidden = repository.hiddenNoticeKeysOrEmpty()
         val versionCode = deviceHelper.appVersionCode
-        return repository.getNotices().filter { it.isVisibleAt(nowMillis, versionCode) && it.hideKey !in hidden }
+        return (leading + repository.getNotices()).filter { it.isVisibleAt(nowMillis, versionCode) && it.hideKey !in hidden }
     }
 }
 
