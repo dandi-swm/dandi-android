@@ -332,6 +332,55 @@ class WidgetPlannerTest {
         assertEquals(13, plan.streakDays)
     }
 
+    @Test
+    fun `아침 기록 뒤 홈 요약을 다시 받아도 홈 요약을 받은 시각을 식사로 보지 않는다`() {
+        val snapshot = WidgetSnapshotVO(
+            lastRecordedAtMillis = at(TODAY, 8, 10),
+            homeHint = hint(at(TODAY, 11, 30), streakDays = 12, todayRecordedCount = 1),
+        )
+
+        val plan = plan(snapshot, now = at(TODAY, 11, 40))
+        assertEquals(WidgetStage.WAITING, plan.stage)
+        assertEquals(Meal.LUNCH, plan.meal)
+        assertTrue(plan.isStreakLit)
+    }
+
+    @Test
+    fun `재회 직후 홈 요약을 받아도 다음 기다림까지 재회다`() {
+        val recordedAt = at(TODAY, 12, 30)
+        val snapshot = WidgetSnapshotVO(
+            lastRecordedAtMillis = recordedAt,
+            reunionRecordedAtMillis = recordedAt,
+            homeHint = hint(at(TODAY, 12, 31), streakDays = 1, todayRecordedCount = 1),
+        )
+
+        val plan = plan(snapshot, now = at(TODAY, 15))
+        assertEquals(WidgetStage.REUNION, plan.stage)
+        assertEquals("R:$recordedAt", plan.episodeKey)
+    }
+
+    @Test
+    fun `홈 요약을 여러 번 받아도 배빵빵 회차는 이 기기 접수 하나다`() {
+        val recordedAt = at(TODAY, 8, 10)
+        val first = WidgetSnapshotVO(lastRecordedAtMillis = recordedAt, homeHint = hint(at(TODAY, 8, 11), 12, 1))
+        val later = first.copy(homeHint = hint(at(TODAY, 9, 30), 12, 1))
+
+        assertEquals(plan(first, now = at(TODAY, 10)).episodeKey, plan(later, now = at(TODAY, 10)).episodeKey)
+    }
+
+    @Test
+    fun `끊긴 요약을 날마다 다시 받아도 처음 끊긴 날부터 센다`() {
+        val snapshot = WidgetSnapshotVO(
+            homeHint = hint(at(TODAY, 9), streakDays = 0, todayRecordedCount = 0)
+                .copy(brokenSinceMillis = at(TODAY.minusDays(2), 10)),
+        )
+
+        val plan = plan(snapshot, now = at(TODAY, 12))
+        assertEquals(WidgetStage.AWAY, plan.stage)
+        assertEquals(3, plan.awayDays)
+        assertFalse(plan.isAwayDaysExact)
+    }
+
     // ── 타임존·자정·다시 그릴 시각 ─────────────────────────────
 
     @Test

@@ -50,7 +50,8 @@ class FinishOnboardingUseCaseTest {
         assertEquals(1, repository.onboardingCompleteCount)
         assertEquals(listOf(HomePreparePage), navigationHelper.rootPages)
         assertTrue(messageHelper.dialogs.isEmpty())
-        assertEquals(listOf<WidgetCall>(WidgetCall.MealTimesSaved(MealTimesVO.default)), widgetHelper.calls)
+        // 서버에는 예전 시각이 남아 있으므로 이번 입력을 위젯에 넘기지 않는다.
+        assertTrue(widgetHelper.calls.isEmpty())
     }
 
     @Test

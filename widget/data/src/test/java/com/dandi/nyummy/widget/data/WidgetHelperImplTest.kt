@@ -96,6 +96,30 @@ class WidgetHelperImplTest {
     }
 
     @Test
+    fun `끊긴 홈 요약을 이어 받으면 처음 끊긴 순간을 지킨다`() = runBlocking {
+        val repository = FakeWidgetRepository(WidgetSnapshotVO.empty)
+
+        helper(repository, now = at(TODAY.minusDays(2), 9)).onHomeSummary(streakDays = 0, todayRecordedCount = 0)
+        helper(repository, now = at(TODAY, 9)).onHomeSummary(streakDays = 0, todayRecordedCount = 0)
+
+        assertEquals(at(TODAY, 9), repository.current.homeHint.fetchedAtMillis)
+        assertEquals(at(TODAY.minusDays(2), 9), repository.current.homeHint.brokenSinceMillis)
+    }
+
+    @Test
+    fun `연속이 이어진 홈 요약을 받으면 끊긴 순간을 지운다`() = runBlocking {
+        val brokenHint = WidgetHomeHintVO(
+            fetchedAtMillis = at(TODAY.minusDays(1), 9),
+            brokenSinceMillis = at(TODAY.minusDays(1), 9),
+        )
+        val repository = FakeWidgetRepository(WidgetSnapshotVO(homeHint = brokenHint))
+
+        helper(repository, now = at(TODAY, 9)).onHomeSummary(streakDays = 1, todayRecordedCount = 1)
+
+        assertEquals(0L, repository.current.homeHint.brokenSinceMillis)
+    }
+
+    @Test
     fun `저장한 끼니 시각을 남긴다`() = runBlocking {
         val repository = FakeWidgetRepository(WidgetSnapshotVO.empty)
         val lunchAt13 = MealTimesVO.default.with(Meal.LUNCH, MealTimeVO(hour = 13))

@@ -57,7 +57,12 @@ class WidgetDataSourceTest {
     fun `남긴 값을 그대로 다시 읽는다`() = runBlocking {
         val snapshot = WidgetSnapshotVO(
             lastRecordedAtMillis = 1_762_222_200_000L,
-            homeHint = WidgetHomeHintVO(fetchedAtMillis = 1_762_222_300_000L, streakDays = 12, todayRecordedCount = 2),
+            homeHint = WidgetHomeHintVO(
+                fetchedAtMillis = 1_762_222_300_000L,
+                streakDays = 12,
+                todayRecordedCount = 2,
+                brokenSinceMillis = 1_762_100_000_000L,
+            ),
             mealTimes = MealTimesVO.default
                 .with(Meal.BREAKFAST, MealTimeVO(hour = 9, isSkipped = true))
                 .with(Meal.LUNCH, MealTimeVO(hour = 13)),
