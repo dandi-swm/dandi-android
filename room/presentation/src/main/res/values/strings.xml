@@ -29,4 +29,16 @@
     <string name="my_room_tutorial_place_body">누르면 방 가운데에 놓여</string>
     <string name="my_room_tutorial_save_title">직접 옮겨 보고 마음에 들면 저장해 줘!</string>
     <string name="my_room_tutorial_save_body">아이템은 끌어서 옮기고, 두 손가락으로 크기를 바꿀 수 있어</string>
+
+    <!-- 놓아보기: 장바구니에 담은 아이템을 사기 전에 내 방에 놓아 본다 -->
+    <string name="room_try_on_title">놓아보기</string>
+    <string name="room_try_on_header">담은 아이템 %1$s</string>
+    <string name="room_try_on_header_count">%1$d개</string>
+    <string name="room_try_on_not_saved">놓아 본 모습은 저장되지 않아요</string>
+    <string name="room_try_on_price_description">%1$s코인</string>
+    <string name="room_try_on_unavailable">살 수 없어요</string>
+    <string name="room_try_on_put_away">빼기</string>
+    <string name="room_try_on_load_failed">방을 불러오지 못했어요</string>
+    <string name="room_try_on_sheet_expand">담은 아이템 펼치기</string>
+    <string name="room_try_on_sheet_collapse">담은 아이템 접기</string>
 </resources>
