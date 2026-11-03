@@ -47,12 +47,13 @@ class ShopPurchaseFlowTest {
     private val messageHelper = RecordingMessageHelper()
     private val navigationHelper = RecordingNavigationHelper()
 
-    /** 1번(2개, 150), 2번(1개, 320)을 골랐고, 3번은 골랐지만 살 수 없다. */
+    /** 1번(2개, 150), 2번(1개, 320)을 골랐고, 3번은 골랐지만 살 수 없고, 4번은 살 수 있지만 고르지 않았다. */
     private fun cart(balanceAfter: Int = 860) = CartVO(
         items = listOf(
             CartItemVO(shopItem(1), quantity = 2, maxQuantity = 10, isSelected = true, canPurchase = true, purchasePrice = 150),
             CartItemVO(shopItem(2), quantity = 1, maxQuantity = 10, isSelected = true, canPurchase = true, purchasePrice = 320),
             CartItemVO(shopItem(3), quantity = 1, maxQuantity = 0, isSelected = true, canPurchase = false, purchasePrice = 400),
+            CartItemVO(shopItem(4), quantity = 1, maxQuantity = 10, isSelected = false, canPurchase = true, purchasePrice = 200),
         ),
         selectedItemCount = 2,
         summary = CartSummaryVO(quantity = 3, purchasePrice = 620, balance = 620 + balanceAfter, balanceAfter = balanceAfter),
@@ -90,6 +91,7 @@ class ShopPurchaseFlowTest {
         advanceUntilIdle()
 
         viewModel.onIntent(ShopCartIntent.ClickPurchase)
+        advanceUntilIdle()
 
         assertEquals(ShopCartSheet.InsufficientBalance, viewModel.uiState.value.sheet)
         assertEquals(380, viewModel.uiState.value.shortage)
@@ -179,17 +181,51 @@ class ShopPurchaseFlowTest {
     }
 
     @Test
-    fun `서버가 코인 부족으로 거절하면 부족 시트를 보이고 다시 읽는다`() = runTest(testDispatcher) {
+    fun `서버가 코인 부족으로 거절하면 장바구니를 다시 받은 뒤 최신 금액으로 부족 시트를 연다`() = runTest(testDispatcher) {
         repository.purchaseHandler = { throw httpException(409, ShopErrorType.INSUFFICIENT_BALANCE.type) }
         val viewModel = enteredViewModel()
         advanceUntilIdle()
+        val reloaded = CompletableDeferred<Unit>()
+        repository.cartHandler = {
+            reloaded.await()
+            cart(balanceAfter = -100)
+        }
 
         viewModel.onIntent(ShopCartIntent.ClickPurchase)
         viewModel.onIntent(ShopCartIntent.ConfirmPurchase)
         advanceUntilIdle()
+        // 다시 받는 동안에는 잔액이 넉넉했던 옛 금액으로 시트를 열지 않는다.
+        assertNull(viewModel.uiState.value.sheet)
+        assertTrue(viewModel.uiState.value.isSyncing)
+
+        reloaded.complete(Unit)
+        advanceUntilIdle()
 
         assertEquals(ShopCartSheet.InsufficientBalance, viewModel.uiState.value.sheet)
+        assertEquals(100, viewModel.uiState.value.shortage)
         assertEquals(listOf(CartCall.Get, CartCall.Get), repository.cartCalls)
+    }
+
+    @Test
+    fun `장바구니 요청의 응답을 받기 전에는 구매 시트를 열지 않는다`() = runTest(testDispatcher) {
+        val viewModel = enteredViewModel()
+        advanceUntilIdle()
+        val gate = CompletableDeferred<Unit>()
+        repository.cartHandler = { call ->
+            if (call is CartCall.Quantity) gate.await()
+            cart()
+        }
+
+        viewModel.onIntent(ShopCartIntent.ChangeQuantity(1, 3))
+        advanceUntilIdle()
+        viewModel.onIntent(ShopCartIntent.ClickPurchase)
+        assertNull(viewModel.uiState.value.sheet)
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+        viewModel.onIntent(ShopCartIntent.ClickPurchase)
+
+        assertEquals(ShopCartSheet.Confirm, viewModel.uiState.value.sheet)
     }
 
     @Test
