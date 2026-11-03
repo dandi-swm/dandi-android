@@ -114,3 +114,6 @@ include(":onboarding:presentation")
 include(":onboarding:domain")
 include(":onboarding:data")
 include(":onboarding:entity")
+
+include(":widget:domain")
+include(":widget:entity")
