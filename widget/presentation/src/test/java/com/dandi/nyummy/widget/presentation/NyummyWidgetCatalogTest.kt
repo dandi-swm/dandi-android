@@ -17,21 +17,21 @@ import javax.xml.parsers.DocumentBuilderFactory
  * 위젯 시안 목록이 피그마 `Widget · 20 사용 시안 · 상태별`과 문구 규칙을 지키는지 본다.
  * 문구는 리소스 파일(strings.xml)에서 읽고, 까투리 글자 판정은 앱의 `AccentGlyphCoverage`와 같은 규칙으로 JVM 글꼴로 한다.
  */
-class NyamiWidgetCatalogTest {
+class NyummyWidgetCatalogTest {
 
     @Test
     fun `모든 상태와 일 단위 날수에 시안이 하나 이상 있다`() {
         allPlans.forEach { plan ->
-            val cards = NyamiWidgetCatalog.cardsFor(plan)
+            val cards = NyummyWidgetCatalog.cardsFor(plan)
             assertTrue("$plan", cards.isNotEmpty())
-            assertEquals(cards.size, NyamiWidgetCatalog.variantCount(plan))
+            assertEquals(cards.size, NyummyWidgetCatalog.variantCount(plan))
         }
     }
 
     @Test
     fun `시안 수는 보드와 같은 39장이고 그림이 겹치지 않는다`() {
         val counts = WidgetStage.entries.filterNot { it == WidgetStage.AWAY }
-            .associateWith { NyamiWidgetCatalog.variantCount(WidgetPlanVO(stage = it)) }
+            .associateWith { NyummyWidgetCatalog.variantCount(WidgetPlanVO(stage = it)) }
 
         assertEquals(
             mapOf(
@@ -46,16 +46,16 @@ class NyamiWidgetCatalogTest {
             ),
             counts,
         )
-        assertEquals(listOf(1, 1, 1, 1, 2, 3, 1), (1..7).map { NyamiWidgetCatalog.variantCount(away(it)) })
+        assertEquals(listOf(1, 1, 1, 1, 2, 3, 1), (1..7).map { NyummyWidgetCatalog.variantCount(away(it)) })
         assertEquals(39, allCards.size)
         assertEquals(39, allCards.map { it.image }.toSet().size)
     }
 
     @Test
     fun `7일 이상은 모두 망부석이다`() {
-        val stone = NyamiWidgetCatalog.cardsFor(away(7))
+        val stone = NyummyWidgetCatalog.cardsFor(away(7))
 
-        (8..30).forEach { days -> assertEquals(stone, NyamiWidgetCatalog.cardsFor(away(days))) }
+        (8..30).forEach { days -> assertEquals(stone, NyummyWidgetCatalog.cardsFor(away(days))) }
     }
 
     @Test
@@ -68,14 +68,14 @@ class NyamiWidgetCatalogTest {
 
     @Test
     fun `배빵빵 제목에 끼니 수 같은 숫자가 없다`() {
-        NyamiWidgetCatalog.cardsFor(WidgetPlanVO(stage = WidgetStage.FULL)).forEach { card ->
+        NyummyWidgetCatalog.cardsFor(WidgetPlanVO(stage = WidgetStage.FULL)).forEach { card ->
             assertFalse(text(card.title), text(card.title).any(Char::isDigit))
         }
     }
 
     @Test
     fun `재회 문구는 지난 날수를 말하지 않는다`() {
-        val reunion = NyamiWidgetCatalog.cardsFor(WidgetPlanVO(stage = WidgetStage.REUNION)).single()
+        val reunion = NyummyWidgetCatalog.cardsFor(WidgetPlanVO(stage = WidgetStage.REUNION)).single()
 
         assertEquals("왔다!!!", text(reunion.title))
         assertEquals("집사다, 집사!", text(reunion.sub))
@@ -90,7 +90,7 @@ class NyamiWidgetCatalogTest {
         val withMeal = setOf(WidgetStage.NIGHT, WidgetStage.WAITING, WidgetStage.MISSED_ONE)
 
         allPlans.filterNot { it.stage in withMeal }.forEach { plan ->
-            NyamiWidgetCatalog.cardsFor(plan).flatMap(::rawTexts).forEach { copy ->
+            NyummyWidgetCatalog.cardsFor(plan).flatMap(::rawTexts).forEach { copy ->
                 assertFalse("${plan.stage}: $copy", "%1\$s" in copy)
             }
         }
@@ -99,7 +99,7 @@ class NyamiWidgetCatalogTest {
     @Test
     fun `일 단위 설명에는 날수가 없고 날수 접두는 따로 붙인다`() {
         assertEquals("%1\$d일째 %2\$s", strings.getValue("widget_away_days_prefix"))
-        (1..7).flatMap { NyamiWidgetCatalog.cardsFor(away(it)) }.forEach { card ->
+        (1..7).flatMap { NyummyWidgetCatalog.cardsFor(away(it)) }.forEach { card ->
             val rest = text(card.sub)
             assertFalse(rest, "일째" in rest || "%" in rest)
         }
@@ -117,10 +117,10 @@ class NyamiWidgetCatalogTest {
     @Test
     fun `범위를 벗어난 시안 번호는 끝 시안으로 맞춘다`() {
         val plan = WidgetPlanVO(stage = WidgetStage.NIGHT)
-        val cards = NyamiWidgetCatalog.cardsFor(plan)
+        val cards = NyummyWidgetCatalog.cardsFor(plan)
 
-        assertEquals(cards.last(), NyamiWidgetCatalog.cardFor(WidgetCardVO(plan, variant = 99)))
-        assertEquals(cards.first(), NyamiWidgetCatalog.cardFor(WidgetCardVO(plan, variant = -1)))
+        assertEquals(cards.last(), NyummyWidgetCatalog.cardFor(WidgetCardVO(plan, variant = 99)))
+        assertEquals(cards.first(), NyummyWidgetCatalog.cardFor(WidgetCardVO(plan, variant = -1)))
     }
 
     @Test
@@ -154,7 +154,7 @@ class NyamiWidgetCatalogTest {
             listOf(strings.getValue("widget_label"), strings.getValue("widget_description"))
     }
 
-    private fun rawTexts(card: NyamiWidgetCard): List<String> =
+    private fun rawTexts(card: NyummyWidgetCard): List<String> =
         listOfNotNull(card.title, card.sub, card.subAfterMealTime.takeIf { it != 0 }).map(::text)
 
     private fun text(res: Int): String = strings.getValue(stringNames.getValue(res))
@@ -165,10 +165,10 @@ class NyamiWidgetCatalogTest {
         if (stage == WidgetStage.AWAY) (1..10).map(::away) else listOf(WidgetPlanVO(stage = stage))
     }
 
-    private val allCards: List<NyamiWidgetCard> =
+    private val allCards: List<NyummyWidgetCard> =
         WidgetStage.entries.filterNot { it == WidgetStage.AWAY }
-            .flatMap { NyamiWidgetCatalog.cardsFor(WidgetPlanVO(stage = it)) } +
-            (1..7).flatMap { NyamiWidgetCatalog.cardsFor(away(it)) }
+            .flatMap { NyummyWidgetCatalog.cardsFor(WidgetPlanVO(stage = it)) } +
+            (1..7).flatMap { NyummyWidgetCatalog.cardsFor(away(it)) }
 
     /**
      * 앱의 `AccentGlyphCoverage`와 같은 규칙: 글자만 보고, 영문 대소문자는 있다고 보고, 한글은 모양이 실제로
