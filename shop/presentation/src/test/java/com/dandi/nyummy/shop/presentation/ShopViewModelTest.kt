@@ -213,4 +213,22 @@ class ShopViewModelTest {
         viewModel.onIntent(ShopIntent.DismissDetail)
         assertNull(viewModel.uiState.value.detailItem)
     }
+
+    @Test
+    fun `시트를 바꾼 뒤 늦게 온 앞 상품의 담기 응답은 지금 시트를 닫지 않는다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+        val gate = CompletableDeferred<Unit>().also { repository.addGate = it }
+        val first = shopItem(1)
+        val second = shopItem(2)
+
+        viewModel.onIntent(ShopIntent.ClickItem(first))
+        viewModel.onIntent(ShopIntent.AddToCart(first, fromSheet = true))
+        advanceUntilIdle()
+        viewModel.onIntent(ShopIntent.DismissDetail)
+        viewModel.onIntent(ShopIntent.ClickItem(second))
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(second, viewModel.uiState.value.detailItem)
+    }
 }
