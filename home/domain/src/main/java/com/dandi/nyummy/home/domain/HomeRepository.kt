@@ -2,7 +2,6 @@ package com.dandi.nyummy.home.domain
 
 import com.dandi.nyummy.home.entity.HomeNoticeVO
 import com.dandi.nyummy.home.entity.HomeSummaryVO
-import java.time.LocalDate
 
 interface HomeRepository {
     /**
@@ -20,11 +19,11 @@ interface HomeRepository {
     /** 원격 구성에 넣은 새 소식 공지를 JSON 순서대로 읽는다. 받아 둔 값만 읽고, 비었거나 형식이 맞지 않으면 빈 목록이다. */
     fun getNotices(): List<HomeNoticeVO>
 
-    /** 새 소식을 "오늘 하루 보지 않기"로 닫은 날(기기 날짜). 그런 적이 없으면 null. */
-    suspend fun getNoticeHiddenDate(): LocalDate?
+    /** "다시 보지 않기"로 닫은 공지들([HomeNoticeVO.hideKey]). 그런 적이 없으면 빈 집합이다. */
+    suspend fun getHiddenNoticeKeys(): Set<String>
 
-    /** 새 소식을 [date] 하루 동안 띄우지 않게 기기에 남긴다. */
-    suspend fun setNoticeHiddenDate(date: LocalDate)
+    /** [keys] 공지([HomeNoticeVO.hideKey])를 다시 띄우지 않게 기기에 남긴다. */
+    suspend fun hideNotices(keys: Set<String>)
 
     /** 이번 실행에서 새 소식을 이미 보였거나 띄우지 않기로 했는지. 앱을 다시 실행하면 false로 돌아간다. */
     fun isNoticeHandled(): Boolean

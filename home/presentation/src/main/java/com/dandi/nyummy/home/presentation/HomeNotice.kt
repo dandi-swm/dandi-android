@@ -6,6 +6,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyNoticeD
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyNoticePage
 import com.dandi.nyummy.home.entity.HomeNoticeVO
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
 /**
@@ -13,13 +14,15 @@ import kotlinx.collections.immutable.toImmutableList
  *
  * @property pages 넘겨 볼 공지 장. JSON 순서다.
  * @property links 장마다 버튼이 여는 앱 경로. 버튼이 없는 장은 null이다.
- * @property isHideTodayChecked "오늘 하루 보지 않기"를 체크했다. 닫을 때 적용한다.
+ * @property hideKeys 장마다 "다시 보지 않기"로 숨길 때 남기는 값([HomeNoticeVO.hideKey]). JSON 순서다.
+ * @property isDontShowAgainChecked "다시 보지 않기"를 체크했다. 닫을 때 적용한다.
  */
 @Immutable
 data class HomeNoticeUiState(
     val pages: ImmutableList<NyummyNoticePage>,
     val links: ImmutableList<String?>,
-    val isHideTodayChecked: Boolean = false,
+    val hideKeys: ImmutableList<String> = persistentListOf(),
+    val isDontShowAgainChecked: Boolean = false,
 )
 
 internal fun List<HomeNoticeVO>.toNoticeUiState() = HomeNoticeUiState(
@@ -34,6 +37,7 @@ internal fun List<HomeNoticeVO>.toNoticeUiState() = HomeNoticeUiState(
         )
     }.toImmutableList(),
     links = map { it.ctaLink }.toImmutableList(),
+    hideKeys = map { it.hideKey }.toImmutableList(),
 )
 
 /** 새 소식 공지 다이얼로그. 띄울 공지가 없으면 그리지 않는다. */
@@ -42,8 +46,8 @@ internal fun HomeNoticeDialog(notice: HomeNoticeUiState?, onIntent: (HomeIntent)
     notice ?: return
     NyummyNoticeDialog(
         pages = notice.pages,
-        todayChecked = notice.isHideTodayChecked,
-        onTodayCheckedChange = { onIntent(HomeIntent.NoticeHideTodayChanged(it)) },
+        dontShowAgainChecked = notice.isDontShowAgainChecked,
+        onDontShowAgainChange = { onIntent(HomeIntent.NoticeDontShowAgainChanged(it)) },
         onClose = { onIntent(HomeIntent.NoticeClosed) },
         onCtaClick = { onIntent(HomeIntent.NoticeCtaClicked(it)) },
     )

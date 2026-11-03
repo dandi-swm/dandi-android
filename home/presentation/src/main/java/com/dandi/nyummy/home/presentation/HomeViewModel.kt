@@ -159,8 +159,8 @@ class HomeViewModel @Inject constructor(
                 dispatch(HomeReducerEvent.HealthStoryChanged(null))
                 tutorialRecordJob = viewModelScope.launch { tutorialHelper.finish() }
             }
-            is HomeIntent.NoticeHideTodayChanged -> currentState.notice?.let {
-                dispatch(HomeReducerEvent.NoticeChanged(it.copy(isHideTodayChecked = intent.checked)))
+            is HomeIntent.NoticeDontShowAgainChanged -> currentState.notice?.let {
+                dispatch(HomeReducerEvent.NoticeChanged(it.copy(isDontShowAgainChecked = intent.checked)))
             }
             HomeIntent.NoticeClosed -> closeNotice()
             is HomeIntent.NoticeCtaClicked -> {
@@ -235,7 +235,7 @@ class HomeViewModel @Inject constructor(
     /**
      * 홈 요약을 처음 받으면 튜토리얼 판단이 끝나기를 기다렸다가 새 소식 공지를 띄울지 정한다. 이 화면에서는 한 번만 정한다.
      * 튜토리얼(코치마크, 건너뛰기 확인, 건강 이야기)이 떠 있으면 이번 실행에는 띄우지 않는다. 튜토리얼을 마친 직후 같은 실행에서
-     * 공지가 연달아 뜨지 않게 한다. 이번 실행에 이미 다뤘거나 오늘 하루 숨겼으면 UseCase가 빈 목록을 준다.
+     * 공지가 연달아 뜨지 않게 한다. 이번 실행에 이미 다뤘거나 다시 보지 않기로 숨긴 공지는 UseCase가 빼고 준다.
      */
     private fun showNoticeIfNeeded() {
         if (noticeJob != null) return
@@ -245,7 +245,7 @@ class HomeViewModel @Inject constructor(
                 currentState.tutorialSkipConfirm != null ||
                 currentState.healthStory != null
             if (tutorialShown) {
-                closeHomeNotice(hideToday = false)
+                closeHomeNotice()
                 return@launch
             }
             val notices = getHomeNotices()
@@ -253,11 +253,12 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** 공지를 내리고, 이번 실행에서는 다시 띄우지 않는다. "오늘 하루 보지 않기"를 체크해 두었으면 오늘 하루 더 띄우지 않는다. */
+    /** 공지를 내리고, 이번 실행에서는 다시 띄우지 않는다. "다시 보지 않기"를 체크해 두었으면 이 공지들은 앞으로도 띄우지 않는다. */
     private fun closeNotice() {
         val notice = currentState.notice ?: return
         dispatch(HomeReducerEvent.NoticeChanged(null))
-        viewModelScope.launch { closeHomeNotice(hideToday = notice.isHideTodayChecked) }
+        val hideKeys = if (notice.isDontShowAgainChecked) notice.hideKeys.toSet() else emptySet()
+        viewModelScope.launch { closeHomeNotice(hideKeys) }
     }
 
     /**

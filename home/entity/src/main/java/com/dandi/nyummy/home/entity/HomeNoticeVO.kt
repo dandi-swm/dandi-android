@@ -3,7 +3,7 @@ package com.dandi.nyummy.home.entity
 /**
  * 홈 첫 진입 때 띄우는 새 소식 공지 한 장(Remote Config `android_home_notice`).
  *
- * @property id 공지 구분값. 화면에 쓰지 않고 운영자가 공지를 알아보는 데 쓴다.
+ * @property id 공지 구분값. 화면에 쓰지 않고 운영자가 공지를 알아보는 데, 그리고 "다시 보지 않기"로 숨긴 공지를 기억하는 데([hideKey]) 쓴다.
  * @property badge 사진 위 왼쪽에 얹는 배지 글자(업데이트, 이벤트 등). 비어 있으면 배지를 그리지 않는다.
  * @property startAtMillis 보이기 시작하는 순간. null이면 처음부터 보인다.
  * @property endAtMillis 그만 보이는 순간. null이면 끝없이 보인다.
@@ -27,4 +27,8 @@ data class HomeNoticeVO(
     val body: String = "",
     val ctaText: String? = null,
     val ctaLink: String? = null,
-)
+) {
+    /** "다시 보지 않기"로 숨길 때 기기에 남기는 값. [id]가 비어 있으면 제목으로 알아본다. */
+    val hideKey: String
+        get() = id.ifBlank { title }
+}

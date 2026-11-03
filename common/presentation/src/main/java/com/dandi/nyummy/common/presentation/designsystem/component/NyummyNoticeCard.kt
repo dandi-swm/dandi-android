@@ -134,11 +134,11 @@ internal fun NoticeDots(count: Int, current: Int, modifier: Modifier = Modifier)
     }
 }
 
-/** 카드 아래 줄. 왼쪽은 "오늘 하루 보지 않기" 체크, 오른쪽은 "닫기"다. 딤 위라 흰 글자로 쓴다. */
+/** 카드 아래 줄. 왼쪽은 "다시 보지 않기" 체크, 오른쪽은 "닫기"다. 딤 위라 흰 글자로 쓴다. */
 @Composable
 internal fun NoticeDismissRow(
-    todayChecked: Boolean,
-    onTodayCheckedChange: (Boolean) -> Unit,
+    dontShowAgainChecked: Boolean,
+    onDontShowAgainChange: (Boolean) -> Unit,
     onClose: () -> Unit,
 ) {
     Row(
@@ -149,18 +149,18 @@ internal fun NoticeDismissRow(
             modifier = Modifier
                 .fillMaxHeight()
                 .toggleable(
-                    value = todayChecked,
+                    value = dontShowAgainChecked,
                     interactionSource = rememberNyummyInteractionSource(),
                     indication = null,
                     role = Role.Checkbox,
-                    onValueChange = onTodayCheckedChange,
+                    onValueChange = onDontShowAgainChange,
                 ),
             horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            NoticeCheckbox(checked = todayChecked)
+            NoticeCheckbox(checked = dontShowAgainChecked)
             NyummyText(
-                text = stringResource(R.string.nyummy_notice_hide_today),
+                text = stringResource(R.string.nyummy_notice_dont_show_again),
                 style = NyummyTheme.typography.bodyM,
                 color = NyummyTheme.colors.content.onAction,
             )

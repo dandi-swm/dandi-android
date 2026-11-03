@@ -27,7 +27,6 @@ import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
-import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
@@ -70,7 +69,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
-import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.random.Random
 
@@ -640,7 +638,7 @@ class HomeViewModelTest {
 
         assertEquals(listOf("냐미가 새단장을 했어요!", "가을 이벤트"), state.notice?.pages?.map { it.title })
         assertEquals(listOf(null, "/shop"), state.notice?.links)
-        assertFalse(state.notice!!.isHideTodayChecked)
+        assertFalse(state.notice!!.isDontShowAgainChecked)
     }
 
     @Test
@@ -651,7 +649,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `닫은 뒤 다시 홈이 보여도 공지를 띄우지 않고 날짜도 남기지 않는다`() = runTest(testDispatcher) {
+    fun `닫은 뒤 다시 홈이 보여도 공지를 띄우지 않고 숨긴 공지로 남기지도 않는다`() = runTest(testDispatcher) {
         homeRepository.noticeList = listOf(renewal)
         resumeWith(afterTutorialMeal)
 
@@ -661,7 +659,7 @@ class HomeViewModelTest {
 
         assertNull(state.notice)
         assertTrue(homeRepository.noticeHandled)
-        assertNull(homeRepository.hiddenDate)
+        assertTrue(homeRepository.hiddenKeys.isEmpty())
     }
 
     @Test
@@ -686,27 +684,27 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `오늘 하루 보지 않기를 체크하고 닫으면 오늘 날짜를 남긴다`() = runTest(testDispatcher) {
-        homeRepository.noticeList = listOf(renewal)
+    fun `다시 보지 않기를 체크하고 닫으면 그때 보인 공지들을 숨긴 공지로 남긴다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(renewal, event)
         resumeWith(afterTutorialMeal)
 
-        viewModel.onIntent(HomeIntent.NoticeHideTodayChanged(true))
-        assertTrue(state.notice!!.isHideTodayChecked)
+        viewModel.onIntent(HomeIntent.NoticeDontShowAgainChanged(true))
+        assertTrue(state.notice!!.isDontShowAgainChecked)
         viewModel.onIntent(HomeIntent.NoticeClosed)
         advanceUntilIdle()
 
         assertNull(state.notice)
-        assertEquals(DeviceTime.today(), homeRepository.hiddenDate)
+        assertEquals(setOf(renewal.hideKey, event.hideKey), homeRepository.hiddenKeys)
     }
 
     @Test
-    fun `오늘 하루 숨긴 날에는 띄우지 않는다`() = runTest(testDispatcher) {
-        homeRepository.noticeList = listOf(renewal)
-        homeRepository.hiddenDate = DeviceTime.today()
+    fun `다시 보지 않기로 숨긴 공지는 띄우지 않고 새 공지만 띄운다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(renewal, event)
+        homeRepository.hiddenKeys = mutableSetOf(renewal.hideKey)
 
         resumeWith(afterTutorialMeal)
 
-        assertNull(state.notice)
+        assertEquals(listOf("가을 이벤트"), state.notice?.pages?.map { it.title })
     }
 
     @Test
@@ -841,13 +839,13 @@ class HomeViewModelTest {
         override fun prefetchHomeSummary() = Unit
 
         var noticeList: List<HomeNoticeVO> = emptyList()
-        var hiddenDate: LocalDate? = null
+        var hiddenKeys: MutableSet<String> = mutableSetOf()
         var noticeHandled = false
 
         override fun getNotices(): List<HomeNoticeVO> = noticeList
-        override suspend fun getNoticeHiddenDate(): LocalDate? = hiddenDate
-        override suspend fun setNoticeHiddenDate(date: LocalDate) {
-            hiddenDate = date
+        override suspend fun getHiddenNoticeKeys(): Set<String> = hiddenKeys.toSet()
+        override suspend fun hideNotices(keys: Set<String>) {
+            hiddenKeys += keys
         }
 
         override fun isNoticeHandled(): Boolean = noticeHandled

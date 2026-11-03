@@ -33,7 +33,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomePrepareViewModelTest {
@@ -150,8 +149,8 @@ private class FakeHomeRepository : HomeRepository {
     var noticeList: List<HomeNoticeVO> = emptyList()
 
     override fun getNotices(): List<HomeNoticeVO> = noticeList
-    override suspend fun getNoticeHiddenDate(): LocalDate? = null
-    override suspend fun setNoticeHiddenDate(date: LocalDate) = Unit
+    override suspend fun getHiddenNoticeKeys(): Set<String> = emptySet()
+    override suspend fun hideNotices(keys: Set<String>) = Unit
     override fun isNoticeHandled(): Boolean = false
     override fun markNoticeHandled() = Unit
 }
