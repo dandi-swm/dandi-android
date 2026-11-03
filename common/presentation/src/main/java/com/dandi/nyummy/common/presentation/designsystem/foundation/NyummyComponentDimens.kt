@@ -105,6 +105,16 @@ internal object NyummyComponentDimens {
     /** Top Bar 높이. */
     val TopBarHeight = 56.dp
 
+    /** Icon Button 크기별 원 지름(M·S·Xs)과 Xs 아이콘. L은 터치 영역(48), Inline은 아이콘 크기 그대로다. */
+    val IconButtonMediumSize = 40.dp
+    val IconButtonSmallSize = 32.dp
+    val IconButtonCompactSize = 30.dp
+    val IconButtonCompactIconSize = 18.dp
+
+    /** Icon Button 수 배지 지름(최소 너비)과 원 위쪽에서 내려온 거리. 배지 오른쪽 끝을 원 오른쪽 끝에 맞춘다. */
+    val IconButtonBadgeSize = 18.dp
+    val IconButtonBadgeTopOffset = 3.dp
+
     /** Bottom Nav 가운데 동작 버튼(바 안의 초록 버튼). */
     val BottomNavActionSize = 54.dp
 

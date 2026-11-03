@@ -12,16 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -29,6 +26,9 @@ import coil3.compose.AsyncImage
 import com.dandi.nyummy.common.entity.richText.RichTextVO
 import com.dandi.nyummy.common.entity.tag.TagTone
 import com.dandi.nyummy.common.entity.tag.TagVO
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonSize
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRichText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTag
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
@@ -170,22 +170,15 @@ fun shopItemTag(item: ShopItemVO): TagVO? = when {
 /** 장바구니에 1개 바로 담는 버튼(피그마 `v2 / Shop / Add Button`). 흰 원 위 브랜드 색 장바구니. */
 @Composable
 fun ShopAddButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .size(AddButtonSize)
-            .clip(CircleShape)
-            .background(NyummyTheme.colors.bg.surface)
-            .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.border.subtle, CircleShape)
-            .nyummyClickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painter = painterResource(CommonR.drawable.nyummy_ic_cart),
-            contentDescription = stringResource(R.string.shop_item_add_to_cart),
-            tint = NyummyTheme.colors.content.brand,
-            modifier = Modifier.size(AddIconSize),
-        )
-    }
+    NyummyIconButton(
+        icon = CommonR.drawable.nyummy_ic_cart,
+        contentDescription = stringResource(R.string.shop_item_add_to_cart),
+        onClick = onClick,
+        modifier = modifier,
+        style = NyummyIconButtonStyle.Outlined,
+        size = NyummyIconButtonSize.Xs,
+        tint = NyummyTheme.colors.content.brand,
+    )
 }
 
 /** 상품 그림(`items/{itemId}.png`). 픽셀 그림이라 보간 없이 그린다. */
@@ -211,8 +204,6 @@ private const val ItemImageFraction = 0.7778f
 /** 방 배경 그림 비율(9:16). */
 private const val BackgroundAspectRatio = 9f / 16f
 
-private val AddButtonSize = 30.dp
-private val AddIconSize = 18.dp
 
 internal val PreviewPrice = listOf(RichTextVO(icon = "coin"), RichTextVO("900", "numberS", "contentPrimary"))
 internal val PreviewSalePrice = listOf(
