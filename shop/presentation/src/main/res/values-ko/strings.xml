@@ -31,7 +31,6 @@
     <string name="shop_sort_popular">인기순</string>
     <string name="shop_sort_price_asc">낮은 가격순</string>
     <string name="shop_sort_price_desc">높은 가격순</string>
-    <string name="shop_back">뒤로</string>
     <string name="shop_promotion_title">프로모션</string>
     <string name="shop_promotion_items">프로모션 상품</string>
     <string name="shop_promotion_ended_voice">다음 프로모션도 기대해 줘</string>

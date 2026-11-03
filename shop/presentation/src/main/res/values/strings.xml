@@ -31,7 +31,6 @@
     <string name="shop_sort_popular">Popular</string>
     <string name="shop_sort_price_asc">Price: low to high</string>
     <string name="shop_sort_price_desc">Price: high to low</string>
-    <string name="shop_back">Back</string>
     <string name="shop_promotion_title">Promotion</string>
     <string name="shop_promotion_items">Promotion items</string>
     <string name="shop_promotion_ended_voice">Look forward to the next one</string>

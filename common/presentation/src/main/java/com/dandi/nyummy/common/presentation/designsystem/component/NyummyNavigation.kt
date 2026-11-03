@@ -49,9 +49,18 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
+/** 상단 바 제목 자리. */
+enum class NyummyTopBarTitleAlignment {
+    /** 화면 가운데 제목(title/s). 양옆 요소와 상관없이 가운데에 둔다. */
+    Center,
+
+    /** 뒤로가기 바로 옆 왼쪽 제목(title/m, 피그마 `v2 / Shop / Top Bar`). 제목이 곧 화면 이름인 하위 화면에 쓴다. */
+    Start,
+}
+
 /**
- * 상단 바. 높이 56, 왼쪽 뒤로가기(선택), 가운데 제목(title/s), 오른쪽 슬롯(글자 버튼이나 아이콘 버튼).
- * 제목은 양옆 요소와 상관없이 화면 가운데에 둔다.
+ * 상단 바. 높이 56, 왼쪽 뒤로가기(선택), 제목, 오른쪽 슬롯(글자 버튼이나 아이콘 버튼).
+ * 제목은 기본으로 화면 가운데(title/s)에 두고, [titleAlignment]가 Start면 뒤로가기 옆 왼쪽(title/m)에 둔다.
  *
  * @param containerColor 바탕색. 마이룸처럼 그림 위에 띄울 때는 투명으로 둔다.
  * @param backModifier 뒤로가기 버튼에 덧붙일 Modifier(코치마크 대상 등록 등).
@@ -64,9 +73,11 @@ fun NyummyTopBar(
     trailing: (@Composable () -> Unit)? = null,
     containerColor: Color = NyummyTheme.colors.bg.canvas,
     backModifier: Modifier = Modifier,
+    titleAlignment: NyummyTopBarTitleAlignment = NyummyTopBarTitleAlignment.Center,
 ) {
     val minSide = NyummyTheme.size.touchTarget
-    // 제목은 화면 가운데에 두되, 양옆 슬롯 중 넓은 쪽 너비만큼 양쪽을 비워 겹치지 않게 한다.
+    val startTitleGap = NyummyTheme.spacing.s4
+    val centered = titleAlignment == NyummyTopBarTitleAlignment.Center
     Layout(
         modifier = modifier
             .fillMaxWidth()
@@ -87,8 +98,8 @@ fun NyummyTopBar(
             Box(Modifier.layoutId(TopBarEnd)) { trailing?.invoke() }
             NyummyText(
                 text = title,
-                style = NyummyTheme.typography.titleS,
-                textAlign = TextAlign.Center,
+                style = if (centered) NyummyTheme.typography.titleS else NyummyTheme.typography.titleM,
+                textAlign = if (centered) TextAlign.Center else TextAlign.Start,
                 maxLines = 1,
                 modifier = Modifier
                     .layoutId(TopBarTitle)
@@ -99,18 +110,33 @@ fun NyummyTopBar(
         val loose = constraints.copy(minWidth = 0, minHeight = 0)
         val start = measurables.first { it.layoutId == TopBarStart }.measure(loose)
         val end = measurables.first { it.layoutId == TopBarEnd }.measure(loose)
-        val side = maxOf(start.width, end.width, minSide.roundToPx())
-        val titleWidth = (constraints.maxWidth - side * 2).coerceAtLeast(0)
-        val titlePlaceable = measurables.first { it.layoutId == TopBarTitle }
-            .measure(loose.copy(maxWidth = titleWidth))
         val height = constraints.maxHeight
-        layout(constraints.maxWidth, height) {
-            start.placeRelative(0, (height - start.height) / 2)
-            end.placeRelative(constraints.maxWidth - end.width, (height - end.height) / 2)
-            titlePlaceable.placeRelative(
-                (constraints.maxWidth - titlePlaceable.width) / 2,
-                (height - titlePlaceable.height) / 2,
-            )
+        if (centered) {
+            // 제목은 화면 가운데에 두되, 양옆 슬롯 중 넓은 쪽 너비만큼 양쪽을 비워 겹치지 않게 한다.
+            val side = maxOf(start.width, end.width, minSide.roundToPx())
+            val titleWidth = (constraints.maxWidth - side * 2).coerceAtLeast(0)
+            val titlePlaceable = measurables.first { it.layoutId == TopBarTitle }
+                .measure(loose.copy(maxWidth = titleWidth))
+            layout(constraints.maxWidth, height) {
+                start.placeRelative(0, (height - start.height) / 2)
+                end.placeRelative(constraints.maxWidth - end.width, (height - end.height) / 2)
+                titlePlaceable.placeRelative(
+                    (constraints.maxWidth - titlePlaceable.width) / 2,
+                    (height - titlePlaceable.height) / 2,
+                )
+            }
+        } else {
+            // 제목은 뒤로가기 바로 옆에서 시작해 오른쪽 슬롯 앞까지만 쓴다.
+            val gap = startTitleGap.roundToPx()
+            val titleX = if (start.width > 0) start.width + gap else 0
+            val titleEnd = constraints.maxWidth - end.width - if (end.width > 0) gap else 0
+            val titlePlaceable = measurables.first { it.layoutId == TopBarTitle }
+                .measure(loose.copy(maxWidth = (titleEnd - titleX).coerceAtLeast(0)))
+            layout(constraints.maxWidth, height) {
+                start.placeRelative(0, (height - start.height) / 2)
+                end.placeRelative(constraints.maxWidth - end.width, (height - end.height) / 2)
+                titlePlaceable.placeRelative(titleX, (height - titlePlaceable.height) / 2)
+            }
         }
     }
 }
@@ -401,6 +427,12 @@ private fun NyummyNavigationPreview() {
                 title = "설정",
                 onBackClick = {},
                 trailing = { NyummyTextButton(text = "문의하기", onClick = {}) },
+            )
+            NyummyTopBar(
+                title = "신입 집사 환영",
+                onBackClick = {},
+                trailing = { NyummyIconButton(R.drawable.nyummy_ic_cart, "장바구니 2개", {}, size = NyummyIconButtonSize.M, badgeCount = 2) },
+                titleAlignment = NyummyTopBarTitleAlignment.Start,
             )
             NyummyTabs(
                 tabs = persistentListOf("전체", "모자", "옷", "소품"),
