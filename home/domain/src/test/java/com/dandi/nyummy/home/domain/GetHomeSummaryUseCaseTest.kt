@@ -34,6 +34,7 @@ class GetHomeSummaryUseCaseTest {
 
     private fun useCase(repository: HomeRepository) = GetHomeSummaryUseCase(
         repository = repository,
+        widgetHelper = NoOpWidgetHelper,
         resourceHelper = FakeResourceHelper,
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,

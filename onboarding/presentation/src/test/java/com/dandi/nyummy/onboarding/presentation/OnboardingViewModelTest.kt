@@ -58,6 +58,7 @@ class OnboardingViewModelTest {
             finishOnboardingUseCase = FinishOnboardingUseCase(
                 repository = repository,
                 analyticsHelper = RecordingAnalyticsHelper(),
+                widgetHelper = NoOpWidgetHelper,
                 resourceHelper = FakeResourceHelper,
                 messageHelper = SilentMessageHelper,
                 navigationHelper = navigationHelper,

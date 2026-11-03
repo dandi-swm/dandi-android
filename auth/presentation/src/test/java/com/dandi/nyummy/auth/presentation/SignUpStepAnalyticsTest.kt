@@ -91,6 +91,7 @@ class SignUpStepAnalyticsTest {
             repository,
             socialSignUpSession,
             RecordingAnalyticsHelper(),
+            NoOpWidgetHelper,
             FakeResourceHelper,
             messageHelper,
             navigationHelper,

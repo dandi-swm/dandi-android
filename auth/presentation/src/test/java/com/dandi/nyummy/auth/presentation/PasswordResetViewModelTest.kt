@@ -192,7 +192,7 @@ class PasswordResetViewModelTest {
     fun `이메일 로그인의 비밀번호 찾기는 비밀번호 찾기 화면으로 간다`() {
         val viewModel = EmailLoginViewModel(
             navigationHelper = navigationHelper,
-            loginUseCase = LoginUseCase(repository, RecordingAnalyticsHelper(), FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
+            loginUseCase = LoginUseCase(repository, RecordingAnalyticsHelper(), NoOpWidgetHelper, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
         )
 
         viewModel.onIntent(EmailLoginIntent.ClickForgotPassword)

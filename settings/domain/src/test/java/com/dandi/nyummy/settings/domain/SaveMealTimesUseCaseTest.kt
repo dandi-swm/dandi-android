@@ -19,6 +19,7 @@ class SaveMealTimesUseCaseTest {
 
     private val useCase = SaveMealTimesUseCase(
         repository = repository,
+        widgetHelper = NoOpWidgetHelper,
         resourceHelper = FakeResourceHelper,
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,

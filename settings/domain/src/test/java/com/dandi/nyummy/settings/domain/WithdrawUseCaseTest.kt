@@ -65,6 +65,7 @@ class WithdrawUseCaseTest {
         pushTokenHelper = pushTokenHelper,
         companionMemory = companionMemory,
         tutorialHelper = tutorialHelper,
+        widgetHelper = NoOpWidgetHelper,
         resourceHelper = FakeResourceHelper,
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,

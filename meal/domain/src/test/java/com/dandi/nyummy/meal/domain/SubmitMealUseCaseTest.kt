@@ -34,6 +34,7 @@ class SubmitMealUseCaseTest {
     private fun useCase(createMealError: Exception, issueUrlError: Exception? = null) = SubmitMealUseCase(
         repository = FakeMealRecordRepository(createMealError, issueUrlError),
         analyticsHelper = analytics,
+        widgetHelper = NoOpWidgetHelper,
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = FakeNavigationHelper(),

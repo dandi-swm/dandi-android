@@ -19,6 +19,7 @@ class AuthAnalyticsTest {
     private val loginUseCase = LoginUseCase(
         repository = repository,
         analyticsHelper = analytics,
+        widgetHelper = NoOpWidgetHelper,
         resourceHelper = FakeResourceHelper(),
         messageHelper = RecordingMessageHelper(),
         navigationHelper = RecordingNavigationHelper(),
@@ -28,6 +29,7 @@ class AuthAnalyticsTest {
         repository = repository,
         socialSignUpSession = session,
         analyticsHelper = analytics,
+        widgetHelper = NoOpWidgetHelper,
         resourceHelper = FakeResourceHelper(),
         messageHelper = RecordingMessageHelper(),
         navigationHelper = RecordingNavigationHelper(),
@@ -37,6 +39,7 @@ class AuthAnalyticsTest {
         repository = repository,
         socialSignUpSession = session,
         analyticsHelper = analytics,
+        widgetHelper = NoOpWidgetHelper,
         resourceHelper = FakeResourceHelper(),
         messageHelper = RecordingMessageHelper(),
         navigationHelper = RecordingNavigationHelper(),

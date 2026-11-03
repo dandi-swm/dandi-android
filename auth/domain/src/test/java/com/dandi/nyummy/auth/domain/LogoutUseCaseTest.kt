@@ -46,6 +46,7 @@ class LogoutUseCaseTest {
             override suspend fun isMealTutorialRequired(): Boolean = false
             override suspend fun setMealTutorialRequired(required: Boolean) = Unit
         },
+        widgetHelper = NoOpWidgetHelper,
         navigationHelper = navigationHelper,
     )
 
