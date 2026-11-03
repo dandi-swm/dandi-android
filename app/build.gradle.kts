@@ -111,7 +111,9 @@ androidComponents {
         // 비정상 종료 보고(Crashlytics)도 release 에서만 보낸다. 개발 중 크래시가 실사용자 지표에 섞이지 않게 한다.
         variant.manifestPlaceholders.put("firebaseCrashlyticsCollectionEnabled", isReleaseBuild.toString())
         // 사용 분석(Firebase Analytics, GA4)도 release 에서만 모은다. 개발 중 기록이 실사용자 퍼널에 섞이지 않게 한다.
-        variant.manifestPlaceholders.put("firebaseAnalyticsCollectionEnabled", isReleaseBuild.toString())
+        // 분석 이벤트를 GA4 DebugView로 확인할 때만 `-Pnyummy.analyticsInDebug=true`를 붙여 debug 빌드에서도 켠다(기본은 꺼짐).
+        val analyticsInDebug = providers.gradleProperty("nyummy.analyticsInDebug").orNull == "true"
+        variant.manifestPlaceholders.put("firebaseAnalyticsCollectionEnabled", (isReleaseBuild || analyticsInDebug).toString())
         // Meta 앱 이벤트(설치, 실행 자동 기록)와 광고 ID 수집도 release 에서만 켠다. 개발 중 설치가 광고 성과에 섞이지 않게 한다.
         variant.manifestPlaceholders.put("metaAppEventsEnabled", isReleaseBuild.toString())
         // 평문 HTTP는 debug 에서만 허용한다(로컬 서버 등). 개발·운영 서버는 모두 HTTPS 라 그 밖의 빌드는 막는다.
