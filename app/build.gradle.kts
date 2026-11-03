@@ -42,7 +42,7 @@ android {
         applicationId = "com.dandi.nyummy"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 12
+        versionCode = 13
         versionName = "2.1.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
