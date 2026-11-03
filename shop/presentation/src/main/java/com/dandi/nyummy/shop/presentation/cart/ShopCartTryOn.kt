@@ -4,27 +4,23 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.R as CommonR
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCard
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
-import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.entity.RoomTryOnItemVO
@@ -64,55 +60,62 @@ internal fun List<CartItemVO>.toTryOnItems(): ImmutableList<RoomTryOnItemVO> = f
     }
 }.toImmutableList()
 
-/** 장바구니 맨 위 "내 방에 놓아 보기" 카드(피그마 `Shop · 20c`). 누르면 놓아보기가 장바구니 위를 덮는다. */
+/**
+ * 장바구니 맨 위 "내 방에 놓아 보기" 카드(피그마 `Shop · 20c`). 누르면 놓아보기가 장바구니 위를 덮는다.
+ * 공용 카드에 브랜드 연한 바탕을 깔고, 흰 원 안의 마이룸 아이콘·제목·설명·화살표를 한 줄로 둔다.
+ */
 @Composable
 internal fun TryOnEntryCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(NyummyTheme.radius.l)
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(NyummyTheme.colors.bg.brandSubtle, shape)
-            .nyummyClickable(onClick = onClick)
-            .semantics(mergeDescendants = true) { role = Role.Button }
-            .padding(start = EntryStartPadding, end = NyummyTheme.spacing.s12, top = NyummyTheme.spacing.s12, bottom = NyummyTheme.spacing.s12),
-        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
-        verticalAlignment = Alignment.CenterVertically,
+    NyummyCard(
+        modifier = modifier.fillMaxWidth(),
+        onClick = onClick,
+        containerColor = NyummyTheme.colors.bg.brandSubtle,
+        contentPadding = PaddingValues(
+            start = EntryStartPadding,
+            end = NyummyTheme.spacing.s12,
+            top = NyummyTheme.spacing.s12,
+            bottom = NyummyTheme.spacing.s12,
+        ),
     ) {
-        Box(
-            modifier = Modifier
-                .size(EntryIconCircle)
-                .background(NyummyTheme.colors.bg.surface, CircleShape),
-            contentAlignment = Alignment.Center,
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
+            Box(
+                modifier = Modifier
+                    .size(EntryIconCircle)
+                    .background(NyummyTheme.colors.bg.surface, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(CommonR.drawable.nyummy_nav_my_room),
+                    contentDescription = null,
+                    tint = NyummyTheme.colors.content.brand,
+                    modifier = Modifier.size(EntryIconSize),
+                )
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(EntryTextGap),
+            ) {
+                NyummyText(text = stringResource(R.string.shop_cart_try_on_title), style = NyummyTheme.typography.labelM, maxLines = 1)
+                NyummyText(
+                    text = stringResource(R.string.shop_cart_try_on_body),
+                    style = NyummyTheme.typography.bodyS,
+                    color = NyummyTheme.colors.content.secondary,
+                    maxLines = 1,
+                )
+            }
             Icon(
-                painter = painterResource(CommonR.drawable.nyummy_nav_my_room),
+                painter = painterResource(CommonR.drawable.nyummy_ic_chevron_right),
                 contentDescription = null,
-                tint = NyummyTheme.colors.content.brand,
-                modifier = Modifier.size(EntryIconSize),
+                tint = NyummyTheme.colors.content.tertiary,
+                modifier = Modifier.size(EntryChevronSize),
             )
         }
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(EntryTextGap),
-        ) {
-            NyummyText(text = stringResource(R.string.shop_cart_try_on_title), style = NyummyTheme.typography.labelM, maxLines = 1)
-            NyummyText(
-                text = stringResource(R.string.shop_cart_try_on_body),
-                style = NyummyTheme.typography.bodyS,
-                color = NyummyTheme.colors.content.secondary,
-                maxLines = 1,
-            )
-        }
-        Icon(
-            painter = painterResource(CommonR.drawable.nyummy_ic_chevron_right),
-            contentDescription = null,
-            tint = NyummyTheme.colors.content.tertiary,
-            modifier = Modifier.size(EntryChevronSize),
-        )
     }
 }
 
