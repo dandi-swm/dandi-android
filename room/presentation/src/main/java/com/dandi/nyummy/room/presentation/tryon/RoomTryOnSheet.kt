@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -126,7 +127,8 @@ internal fun RoomTryOnSheet(
                         .wrapContentWidth(Alignment.CenterHorizontally)
                         .widthIn(max = RoomSheetContentMaxWidth)
                         .padding(top = NyummyTheme.spacing.s12)
-                        .height(CellRowHeight),
+                        // 기본은 칸 한 줄 높이이고, 글자를 크게 하면 칸(이름·가격)이 커지는 만큼 늘어난다.
+                        .heightIn(min = CellRowHeight),
                 ) {
                     when (loadState) {
                         MyRoomLoadState.LOADING -> NyummySpinner(
@@ -241,6 +243,6 @@ private fun TryOnCellPrice(price: Int, isPurchasable: Boolean) {
     }
 }
 
-/** 칸 줄 높이. 칸(80) + 이름 + 가격 줄이 들어가고, 불러오는 중이거나 실패해도 같아서 시트가 흔들리지 않는다. */
+/** 칸 줄 최소 높이. 칸(80) + 이름 + 가격 줄이 들어가고, 불러오는 중이거나 실패해도 같아서 시트가 흔들리지 않는다. */
 private val CellRowHeight = 132.dp
 private val CoinSize = 16.dp

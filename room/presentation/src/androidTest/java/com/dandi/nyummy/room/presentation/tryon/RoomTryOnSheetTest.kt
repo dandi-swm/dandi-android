@@ -1,6 +1,8 @@
 package com.dandi.nyummy.room.presentation.tryon
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -18,6 +20,7 @@ import com.dandi.nyummy.room.presentation.MyRoomLoadState
 import com.dandi.nyummy.room.presentation.component.rememberRoomSheetState
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -39,9 +42,13 @@ class RoomTryOnSheetTest {
         RoomTryOnCellUiModel(key = "5:0", id = -5, name = "단풍 러그", imageUrl = "", isBackground = false, price = 400, isPurchasable = false),
     )
 
-    private fun setSheet(loadState: MyRoomLoadState = MyRoomLoadState.LOADED) {
+    private fun setSheet(loadState: MyRoomLoadState = MyRoomLoadState.LOADED, fontScale: Float = 1f) {
         composeRule.setContent {
-            CompositionLocalProvider(LocalJankReporter provides JankReporter(DebugJankReport())) {
+            val density = LocalDensity.current
+            CompositionLocalProvider(
+                LocalJankReporter provides JankReporter(DebugJankReport()),
+                LocalDensity provides Density(density.density, fontScale),
+            ) {
                 NyummyTheme {
                     RoomTryOnSheet(
                         state = rememberRoomSheetState(),
@@ -74,6 +81,22 @@ class RoomTryOnSheetTest {
         assertEquals(2, composeRule.onAllNodesWithText("발바닥 방석", useUnmergedTree = true).fetchSemanticsNodes().size)
         composeRule.onNode(hasScrollToIndexAction()).performScrollToIndex(cells.lastIndex)
         composeRule.onNodeWithText("살 수 없어요", useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun 글자를_크게_해도_칸_아래_가격과_살_수_없어요가_잘리지_않는다() {
+        setSheet(fontScale = 2f)
+
+        val row = composeRule.onNode(hasScrollToIndexAction())
+        row.performScrollToIndex(cells.lastIndex)
+        val rowNode = row.fetchSemanticsNode()
+        val unavailable = composeRule.onNodeWithText("살 수 없어요", useUnmergedTree = true)
+        unavailable.assertIsDisplayed()
+        // "살 수 없어요"는 이름과 같은 글자 스타일이라 높이도 같아야 한다. 칸 줄 높이가 고정이면 가격 자리가 눌려 잘린다.
+        val name = composeRule.onAllNodesWithText("단풍 러그", useUnmergedTree = true).fetchSemanticsNodes().first()
+        val text = unavailable.fetchSemanticsNode()
+        assertTrue("가격 자리가 눌렸다: ${text.size.height} < ${name.size.height}", text.size.height >= name.size.height - 1)
+        assertTrue("가격 자리가 칸 줄 아래로 나갔다", text.boundsInRoot.bottom <= rowNode.boundsInRoot.bottom + 0.5f)
     }
 
     @Test
