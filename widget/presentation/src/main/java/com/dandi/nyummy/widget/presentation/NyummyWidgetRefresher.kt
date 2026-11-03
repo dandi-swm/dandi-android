@@ -11,11 +11,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /** 앱이 위젯 값을 바꾼 뒤 위젯을 곧바로 다시 그리게 한다. */
-class NyamiWidgetRefresher @Inject constructor(
+class NyummyWidgetRefresher @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : WidgetRefresher {
     override fun requestRefresh() {
-        NyamiWidgetReceiver.requestRefresh(context)
+        NyummyWidgetReceiver.requestRefresh(context)
     }
 }
 
@@ -24,5 +24,5 @@ class NyamiWidgetRefresher @Inject constructor(
 abstract class WidgetPresentationModule {
     @Binds
     @Singleton
-    abstract fun bindWidgetRefresher(impl: NyamiWidgetRefresher): WidgetRefresher
+    abstract fun bindWidgetRefresher(impl: NyummyWidgetRefresher): WidgetRefresher
 }

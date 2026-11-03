@@ -5,7 +5,7 @@
     <application>
         <!-- debug 전용: adb로 위젯 상태·시안을 고정해 그린다(시안 비교용). adb가 보내야 해서 내보낸다. -->
         <receiver
-            android:name="com.dandi.nyummy.widget.presentation.NyamiWidgetDebugReceiver"
+            android:name="com.dandi.nyummy.widget.presentation.NyummyWidgetDebugReceiver"
             android:exported="true"
             tools:ignore="ExportedReceiver">
             <intent-filter>

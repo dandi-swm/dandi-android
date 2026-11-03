@@ -9,7 +9,7 @@ import android.content.Context
  * 화면이 꺼져 있으면 켜질 때 전달되는 비깨우기 알람이라 정확한 알람 권한이 필요 없다.
  * `set()`은 시스템이 오차를 30분 넘게 잡아서(에뮬레이터에서 +35분 확인), 오차 10분짜리 [AlarmManager.setWindow]를 쓴다.
  */
-internal object NyamiWidgetScheduler {
+internal object NyummyWidgetScheduler {
 
     private const val REQUEST_CODE = 0
     // 경계 순간 바로 뒤에 그리도록 조금 늦춘다.
@@ -29,7 +29,7 @@ internal object NyamiWidgetScheduler {
     private fun refreshPendingIntent(context: Context): PendingIntent = PendingIntent.getBroadcast(
         context,
         REQUEST_CODE,
-        NyamiWidgetReceiver.refreshIntent(context),
+        NyummyWidgetReceiver.refreshIntent(context),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 }

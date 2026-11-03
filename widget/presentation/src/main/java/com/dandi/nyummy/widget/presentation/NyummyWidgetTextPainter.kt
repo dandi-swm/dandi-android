@@ -24,7 +24,7 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  * 문장에 까투리에 없는 글자가 있으면 앱 화면과 같이 그 문장만 Pretendard Medium으로 그린다.
  * 크기·줄 높이는 피그마 `Widget / Card`(제목 32/36, 설명 17/21, 둘 사이 4, 스트릭 15/19)를 따른다.
  */
-internal object NyamiWidgetTextPainter {
+internal object NyummyWidgetTextPainter {
 
     private const val TITLE_SIZE_SP = 32f
     private const val TITLE_LINE_SP = 36f

@@ -22,7 +22,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * 예약한 알람([ACTION_REFRESH]), 시각·타임존 변경, 앱 업데이트.
  */
 @AndroidEntryPoint
-class NyamiWidgetReceiver : AppWidgetProvider() {
+class NyummyWidgetReceiver : AppWidgetProvider() {
 
     @Inject
     lateinit var getWidgetCard: GetWidgetCardUseCase
@@ -43,7 +43,7 @@ class NyamiWidgetReceiver : AppWidgetProvider() {
     }
 
     override fun onDisabled(context: Context) {
-        NyamiWidgetScheduler.cancel(context)
+        NyummyWidgetScheduler.cancel(context)
     }
 
     private fun renderAsync(context: Context) {
@@ -65,12 +65,12 @@ class NyamiWidgetReceiver : AppWidgetProvider() {
     private suspend fun render(context: Context) {
         val ids = widgetIds(context)
         if (ids.isEmpty()) {
-            NyamiWidgetScheduler.cancel(context)
+            NyummyWidgetScheduler.cancel(context)
             return
         }
-        val card = getWidgetCard(variantCount = NyamiWidgetCatalog::variantCount)
+        val card = getWidgetCard(variantCount = NyummyWidgetCatalog::variantCount)
         show(context, ids, card)
-        NyamiWidgetScheduler.schedule(context, card.plan.nextChangeAtMillis)
+        NyummyWidgetScheduler.schedule(context, card.plan.nextChangeAtMillis)
     }
 
     companion object {
@@ -79,7 +79,7 @@ class NyamiWidgetReceiver : AppWidgetProvider() {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
         fun refreshIntent(context: Context): Intent =
-            Intent(context, NyamiWidgetReceiver::class.java).setAction(ACTION_REFRESH)
+            Intent(context, NyummyWidgetReceiver::class.java).setAction(ACTION_REFRESH)
 
         /** 홈 화면에 냐미 위젯이 있으면 다시 그리게 한다. 없으면 아무것도 하지 않는다. */
         fun requestRefresh(context: Context) {
@@ -89,10 +89,10 @@ class NyamiWidgetReceiver : AppWidgetProvider() {
 
         internal fun widgetIds(context: Context): IntArray =
             AppWidgetManager.getInstance(context)
-                .getAppWidgetIds(ComponentName(context, NyamiWidgetReceiver::class.java))
+                .getAppWidgetIds(ComponentName(context, NyummyWidgetReceiver::class.java))
 
         internal fun show(context: Context, ids: IntArray, card: WidgetCardVO) {
-            AppWidgetManager.getInstance(context).updateAppWidget(ids, NyamiWidgetRenderer.render(context, card))
+            AppWidgetManager.getInstance(context).updateAppWidget(ids, NyummyWidgetRenderer.render(context, card))
         }
     }
 }
