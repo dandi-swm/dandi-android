@@ -12,6 +12,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -20,6 +22,7 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  * 다시 그리는 때: 위젯 추가·재부팅·주기 갱신(onUpdate), 앱이 값을 바꿈([ACTION_REFRESH]),
  * 예약한 알람([ACTION_REFRESH]), 시각·타임존 변경, 앱 업데이트.
+ * 갱신이 겹치면 한 번에 하나씩 그린다. 늦게 시작한 쪽이 최신 기록을 읽고 마지막에 그리며, 같은 회차의 시안 고르기도 겹치지 않는다.
  */
 @AndroidEntryPoint
 class NyummyWidgetReceiver : AppWidgetProvider() {
@@ -51,7 +54,7 @@ class NyummyWidgetReceiver : AppWidgetProvider() {
         val pending = goAsync()
         scope.launch {
             try {
-                render(appContext)
+                renderLock.withLock { render(appContext) }
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
@@ -77,6 +80,9 @@ class NyummyWidgetReceiver : AppWidgetProvider() {
         const val ACTION_REFRESH = "com.dandi.nyummy.widget.action.REFRESH"
 
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+        /** 기록 읽기부터 시안 고르기·그리기·알람 예약까지를 receiver들 사이에서 한 줄로 세운다. */
+        private val renderLock = Mutex()
 
         fun refreshIntent(context: Context): Intent =
             Intent(context, NyummyWidgetReceiver::class.java).setAction(ACTION_REFRESH)
