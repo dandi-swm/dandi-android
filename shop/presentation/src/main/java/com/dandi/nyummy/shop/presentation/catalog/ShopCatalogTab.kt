@@ -159,7 +159,7 @@ private fun CategoryChips(selected: ShopCategory?, onSelect: (ShopCategory?) -> 
     }
 }
 
-/** 오른쪽 정렬: "✓ 보유 숨기기"와 "신상품순 ⌄". */
+/** 오른쪽 정렬: "(✓) 보유 숨기기"와 "신상품순 ⌄". 원형 체크는 체크박스처럼 켜지면 초록, 꺼지면 회색으로 채운다. */
 @Composable
 private fun CatalogMeta(
     hideOwned: Boolean,
@@ -185,9 +185,9 @@ private fun CatalogMeta(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                painter = painterResource(CommonR.drawable.nyummy_ic_check),
+                painter = painterResource(CommonR.drawable.nyummy_ic_check_circle_fill),
                 contentDescription = null,
-                tint = hideColor,
+                tint = if (hideOwned) NyummyTheme.colors.bg.actionPrimary else NyummyTheme.colors.border.strong,
                 modifier = Modifier.size(MetaCheckSize),
             )
             NyummyText(text = stringResource(R.string.shop_catalog_hide_owned), style = NyummyTheme.typography.labelM, color = hideColor)
