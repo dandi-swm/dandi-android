@@ -79,6 +79,16 @@ class ShopBrowseUseCasesTest {
     }
 
     @Test
+    fun `코드 없는 404도 준비 중 안내 대신 더 이상 담을 수 없다고 알린다`() = runBlocking {
+        repository.error = httpException(404)
+
+        addToCart(7L)
+
+        assertEquals(listOf(ShopMessages.CANNOT_ADD_MORE), messageHelper.toasts)
+        assertTrue(messageHelper.dialogs.isEmpty())
+    }
+
+    @Test
     fun `응답 전에 끊기면 다시 담아 달라고 알린다`() = runBlocking {
         repository.error = IOException("offline")
 
