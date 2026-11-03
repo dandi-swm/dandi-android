@@ -150,7 +150,7 @@ private fun PackageList(uiState: ShopCoinChargeUIState, onIntent: (ShopCoinCharg
         )
         Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12)) {
             uiState.packages.forEach { pack ->
-                CoinPackageRow(pack = pack, onClick = { onIntent(ShopCoinChargeIntent.ClickPackage(pack.id)) })
+                CoinPackageRow(pack = pack, onClick = { onIntent(ShopCoinChargeIntent.ClickPackage(pack.coinPackageId)) })
             }
         }
         NyummyText(

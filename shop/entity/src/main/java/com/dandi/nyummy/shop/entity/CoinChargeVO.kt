@@ -2,18 +2,16 @@ package com.dandi.nyummy.shop.entity
 
 /**
  * 코인 충전 이벤트(가짜 결제 A/B 테스트) 한 회차. 원격 구성 `android_coin_charge_event` 값이고, Firebase A/B Testing 실험이
- * 그룹마다 다른 값을 준다. 실제 결제는 하지 않고, "결제하기"를 누르면 이번 한 번만 [grantCoins]를 무료로 넣어 준다.
+ * 그룹마다 다른 값을 준다. 실제 결제는 하지 않고, "결제하기"를 누르면 이번 한 번만 서버가 선물 코인을 넣어 준다(`POST /api/v1/coins/gifts`).
  *
  * @property eventId 회차 구분값. 분석 이벤트, "다시 보지 않기", 받음 기록이 이 값으로 회차를 나눈다.
- * @property group 이 기기가 받은 A/B 그룹(A, B 등). 분석 이벤트와 사용자 속성에 그대로 남는다.
- * @property grantCoins "결제하기"를 누르면 실제로 넣어 주는 코인 수. 고른 묶음과 그룹에 상관없이 같다.
+ * @property group 이 기기가 받은 가격 그룹(A 또는 B). 선물 코인 받기 헤더, 분석 이벤트, 사용자 속성에 그대로 간다.
  * @property notice 홈에 띄울 공지. null이면 공지 없이 충전 화면만 있다(링크로만 들어옴).
- * @property packages 충전 화면에 보일 묶음. 그룹마다 가격만 다르다. 비어 있는 이벤트는 만들지 않는다.
+ * @property packages 충전 화면에 보일 묶음. 그룹마다 가격만 다르고, 앱에 고정된 표에서 온다(서버와 같은 표).
  */
 data class CoinChargeEventVO(
     val eventId: String = "",
     val group: String = "",
-    val grantCoins: Int = 0,
     val notice: CoinChargeNoticeVO? = null,
     val packages: List<CoinChargePackageVO> = emptyList(),
 )
@@ -38,13 +36,13 @@ data class CoinChargeNoticeVO(
 /**
  * 충전 화면의 묶음 하나.
  *
- * @property id 묶음 구분값(coin_300 등). 분석 이벤트의 package_id다.
- * @property coins 묶음의 코인 수(화면 표시용. 실제로 받는 코인은 [CoinChargeEventVO.grantCoins])
+ * @property coinPackageId 화면의 묶음 번호(1~3). 선물 코인 받기 요청과 분석 이벤트의 package_id다.
+ * @property coins 묶음의 코인 수(화면 표시용. 실제로 받는 코인은 서버가 정한다)
  * @property price 원 단위 가격
  * @property imageId 묶음 그림 CDN 번호(`coins/{imageId}.png`, 1 동전 · 2 주머니 · 3 바구니)
  */
 data class CoinChargePackageVO(
-    val id: String = "",
+    val coinPackageId: Long = 0L,
     val coins: Int = 0,
     val price: Int = 0,
     val imageId: Long = 1,

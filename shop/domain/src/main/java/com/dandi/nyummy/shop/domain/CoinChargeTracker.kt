@@ -32,22 +32,22 @@ class CoinChargeTracker @Inject constructor(
         log(AnalyticsEvent.CoinChargeView(event.eventId, event.group, source, claimed))
 
     fun packageClick(event: CoinChargeEventVO, pack: CoinChargePackageVO) =
-        log(AnalyticsEvent.CoinChargePackageClick(event.eventId, event.group, pack.id, pack.price, pack.coins))
+        log(AnalyticsEvent.CoinChargePackageClick(event.eventId, event.group, pack.analyticsId, pack.price, pack.coins))
 
     fun sheetClose(event: CoinChargeEventVO, pack: CoinChargePackageVO) =
-        log(AnalyticsEvent.CoinChargeSheetClose(event.eventId, event.group, pack.id))
+        log(AnalyticsEvent.CoinChargeSheetClose(event.eventId, event.group, pack.analyticsId))
 
     fun payClick(event: CoinChargeEventVO, pack: CoinChargePackageVO) =
-        log(AnalyticsEvent.CoinChargePayClick(event.eventId, event.group, pack.id, pack.price, pack.coins))
+        log(AnalyticsEvent.CoinChargePayClick(event.eventId, event.group, pack.analyticsId, pack.price, pack.coins))
 
     fun granted(event: CoinChargeEventVO, pack: CoinChargePackageVO, coins: Int) =
-        log(AnalyticsEvent.CoinChargeGranted(event.eventId, event.group, pack.id, coins))
+        log(AnalyticsEvent.CoinChargeGranted(event.eventId, event.group, pack.analyticsId, coins))
 
     fun grantFailed(event: CoinChargeEventVO, pack: CoinChargePackageVO, reason: String) =
-        log(AnalyticsEvent.CoinChargeGrantFailed(event.eventId, event.group, pack.id, reason))
+        log(AnalyticsEvent.CoinChargeGrantFailed(event.eventId, event.group, pack.analyticsId, reason))
 
     fun repeatClick(event: CoinChargeEventVO, pack: CoinChargePackageVO) =
-        log(AnalyticsEvent.CoinChargeRepeatClick(event.eventId, event.group, pack.id, pack.price))
+        log(AnalyticsEvent.CoinChargeRepeatClick(event.eventId, event.group, pack.analyticsId, pack.price))
 
     fun resultAction(event: CoinChargeEventVO, action: String) =
         log(AnalyticsEvent.CoinChargeResultAction(event.eventId, event.group, action))
@@ -57,9 +57,14 @@ class CoinChargeTracker @Inject constructor(
 
     private fun log(event: AnalyticsEvent) = analyticsHelper.logEvent(event)
 
+    /** 분석 이벤트의 package_id. 서버와 같은 묶음 번호(1~3)다. */
+    private val CoinChargePackageVO.analyticsId: String get() = coinPackageId.toString()
+
     /** 분석 이벤트 매개변수 값. 철자를 이 파일에서만 정한다. */
     object Values {
         const val REASON_ALREADY_CLAIMED = "already_claimed"
+        const val REASON_PACKAGE_NOT_FOUND = "package_not_found"
+        const val REASON_INVALID_REQUEST = "invalid_request"
         const val REASON_SERVER_ERROR = "server_error"
         const val REASON_NETWORK_OR_UNKNOWN = "network_or_unknown"
 

@@ -106,7 +106,7 @@ sealed class AnalyticsEvent(
         coinCharge(eventId, group) + mapOf(PARAM_SOURCE to source, "claimed" to claimed.toString()),
     )
 
-    /** 묶음 하나를 눌렀다(충전 확인 시트가 뜬다). [price]는 원, [coins]는 묶음의 코인 수다. */
+    /** 묶음 하나를 눌렀다(충전 확인 시트가 뜬다). [packageId]는 묶음 번호(1~3), [price]는 원, [coins]는 묶음의 코인 수다. */
     class CoinChargePackageClick(eventId: String, group: String, packageId: String, price: Int, coins: Int) : AnalyticsEvent(
         "coin_charge_package_click",
         coinCharge(eventId, group) + mapOf(PARAM_PACKAGE_ID to packageId),
@@ -126,14 +126,17 @@ sealed class AnalyticsEvent(
         mapOf(PARAM_PRICE to price.toLong(), PARAM_COINS to coins.toLong()),
     )
 
-    /** 이벤트 코인을 받았다(결제 대신 무료 지급). [coins]는 실제로 받은 코인 수다(그룹·묶음과 상관없이 같다). */
+    /** 선물 코인을 받았다(결제 대신 무료 지급). [coins]는 서버가 넣어 준 코인 수다(그룹·묶음과 상관없이 같다). */
     class CoinChargeGranted(eventId: String, group: String, packageId: String, coins: Int) : AnalyticsEvent(
         "coin_charge_granted",
         coinCharge(eventId, group) + mapOf(PARAM_PACKAGE_ID to packageId),
         mapOf(PARAM_COINS to coins.toLong()),
     )
 
-    /** 이벤트 코인을 받지 못했다. [reason]은 already_claimed, server_error, network_or_unknown이다. */
+    /**
+     * 선물 코인을 받지 못했다. [reason]은 already_claimed(기기에 받음 기록, 서버에 묻지 않음), package_not_found(404),
+     * invalid_request(그 밖의 4xx), server_error(로그인 만료·5xx), network_or_unknown이다.
+     */
     class CoinChargeGrantFailed(eventId: String, group: String, packageId: String, reason: String) : AnalyticsEvent(
         "coin_charge_grant_failed",
         coinCharge(eventId, group) + mapOf(PARAM_PACKAGE_ID to packageId, "reason" to reason),

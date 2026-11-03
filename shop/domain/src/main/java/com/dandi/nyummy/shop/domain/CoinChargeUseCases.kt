@@ -59,7 +59,7 @@ sealed interface CoinChargeClaimResult {
     /** 받았다. 상단 바 잔액도 다시 읽었다. */
     data class Granted(val grant: CoinChargeGrantVO) : CoinChargeClaimResult
 
-    /** 이번 회차 코인을 이미 받았다(기기 기록 또는 서버). 화면은 안내 다이얼로그를 띄운다. */
+    /** 이번 회차 코인을 이미 받았다(기기 기록). 서버에 묻지 않고, 화면은 안내 다이얼로그를 띄운다. */
     data object AlreadyClaimed : CoinChargeClaimResult
 
     /** 받지 못했다. 안내는 이 UseCase가 이미 했다. */
@@ -67,9 +67,10 @@ sealed interface CoinChargeClaimResult {
 }
 
 /**
- * "결제하기"를 누른 뒤 이번 한 번만 이벤트 코인을 받는다(실제 결제는 하지 않는다). 받으면 기기에 받음을 남기고
- * 상단 바 잔액을 다시 읽는다. 단계 결과(받음, 못 받음과 그 까닭)는 분석 이벤트로 남긴다.
- * 서버 오류는 공통 안내를 하고, 그 밖의 실패는 다시 눌러 달라고 알린다.
+ * "결제하기"를 누른 뒤 이번 한 번만 선물 코인을 받는다(실제 결제는 하지 않는다, `POST /api/v1/coins/gifts`).
+ * 받으면 기기에 받음을 남기고 상단 바 잔액을 다시 읽는다. 단계 결과(받음, 못 받음과 그 까닭)는 분석 이벤트로 남긴다.
+ * 서버 오류(로그인 만료, 5xx)는 공통 안내를 하고, 그 밖의 실패는 다시 눌러 달라고 알린다.
+ * 같은 사람이 두 번 받는 것은 서버가 막는다(다시 보내면 코인을 더 주지 않고 200으로 지금 잔액을 준다).
  */
 class ClaimCoinChargeUseCase @Inject constructor(
     private val repository: CoinChargeRepository,
@@ -87,26 +88,26 @@ class ClaimCoinChargeUseCase @Inject constructor(
             return CoinChargeClaimResult.AlreadyClaimed
         }
         return try {
-            val grant = repository.claim(event, pack.id)
+            val grant = repository.claim(event, pack.coinPackageId)
             markClaimedQuietly(event.eventId)
             tracker.granted(event, pack, grant.grantedCoins)
             refreshBalanceQuietly()
             CoinChargeClaimResult.Granted(grant)
         } catch (e: HttpResponseException) {
-            var alreadyClaimed = false
+            var reason = CoinChargeTracker.Values.REASON_SERVER_ERROR
             handleHttpError<ShopErrorType>(
                 e,
-                onDomainError = { if (it == ShopErrorType.COIN_CHARGE_ALREADY_CLAIMED) alreadyClaimed = true },
-                onUnknownError = { messageHelper.showToast(ShopMessages.COIN_CHARGE_FAILED) },
+                onDomainError = {
+                    reason = CoinChargeTracker.Values.REASON_PACKAGE_NOT_FOUND
+                    messageHelper.showToast(ShopMessages.COIN_CHARGE_FAILED)
+                },
+                onUnknownError = {
+                    reason = CoinChargeTracker.Values.REASON_INVALID_REQUEST
+                    messageHelper.showToast(ShopMessages.COIN_CHARGE_FAILED)
+                },
             )
-            if (alreadyClaimed) {
-                markClaimedQuietly(event.eventId)
-                tracker.grantFailed(event, pack, CoinChargeTracker.Values.REASON_ALREADY_CLAIMED)
-                CoinChargeClaimResult.AlreadyClaimed
-            } else {
-                tracker.grantFailed(event, pack, CoinChargeTracker.Values.REASON_SERVER_ERROR)
-                CoinChargeClaimResult.Failed
-            }
+            tracker.grantFailed(event, pack, reason)
+            CoinChargeClaimResult.Failed
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {

@@ -26,7 +26,7 @@ data class CoinHistoriesDTO(
 /**
  * 코인을 얻거나 쓴 내역 하나.
  *
- * @property category MAIL_CLAIM / ROOM_ITEM_PURCHASE / IN_APP_PURCHASE. 앱은 분기하지 않는다
+ * @property category MAIL_CLAIM / ROOM_ITEM_PURCHASE / IN_APP_PURCHASE / COIN_GIFT(코인 충전 이벤트 선물). 앱은 분기하지 않는다
  * @property quantity 부호 있는 수량(+ 얻음, − 씀)
  * @property createdAt UTC 시각(ISO date-time)
  */

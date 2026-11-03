@@ -56,7 +56,8 @@ sealed interface ShopCoinChargeIntent : MviIntent {
     /** 화면이 다시 보였다. 잔액만 다시 읽는다. */
     data object Resume : ShopCoinChargeIntent
 
-    data class ClickPackage(val packageId: String) : ShopCoinChargeIntent
+    /** [coinPackageId] 묶음(1~3)을 눌렀다. */
+    data class ClickPackage(val coinPackageId: Long) : ShopCoinChargeIntent
 
     /** 충전 확인 시트의 취소, 바깥 누름, 뒤로 가기. */
     data object DismissSheet : ShopCoinChargeIntent
@@ -119,7 +120,7 @@ class ShopCoinChargeViewModel @Inject constructor(
         when (intent) {
             is ShopCoinChargeIntent.Enter -> enter(intent.source)
             ShopCoinChargeIntent.Resume -> viewModelScope.launch { refreshShopSummary() }
-            is ShopCoinChargeIntent.ClickPackage -> clickPackage(intent.packageId)
+            is ShopCoinChargeIntent.ClickPackage -> clickPackage(intent.coinPackageId)
             ShopCoinChargeIntent.DismissSheet -> dismissSheet()
             ShopCoinChargeIntent.ClickPay -> pay()
             ShopCoinChargeIntent.DismissClaimedDialog ->
@@ -158,11 +159,11 @@ class ShopCoinChargeViewModel @Inject constructor(
         }
     }
 
-    private fun clickPackage(packageId: String) {
+    private fun clickPackage(coinPackageId: Long) {
         val event = event ?: return
         val state = currentState
         if (state.isPaying || state.grantedCoins != null) return
-        val pack = state.packages.firstOrNull { it.id == packageId } ?: return
+        val pack = state.packages.firstOrNull { it.coinPackageId == coinPackageId } ?: return
         if (state.isClaimed) {
             tracker.repeatClick(event, pack)
             dispatch(ShopCoinChargeReducerEvent.ClaimedDialogChanged(shows = true))

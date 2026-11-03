@@ -16,8 +16,8 @@ interface CoinChargeRepository {
     suspend fun markClaimed(eventId: String)
 
     /**
-     * 이번 회차 이벤트 코인을 받는다. [packageId]는 고른 묶음이고 기록용이다(받는 코인 수는 [CoinChargeEventVO.grantCoins]).
-     * 이미 받은 사람이면 서버가 [ShopErrorType.COIN_CHARGE_ALREADY_CLAIMED]로 막는다.
+     * 선물 코인을 받는다(`POST /api/v1/coins/gifts`, 가격 그룹은 헤더). [coinPackageId]는 고른 묶음 번호(1~3)이고,
+     * 받는 코인 수는 서버가 정한다(묶음과 상관없이 같다). 이미 받은 사람이 다시 보내면 서버는 코인을 더 주지 않고 지금 잔액을 준다.
      */
-    suspend fun claim(event: CoinChargeEventVO, packageId: String): CoinChargeGrantVO
+    suspend fun claim(event: CoinChargeEventVO, coinPackageId: Long): CoinChargeGrantVO
 }
