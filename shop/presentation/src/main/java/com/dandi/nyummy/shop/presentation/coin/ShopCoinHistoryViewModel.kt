@@ -63,6 +63,7 @@ data class ShopCoinHistoryUIState(
 }
 
 sealed interface ShopCoinHistoryIntent : MviIntent {
+    /** 화면이 보였다(처음 들어옴, 식사 기록 등에서 돌아옴). */
     data object Enter : ShopCoinHistoryIntent
     data object LoadMore : ShopCoinHistoryIntent
     data object Retry : ShopCoinHistoryIntent
@@ -80,7 +81,10 @@ sealed interface ShopCoinHistoryReducerEvent : ReducerEvent {
     data class LoadFailed(val firstPage: Boolean) : ShopCoinHistoryReducerEvent
 }
 
-/** 코인 내역. 내 코인은 공유 상단 바 상태를 따르고 들어올 때 새로 읽는다. 내역은 끝에 닿으면 이어 받는다. */
+/**
+ * 코인 내역. 내 코인은 공유 상단 바 상태를 따르고, 들어올 때와 화면이 다시 보일 때(식사 기록에서 돌아옴 등) 잔액과 내역을
+ * 새로 읽는다. 내역은 끝에 닿으면 이어 받는다. 다시 시도는 잔액도 다시 읽는다.
+ */
 @HiltViewModel
 class ShopCoinHistoryViewModel @Inject constructor(
     private val navigationHelper: NavigationHelper,
@@ -89,7 +93,6 @@ class ShopCoinHistoryViewModel @Inject constructor(
     private val refreshShopSummary: RefreshShopSummaryUseCase,
 ) : MviViewModel<ShopCoinHistoryIntent, ShopCoinHistoryUIState, ShopCoinHistoryReducerEvent>(ShopCoinHistoryUIState()) {
 
-    private var entered = false
     private var loadJob: Job? = null
 
     init {
@@ -100,21 +103,23 @@ class ShopCoinHistoryViewModel @Inject constructor(
 
     override fun onIntent(intent: ShopCoinHistoryIntent) {
         when (intent) {
-            ShopCoinHistoryIntent.Enter -> if (!entered) {
-                entered = true
-                viewModelScope.launch { refreshShopSummary() }
-                loadFirst()
-            }
+            ShopCoinHistoryIntent.Enter -> refreshAll()
             ShopCoinHistoryIntent.LoadMore -> loadMore()
-            ShopCoinHistoryIntent.Retry -> loadFirst()
+            ShopCoinHistoryIntent.Retry -> refreshAll()
             ShopCoinHistoryIntent.ClickBack -> navigationHelper.navigateToBack()
             ShopCoinHistoryIntent.ClickRecordMeal -> navigationHelper.navigateTo(MealRecordPage)
         }
     }
 
+    private fun refreshAll() {
+        viewModelScope.launch { refreshShopSummary() }
+        loadFirst()
+    }
+
+    /** 처음부터 다시 읽는다. 이미 보이는 내역이 있으면 받는 동안 그대로 두어 화면이 깜빡이지 않게 한다. */
     private fun loadFirst() {
         loadJob?.cancel()
-        dispatch(ShopCoinHistoryReducerEvent.FirstPageStarted)
+        if (currentState.histories.isEmpty() || currentState.isLoadFailed) dispatch(ShopCoinHistoryReducerEvent.FirstPageStarted)
         loadJob = viewModelScope.launch { fetch(cursor = null) }
     }
 

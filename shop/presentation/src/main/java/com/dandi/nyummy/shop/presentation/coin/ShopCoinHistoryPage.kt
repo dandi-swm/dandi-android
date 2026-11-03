@@ -12,11 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -26,6 +28,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyListRow
@@ -38,6 +41,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateSu
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyLoadMoreEffect
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.jank.JankScrollWatcher
 import com.dandi.nyummy.shop.entity.CoinHistoryVO
 import com.dandi.nyummy.shop.presentation.R
 import com.dandi.nyummy.shop.presentation.component.ShopTopBar
@@ -50,12 +54,22 @@ import com.dandi.nyummy.common.presentation.R as CommonR
 @Composable
 fun ShopCoinHistoryPage(viewModel: ShopCoinHistoryViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { viewModel.onIntent(ShopCoinHistoryIntent.Enter) }
-    ShopCoinHistoryScreen(uiState = uiState, onIntent = viewModel::onIntent)
+    // 처음 들어올 때와 다시 보일 때(식사 기록에서 돌아옴 등) 잔액과 내역을 새로 읽는다.
+    LifecycleResumeEffect(Unit) {
+        viewModel.onIntent(ShopCoinHistoryIntent.Enter)
+        onPauseOrDispose { }
+    }
+    val listState = rememberLazyListState()
+    JankScrollWatcher(listState)
+    ShopCoinHistoryScreen(uiState = uiState, onIntent = viewModel::onIntent, listState = listState)
 }
 
 @Composable
-private fun ShopCoinHistoryScreen(uiState: ShopCoinHistoryUIState, onIntent: (ShopCoinHistoryIntent) -> Unit) {
+private fun ShopCoinHistoryScreen(
+    uiState: ShopCoinHistoryUIState,
+    onIntent: (ShopCoinHistoryIntent) -> Unit,
+    listState: LazyListState = rememberLazyListState(),
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -81,7 +95,7 @@ private fun ShopCoinHistoryScreen(uiState: ShopCoinHistoryUIState, onIntent: (Sh
                 NyummySpinner(contentDescription = stringResource(R.string.shop_loading))
             }
             uiState.isEmpty -> EmptyHistory(onRecordMeal = { onIntent(ShopCoinHistoryIntent.ClickRecordMeal) }, modifier = bodyModifier)
-            else -> HistoryList(uiState = uiState, onIntent = onIntent, modifier = bodyModifier)
+            else -> HistoryList(uiState = uiState, onIntent = onIntent, listState = listState, modifier = bodyModifier)
         }
     }
 }
@@ -105,8 +119,12 @@ private fun BalanceCard(balance: Int, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun HistoryList(uiState: ShopCoinHistoryUIState, onIntent: (ShopCoinHistoryIntent) -> Unit, modifier: Modifier) {
-    val listState = rememberLazyListState()
+private fun HistoryList(
+    uiState: ShopCoinHistoryUIState,
+    onIntent: (ShopCoinHistoryIntent) -> Unit,
+    listState: LazyListState,
+    modifier: Modifier,
+) {
     NyummyLoadMoreEffect(listState = listState, itemCount = uiState.entries.size) { onIntent(ShopCoinHistoryIntent.LoadMore) }
     val locale = LocalConfiguration.current.locales[0]
     val datePattern = stringResource(R.string.shop_coin_date_pattern)
@@ -180,38 +198,46 @@ private fun EmptyHistory(onRecordMeal: () -> Unit, modifier: Modifier) {
         modifier = modifier.padding(horizontal = NyummyTheme.spacing.gutter, vertical = NyummyTheme.spacing.s16),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        NyummyPoseImage(pose = NyummyPose.Hello, size = NyummyTheme.size.characterM)
-        NyummyText(
-            text = stringResource(R.string.shop_coin_empty_title),
-            style = NyummyTheme.typography.titleM,
-            modifier = Modifier.padding(top = NyummyTheme.spacing.s16),
-        )
-        NyummyText(
-            text = stringResource(R.string.shop_coin_empty_body),
-            style = NyummyTheme.typography.bodyM,
-            color = NyummyTheme.colors.content.secondary,
-            modifier = Modifier.padding(top = NyummyTheme.spacing.s8),
-        )
+        // 큰 글자·작은 화면에서 안내가 길어지면 안내만 스크롤하고 "식사 기록하기"는 늘 아래에 보이게 둔다.
         Column(
             modifier = Modifier
-                .padding(top = NyummyTheme.spacing.s24)
+                .weight(1f)
                 .fillMaxWidth()
-                .background(NyummyTheme.colors.bg.surfaceSubtle, RoundedCornerShape(NyummyTheme.radius.m))
-                .padding(vertical = NyummyTheme.spacing.s8),
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            NyummyPoseImage(pose = NyummyPose.Hello, size = NyummyTheme.size.characterM)
             NyummyText(
-                text = stringResource(R.string.shop_coin_how_to_title),
-                style = NyummyTheme.typography.labelM,
-                modifier = Modifier.padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s8),
+                text = stringResource(R.string.shop_coin_empty_title),
+                style = NyummyTheme.typography.titleM,
+                modifier = Modifier.padding(top = NyummyTheme.spacing.s16),
             )
-            NyummyListRow(
-                title = stringResource(R.string.shop_coin_how_to_meal),
-                subtitle = stringResource(R.string.shop_coin_how_to_meal_body),
-                leadingIcon = CommonR.drawable.nyummy_ic_camera,
-                trailing = NyummyListRowTrailing.None,
+            NyummyText(
+                text = stringResource(R.string.shop_coin_empty_body),
+                style = NyummyTheme.typography.bodyM,
+                color = NyummyTheme.colors.content.secondary,
+                modifier = Modifier.padding(top = NyummyTheme.spacing.s8),
             )
+            Column(
+                modifier = Modifier
+                    .padding(top = NyummyTheme.spacing.s24)
+                    .fillMaxWidth()
+                    .background(NyummyTheme.colors.bg.surfaceSubtle, RoundedCornerShape(NyummyTheme.radius.m))
+                    .padding(vertical = NyummyTheme.spacing.s8),
+            ) {
+                NyummyText(
+                    text = stringResource(R.string.shop_coin_how_to_title),
+                    style = NyummyTheme.typography.labelM,
+                    modifier = Modifier.padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s8),
+                )
+                NyummyListRow(
+                    title = stringResource(R.string.shop_coin_how_to_meal),
+                    subtitle = stringResource(R.string.shop_coin_how_to_meal_body),
+                    leadingIcon = CommonR.drawable.nyummy_ic_camera,
+                    trailing = NyummyListRowTrailing.None,
+                )
+            }
         }
-        Box(modifier = Modifier.weight(1f))
         NyummyButton(
             text = stringResource(R.string.shop_purchase_record_meal),
             onClick = onRecordMeal,
