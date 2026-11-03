@@ -6,6 +6,7 @@ import com.dandi.nyummy.shop.domain.GetCartUseCase
 import com.dandi.nyummy.shop.domain.GetShopProductsUseCase
 import com.dandi.nyummy.shop.domain.ShopErrorType
 import com.dandi.nyummy.shop.domain.ShopMessages
+import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.shop.domain.UpdateCartQuantityUseCase
 import com.dandi.nyummy.shop.domain.UpdateCartSelectionUseCase
 import com.dandi.nyummy.shop.entity.CartItemVO
@@ -73,7 +74,7 @@ class ShopCartViewModelTest {
         )
 
     @Test
-    fun `응답 순서가 뒤바뀌어도 마지막으로 보낸 수량이 남는다`() = runTest(testDispatcher) {
+    fun `수량 요청은 앞 요청이 끝난 뒤 차례로 보내고 마지막 수량이 남는다`() = runTest(testDispatcher) {
         val slow = CompletableDeferred<Unit>()
         repository.cartHandler = { call ->
             when (call) {
@@ -93,13 +94,17 @@ class ShopCartViewModelTest {
         advanceUntilIdle()
         viewModel.onIntent(ShopCartIntent.ChangeQuantity(1, 3))
         advanceUntilIdle()
+        // 앞 요청(2)이 끝나기 전에는 다음 요청(3)을 보내지 않고, 화면은 마지막 입력을 먼저 보인다.
         assertEquals(3, viewModel.uiState.value.items.single().quantity)
+        assertEquals(listOf(CartCall.Get, CartCall.Quantity(1, 2)), repository.cartCalls)
+        assertTrue(viewModel.uiState.value.isSyncing)
 
         slow.complete(Unit)
         advanceUntilIdle()
 
         assertEquals(3, viewModel.uiState.value.items.single().quantity)
         assertEquals(listOf(CartCall.Get, CartCall.Quantity(1, 2), CartCall.Quantity(1, 3)), repository.cartCalls)
+        assertFalse(viewModel.uiState.value.isSyncing)
     }
 
     @Test
@@ -145,8 +150,8 @@ class ShopCartViewModelTest {
             when (call) {
                 is CartCall.Selection -> {
                     gate.await()
-                    // 서버는 2번만 골랐다고 돌려준다.
-                    cartOf(row(1, selected = false), row(2, selected = true))
+                    // 서버는 요청과 달리 둘 다 고르지 않았다고 돌려준다(응답을 반영하는지 본다).
+                    cartOf(row(1, selected = false), row(2, selected = false))
                 }
                 else -> cartOf(row(1, selected = true), row(2, selected = true))
             }
@@ -163,7 +168,47 @@ class ShopCartViewModelTest {
 
         gate.complete(Unit)
         advanceUntilIdle()
-        assertEquals(listOf(false, true), viewModel.uiState.value.items.map { it.isSelected })
+        assertEquals(listOf(false, false), viewModel.uiState.value.items.map { it.isSelected })
+        assertEquals(0, viewModel.uiState.value.selectedItemCount)
+    }
+
+    @Test
+    fun `바꾸는 요청과 다시 읽기가 모두 실패하면 항목이 있어도 다시 시도 안내를 보인다`() = runTest(testDispatcher) {
+        var offline = false
+        repository.cartHandler = { if (offline) throw IOException("offline") else cartOf(row(1, quantity = 1)) }
+        val viewModel = createViewModel()
+        viewModel.onIntent(ShopCartIntent.Enter)
+        advanceUntilIdle()
+
+        offline = true
+        viewModel.onIntent(ShopCartIntent.ChangeQuantity(1, 2))
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.isLoadFailed)
+
+        offline = false
+        viewModel.onIntent(ShopCartIntent.Retry)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isLoadFailed)
+        assertEquals(1, viewModel.uiState.value.items.single().quantity)
+    }
+
+    @Test
+    fun `추천 전체보기는 장바구니를 닫고 매번 새 상점 엔트리로 인테리어 인기순을 연다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+
+        viewModel.onIntent(ShopCartIntent.ClickSeeAllRecommendations)
+        viewModel.onIntent(ShopCartIntent.ClickSeeAllRecommendations)
+
+        val routes = navigationHelper.pages.map { it.toRoute() }
+        assertEquals(RecordingNavigationHelper.Back, navigationHelper.events.first())
+        routes.forEach { route ->
+            assertEquals(ShopPage.PATH, route.path)
+            assertEquals(ShopTab.INTERIOR.linkSegment, route.args[ShopPage.ARG_TAB])
+            assertEquals(ProductSort.POPULAR.name, route.args[ShopPage.ARG_SORT])
+        }
+        // 같은 인자의 상점이 이미 있어도 새 엔트리가 되도록 요청마다 키가 다르다.
+        assertTrue(routes[0] != routes[1])
     }
 
     @Test
