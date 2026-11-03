@@ -22,6 +22,7 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.common.presentation.jank.JankPageEffect
+import com.dandi.nyummy.home.domain.HomePreparePage
 import com.dandi.nyummy.main.presentation.deeplink.appLinkToRoute
 
 @Composable
@@ -128,12 +129,14 @@ fun handleNavRoute(route: NavRoute, backStack: NavBackStack<NavKey>) {
  * 대상만 전면에 노출된다.
  *
  * [asRoot]면 위 규칙 대신 스택을 비우고 그 화면만 남긴다([handleResetTo], 로그인 뒤 이동).
+ * 이때 링크를 풀지 못하면 지금 화면(로그인)에 갇히므로 방 준비 화면([HomePreparePage])을 거쳐 홈으로 간다.
  */
 fun handleAppLink(link: String, asRoot: Boolean, backStack: NavBackStack<NavKey>) {
-    val route = appLinkToRoute(link) ?: return
-    val appRoute = appRouteByPath[route.path]
-    if (appRoute == null) {
-        Log.w(TAG, "Unhandled app link route: ${route.path}")
+    val route = appLinkToRoute(link)
+    val appRoute = route?.let { appRouteByPath[it.path] }
+    if (route == null || appRoute == null) {
+        Log.w(TAG, "Unhandled app link: $link")
+        if (asRoot) handleResetTo(HomePreparePage.toRoute(), backStack)
         return
     }
     if (asRoot) {
