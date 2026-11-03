@@ -107,6 +107,32 @@ class ShopCoinHistoryViewModelTest {
 
         assertEquals(980, viewModel.uiState.value.balance)
         assertEquals(1, repository.refreshCount)
+
+        // 다시 들어오지 않아도 공유 상태가 바뀌면 따라간다.
+        repository.summaryState.value = ShopSummaryVO(balance = 1100, cartItemCount = 0)
+        advanceUntilIdle()
+
+        assertEquals(1100, viewModel.uiState.value.balance)
+        assertEquals(1, repository.refreshCount)
+    }
+
+    @Test
+    fun `화면이 다시 보이면 잔액과 내역을 다시 읽고 다시 시도는 잔액도 다시 읽는다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+
+        viewModel.onIntent(ShopCoinHistoryIntent.Enter)
+        advanceUntilIdle()
+        viewModel.onIntent(ShopCoinHistoryIntent.Enter)
+        advanceUntilIdle()
+
+        assertEquals(2, repository.refreshCount)
+        assertEquals(listOf(null, null), repository.coinHistoryRequests)
+
+        viewModel.onIntent(ShopCoinHistoryIntent.Retry)
+        advanceUntilIdle()
+
+        assertEquals(3, repository.refreshCount)
+        assertEquals(listOf(null, null, null), repository.coinHistoryRequests)
     }
 
     @Test
