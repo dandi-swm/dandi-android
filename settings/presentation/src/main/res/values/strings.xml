@@ -112,4 +112,5 @@
     <string name="my_profile_sheet_save">저장</string>
     <string name="my_profile_error_name_empty">이름을 입력해 주세요</string>
     <string name="my_profile_error_cat_name_too_long">이름은 %1$d자까지 지을 수 있어요</string>
+    <string name="my_profile_error_nickname_too_long">이름은 %1$d자까지 쓸 수 있어요</string>
 </resources>

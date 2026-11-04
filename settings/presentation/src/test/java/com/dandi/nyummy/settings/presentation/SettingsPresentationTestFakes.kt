@@ -127,13 +127,18 @@ internal class RecordingMessageHelper : MessageHelper {
         onClickCTA: (() -> Unit)?,
     ) = Unit
 
+    /** 띄운 한 버튼 창의 버튼 동작. */
+    val oneButtonDialogClicks = mutableListOf<(() -> Unit)?>()
+
     override fun showOneButtonDialog(
         titleText: String?,
         descText: String,
         cantIgnore: Boolean,
         buttonText: String,
         onClickButton: (() -> Unit)?,
-    ) = Unit
+    ) {
+        oneButtonDialogClicks += onClickButton
+    }
 
     override fun showTwoButtonDialog(
         titleText: String?,
@@ -162,7 +167,12 @@ internal class RecordingNavigationHelper : NavigationHelper {
     }
 
     override fun navigateToAsRoot(page: Page) = Unit
-    override fun navigateToInitial() = Unit
+    var initialCount = 0
+
+    override fun navigateToInitial() {
+        initialCount++
+    }
+
     override fun navigateToExternalLink(url: String) = Unit
 }
 

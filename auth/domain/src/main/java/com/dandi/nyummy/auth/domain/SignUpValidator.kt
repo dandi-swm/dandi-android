@@ -7,6 +7,9 @@ object SignUpValidator {
 
     private const val PASSWORD_MIN_LENGTH = 8
 
+    /** 집사 이름 최대 글자 수. 고양이 이름처럼 앞뒤 공백을 뺀 String 길이로 센다(이모지는 2자 이상). 회원가입과 마이페이지가 같이 쓴다. */
+    const val NICKNAME_MAX_LENGTH = 8
+
     fun validateEmail(email: String): SignUpFieldError? =
         if (EmailLoginValidator.validateEmail(email) == null) null else SignUpFieldError.EMAIL_FORMAT
 
@@ -21,6 +24,12 @@ object SignUpValidator {
     fun validatePasswordConfirm(password: String, passwordConfirm: String): SignUpFieldError? =
         if (password == passwordConfirm) null else SignUpFieldError.PASSWORD_CONFIRM_MISMATCH
 
-    fun validateNickname(nickname: String): SignUpFieldError? =
-        if (nickname.isNotBlank()) null else SignUpFieldError.NICKNAME_EMPTY
+    fun validateNickname(nickname: String): SignUpFieldError? {
+        val trimmed = nickname.trim()
+        return when {
+            trimmed.isEmpty() -> SignUpFieldError.NICKNAME_EMPTY
+            trimmed.length > NICKNAME_MAX_LENGTH -> SignUpFieldError.NICKNAME_TOO_LONG
+            else -> null
+        }
+    }
 }

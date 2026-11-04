@@ -6,6 +6,6 @@ package com.dandi.nyummy.auth.entity
  */
 object UserProfileRange {
     val HEIGHT_CM = 120..220
-    val WEIGHT_KG = 30..150
+    val WEIGHT_KG = 30..200
     const val BIRTH_YEAR_FIRST = 1900
 }

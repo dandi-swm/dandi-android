@@ -60,6 +60,8 @@
     <string name="auth_signup_profile_cta">냐미 시작하기</string>
     <string name="auth_signup_error_nickname_empty_title">필수 정보를 확인해주세요.</string>
     <string name="auth_signup_error_nickname_empty_desc">집사 이름은 비워둘 수 없어요.</string>
+    <string name="auth_signup_error_nickname_too_long_title">집사 이름을 확인해주세요.</string>
+    <string name="auth_signup_error_nickname_too_long_desc">집사 이름은 8자까지 쓸 수 있어요.</string>
     <string name="auth_login_headline">기다리고 있었어요!</string>
     <string name="auth_login_button_loading">로그인 중…</string>
     <string name="auth_password_reset_title">비밀번호 찾기</string>

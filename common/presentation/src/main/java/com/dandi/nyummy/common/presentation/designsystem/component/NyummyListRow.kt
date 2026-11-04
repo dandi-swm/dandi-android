@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,10 +20,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
 import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyummyInteractionSource
@@ -150,8 +152,12 @@ fun NyummyListRow(
     }
 }
 
+/**
+ * 오른쪽 끝. 값([NyummyListRowTrailing.Value])은 줄 너비의 절반 칸을 차지하고 그 안에서 오른쪽 끝에 붙는다.
+ * 값이 짧아도 화살표가 늘 줄 오른쪽 끝에 오고, 길면 말줄임(…)으로 줄여 제목을 밀어내지 않는다.
+ */
 @Composable
-private fun ListRowTrailing(trailing: NyummyListRowTrailing, enabled: Boolean) {
+private fun RowScope.ListRowTrailing(trailing: NyummyListRowTrailing, enabled: Boolean) {
     when (trailing) {
         NyummyListRowTrailing.None -> Unit
         NyummyListRowTrailing.Chevron -> Icon(
@@ -161,7 +167,8 @@ private fun ListRowTrailing(trailing: NyummyListRowTrailing, enabled: Boolean) {
             modifier = Modifier.size(NyummyTheme.size.iconL),
         )
         is NyummyListRowTrailing.Value -> Row(
-            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2),
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2, Alignment.End),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             NyummyText(
@@ -169,6 +176,8 @@ private fun ListRowTrailing(trailing: NyummyListRowTrailing, enabled: Boolean) {
                 style = NyummyTheme.typography.bodyM,
                 color = NyummyTheme.colors.content.tertiary,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
             )
             Icon(
                 painter = painterResource(R.drawable.nyummy_ic_chevron_right),

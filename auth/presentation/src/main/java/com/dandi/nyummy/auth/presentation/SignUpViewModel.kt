@@ -11,6 +11,8 @@ import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.entity.time.DeviceTime
+import com.dandi.nyummy.common.presentation.designsystem.component.isBirthAfter
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -252,7 +254,14 @@ class SignUpViewModel @AssistedInject constructor(
         month: Int = currentState.birthMonth,
         day: Int = currentState.birthDay,
     ) {
-        dispatch(SignUpReducerEvent.BirthChanged(year = year, month = month, day = day))
+        // 미래 날짜는 고르지 못한다. 올해에서 이번 달 뒤의 월·일이 되면 오늘(기기 타임존)로 맞춘다.
+        val today = DeviceTime.today()
+        val event = if (isBirthAfter(year, month, day, latest = today)) {
+            SignUpReducerEvent.BirthChanged(year = today.year, month = today.monthValue, day = today.dayOfMonth)
+        } else {
+            SignUpReducerEvent.BirthChanged(year = year, month = month, day = day)
+        }
+        dispatch(event)
     }
 
     private fun submit() {

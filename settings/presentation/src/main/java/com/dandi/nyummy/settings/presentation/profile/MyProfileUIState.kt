@@ -10,7 +10,7 @@ import java.time.LocalDate
 enum class MyProfileField { CAT_NAME, NICKNAME, GENDER, BIRTH, HEIGHT, WEIGHT }
 
 /** 이름 시트(고양이 이름, 집사 이름)의 입력 오류. */
-enum class NameInputError { EMPTY, CAT_NAME_TOO_LONG }
+enum class NameInputError { EMPTY, CAT_NAME_TOO_LONG, NICKNAME_TOO_LONG }
 
 /**
  * 시트에서 고치는 중인 값. 시트를 열 때 지금 값으로 채우고, 저장을 눌러야 서버에 보낸다.
