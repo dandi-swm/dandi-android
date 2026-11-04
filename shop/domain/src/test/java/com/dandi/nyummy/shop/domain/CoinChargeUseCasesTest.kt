@@ -123,7 +123,8 @@ class CoinChargeUseCasesTest {
         tracker.noticeView(event)
         tracker.noticeClick(event)
         tracker.noticeClose(event, dontShowAgain = true)
-        tracker.view(event, source = "notice", claimed = false)
+        tracker.tabClick(event, claimed = true)
+        tracker.view(event, source = "shop_tab", claimed = false)
         tracker.packageClick(event, pack)
         tracker.sheetClose(event, pack)
         tracker.payClick(event, pack)
@@ -133,7 +134,7 @@ class CoinChargeUseCasesTest {
 
         assertEquals(
             listOf(
-                "coin_charge_notice_view", "coin_charge_notice_click", "coin_charge_notice_close", "coin_charge_view",
+                "coin_charge_notice_view", "coin_charge_notice_click", "coin_charge_notice_close", "coin_charge_tab_click", "coin_charge_view",
                 "coin_charge_package_click", "coin_charge_sheet_close", "coin_charge_pay_click", "coin_charge_repeat_click",
                 "coin_charge_result_action", "coin_charge_exit",
             ),

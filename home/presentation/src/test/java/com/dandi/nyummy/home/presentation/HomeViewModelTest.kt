@@ -788,14 +788,14 @@ class HomeViewModelTest {
         resumeWith(afterTutorialMeal)
 
         assertEquals(listOf("냐미 상점이 문을 열었어요!", "냐미가 새단장을 했어요!"), state.notice?.pages?.map { it.title })
-        assertEquals("/shop/coins/charge?source=notice", state.notice?.links?.first())
+        assertEquals("/shop", state.notice?.links?.first())
         val view = coinChargeEvents.single()
         assertEquals("coin_charge_notice_view", view.name)
         assertEquals(mapOf("event_id" to coinCharge.eventId, "ab_group" to "A"), view.params)
     }
 
     @Test
-    fun `이벤트 장의 버튼을 누르면 공지 클릭을 남기고 충전 화면을 연다`() = runTest(testDispatcher) {
+    fun `이벤트 장의 버튼을 누르면 공지 클릭을 남기고 상점을 연다`() = runTest(testDispatcher) {
         coinChargeEvent = coinCharge
         resumeWith(afterTutorialMeal)
 
@@ -803,7 +803,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertEquals(listOf("coin_charge_notice_view", "coin_charge_notice_click"), coinChargeEvents.map { it.name })
-        assertEquals(listOf("https://link.nyummy.co.kr/shop/coins/charge?source=notice"), navigationHelper.appLinks)
+        assertEquals(listOf("https://link.nyummy.co.kr/shop"), navigationHelper.appLinks)
     }
 
     @Test

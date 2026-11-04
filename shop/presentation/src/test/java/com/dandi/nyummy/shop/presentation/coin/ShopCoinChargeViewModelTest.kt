@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
+import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.shop.domain.ClaimCoinChargeUseCase
 import com.dandi.nyummy.shop.domain.CoinChargeRepository
 import com.dandi.nyummy.shop.domain.CoinChargeTracker
@@ -86,8 +87,8 @@ class ShopCoinChargeViewModelTest {
         shopRepository.summaryState.value = ShopSummaryVO(balance = 1240)
         val viewModel = createViewModel()
 
-        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "notice"))
-        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "notice"))
+        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "shop_tab"))
+        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "shop_tab"))
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -97,7 +98,7 @@ class ShopCoinChargeViewModelTest {
         val view = analytics.events.single()
         assertEquals("coin_charge_view", view.name)
         assertEquals(
-            mapOf("event_id" to event.eventId, "ab_group" to "B", "source" to "notice", "claimed" to "false"),
+            mapOf("event_id" to event.eventId, "ab_group" to "B", "source" to "shop_tab", "claimed" to "false"),
             view.params,
         )
         assertEquals(listOf(AnalyticsHelper.UserProperty.COIN_CHARGE_GROUP to "B"), analytics.userProperties)
@@ -129,7 +130,7 @@ class ShopCoinChargeViewModelTest {
     @Test
     fun `묶음을 누르면 시트가 뜨고, 취소하면 닫았다고 남긴다`() = runTest(testDispatcher) {
         val viewModel = createViewModel()
-        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "notice"))
+        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "shop_tab"))
         advanceUntilIdle()
 
         viewModel.onIntent(ShopCoinChargeIntent.ClickPackage(2L))
@@ -147,7 +148,7 @@ class ShopCoinChargeViewModelTest {
     @Test
     fun `결제하기를 누르면 누름을 남기고, 받으면 이벤트 코인으로 받은 뒤 화면을 보인다`() = runTest(testDispatcher) {
         val viewModel = createViewModel()
-        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "notice"))
+        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "shop_tab"))
         advanceUntilIdle()
         viewModel.onIntent(ShopCoinChargeIntent.ClickPackage(1L))
 
@@ -179,7 +180,7 @@ class ShopCoinChargeViewModelTest {
         shopRepository.summaryState.value = ShopSummaryVO(balance = 100)
         coinChargeRepository.grantBalance = 3100
         val viewModel = createViewModel()
-        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "notice"))
+        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "shop_tab"))
         advanceUntilIdle()
         viewModel.onIntent(ShopCoinChargeIntent.ClickPackage(1L))
 
@@ -192,7 +193,7 @@ class ShopCoinChargeViewModelTest {
     @Test
     fun `받은 뒤 상점 둘러보기는 화면을 닫고 상점을 열고, 행동과 떠남을 남긴다`() = runTest(testDispatcher) {
         val viewModel = createViewModel()
-        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "notice"))
+        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "shop_tab"))
         advanceUntilIdle()
         viewModel.onIntent(ShopCoinChargeIntent.ClickPackage(1L))
         viewModel.onIntent(ShopCoinChargeIntent.ClickPay)
@@ -204,6 +205,21 @@ class ShopCoinChargeViewModelTest {
         assertEquals(listOf(RecordingNavigationHelper.Back, ShopPage), navigationHelper.events)
         assertEquals("shop", analytics.events.first { it.name == "coin_charge_result_action" }.params["action"])
         assertEquals("result", analytics.events.last().params["stage"])
+    }
+
+    @Test
+    fun `받은 뒤 홈으로는 화면을 닫고 홈 탭을 연다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "shop_tab"))
+        advanceUntilIdle()
+        viewModel.onIntent(ShopCoinChargeIntent.ClickPackage(1L))
+        viewModel.onIntent(ShopCoinChargeIntent.ClickPay)
+        advanceUntilIdle()
+
+        viewModel.onIntent(ShopCoinChargeIntent.ClickGoHome)
+
+        assertEquals(listOf(RecordingNavigationHelper.Back, HomePage), navigationHelper.events)
+        assertEquals("home", analytics.events.first { it.name == "coin_charge_result_action" }.params["action"])
     }
 
     @Test
@@ -225,7 +241,7 @@ class ShopCoinChargeViewModelTest {
     @Test
     fun `결제하기를 눌렀는데 이미 받은 것으로 확인되면 시트를 닫고 안내한다`() = runTest(testDispatcher) {
         val viewModel = createViewModel()
-        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "notice"))
+        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "shop_tab"))
         advanceUntilIdle()
         viewModel.onIntent(ShopCoinChargeIntent.ClickPackage(1L))
         coinChargeRepository.claimed += event.eventId
@@ -242,7 +258,7 @@ class ShopCoinChargeViewModelTest {
     @Test
     fun `시트를 띄운 채 떠나면 떠난 단계를 sheet로 남긴다`() = runTest(testDispatcher) {
         val viewModel = createViewModel()
-        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "notice"))
+        viewModel.onIntent(ShopCoinChargeIntent.Enter(source = "shop_tab"))
         advanceUntilIdle()
         viewModel.onIntent(ShopCoinChargeIntent.ClickPackage(1L))
 

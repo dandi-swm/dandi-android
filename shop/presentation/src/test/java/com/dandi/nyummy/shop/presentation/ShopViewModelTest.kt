@@ -1,12 +1,20 @@
 package com.dandi.nyummy.shop.presentation
 
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.shop.domain.AddToCartUseCase
+import com.dandi.nyummy.shop.domain.CoinChargePackages
+import com.dandi.nyummy.shop.domain.CoinChargeRepository
+import com.dandi.nyummy.shop.domain.CoinChargeTracker
+import com.dandi.nyummy.shop.domain.GetCoinChargeOfferUseCase
 import com.dandi.nyummy.shop.domain.ObserveShopSummaryUseCase
 import com.dandi.nyummy.shop.domain.RefreshShopSummaryUseCase
 import com.dandi.nyummy.shop.domain.ShopCartPage
+import com.dandi.nyummy.shop.domain.ShopCoinChargePage
 import com.dandi.nyummy.shop.domain.ShopCoinHistoryPage
 import com.dandi.nyummy.shop.domain.ShopErrorType
 import com.dandi.nyummy.shop.domain.ShopMessages
+import com.dandi.nyummy.shop.entity.CoinChargeEventVO
+import com.dandi.nyummy.shop.entity.CoinChargeGrantVO
 import com.dandi.nyummy.shop.entity.ProductSort
 import com.dandi.nyummy.shop.entity.ShopActionVO
 import com.dandi.nyummy.shop.entity.ShopSummaryVO
@@ -44,13 +52,21 @@ class ShopViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel() = ShopViewModel(
-        navigationHelper = navigationHelper,
-        messageHelper = messageHelper,
-        observeShopSummary = ObserveShopSummaryUseCase(repository),
-        refreshShopSummary = RefreshShopSummaryUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
-        addToCart = AddToCartUseCase(repository, shopTracker(), FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
-    )
+    private val analytics = RecordingShopAnalytics()
+    private val coinChargeRepository = FakeCoinChargeTabRepository()
+
+    private fun createViewModel(): ShopViewModel {
+        val coinChargeTracker = CoinChargeTracker(analytics)
+        return ShopViewModel(
+            navigationHelper = navigationHelper,
+            messageHelper = messageHelper,
+            observeShopSummary = ObserveShopSummaryUseCase(repository),
+            refreshShopSummary = RefreshShopSummaryUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
+            addToCart = AddToCartUseCase(repository, shopTracker(), FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
+            getCoinChargeOffer = GetCoinChargeOfferUseCase(coinChargeRepository, coinChargeTracker),
+            coinChargeTracker = coinChargeTracker,
+        )
+    }
 
     @Test
     fun `인자가 없으면 추천 탭으로 열린다`() = runTest(testDispatcher) {
@@ -231,4 +247,81 @@ class ShopViewModelTest {
 
         assertEquals(second, viewModel.uiState.value.detailItem)
     }
+
+    // region 코인 충전 이벤트 탭
+
+    private val coinChargeEvent = CoinChargeEventVO(eventId = "2026-11-coin-charge", group = "A", packages = CoinChargePackages.of("A"))
+
+    @Test
+    fun `코인 충전 이벤트가 없으면 코인 탭이 없다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+
+        viewModel.onIntent(ShopIntent.ScreenResumed)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.coinChargeTab)
+    }
+
+    @Test
+    fun `받기 전에는 Event 칩이 붙고, 누르면 충전 화면으로 가며 탭 누름을 남긴다`() = runTest(testDispatcher) {
+        coinChargeRepository.current = coinChargeEvent
+        val viewModel = createViewModel()
+        viewModel.onIntent(ShopIntent.ScreenResumed)
+        advanceUntilIdle()
+
+        assertEquals(ShopCoinChargeTab(showsEventChip = true), viewModel.uiState.value.coinChargeTab)
+        viewModel.onIntent(ShopIntent.ClickCoinChargeTab)
+
+        val route = navigationHelper.pages.single().toRoute()
+        assertEquals(ShopCoinChargePage.PATH, route.path)
+        assertEquals("shop_tab", route.args[ShopCoinChargePage.ARG_SOURCE])
+        val click = analytics.events.single()
+        assertEquals("coin_charge_tab_click", click.name)
+        assertEquals("false", click.params["claimed"])
+    }
+
+    @Test
+    fun `받은 뒤에는 칩이 없고, 누르면 준비 중 안내만 띄우고 충전 화면으로 가지 않는다`() = runTest(testDispatcher) {
+        coinChargeRepository.current = coinChargeEvent
+        coinChargeRepository.claimed += coinChargeEvent.eventId
+        val viewModel = createViewModel()
+        viewModel.onIntent(ShopIntent.ScreenResumed)
+        advanceUntilIdle()
+
+        assertEquals(ShopCoinChargeTab(showsEventChip = false), viewModel.uiState.value.coinChargeTab)
+        viewModel.onIntent(ShopIntent.ClickCoinChargeTab)
+
+        assertTrue(navigationHelper.pages.isEmpty())
+        assertEquals(listOf(CommonR.string.nyummy_not_ready), messageHelper.toastResIds)
+        assertEquals("true", analytics.events.single().params["claimed"])
+    }
+
+    @Test
+    fun `충전 화면에서 받고 돌아오면 다시 읽어 칩을 뗀다`() = runTest(testDispatcher) {
+        coinChargeRepository.current = coinChargeEvent
+        val viewModel = createViewModel()
+        viewModel.onIntent(ShopIntent.ScreenResumed)
+        advanceUntilIdle()
+
+        coinChargeRepository.claimed += coinChargeEvent.eventId
+        viewModel.onIntent(ShopIntent.ScreenResumed)
+        advanceUntilIdle()
+
+        assertEquals(ShopCoinChargeTab(showsEventChip = false), viewModel.uiState.value.coinChargeTab)
+    }
+
+    // endregion
+}
+
+private class FakeCoinChargeTabRepository : CoinChargeRepository {
+    var current: CoinChargeEventVO? = null
+    val claimed = mutableSetOf<String>()
+
+    override fun getEvent(): CoinChargeEventVO? = current
+    override suspend fun isClaimed(eventId: String): Boolean = eventId in claimed
+    override suspend fun markClaimed(eventId: String) {
+        claimed += eventId
+    }
+
+    override suspend fun claim(event: CoinChargeEventVO, coinPackageId: Long): CoinChargeGrantVO = error("상점 화면은 받지 않는다")
 }

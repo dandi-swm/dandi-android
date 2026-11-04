@@ -163,7 +163,10 @@ internal class RecordingMessageHelper : MessageHelper {
         toasts += toastMsg
     }
 
-    override fun showToast(messageRes: Int) = Unit
+    val toastResIds = mutableListOf<Int>()
+    override fun showToast(messageRes: Int) {
+        toastResIds += messageRes
+    }
     override fun showSnackBar(iconType: IconType, messageText: String, callToActionText: String?, onClickCTA: (() -> Unit)?) = Unit
     override fun showSnackBar(iconType: IconType, messageRes: Int, callToActionText: String?, onClickCTA: (() -> Unit)?) = Unit
     override fun showOneButtonDialog(

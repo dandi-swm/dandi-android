@@ -23,7 +23,7 @@ class CoinChargeEventDTOTest {
             "imageUrl": "https://cdn.nyummy.co.kr/notices/2026-11-shop-open.webp",
             "title": "냐미 상점이 문을 열었어요!",
             "body": "코인을 충전하고 냐미 방을 꾸밀\n가구와 배경을 골라 보세요.",
-            "cta": "코인 충전하기"
+            "cta": "상점 둘러보기"
           }
         }
     """.trimIndent()
@@ -34,7 +34,7 @@ class CoinChargeEventDTOTest {
 
         assertEquals("2026-11-coin-charge", event.eventId)
         assertEquals("A", event.group)
-        assertEquals("코인 충전하기", event.notice?.ctaText)
+        assertEquals("상점 둘러보기", event.notice?.ctaText)
         assertEquals(
             listOf(
                 CoinChargePackageVO(coinPackageId = 1, coins = 300, price = 1000, imageId = 1),
@@ -82,8 +82,8 @@ class CoinChargeEventDTOTest {
     }
 
     @Test
-    fun `버튼 글자가 없는 공지는 버리고 충전 화면만 남긴다`() {
-        val event = parse(groupA.replace("\"cta\": \"코인 충전하기\"", "\"cta\": \"\""))
+    fun `버튼 글자가 없는 공지는 버리고 이벤트(상점 코인 탭)만 남긴다`() {
+        val event = parse(groupA.replace("\"cta\": \"상점 둘러보기\"", "\"cta\": \"\""))
 
         assertNotNull(event)
         assertNull(event!!.notice)
