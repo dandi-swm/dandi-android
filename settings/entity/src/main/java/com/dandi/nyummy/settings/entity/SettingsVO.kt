@@ -42,10 +42,12 @@ data class NotificationSettingsChange(
  * 설정 화면이 한 번에 읽는 값.
  *
  * @property mealTimes 평소 식사 시각. 서버에 저장한다(온보딩에서 처음 받는다). 읽지 못했으면 null.
+ * @property nickname 집사 이름. 맨 위 마이페이지 줄에 보인다. 읽지 못했으면 null.
  */
 data class SettingsVO(
     val notification: NotificationSettingsVO = NotificationSettingsVO.default,
     val mealTimes: MealTimesVO? = null,
+    val nickname: String? = null,
 ) {
     companion object {
         val default = SettingsVO()
