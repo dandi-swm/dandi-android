@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  냐미 위젯: 홈 화면 4x2 고정. 카드가 4x2(약 356×192dp) 한 가지 배치라 크기를 바꾸지 못하게 한다(resizeMode none).
-  Android 12 이상은 targetCell 4x2, 그 아래는 minWidth/minHeight(250×110 → 4x2)로 크기가 정해진다.
+  냐미 위젯: 홈 화면 4x2. 카드가 4x2(약 356×192dp) 한 가지 배치라 세로 크기는 바꾸지 못하게 하고(resizeMode horizontal),
+  가로는 문구가 냐미 그림에 겹치지 않는 340dp 아래로 줄지 않게 한다(minWidth·minResizeWidth). 340dp는 위젯 높이 170dp 이상에서
+  시안 전부가 겹치지 않는 가장 작은 너비다(글자 크기 고정 기준). 높이는 런처의 2칸 높이라 앱이 정할 수 없다.
+  Android 12 이상은 targetCell 4x2로 놓는다. 4칸이 340dp보다 좁은 기기에서는 런처가 칸을 늘리거나 놓지 못하게 할 수 있다(런처마다 다름).
   상태는 앱이 남긴 값과 기기 시계로 계산하고, 바뀌는 시각에 알람으로 다시 그린다.
   주기 갱신(1시간)은 알람이 사라졌을 때를 위한 안전망이다.
 -->
@@ -10,9 +12,10 @@
     android:initialLayout="@layout/widget_nyummy"
     android:previewLayout="@layout/widget_nyummy"
     android:previewImage="@drawable/widget_nyummy_wait_b"
-    android:minWidth="250dp"
+    android:minWidth="340dp"
     android:minHeight="110dp"
-    android:resizeMode="none"
+    android:minResizeWidth="340dp"
+    android:resizeMode="horizontal"
     android:targetCellWidth="4"
     android:targetCellHeight="2"
     android:updatePeriodMillis="3600000"
