@@ -12,7 +12,7 @@ import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMealTimeSheet
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
-import com.dandi.nyummy.onboarding.domain.CatNameError
+import com.dandi.nyummy.common.entity.cat.CatNameError
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
