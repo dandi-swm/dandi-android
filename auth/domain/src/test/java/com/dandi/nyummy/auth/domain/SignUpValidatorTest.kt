@@ -43,4 +43,12 @@ class SignUpValidatorTest {
         assertNull(SignUpValidator.validateNickname("진우 집사"))
         assertEquals(SignUpFieldError.NICKNAME_EMPTY, SignUpValidator.validateNickname("  "))
     }
+
+    @Test
+    fun `집사 이름은 앞뒤 공백을 뺀 8자까지이고 이모지는 2자 이상으로 센다`() {
+        assertNull(SignUpValidator.validateNickname("가나다라마바사아"))
+        assertNull(SignUpValidator.validateNickname("  가나다라마바사아  "))
+        assertEquals(SignUpFieldError.NICKNAME_TOO_LONG, SignUpValidator.validateNickname("가나다라마바사아자"))
+        assertEquals(SignUpFieldError.NICKNAME_TOO_LONG, SignUpValidator.validateNickname("가나다라마바사😺"))
+    }
 }

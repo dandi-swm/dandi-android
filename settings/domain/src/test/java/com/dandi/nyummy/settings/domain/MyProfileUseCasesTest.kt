@@ -17,6 +17,7 @@ class MyProfileUseCasesTest {
     private val messageHelper = RecordingMessageHelper()
     private val navigationHelper = RecordingNavigationHelper()
     private var retryCount = 0
+    private var signOutCount = 0
 
     private val getMyProfile = GetMyProfileUseCase(
         repository = repository,
@@ -40,7 +41,7 @@ class MyProfileUseCasesTest {
     fun `내 프로필을 읽어 그대로 돌려준다`() = runBlocking {
         repository.profile = MyProfileVO(nickname = "진우", gender = Gender.FEMALE, heightCm = 163)
 
-        val result = getMyProfile(onRetry = { retryCount++ })
+        val result = getMyProfile(onRetry = { retryCount++ }, onSignOut = { signOutCount++ })
 
         assertEquals(repository.profile, result.getOrNull())
         assertTrue(messageHelper.snackBars.isEmpty())
@@ -50,7 +51,7 @@ class MyProfileUseCasesTest {
     fun `내 프로필을 읽지 못하면 다시 시도 스낵바를 띄우고 다시 시도는 화면에 맡긴다`() = runBlocking {
         repository.getMealTimesError = IOException("offline")
 
-        val result = getMyProfile(onRetry = { retryCount++ })
+        val result = getMyProfile(onRetry = { retryCount++ }, onSignOut = { signOutCount++ })
 
         assertTrue(result.isFailure)
         val snackBar = messageHelper.snackBars.single()
@@ -60,14 +61,20 @@ class MyProfileUseCasesTest {
     }
 
     @Test
-    fun `회원이 없으면 다시 로그인 안내를 한다`() = runBlocking {
+    fun `회원이 없으면 닫을 수 없는 다시 로그인 창을 띄우고 확인하면 로그아웃을 화면에 맡긴다`() = runBlocking {
         repository.getMealTimesError = httpException(404, "api.user.notFound")
 
-        getMyProfile(onRetry = { retryCount++ })
+        val result = getMyProfile(onRetry = { retryCount++ }, onSignOut = { signOutCount++ })
 
-        val snackBar = messageHelper.snackBars.single()
-        assertEquals("회원 정보를 찾지 못했어요. 다시 로그인해 주세요.", snackBar.messageText)
-        assertNull(snackBar.callToActionText)
+        assertTrue(result.isFailure)
+        assertTrue(messageHelper.snackBars.isEmpty())
+        val dialog = messageHelper.dialogs.single()
+        assertEquals("회원 정보를 찾지 못했어요. 다시 로그인해 주세요.", dialog.descText)
+        assertTrue(dialog.cantIgnore)
+        assertEquals(0, signOutCount)
+        dialog.onClickButton?.invoke()
+        assertEquals(1, signOutCount)
+        assertEquals(0, retryCount)
     }
 
     @Test

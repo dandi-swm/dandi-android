@@ -1,17 +1,27 @@
 package com.dandi.nyummy.settings.presentation.profile
 
+import com.dandi.nyummy.auth.domain.LogoutUseCase
 import com.dandi.nyummy.auth.entity.Gender
+import com.dandi.nyummy.auth.entity.UserProfileRange
 import com.dandi.nyummy.cat.domain.CatRepository
 import com.dandi.nyummy.cat.domain.RenameCatUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
+import com.dandi.nyummy.common.domain.error.HttpResponseException
+import com.dandi.nyummy.common.domain.error.HttpResponseStatus
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.settings.domain.GetMyProfileUseCase
 import com.dandi.nyummy.settings.domain.UpdateMyProfileUseCase
 import com.dandi.nyummy.settings.entity.MyProfileChange
 import com.dandi.nyummy.settings.entity.MyProfileVO
+import com.dandi.nyummy.settings.presentation.FakeAuthRepository
+import com.dandi.nyummy.settings.presentation.FakeCompanionMemoryHelper
+import com.dandi.nyummy.settings.presentation.FakePushTokenHelper
 import com.dandi.nyummy.settings.presentation.FakeResourceHelper
 import com.dandi.nyummy.settings.presentation.FakeSettingsRepository
 import com.dandi.nyummy.settings.presentation.FakeTTIHelper
+import com.dandi.nyummy.settings.presentation.FakeTutorialHelper
+import com.dandi.nyummy.settings.presentation.NoOpWidgetHelper
 import com.dandi.nyummy.settings.presentation.RecordingMessageHelper
 import com.dandi.nyummy.settings.presentation.RecordingNavigationHelper
 import kotlinx.coroutines.CompletableDeferred
@@ -49,6 +59,7 @@ class MyProfileViewModelTest {
             getMyProfile = GetMyProfileUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
             updateMyProfile = UpdateMyProfileUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
             renameCat = RenameCatUseCase(catRepository, memory, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
+            logout = LogoutUseCase(FakeAuthRepository, FakePushTokenHelper, FakeCompanionMemoryHelper, FakeTutorialHelper, NoOpWidgetHelper, navigationHelper),
             navigationHelper = navigationHelper,
         )
     }
@@ -296,4 +307,77 @@ class MyProfileViewModelTest {
         }
         override suspend fun clear() = Unit
     }
+
+    // region 입력 제한
+
+    @Test
+    fun `집사 이름이 8자를 넘으면 보내지 않고 글자 수 오류를 보여 준다`() = runTest(testDispatcher) {
+        viewModel.onIntent(MyProfileIntent.Enter)
+        advanceUntilIdle()
+        viewModel.onIntent(MyProfileIntent.ClickField(MyProfileField.NICKNAME))
+        viewModel.onIntent(MyProfileIntent.InputName("가나다라마바사아자"))
+
+        viewModel.onIntent(MyProfileIntent.ClickSave)
+        advanceUntilIdle()
+
+        assertEquals(NameInputError.NICKNAME_TOO_LONG, state.nameError)
+        assertEquals(MyProfileField.NICKNAME, state.editing)
+        assertTrue(repository.profileChanges.isEmpty())
+
+        viewModel.onIntent(MyProfileIntent.InputName("가나다라마바사아"))
+        viewModel.onIntent(MyProfileIntent.ClickSave)
+        advanceUntilIdle()
+
+        assertEquals(listOf(MyProfileChange(nickname = "가나다라마바사아")), repository.profileChanges)
+    }
+
+    @Test
+    fun `생년월일은 오늘 뒤로 고르면 오늘로 맞춘다`() = runTest(testDispatcher) {
+        val today = DeviceTime.today()
+        viewModel.onIntent(MyProfileIntent.Enter)
+        advanceUntilIdle()
+        viewModel.onIntent(MyProfileIntent.ClickField(MyProfileField.BIRTH))
+
+        viewModel.onIntent(MyProfileIntent.SelectBirthYear(today.year))
+        viewModel.onIntent(MyProfileIntent.SelectBirthMonth(12))
+        viewModel.onIntent(MyProfileIntent.SelectBirthDay(31))
+
+        val picked = LocalDate.of(today.year, 12, 31)
+        assertEquals(if (picked.isAfter(today)) today else picked, state.draft.birth)
+        assertTrue(!state.draft.birth.isAfter(today))
+    }
+
+    @Test
+    fun `몸무게는 200kg까지 고를 수 있다`() {
+        assertEquals(200, UserProfileRange.WEIGHT_KG.last)
+    }
+
+    // endregion
+
+    // region 회원 없음
+
+    @Test
+    fun `회원이 없으면 다시 로그인 창을 띄우고 확인하면 로그아웃해 처음 화면으로 간다`() = runTest(testDispatcher) {
+        repository.getMealTimesError = httpException(404, "api.user.notFound")
+
+        viewModel.onIntent(MyProfileIntent.Enter)
+        advanceUntilIdle()
+
+        assertTrue(!state.isLoaded)
+        val click = messageHelper.oneButtonDialogClicks.single()
+        assertEquals(0, navigationHelper.initialCount)
+        click?.invoke()
+        advanceUntilIdle()
+        assertEquals(1, navigationHelper.initialCount)
+    }
+
+    // endregion
 }
+
+private fun httpException(code: Int, errorCode: String): HttpResponseException = HttpResponseException(
+    status = HttpResponseStatus.create(code),
+    rawCode = code,
+    errorRequestUrl = "https://test/api/v1/users/me",
+    msg = "Http Request Failed ($code)",
+    cause = Throwable(errorCode),
+)
