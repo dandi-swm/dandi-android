@@ -38,12 +38,14 @@ import com.dandi.nyummy.settings.domain.InquiryDetailPage as InquiryDetailRoute
 import com.dandi.nyummy.settings.domain.InquiryListPage as InquiryListRoute
 import com.dandi.nyummy.settings.domain.InquiryWritePage
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
+import com.dandi.nyummy.settings.domain.MyProfilePage as MyProfileRoute
 import com.dandi.nyummy.settings.domain.SettingsPage
 import com.dandi.nyummy.settings.presentation.inquiry.detail.InquiryDetailPage
 import com.dandi.nyummy.settings.presentation.inquiry.list.InquiryListPage
 import com.dandi.nyummy.settings.presentation.inquiry.write.InquiryWritePage
 import com.dandi.nyummy.settings.presentation.main.SettingsPage
 import com.dandi.nyummy.settings.presentation.mealtime.MealTimeSettingPage
+import com.dandi.nyummy.settings.presentation.profile.MyProfilePage
 import com.dandi.nyummy.shop.domain.ShopCartPage
 import com.dandi.nyummy.shop.domain.ShopCoinHistoryPage
 import com.dandi.nyummy.shop.domain.ShopPage
@@ -311,6 +313,17 @@ val appRoutes: List<AppRoute> = listOf(
             )
         },
         render = { MealTimeSettingPage() },
+    ),
+    AppRoute(
+        path = MyProfileRoute.PATH,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(HomePage.PATH),
+                GenericNavKey(SettingsPage.PATH),
+                GenericNavKey(MyProfileRoute.PATH, args),
+            )
+        },
+        render = { MyProfilePage() },
     ),
     AppRoute(
         // 로그인 화면과 설정에서 연다. 로그인하지 않아도 열린다.

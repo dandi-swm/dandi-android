@@ -19,6 +19,14 @@ object MealTimeSettingPage : Page {
     override fun toRoute(): NavRoute = NavRoute(PATH)
 }
 
+/** 마이페이지. 집사 정보(이름, 성별, 생년월일, 키, 몸무게)와 고양이 이름을 보고 바꾼다. 설정 맨 위 집사 줄에서 들어온다. */
+object MyProfilePage : Page {
+
+    const val PATH = "/settings/profile"
+
+    override fun toRoute(): NavRoute = NavRoute(PATH)
+}
+
 /** 내가 보낸 문의 목록. 설정의 문의하기에서 들어온다. */
 object InquiryListPage : Page {
 
