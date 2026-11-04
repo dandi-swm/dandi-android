@@ -7,6 +7,7 @@ import com.dandi.nyummy.shop.domain.ObserveShopSummaryUseCase
 import com.dandi.nyummy.shop.domain.RefreshShopSummaryUseCase
 import com.dandi.nyummy.shop.domain.ShopCartPage
 import com.dandi.nyummy.shop.domain.ShopErrorType
+import com.dandi.nyummy.shop.domain.ShopMessages
 import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.shop.entity.ShopBannerVO
 import com.dandi.nyummy.shop.entity.ShopPromotionPageVO
@@ -190,6 +191,20 @@ class ShopPromotionViewModelTest {
         advanceUntilIdle()
 
         assertNull(viewModel.uiState.value.detailItem)
+    }
+
+    @Test
+    fun `시트에서 담기가 거절되면 토스트가 가려지지 않게 시트를 닫고 알린다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+        val item = shopItem(1)
+        repository.error = httpException(409, ShopErrorType.CART_QUANTITY_EXCEEDED.type)
+
+        viewModel.onIntent(ShopPromotionIntent.ClickItem(item))
+        viewModel.onIntent(ShopPromotionIntent.AddToCart(item, fromSheet = true))
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.detailItem)
+        assertEquals(listOf(ShopMessages.CANNOT_ADD_MORE), messageHelper.toasts)
     }
 
     @Test

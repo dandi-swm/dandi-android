@@ -203,7 +203,7 @@ class ShopViewModelTest {
     }
 
     @Test
-    fun `시트에서 담기가 거절되면 시트를 그대로 두고 알린다`() = runTest(testDispatcher) {
+    fun `시트에서 담기가 거절되면 토스트가 가려지지 않게 시트를 닫고 알린다`() = runTest(testDispatcher) {
         val viewModel = createViewModel()
         val item = shopItem(7)
         repository.error = httpException(409, ShopErrorType.CART_QUANTITY_EXCEEDED.type)
@@ -212,7 +212,7 @@ class ShopViewModelTest {
         viewModel.onIntent(ShopIntent.AddToCart(item, fromSheet = true))
         advanceUntilIdle()
 
-        assertEquals(item, viewModel.uiState.value.detailItem)
+        assertNull(viewModel.uiState.value.detailItem)
         assertEquals(listOf(ShopMessages.CANNOT_ADD_MORE), messageHelper.toasts)
     }
 

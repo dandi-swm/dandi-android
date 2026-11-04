@@ -312,6 +312,41 @@ class ShopCartViewModelTest {
     }
 
     @Test
+    fun `추천 상품 시트에서 담기가 거절되면 토스트가 가려지지 않게 시트를 닫고 알린다`() = runTest(testDispatcher) {
+        repository.cartHandler = { CartVO() }
+        val viewModel = createViewModel()
+        viewModel.onIntent(ShopCartIntent.Enter)
+        advanceUntilIdle()
+        repository.error = httpException(409, ShopErrorType.CART_QUANTITY_EXCEEDED.type)
+
+        viewModel.onIntent(ShopCartIntent.ClickRecommendation(shopItem(7)))
+        viewModel.onIntent(ShopCartIntent.AddRecommendation(shopItem(7)))
+        advanceUntilIdle()
+
+        assertEquals(null, viewModel.uiState.value.detailItem)
+        assertEquals(listOf(ShopMessages.CANNOT_ADD_MORE), messageHelper.toasts)
+    }
+
+    @Test
+    fun `시트를 바꾼 뒤 늦게 온 앞 상품의 담기 응답은 지금 시트를 닫지 않는다`() = runTest(testDispatcher) {
+        repository.cartHandler = { CartVO() }
+        val viewModel = createViewModel()
+        viewModel.onIntent(ShopCartIntent.Enter)
+        advanceUntilIdle()
+        val gate = CompletableDeferred<Unit>().also { repository.addGate = it }
+
+        viewModel.onIntent(ShopCartIntent.ClickRecommendation(shopItem(1)))
+        viewModel.onIntent(ShopCartIntent.AddRecommendation(shopItem(1)))
+        advanceUntilIdle()
+        viewModel.onIntent(ShopCartIntent.DismissDetail)
+        viewModel.onIntent(ShopCartIntent.ClickRecommendation(shopItem(2)))
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(shopItem(2), viewModel.uiState.value.detailItem)
+    }
+
+    @Test
     fun `처음 읽기에 실패하면 다시 시도 안내를 보인다`() = runTest(testDispatcher) {
         var fail = true
         repository.cartHandler = { if (fail) throw IOException("offline") else cartOf(row(1)) }
