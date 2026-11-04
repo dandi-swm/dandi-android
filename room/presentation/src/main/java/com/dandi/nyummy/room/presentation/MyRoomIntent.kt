@@ -39,6 +39,7 @@ sealed interface MyRoomIntent : MviIntent {
     /** 보관함 [category] 탭을 끝 가까이까지 넘겼다. 남은 묶음이 있으면 더 받는다. */
     data class ReachInventoryEnd(val category: RoomItemCategory) : MyRoomIntent
 
+    /** 보관함의 상점 버튼. 저장하지 않은 변경이 있으면 저장할지 묻고, 마이룸을 닫고 상점을 연다. */
     data object ClickShop : MyRoomIntent
 
     /** 냐미 동작 하나가 끝났다. 같은 상태의 다른 동작을 이어 간다. */

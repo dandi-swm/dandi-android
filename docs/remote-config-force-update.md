@@ -71,21 +71,17 @@ qa 환경은 따로 두지 않기로 했다. 앱은 빌드 타입이 release인�
 | debug, benchmark, 베이스라인 프로파일 수집용 | DEBUG | `_debug` |
 
 - 구현: `common/domain/.../remoteconfig/RemoteConfigKey.kt`(키 정의), `common/data/.../remoteconfig/FirebaseRemoteConfigHelper.kt`, `RemoteConfigEnv.kt`, `common/data/.../di/RemoteConfigModule.kt`
-- 원격 구성은 `intro`에서 `common`으로 옮겼다. 인트로가 앱 시작 때 한 번 받아 두고, 강제 업데이트와 기능 플래그가 같은 값을 읽는다.
+- 원격 구성은 `intro`에서 `common`으로 옮겼다. 인트로가 앱 시작 때 한 번 받아 두고, 강제 업데이트, 공지, A/B 실험이 같은 값을 읽는다.
 - 키는 `RemoteConfigKey<T>`(이름, 직렬화기, 기본값)로 정의한다. 원시 타입은 Firebase 타입별 조회로, 목록과 VO는 문자열을 JSON으로 읽는다. 콘솔에 값이 없거나 형식이 맞지 않으면 기본값을 쓴다. 새 키는 `data object`를 하나 추가한다.
 - 콘솔의 기존 `_qa` 키는 앱이 더 읽지 않는다. 운영 키 이름과 값은 그대로 두는 규칙에 따라 지우지 않았다.
-- debug 빌드는 이제 `_debug` 키를 읽는다. debug 그룹을 게시하지 않으면 debug 빌드는 기본값(최소 versionCode 0, 기능 플래그 꺼짐)으로 동작해 강제 업데이트가 걸리지 않는다.
+- debug 빌드는 이제 `_debug` 키를 읽는다. debug 그룹을 게시하지 않으면 debug 빌드는 기본값(최소 versionCode 0)으로 동작해 강제 업데이트가 걸리지 않는다.
 - 이전에는 받아 오기 전 기본값으로 현재 앱 버전을 깔았다. 지금은 키마다 정적 기본값을 두고, 최소 versionCode 기본값 0이 같은 역할(강제 업데이트 안 함)을 한다.
 
-### 기능 플래그 키
+### 회수한 기능 플래그 키
 
-| 키 | `RemoteConfigKey` | 타입 | 기본값 | release | debug |
-|---|---|---|---|---|---|
-| `android_mail_item_tab_enabled` | `MailItemTabEnabled` | Boolean | false | false(우편함 아이템 탭 숨김) | `_debug`: true |
-| `android_my_room_enabled` | `MyRoomEnabled` | Boolean | false | false(하단 내비 마이룸 탭을 누르면 "준비 중" 안내) | `_debug`: true |
-| `android_shop_enabled` | `ShopEnabled` | Boolean | false | false(하단 내비 상점 탭을 누르면 "준비 중" 안내) | `_debug`: 미정 |
+`android_mail_item_tab_enabled`, `android_my_room_enabled`, `android_shop_enabled`는 2.2.1(15)에서 회수했다. 이 버전부터 앱은 이 키를 읽지 않고, 우편함 아이템 탭, 마이룸, 상점이 늘 켜져 있다.
 
-키가 없거나 값을 받지 못하면 꺼진 것으로 본다.
+2.2.0(14) 이하는 아직 이 키를 읽고, 키가 없으면 꺼진 것으로 본다. 그래서 콘솔의 운영 키는 `true`로 두고, 옛 버전 사용자가 없어질 때까지 지우지 않는다.
 
 ### 홈 새 소식 공지 키
 
@@ -110,13 +106,13 @@ qa 환경은 따로 두지 않기로 했다. 앱은 빌드 타입이 release인�
 - [x] 환경별 키 선택 테스트(`RemoteConfigEnvTest`)
 - [x] code 0이면 차단 없음, 최소 code 미만이면 차단, 같으면 허용하는 경계 테스트(`GetIntroUseCaseTest`)
 - [x] 오프라인, 값 누락에서 앱이 불필요하게 차단되지 않는지 테스트(기본값으로 만든 버전 확인 값, `DecodeRemoteConfigValueTest`의 형식 오류)
-- [ ] 콘솔 debug 그룹에 `_debug` 키 4개와 기능 플래그 `_debug` 키 게시
+- [ ] 콘솔 debug 그룹에 `_debug` 키 4개 게시
 
 ## 나중에 게시할 때
 
 - [ ] 콘솔 초안이 여전히 있는지 확인
 - [ ] 기존 키 5개의 이름과 값 유지 여부 확인
-- [ ] 기능 플래그 운영 키(`android_mail_item_tab_enabled`, `android_my_room_enabled`, `android_shop_enabled`)가 false인지 확인
+- [ ] 회수한 기능 플래그 운영 키(`android_mail_item_tab_enabled`, `android_my_room_enabled`, `android_shop_enabled`)가 `true`로 남아 있는지 확인
 - [ ] release 최소 versionCode가 0인지 확인
 - [ ] 업데이트 링크와 문구 확인
 - [ ] 사용자 검토 및 승인 후 변경사항 게시

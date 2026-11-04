@@ -10,7 +10,6 @@ import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
-import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
@@ -31,6 +30,7 @@ import com.dandi.nyummy.room.presentation.model.withItemInFront
 import com.dandi.nyummy.room.presentation.model.withItemMoved
 import com.dandi.nyummy.room.presentation.model.withItemPlaced
 import com.dandi.nyummy.room.presentation.model.withItemRemoved
+import com.dandi.nyummy.shop.domain.ShopPage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -62,7 +62,7 @@ class MyRoomViewModel @Inject constructor(
 
     override fun onIntent(intent: MyRoomIntent) {
         when (intent) {
-            MyRoomIntent.ClickBack -> clickBack()
+            MyRoomIntent.ClickBack -> leave(navigationHelper::navigateToBack)
             MyRoomIntent.ClickSave -> {
                 // 저장 안내는 화면을 막지 않아 사용자가 저장 버튼을 직접 누른다. 결과를 기다리는 동안 안내를 내린다.
                 if (currentState.tutorial?.phase == MyRoomTutorialPhase.Save) changeTutorial(MyRoomTutorialUiState(MyRoomTutorialPhase.Saving))
@@ -78,8 +78,7 @@ class MyRoomViewModel @Inject constructor(
             MyRoomIntent.PutSelectedAway -> putSelectedAway()
             MyRoomIntent.Undo -> if (currentState.canUndo) dispatch(MyRoomReducerEvent.Undone)
             is MyRoomIntent.ReachInventoryEnd -> loadMoreItems(intent.category)
-            // TODO: 상점 화면이 생기면 ShopPage로 연결한다.
-            MyRoomIntent.ClickShop -> messageHelper.showToast(CommonR.string.nyummy_not_ready)
+            MyRoomIntent.ClickShop -> leave(::openShop)
             is MyRoomIntent.CatMotionFinished -> if (intent.playId == currentState.catMotion?.playId) startCatMotion()
             MyRoomIntent.TutorialAdvance -> advanceTutorial()
             MyRoomIntent.TutorialTargetClicked -> if (currentState.tutorial?.phase == MyRoomTutorialPhase.Place) {
@@ -277,23 +276,30 @@ class MyRoomViewModel @Inject constructor(
         dispatch(MyRoomReducerEvent.RoomChanged(room, selectedItemId))
     }
 
-    private fun clickBack() {
+    /** 마이룸을 나간다. 저장하지 않은 변경이 있으면 저장할지 먼저 묻는다. */
+    private fun leave(exit: () -> Unit) {
         val state = currentState
         if (!state.hasChanges || state.loadState != MyRoomLoadState.LOADED) {
-            navigationHelper.navigateToBack()
+            exit()
             return
         }
         messageHelper.showTwoButtonDialog(
             descText = SAVE_CONFIRM_MESSAGE,
             leftButtonText = SAVE_CONFIRM_DISCARD,
-            onClickLeftButton = navigationHelper::navigateToBack,
+            onClickLeftButton = exit,
             rightButtonText = SAVE_CONFIRM_SAVE,
-            onClickRightButton = ::save,
+            onClickRightButton = { save(exit) },
         )
     }
 
-    /** 꾸민 방을 저장하고, 성공하면 들어온 화면(홈)으로 돌아가 저장했다고 알린다. */
-    private fun save() {
+    /** 마이룸을 닫고 상점을 연다. 마이룸을 스택에 두지 않아, 상점에서 산 아이템이 다음에 들어올 때 보관함에 보인다. */
+    private fun openShop() {
+        navigationHelper.navigateToBack()
+        navigationHelper.navigateTo(ShopPage)
+    }
+
+    /** 꾸민 방을 저장하고, 성공하면 [exit]으로 나가 저장했다고 알린다. */
+    private fun save(exit: () -> Unit = navigationHelper::navigateToBack) {
         val state = currentState
         if (!state.canSave) return
         dispatch(MyRoomReducerEvent.SaveStarted)
@@ -306,7 +312,7 @@ class MyRoomViewModel @Inject constructor(
                         changeTutorial(null)
                         tutorialHelper.complete(TutorialStep.ROOM)
                     }
-                    navigationHelper.navigateToBack()
+                    exit()
                     messageHelper.showSnackBar(iconType = IconType.SUCCESS, messageText = SAVED_MESSAGE)
                 }
                 .onFailure { e ->

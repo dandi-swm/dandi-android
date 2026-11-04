@@ -87,7 +87,7 @@ X-Coin-Package-Variant: B
 4. **목표:** 주 측정항목은 `coin_charge_pay_click`. 함께 볼 측정항목으로 `coin_charge_view`, `coin_charge_package_click`, 유지율을 더한다.
 5. **변형:** 매개변수 `android_coin_charge_event`에 기준(Baseline) = A 그룹 JSON, 변형 B = B 그룹 JSON을 넣는다. 실험에 들지 않은 사람은
    Remote Config 기본값(비어 있음)을 받아 이벤트가 없다.
-6. **시작 전 확인:** 서버의 실제 지급(아래 "남은 일")과 상점 플래그(`android_shop_enabled`)를 켰는지 본다. 충전 화면은 상점의 "코인" 탭으로만 들어가므로, 꺼져 있으면 공지를 닫은 뒤 하단 상점 탭이 "준비 중"이라 코인 탭에 갈 수 없다(공지 버튼의 `/shop` 링크는 플래그와 상관없이 열린다).
+6. **시작 전 확인:** 서버의 실제 지급(아래 "남은 일")이 됐는지 본다. 충전 화면은 상점의 "코인" 탭으로만 들어간다.
 
 개발 빌드는 분석 수집이 꺼져 있어(매니페스트 `firebase_analytics_collection_enabled`) 실험 결과에 잡히지 않는다. 화면 확인은 `_debug` 키
 **기본값**에 A 또는 B JSON을 직접 넣고 한다(데이터 유형 JSON, 운영 키 기본값은 `{}`). release 빌드로 특정 그룹을 확인하려면 실험의 테스트 기기(Firebase 설치 ID)를 쓴다.

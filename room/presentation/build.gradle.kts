@@ -61,6 +61,7 @@ dependencies {
     implementation(project(":room:entity"))
     implementation(project(":cat:domain"))
     implementation(project(":cat:entity"))
+    implementation(project(":shop:domain"))
     implementation(project(":common:presentation"))
 
     implementation(libs.androidx.lifecycle.runtime.compose)
