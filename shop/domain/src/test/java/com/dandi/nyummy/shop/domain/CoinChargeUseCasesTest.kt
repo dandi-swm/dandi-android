@@ -80,6 +80,34 @@ class CoinChargeUseCasesTest {
     }
 
     @Test
+    fun `다시 설치해 기기 기록이 없는데 서버가 이미 받았다고 하면 기록을 되살리고 이미 받았다고 한다`() = runBlocking {
+        repository.claimError = httpException(409, ShopErrorType.COIN_GIFT_ALREADY_RECEIVED.type)
+        val notice = GetCoinChargeNoticeUseCase(GetCoinChargeOfferUseCase(repository, tracker))
+        assertEquals(event, notice())
+
+        assertEquals(CoinChargeClaimResult.AlreadyClaimed, claim()(event, pack))
+
+        assertEquals(setOf(event.eventId), repository.claimed)
+        assertTrue(messageHelper.toasts.isEmpty())
+        assertTrue(messageHelper.dialogs.isEmpty())
+        assertEquals(0, shopRepository.refreshCount)
+        assertEquals("already_claimed_server", analytics.events.last().params["reason"])
+        // 되살린 기록으로 다음부터는 서버에 묻지 않고, 홈 공지도 다시 뜨지 않는다.
+        assertEquals(CoinChargeClaimResult.AlreadyClaimed, claim()(event, pack))
+        assertEquals(1, repository.claimRequests.size)
+        assertNull(notice())
+    }
+
+    @Test
+    fun `코드 이름이 서버와 어긋나도 409면 이미 받은 것으로 본다`() = runBlocking {
+        repository.claimError = httpException(409, "api.coin.giftAlreadyClaimed")
+
+        assertEquals(CoinChargeClaimResult.AlreadyClaimed, claim()(event, pack))
+        assertEquals(setOf(event.eventId), repository.claimed)
+        assertTrue(messageHelper.toasts.isEmpty())
+    }
+
+    @Test
     fun `묶음 번호가 없다는 404면 다시 눌러 달라고 알리고 package_not_found로 남긴다`() = runBlocking {
         repository.claimError = httpException(404, ShopErrorType.COIN_PACKAGE_NOT_FOUND.type)
 
