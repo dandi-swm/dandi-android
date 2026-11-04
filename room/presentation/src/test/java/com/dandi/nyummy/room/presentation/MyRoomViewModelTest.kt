@@ -34,6 +34,7 @@ import com.dandi.nyummy.room.entity.OwnedRoomItemVO
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import com.dandi.nyummy.room.entity.RoomPlacementVO
 import com.dandi.nyummy.room.entity.RoomVO
+import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -314,6 +315,46 @@ class MyRoomViewModelTest {
 
         assertTrue(messageHelper.twoButtonDialogs.isEmpty())
         assertEquals(1, navigationHelper.backCount)
+    }
+
+    @Test
+    fun `바뀐 것이 없으면 상점 버튼은 묻지 않고 마이룸을 닫고 상점을 연다`() = runTest(testDispatcher) {
+        val viewModel = loadedViewModel()
+
+        viewModel.onIntent(MyRoomIntent.ClickShop)
+
+        assertTrue(messageHelper.twoButtonDialogs.isEmpty())
+        assertEquals(1, navigationHelper.backCount)
+        assertEquals(listOf<Page>(ShopPage), navigationHelper.pages)
+    }
+
+    @Test
+    fun `저장하지 않은 변경이 있으면 상점으로 갈 때도 저장할지 묻고 저장 안 함이면 저장 없이 간다`() = runTest(testDispatcher) {
+        val viewModel = loadedViewModel()
+        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3, x = 0.45f, y = 0.7f))
+
+        viewModel.onIntent(MyRoomIntent.ClickShop)
+
+        val dialog = messageHelper.twoButtonDialogs.single()
+        assertTrue(navigationHelper.pages.isEmpty())
+        dialog.onClickLeft?.invoke()
+        assertEquals(1, navigationHelper.backCount)
+        assertEquals(listOf<Page>(ShopPage), navigationHelper.pages)
+        assertTrue(repository.saved.isEmpty())
+    }
+
+    @Test
+    fun `상점으로 갈 때 저장하기를 누르면 저장한 뒤 상점으로 간다`() = runTest(testDispatcher) {
+        val viewModel = loadedViewModel()
+        viewModel.onIntent(MyRoomIntent.ClickInteriorItem(3, x = 0.45f, y = 0.7f))
+        viewModel.onIntent(MyRoomIntent.ClickShop)
+
+        messageHelper.twoButtonDialogs.single().onClickRight?.invoke()
+        advanceUntilIdle()
+
+        assertEquals(1, repository.saved.size)
+        assertEquals(1, navigationHelper.backCount)
+        assertEquals(listOf<Page>(ShopPage), navigationHelper.pages)
     }
 
     @Test

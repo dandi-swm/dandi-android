@@ -191,10 +191,14 @@ internal class RecordingMessageHelper : MessageHelper {
 internal class RecordingNavigationHelper : NavigationHelper {
     var initialCount = 0
     var backCount = 0
+    val pages = mutableListOf<Page>()
 
     override val navigationFlow: Flow<NavSignal> = emptyFlow()
     override fun navigateByRoute(route: NavRoute) = Unit
-    override fun navigateTo(page: Page) = Unit
+    override fun navigateTo(page: Page) {
+        pages += page
+    }
+
     override fun navigateToAppLink(link: String, asRoot: Boolean) = Unit
     override fun navigateToBack() {
         backCount++

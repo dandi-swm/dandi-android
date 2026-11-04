@@ -27,8 +27,6 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
@@ -93,13 +91,6 @@ class HomeViewModelTest {
     private val tti = RecordingTTIHelper()
     private lateinit var viewModel: HomeViewModel
 
-    /** 원격 구성 마이룸 플래그. 읽을 때마다 이 값을 돌려준다. */
-    private var isMyRoomEnabled = false
-
-    /** 원격 구성 우편함 아이템 플래그. 읽을 때마다 이 값을 돌려준다. */
-    private var isMailEnabled = false
-    private var isShopEnabled = false
-
     private val tutorialHelper = FakeTutorialHelper()
     private val mealRepository = FakeMealRecordRepository()
 
@@ -125,7 +116,6 @@ class HomeViewModelTest {
         Dispatchers.setMain(testDispatcher)
         viewModel = HomeViewModel(
             navigationHelper = navigationHelper,
-            messageHelper = SilentMessageHelper,
             getHomeSummary = GetHomeSummaryUseCase(
                 repository = homeRepository,
                 widgetHelper = NoOpWidgetHelper,
@@ -154,17 +144,6 @@ class HomeViewModelTest {
             }),
             companionMemory = companionMemory,
             ttiHelper = tti,
-            remoteConfigHelper = object : RemoteConfigHelper {
-                override suspend fun sync() = Unit
-
-                @Suppress("UNCHECKED_CAST")
-                override fun <T> get(key: RemoteConfigKey<T>): T = when (key) {
-                    RemoteConfigKey.MyRoomEnabled -> isMyRoomEnabled as T
-                    RemoteConfigKey.MailItemTabEnabled -> isMailEnabled as T
-                    RemoteConfigKey.ShopEnabled -> isShopEnabled as T
-                    else -> key.defaultValue
-                }
-            },
             tutorialHelper = tutorialHelper,
             submitTutorialMeal = SubmitTutorialMealUseCase(
                 repository = mealRepository,
@@ -207,9 +186,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `마이룸 플래그가 켜져 있으면 홈 요약의 놓인 아이템으로 고양이방 카드에 꾸민 방을 그린다`() = runTest(testDispatcher) {
-        isMyRoomEnabled = true
-
+    fun `홈 요약의 놓인 아이템으로 고양이방 카드에 꾸민 방을 그린다`() = runTest(testDispatcher) {
         resumeWith(HomeSummaryVO(roomPlacements = decoratedRoom))
 
         val room = viewModel.uiState.value.room!!
@@ -221,13 +198,6 @@ class HomeViewModelTest {
         assertEquals(0.5f, bed.x, 0.001f)
         assertEquals(0.8f, bed.y, 0.001f)
         assertEquals(RoomCardLayout.MaxItemScale, bed.scale)
-    }
-
-    @Test
-    fun `마이룸 플래그가 꺼져 있으면 꾸민 방 없이 기본 빈 방만 그린다`() = runTest(testDispatcher) {
-        resumeWith(HomeSummaryVO(roomPlacements = decoratedRoom))
-
-        assertNull(viewModel.uiState.value.room)
     }
 
     @Test
@@ -492,24 +462,14 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `상점이 켜져 있으면 지갑 버튼이 코인 내역을 연다`() = runTest(testDispatcher) {
-        isShopEnabled = true
-
+    fun `지갑 버튼이 코인 내역을 연다`() = runTest(testDispatcher) {
         viewModel.onIntent(HomeIntent.ClickWallet)
 
         assertEquals(listOf<Page>(ShopCoinHistoryPage), navigationHelper.pages)
     }
 
     @Test
-    fun `상점이 꺼져 있으면 지갑 버튼은 이동하지 않는다`() = runTest(testDispatcher) {
-        viewModel.onIntent(HomeIntent.ClickWallet)
-
-        assertTrue(navigationHelper.pages.isEmpty())
-    }
-
-    @Test
     fun `튜토리얼 식사 뒤에는 우편 버튼을 가리키고 누르면 그 단계를 마친다`() = runTest(testDispatcher) {
-        isMailEnabled = true
         tutorialHelper.startAfterMeal()
         resumeWith(afterTutorialMeal)
 
@@ -524,31 +484,19 @@ class HomeViewModelTest {
 
     @Test
     fun `우편함 단계를 마치고 돌아오면 마이룸 탭을 가리킨다`() = runTest(testDispatcher) {
-        isMailEnabled = true
-        isMyRoomEnabled = true
         tutorialHelper.startAfterMeal()
-        tutorialHelper.complete(TutorialStep.HOME_MAIL)
-        tutorialHelper.complete(TutorialStep.MAILBOX)
+        tutorialHelper.completeBeforeRoomTab()
 
         resumeWith(afterTutorialMeal)
 
         assertEquals(HomeTutorialStage.RoomTabPointer, state.tutorial?.stage)
-    }
-
-    @Test
-    fun `우편함 기능이 꺼져 있으면 우편 단계를 마치고 마이룸 탭으로 간다`() = runTest(testDispatcher) {
-        isMyRoomEnabled = true
-        tutorialHelper.startAfterMeal()
-
-        resumeWith(afterTutorialMeal)
-
-        assertEquals(HomeTutorialStage.RoomTabPointer, state.tutorial?.stage)
-        assertFalse(TutorialStep.MAILBOX in tutorialHelper.pending)
     }
 
     @Test
     fun `우편함과 마이룸 단계를 마치면 냐미 건강 이야기를 보이고 끝까지 넘기면 튜토리얼을 마친다`() = runTest(testDispatcher) {
         tutorialHelper.startAfterMeal()
+        tutorialHelper.completeBeforeRoomTab()
+        listOf(TutorialStep.HOME_ROOM_TAB, TutorialStep.ROOM, TutorialStep.HOME_ROOM_SAVED).forEach { tutorialHelper.complete(it) }
 
         resumeWith(afterTutorialMeal)
 
@@ -566,7 +514,6 @@ class HomeViewModelTest {
 
     @Test
     fun `마이룸을 저장하고 돌아오면 방이 저장됐다고 알리고 넘기면 냐미 건강 이야기를 보인다`() = runTest(testDispatcher) {
-        isMyRoomEnabled = true
         tutorialHelper.pending += setOf(TutorialStep.HOME_ROOM_SAVED, TutorialStep.HEALTH_STORY)
 
         resumeWith(afterTutorialMeal)
@@ -584,8 +531,6 @@ class HomeViewModelTest {
 
     @Test
     fun `건너뛰기를 누르면 남은 안내와 함께 확인을 띄우고 계속 배우면 같은 단계로 돌아온다`() = runTest(testDispatcher) {
-        isMailEnabled = true
-        isMyRoomEnabled = true
         resumeWith(beforeTutorialMeal)
         viewModel.onIntent(HomeIntent.TutorialAdvance)
 
@@ -601,8 +546,8 @@ class HomeViewModelTest {
 
     @Test
     fun `마이룸 탭 단계에서 건너뛰면 남은 안내는 꾸미기와 건강 이야기뿐이다`() = runTest(testDispatcher) {
-        isMyRoomEnabled = true
         tutorialHelper.startAfterMeal()
+        tutorialHelper.completeBeforeRoomTab()
         resumeWith(afterTutorialMeal)
 
         viewModel.onIntent(HomeIntent.TutorialSkip)
@@ -627,7 +572,6 @@ class HomeViewModelTest {
 
     @Test
     fun `튜토리얼 식사 뒤에 건너뛰면 튜토리얼 식사를 다시 부르지 않는다`() = runTest(testDispatcher) {
-        isMyRoomEnabled = true
         tutorialHelper.startAfterMeal()
         resumeWith(afterTutorialMeal)
         viewModel.onIntent(HomeIntent.TutorialSkip)
@@ -879,6 +823,12 @@ class HomeViewModelTest {
 
         override suspend fun complete(step: TutorialStep) {
             pending -= step
+        }
+
+        /** 우편함 단계까지 마쳐 다음이 마이룸 탭 단계가 되게 한다. */
+        suspend fun completeBeforeRoomTab() {
+            complete(TutorialStep.HOME_MAIL)
+            complete(TutorialStep.MAILBOX)
         }
 
         override suspend fun skipToHealthStory() {
