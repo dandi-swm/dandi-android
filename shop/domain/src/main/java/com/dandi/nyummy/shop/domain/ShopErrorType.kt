@@ -38,6 +38,15 @@ enum class ShopErrorType(
     /** 화면에서 본 가격과 서버 결제가가 다르다(409). */
     PRICE_CHANGED("api.shop.priceChanged"),
 
+    /** 선물 코인 받기에서 묶음 번호가 1~3 밖이다(404, 코인 충전 이벤트). */
+    COIN_PACKAGE_NOT_FOUND("api.coin.coinPackageNotFound"),
+
+    /**
+     * 이 회차 선물 코인을 이미 받은 사람이 다시 받으려 했다(409, 코인 충전 이벤트, 코인 변동 없음).
+     * 받기 API의 409는 이것뿐이라 코드가 없어도 409면 같은 것으로 본다([ClaimCoinChargeUseCase]).
+     */
+    COIN_GIFT_ALREADY_CLAIMED("api.coin.coinGiftAlreadyClaimed"),
+
     /** 코인이 모자란다(409). */
     INSUFFICIENT_BALANCE("api.shop.insufficientBalance"),
 

@@ -15,6 +15,7 @@ import kotlinx.collections.immutable.persistentSetOf
  * @property sortRequest 링크로 받은 정렬. 인테리어·방 배경 탭이 받아 정렬을 바꾼다
  * @property detailItem 상세 시트에 보이는 상품. null이면 시트가 닫혀 있다
  * @property addingProductIds 담기 요청 중인 상품. 응답 전 같은 상품을 다시 담지 않는다
+ * @property coinChargeTab 탭 줄 끝의 "코인" 탭(코인 충전 이벤트). 이벤트(A/B 실험 대상)가 없으면 null이라 탭이 없다
  */
 data class ShopUIState(
     val balance: Int = 0,
@@ -23,11 +24,19 @@ data class ShopUIState(
     val sortRequest: ShopSortRequest? = null,
     val detailItem: ShopItemVO? = null,
     val addingProductIds: ImmutableSet<Long> = persistentSetOf(),
+    val coinChargeTab: ShopCoinChargeTab? = null,
 ) : UiState {
     companion object {
         val empty = ShopUIState()
     }
 }
+
+/**
+ * 상점 탭 줄 끝의 "코인" 탭. 누르면 충전 화면으로 가는 버튼 탭이라 선택된 탭이 되지 않는다.
+ *
+ * @property showsEventChip "Event" 칩을 붙인다. 선물 코인을 이미 받았으면 false이고, 누르면 "준비 중인 기능이에요"만 뜬다
+ */
+data class ShopCoinChargeTab(val showsEventChip: Boolean = true)
 
 /**
  * 링크(`/shop/interior?sort=POPULAR`)로 받은 정렬 요청. 같은 링크를 다시 눌러도 다시 적용되게 [id]를 올린다.

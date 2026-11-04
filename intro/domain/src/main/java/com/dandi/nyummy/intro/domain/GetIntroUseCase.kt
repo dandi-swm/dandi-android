@@ -14,12 +14,15 @@ import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.entity.remoteconfig.VersionCheckVO
 import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.home.domain.PrefetchHomeNoticesUseCase
+import com.dandi.nyummy.shop.domain.PrefetchCoinChargeNoticeUseCase
 import com.dandi.nyummy.home.domain.PrefetchHomeSummaryUseCase
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TimelineCategory
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
@@ -33,6 +36,7 @@ class GetIntroUseCase @Inject constructor(
     private val prefetchHomeSummary: PrefetchHomeSummaryUseCase,
     private val prefetchCatAnimations: PrefetchCatAnimationsUseCase,
     private val prefetchHomeNotices: PrefetchHomeNoticesUseCase,
+    private val prefetchCoinChargeNotice: PrefetchCoinChargeNoticeUseCase,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -106,8 +110,13 @@ class GetIntroUseCase @Inject constructor(
 
             val destination = startDestination()
             if (destination == HomePage) {
-                // 공지는 원격 구성 값이 있어야 고를 수 있어 받은 뒤에 시작한다.
-                val noticePrefetch = async { prefetchHomeNotices() }
+                // 공지는 원격 구성 값이 있어야 고를 수 있어 받은 뒤에 시작한다. 코인 충전 이벤트 공지(맨 앞 장) 사진도 같이 받는다.
+                val noticePrefetch = async {
+                    coroutineScope {
+                        launch { prefetchHomeNotices() }
+                        launch { prefetchCoinChargeNotice() }
+                    }
+                }
                 // 느린 망에서도 인트로에 갇히지 않게 상한까지만 기다린다. 넘기면 받기를 멈추고, 받지 못한 것은 홈이 이어서 받는다.
                 withTimeoutOrNull(CAT_PREFETCH_TIMEOUT_MS) {
                     catPrefetch.join()

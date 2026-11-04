@@ -1,5 +1,10 @@
 package com.dandi.nyummy.shop.data
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import com.dandi.nyummy.common.data.di.AppPreferenceDataStore
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
+import com.dandi.nyummy.shop.domain.CoinChargeRepository
 import com.dandi.nyummy.shop.domain.ShopRepository
 import dagger.Module
 import dagger.Provides
@@ -46,4 +51,19 @@ object ShopDataModule {
     @Singleton
     fun provideShopRepository(dataSource: ShopDataSource, json: Json): ShopRepository =
         ShopRepositoryImpl(dataSource, json)
+
+    @Provides
+    @Singleton
+    fun provideCoinChargeLocalDataSource(
+        @AppPreferenceDataStore dataStore: DataStore<Preferences>,
+    ): CoinChargeLocalDataSource = CoinChargeLocalDataSource(dataStore)
+
+    @Provides
+    @Singleton
+    fun provideCoinChargeRepository(
+        remoteConfigHelper: RemoteConfigHelper,
+        json: Json,
+        localDataSource: CoinChargeLocalDataSource,
+        dataSource: ShopDataSource,
+    ): CoinChargeRepository = CoinChargeRepositoryImpl(remoteConfigHelper, json, localDataSource, dataSource)
 }

@@ -3,6 +3,8 @@ package com.dandi.nyummy.home.presentation.prepare
 import com.dandi.nyummy.cat.domain.CatRepository
 import com.dandi.nyummy.cat.domain.PrefetchCatAnimationsUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
+import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.helper.DeviceHelper
 import com.dandi.nyummy.common.domain.helper.ImagePrefetchHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
@@ -15,6 +17,13 @@ import com.dandi.nyummy.home.domain.PrefetchHomeNoticesUseCase
 import com.dandi.nyummy.home.domain.PrefetchHomeSummaryUseCase
 import com.dandi.nyummy.home.entity.HomeNoticeVO
 import com.dandi.nyummy.home.entity.HomeSummaryVO
+import com.dandi.nyummy.shop.domain.CoinChargeRepository
+import com.dandi.nyummy.shop.domain.CoinChargeTracker
+import com.dandi.nyummy.shop.domain.GetCoinChargeNoticeUseCase
+import com.dandi.nyummy.shop.domain.GetCoinChargeOfferUseCase
+import com.dandi.nyummy.shop.domain.PrefetchCoinChargeNoticeUseCase
+import com.dandi.nyummy.shop.entity.CoinChargeEventVO
+import com.dandi.nyummy.shop.entity.CoinChargeGrantVO
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -72,6 +81,7 @@ class HomePrepareViewModelTest {
             },
             imagePrefetchHelper = imagePrefetch,
         ),
+        prefetchCoinChargeNotice = noCoinChargeNoticePrefetch(imagePrefetch),
         navigationHelper = navigationHelper,
     )
 
@@ -182,3 +192,24 @@ private class RecordingNavigationHelper : NavigationHelper {
     override fun navigateToInitial() = Unit
     override fun navigateToExternalLink(url: String) = Unit
 }
+
+/** 코인 충전 이벤트가 없는 원격 구성. 공지 사진을 받지 않는다. */
+private fun noCoinChargeNoticePrefetch(imagePrefetchHelper: ImagePrefetchHelper) = PrefetchCoinChargeNoticeUseCase(
+    getNotice = GetCoinChargeNoticeUseCase(
+        GetCoinChargeOfferUseCase(
+            repository = object : CoinChargeRepository {
+                override fun getEvent(): CoinChargeEventVO? = null
+                override suspend fun isClaimed(eventId: String): Boolean = false
+                override suspend fun markClaimed(eventId: String) = Unit
+                override suspend fun claim(event: CoinChargeEventVO, coinPackageId: Long): CoinChargeGrantVO = error("지급하지 않는다")
+            },
+            tracker = CoinChargeTracker(
+                object : AnalyticsHelper {
+                    override fun logScreenView(screenName: String) = Unit
+                    override fun logEvent(event: AnalyticsEvent) = Unit
+                },
+            ),
+        ),
+    ),
+    imagePrefetchHelper = imagePrefetchHelper,
+)

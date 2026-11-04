@@ -13,6 +13,9 @@ sealed interface ShopIntent : MviIntent {
     /** 화면이 다시 보였다. 상단 바 값을 새로 읽는다. */
     data object ScreenResumed : ShopIntent
 
+    /** 추천 탭을 아래로 당겨 새로 고쳤다. 화면이 다시 보였을 때처럼 상단 바 값과 코인 탭을 새로 읽는다. */
+    data object PulledToRefresh : ShopIntent
+
     data class SelectTab(val tab: ShopTab) : ShopIntent
     data object ClickCart : ShopIntent
     data object ClickCoins : ShopIntent
@@ -23,6 +26,9 @@ sealed interface ShopIntent : MviIntent {
     /** 상품 카드·줄을 눌렀다. 상세 시트를 연다. */
     data class ClickItem(val item: ShopItemVO) : ShopIntent
     data object DismissDetail : ShopIntent
+
+    /** 탭 줄 끝의 "코인" 탭을 눌렀다. 선물 코인을 받기 전이면 충전 화면, 받은 뒤면 준비 중 안내. */
+    data object ClickCoinChargeTab : ShopIntent
 
     /** 1개 담기. [fromSheet]면 담은 뒤 시트를 닫는다. */
     data class AddToCart(val item: ShopItemVO, val fromSheet: Boolean = false) : ShopIntent

@@ -24,6 +24,7 @@ import com.dandi.nyummy.shop.presentation.RecordingMessageHelper
 import com.dandi.nyummy.shop.presentation.RecordingNavigationHelper
 import com.dandi.nyummy.shop.presentation.httpException
 import com.dandi.nyummy.shop.presentation.shopItem
+import com.dandi.nyummy.shop.presentation.shopTracker
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -71,8 +72,8 @@ class ShopCartViewModelTest {
             updateCartSelection = UpdateCartSelectionUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
             deleteCartItems = DeleteCartItemsUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
             getShopProducts = GetShopProductsUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
-            addToCart = AddToCartUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
-            purchase = PurchaseUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
+            addToCart = AddToCartUseCase(repository, shopTracker(), FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
+            purchase = PurchaseUseCase(repository, shopTracker(), FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
         )
 
     @Test

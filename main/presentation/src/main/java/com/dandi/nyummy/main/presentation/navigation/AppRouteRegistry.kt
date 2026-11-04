@@ -47,10 +47,12 @@ import com.dandi.nyummy.settings.presentation.main.SettingsPage
 import com.dandi.nyummy.settings.presentation.mealtime.MealTimeSettingPage
 import com.dandi.nyummy.settings.presentation.profile.MyProfilePage
 import com.dandi.nyummy.shop.domain.ShopCartPage
+import com.dandi.nyummy.shop.domain.ShopCoinChargePage
 import com.dandi.nyummy.shop.domain.ShopCoinHistoryPage
 import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.shop.domain.ShopPromotionPage
 import com.dandi.nyummy.shop.presentation.ShopPage
+import com.dandi.nyummy.shop.presentation.coin.ShopCoinChargePage as ShopCoinChargeScreenPage
 import com.dandi.nyummy.shop.presentation.coin.ShopCoinHistoryPage as ShopCoinHistoryScreenPage
 import com.dandi.nyummy.shop.presentation.cart.ShopCartPage as ShopCartScreenPage
 import com.dandi.nyummy.shop.presentation.promotion.ShopPromotionPage as ShopPromotionScreenPage
@@ -230,6 +232,18 @@ val appRoutes: List<AppRoute> = listOf(
             )
         },
         render = { ShopCoinHistoryScreenPage() },
+    ),
+    AppRoute(
+        // 코인 충전(코인 충전 이벤트, 가짜 결제 A/B 테스트). 홈 이벤트 공지 버튼이나 링크로 들어오며,
+        // 링크로 바로 열면 뒤로 가기가 홈이다. 이벤트가 없으면 끝났다는 안내만 보인다.
+        path = ShopCoinChargePage.PATH,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(HomePage.PATH),
+                GenericNavKey(ShopCoinChargePage.PATH, args),
+            )
+        },
+        render = { args -> ShopCoinChargeScreenPage(source = args[ShopCoinChargePage.ARG_SOURCE]) },
     ),
     AppRoute(
         path = MailboxPage.PATH,

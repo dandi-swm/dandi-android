@@ -31,7 +31,10 @@ import com.dandi.nyummy.home.entity.HomeSummaryVO
 import com.dandi.nyummy.mailbox.domain.MailboxPage
 import com.dandi.nyummy.meal.domain.SubmitTutorialMealUseCase
 import com.dandi.nyummy.settings.domain.SettingsPage
+import com.dandi.nyummy.shop.domain.CoinChargeTracker
+import com.dandi.nyummy.shop.domain.GetCoinChargeNoticeUseCase
 import com.dandi.nyummy.shop.domain.ShopCoinHistoryPage
+import com.dandi.nyummy.shop.entity.CoinChargeEventVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TimelineCategory
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -58,6 +61,8 @@ class HomeViewModel @Inject constructor(
     private val submitTutorialMeal: SubmitTutorialMealUseCase,
     private val getHomeNotices: GetHomeNoticesUseCase,
     private val closeHomeNotice: CloseHomeNoticeUseCase,
+    private val getCoinChargeNotice: GetCoinChargeNoticeUseCase,
+    private val coinChargeTracker: CoinChargeTracker,
 ) : MviViewModel<HomeIntent, HomeUIState, HomeReducerEvent>(HomeUIState.empty) {
 
     init {
@@ -72,6 +77,9 @@ class HomeViewModel @Inject constructor(
 
     /** 새 소식 공지를 띄울지 정하는 일. 홈 요약을 처음 받은 뒤 한 번만 한다. */
     private var noticeJob: Job? = null
+
+    /** 지금 공지 다이얼로그에 맨 앞 장으로 끼운 코인 충전 이벤트. 없으면 null이다. 공지 단계 분석 이벤트를 남기는 데 쓴다. */
+    private var noticeCoinCharge: CoinChargeEventVO? = null
 
     /** 홈 요약을 한 번이라도 읽었는지. 첫 진입을 "방금 기록하고 돌아옴"으로 착각하지 않게 한다. */
     private var hasLoadedSummary = false
@@ -164,8 +172,12 @@ class HomeViewModel @Inject constructor(
             }
             HomeIntent.NoticeClosed -> closeNotice()
             is HomeIntent.NoticeCtaClicked -> {
-                val link = currentState.notice?.links?.getOrNull(intent.index)
-                closeNotice()
+                val notice = currentState.notice
+                val link = notice?.links?.getOrNull(intent.index)
+                // 코인 충전 이벤트 장의 버튼이면 공지 클릭, 다른 장의 버튼이면 이벤트 공지는 닫힌 것으로 남긴다.
+                val clickedCoinCharge = noticeCoinCharge?.takeIf { notice?.hideKeys?.getOrNull(intent.index) == it.eventId }
+                if (clickedCoinCharge != null) coinChargeTracker.noticeClick(clickedCoinCharge)
+                closeNotice(trackCoinChargeClose = clickedCoinCharge == null)
                 // 앱 경로("/shop")나 앱 링크만 연다. 앱에 없는 경로면 이동 쪽이 무시하고 홈에 머문다.
                 val appLink = when {
                     link == null -> null
@@ -248,14 +260,24 @@ class HomeViewModel @Inject constructor(
                 closeHomeNotice()
                 return@launch
             }
-            val notices = getHomeNotices()
-            if (notices.isNotEmpty()) dispatch(HomeReducerEvent.NoticeChanged(notices.toNoticeUiState()))
+            // 코인 충전 이벤트 공지는 맨 앞 장에 끼우고, 다른 공지와 같이 "다시 보지 않기"로 숨긴 회차는 거른다.
+            val coinCharge = getCoinChargeNotice()
+            val notices = getHomeNotices(leading = listOfNotNull(coinCharge?.toHomeNotice()))
+            if (notices.isEmpty()) return@launch
+            noticeCoinCharge = coinCharge?.takeIf { event -> notices.any { it.id == event.eventId } }
+            dispatch(HomeReducerEvent.NoticeChanged(notices.toNoticeUiState()))
+            noticeCoinCharge?.let(coinChargeTracker::noticeView)
         }
     }
 
-    /** 공지를 내리고, 이번 실행에서는 다시 띄우지 않는다. "다시 보지 않기"를 체크해 두었으면 이 공지들은 앞으로도 띄우지 않는다. */
-    private fun closeNotice() {
+    /**
+     * 공지를 내리고, 이번 실행에서는 다시 띄우지 않는다. "다시 보지 않기"를 체크해 두었으면 이 공지들은 앞으로도 띄우지 않는다.
+     * 코인 충전 이벤트 장이 있었으면 [trackCoinChargeClose]일 때 이벤트 공지를 닫았다고 남긴다(그 장의 버튼으로 닫으면 남기지 않음).
+     */
+    private fun closeNotice(trackCoinChargeClose: Boolean = true) {
         val notice = currentState.notice ?: return
+        noticeCoinCharge?.let { if (trackCoinChargeClose) coinChargeTracker.noticeClose(it, notice.isDontShowAgainChecked) }
+        noticeCoinCharge = null
         dispatch(HomeReducerEvent.NoticeChanged(null))
         val hideKeys = if (notice.isDontShowAgainChecked) notice.hideKeys.toSet() else emptySet()
         viewModelScope.launch { closeHomeNotice(hideKeys) }

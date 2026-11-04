@@ -6,6 +6,7 @@ import com.dandi.nyummy.shop.data.dto.ShopMeDTO
 import com.dandi.nyummy.shop.data.dto.ShopPageDTO
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -15,7 +16,7 @@ import retrofit2.http.Query
 interface ShopApiService {
     /** 추천 탭 SDUI 조회 */
     @GET("$SHOP_PATH/pages/recommend")
-    suspend fun getRecommendPage(): Response<ShopPageDTO>
+    suspend fun getRecommendPage(@Header(HEADER_LAYOUT_VARIANT) layoutVariant: String): Response<ShopPageDTO>
 
     /** 인테리어·방 배경 탭 상품 목록 조회 */
     @GET("$SHOP_PATH/products")
@@ -41,5 +42,8 @@ interface ShopApiService {
 
     companion object {
         const val SHOP_PATH = "/api/v1/shop"
+
+        /** 추천 탭 배치 A/B 그룹(A, B). 없거나 모르는 값이면 서버가 A로 준다. */
+        const val HEADER_LAYOUT_VARIANT = "X-Shop-Layout-Variant"
     }
 }

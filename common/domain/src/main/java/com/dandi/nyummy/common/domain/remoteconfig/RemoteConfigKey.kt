@@ -57,6 +57,30 @@ sealed class RemoteConfigKey<T>(
         defaultValue = "",
     )
 
+    // ---- 코인 충전 이벤트(docs/remote-config-coin-charge-event.md) ----
+
+    /**
+     * 코인 충전 이벤트(가짜 결제 A/B 테스트) JSON. Firebase A/B Testing 실험이 그룹마다 다른 값(가격표, 그룹 이름)을 준다.
+     * 비어 있거나 형식이 맞지 않으면 이벤트가 없다(홈 공지도 충전 화면도 없음). 파싱은 상점 데이터 계층이 한다.
+     */
+    data object CoinChargeEvent : RemoteConfigKey<String>(
+        key = "android_coin_charge_event",
+        serializer = String.serializer(),
+        defaultValue = "",
+    )
+
+    // ---- 상점 추천 탭 배치 A/B(docs/remote-config-shop-layout-variant.md) ----
+
+    /**
+     * 상점 추천 탭 배치 그룹(A, B). 추천 탭 조회 때 `X-Shop-Layout-Variant` 헤더로 보내면 서버가 그룹에 맞는 칸 순서를 준다.
+     * Firebase A/B Testing 실험이 그룹마다 다른 값을 준다. 비었거나 모르는 값이면 A다(서버 기본과 같다).
+     */
+    data object ShopLayoutVariant : RemoteConfigKey<String>(
+        key = "android_shop_layout_variant",
+        serializer = String.serializer(),
+        defaultValue = "",
+    )
+
     // ---- 기능 플래그 ----
 
     /** 우편함 아이템 탭(보상, 코인, 아이템 받기). 백엔드가 완성될 때까지 운영에서는 끈다. */

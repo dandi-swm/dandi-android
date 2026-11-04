@@ -44,8 +44,8 @@ class ShopRepositoryImpl(
     override suspend fun refreshSummary(): ShopSummaryVO =
         dataSource.getMe().toVO().also { summaryState.value = it }
 
-    override suspend fun getRecommendPage(): ShopRecommendPageVO =
-        dataSource.getRecommendPage().toVO(json) { Log.d(TAG, it) }
+    override suspend fun getRecommendPage(layoutVariant: String): ShopRecommendPageVO =
+        dataSource.getRecommendPage(layoutVariant).toVO(json) { Log.d(TAG, it) }.copy(layoutVariant = layoutVariant)
 
     override suspend fun getProducts(
         tab: ShopTab,

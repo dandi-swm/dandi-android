@@ -61,3 +61,27 @@ object ShopCoinHistoryPage : Page {
 
     override fun toRoute(): NavRoute = NavRoute(PATH)
 }
+
+/**
+ * 코인 충전 화면(코인 충전 이벤트, 가짜 결제 A/B 테스트). 상점의 "코인 · Event" 탭([fromShopTab])과 링크 `/shop/coins/charge`로 연다.
+ * [ARG_SOURCE]는 어디서 들어왔는지(분석용)다. 없으면 [SOURCE_LINK]로 본다.
+ */
+object ShopCoinChargePage : Page {
+
+    const val PATH = "/shop/coins/charge"
+
+    const val ARG_SOURCE = "source"
+
+    /** 상점의 "코인 · Event" 탭으로 들어왔다. */
+    const val SOURCE_SHOP_TAB = "shop_tab"
+
+    /** 그 밖의 링크(푸시, 외부 앱 링크 등)로 들어왔다. */
+    const val SOURCE_LINK = "link"
+
+    override fun toRoute(): NavRoute = NavRoute(PATH)
+
+    /** 상점의 "코인 · Event" 탭이 여는 충전 화면. */
+    val fromShopTab: Page = object : Page {
+        override fun toRoute(): NavRoute = NavRoute(PATH, mapOf(ARG_SOURCE to SOURCE_SHOP_TAB))
+    }
+}

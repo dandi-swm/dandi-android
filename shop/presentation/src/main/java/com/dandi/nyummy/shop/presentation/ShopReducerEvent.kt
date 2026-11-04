@@ -17,4 +17,7 @@ sealed interface ShopReducerEvent : ReducerEvent {
 
     /** 담기 요청이 끝났다. [closeDetail]이면 상세 시트를 닫는다. */
     data class AddFinished(val productId: Long, val closeDetail: Boolean) : ShopReducerEvent
+
+    /** 코인 충전 이벤트를 다시 읽었다. null이면 이벤트가 없어 "코인" 탭을 숨긴다. */
+    data class CoinChargeTabChanged(val tab: ShopCoinChargeTab?) : ShopReducerEvent
 }

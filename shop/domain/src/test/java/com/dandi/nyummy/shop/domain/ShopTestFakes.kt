@@ -1,5 +1,7 @@
 package com.dandi.nyummy.shop.domain
 
+import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
+import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.HttpResponseStatus
 import com.dandi.nyummy.common.domain.helper.MessageHelper
@@ -11,6 +13,8 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
+import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.shop.entity.AddedCartItemVO
 import com.dandi.nyummy.shop.entity.CartVO
 import com.dandi.nyummy.shop.entity.CoinHistoryPageVO
@@ -54,14 +58,21 @@ internal class FakeShopRepository(
     val purchaseRequests = mutableListOf<Pair<String, List<PurchaseProductVO>>>()
     val purchaseErrors = ArrayDeque<Exception>()
 
+    var refreshCount = 0
+
     override suspend fun refreshSummary(): ShopSummaryVO {
+        refreshCount++
         error?.let { throw it }
         return summaryState.value
     }
 
-    override suspend fun getRecommendPage(): ShopRecommendPageVO {
+    /** 추천 탭을 읽을 때 보낸 배치 그룹. */
+    val recommendVariants = mutableListOf<String>()
+
+    override suspend fun getRecommendPage(layoutVariant: String): ShopRecommendPageVO {
+        recommendVariants += layoutVariant
         error?.let { throw it }
-        return ShopRecommendPageVO()
+        return ShopRecommendPageVO(layoutVariant = layoutVariant)
     }
 
     override suspend fun getProducts(
@@ -204,3 +215,28 @@ internal fun httpException(code: Int, errorCode: String? = null): HttpResponseEx
     msg = "Http Request Failed ($code)",
     cause = errorCode?.let(::Throwable),
 )
+
+/** 남긴 분석 이벤트와 사용자 속성을 모은다. */
+internal class RecordingShopAnalytics : AnalyticsHelper {
+    val events = mutableListOf<AnalyticsEvent>()
+    val userProperties = mutableListOf<Pair<String, String?>>()
+
+    override fun logScreenView(screenName: String) = Unit
+    override fun logEvent(event: AnalyticsEvent) {
+        events += event
+    }
+
+    override fun setUserProperty(name: String, value: String?) {
+        userProperties += name to value
+    }
+}
+
+internal fun shopTracker(analytics: AnalyticsHelper = RecordingShopAnalytics()) = ShopTracker(analytics)
+
+/** 원격 구성 값. [values]에 없는 키는 기본값이다. */
+internal class FakeRemoteConfig(private val values: Map<RemoteConfigKey<*>, Any> = emptyMap()) : RemoteConfigHelper {
+    override suspend fun sync() = Unit
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T> get(key: RemoteConfigKey<T>): T = (values[key] as T?) ?: key.defaultValue
+}

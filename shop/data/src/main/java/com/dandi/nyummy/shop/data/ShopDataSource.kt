@@ -4,6 +4,8 @@ import com.dandi.nyummy.common.data.BaseRemoteDataSource
 import com.dandi.nyummy.shop.data.dto.AddCartItemRequestDTO
 import com.dandi.nyummy.shop.data.dto.AddedCartItemDTO
 import com.dandi.nyummy.shop.data.dto.CartDTO
+import com.dandi.nyummy.shop.data.dto.CoinGiftDTO
+import com.dandi.nyummy.shop.data.dto.CoinGiftRequestDTO
 import com.dandi.nyummy.shop.data.dto.CoinHistoriesDTO
 import com.dandi.nyummy.shop.data.dto.PromotionProductsDTO
 import com.dandi.nyummy.shop.data.dto.PurchaseRequestDTO
@@ -21,8 +23,8 @@ class ShopDataSource(
     private val coinApiService: CoinApiService,
 ) : BaseRemoteDataSource() {
 
-    suspend fun getRecommendPage(): ShopPageDTO =
-        checkResponse(apiService.getRecommendPage())
+    suspend fun getRecommendPage(layoutVariant: String): ShopPageDTO =
+        checkResponse(apiService.getRecommendPage(layoutVariant))
 
     suspend fun getProducts(tab: String, category: String?, sort: String, cursor: Long?, size: Int): ShopItemsDTO =
         checkResponse(apiService.getProducts(tab, category, sort, cursor, size))
@@ -53,4 +55,7 @@ class ShopDataSource(
 
     suspend fun getCoinHistories(cursor: Long?, size: Int): CoinHistoriesDTO =
         checkResponse(coinApiService.getCoinHistories(cursor, size))
+
+    suspend fun claimCoinGift(coinPackageVariant: String, coinPackageId: Long): CoinGiftDTO =
+        checkResponse(coinApiService.claimCoinGift(coinPackageVariant, CoinGiftRequestDTO(coinPackageId)))
 }

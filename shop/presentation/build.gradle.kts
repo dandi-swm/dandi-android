@@ -61,6 +61,8 @@ dependencies {
     // 구매 흐름의 "식사 기록하기"·"우편함 가기" 이동(홈과 같은 방식).
     implementation(project(":meal:domain"))
     implementation(project(":mailbox:domain"))
+    // 코인 충전 받은 뒤 화면의 "홈으로"
+    implementation(project(":home:domain"))
     // 장바구니 놓아보기 칸 모델. 놓아보기 화면 자체는 main이 슬롯으로 꽂는다.
     implementation(project(":room:entity"))
     implementation(project(":common:presentation"))

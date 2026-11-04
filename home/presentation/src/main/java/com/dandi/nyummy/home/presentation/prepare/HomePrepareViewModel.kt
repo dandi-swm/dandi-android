@@ -6,6 +6,7 @@ import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.home.domain.PrefetchHomeNoticesUseCase
+import com.dandi.nyummy.shop.domain.PrefetchCoinChargeNoticeUseCase
 import com.dandi.nyummy.home.domain.PrefetchHomeSummaryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.coroutineScope
@@ -28,6 +29,7 @@ class HomePrepareViewModel @Inject constructor(
     private val prefetchHomeSummary: PrefetchHomeSummaryUseCase,
     private val prefetchCatAnimations: PrefetchCatAnimationsUseCase,
     private val prefetchHomeNotices: PrefetchHomeNoticesUseCase,
+    private val prefetchCoinChargeNotice: PrefetchCoinChargeNoticeUseCase,
     private val navigationHelper: NavigationHelper,
 ) : MviViewModel<HomePrepareIntent, HomePrepareUIState, HomePrepareReducerEvent>(HomePrepareUIState.empty) {
 
@@ -39,6 +41,7 @@ class HomePrepareViewModel @Inject constructor(
                 coroutineScope {
                     launch { prefetchCatAnimations() }
                     launch { prefetchHomeNotices() }
+                    launch { prefetchCoinChargeNotice() }
                 }
             }
             dispatch(HomePrepareReducerEvent.PrepareCompleted)

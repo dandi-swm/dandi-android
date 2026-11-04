@@ -33,4 +33,8 @@ class FirebaseAnalyticsHelper(
             },
         )
     }
+
+    override fun setUserProperty(name: String, value: String?) {
+        analytics.setUserProperty(name, value)
+    }
 }

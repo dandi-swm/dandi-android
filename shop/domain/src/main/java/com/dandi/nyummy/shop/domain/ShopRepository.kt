@@ -26,8 +26,8 @@ interface ShopRepository {
     /** 상단 바 값을 서버에서 다시 읽고 [summary]를 바꾼다. */
     suspend fun refreshSummary(): ShopSummaryVO
 
-    /** 추천 탭 SDUI 칸 목록. 모르는 칸과 필수 값이 빠진 칸은 뺀다. */
-    suspend fun getRecommendPage(): ShopRecommendPageVO
+    /** 추천 탭 SDUI 칸 목록. [layoutVariant] 배치 그룹(A, B)의 칸 순서로 받는다. 모르는 칸과 필수 값이 빠진 칸은 뺀다. */
+    suspend fun getRecommendPage(layoutVariant: String): ShopRecommendPageVO
 
     /** 인테리어·방 배경 탭 상품 한 묶음. 방 배경 탭은 [category]를 보내지 않는다. */
     suspend fun getProducts(

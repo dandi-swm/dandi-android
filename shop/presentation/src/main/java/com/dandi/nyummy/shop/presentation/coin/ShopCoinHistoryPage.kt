@@ -76,7 +76,7 @@ private fun ShopCoinHistoryScreen(
             .background(NyummyTheme.colors.bg.canvas),
     ) {
         ShopTopBar(title = stringResource(R.string.shop_coin_title), onBack = { onIntent(ShopCoinHistoryIntent.ClickBack) })
-        BalanceCard(
+        ShopBalanceCard(
             balance = uiState.balance,
             modifier = Modifier.padding(horizontal = NyummyTheme.spacing.gutter, vertical = NyummyTheme.spacing.s16),
         )
@@ -100,9 +100,9 @@ private fun ShopCoinHistoryScreen(
     }
 }
 
-/** "내 코인" 카드. */
+/** "내 코인" 카드. 코인 내역과 코인 충전 화면이 같이 쓴다. */
 @Composable
-private fun BalanceCard(balance: Int, modifier: Modifier = Modifier) {
+internal fun ShopBalanceCard(balance: Int, modifier: Modifier = Modifier) {
     NyummyCard(
         modifier = modifier.fillMaxWidth(),
         containerColor = NyummyTheme.colors.bg.actionNeutral,

@@ -12,10 +12,12 @@ import com.dandi.nyummy.shop.domain.ObserveShopSummaryUseCase
 import com.dandi.nyummy.shop.domain.RefreshShopSummaryUseCase
 import com.dandi.nyummy.shop.domain.ShopCartPage
 import com.dandi.nyummy.shop.domain.ShopPage
+import com.dandi.nyummy.shop.domain.ShopTracker
 import com.dandi.nyummy.shop.entity.ShopBannerVO
 import com.dandi.nyummy.shop.entity.ShopItemVO
 import com.dandi.nyummy.shop.entity.ShopPromotionPageVO
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
@@ -24,7 +26,6 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * 프로모션 화면 상태.
@@ -153,7 +154,7 @@ class ShopPromotionViewModel @Inject constructor(
         if (productId in currentState.addingProductIds) return
         dispatch(ShopPromotionReducerEvent.AddStarted(productId))
         viewModelScope.launch {
-            val added = addToCart(productId).isSuccess
+            val added = addToCart(productId, ShopTracker.Source.PROMOTION).isSuccess
             dispatch(ShopPromotionReducerEvent.AddFinished(productId, closeDetail = fromSheet && added))
         }
     }

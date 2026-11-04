@@ -54,6 +54,7 @@ private fun ShopTabContent(tab: ShopTab, sortRequest: ShopSortRequest?, onIntent
             onItemClick = { onIntent(ShopIntent.ClickItem(it)) },
             onAction = { onIntent(ShopIntent.ClickAction(it)) },
             modifier = modifier,
+            onRefresh = { onIntent(ShopIntent.PulledToRefresh) },
         )
         ShopTab.INTERIOR, ShopTab.BACKGROUND -> ShopCatalogTab(
             tab = tab,
@@ -86,6 +87,8 @@ private fun ShopScreen(
             onSelectTab = { onIntent(ShopIntent.SelectTab(it)) },
             onCartClick = { onIntent(ShopIntent.ClickCart) },
             onCoinsClick = { onIntent(ShopIntent.ClickCoins) },
+            coinChargeTab = uiState.coinChargeTab,
+            onCoinChargeTabClick = { onIntent(ShopIntent.ClickCoinChargeTab) },
         )
         val tabModifier = Modifier
             .fillMaxWidth()

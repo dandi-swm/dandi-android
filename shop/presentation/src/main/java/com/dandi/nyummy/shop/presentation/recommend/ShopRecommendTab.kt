@@ -20,9 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.entity.richText.RichTextVO
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPullToRefreshBox
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRichText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpinner
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateAction
@@ -45,13 +47,15 @@ import kotlinx.collections.immutable.toImmutableList
 
 /**
  * 추천 탭(서버 SDUI). 서버가 준 칸을 순서대로 그리고, 추천 탭 상품에는 담기 버튼이 없다(누르면 상세 시트).
- * 상품 누름과 서버 액션은 상점 화면으로 올린다.
+ * 상품 누름과 서버 액션은 상점 화면으로 올리고, 어느 칸의 몇 번째를 눌렀는지는 추천 탭이 분석 이벤트로 남긴다.
+ * 목록을 아래로 당기면 칸을 다시 읽고, [onRefresh]로 상점 화면에도 알린다(상단 바 값 새로 읽기).
  */
 @Composable
 fun ShopRecommendTab(
     onItemClick: (ShopItemVO) -> Unit,
     onAction: (ShopActionVO) -> Unit,
     modifier: Modifier = Modifier,
+    onRefresh: () -> Unit = {},
     viewModel: ShopRecommendViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -60,9 +64,20 @@ fun ShopRecommendTab(
     ShopRecommendContent(
         uiState = uiState,
         listState = listState,
-        onItemClick = onItemClick,
+        onItemClick = { componentIndex, position, item ->
+            viewModel.onIntent(ShopRecommendIntent.ItemClicked(componentIndex, position, item.productId))
+            onItemClick(item)
+        },
+        onBannerAction = { componentIndex, action ->
+            viewModel.onIntent(ShopRecommendIntent.BannerClicked(componentIndex, action))
+            onAction(action)
+        },
         onAction = onAction,
         onRetry = { viewModel.onIntent(ShopRecommendIntent.Retry) },
+        onRefresh = {
+            viewModel.onIntent(ShopRecommendIntent.Refresh)
+            onRefresh()
+        },
         modifier = modifier,
     )
 }
@@ -70,10 +85,12 @@ fun ShopRecommendTab(
 @Composable
 private fun ShopRecommendContent(
     uiState: ShopRecommendUIState,
-    onItemClick: (ShopItemVO) -> Unit,
+    onItemClick: (componentIndex: Int, position: Int, item: ShopItemVO) -> Unit,
+    onBannerAction: (componentIndex: Int, action: ShopActionVO) -> Unit,
     onAction: (ShopActionVO) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    onRefresh: () -> Unit = {},
     listState: LazyListState = rememberLazyListState(),
 ) {
     when {
@@ -88,15 +105,19 @@ private fun ShopRecommendContent(
             Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 NyummySpinner(contentDescription = stringResource(R.string.shop_loading))
             }
-        else -> {
+        else -> NyummyPullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = onRefresh,
+            modifier = modifier.fillMaxSize(),
+        ) {
             val gutter = NyummyTheme.spacing.gutter
             LazyColumn(
                 state = listState,
-                modifier = modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(top = NyummyTheme.spacing.s16, bottom = NyummyTheme.spacing.s32),
             ) {
                 uiState.components.forEachIndexed { index, component ->
-                    sduiComponent(index, component, gutter, onItemClick, onAction)
+                    sduiComponent(index, component, gutter, onItemClick, onBannerAction, onAction)
                 }
             }
         }
@@ -108,32 +129,34 @@ private fun LazyListScope.sduiComponent(
     index: Int,
     component: SduiComponentVO,
     gutterWidth: Dp,
-    onItemClick: (ShopItemVO) -> Unit,
+    onItemClick: (componentIndex: Int, position: Int, item: ShopItemVO) -> Unit,
+    onBannerAction: (componentIndex: Int, action: ShopActionVO) -> Unit,
     onAction: (ShopActionVO) -> Unit,
 ) {
     val gutter = Modifier.padding(horizontal = gutterWidth)
     when (component) {
         is SduiComponentVO.HeroBanner -> item(key = "hero-$index") {
-            ShopHeroBanner(banners = component.banners.toImmutableList(), onAction = onAction)
+            ShopHeroBanner(banners = component.banners.toImmutableList(), onAction = { onBannerAction(index, it) })
         }
         is SduiComponentVO.SectionHeader -> item(key = "header-$index") {
-            ShopSectionHeader(header = component, onAction = onAction, modifier = gutter)
+            ShopSectionHeader(header = component, onAction = onAction, isFirst = index == 0, modifier = gutter)
         }
         is SduiComponentVO.Ranking -> itemsIndexed(component.items, key = { _, item -> "rank-$index-${item.productId}" }) { rank, item ->
-            ShopRankRow(rank = rank + 1, item = item, onClick = { onItemClick(item) }, modifier = gutter.fillMaxWidth())
+            ShopRankRow(rank = rank + 1, item = item, onClick = { onItemClick(index, rank, item) }, modifier = gutter.fillMaxWidth())
         }
-        is SduiComponentVO.ItemList -> itemsIndexed(component.items, key = { _, item -> "list-$index-${item.productId}" }) { _, item ->
-            ShopItemRow(item = item, onClick = { onItemClick(item) }, modifier = gutter.fillMaxWidth())
+        is SduiComponentVO.ItemList -> itemsIndexed(component.items, key = { _, item -> "list-$index-${item.productId}" }) { position, item ->
+            ShopItemRow(item = item, onClick = { onItemClick(index, position, item) }, modifier = gutter.fillMaxWidth())
         }
         is SduiComponentVO.ItemGrid -> {
             val rows = component.items.chunked(GridColumns)
-            itemsIndexed(rows, key = { row, _ -> "grid-$index-$row" }) { _, row ->
+            itemsIndexed(rows, key = { row, _ -> "grid-$index-$row" }) { rowIndex, row ->
                 Row(
                     modifier = gutter.fillMaxWidth().padding(vertical = NyummyTheme.spacing.s8),
                     horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
                 ) {
-                    row.forEach { item ->
-                        ShopItemCard(item = item, onClick = { onItemClick(item) }, modifier = Modifier.weight(1f))
+                    row.forEachIndexed { column, item ->
+                        val position = rowIndex * GridColumns + column
+                        ShopItemCard(item = item, onClick = { onItemClick(index, position, item) }, modifier = Modifier.weight(1f))
                     }
                     repeat(GridColumns - row.size) { Spacer(Modifier.weight(1f)) }
                 }
@@ -143,19 +166,21 @@ private fun LazyListScope.sduiComponent(
 }
 
 /**
- * 칸 제목 줄(피그마 `v2 / Section / SectionHeader`). 위 24·아래 4 간격을 이 줄이 가진다. 오른쪽 글자는 서버 값이고,
+ * 칸 제목 줄(피그마 `v2 / Section / SectionHeader`). 위 32·아래 8 간격을 이 줄이 가진다. 오른쪽 글자는 서버 값이고,
  * 액션이 있으면 누를 수 있다("전체보기 >").
+ * [isFirst]면(배너 없이 이 줄로 시작하면, 예: 첫 구매를 마친 사람) 위 간격을 빼서 배너가 있을 때처럼 탭 아래 목록 여백만 둔다.
  */
 @Composable
 private fun ShopSectionHeader(
     header: SduiComponentVO.SectionHeader,
     onAction: (ShopActionVO) -> Unit,
+    isFirst: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = NyummyTheme.spacing.s32, bottom = NyummyTheme.spacing.s8),
+            .padding(top = if (isFirst) 0.dp else NyummyTheme.spacing.s32, bottom = NyummyTheme.spacing.s8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NyummyRichText(richText = header.title, maxLines = 1, modifier = Modifier.weight(1f))
@@ -202,7 +227,8 @@ private fun ShopRecommendContentPreview() {
                     SduiComponentVO.ItemGrid(List(4) { item.copy(productId = 10L + it) }),
                 ),
             ),
-            onItemClick = {},
+            onItemClick = { _, _, _ -> },
+            onBannerAction = { _, _ -> },
             onAction = {},
             onRetry = {},
         )

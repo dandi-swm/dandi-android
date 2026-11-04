@@ -7,6 +7,8 @@ import com.dandi.nyummy.shop.data.dto.AddedCartItemDTO
 import com.dandi.nyummy.shop.data.dto.CartDTO
 import com.dandi.nyummy.shop.data.dto.CartItemDTO
 import com.dandi.nyummy.shop.data.dto.CartSummaryDTO
+import com.dandi.nyummy.shop.data.dto.CoinGiftDTO
+import com.dandi.nyummy.shop.data.dto.CoinGiftRequestDTO
 import com.dandi.nyummy.shop.data.dto.CoinHistoriesDTO
 import com.dandi.nyummy.shop.data.dto.CoinHistoryDTO
 import com.dandi.nyummy.shop.data.dto.PromotionProductsDTO
@@ -45,10 +47,27 @@ class ShopRepositoryImplTest {
     private val shopApi = FakeShopApi()
     private val cartApi = FakeCartApi()
     private val purchaseApi = FakePurchaseApi()
+    private val coinApi = FakeCoinApi()
     private val repository = ShopRepositoryImpl(
-        ShopDataSource(shopApi, cartApi, purchaseApi, FakeCoinApi()),
+        ShopDataSource(shopApi, cartApi, purchaseApi, coinApi),
         Json { ignoreUnknownKeys = true },
     )
+
+    @Test
+    fun `선물 코인 받기는 가격 그룹을 헤더로, 묶음 번호를 본문으로 보낸다`() = runBlocking {
+        val gift = ShopDataSource(shopApi, cartApi, purchaseApi, coinApi).claimCoinGift(coinPackageVariant = "B", coinPackageId = 2)
+
+        assertEquals(listOf("B" to CoinGiftRequestDTO(coinPackageId = 2)), coinApi.giftRequests)
+        assertEquals(CoinGiftDTO(coinQuantity = 3000, balance = 3860), gift)
+    }
+
+    @Test
+    fun `추천 탭은 배치 그룹을 헤더로 보내고 받은 칸에 그 그룹을 적는다`() = runBlocking {
+        val page = repository.getRecommendPage("B")
+
+        assertEquals(listOf("B"), shopApi.recommendVariants)
+        assertEquals("B", page.layoutVariant)
+    }
 
     @Test
     fun `상단 바 조회는 잔액과 장바구니 종류 수를 공유 상태로 둔다`() = runBlocking {
@@ -170,7 +189,11 @@ class ShopRepositoryImplTest {
 
     private class FakeShopApi : ShopApiService {
         var me = ShopMeDTO()
-        override suspend fun getRecommendPage(): Response<ShopPageDTO> = Response.success(ShopPageDTO())
+        val recommendVariants = mutableListOf<String>()
+        override suspend fun getRecommendPage(layoutVariant: String): Response<ShopPageDTO> {
+            recommendVariants += layoutVariant
+            return Response.success(ShopPageDTO())
+        }
         override suspend fun getProducts(tab: String, category: String?, sort: String, cursor: Long?, size: Int) =
             Response.success(ShopItemsDTO())
         override suspend fun getPromotionProducts(promotionId: Long, cursor: Long?, size: Int) =
@@ -209,6 +232,11 @@ class ShopRepositoryImplTest {
     }
 
     private class FakeCoinApi : CoinApiService {
+        val giftRequests = mutableListOf<Pair<String, CoinGiftRequestDTO>>()
         override suspend fun getCoinHistories(cursor: Long?, size: Int) = Response.success(CoinHistoriesDTO())
+        override suspend fun claimCoinGift(coinPackageVariant: String, body: CoinGiftRequestDTO): Response<CoinGiftDTO> {
+            giftRequests += coinPackageVariant to body
+            return Response.success(CoinGiftDTO(coinQuantity = 3000, balance = 3860))
+        }
     }
 }
