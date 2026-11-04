@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  냐미 위젯: 홈 화면 4x2.
+  냐미 위젯: 홈 화면 4x2 고정. 카드가 4x2(약 356×192dp) 한 가지 배치라 크기를 바꾸지 못하게 한다(resizeMode none).
+  Android 12 이상은 targetCell 4x2, 그 아래는 minWidth/minHeight(250×110 → 4x2)로 크기가 정해진다.
   상태는 앱이 남긴 값과 기기 시계로 계산하고, 바뀌는 시각에 알람으로 다시 그린다.
   주기 갱신(1시간)은 알람이 사라졌을 때를 위한 안전망이다.
 -->
@@ -11,7 +12,7 @@
     android:previewImage="@drawable/widget_nyummy_wait_b"
     android:minWidth="250dp"
     android:minHeight="110dp"
-    android:resizeMode="horizontal|vertical"
+    android:resizeMode="none"
     android:targetCellWidth="4"
     android:targetCellHeight="2"
     android:updatePeriodMillis="3600000"
