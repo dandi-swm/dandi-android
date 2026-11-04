@@ -149,13 +149,14 @@ class ShopPromotionViewModel @Inject constructor(
             .onFailure { dispatch(ShopPromotionReducerEvent.LoadFailed(firstPage)) }
     }
 
+    /** 거절·실패 안내 토스트가 시트 창에 가려지지 않게, 시트에서 담았으면 성공·실패 모두 시트를 닫는다. */
     private fun add(item: ShopItemVO, fromSheet: Boolean) {
         val productId = item.productId
         if (productId in currentState.addingProductIds) return
         dispatch(ShopPromotionReducerEvent.AddStarted(productId))
         viewModelScope.launch {
-            val added = addToCart(productId, ShopTracker.Source.PROMOTION).isSuccess
-            dispatch(ShopPromotionReducerEvent.AddFinished(productId, closeDetail = fromSheet && added))
+            addToCart(productId, ShopTracker.Source.PROMOTION)
+            dispatch(ShopPromotionReducerEvent.AddFinished(productId, closeDetail = fromSheet))
         }
     }
 

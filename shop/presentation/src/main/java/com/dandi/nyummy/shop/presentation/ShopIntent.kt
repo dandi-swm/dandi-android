@@ -30,6 +30,6 @@ sealed interface ShopIntent : MviIntent {
     /** 탭 줄 끝의 "코인" 탭을 눌렀다. 선물 코인을 받기 전이면 충전 화면, 받은 뒤면 준비 중 안내. */
     data object ClickCoinChargeTab : ShopIntent
 
-    /** 1개 담기. [fromSheet]면 담은 뒤 시트를 닫는다. */
+    /** 1개 담기. [fromSheet]면 담기 결과와 상관없이 시트를 닫는다. */
     data class AddToCart(val item: ShopItemVO, val fromSheet: Boolean = false) : ShopIntent
 }

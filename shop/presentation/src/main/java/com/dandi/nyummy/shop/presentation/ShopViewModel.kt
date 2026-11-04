@@ -121,13 +121,14 @@ class ShopViewModel @Inject constructor(
         }
     }
 
+    /** 거절·실패 안내 토스트가 시트 창에 가려지지 않게, 시트에서 담았으면 성공·실패 모두 시트를 닫는다. */
     private fun add(item: ShopItemVO, fromSheet: Boolean) {
         val productId = item.productId
         if (productId in currentState.addingProductIds) return
         dispatch(ShopReducerEvent.AddStarted(productId))
         viewModelScope.launch {
-            val added = addToCart(productId, ShopTracker.Source.of(currentState.selectedTab)).isSuccess
-            dispatch(ShopReducerEvent.AddFinished(productId, closeDetail = fromSheet && added))
+            addToCart(productId, ShopTracker.Source.of(currentState.selectedTab))
+            dispatch(ShopReducerEvent.AddFinished(productId, closeDetail = fromSheet))
         }
     }
 
