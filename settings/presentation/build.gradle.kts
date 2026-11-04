@@ -60,6 +60,8 @@ dependencies {
     implementation(project(":settings:domain"))
     implementation(project(":settings:entity"))
     implementation(project(":auth:domain"))
+    // 마이페이지에서 고양이 이름 바꾸기(RenameCatUseCase)
+    implementation(project(":cat:domain"))
     implementation(project(":common:presentation"))
     // 약관 화면으로 이동(LegalPage)
     implementation(project(":legal:domain"))
