@@ -47,6 +47,9 @@ internal class RecordingMessageHelper : MessageHelper {
     val dialogs = mutableListOf<DialogCall>()
     val snackBars = mutableListOf<Pair<IconType, String>>()
 
+    /** 스낵바마다 붙은 "다시 시도" 같은 동작. [snackBars]와 순서가 같다. */
+    val snackBarActions = mutableListOf<(() -> Unit)?>()
+
     override val effect: Flow<MessageEffect> = emptyFlow()
     override fun showToast(toastMsg: String) = Unit
     override fun showToast(messageRes: Int) = Unit
@@ -57,6 +60,7 @@ internal class RecordingMessageHelper : MessageHelper {
         onClickCTA: (() -> Unit)?,
     ) {
         snackBars += iconType to messageText
+        snackBarActions += onClickCTA
     }
 
     override fun showSnackBar(

@@ -18,6 +18,8 @@ class PrefetchCatAnimationsUseCaseTest {
                 refreshCount++
                 return refresh()
             }
+
+            override suspend fun rename(name: String) = Unit
         },
     )
 

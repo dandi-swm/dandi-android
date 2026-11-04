@@ -567,6 +567,8 @@ class GetIntroUseCaseTest {
             gate?.await()
             return false
         }
+
+        override suspend fun rename(name: String) = Unit
     }
 
     /** 홈 요약 미리 받기 호출을 센다. */

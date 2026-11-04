@@ -825,6 +825,8 @@ class HomeViewModelTest {
             refreshCount++
             return weightChanged
         }
+
+        override suspend fun rename(name: String) = Unit
     }
 
     private class FakeHomeRepository : HomeRepository {

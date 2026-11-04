@@ -17,6 +17,7 @@ class RefreshCatWeightUseCaseTest {
         repository = object : CatRepository {
             override suspend fun getAnimations(): CatAnimationSetVO = CatAnimationSetVO.empty
             override suspend fun refreshWeight(): Boolean = refresh()
+            override suspend fun rename(name: String) = Unit
         },
         resourceHelper = FakeResourceHelper,
         messageHelper = messageHelper,
