@@ -3,7 +3,7 @@ package com.dandi.nyummy.onboarding.presentation
 import com.dandi.nyummy.common.presentation.mvi.UiState
 import com.dandi.nyummy.common.entity.meal.Meal
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
-import com.dandi.nyummy.onboarding.domain.CatNameError
+import com.dandi.nyummy.common.entity.cat.CatNameError
 
 /**
  * 온보딩 진행 상태. 장면·대사 내용은 [OnboardingScript] 에 있고, 여기는 "어디까지 봤는지"만 들고 있다.

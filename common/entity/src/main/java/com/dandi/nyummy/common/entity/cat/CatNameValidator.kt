@@ -1,4 +1,4 @@
-package com.dandi.nyummy.onboarding.domain
+package com.dandi.nyummy.common.entity.cat
 
 /** 고양이 이름 입력 검증 실패 사유. */
 enum class CatNameError {
