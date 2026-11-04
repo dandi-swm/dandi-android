@@ -66,6 +66,9 @@ class CoinChargeTracker @Inject constructor(
     /** 분석 이벤트 매개변수 값. 철자를 이 파일에서만 정한다. */
     object Values {
         const val REASON_ALREADY_CLAIMED = "already_claimed"
+
+        /** 기기에는 받음 기록이 없는데 서버가 이미 받았다고 했다(앱을 지웠다 다시 깐 사람 등). */
+        const val REASON_ALREADY_CLAIMED_ON_SERVER = "already_claimed_server"
         const val REASON_PACKAGE_NOT_FOUND = "package_not_found"
         const val REASON_INVALID_REQUEST = "invalid_request"
         const val REASON_SERVER_ERROR = "server_error"

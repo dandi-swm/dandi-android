@@ -2,6 +2,7 @@ package com.dandi.nyummy.shop.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.HttpResponseException
+import com.dandi.nyummy.common.domain.error.registeredErrorType
 import com.dandi.nyummy.common.domain.helper.ImagePrefetchHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
@@ -94,6 +95,13 @@ class ClaimCoinChargeUseCase @Inject constructor(
             refreshBalanceQuietly()
             CoinChargeClaimResult.Granted(grant)
         } catch (e: HttpResponseException) {
+            // 앱을 지웠다 다시 깔면 기기 받음 기록이 없어 다시 들어올 수 있다. 서버가 이미 받았다고 하면 기록을 되살려
+            // 이미 받은 사람과 똑같이 안내하고, 상점 코인 탭의 Event 칩과 홈 공지도 다시 뜨지 않게 한다.
+            if (e.isCoinGiftAlreadyReceived()) {
+                markClaimedQuietly(event.eventId)
+                tracker.grantFailed(event, pack, CoinChargeTracker.Values.REASON_ALREADY_CLAIMED_ON_SERVER)
+                return CoinChargeClaimResult.AlreadyClaimed
+            }
             var reason = CoinChargeTracker.Values.REASON_SERVER_ERROR
             handleHttpError<ShopErrorType>(
                 e,
@@ -116,6 +124,10 @@ class ClaimCoinChargeUseCase @Inject constructor(
             CoinChargeClaimResult.Failed
         }
     }
+
+    /** 서버가 이 회차 코인을 이미 줬다고 했다. 코드 이름이 서버와 어긋나도 받기 API의 409는 이것뿐이라 같이 본다. */
+    private fun HttpResponseException.isCoinGiftAlreadyReceived(): Boolean =
+        registeredErrorType<ShopErrorType>() == ShopErrorType.COIN_GIFT_ALREADY_RECEIVED || rawCode == HTTP_CONFLICT
 
     /** 기기에 쓰지 못해도 서버가 두 번째 지급을 막으므로 알리지 않는다. */
     private suspend fun markClaimedQuietly(eventId: String) {
@@ -146,3 +158,5 @@ internal suspend fun CoinChargeRepository.isClaimedOrFalse(eventId: String): Boo
 } catch (_: Exception) {
     false
 }
+
+private const val HTTP_CONFLICT = 409
