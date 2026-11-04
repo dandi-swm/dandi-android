@@ -82,6 +82,8 @@
     <string name="inquiry_detail_reply_from">냐미 팀 답장</string>
     <string name="inquiry_attached_image">첨부한 사진</string>
     <!-- 설정 맨 위 집사 줄과 마이페이지 -->
+    <string name="settings_my_profile_fallback_title">내 정보</string>
+    <string name="settings_my_profile_entry_desc">%1$s 집사 · 내 정보 보기</string>
     <string name="my_profile_title">마이페이지</string>
     <string name="my_profile_section_cat">고양이 정보</string>
     <string name="my_profile_section_owner">집사 정보</string>

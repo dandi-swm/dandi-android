@@ -3,6 +3,7 @@ package com.dandi.nyummy.settings.presentation.main
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -121,6 +123,8 @@ internal fun SettingsScreen(
                 .widthIn(max = ContentMaxWidth)
                 .padding(bottom = NyummyTheme.spacing.s24),
         ) {
+            MyProfileEntry(nickname = uiState.nickname, onClick = { onIntent(SettingsIntent.ClickMyProfile) })
+            NyummySectionBand()
             Column(modifier = Modifier.padding(horizontal = NyummyTheme.spacing.gutter)) {
                 NotificationSection(uiState, onIntent, onOpenDeviceSettings)
             }
@@ -196,6 +200,59 @@ internal fun SettingsScreen(
             type = NyummyDialogType.Destructive,
             confirmEnabled = !uiState.isWithdrawing,
             dismissEnabled = !uiState.isWithdrawing,
+        )
+    }
+}
+
+/**
+ * 맨 위 집사 줄. 프로필 기본 아이콘, 집사 이름, "(고양이 이름) 집사 · 내 정보 보기". 누르면 마이페이지로 간다.
+ * 집사 이름을 읽기 전에는 "내 정보"로 보인다.
+ */
+@Composable
+private fun MyProfileEntry(nickname: String?, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .nyummyClickable(onClick = onClick)
+            .padding(horizontal = NyummyTheme.spacing.gutter)
+            .padding(top = NyummyTheme.spacing.s16, bottom = NyummyTheme.spacing.s20),
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(ProfileAvatarSize)
+                .background(NyummyTheme.colors.bg.surfaceSubtle, RoundedCornerShape(NyummyTheme.radius.full)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(CommonR.drawable.nyummy_ic_user),
+                contentDescription = null,
+                tint = NyummyTheme.colors.content.tertiary,
+                modifier = Modifier.size(ProfileAvatarIconSize),
+            )
+        }
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2),
+        ) {
+            NyummyText(
+                text = nickname?.takeIf { it.isNotBlank() } ?: stringResource(R.string.settings_my_profile_fallback_title),
+                style = NyummyTheme.typography.titleM,
+                maxLines = 1,
+            )
+            NyummyText(
+                text = catNameStringResource(R.string.settings_my_profile_entry_desc),
+                style = NyummyTheme.typography.bodyS,
+                color = NyummyTheme.colors.content.tertiary,
+                maxLines = 1,
+            )
+        }
+        Icon(
+            painter = painterResource(CommonR.drawable.nyummy_ic_chevron_right),
+            contentDescription = null,
+            tint = NyummyTheme.colors.content.tertiary,
+            modifier = Modifier.size(NyummyTheme.size.iconL),
         )
     }
 }
@@ -479,4 +536,6 @@ private fun SettingsScreenDeviceOffPreview() {
 }
 
 private val DetailChevronSize = 12.dp
+private val ProfileAvatarSize = 56.dp
+private val ProfileAvatarIconSize = 32.dp
 private val AccountTopGap = 20.dp
