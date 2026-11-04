@@ -23,21 +23,23 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  * 불러오지 않고 기기 글꼴로 보인다(2026-11-03 에뮬레이터 확인, design.md D9). 그래서 문구는 앱이 직접 그려 넣는다.
  * 문장에 까투리에 없는 글자가 있으면 앱 화면과 같이 그 문장만 Pretendard Medium으로 그린다.
  * 크기·줄 높이는 피그마 `Widget / Card`(제목 32/36, 설명 17/21, 둘 사이 4, 스트릭 15/19)를 따른다.
+ * 글자 크기는 기기 글꼴 크기 설정을 따르지 않고 dp로 고정한다. 카드가 크기와 상관없이 같은 배치라, 글자만 커지면
+ * 문구가 냐미 그림이나 스트릭 줄에 겹친다.
  */
 internal object NyummyWidgetTextPainter {
 
-    private const val TITLE_SIZE_SP = 32f
-    private const val TITLE_LINE_SP = 36f
-    private const val SUB_SIZE_SP = 17f
-    private const val SUB_LINE_SP = 21f
+    private const val TITLE_SIZE_DP = 32f
+    private const val TITLE_LINE_DP = 36f
+    private const val SUB_SIZE_DP = 17f
+    private const val SUB_LINE_DP = 21f
     private const val TITLE_SUB_GAP_DP = 4f
-    private const val STREAK_SIZE_SP = 15f
-    private const val STREAK_LINE_SP = 19f
+    private const val STREAK_SIZE_DP = 15f
+    private const val STREAK_LINE_DP = 19f
 
     /** 제목과 설명을 한 장에 그린다. */
     fun copy(context: Context, title: String, sub: String): Bitmap {
-        val titleLayout = layout(context, title, sp(context, TITLE_SIZE_SP), sp(context, TITLE_LINE_SP))
-        val subLayout = layout(context, sub, sp(context, SUB_SIZE_SP), sp(context, SUB_LINE_SP))
+        val titleLayout = layout(context, title, textPx(context, TITLE_SIZE_DP), textPx(context, TITLE_LINE_DP))
+        val subLayout = layout(context, sub, textPx(context, SUB_SIZE_DP), textPx(context, SUB_LINE_DP))
         val gap = dp(context, TITLE_SUB_GAP_DP)
         val width = max(titleLayout.width, subLayout.width)
         val height = titleLayout.height + gap + subLayout.height
@@ -50,7 +52,7 @@ internal object NyummyWidgetTextPainter {
 
     /** 스트릭 줄의 "12일"을 그린다. */
     fun streak(context: Context, text: String): Bitmap {
-        val textLayout = layout(context, text, sp(context, STREAK_SIZE_SP), sp(context, STREAK_LINE_SP))
+        val textLayout = layout(context, text, textPx(context, STREAK_SIZE_DP), textPx(context, STREAK_LINE_DP))
         return draw(context, textLayout.width, textLayout.height) { canvas -> textLayout.draw(canvas) }
     }
 
@@ -85,8 +87,9 @@ internal object NyummyWidgetTextPainter {
         return ResourcesCompat.getFont(context, fontRes)
     }
 
-    private fun sp(context: Context, value: Float): Float =
-        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, value, context.resources.displayMetrics)
+    /** 글자 크기·줄 높이(px). 화면 밀도만 따르고 글꼴 크기 설정은 무시한다(위 설명). */
+    private fun textPx(context: Context, value: Float): Float =
+        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value, context.resources.displayMetrics)
 
     private fun dp(context: Context, value: Float): Int =
         ceil(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value, context.resources.displayMetrics)).toInt()
