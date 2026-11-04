@@ -19,8 +19,6 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.meal.domain.ImportGalleryMealPhotoUseCase
@@ -103,15 +101,9 @@ class MealRecordViewModelTest {
     }
 
     @Test
-    fun `우편함 플래그는 원격 구성의 우편함 아이템 탭 값을 따른다`() = runTest(testDispatcher) {
-        assertTrue(createViewModel(isMailGiftEnabled = true).uiState.value.isMailGiftEnabled)
-        assertFalse(createViewModel(isMailGiftEnabled = false).uiState.value.isMailGiftEnabled)
-    }
-
-    @Test
     fun `제출에 실패하면 연출을 멈추고 곧장 홈으로 간다`() = runTest(testDispatcher) {
         mealRepository.createError = IOException("network")
-        val viewModel = createViewModel(isMailGiftEnabled = true)
+        val viewModel = createViewModel()
 
         submit(viewModel)
 
@@ -185,9 +177,9 @@ class MealRecordViewModelTest {
     }
 
     @Test
-    fun `상자를 보내지 않으면 먹었어요에서 끝 장면으로 가고 완료를 기다린다`() = runTest(testDispatcher) {
-        mealRepository.created = CreatedMealVO(mealId = 1, rewardBoxGrade = RewardBoxGrade.GOLD)
-        val viewModel = createViewModel(isMailGiftEnabled = false)
+    fun `상자가 없는 기록은 먹었어요에서 끝 장면으로 가고 완료를 기다린다`() = runTest(testDispatcher) {
+        mealRepository.created = CreatedMealVO(mealId = 1, rewardBoxGrade = RewardBoxGrade.NONE)
+        val viewModel = createViewModel()
         submit(viewModel)
 
         viewModel.finishStage(MealCeremonyStage.Serving)
@@ -202,7 +194,7 @@ class MealRecordViewModelTest {
     @Test
     fun `상자를 보내면 상자가 우편함에 들어간 뒤 곧장 홈으로 간다`() = runTest(testDispatcher) {
         mealRepository.created = CreatedMealVO(mealId = 1, rewardBoxGrade = RewardBoxGrade.SILVER)
-        val viewModel = createViewModel(isMailGiftEnabled = true)
+        val viewModel = createViewModel()
         submit(viewModel)
 
         listOf(
@@ -234,7 +226,7 @@ class MealRecordViewModelTest {
 
     @Test
     fun `띠욧에서 건너뛰면 컷신만 건너뛰고 먹었어요로 간다`() = runTest(testDispatcher) {
-        val viewModel = createViewModel(isMailGiftEnabled = true)
+        val viewModel = createViewModel()
         submit(viewModel)
         viewModel.finishStage(MealCeremonyStage.Serving)
 
@@ -247,7 +239,7 @@ class MealRecordViewModelTest {
     @Test
     fun `상자를 보내는 기록은 건너뛰어도 상자 연출은 그대로 보여 준다`() = runTest(testDispatcher) {
         mealRepository.created = CreatedMealVO(mealId = 1, rewardBoxGrade = RewardBoxGrade.BRONZE)
-        val viewModel = createViewModel(isMailGiftEnabled = true)
+        val viewModel = createViewModel()
         submit(viewModel)
         viewModel.finishStage(MealCeremonyStage.Serving)
 
@@ -330,9 +322,9 @@ class MealRecordViewModelTest {
     fun `접수된 뒤 앱이 종료됐다 돌아오면 다시 기록하지 않고 연출 끝 장면을 보여 준다`() = runTest(testDispatcher) {
         mealRepository.created = CreatedMealVO(mealId = 1, rewardBoxGrade = RewardBoxGrade.SILVER)
         val savedState = SavedStateHandle()
-        submit(createViewModel(isMailGiftEnabled = true, savedState = savedState))
+        submit(createViewModel(savedState = savedState))
 
-        val restored = createViewModel(isMailGiftEnabled = true, savedState = savedState.afterProcessDeath())
+        val restored = createViewModel(savedState = savedState.afterProcessDeath())
 
         val ceremony = restored.ceremony()
         assertEquals(MealSubmitStatus.Accepted(RewardBoxGrade.SILVER), ceremony.submit)
@@ -469,7 +461,7 @@ class MealRecordViewModelTest {
     @Test
     fun `튜토리얼에서 담기를 누르면 사진 없이 튜토리얼 식사로 기록하고 골드 상자로 연출을 이어 간다`() = runTest(testDispatcher) {
         tutorialHelper.mealRequired = true
-        val viewModel = createViewModel(isMailGiftEnabled = true)
+        val viewModel = createViewModel()
         advanceUntilIdle()
 
         viewModel.onIntent(MealRecordIntent.ClickSubmit)
@@ -551,13 +543,18 @@ class MealRecordViewModelTest {
     @Test
     fun `튜토리얼에서 건너뛰기를 누르면 남은 안내와 함께 확인을 띄우고 계속 배우면 닫는다`() = runTest(testDispatcher) {
         tutorialHelper.mealRequired = true
-        val viewModel = createViewModel(isMailGiftEnabled = true)
+        val viewModel = createViewModel()
         advanceUntilIdle()
 
         viewModel.onIntent(MealRecordIntent.TutorialSkip)
 
         assertEquals(
-            listOf(NyummyTutorialLesson.RecordMeal, NyummyTutorialLesson.OpenBox, NyummyTutorialLesson.CatHealth),
+            listOf(
+                NyummyTutorialLesson.RecordMeal,
+                NyummyTutorialLesson.OpenBox,
+                NyummyTutorialLesson.DecorateRoom,
+                NyummyTutorialLesson.CatHealth,
+            ),
             viewModel.uiState.value.tutorialSkipConfirm,
         )
 
@@ -648,7 +645,6 @@ class MealRecordViewModelTest {
     }
 
     private fun createViewModel(
-        isMailGiftEnabled: Boolean = false,
         savedState: SavedStateHandle = SavedStateHandle(),
     ): MealRecordViewModel = MealRecordViewModel(
         submitMeal = SubmitMealUseCase(
@@ -681,7 +677,6 @@ class MealRecordViewModelTest {
             ttiHelper = FakeTTIHelper(),
         ),
         tutorialHelper = tutorialHelper,
-        remoteConfigHelper = FakeRemoteConfigHelper(isMailGiftEnabled),
         getRoomBackground = GetRoomBackgroundUseCase(roomRepository),
     )
 
@@ -741,14 +736,6 @@ class MealRecordViewModelTest {
             tutorialCount++
             tutorialError?.let { throw it }
         }
-    }
-
-    private class FakeRemoteConfigHelper(private val isMailGiftEnabled: Boolean) : RemoteConfigHelper {
-        override suspend fun sync() = Unit
-
-        @Suppress("UNCHECKED_CAST")
-        override fun <T> get(key: RemoteConfigKey<T>): T =
-            if (key == RemoteConfigKey.MailItemTabEnabled) isMailGiftEnabled as T else key.defaultValue
     }
 
     private class RecordingNavigationHelper : NavigationHelper {

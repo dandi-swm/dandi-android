@@ -8,8 +8,6 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
@@ -42,14 +40,11 @@ class MealRecordViewModel @Inject constructor(
     private val messageHelper: MessageHelper,
     private val analyticsHelper: AnalyticsHelper,
     private val savedStateHandle: SavedStateHandle,
-    private val remoteConfigHelper: RemoteConfigHelper,
     getRoomBackground: GetRoomBackgroundUseCase,
 ) : MviViewModel<MealRecordIntent, MealRecordUIState, MealRecordReducerEvent>(
     MealRecordUIState(
         // 앱이 백그라운드에서 종료됐다 돌아왔으면 저장해 둔 사실로 하던 단계를 되살린다.
         phase = MealRecordSnapshot.readFrom(savedStateHandle)?.toPhase() ?: MealCameraPhase.Preview,
-        // 상자를 받을 우편함 아이템 탭이 보일 때만 상자를 우편함으로 보내는 연출을 한다.
-        isMailGiftEnabled = remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled),
         // 되살린 화면은 저장해 둔 사진 경로로 튜토리얼인지 이미 안다.
         isTutorialChecked = MealRecordSnapshot.readFrom(savedStateHandle) != null,
     ),
@@ -330,7 +325,7 @@ class MealRecordViewModel @Inject constructor(
     private fun advanceCeremony(finished: MealCeremonyStage) {
         val ceremony = currentState.phase as? MealCameraPhase.Ceremony ?: return
         if (ceremony.stage != finished) return
-        when (val next = ceremony.nextStage(currentState.isMailGiftEnabled)) {
+        when (val next = ceremony.nextStage()) {
             null -> finishRecord()
             ceremony.stage -> Unit
             else -> dispatch(MealRecordReducerEvent.CeremonyStageChanged(next))
@@ -373,11 +368,11 @@ class MealRecordViewModel @Inject constructor(
         }
     }
 
-    /** 건너뛰기 확인에 보일 남은 안내. 꺼진 기능은 뺀다. */
+    /** 건너뛰기 확인에 보일 남은 안내. */
     private fun remainingTutorialLessons(): ImmutableList<NyummyTutorialLesson> = buildList {
         add(NyummyTutorialLesson.RecordMeal)
-        if (remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)) add(NyummyTutorialLesson.OpenBox)
-        if (remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled)) add(NyummyTutorialLesson.DecorateRoom)
+        add(NyummyTutorialLesson.OpenBox)
+        add(NyummyTutorialLesson.DecorateRoom)
         add(NyummyTutorialLesson.CatHealth)
     }.toImmutableList()
 

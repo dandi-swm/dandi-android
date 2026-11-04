@@ -36,7 +36,6 @@ enum class MailboxTutorialStage {
  * @property boxMailId 열어 보게 할 받지 않은 상자 우편. [MailboxTutorialStage.OpenBox]에서만 있다.
  * @property isWaitingForBox 안내대로 열기를 눌러 상자 열기 연출이 도는 중. 코치마크를 내리고 연출이 끝나길 기다린다.
  * @property skipConfirm 건너뛰기 확인에 보일 남은 안내. 확인이 닫혀 있으면 null
- * @property isRoomNext 다음이 마이룸 단계인지. 마이룸 기능이 꺼져 있으면 뒤로가기 안내가 홈으로 돌아가자고 한다.
  */
 @Immutable
 data class MailboxTutorialUiState(
@@ -44,7 +43,6 @@ data class MailboxTutorialUiState(
     val boxMailId: Long? = null,
     val isWaitingForBox: Boolean = false,
     val skipConfirm: ImmutableList<NyummyTutorialLesson>? = null,
-    val isRoomNext: Boolean = true,
 )
 
 /**
@@ -77,7 +75,7 @@ internal fun MailboxTutorialCoachMark(
             )
             MailboxTutorialStage.GoBack -> CoachMark(
                 title = stringResource(R.string.mailbox_tutorial_back_title),
-                body = stringResource(if (it.isRoomNext) R.string.mailbox_tutorial_back_body else R.string.mailbox_tutorial_back_home_body),
+                body = stringResource(R.string.mailbox_tutorial_back_body),
                 expression = NyummyTutorialExpression.Cheer,
                 target = MailboxBackCoachMarkKey,
                 onSkip = onSkip,

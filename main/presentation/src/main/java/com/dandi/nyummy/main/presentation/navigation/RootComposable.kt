@@ -29,7 +29,6 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.Page
-import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.coachmark.CoachMarkHost
 import com.dandi.nyummy.common.presentation.coachmark.CoachMarkLayer
 import com.dandi.nyummy.common.presentation.coachmark.LocalCoachMarkHost
@@ -59,14 +58,12 @@ import kotlinx.coroutines.flow.Flow
  * 앱 뼈대(Scaffold, 하단 탭, 공통 다이얼로그와 스낵바, 화면 전환).
  *
  * @param onScreenShown 맨 위 화면의 경로가 바뀔 때마다 그 경로로 부른다. 사용 분석의 화면 조회 기록에 쓴다.
- * @param mainTabFlags 기능 플래그로 켜고 끄는 하단 탭. 원격 구성은 인트로에서 받아 오므로 탭을 누를 때마다 읽는다.
  */
 @Composable
 fun RootComposable(
     modifier: Modifier = Modifier,
     startStack: List<NavKey>,
     onScreenShown: (path: String) -> Unit = {},
-    mainTabFlags: () -> MainTabFlags = { MainTabFlags() },
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
     val toastHostState = remember { NyummyToastHostState() }
@@ -144,14 +141,7 @@ fun RootComposable(
 
     // 첫 사용자 튜토리얼 코치마크. 화면과 바텀 네비가 대상을 등록하고, 맨 위 층에서 그린다.
     val coachMarkHost = remember { CoachMarkHost() }
-    val onSelectTab: (Int) -> Unit = { index ->
-        val page = mainTabPages[index]
-        if (isMainTabReady(page, mainTabFlags())) {
-            navigationHelper.navigateTo(page)
-        } else {
-            messageHelper.showToast(CommonR.string.nyummy_not_ready)
-        }
-    }
+    val onSelectTab: (Int) -> Unit = { index -> navigationHelper.navigateTo(mainTabPages[index]) }
     val onMealRecordClick = { navigationHelper.navigateTo(MealRecordPage) }
 
     val drawsBehindSystemBars = currentRoute?.drawsBehindSystemBars == true
@@ -223,12 +213,6 @@ fun RootComposable(
     }
 }
 
-/** 기능 플래그로 켜고 끄는 하단 탭. 꺼져 있어도 탭은 보이고, 누르면 준비 중이라고 알린다. */
-data class MainTabFlags(
-    val isMyRoomEnabled: Boolean = false,
-    val isShopEnabled: Boolean = false,
-)
-
 /**
  * 하단 내비 탭 순서대로 이동할 화면. [NyummyMainTabs]의 순서(홈, 마이룸, 기록, 상점)와 같다.
  * 마이룸 탭은 하단 내비 없는 마이룸 화면으로 가는 지름길이라 탭 루트가 아니다(뒤로 가면 보던 탭으로 돌아온다).
@@ -241,13 +225,6 @@ internal const val MealRecordActionIndex = 2
 /** [path] 화면이 [mainTabPages]에서 몇 번째인지. 탭 화면이 아니면 -1이다. */
 internal fun mainTabIndexOf(path: String?): Int =
     mainTabPages.indexOfFirst { it.toRoute().path == path }
-
-/** [page] 탭으로 갈 수 있는지. 기능 플래그가 꺼진 탭은 아직 준비 중이다. 홈과 기록은 늘 갈 수 있다. */
-internal fun isMainTabReady(page: Page, flags: MainTabFlags): Boolean = when (page) {
-    MyRoomPage -> flags.isMyRoomEnabled
-    ShopPage -> flags.isShopEnabled
-    else -> true
-}
 
 @Composable
 private fun MessageEffect(

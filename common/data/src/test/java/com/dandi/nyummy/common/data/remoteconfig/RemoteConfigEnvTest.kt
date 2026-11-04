@@ -18,6 +18,6 @@ class RemoteConfigEnvTest {
         val env = RemoteConfigEnv.of(isReleaseBuild = false)
 
         assertEquals(RemoteConfigEnv.DEBUG, env)
-        assertEquals("android_mail_item_tab_enabled_debug", env.keyOf("android_mail_item_tab_enabled"))
+        assertEquals("android_shop_layout_variant_debug", env.keyOf("android_shop_layout_variant"))
     }
 }

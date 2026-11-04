@@ -187,7 +187,7 @@ private fun MealRecordScreen(
             stage = phase.stage,
             cutscene = phase.cutscene,
             rewardBoxGrade = phase.rewardBoxGrade,
-            sendsRewardBox = phase.sendsRewardBox(uiState.isMailGiftEnabled),
+            sendsRewardBox = phase.sendsRewardBox,
             roomBackgroundUrl = uiState.roomBackgroundItemId?.let(NyummyCdn::itemUrl),
             notificationsOff = !uiState.isDeviceNotificationEnabled,
             onStageFinished = { onIntent(MealRecordIntent.CeremonyStageFinished(it)) },

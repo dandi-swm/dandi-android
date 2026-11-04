@@ -85,9 +85,9 @@ val MealCameraPhase.Ceremony.isAccepted: Boolean
 val MealCameraPhase.Ceremony.rewardBoxGrade: RewardBoxGrade
     get() = (submit as? MealSubmitStatus.Accepted)?.rewardBoxGrade ?: RewardBoxGrade.NONE
 
-/** 상자를 우편함으로 보내는 장면까지 보여 줄지. 우편함 연출이 켜져 있고 이번 기록에 상자가 있을 때만입니다. */
-fun MealCameraPhase.Ceremony.sendsRewardBox(isMailGiftEnabled: Boolean): Boolean =
-    isMailGiftEnabled && rewardBoxGrade != RewardBoxGrade.NONE
+/** 상자를 우편함으로 보내는 장면까지 보여 줄지. 이번 기록에 상자가 있을 때만입니다. */
+val MealCameraPhase.Ceremony.sendsRewardBox: Boolean
+    get() = rewardBoxGrade != RewardBoxGrade.NONE
 
 /** 접수 결과를 싣습니다. 응답을 기다리던 중이면 곧장 맛 리액션으로, 사진 카드가 올라오는 중이면 그 장면이 끝난 뒤 넘어갑니다. */
 fun MealCameraPhase.Ceremony.accepted(
@@ -105,12 +105,12 @@ fun MealCameraPhase.Ceremony.accepted(
  * 접수되기 전에는 기다림 장면에 머물고, 상자를 보내지 않는 기록은 먹었어요에서 끝 장면으로 갑니다.
  * 상자를 보내는 기록은 상자가 우편함에 들어가면 따로 끝 장면 없이 홈으로 갑니다.
  */
-fun MealCameraPhase.Ceremony.nextStage(isMailGiftEnabled: Boolean): MealCeremonyStage? = when (stage) {
+fun MealCameraPhase.Ceremony.nextStage(): MealCeremonyStage? = when (stage) {
     MealCeremonyStage.Serving, MealCeremonyStage.Waiting ->
         if (isAccepted) MealCeremonyStage.Reaction else MealCeremonyStage.Waiting
     MealCeremonyStage.Reaction -> MealCeremonyStage.Ate
     MealCeremonyStage.Ate ->
-        if (sendsRewardBox(isMailGiftEnabled)) MealCeremonyStage.BoxReveal else MealCeremonyStage.Finished
+        if (sendsRewardBox) MealCeremonyStage.BoxReveal else MealCeremonyStage.Finished
     MealCeremonyStage.BoxReveal -> MealCeremonyStage.BoxSend
     MealCeremonyStage.BoxSend -> null
     MealCeremonyStage.Finished -> MealCeremonyStage.Finished
@@ -134,7 +134,6 @@ enum class MealCameraPermission { Requesting, Granted, Denied, Blocked }
  * 접수에 실패하면 안내 스낵바와 함께 곧장 홈으로 돌아갑니다. [isFinishing] 은 마무리(뒤로가기 신호)가 한 번만
  * 나가도록 완료·닫기·백·연출 끝의 동시 입력을 래치합니다.
  *
- * @property isMailGiftEnabled 보상 상자를 우편함으로 보내는 연출을 보여 줄지. 우편함 아이템 탭이 보일 때만 켭니다.
  * @property roomBackgroundItemId 지금 마이룸에 깔린 배경의 아이템 id. 연출의 고양이방을 이 배경으로 그리고, 없으면 기본 빈 방입니다.
  * @property isTutorialChecked 식사 기록 튜토리얼로 열지 확인을 마쳤는지. 마치기 전에는 카메라 권한을 묻지 않습니다
  * (튜토리얼은 예시 사진을 쓰므로 권한을 묻지 않습니다).
@@ -148,7 +147,6 @@ data class MealRecordUIState(
     val isCapturing: Boolean = false,
     val isImportingGalleryPhoto: Boolean = false,
     val isFinishing: Boolean = false,
-    val isMailGiftEnabled: Boolean = false,
     val roomBackgroundItemId: Long? = null,
     val isTutorialChecked: Boolean = false,
     val tutorialSkipConfirm: ImmutableList<NyummyTutorialLesson>? = null,

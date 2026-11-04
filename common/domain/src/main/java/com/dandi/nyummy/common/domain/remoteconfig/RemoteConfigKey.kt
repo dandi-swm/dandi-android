@@ -80,27 +80,4 @@ sealed class RemoteConfigKey<T>(
         serializer = String.serializer(),
         defaultValue = "",
     )
-
-    // ---- 기능 플래그 ----
-
-    /** 우편함 아이템 탭(보상, 코인, 아이템 받기). 백엔드가 완성될 때까지 운영에서는 끈다. */
-    data object MailItemTabEnabled : RemoteConfigKey<Boolean>(
-        key = "android_mail_item_tab_enabled",
-        serializer = Boolean.serializer(),
-        defaultValue = false,
-    )
-
-    /** 마이룸(방 꾸미기). 백엔드가 완성될 때까지 운영에서는 끄고, 하단 내비 마이룸 탭을 누르면 준비 중이라고 알린다. */
-    data object MyRoomEnabled : RemoteConfigKey<Boolean>(
-        key = "android_my_room_enabled",
-        serializer = Boolean.serializer(),
-        defaultValue = false,
-    )
-
-    /** 상점. 기능이 완성될 때까지 운영에서는 끄고, 하단 내비 상점 탭을 누르면 준비 중이라고 알린다. */
-    data object ShopEnabled : RemoteConfigKey<Boolean>(
-        key = "android_shop_enabled",
-        serializer = Boolean.serializer(),
-        defaultValue = false,
-    )
 }
