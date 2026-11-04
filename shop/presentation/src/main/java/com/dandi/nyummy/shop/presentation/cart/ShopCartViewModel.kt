@@ -157,7 +157,7 @@ sealed interface ShopCartReducerEvent : ReducerEvent {
     data class DetailOpened(val item: ShopItemVO) : ShopCartReducerEvent
     data object DetailClosed : ShopCartReducerEvent
     data class AddStarted(val productId: Long) : ShopCartReducerEvent
-    data class AddFinished(val productId: Long, val added: Boolean) : ShopCartReducerEvent
+    data class AddFinished(val productId: Long) : ShopCartReducerEvent
     data class SheetChanged(val sheet: ShopCartSheet?) : ShopCartReducerEvent
     data object PurchaseStarted : ShopCartReducerEvent
 
@@ -304,13 +304,14 @@ class ShopCartViewModel @Inject constructor(
         }
     }
 
+    /** 거절·실패 안내 토스트가 시트 창에 가려지지 않게, 성공·실패 모두 시트를 닫는다. */
     private fun addRecommendation(item: ShopItemVO) {
         val productId = item.productId
         if (productId in currentState.addingProductIds) return
         dispatch(ShopCartReducerEvent.AddStarted(productId))
         viewModelScope.launch {
             val added = addToCart(productId, ShopTracker.Source.CART).isSuccess
-            dispatch(ShopCartReducerEvent.AddFinished(productId, added))
+            dispatch(ShopCartReducerEvent.AddFinished(productId))
             if (added) reload()
         }
     }
@@ -408,7 +409,8 @@ class ShopCartViewModel @Inject constructor(
             state.copy(addingProductIds = (state.addingProductIds + event.productId).toPersistentSet())
         is ShopCartReducerEvent.AddFinished -> state.copy(
             addingProductIds = (state.addingProductIds - event.productId).toPersistentSet(),
-            detailItem = if (event.added) null else state.detailItem,
+            // 늦게 온 다른 상품의 담기 응답이 지금 열린 시트를 닫지 않게, 같은 상품일 때만 닫는다.
+            detailItem = if (state.detailItem?.productId == event.productId) null else state.detailItem,
         )
         is ShopCartReducerEvent.SheetChanged -> state.copy(sheet = event.sheet)
         ShopCartReducerEvent.PurchaseStarted -> state.copy(isPurchasing = true)
