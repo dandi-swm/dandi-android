@@ -310,6 +310,20 @@ class ShopViewModelTest {
         assertEquals(ShopCoinChargeTab(showsEventChip = false), viewModel.uiState.value.coinChargeTab)
     }
 
+    @Test
+    fun `추천 탭을 당겨 새로 고치면 코인 탭도 다시 읽는다`() = runTest(testDispatcher) {
+        coinChargeRepository.current = coinChargeEvent
+        val viewModel = createViewModel()
+        viewModel.onIntent(ShopIntent.ScreenResumed)
+        advanceUntilIdle()
+
+        coinChargeRepository.claimed += coinChargeEvent.eventId
+        viewModel.onIntent(ShopIntent.PulledToRefresh)
+        advanceUntilIdle()
+
+        assertEquals(ShopCoinChargeTab(showsEventChip = false), viewModel.uiState.value.coinChargeTab)
+    }
+
     // endregion
 }
 

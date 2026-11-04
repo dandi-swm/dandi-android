@@ -11,6 +11,7 @@ import com.dandi.nyummy.shop.presentation.FakeRemoteConfig
 import com.dandi.nyummy.shop.presentation.FakeResourceHelper
 import com.dandi.nyummy.shop.presentation.FakeShopRepository
 import com.dandi.nyummy.shop.presentation.FakeTTIHelper
+import com.dandi.nyummy.shop.presentation.R
 import com.dandi.nyummy.shop.presentation.RecordingMessageHelper
 import com.dandi.nyummy.shop.presentation.RecordingNavigationHelper
 import com.dandi.nyummy.shop.presentation.RecordingShopAnalytics
@@ -63,6 +64,7 @@ class ShopRecommendViewModelTest {
         return ShopRecommendViewModel(
             GetShopRecommendPageUseCase(repository, remoteConfig, tracker, FakeResourceHelper, messageHelper, RecordingNavigationHelper(), FakeTTIHelper),
             tracker,
+            messageHelper,
         )
     }
 
@@ -196,6 +198,105 @@ class ShopRecommendViewModelTest {
         viewModel.onIntent(ShopRecommendIntent.ItemClicked(componentIndex = 0, position = 0, productId = 1))
 
         assertTrue(analytics.events.isEmpty())
+    }
+
+    // endregion
+
+    // region 당겨서 새로 고침
+
+    private val newComponents = listOf(SduiComponentVO.Ranking(listOf(shopItem(3))))
+
+    @Test
+    fun `당기면 보던 칸을 둔 채 다시 읽고, 노출 이벤트는 다시 남기지 않는다`() = runTest(testDispatcher) {
+        repository.recommendPage = ShopRecommendPageVO(components)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        repository.recommendPage = ShopRecommendPageVO(newComponents)
+
+        viewModel.onIntent(ShopRecommendIntent.Refresh)
+        assertTrue(viewModel.uiState.value.isRefreshing)
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertEquals(components, viewModel.uiState.value.components)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isRefreshing)
+        assertEquals(newComponents, viewModel.uiState.value.components)
+        assertEquals(2, repository.recommendCount)
+        assertEquals(1, analytics.events.count { it.name == "shop_recommend_view" })
+    }
+
+    @Test
+    fun `새로 읽은 칸으로 누름 이벤트의 칸 정보를 붙인다`() = runTest(testDispatcher) {
+        repository.recommendPage = ShopRecommendPageVO(components)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        repository.recommendPage = ShopRecommendPageVO(newComponents)
+        viewModel.onIntent(ShopRecommendIntent.Refresh)
+        advanceUntilIdle()
+
+        viewModel.onIntent(ShopRecommendIntent.ItemClicked(componentIndex = 0, position = 0, productId = 3))
+
+        assertEquals("ranking", analytics.events.last { it.name == "shop_recommend_item_click" }.params["section"])
+    }
+
+    @Test
+    fun `새로 고침이 네트워크 오류로 실패하면 보던 칸을 두고 토스트로 알린다`() = runTest(testDispatcher) {
+        repository.recommendPage = ShopRecommendPageVO(components)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        repository.recommendError = IOException("offline")
+
+        viewModel.onIntent(ShopRecommendIntent.Refresh)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isRefreshing)
+        assertFalse(viewModel.uiState.value.isLoadFailed)
+        assertEquals(components, viewModel.uiState.value.components)
+        assertEquals(listOf(R.string.shop_refresh_failed), messageHelper.toastResIds)
+    }
+
+    @Test
+    fun `새로 고침이 서버 오류면 공통 안내만 띄우고 토스트는 더하지 않는다`() = runTest(testDispatcher) {
+        repository.recommendPage = ShopRecommendPageVO(components)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        repository.recommendError = httpException(500)
+
+        viewModel.onIntent(ShopRecommendIntent.Refresh)
+        advanceUntilIdle()
+
+        assertEquals(components, viewModel.uiState.value.components)
+        assertEquals(1, messageHelper.dialogs.size)
+        assertTrue(messageHelper.toastResIds.isEmpty())
+    }
+
+    @Test
+    fun `보던 칸이 없으면 당겨도 처음 조회처럼 읽는다`() = runTest(testDispatcher) {
+        repository.recommendError = IOException("offline")
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        repository.recommendPage = ShopRecommendPageVO(components)
+
+        viewModel.onIntent(ShopRecommendIntent.Refresh)
+        assertTrue(viewModel.uiState.value.isLoading)
+        assertFalse(viewModel.uiState.value.isRefreshing)
+        advanceUntilIdle()
+
+        assertEquals(components, viewModel.uiState.value.components)
+        assertEquals(1, analytics.events.count { it.name == "shop_recommend_view" })
+    }
+
+    @Test
+    fun `새로 고치는 중에 또 당겨도 요청은 한 번이다`() = runTest(testDispatcher) {
+        repository.recommendPage = ShopRecommendPageVO(components)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(ShopRecommendIntent.Refresh)
+        viewModel.onIntent(ShopRecommendIntent.Refresh)
+        advanceUntilIdle()
+
+        assertEquals(2, repository.recommendCount)
     }
 
     // endregion
