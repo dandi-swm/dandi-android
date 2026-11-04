@@ -74,8 +74,8 @@ X-Coin-Package-Variant: B
 - 받은 뒤 화면의 코인 수는 `coinQuantity`, 내 코인은 `balance`(그 뒤 상단 바도 다시 읽는다).
 - 헤더가 없거나 A·B 외의 값, `coinPackageId` 누락은 `400 api.common.invalidInputValue`, 묶음 번호가 1~3 밖이면 `404 api.coin.coinPackageNotFound`.
   앱은 둘 다 "코인을 넣지 못했어요. 잠시 뒤 다시 눌러 주세요"로 알리고 시트를 그대로 둔다(`coin_charge_grant_failed`에 까닭).
-- 같은 사람이 다시 보내면 서버는 코인을 더 주지 않고 `409 api.coin.coinGiftAlreadyReceived`를 준다(서버 다음 PR, 코드 이름은 앱이 먼저 정함). 앱은 받음 기록이 있으면 서버에 묻지 않고 안내만 띄운다.
-- 앱을 지웠다 다시 깔면 기기 받음 기록이 없어 코인 탭(Event 칩)과 홈 공지가 다시 뜬다. 이때 "결제하기"에 서버가 이미 받았다고 하면(위 코드, 또는 이름이 달라도 409) 받음 기록을 다시 쓰고 "이미 받았어요" 안내를 띄운다. 그 뒤로는 칩·공지가 다시 뜨지 않는다.
+- 같은 사람이 다시 보내면 서버는 코인을 더 주지 않고 `409 api.coin.coinGiftAlreadyClaimed`를 준다(코인 변동 없음, 서버 다음 PR). 앱은 받음 기록이 있으면 서버에 묻지 않고 안내만 띄운다.
+- 앱을 지웠다 다시 깔면 기기 받음 기록이 없어 코인 탭(Event 칩)과 홈 공지가 다시 뜬다. 이때 "결제하기"에 서버가 이미 받았다고 하면(위 409, 코드가 빠져도 409면) 받음 기록을 다시 쓰고 "이미 받았어요" 안내를 띄운다. 그 뒤로는 칩·공지가 다시 뜨지 않는다.
 - 코인 내역에는 `COIN_GIFT`("코인 선물") 줄이 생긴다. 앱은 서버 문구를 그대로 보여 준다.
 
 ## A/B 실험 만들기(Firebase 콘솔)
@@ -144,5 +144,5 @@ adb -s emulator-5554 shell setprop debug.firebase.analytics.app com.dandi.nyummy
 
 - [x] 선물 코인 받기 API 연결(백엔드 PR #210 규격).
 - [ ] **서버 실제 지급(백엔드 다음 PR):** #210은 고정 응답이라 코인이 들어가지 않고 아무것도 저장하지 않는다. 실제 지급·한 번만 지급이 붙기 전에는 release 실험을 시작하지 않는다.
-- [ ] **서버 "이미 받음" 코드:** 다시 받으려는 사람에게 `409 api.coin.coinGiftAlreadyReceived`를 주기로 했다(백엔드가 추가 예정). 이름이 달라지면 `ShopErrorType.COIN_GIFT_ALREADY_RECEIVED`를 맞춘다(409면 이름이 달라도 앱은 이미 받음으로 본다).
+- [ ] **서버 "이미 받음" 응답 배포 확인:** 다시 받으려는 사람에게 `409 api.coin.coinGiftAlreadyClaimed`(코인 변동 없음)를 준다고 백엔드와 정했다(`ShopErrorType.COIN_GIFT_ALREADY_CLAIMED`). 배포되면 다시 설치한 기기에서 "이미 받았어요" 안내와 칩이 빠지는지 본다.
 - [ ] 공지 사진 `notices/2026-11-shop-open.webp` 올리기(피그마 `Charge · 01`의 사진은 상점 예고 2안을 임시로 썼다).

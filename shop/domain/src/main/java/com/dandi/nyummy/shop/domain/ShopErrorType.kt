@@ -42,10 +42,10 @@ enum class ShopErrorType(
     COIN_PACKAGE_NOT_FOUND("api.coin.coinPackageNotFound"),
 
     /**
-     * 이 회차 선물 코인을 이미 받은 사람이 다시 받으려 했다(409, 코인 충전 이벤트). 서버가 곧 더할 코드라 이름을 앱이 먼저 정했고,
-     * 이름이 달라도 409면 같은 것으로 본다([ClaimCoinChargeUseCase]).
+     * 이 회차 선물 코인을 이미 받은 사람이 다시 받으려 했다(409, 코인 충전 이벤트, 코인 변동 없음).
+     * 받기 API의 409는 이것뿐이라 코드가 없어도 409면 같은 것으로 본다([ClaimCoinChargeUseCase]).
      */
-    COIN_GIFT_ALREADY_RECEIVED("api.coin.coinGiftAlreadyReceived"),
+    COIN_GIFT_ALREADY_CLAIMED("api.coin.coinGiftAlreadyClaimed"),
 
     /** 코인이 모자란다(409). */
     INSUFFICIENT_BALANCE("api.shop.insufficientBalance"),
