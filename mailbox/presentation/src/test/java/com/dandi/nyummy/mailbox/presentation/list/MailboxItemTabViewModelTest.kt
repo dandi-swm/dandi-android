@@ -12,8 +12,6 @@ import com.dandi.nyummy.common.domain.message.MessageEffect
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.mailbox.domain.ClaimAllMailsUseCase
@@ -61,7 +59,6 @@ class MailboxItemTabViewModelTest {
     private val messageHelper = RecordingMessageHelper()
     private val navigationHelper = RecordingNavigationHelper()
     private val tutorialHelper = FakeTutorialHelper()
-    private var isMyRoomEnabled = true
 
     @Before
     fun setUp() {
@@ -532,20 +529,8 @@ class MailboxItemTabViewModelTest {
         viewModel.onIntent(MailboxIntent.CloseBoxOpening)
         advanceUntilIdle()
 
-        assertEquals(MailboxTutorialUiState(MailboxTutorialStage.GoBack, isRoomNext = true), viewModel.uiState.value.tutorial)
+        assertEquals(MailboxTutorialUiState(MailboxTutorialStage.GoBack), viewModel.uiState.value.tutorial)
         assertFalse(TutorialStep.MAILBOX in tutorialHelper.pending)
-    }
-
-    @Test
-    fun `마이룸 기능이 꺼져 있으면 뒤로가기 안내가 홈으로 돌아가자고 한다`() = runTest(testDispatcher) {
-        isMyRoomEnabled = false
-        tutorialHelper.pending += TutorialStep.MAILBOX
-        repository.mailPage = MailPageVO(mails = listOf(mail(1)))
-        val viewModel = loadedViewModel()
-
-        viewModel.onIntent(MailboxIntent.TutorialAdvance)
-
-        assertFalse(viewModel.uiState.value.tutorial!!.isRoomNext)
     }
 
     @Test
@@ -619,13 +604,6 @@ class MailboxItemTabViewModelTest {
             navigationHelper = navigationHelper,
             messageHelper = messageHelper,
             tutorialHelper = tutorialHelper,
-            remoteConfigHelper = object : RemoteConfigHelper {
-                override suspend fun sync() = Unit
-
-                @Suppress("UNCHECKED_CAST")
-                override fun <T> get(key: RemoteConfigKey<T>): T =
-                    if (key == RemoteConfigKey.MyRoomEnabled) isMyRoomEnabled as T else key.defaultValue
-            },
             ioScope = this,
         )
     }
