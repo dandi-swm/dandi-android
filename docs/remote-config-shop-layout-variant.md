@@ -30,10 +30,10 @@
 | 단계 | 이벤트 | 매개변수 |
 |---|---|---|
 | 추천 탭 칸을 받아 그림 | `shop_recommend_view` | `layout_group`, `sections`(받은 칸 종류를 위에서부터, 예 `hero_banner,item_list,ranking`) |
-| 추천 탭 상품·배너 누름 | `shop_recommend_item_click` | `layout_group`, `section`(hero_banner·item_grid·ranking·item_list), 숫자 `section_order`(제목 줄을 뺀 칸 중 몇 번째), `position`(칸 안 몇 번째), `product_id` 또는 `banner_id` |
+| 추천 탭 상품·배너 누름 | `shop_recommend_item_click` | `layout_group`, `section`(hero_banner·item_grid·ranking·item_list), `section_order`(제목 줄을 뺀 칸 중 몇 번째), `position`(칸 안 몇 번째) — 둘 다 숫자로 보내지만 더하는 값이 아니라 나눠 보는 값이라 측정기준으로 등록, `product_id` 또는 `banner_id` |
 | 장바구니 담기 성공 | `shop_add_to_cart` | `source`(recommend·interior·background·promotion·cart), 숫자 `product_id` |
 | 구매 완료 | `shop_purchase` | 숫자 `item_count`, `coins` |
 
 - 추천 탭을 읽을 때마다 사용자 속성 `shop_layout_group`(A·B)을 남긴다. 담기·구매는 이 속성으로 그룹을 나눠 본다.
-- GA4 맞춤 정의 등록: 이벤트 범위 `layout_group`, `sections`, `section`, `source`, 측정항목 `section_order`, `position`, `item_count`, `coins`,
+- GA4 맞춤 정의 등록: 이벤트 범위 측정기준 `layout_group`, `sections`, `section`, `source`, `section_order`, `position`, 측정항목 `item_count`, `coins`,
   사용자 범위 `shop_layout_group`. 개발 빌드에서 DebugView로 보는 법은 코인 충전 이벤트 문서와 같다(`-Pnyummy.analyticsInDebug=true`).
