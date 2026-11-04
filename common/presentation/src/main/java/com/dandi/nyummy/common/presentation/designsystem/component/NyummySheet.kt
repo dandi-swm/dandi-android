@@ -19,10 +19,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -48,21 +50,29 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
  * 내용이 길어도 상태바 아래까지만 올라온다.
  * 시트 상태는 안에서 만들어 Material3 실험적 API가 호출하는 쪽으로 새지 않게 한다.
  * 안쪽은 좌우 gutter, 위 12, 아래 24 + 내비게이션 바. 요소 사이 16.
+ *
+ * [dismissible]이 false인 동안(저장 중 등)은 끌어내리기·바깥 누르기·뒤로 가기로 닫히지 않는다. 닫히지 않을 때
+ * 시트만 혼자 숨어 보이지 않는 창이 터치를 막는 일이 없게, 시트 상태에서 숨김 자체를 거절한다.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NyummyBottomSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
+    dismissible: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val canDismiss by rememberUpdatedState(dismissible)
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         // 시트가 상태바 밑으로 올라가지 않게 바깥에서 상태바만큼 비운다. Material3 시트는 위치에 따라 상단 시스템 바 여백을
         // 넣었다 빼는데, 그 여백이 다시 시트 높이를 바꿔 내용 높이가 화면 높이 근처면 시트가 계속 흔들린다.
         // 바깥에서 상태바 영역을 먼저 빼 두면 안쪽 여백이 위치와 상관없이 0이 되어 흔들리지 않는다.
         modifier = modifier.statusBarsPadding(),
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = true,
+            confirmValueChange = { value -> value != SheetValue.Hidden || canDismiss },
+        ),
         shape = RoundedCornerShape(topStart = NyummyTheme.radius.l, topEnd = NyummyTheme.radius.l),
         containerColor = NyummyTheme.colors.bg.surface,
         contentColor = NyummyTheme.colors.content.primary,

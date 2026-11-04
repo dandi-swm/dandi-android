@@ -10,6 +10,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import kotlinx.collections.immutable.toImmutableList
+import java.time.LocalDate
 import java.time.YearMonth
 
 /**
@@ -18,8 +19,11 @@ import java.time.YearMonth
  *
  * 일 목록은 고른 연·월의 마지막 날까지다. 고른 일이 그달에 없으면(2월 30일 등) 마지막 날로 보여 주고,
  * 그 값을 저장할지는 쓰는 곳이 [birthDayOfMonth]로 맞춘다.
+ * [latest]를 주면 그 날짜보다 뒤는 목록에 없다(올해는 이번 달까지, 이번 달은 오늘까지). 고른 값이 그보다 뒤가 되면
+ * ([isBirthAfter]) 쓰는 곳이 [latest]로 맞춘다.
  *
  * @param years 고를 수 있는 해. 끝은 보통 올해(기기 타임존)다.
+ * @param latest 고를 수 있는 마지막 날짜. 보통 오늘(기기 타임존)이라 미래 날짜를 고르지 못한다. null이면 제한하지 않는다.
  */
 @Composable
 fun NyummyBirthDatePicker(
@@ -31,10 +35,17 @@ fun NyummyBirthDatePicker(
     onMonthChange: (Int) -> Unit,
     onDayChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    latest: LocalDate? = null,
 ) {
     val yearItems = remember(years) { years.map(Int::toString).toImmutableList() }
-    val monthItems = remember { MONTHS.map(::toTwoDigits).toImmutableList() }
-    val lastDay = birthDayOfMonth(year, month, Int.MAX_VALUE)
+    val lastMonth = if (latest != null && year >= latest.year) latest.monthValue else MONTHS.last
+    val monthItems = remember(lastMonth) { (MONTHS.first..lastMonth).map(::toTwoDigits).toImmutableList() }
+    val lastDayOfMonth = birthDayOfMonth(year, month, Int.MAX_VALUE)
+    val lastDay = if (latest != null && year >= latest.year && month >= latest.monthValue) {
+        minOf(lastDayOfMonth, latest.dayOfMonth)
+    } else {
+        lastDayOfMonth
+    }
     val dayItems = remember(lastDay) { (1..lastDay).map(::toTwoDigits).toImmutableList() }
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
         NyummyWheelPicker(
@@ -48,7 +59,7 @@ fun NyummyBirthDatePicker(
         )
         NyummyWheelPicker(
             items = monthItems,
-            selectedIndex = month.coerceIn(MONTHS) - MONTHS.first,
+            selectedIndex = month.coerceIn(MONTHS.first, lastMonth) - MONTHS.first,
             onSelectedIndexChange = { onMonthChange(MONTHS.first + it) },
             unit = stringResource(R.string.nyummy_birth_unit_month),
             contentDescription = stringResource(R.string.nyummy_birth_month_description),
@@ -66,6 +77,13 @@ fun NyummyBirthDatePicker(
         )
     }
 }
+
+/**
+ * 고른 연·월·일이 [latest](보통 오늘)보다 뒤인지. 일은 그달 마지막 날 안으로 맞춰 본다.
+ * 올해를 고른 채 이번 달 뒤의 월·일이 남아 있으면 true라, 쓰는 곳이 [latest]로 맞춘다.
+ */
+fun isBirthAfter(year: Int, month: Int, day: Int, latest: LocalDate): Boolean =
+    LocalDate.of(year, month.coerceIn(MONTHS), birthDayOfMonth(year, month, day)).isAfter(latest)
 
 /** [day]를 [year]년 [month]월의 마지막 날 안으로 맞춘 값. 월을 바꿔 고른 일이 사라졌을 때 쓴다. */
 fun birthDayOfMonth(year: Int, month: Int, day: Int): Int =
