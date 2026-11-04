@@ -17,6 +17,7 @@
     <string name="shop_retry">Try again</string>
     <string name="shop_load_more">Load more</string>
     <string name="shop_loading">Loading the shop</string>
+    <string name="shop_refresh_failed">Couldn\'t refresh. Pull down to try again.</string>
     <string name="shop_banner_index">%1$d / %2$d</string>
     <string name="shop_catalog_hide_owned">Hide owned</string>
     <string name="shop_catalog_empty_voice">Nothing here yet</string>

@@ -57,7 +57,7 @@ class ShopViewModel @Inject constructor(
     override fun onIntent(intent: ShopIntent) {
         when (intent) {
             is ShopIntent.Enter -> enter(intent.tab, intent.sort)
-            ShopIntent.ScreenResumed -> {
+            ShopIntent.ScreenResumed, ShopIntent.PulledToRefresh -> {
                 viewModelScope.launch { refreshShopSummary() }
                 refreshCoinChargeTab()
             }

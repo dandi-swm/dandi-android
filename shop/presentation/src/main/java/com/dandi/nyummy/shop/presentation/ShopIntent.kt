@@ -13,6 +13,9 @@ sealed interface ShopIntent : MviIntent {
     /** 화면이 다시 보였다. 상단 바 값을 새로 읽는다. */
     data object ScreenResumed : ShopIntent
 
+    /** 추천 탭을 아래로 당겨 새로 고쳤다. 화면이 다시 보였을 때처럼 상단 바 값과 코인 탭을 새로 읽는다. */
+    data object PulledToRefresh : ShopIntent
+
     data class SelectTab(val tab: ShopTab) : ShopIntent
     data object ClickCart : ShopIntent
     data object ClickCoins : ShopIntent

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.entity.richText.RichTextVO
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyPullToRefreshBox
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRichText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpinner
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyStateAction
@@ -46,12 +47,14 @@ import kotlinx.collections.immutable.toImmutableList
 /**
  * 추천 탭(서버 SDUI). 서버가 준 칸을 순서대로 그리고, 추천 탭 상품에는 담기 버튼이 없다(누르면 상세 시트).
  * 상품 누름과 서버 액션은 상점 화면으로 올리고, 어느 칸의 몇 번째를 눌렀는지는 추천 탭이 분석 이벤트로 남긴다.
+ * 목록을 아래로 당기면 칸을 다시 읽고, [onRefresh]로 상점 화면에도 알린다(상단 바 값 새로 읽기).
  */
 @Composable
 fun ShopRecommendTab(
     onItemClick: (ShopItemVO) -> Unit,
     onAction: (ShopActionVO) -> Unit,
     modifier: Modifier = Modifier,
+    onRefresh: () -> Unit = {},
     viewModel: ShopRecommendViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -70,6 +73,10 @@ fun ShopRecommendTab(
         },
         onAction = onAction,
         onRetry = { viewModel.onIntent(ShopRecommendIntent.Retry) },
+        onRefresh = {
+            viewModel.onIntent(ShopRecommendIntent.Refresh)
+            onRefresh()
+        },
         modifier = modifier,
     )
 }
@@ -82,6 +89,7 @@ private fun ShopRecommendContent(
     onAction: (ShopActionVO) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    onRefresh: () -> Unit = {},
     listState: LazyListState = rememberLazyListState(),
 ) {
     when {
@@ -96,11 +104,15 @@ private fun ShopRecommendContent(
             Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 NyummySpinner(contentDescription = stringResource(R.string.shop_loading))
             }
-        else -> {
+        else -> NyummyPullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = onRefresh,
+            modifier = modifier.fillMaxSize(),
+        ) {
             val gutter = NyummyTheme.spacing.gutter
             LazyColumn(
                 state = listState,
-                modifier = modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(top = NyummyTheme.spacing.s16, bottom = NyummyTheme.spacing.s32),
             ) {
                 uiState.components.forEachIndexed { index, component ->

@@ -54,6 +54,7 @@ private fun ShopTabContent(tab: ShopTab, sortRequest: ShopSortRequest?, onIntent
             onItemClick = { onIntent(ShopIntent.ClickItem(it)) },
             onAction = { onIntent(ShopIntent.ClickAction(it)) },
             modifier = modifier,
+            onRefresh = { onIntent(ShopIntent.PulledToRefresh) },
         )
         ShopTab.INTERIOR, ShopTab.BACKGROUND -> ShopCatalogTab(
             tab = tab,
