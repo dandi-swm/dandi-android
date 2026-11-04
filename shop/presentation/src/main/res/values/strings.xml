@@ -8,6 +8,8 @@
     <string name="shop_tab_recommend">For you</string>
     <string name="shop_tab_interior">Interior</string>
     <string name="shop_tab_background">Rooms</string>
+    <string name="shop_tab_coin">Coins</string>
+    <string name="shop_tab_event_badge">Event</string>
     <string name="shop_cart_description">Cart</string>
     <string name="shop_cart_description_count">Cart, %1$d items</string>
     <string name="shop_load_failed_voice">I couldn\'t open the shop</string>

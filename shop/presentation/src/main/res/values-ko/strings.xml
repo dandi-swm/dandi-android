@@ -8,6 +8,8 @@
     <string name="shop_tab_recommend">추천</string>
     <string name="shop_tab_interior">인테리어</string>
     <string name="shop_tab_background">방 배경</string>
+    <string name="shop_tab_coin">코인</string>
+    <string name="shop_tab_event_badge">Event</string>
     <string name="shop_cart_description">장바구니</string>
     <string name="shop_cart_description_count">장바구니, 상품 %1$d개</string>
     <string name="shop_load_failed_voice">상점을 못 열었어요</string>

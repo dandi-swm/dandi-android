@@ -13,6 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.tooling.preview.Preview
+import com.dandi.nyummy.common.entity.tag.TagTone
+import com.dandi.nyummy.common.entity.tag.TagVO
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyCoinPill
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonSize
@@ -22,14 +25,15 @@ import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClicka
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.shop.entity.ShopTab
 import com.dandi.nyummy.shop.presentation.R
+import com.dandi.nyummy.shop.presentation.ShopCoinChargeTab
+import kotlinx.collections.immutable.toImmutableList
 import java.text.NumberFormat
 import java.util.Locale
-import kotlinx.collections.immutable.toImmutableList
-import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
  * 상점 머리(피그마 `v2 / Shop / Header`). "상점" 제목, 장바구니 버튼(배지), 코인 칩("+" 없음)과 세 탭.
- * 탭 아래 내용은 탭마다 따로 그린다.
+ * 탭 아래 내용은 탭마다 따로 그린다. [coinChargeTab]이 있으면 탭 줄 끝에 "코인" 탭(코인 충전 이벤트)을 더한다.
+ * 이 탭은 누르면 [onCoinChargeTabClick]만 부르고 선택되지 않는다.
  */
 @Composable
 fun ShopHeader(
@@ -40,8 +44,15 @@ fun ShopHeader(
     onCartClick: () -> Unit,
     onCoinsClick: () -> Unit,
     modifier: Modifier = Modifier,
+    coinChargeTab: ShopCoinChargeTab? = null,
+    onCoinChargeTabClick: () -> Unit = {},
 ) {
-    val tabLabels = ShopTab.entries.map { stringResource(it.labelRes) }.toImmutableList()
+    val coinLabel = stringResource(R.string.shop_tab_coin)
+    val eventChip = TagVO(stringResource(R.string.shop_tab_event_badge), TagTone.PROMO)
+    val tabLabels = (ShopTab.entries.map { stringResource(it.labelRes) } + listOfNotNull(coinLabel.takeIf { coinChargeTab != null }))
+        .toImmutableList()
+    val tabBadges = (ShopTab.entries.map { null } + listOfNotNull(coinChargeTab?.let { if (it.showsEventChip) eventChip else null }))
+        .toImmutableList()
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -70,7 +81,8 @@ fun ShopHeader(
         NyummyTabs(
             tabs = tabLabels,
             selectedIndex = selectedTab.ordinal,
-            onSelect = { onSelectTab(ShopTab.entries[it]) },
+            onSelect = { index -> ShopTab.entries.getOrNull(index)?.let(onSelectTab) ?: onCoinChargeTabClick() },
+            badges = tabBadges,
         )
     }
 }
@@ -108,6 +120,7 @@ private fun ShopHeaderPreview() {
         Column {
             ShopHeader(1240, 2, ShopTab.RECOMMEND, {}, {}, {})
             ShopHeader(0, 0, ShopTab.INTERIOR, {}, {}, {})
+            ShopHeader(1240, 0, ShopTab.RECOMMEND, {}, {}, {}, coinChargeTab = ShopCoinChargeTab(showsEventChip = true))
         }
     }
 }

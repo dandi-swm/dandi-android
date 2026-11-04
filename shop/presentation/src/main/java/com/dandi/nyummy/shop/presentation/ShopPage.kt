@@ -86,6 +86,8 @@ private fun ShopScreen(
             onSelectTab = { onIntent(ShopIntent.SelectTab(it)) },
             onCartClick = { onIntent(ShopIntent.ClickCart) },
             onCoinsClick = { onIntent(ShopIntent.ClickCoins) },
+            coinChargeTab = uiState.coinChargeTab,
+            onCoinChargeTabClick = { onIntent(ShopIntent.ClickCoinChargeTab) },
         )
         val tabModifier = Modifier
             .fillMaxWidth()

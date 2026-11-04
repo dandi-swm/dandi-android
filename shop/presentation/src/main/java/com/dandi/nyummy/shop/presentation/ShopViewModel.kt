@@ -4,15 +4,20 @@ import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.navigation.NavRoute
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.shop.domain.AddToCartUseCase
+import com.dandi.nyummy.shop.domain.CoinChargeTracker
+import com.dandi.nyummy.shop.domain.GetCoinChargeOfferUseCase
 import com.dandi.nyummy.shop.domain.ObserveShopSummaryUseCase
 import com.dandi.nyummy.shop.domain.RefreshShopSummaryUseCase
 import com.dandi.nyummy.shop.domain.ShopCartPage
+import com.dandi.nyummy.shop.domain.ShopCoinChargePage
 import com.dandi.nyummy.shop.domain.ShopCoinHistoryPage
-import com.dandi.nyummy.shop.domain.ShopTracker
 import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.shop.domain.ShopTabLink
+import com.dandi.nyummy.shop.domain.ShopTracker
+import com.dandi.nyummy.shop.entity.CoinChargeOfferVO
 import com.dandi.nyummy.shop.entity.ShopActionVO
 import com.dandi.nyummy.shop.entity.ShopItemVO
 import com.dandi.nyummy.shop.entity.ShopTab
@@ -24,6 +29,8 @@ import javax.inject.Inject
 /**
  * 상점 화면. 상단 바(공유 상태 구독, 화면이 보일 때 새로 읽기), 선택 탭, 서버 액션 링크, 상세 시트, 담기를 맡는다.
  * 탭 안 목록은 탭 ViewModel이 따로 들고, 상품 누름·담기 누름만 여기로 올린다.
+ * 코인 충전 이벤트 대상이면 탭 줄 끝에 "코인 · Event" 탭을 두고, 선물 코인을 받기 전에만 충전 화면으로 보낸다(받은 뒤에는 준비 중 안내).
+ * 받았는지는 충전 화면에서 돌아올 때 바뀌므로 화면이 보일 때마다 다시 읽는다.
  */
 @HiltViewModel
 class ShopViewModel @Inject constructor(
@@ -32,9 +39,14 @@ class ShopViewModel @Inject constructor(
     observeShopSummary: ObserveShopSummaryUseCase,
     private val refreshShopSummary: RefreshShopSummaryUseCase,
     private val addToCart: AddToCartUseCase,
+    private val getCoinChargeOffer: GetCoinChargeOfferUseCase,
+    private val coinChargeTracker: CoinChargeTracker,
 ) : MviViewModel<ShopIntent, ShopUIState, ShopReducerEvent>(ShopUIState.empty) {
 
     private var entered = false
+
+    /** 지금 기기의 코인 충전 이벤트. 없으면 "코인" 탭이 없다. */
+    private var coinChargeOffer: CoinChargeOfferVO? = null
 
     init {
         viewModelScope.launch {
@@ -45,7 +57,11 @@ class ShopViewModel @Inject constructor(
     override fun onIntent(intent: ShopIntent) {
         when (intent) {
             is ShopIntent.Enter -> enter(intent.tab, intent.sort)
-            ShopIntent.ScreenResumed -> viewModelScope.launch { refreshShopSummary() }
+            ShopIntent.ScreenResumed -> {
+                viewModelScope.launch { refreshShopSummary() }
+                refreshCoinChargeTab()
+            }
+            ShopIntent.ClickCoinChargeTab -> clickCoinChargeTab()
             is ShopIntent.SelectTab -> dispatch(ShopReducerEvent.TabSelected(intent.tab))
             ShopIntent.ClickCart -> navigationHelper.navigateTo(ShopCartPage)
             ShopIntent.ClickCoins -> navigationHelper.navigateTo(ShopCoinHistoryPage)
@@ -87,6 +103,24 @@ class ShopViewModel @Inject constructor(
         }
     }
 
+    private fun refreshCoinChargeTab() {
+        viewModelScope.launch {
+            val offer = getCoinChargeOffer()
+            coinChargeOffer = offer
+            dispatch(ShopReducerEvent.CoinChargeTabChanged(offer?.let { ShopCoinChargeTab(showsEventChip = !it.isClaimed) }))
+        }
+    }
+
+    private fun clickCoinChargeTab() {
+        val offer = coinChargeOffer ?: return
+        coinChargeTracker.tabClick(offer.event, claimed = offer.isClaimed)
+        if (offer.isClaimed) {
+            messageHelper.showToast(CommonR.string.nyummy_not_ready)
+        } else {
+            navigationHelper.navigateTo(ShopCoinChargePage.fromShopTab)
+        }
+    }
+
     private fun add(item: ShopItemVO, fromSheet: Boolean) {
         val productId = item.productId
         if (productId in currentState.addingProductIds) return
@@ -112,5 +146,6 @@ class ShopViewModel @Inject constructor(
             // 늦게 온 다른 상품의 담기 응답이 지금 열린 시트를 닫지 않게, 같은 상품일 때만 닫는다.
             detailItem = if (event.closeDetail && state.detailItem?.productId == event.productId) null else state.detailItem,
         )
+        is ShopReducerEvent.CoinChargeTabChanged -> state.copy(coinChargeTab = event.tab)
     }
 }
