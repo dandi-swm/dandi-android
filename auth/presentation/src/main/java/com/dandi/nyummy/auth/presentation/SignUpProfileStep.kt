@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import com.dandi.nyummy.auth.domain.SignUpFieldError
 import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.auth.entity.UserProfileRange
 import com.dandi.nyummy.common.entity.time.DeviceTime
@@ -97,10 +98,17 @@ internal fun ColumnScope.SignUpProfileStep(
         }
     }
     SectionGap()
-    if (uiState.nicknameError != null) {
+    val nicknameError = uiState.nicknameError
+    if (nicknameError != null) {
         NyummyInlineNotice(
-            title = stringResource(R.string.auth_signup_error_nickname_empty_title),
-            body = stringResource(R.string.auth_signup_error_nickname_empty_desc),
+            title = stringResource(
+                if (nicknameError == SignUpFieldError.NICKNAME_TOO_LONG) {
+                    R.string.auth_signup_error_nickname_too_long_title
+                } else {
+                    R.string.auth_signup_error_nickname_empty_title
+                },
+            ),
+            body = stringResource(nicknameError.messageRes()),
             tone = NyummyInlineNoticeTone.Danger,
         )
     } else {
@@ -131,8 +139,9 @@ private fun BirthWheelPickers(
     uiState: SignUpUIState,
     onIntent: (SignUpIntent) -> Unit,
 ) {
-    // 화면에 들어올 때 기기 타임존 기준 올해까지로 정한다. 앱이 켜진 채 해가 바뀌어도 다음 진입부터 반영된다.
-    val birthYearRange = remember { UserProfileRange.BIRTH_YEAR_FIRST..DeviceTime.today().year }
+    // 화면에 들어올 때 기기 타임존 기준 오늘까지로 정한다(미래 날짜 없음). 앱이 켜진 채 날이 바뀌어도 다음 진입부터 반영된다.
+    val today = remember { DeviceTime.today() }
+    val birthYearRange = remember { UserProfileRange.BIRTH_YEAR_FIRST..today.year }
     NyummyBirthDatePicker(
         year = uiState.birthYear,
         month = uiState.birthMonth,
@@ -141,6 +150,7 @@ private fun BirthWheelPickers(
         onYearChange = { onIntent(SignUpIntent.SelectBirthYear(it)) },
         onMonthChange = { onIntent(SignUpIntent.SelectBirthMonth(it)) },
         onDayChange = { onIntent(SignUpIntent.SelectBirthDay(it)) },
+        latest = today,
     )
 }
 

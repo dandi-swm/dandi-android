@@ -8,4 +8,7 @@ enum class SignUpFieldError {
     PASSWORD_POLICY,
     PASSWORD_CONFIRM_MISMATCH,
     NICKNAME_EMPTY,
+
+    /** 집사 이름이 [SignUpValidator.NICKNAME_MAX_LENGTH]자를 넘는다. */
+    NICKNAME_TOO_LONG,
 }

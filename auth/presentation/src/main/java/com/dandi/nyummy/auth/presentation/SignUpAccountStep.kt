@@ -103,4 +103,5 @@ internal fun SignUpFieldError.messageRes(): Int = when (this) {
     SignUpFieldError.PASSWORD_POLICY -> R.string.auth_signup_error_password_policy
     SignUpFieldError.PASSWORD_CONFIRM_MISMATCH -> R.string.auth_signup_error_password_mismatch
     SignUpFieldError.NICKNAME_EMPTY -> R.string.auth_signup_error_nickname_empty_desc
+    SignUpFieldError.NICKNAME_TOO_LONG -> R.string.auth_signup_error_nickname_too_long_desc
 }
