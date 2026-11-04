@@ -23,6 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dandi.nyummy.auth.domain.SignUpValidator
 import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.auth.entity.UserProfileRange
 import com.dandi.nyummy.common.entity.cat.CatNameValidator
@@ -173,7 +174,8 @@ private fun MyProfileSheet(
     onIntent: (MyProfileIntent) -> Unit,
 ) {
     val draft = uiState.draft
-    NyummyBottomSheet(onDismissRequest = { onIntent(MyProfileIntent.DismissSheet) }) {
+    // 저장 중에는 닫히지 않는다. 시트만 혼자 숨어 보이지 않는 창이 응답이 올 때까지 터치를 막지 않게 한다.
+    NyummyBottomSheet(onDismissRequest = { onIntent(MyProfileIntent.DismissSheet) }, dismissible = !uiState.isSaving) {
         NyummySheetTitle(text = stringResource(field.sheetTitle))
         when (field) {
             MyProfileField.CAT_NAME, MyProfileField.NICKNAME -> NameField(field = field, uiState = uiState, onIntent = onIntent)
@@ -195,8 +197,9 @@ private fun MyProfileSheet(
                 SheetHelper(stringResource(R.string.my_profile_sheet_gender_note))
             }
             MyProfileField.BIRTH -> {
-                // 시트를 열 때 기기 타임존 기준 올해까지로 정한다.
-                val years = remember { UserProfileRange.BIRTH_YEAR_FIRST..DeviceTime.today().year }
+                // 시트를 열 때 기기 타임존 기준 오늘까지로 정한다(미래 날짜 없음).
+                val today = remember { DeviceTime.today() }
+                val years = remember { UserProfileRange.BIRTH_YEAR_FIRST..today.year }
                 NyummyBirthDatePicker(
                     year = draft.birthYear,
                     month = draft.birthMonth,
@@ -206,6 +209,7 @@ private fun MyProfileSheet(
                     onMonthChange = { onIntent(MyProfileIntent.SelectBirthMonth(it)) },
                     onDayChange = { onIntent(MyProfileIntent.SelectBirthDay(it)) },
                     modifier = Modifier.fillMaxWidth(),
+                    latest = today,
                 )
                 SheetHelper(stringResource(R.string.my_profile_sheet_birth_helper))
             }
@@ -239,20 +243,22 @@ private fun MyProfileSheet(
     }
 }
 
-/** 고양이 이름·집사 이름 입력. 고양이 이름만 글자 수 안내를 둔다. */
+/** 고양이 이름·집사 이름 입력. 둘 다 글자 수 안내를 둔다(고양이 이름 [CatNameValidator.MAX_LENGTH]자, 집사 이름 [SignUpValidator.NICKNAME_MAX_LENGTH]자). */
 @Composable
 private fun NameField(field: MyProfileField, uiState: MyProfileUIState, onIntent: (MyProfileIntent) -> Unit) {
-    val isCatName = field == MyProfileField.CAT_NAME
+    val maxLength = if (field == MyProfileField.CAT_NAME) CatNameValidator.MAX_LENGTH else SignUpValidator.NICKNAME_MAX_LENGTH
     NyummyTextField(
         value = uiState.draft.text,
         onValueChange = { onIntent(MyProfileIntent.InputName(it)) },
         label = stringResource(R.string.my_profile_sheet_name_label),
-        helperText = if (isCatName) stringResource(R.string.my_profile_sheet_cat_name_helper, CatNameValidator.MAX_LENGTH) else null,
+        helperText = stringResource(R.string.my_profile_sheet_cat_name_helper, maxLength),
         errorMessage = uiState.nameError?.let { error ->
             when (error) {
                 NameInputError.EMPTY -> stringResource(R.string.my_profile_error_name_empty)
                 NameInputError.CAT_NAME_TOO_LONG ->
                     stringResource(R.string.my_profile_error_cat_name_too_long, CatNameValidator.MAX_LENGTH)
+                NameInputError.NICKNAME_TOO_LONG ->
+                    stringResource(R.string.my_profile_error_nickname_too_long, SignUpValidator.NICKNAME_MAX_LENGTH)
             }
         },
         enabled = !uiState.isSaving,

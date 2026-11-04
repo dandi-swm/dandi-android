@@ -1,6 +1,8 @@
 package com.dandi.nyummy.settings.presentation.profile
 
 import androidx.lifecycle.viewModelScope
+import com.dandi.nyummy.auth.domain.LogoutUseCase
+import com.dandi.nyummy.auth.domain.SignUpFieldError
 import com.dandi.nyummy.auth.domain.SignUpValidator
 import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.auth.entity.UserProfileRange
@@ -9,6 +11,7 @@ import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.entity.cat.CatNameError
 import com.dandi.nyummy.common.entity.cat.CatNameValidator
 import com.dandi.nyummy.common.entity.time.DeviceTime
+import com.dandi.nyummy.common.presentation.designsystem.component.isBirthAfter
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.settings.domain.GetMyProfileUseCase
 import com.dandi.nyummy.settings.domain.UpdateMyProfileUseCase
@@ -23,6 +26,7 @@ class MyProfileViewModel @Inject constructor(
     private val getMyProfile: GetMyProfileUseCase,
     private val updateMyProfile: UpdateMyProfileUseCase,
     private val renameCat: RenameCatUseCase,
+    private val logout: LogoutUseCase,
     private val navigationHelper: NavigationHelper,
 ) : MviViewModel<MyProfileIntent, MyProfileUIState, MyProfileReducerEvent>(MyProfileUIState.empty) {
 
@@ -35,9 +39,9 @@ class MyProfileViewModel @Inject constructor(
             is MyProfileIntent.ClickField -> openProfileField(intent.field)
             is MyProfileIntent.InputName -> editDraft { it.copy(text = intent.value) }
             is MyProfileIntent.SelectGender -> editDraft { it.copy(gender = intent.gender) }
-            is MyProfileIntent.SelectBirthYear -> editDraft { it.copy(birthYear = intent.year) }
-            is MyProfileIntent.SelectBirthMonth -> editDraft { it.copy(birthMonth = intent.month) }
-            is MyProfileIntent.SelectBirthDay -> editDraft { it.copy(birthDay = intent.day) }
+            is MyProfileIntent.SelectBirthYear -> editDraft { it.copy(birthYear = intent.year).notAfterToday() }
+            is MyProfileIntent.SelectBirthMonth -> editDraft { it.copy(birthMonth = intent.month).notAfterToday() }
+            is MyProfileIntent.SelectBirthDay -> editDraft { it.copy(birthDay = intent.day).notAfterToday() }
             is MyProfileIntent.SelectHeight -> editDraft { it.copy(heightCm = intent.cm) }
             is MyProfileIntent.SelectWeight -> editDraft { it.copy(weightKg = intent.kg) }
             MyProfileIntent.ClickSave -> save()
@@ -60,9 +64,14 @@ class MyProfileViewModel @Inject constructor(
 
     private fun load() {
         // 실패 안내와 "다시 시도"는 UseCase가 띄운다. 다시 시도하면 읽기부터 다시 한다.
+        // 회원이 없으면(404) UseCase가 다시 로그인하라고 알리고, 확인을 누르면 로그아웃해 로그인 화면으로 간다.
         viewModelScope.launch {
-            getMyProfile(onRetry = ::load).onSuccess { dispatch(MyProfileReducerEvent.Loaded(it)) }
+            getMyProfile(onRetry = ::load, onSignOut = ::signOut).onSuccess { dispatch(MyProfileReducerEvent.Loaded(it)) }
         }
+    }
+
+    private fun signOut() {
+        viewModelScope.launch { logout() }
     }
 
     /** 집사 정보는 읽은 뒤에만 고친다. 읽기 전 값(빈 값)으로 저장하지 않게 하려는 것이다. */
@@ -102,8 +111,9 @@ class MyProfileViewModel @Inject constructor(
                 if (name == draft.initialText.trim()) dispatch(MyProfileReducerEvent.SheetClosed) else saveCatName(name)
             }
             MyProfileField.NICKNAME -> {
-                if (SignUpValidator.validateNickname(draft.text) != null) {
-                    dispatch(MyProfileReducerEvent.NameInvalid(NameInputError.EMPTY))
+                SignUpValidator.validateNickname(draft.text)?.let { error ->
+                    val inputError = if (error == SignUpFieldError.NICKNAME_TOO_LONG) NameInputError.NICKNAME_TOO_LONG else NameInputError.EMPTY
+                    dispatch(MyProfileReducerEvent.NameInvalid(inputError))
                     return
                 }
                 saveProfile(MyProfileChange(nickname = draft.text.trim()))
@@ -156,7 +166,14 @@ class MyProfileViewModel @Inject constructor(
             birthDay = birth.dayOfMonth,
             heightCm = (profile.heightCm ?: MyProfileDraft.DEFAULT_HEIGHT_CM).coerceIn(UserProfileRange.HEIGHT_CM),
             weightKg = (profile.weightKg ?: MyProfileDraft.DEFAULT_WEIGHT_KG).coerceIn(UserProfileRange.WEIGHT_KG),
-        )
+        ).notAfterToday()
+    }
+
+    /** 미래 생년월일은 고르지 못한다. 고른 날짜가 오늘(기기 타임존)보다 뒤가 되면 오늘로 맞춘다. */
+    private fun MyProfileDraft.notAfterToday(): MyProfileDraft {
+        val today = DeviceTime.today()
+        if (!isBirthAfter(birthYear, birthMonth, birthDay, latest = today)) return this
+        return copy(birthYear = today.year, birthMonth = today.monthValue, birthDay = today.dayOfMonth)
     }
 
     private fun CatNameError.toInputError(): NameInputError = when (this) {
