@@ -47,8 +47,9 @@ class GetIntroUseCase @Inject constructor(
      * 앱 시작 게이트 + 분기.
      *
      * 1. 권한 안내를 아직 노출하지 않았고 미허용 시작 권한이 있으면 [requestPermissions] 로
-     *    UI 게이트(접근권한 안내 바텀시트)를 확인까지 suspend 한 뒤 노출 완료를 기록한다.
-     *    시스템 권한 팝업은 여기서 띄우지 않는다 — 각 기능(식사 기록 카메라, 온보딩·설정 알림)을 쓸 때 그 화면이 요청한다.
+     *    UI 게이트(접근권한 안내 바텀시트 → 확인 → 시스템 권한 팝업)를 응답까지 suspend 한 뒤 노출 완료를 기록한다.
+     *    안내는 시작 권한을 모두 고지하고, 팝업은 [INTRO_POPUP_PERMISSIONS]만 띄운다. 허용 여부와 상관없이 이어서 진행한다.
+     *    카메라는 식사 기록 화면이 쓸 때 묻고, 거부한 알림은 온보딩·설정에서 다시 묻는다.
      *    로딩(버전 체크)보다 먼저 두어 "권한부터 받고 로딩" 흐름을 만든다.
      * 2. RemoteConfig 를 sync(fetch/activate)한다 — 앱 전체에서 여기 1회뿐이며,
      *    이후 다른 기능의 flag 조회는 활성화된 스냅샷만 읽는다.
@@ -89,7 +90,7 @@ class GetIntroUseCase @Inject constructor(
             if (ungranted.isNotEmpty() && !repository.hasShownPermissionNotice()) {
                 // 권한 안내를 기다린 시간은 TTI 구간에서 뺄 수 없어 표시만 남긴다.
                 ttiHelper.addTTIMetaData(TTIMetaData.USER_WAIT_INCLUDED, true)
-                requestPermissions(ungranted)
+                requestPermissions(ungranted.filter { it in INTRO_POPUP_PERMISSIONS })
                 repository.markPermissionNoticeShown()
             }
 
@@ -179,6 +180,9 @@ class GetIntroUseCase @Inject constructor(
 
         /** 앱 시작 시 접근권한 안내에 올리는 권한. 하나라도 미허용이면 안내를 노출한다. */
         private val STARTUP_PERMISSIONS = listOf(AppPermission.CAMERA, AppPermission.NOTIFICATION)
+
+        /** 인트로에서 시스템 팝업으로 묻는 권한. */
+        private val INTRO_POPUP_PERMISSIONS = setOf(AppPermission.NOTIFICATION)
 
         /** 홈으로 가기 전에 냐미 미리 받기를 기다리는 상한. 방 준비 화면과 같다. */
         internal const val CAT_PREFETCH_TIMEOUT_MS = 3_000L

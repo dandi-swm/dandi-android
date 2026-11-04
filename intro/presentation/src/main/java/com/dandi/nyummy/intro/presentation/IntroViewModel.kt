@@ -1,11 +1,13 @@
 package com.dandi.nyummy.intro.presentation
 
 import androidx.lifecycle.viewModelScope
+import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.intro.domain.GetIntroUseCase
 import com.dandi.nyummy.intro.domain.tti.IntroTTIPage
 import com.dandi.nyummy.tti.TTIHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -15,8 +17,8 @@ import javax.inject.Inject
  * 시작 분기 ViewModel.
  *
  * 생성 즉시 [GetIntroUseCase] 가 (최초 1회) 권한 안내 → 버전 체크 → 홈/로그인 루트 전환을
- * 수행한다. 다이얼로그/네비게이션은 UseCase(domain)에서 종결되고, 권한 안내 바텀시트만
- * UI 게이트([awaitPermissionNotice])로 이 레이어가 담당한다. 시스템 권한 팝업은 여기서 띄우지 않는다.
+ * 수행한다. 다이얼로그/네비게이션은 UseCase(domain)에서 종결되고, 권한 안내 바텀시트와 시스템 권한 팝업만
+ * UI 게이트([awaitPermissionRequest])로 이 레이어가 담당한다. 팝업은 Activity가 필요해 화면이 띄운다.
  */
 @HiltViewModel
 class IntroViewModel @Inject constructor(
@@ -24,7 +26,7 @@ class IntroViewModel @Inject constructor(
     private val ttiHelper: TTIHelper,
 ) : MviViewModel<IntroIntent, IntroUIState, IntroReducerEvent>(IntroUIState.empty) {
 
-    private var permissionNoticeConfirmed: CompletableDeferred<Unit>? = null
+    private var permissionRequestFinished: CompletableDeferred<Unit>? = null
 
     init {
         ttiHelper.startTTITracking(IntroTTIPage)
@@ -33,14 +35,25 @@ class IntroViewModel @Inject constructor(
 
     override fun onIntent(intent: IntroIntent) {
         when (intent) {
-            IntroIntent.ConfirmPermissionNotice -> permissionNoticeConfirmed?.complete(Unit)
+            // 안내가 내려가는 중에 눌러도 팝업을 다시 띄우지 않는다.
+            IntroIntent.ConfirmPermissionNotice -> if (currentState.showPermissionNotice) {
+                dispatch(IntroReducerEvent.PermissionRequestStarted)
+            }
+            IntroIntent.PermissionRequestFinished -> permissionRequestFinished?.complete(Unit)
         }
     }
 
     override fun reduce(state: IntroUIState, event: IntroReducerEvent): IntroUIState =
         when (event) {
-            IntroReducerEvent.PermissionNoticeShown -> state.copy(showPermissionNotice = true)
-            IntroReducerEvent.PermissionNoticeFinished -> state.copy(showPermissionNotice = false)
+            is IntroReducerEvent.PermissionNoticeShown -> state.copy(
+                showPermissionNotice = true,
+                requestedPermissions = event.permissions,
+            )
+            IntroReducerEvent.PermissionRequestStarted -> state.copy(isRequestingPermissions = true)
+            IntroReducerEvent.PermissionNoticeFinished -> state.copy(
+                showPermissionNotice = false,
+                isRequestingPermissions = false,
+            )
             IntroReducerEvent.SplashCompleted -> state.copy(isSplashComplete = true)
         }
 
@@ -49,7 +62,7 @@ class IntroViewModel @Inject constructor(
         viewModelScope.launch {
             useCase(
                 onRetry = ::start,
-                requestPermissions = { awaitPermissionNotice() },
+                requestPermissions = ::awaitPermissionRequest,
                 onBeforeNavigate = ::completeSplash,
             ).onSuccess {
                 // 끝 표시는 UseCase가 버전 확인 직후에 한다. 실패하면 재시도 결과까지 기다리도록 보내지 않는다.
@@ -65,13 +78,13 @@ class IntroViewModel @Inject constructor(
     }
 
     /**
-     * 권한 안내 게이트 — 바텀시트를 띄우고 사용자가 확인할 때까지 suspend 한다.
-     * 맥락 없이 미리 요청해 거부되면, 기능에서 다시 물을 때 한 번 더 거부해 "다시 묻지 않음"이 되기 쉬워 여기서는 요청하지 않는다.
+     * 권한 게이트 — 바텀시트로 고지하고, 사용자가 확인하면 [permissions]를 시스템 팝업으로 물어 답할 때까지 suspend 한다.
+     * 물을 권한이 없으면 확인 뒤 팝업 없이, 물었으면 허용 여부와 상관없이 이어서 진행한다.
      */
-    private suspend fun awaitPermissionNotice() {
+    private suspend fun awaitPermissionRequest(permissions: List<AppPermission>) {
         val deferred = CompletableDeferred<Unit>()
-        permissionNoticeConfirmed = deferred
-        dispatch(IntroReducerEvent.PermissionNoticeShown)
+        permissionRequestFinished = deferred
+        dispatch(IntroReducerEvent.PermissionNoticeShown(permissions.toImmutableList()))
         deferred.await()
         dispatch(IntroReducerEvent.PermissionNoticeFinished)
     }
