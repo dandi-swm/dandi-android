@@ -31,6 +31,12 @@
     <string name="nyummy_meal_sheet_skip">%1$s은 안 먹어요</string>
     <string name="nyummy_meal_sheet_confirm">확인</string>
     <string name="nyummy_meal_unit_hour">시</string>
+    <string name="nyummy_birth_unit_year">년</string>
+    <string name="nyummy_birth_unit_month">월</string>
+    <string name="nyummy_birth_unit_day">일</string>
+    <string name="nyummy_birth_year_description">태어난 해</string>
+    <string name="nyummy_birth_month_description">태어난 달</string>
+    <string name="nyummy_birth_day_description">태어난 날</string>
     <string name="nyummy_meal_period_description">오전 또는 오후</string>
     <string name="nyummy_meal_hour_description">시</string>
     <string name="nyummy_star_rating_state">5점 만점에 %1$s점</string>

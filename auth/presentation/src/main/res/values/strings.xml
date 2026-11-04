@@ -64,12 +64,6 @@
     <string name="auth_signup_error_nickname_empty_desc">Keeper name can\'t be empty.</string>
     <string name="auth_login_headline">We\'ve been waiting for you!</string>
     <string name="auth_login_button_loading">Logging in…</string>
-    <string name="auth_signup_unit_year">y</string>
-    <string name="auth_signup_unit_month">m</string>
-    <string name="auth_signup_unit_day">d</string>
-    <string name="auth_signup_birth_year_description">Birth year</string>
-    <string name="auth_signup_birth_month_description">Birth month</string>
-    <string name="auth_signup_birth_day_description">Birth day</string>
     <string name="auth_password_reset_title">Reset password</string>
     <string name="auth_password_reset_subtitle">Enter the email you signed up with.</string>
     <string name="auth_password_reset_cta">Get verification code</string>
