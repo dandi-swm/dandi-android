@@ -152,7 +152,10 @@ fun NyummyListRow(
     }
 }
 
-/** 오른쪽 끝. 값([NyummyListRowTrailing.Value])은 줄 너비의 절반까지만 쓰고, 넘치면 말줄임(…)으로 줄여 제목을 밀어내지 않는다. */
+/**
+ * 오른쪽 끝. 값([NyummyListRowTrailing.Value])은 줄 너비의 절반 칸을 차지하고 그 안에서 오른쪽 끝에 붙는다.
+ * 값이 짧아도 화살표가 늘 줄 오른쪽 끝에 오고, 길면 말줄임(…)으로 줄여 제목을 밀어내지 않는다.
+ */
 @Composable
 private fun RowScope.ListRowTrailing(trailing: NyummyListRowTrailing, enabled: Boolean) {
     when (trailing) {
@@ -164,8 +167,8 @@ private fun RowScope.ListRowTrailing(trailing: NyummyListRowTrailing, enabled: B
             modifier = Modifier.size(NyummyTheme.size.iconL),
         )
         is NyummyListRowTrailing.Value -> Row(
-            modifier = Modifier.weight(1f, fill = false),
-            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2),
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2, Alignment.End),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             NyummyText(
