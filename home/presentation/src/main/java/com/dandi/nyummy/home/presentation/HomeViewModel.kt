@@ -12,15 +12,11 @@ import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatLineVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
-import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.navigation.AppLinks
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
-import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.home.domain.CloseHomeNoticeUseCase
@@ -48,7 +44,6 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val navigationHelper: NavigationHelper,
-    private val messageHelper: MessageHelper,
     private val getHomeSummary: GetHomeSummaryUseCase,
     private val getCatAnimations: GetCatAnimationsUseCase,
     private val refreshCatWeight: RefreshCatWeightUseCase,
@@ -56,7 +51,6 @@ class HomeViewModel @Inject constructor(
     private val getCatLines: GetCatLinesUseCase,
     private val companionMemory: CompanionMemoryHelper,
     private val ttiHelper: TTIHelper,
-    private val remoteConfigHelper: RemoteConfigHelper,
     private val tutorialHelper: TutorialHelper,
     private val submitTutorialMeal: SubmitTutorialMealUseCase,
     private val getHomeNotices: GetHomeNoticesUseCase,
@@ -133,18 +127,9 @@ class HomeViewModel @Inject constructor(
                 prepareGreeting()
             }
             HomeIntent.ScreenPaused -> rememberLastSeen()
-            // 지갑은 코인 내역을 연다. 상점이 꺼져 있으면 준비 중이라고 알린다.
-            HomeIntent.ClickWallet -> if (remoteConfigHelper.get(RemoteConfigKey.ShopEnabled)) {
-                navigationHelper.navigateTo(ShopCoinHistoryPage)
-            } else {
-                messageHelper.showToast(CommonR.string.nyummy_not_ready)
-            }
-            // 우편함은 받을 아이템만 있는 곳이라, 아이템 기능이 꺼져 있으면 들어가지 않고 준비 중이라고 알린다.
-            HomeIntent.ClickMail -> if (remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)) {
-                navigationHelper.navigateTo(MailboxPage)
-            } else {
-                messageHelper.showToast(CommonR.string.nyummy_not_ready)
-            }
+            // 지갑은 코인 내역을 연다.
+            HomeIntent.ClickWallet -> navigationHelper.navigateTo(ShopCoinHistoryPage)
+            HomeIntent.ClickMail -> navigationHelper.navigateTo(MailboxPage)
             HomeIntent.ClickNotice -> Unit
             HomeIntent.ClickSettings -> navigationHelper.navigateTo(SettingsPage)
             HomeIntent.ToggleUiHidden ->
@@ -195,7 +180,7 @@ class HomeViewModel @Inject constructor(
             is HomeReducerEvent.SummaryLoaded -> state.copy(
                 summary = event.summary,
                 room = event.room,
-                showsMailBadge = event.showsMailBadge,
+                showsMailBadge = event.summary.hasMailboxBadge,
                 isSummaryLoaded = true,
             )
             is HomeReducerEvent.UiHiddenChanged -> state.copy(isUiHidden = event.hidden)
@@ -231,11 +216,7 @@ class HomeViewModel @Inject constructor(
                 val recordedJustNow = hasLoadedSummary &&
                     summary.todayRecordedCount > currentState.summary.todayRecordedCount
                 hasLoadedSummary = true
-                // 마이룸이 켜져 있으면 고양이방에 꾸민 방을 그린다. 꺼져 있으면 기본 빈 방만 그린다.
-                val room = summary.roomPlacements.toHomeRoom()
-                    .takeIf { remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled) }
-                val showsMailBadge = summary.hasMailboxBadge && remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)
-                dispatch(HomeReducerEvent.SummaryLoaded(summary, room, showsMailBadge))
+                dispatch(HomeReducerEvent.SummaryLoaded(summary, room = summary.roomPlacements.toHomeRoom()))
                 if (recordedJustNow) pendingReaction = CatReaction.EAT
                 driveCat()
                 updateTutorial(summary)
@@ -295,11 +276,7 @@ class HomeViewModel @Inject constructor(
             tutorialHelper.setMealTutorialRequired(!summary.isTutorialCompleted)
             // 방금 마친 단계를 기록하는 중이면 끝난 뒤에 고른다. 그래야 같은 안내가 다시 뜨지 않는다.
             tutorialRecordJob?.join()
-            val pending = tutorialHelper.pendingSteps().toMutableSet()
-            if (!remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)) pending.completeAll(TutorialStep.HOME_MAIL, TutorialStep.MAILBOX)
-            if (!remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled)) {
-                pending.completeAll(TutorialStep.HOME_ROOM_TAB, TutorialStep.ROOM, TutorialStep.HOME_ROOM_SAVED)
-            }
+            val pending = tutorialHelper.pendingSteps()
             val stage = when {
                 TutorialStep.HEALTH_STORY in pending && pending.none { it in StepsBeforeStory } -> {
                     dispatch(HomeReducerEvent.TutorialChanged(null))
@@ -331,13 +308,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private suspend fun MutableSet<TutorialStep>.completeAll(vararg steps: TutorialStep) {
-        steps.filter { it in this }.forEach {
-            tutorialHelper.complete(it)
-            remove(it)
-        }
-    }
-
     /**
      * 가리킨 곳을 눌렀다. 이동은 그 버튼이 한다. 우편 버튼과 마이룸 탭 단계는 이 홈 단계를 마치고 코치마크를 내린다
      * (그 화면 단계를 마치지 않고 돌아오면 다음 요약에서 다시 가리킨다). 소개의 카메라 버튼은 서버가 마쳤다고 할 때까지 둔다.
@@ -352,17 +322,15 @@ class HomeViewModel @Inject constructor(
         tutorialRecordJob = viewModelScope.launch { tutorialHelper.complete(step) }
     }
 
-    /** 건너뛰기 확인에 보일 남은 안내. 지금 단계 뒤의 것만, 꺼진 기능은 빼고 보인다. */
-    private fun remainingLessons(): ImmutableList<NyummyTutorialLesson> {
-        val mail = remoteConfigHelper.get(RemoteConfigKey.MailItemTabEnabled)
-        val room = remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled)
-        return buildList {
-            if (currentState.tutorial?.stage == HomeTutorialStage.Intro) add(NyummyTutorialLesson.RecordMeal)
-            if (mail && currentState.tutorial?.stage == HomeTutorialStage.Intro) add(NyummyTutorialLesson.OpenBox)
-            if (room && currentState.tutorial?.stage != HomeTutorialStage.RoomSaved) add(NyummyTutorialLesson.DecorateRoom)
-            add(NyummyTutorialLesson.CatHealth)
-        }.toImmutableList()
-    }
+    /** 건너뛰기 확인에 보일 남은 안내. 지금 단계 뒤의 것만 보인다. */
+    private fun remainingLessons(): ImmutableList<NyummyTutorialLesson> = buildList {
+        if (currentState.tutorial?.stage == HomeTutorialStage.Intro) {
+            add(NyummyTutorialLesson.RecordMeal)
+            add(NyummyTutorialLesson.OpenBox)
+        }
+        if (currentState.tutorial?.stage != HomeTutorialStage.RoomSaved) add(NyummyTutorialLesson.DecorateRoom)
+        add(NyummyTutorialLesson.CatHealth)
+    }.toImmutableList()
 
     /**
      * 건너뛰기를 확정했다. 튜토리얼 식사 전이면 튜토리얼 식사를 대신 기록해 서버에 마쳤다고 남긴다(실패 안내는 UseCase가 한다).

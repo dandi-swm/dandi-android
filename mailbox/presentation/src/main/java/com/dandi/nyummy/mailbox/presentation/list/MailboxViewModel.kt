@@ -6,8 +6,6 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.image.NyummyCdn
@@ -43,7 +41,6 @@ class MailboxViewModel @Inject constructor(
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
     private val tutorialHelper: TutorialHelper,
-    private val remoteConfigHelper: RemoteConfigHelper,
     @IoScope private val ioScope: CoroutineScope,
 ) : MviViewModel<MailboxIntent, MailboxUIState, MailboxReducerEvent>(MailboxUIState.empty) {
 
@@ -186,18 +183,14 @@ class MailboxViewModel @Inject constructor(
 
     /** 우편함 단계를 마치고, 뒤로가기를 가리켜 홈(마이룸 탭 단계)으로 이끈다. */
     private fun finishMailboxStep() {
-        val tutorial = MailboxTutorialUiState(
-            stage = MailboxTutorialStage.GoBack,
-            isRoomNext = remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled),
-        )
-        dispatch(MailboxReducerEvent.TutorialChanged(tutorial))
+        dispatch(MailboxReducerEvent.TutorialChanged(MailboxTutorialUiState(stage = MailboxTutorialStage.GoBack)))
         tutorialJob = viewModelScope.launch { tutorialHelper.complete(TutorialStep.MAILBOX) }
     }
 
-    /** 건너뛰기 확인에 보일 남은 안내. 상자를 열기 전이면 상자 열기부터, 꺼진 기능은 빼고 보인다. */
+    /** 건너뛰기 확인에 보일 남은 안내. 상자를 열기 전이면 상자 열기부터 보인다. */
     private fun remainingTutorialLessons(): ImmutableList<NyummyTutorialLesson> = buildList {
         if (currentState.tutorial?.stage != MailboxTutorialStage.GoBack) add(NyummyTutorialLesson.OpenBox)
-        if (remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled)) add(NyummyTutorialLesson.DecorateRoom)
+        add(NyummyTutorialLesson.DecorateRoom)
         add(NyummyTutorialLesson.CatHealth)
     }.toImmutableList()
 

@@ -62,7 +62,8 @@ class MealCeremonyDebugActivity : ComponentActivity() {
         val cutscene = intent.getStringExtra(EXTRA_CUTSCENE)?.let { name -> MealCutscene.entries.firstOrNull { it.name == name } }
         val forcesNotificationOff = intent.getBooleanExtra(EXTRA_NOTIFICATION_OFF, false)
         val viewModel = ViewModelProvider(this)[CeremonyDebugViewModel::class.java]
-        viewModel.start(copySamplePhoto(), grade, responseDelay, fails, cutscene)
+        // gift=false면 상자 없는 기록으로 띄운다.
+        viewModel.start(copySamplePhoto(), if (sendsGift) grade else RewardBoxGrade.NONE, responseDelay, fails, cutscene)
 
         setContent {
             NyummyTheme {
@@ -82,12 +83,12 @@ class MealCeremonyDebugActivity : ComponentActivity() {
                     stage = ceremony.stage,
                     cutscene = ceremony.cutscene,
                     rewardBoxGrade = ceremony.rewardBoxGrade,
-                    sendsRewardBox = ceremony.sendsRewardBox(sendsGift),
+                    sendsRewardBox = ceremony.sendsRewardBox,
                     roomBackgroundUrl = roomBackgroundUrl,
                     notificationsOff = forcesNotificationOff || !notificationsEnabled,
                     onNotificationSettingsClick = { openAppNotificationSettings() },
-                    onStageFinished = { if (!viewModel.advance(it, sendsGift)) finish() },
-                    onSkipClick = { if (!viewModel.skip(sendsGift)) finish() },
+                    onStageFinished = { if (!viewModel.advance(it)) finish() },
+                    onSkipClick = { if (!viewModel.skip()) finish() },
                     onCloseClick = { if (ceremony.isAccepted) finish() },
                     onDoneClick = { finish() },
                     modifier = Modifier
@@ -144,14 +145,14 @@ internal class CeremonyDebugViewModel : ViewModel() {
     }
 
     /** 장면 [finished] 가 끝나면 다음 장면으로 넘긴다. 연출을 마칠 차례면 false 다. */
-    fun advance(finished: MealCeremonyStage, isMailGiftEnabled: Boolean): Boolean {
+    fun advance(finished: MealCeremonyStage): Boolean {
         if (ceremony.stage != finished) return true
-        val next = ceremony.nextStage(isMailGiftEnabled) ?: return false
+        val next = ceremony.nextStage() ?: return false
         ceremony = ceremony.copy(stage = next)
         return true
     }
 
     /** 띠욧 컷신만 건너뛴다. 연출을 마칠 차례면 false 다. */
-    fun skip(isMailGiftEnabled: Boolean): Boolean =
-        !ceremony.stage.isSkippable || advance(ceremony.stage, isMailGiftEnabled)
+    fun skip(): Boolean =
+        !ceremony.stage.isSkippable || advance(ceremony.stage)
 }

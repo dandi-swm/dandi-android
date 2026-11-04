@@ -16,8 +16,6 @@ import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 import com.dandi.nyummy.common.presentation.cat.LocalCatName
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
@@ -28,7 +26,6 @@ import com.dandi.nyummy.main.presentation.deeplink.appLinkUri
 import com.dandi.nyummy.main.presentation.deeplink.pushNotificationId
 import com.dandi.nyummy.main.presentation.deeplink.resolveStartStack
 import com.dandi.nyummy.main.presentation.deeplink.withNotificationId
-import com.dandi.nyummy.main.presentation.navigation.MainTabFlags
 import com.dandi.nyummy.main.presentation.navigation.RootComposable
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -47,9 +44,6 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var analyticsHelper: AnalyticsHelper
-
-    @Inject
-    lateinit var remoteConfigHelper: RemoteConfigHelper
 
     @Inject
     lateinit var companionMemory: CompanionMemoryHelper
@@ -100,12 +94,6 @@ class MainActivity : ComponentActivity() {
                     RootComposable(
                         startStack = startStack,
                         onScreenShown = analyticsHelper::logScreenView,
-                        mainTabFlags = {
-                            MainTabFlags(
-                                isMyRoomEnabled = remoteConfigHelper.get(RemoteConfigKey.MyRoomEnabled),
-                                isShopEnabled = remoteConfigHelper.get(RemoteConfigKey.ShopEnabled),
-                            )
-                        },
                     )
                 }
             }

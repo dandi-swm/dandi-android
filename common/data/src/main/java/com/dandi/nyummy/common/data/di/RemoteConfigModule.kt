@@ -17,7 +17,7 @@ import javax.inject.Singleton
 
 /**
  * Firebase 원격 구성 바인딩. 값은 앱 시작 때 인트로가 한 번 받아 두고([RemoteConfigHelper.sync]),
- * 강제 업데이트와 기능 플래그가 같은 값을 읽는다. 어느 키를 읽을지는 빌드 환경([RemoteConfigEnv])이 정한다.
+ * 강제 업데이트, 공지, A/B 실험이 같은 값을 읽는다. 어느 키를 읽을지는 빌드 환경([RemoteConfigEnv])이 정한다.
  */
 @Module
 @InstallIn(SingletonComponent::class)

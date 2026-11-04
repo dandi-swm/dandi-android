@@ -68,7 +68,6 @@ data class InquiryDetailPage(val inquiryId: Long) : Page {
 
 - 탭은 홈·마이룸·기록·상점 순서(`mainTabPages`)이고, 가운데(마이룸과 기록 사이, `MealRecordActionIndex = 2`)에 식사 기록 버튼이 솟아 있다.
 - `isBottomTab = true`인 라우트(홈·기록·상점)가 탭 루트다. **마이룸은 탭에 있지만 탭 루트가 아니다** — 하단 내비 없는 마이룸 화면으로 가는 지름길이라 뒤로 가면 보던 탭으로 돌아온다.
-- 마이룸·상점 탭은 `MainTabFlags`(Remote Config)가 꺼져 있으면 이동하지 않고 "준비 중" 토스트를 띄운다(`isMainTabReady`).
 
 새 화면 등록 예 (args 없는 기본형 — Page Composable이 `viewModel = hiltViewModel()`을 기본 파라미터로 가진다):
 
