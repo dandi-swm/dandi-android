@@ -232,6 +232,40 @@ class GetIntroUseCaseTest {
     }
 
     @Test
+    fun `시작 권한이 모두 미허용이어도 시스템 팝업으로는 알림만 묻는다`() = runBlocking {
+        var requested: List<AppPermission>? = null
+        val useCase = buildUseCase(
+            repository = FakeIntroRepository(hasRefreshToken = false, permissionNoticeShown = false),
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+            permissionHelper = FakePermissionHelper(granted = false),
+        )
+
+        useCase(requestPermissions = { requested = it })
+
+        assertEquals(listOf(AppPermission.NOTIFICATION), requested)
+    }
+
+    @Test
+    fun `알림이 허용돼 있고 카메라만 미허용이면 안내는 거치고 팝업으로 물을 권한은 없다`() = runBlocking {
+        var requested: List<AppPermission>? = null
+        val repository = FakeIntroRepository(hasRefreshToken = false, permissionNoticeShown = false)
+        val useCase = buildUseCase(
+            repository = repository,
+            remoteConfigHelper = FakeRemoteConfigHelper(versionCheck(minimumVersionCode = 3)),
+            deviceHelper = FakeDeviceHelper(appVersionCode = 5),
+            permissionHelper = object : PermissionHelper {
+                override fun isGranted(permission: AppPermission): Boolean = permission == AppPermission.NOTIFICATION
+            },
+        )
+
+        useCase(requestPermissions = { requested = it })
+
+        assertEquals(emptyList<AppPermission>(), requested)
+        assertEquals(1, repository.markPermissionNoticeShownCount)
+    }
+
+    @Test
     fun `권한 안내를 이미 노출했으면 게이트를 건너뛴다`() = runBlocking {
         val repository = FakeIntroRepository(hasRefreshToken = false, permissionNoticeShown = true)
         var gateCount = 0
