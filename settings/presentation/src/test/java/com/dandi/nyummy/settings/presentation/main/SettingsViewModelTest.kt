@@ -8,8 +8,10 @@ import com.dandi.nyummy.legal.domain.LegalPage
 import com.dandi.nyummy.legal.entity.LegalDocument
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
+import com.dandi.nyummy.settings.domain.MyProfilePage
 import com.dandi.nyummy.settings.domain.UpdateNotificationSettingsUseCase
 import com.dandi.nyummy.settings.domain.WithdrawUseCase
+import com.dandi.nyummy.settings.entity.MyProfileVO
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import com.dandi.nyummy.settings.presentation.FakeAuthRepository
@@ -116,6 +118,31 @@ class SettingsViewModelTest {
 
         assertEquals(listOf(NotificationSettingsChange(isServiceEnabled = false)), repository.savedNotifications)
         assertEquals(listOf(MealTimeSettingPage), navigationHelper.pages)
+    }
+
+    @Test
+    fun `집사 이름을 읽어 맨 위 줄에 보여 주고 누르면 마이페이지로 간다`() = runTest(testDispatcher) {
+        repository.profile = MyProfileVO(nickname = "진우")
+
+        resume()
+        advanceUntilIdle()
+        viewModel.onIntent(SettingsIntent.ClickMyProfile)
+
+        assertEquals("진우", state.nickname)
+        assertEquals(listOf(MyProfilePage), navigationHelper.pages)
+    }
+
+    @Test
+    fun `다시 읽다가 프로필을 읽지 못하면 마지막으로 읽은 집사 이름을 둔다`() = runTest(testDispatcher) {
+        repository.profile = MyProfileVO(nickname = "진우")
+        resume()
+        advanceUntilIdle()
+
+        repository.getMealTimesError = IOException("offline")
+        resume()
+        advanceUntilIdle()
+
+        assertEquals("진우", state.nickname)
     }
 
     @Test
