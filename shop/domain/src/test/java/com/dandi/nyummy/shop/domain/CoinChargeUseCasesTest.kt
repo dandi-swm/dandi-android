@@ -81,7 +81,7 @@ class CoinChargeUseCasesTest {
 
     @Test
     fun `다시 설치해 기기 기록이 없는데 서버가 이미 받았다고 하면 기록을 되살리고 이미 받았다고 한다`() = runBlocking {
-        repository.claimError = httpException(409, ShopErrorType.COIN_GIFT_ALREADY_RECEIVED.type)
+        repository.claimError = httpException(409, ShopErrorType.COIN_GIFT_ALREADY_CLAIMED.type)
         val notice = GetCoinChargeNoticeUseCase(GetCoinChargeOfferUseCase(repository, tracker))
         assertEquals(event, notice())
 
@@ -99,8 +99,8 @@ class CoinChargeUseCasesTest {
     }
 
     @Test
-    fun `코드 이름이 서버와 어긋나도 409면 이미 받은 것으로 본다`() = runBlocking {
-        repository.claimError = httpException(409, "api.coin.giftAlreadyClaimed")
+    fun `코드가 빠져도 409면 이미 받은 것으로 본다`() = runBlocking {
+        repository.claimError = httpException(409)
 
         assertEquals(CoinChargeClaimResult.AlreadyClaimed, claim()(event, pack))
         assertEquals(setOf(event.eventId), repository.claimed)
