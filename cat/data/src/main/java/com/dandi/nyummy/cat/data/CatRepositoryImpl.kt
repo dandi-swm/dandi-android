@@ -1,5 +1,6 @@
 package com.dandi.nyummy.cat.data
 
+import com.dandi.nyummy.cat.data.dto.UpdateCatRequestDTO
 import com.dandi.nyummy.cat.domain.CatRepository
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.common.data.token.TokenProvider
@@ -33,6 +34,11 @@ class CatRepositoryImpl(
         if (weight == previous) return false
         companionMemory.setLastCatWeight(weight)
         return weight != (previous ?: DEFAULT_WEIGHT)
+    }
+
+    // 기기에 기억한 이름은 UseCase가 저장에 성공한 뒤 바꾼다.
+    override suspend fun rename(name: String) {
+        dataSource.updateCat(UpdateCatRequestDTO(name = name))
     }
 
     private suspend fun load(weight: String): CatAnimationSetVO? = cached[weight]

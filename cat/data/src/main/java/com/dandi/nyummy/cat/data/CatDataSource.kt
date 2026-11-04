@@ -1,6 +1,7 @@
 package com.dandi.nyummy.cat.data
 
 import com.dandi.nyummy.cat.data.dto.CatDTO
+import com.dandi.nyummy.cat.data.dto.UpdateCatRequestDTO
 import com.dandi.nyummy.common.data.BaseRemoteDataSource
 
 class CatDataSource(
@@ -8,4 +9,8 @@ class CatDataSource(
 ) : BaseRemoteDataSource() {
     suspend fun getCat(): CatDTO =
         checkResponse(apiService.getCat())
+
+    suspend fun updateCat(request: UpdateCatRequestDTO) {
+        checkResponse(apiService.updateCat(request))
+    }
 }
