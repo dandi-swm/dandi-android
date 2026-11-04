@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import com.dandi.nyummy.common.entity.tag.TagVO
 import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentShadows
@@ -298,6 +299,7 @@ private fun BottomNavTab(
 /**
  * 카테고리 탭 바. 탭은 왼쪽부터 간격 16으로 나열되고 넘치면 가로로 스크롤된다. 아래에 1px 구분선.
  * 선택된 탭은 진한 글자 + 2px 진한 밑줄(브랜드색이 아니다), 나머지는 tertiary.
+ * [badges]는 탭마다 글자 오른쪽에 붙일 태그(이벤트 표시 등)이고, 없거나 null인 탭은 글자만 그린다.
  */
 @Composable
 fun NyummyTabs(
@@ -305,6 +307,7 @@ fun NyummyTabs(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    badges: ImmutableList<TagVO?> = persistentListOf(),
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -315,7 +318,12 @@ fun NyummyTabs(
             horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s16),
         ) {
             tabs.forEachIndexed { index, label ->
-                TabItem(label = label, selected = index == selectedIndex, onClick = { onSelect(index) })
+                TabItem(
+                    label = label,
+                    badge = badges.getOrNull(index),
+                    selected = index == selectedIndex,
+                    onClick = { onSelect(index) },
+                )
             }
         }
         NyummyDivider()
@@ -323,7 +331,7 @@ fun NyummyTabs(
 }
 
 @Composable
-private fun TabItem(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun TabItem(label: String, badge: TagVO?, selected: Boolean, onClick: () -> Unit) {
     val dimens = NyummyComponentDimens
     Column(
         modifier = Modifier
@@ -344,12 +352,18 @@ private fun TabItem(label: String, selected: Boolean, onClick: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        NyummyText(
-            text = label,
-            style = NyummyTheme.typography.labelL,
-            color = if (selected) NyummyTheme.colors.content.primary else NyummyTheme.colors.content.tertiary,
-            maxLines = 1,
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            NyummyText(
+                text = label,
+                style = NyummyTheme.typography.labelL,
+                color = if (selected) NyummyTheme.colors.content.primary else NyummyTheme.colors.content.tertiary,
+                maxLines = 1,
+            )
+            if (badge != null) NyummyTag(tag = badge)
+        }
         Box(
             Modifier
                 .fillMaxWidth()
