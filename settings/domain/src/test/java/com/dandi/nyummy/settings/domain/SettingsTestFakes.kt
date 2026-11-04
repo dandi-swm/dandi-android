@@ -15,6 +15,8 @@ import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.settings.entity.InquiryCategory
 import com.dandi.nyummy.settings.entity.InquiryPageVO
 import com.dandi.nyummy.settings.entity.InquiryVO
+import com.dandi.nyummy.settings.entity.MyProfileChange
+import com.dandi.nyummy.settings.entity.MyProfileVO
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import com.dandi.nyummy.tti.TTIHelper
@@ -53,6 +55,19 @@ internal class FakeSettingsRepository : SettingsRepository {
     override suspend fun saveMealTimes(mealTimes: MealTimesVO) {
         saveMealTimesError?.let { throw it }
         savedMealTimes += mealTimes
+    }
+
+    /** 내 프로필 중 식사 시각을 뺀 값. 식사 시각은 [mealTimes]를 쓴다. */
+    var profile: MyProfileVO = MyProfileVO(nickname = "진우")
+    var updateMyProfileError: Exception? = null
+    val profileChanges = mutableListOf<MyProfileChange>()
+
+    /** 식사 시각과 집사 이름은 같은 내 프로필 API에서 온다. 그래서 [getMealTimesError]도 함께 던진다. */
+    override suspend fun getMyProfile(): MyProfileVO = profile.copy(mealTimes = getMealTimes())
+
+    override suspend fun updateMyProfile(change: MyProfileChange) {
+        updateMyProfileError?.let { throw it }
+        profileChanges += change
     }
 
     var withdrawError: Exception? = null

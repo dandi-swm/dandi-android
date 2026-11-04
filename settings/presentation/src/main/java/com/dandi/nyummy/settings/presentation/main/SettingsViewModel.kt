@@ -13,6 +13,7 @@ import com.dandi.nyummy.legal.domain.LegalPage
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
 import com.dandi.nyummy.settings.domain.InquiryListPage
 import com.dandi.nyummy.settings.domain.MealTimeSettingPage
+import com.dandi.nyummy.settings.domain.MyProfilePage
 import com.dandi.nyummy.settings.domain.UpdateNotificationSettingsUseCase
 import com.dandi.nyummy.settings.domain.WithdrawUseCase
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
@@ -65,6 +66,7 @@ class SettingsViewModel @Inject constructor(
             is SettingsIntent.ClickNotificationDetail -> dispatch(SettingsReducerEvent.NotificationDetailChanged(intent.kind))
             SettingsIntent.DismissNotificationDetail -> dispatch(SettingsReducerEvent.NotificationDetailChanged(null))
             SettingsIntent.ClickMealTime -> whenLoaded { navigationHelper.navigateTo(MealTimeSettingPage) }
+            SettingsIntent.ClickMyProfile -> navigationHelper.navigateTo(MyProfilePage)
             SettingsIntent.ClickInquiry -> navigationHelper.navigateTo(InquiryListPage)
             is SettingsIntent.ClickLegal -> navigationHelper.navigateTo(LegalPage(intent.document))
             SettingsIntent.ClickFontCredit -> dispatch(SettingsReducerEvent.FontCreditVisibilityChanged(visible = true))
@@ -86,6 +88,7 @@ class SettingsViewModel @Inject constructor(
             notification = if (event.keepNotification) state.notification else event.settings.notification,
             // 다시 읽다가 실패하면 마지막으로 읽은 값을 둔다.
             mealTimes = event.settings.mealTimes ?: state.mealTimes,
+            nickname = event.settings.nickname ?: state.nickname,
         )
         is SettingsReducerEvent.DeviceNotificationChecked -> state.copy(isDeviceNotificationEnabled = event.enabled)
         is SettingsReducerEvent.NotificationChanged -> state.copy(notification = event.notification)

@@ -18,8 +18,8 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonS
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextField
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
-import com.dandi.nyummy.onboarding.domain.CatNameError
-import com.dandi.nyummy.onboarding.domain.CatNameValidator
+import com.dandi.nyummy.common.entity.cat.CatNameError
+import com.dandi.nyummy.common.entity.cat.CatNameValidator
 import com.dandi.nyummy.onboarding.presentation.OnboardingChoice
 import com.dandi.nyummy.onboarding.presentation.R
 import kotlinx.collections.immutable.ImmutableList

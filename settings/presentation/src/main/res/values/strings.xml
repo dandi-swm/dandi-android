@@ -81,4 +81,35 @@
     <string name="inquiry_write_send_failed">문의를 보내지 못했어요. 잠시 후 다시 시도해 주세요.</string>
     <string name="inquiry_detail_reply_from">냐미 팀 답장</string>
     <string name="inquiry_attached_image">첨부한 사진</string>
+    <!-- 설정 맨 위 집사 줄과 마이페이지 -->
+    <string name="settings_my_profile_fallback_title">내 정보</string>
+    <string name="settings_my_profile_entry_desc">%1$s 집사 · 내 정보 보기</string>
+    <string name="my_profile_title">마이페이지</string>
+    <string name="my_profile_section_cat">고양이 정보</string>
+    <string name="my_profile_section_owner">집사 정보</string>
+    <string name="my_profile_cat_name">이름</string>
+    <string name="my_profile_nickname">집사 이름</string>
+    <string name="my_profile_gender">성별</string>
+    <string name="my_profile_gender_male">남성</string>
+    <string name="my_profile_gender_female">여성</string>
+    <string name="my_profile_gender_other">기타</string>
+    <string name="my_profile_birth">생년월일</string>
+    <string name="my_profile_birth_value">%1$04d.%2$02d.%3$02d (%4$d세)</string>
+    <string name="my_profile_height">키</string>
+    <string name="my_profile_weight">몸무게</string>
+    <string name="my_profile_unit_height" translatable="false">cm</string>
+    <string name="my_profile_unit_weight" translatable="false">kg</string>
+    <string name="my_profile_height_value">%1$dcm</string>
+    <string name="my_profile_weight_value">%1$dkg</string>
+    <string name="my_profile_unset">입력해 주세요</string>
+    <string name="my_profile_calorie_caption">성별·생년월일·키·몸무게로 하루 권장 칼로리를 계산해요. 바꾸면 권장 칼로리도 다시 계산해요.</string>
+    <string name="my_profile_sheet_cat_name">고양이 이름</string>
+    <string name="my_profile_sheet_name_label">이름</string>
+    <string name="my_profile_sheet_cat_name_helper">%1$d자까지 쓸 수 있어요</string>
+    <string name="my_profile_sheet_gender_note">권장 칼로리는 성별·생년월일·키·몸무게로 계산해요</string>
+    <string name="my_profile_sheet_recalculate">바꾸면 하루 권장 칼로리를 다시 계산해요</string>
+    <string name="my_profile_sheet_birth_helper">나이는 생년월일로 계산해요. 바꾸면 하루 권장 칼로리를 다시 계산해요</string>
+    <string name="my_profile_sheet_save">저장</string>
+    <string name="my_profile_error_name_empty">이름을 입력해 주세요</string>
+    <string name="my_profile_error_cat_name_too_long">이름은 %1$d자까지 지을 수 있어요</string>
 </resources>

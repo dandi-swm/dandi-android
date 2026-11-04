@@ -20,6 +20,7 @@ class GetCatAnimationsUseCaseTest {
         repository = object : CatRepository {
             override suspend fun getAnimations(): CatAnimationSetVO = block()
             override suspend fun refreshWeight(): Boolean = error("조회는 체형을 다시 읽지 않는다")
+            override suspend fun rename(name: String) = Unit
         },
         resourceHelper = FakeResourceHelper,
         messageHelper = messageHelper,

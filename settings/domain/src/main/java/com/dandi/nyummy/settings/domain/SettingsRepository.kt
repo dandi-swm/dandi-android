@@ -1,6 +1,8 @@
 package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
+import com.dandi.nyummy.settings.entity.MyProfileChange
+import com.dandi.nyummy.settings.entity.MyProfileVO
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 
@@ -17,6 +19,12 @@ interface SettingsRepository {
 
     /** 평소 식사 시각을 서버에 저장한다. 서버는 이 시각으로 식사 알림을 보낸다. */
     suspend fun saveMealTimes(mealTimes: MealTimesVO)
+
+    /** 내 프로필(집사 이름, 성별, 생년월일, 키, 몸무게, 평소 식사 시각). 서버가 비워 둔 값은 null이다. */
+    suspend fun getMyProfile(): MyProfileVO
+
+    /** 내 프로필에서 [change]가 바꾸는 항목만 서버에 저장한다. 서버는 바뀐 값으로 하루 권장 칼로리를 다시 계산한다. */
+    suspend fun updateMyProfile(change: MyProfileChange)
 
     /** 회원 탈퇴. 되돌릴 수 없다. 성공하면 이 기기에 저장한 로그인 토큰도 지운다. */
     suspend fun withdraw()

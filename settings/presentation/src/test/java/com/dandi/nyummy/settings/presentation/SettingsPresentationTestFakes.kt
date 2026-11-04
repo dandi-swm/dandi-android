@@ -23,6 +23,8 @@ import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.settings.domain.SettingsRepository
+import com.dandi.nyummy.settings.entity.MyProfileChange
+import com.dandi.nyummy.settings.entity.MyProfileVO
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import com.dandi.nyummy.tti.TTIHelper
@@ -73,6 +75,21 @@ internal class FakeSettingsRepository : SettingsRepository {
     override suspend fun saveMealTimes(mealTimes: MealTimesVO) {
         saveMealTimesError?.let { throw it }
         savedMealTimes += mealTimes
+    }
+
+    /** 내 프로필 중 식사 시각을 뺀 값. 식사 시각은 [mealTimes]와 그 응답을 쓴다. */
+    var profile: MyProfileVO = MyProfileVO(nickname = "진우")
+    val profileChanges = mutableListOf<MyProfileChange>()
+
+    /** 프로필 저장마다 따로 정할 수 있는 응답. 비어 있으면 바로 성공한다. */
+    val profileUpdateResponses = ArrayDeque<suspend (MyProfileChange) -> Unit>()
+
+    /** 식사 시각과 집사 이름은 같은 내 프로필 API에서 온다. 설정 화면의 식사 시각 시나리오가 그대로 돌도록 식사 시각 응답을 함께 쓴다. */
+    override suspend fun getMyProfile(): MyProfileVO = profile.copy(mealTimes = getMealTimes())
+
+    override suspend fun updateMyProfile(change: MyProfileChange) {
+        profileUpdateResponses.removeFirstOrNull()?.invoke(change)
+        profileChanges += change
     }
 
     var withdrawCount = 0

@@ -72,6 +72,7 @@
 | `/mailbox` | 우편함 |
 | `/settings` | 설정 |
 | `/settings/meal-time` | 식사 시간 설정 |
+| `/settings/profile` | 마이페이지(집사 정보·고양이 이름) |
 | `/settings/inquiry` | 문의하기 |
 
 - 버튼은 기능 플래그를 보지 않고 그 화면을 바로 연다. 상점·마이룸·우편함처럼 플래그로 막아 둔 기능은 플래그를 켠 뒤에만 링크로 건다.

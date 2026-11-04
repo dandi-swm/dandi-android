@@ -2,6 +2,7 @@ package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
+import com.dandi.nyummy.settings.entity.MyProfileVO
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -36,6 +37,15 @@ class GetSettingsUseCaseTest {
     }
 
     @Test
+    fun `맨 위 집사 줄에 쓸 집사 이름도 같은 프로필에서 돌려준다`() = runBlocking {
+        repository.profile = MyProfileVO(nickname = "진우")
+
+        val settings = useCase(onRetry = {}).getOrThrow()
+
+        assertEquals("진우", settings.nickname)
+    }
+
+    @Test
     fun `식사 시각을 읽지 못해도 다른 설정은 돌려주고 식사 시각만 비운다`() = runBlocking {
         repository.getMealTimesError = IOException("offline")
 
@@ -43,6 +53,7 @@ class GetSettingsUseCaseTest {
 
         assertEquals(NotificationSettingsVO(isMarketingEnabled = true), settings.notification)
         assertNull(settings.mealTimes)
+        assertNull(settings.nickname)
         assertTrue(messageHelper.dialogs.isEmpty())
         assertTrue(messageHelper.snackBars.isEmpty())
     }

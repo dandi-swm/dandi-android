@@ -4,7 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
-import com.dandi.nyummy.onboarding.domain.CatNameValidator
+import com.dandi.nyummy.common.entity.cat.CatNameValidator
 import com.dandi.nyummy.onboarding.domain.FinishOnboardingUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged

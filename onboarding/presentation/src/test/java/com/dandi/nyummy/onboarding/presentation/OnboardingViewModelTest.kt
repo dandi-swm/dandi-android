@@ -14,7 +14,7 @@ import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.meal.Meal
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
-import com.dandi.nyummy.onboarding.domain.CatNameError
+import com.dandi.nyummy.common.entity.cat.CatNameError
 import com.dandi.nyummy.onboarding.domain.FinishOnboardingUseCase
 import com.dandi.nyummy.onboarding.domain.OnboardingRepository
 import com.dandi.nyummy.tti.TTIHelper

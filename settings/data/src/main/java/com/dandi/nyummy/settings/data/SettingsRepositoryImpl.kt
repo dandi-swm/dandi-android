@@ -4,7 +4,10 @@ import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.settings.data.dto.MealTimeRequestDTO
 import com.dandi.nyummy.settings.data.dto.PushSettingDTO
+import com.dandi.nyummy.settings.data.dto.UpdateProfileRequestDTO
 import com.dandi.nyummy.settings.domain.SettingsRepository
+import com.dandi.nyummy.settings.entity.MyProfileChange
+import com.dandi.nyummy.settings.entity.MyProfileVO
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import kotlinx.coroutines.NonCancellable
@@ -25,6 +28,12 @@ class SettingsRepositoryImpl(
 
     override suspend fun saveMealTimes(mealTimes: MealTimesVO) {
         remoteDataSource.updateMealTime(MealTimeRequestDTO.from(mealTimes))
+    }
+
+    override suspend fun getMyProfile(): MyProfileVO = remoteDataSource.getMyProfile().toMyProfileVO()
+
+    override suspend fun updateMyProfile(change: MyProfileChange) {
+        remoteDataSource.updateMyProfile(UpdateProfileRequestDTO.from(change))
     }
 
     override suspend fun withdraw() {

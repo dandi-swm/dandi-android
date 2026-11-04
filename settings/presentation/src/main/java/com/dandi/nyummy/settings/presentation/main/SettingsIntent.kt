@@ -46,6 +46,9 @@ sealed interface SettingsIntent : MviIntent {
 
     data object ClickMealTime : SettingsIntent
 
+    /** 맨 위 집사 줄을 눌렀다. 마이페이지로 간다. */
+    data object ClickMyProfile : SettingsIntent
+
     /** "문의하기"를 눌렀다. 내가 보낸 문의 목록으로 간다(새 문의도 거기서 쓴다). */
     data object ClickInquiry : SettingsIntent
 

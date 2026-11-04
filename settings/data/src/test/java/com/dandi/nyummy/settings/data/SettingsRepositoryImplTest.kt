@@ -1,9 +1,11 @@
 package com.dandi.nyummy.settings.data
 
+import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
+import com.dandi.nyummy.settings.entity.MyProfileChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import kotlinx.coroutines.runBlocking
@@ -18,8 +20,9 @@ import org.junit.Before
 import org.junit.Test
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.time.LocalDate
 
-/** 저장소가 서버 값(식사 시각, 알림 수신 설정)을 읽고 쓸 때 DTO 변환과 원격 호출을 이어 주는지 확인합니다. */
+/** 저장소가 서버 값(내 프로필, 식사 시각, 알림 수신 설정)을 읽고 쓸 때 DTO 변환과 원격 호출을 이어 주는지 확인합니다. */
 class SettingsRepositoryImplTest {
 
     private lateinit var server: MockWebServer
@@ -108,6 +111,30 @@ class SettingsRepositoryImplTest {
         val request = server.takeRequest()
         assertEquals("PATCH", request.method)
         assertEquals("""{"isServicePushEnabled":false}""", request.body.readUtf8())
+    }
+
+    @Test
+    fun `내 프로필은 바꾸는 항목만 PATCH 로 보내고 생년월일은 날짜로 보낸다`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(200))
+
+        repository.updateMyProfile(MyProfileChange(gender = Gender.FEMALE, birth = LocalDate.of(2001, 3, 4)))
+
+        val request = server.takeRequest()
+        assertEquals("PATCH", request.method)
+        assertEquals("/api/v1/users/me", request.path)
+        assertEquals(
+            Json.parseToJsonElement("""{"birth":"2001-03-04","gender":"FEMALE"}"""),
+            Json.parseToJsonElement(request.body.readUtf8()),
+        )
+    }
+
+    @Test
+    fun `내 프로필을 저장하지 못하면 서버 오류를 그대로 던진다`() {
+        server.enqueue(MockResponse().setResponseCode(400).setBody("""{"code":"api.common.invalidInputValue"}"""))
+
+        assertThrows(HttpResponseException::class.java) {
+            runBlocking { repository.updateMyProfile(MyProfileChange(heightCm = 163)) }
+        }
     }
 
     @Test

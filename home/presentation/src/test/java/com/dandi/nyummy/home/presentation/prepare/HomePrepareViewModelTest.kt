@@ -61,6 +61,7 @@ class HomePrepareViewModelTest {
             repository = object : CatRepository {
                 override suspend fun getAnimations(): CatAnimationSetVO = CatAnimationSetVO.empty
                 override suspend fun refreshWeight(): Boolean = prefetch()
+                override suspend fun rename(name: String) = Unit
             },
         ),
         prefetchHomeNotices = PrefetchHomeNoticesUseCase(

@@ -2,6 +2,7 @@ package com.dandi.nyummy.settings.data
 
 import com.dandi.nyummy.settings.data.dto.MealTimeRequestDTO
 import com.dandi.nyummy.settings.data.dto.PushSettingDTO
+import com.dandi.nyummy.settings.data.dto.UpdateProfileRequestDTO
 import com.dandi.nyummy.settings.data.dto.UserProfileDTO
 import retrofit2.Response
 import retrofit2.http.Body
@@ -12,9 +13,13 @@ import retrofit2.http.PUT
 
 interface SettingsApiService {
 
-    /** 내 프로필. 설정은 여기서 평소 식사 시각만 읽는다. */
+    /** 내 프로필(집사 이름·성별·생년월일·키·몸무게·평소 식사 시각). */
     @GET(USERS_ME_PATH)
     suspend fun getMyProfile(): Response<UserProfileDTO>
+
+    /** 내 프로필을 바꾼다. 담은 항목만 바뀌고 빠진 항목은 그대로다. 성공은 본문 없는 200. */
+    @PATCH(USERS_ME_PATH)
+    suspend fun updateMyProfile(@Body request: UpdateProfileRequestDTO): Response<Unit>
 
     /** 평소 식사 시각을 세 끼 한 번에 바꾼다. 빠지거나 null인 끼니는 알림을 받지 않는다. 성공은 본문 없는 200. */
     @PUT("$USERS_ME_PATH/meal-time")

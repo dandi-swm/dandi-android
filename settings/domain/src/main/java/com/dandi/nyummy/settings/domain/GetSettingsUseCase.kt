@@ -8,14 +8,14 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.message.IconType
-import com.dandi.nyummy.common.entity.meal.MealTimesVO
+import com.dandi.nyummy.settings.entity.MyProfileVO
 import com.dandi.nyummy.settings.entity.SettingsVO
 import com.dandi.nyummy.tti.TTIHelper
 import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 
 /**
- * 설정 화면 값(알림, 식사 시각)을 한 번에 읽는다.
+ * 설정 화면 값(알림, 식사 시각, 집사 이름)을 한 번에 읽는다.
  * 알림 설정을 읽지 못하면 안내하고 [Result.failure]를 돌려준다. 다시 시도는 [onRetry]로 화면에 맡긴다.
  */
 class GetSettingsUseCase @Inject constructor(
@@ -27,10 +27,13 @@ class GetSettingsUseCase @Inject constructor(
 ) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
 
     suspend operator fun invoke(onRetry: () -> Unit): Result<SettingsVO> = try {
+        val notification = repository.getNotificationSettings()
+        val profile = getProfileOrNull()
         Result.success(
             SettingsVO(
-                notification = repository.getNotificationSettings(),
-                mealTimes = getMealTimesOrNull(),
+                notification = notification,
+                mealTimes = profile?.mealTimes,
+                nickname = profile?.nickname,
             ),
         )
     } catch (e: CancellationException) {
@@ -54,11 +57,11 @@ class GetSettingsUseCase @Inject constructor(
     }
 
     /**
-     * 식사 시각은 서버에서 읽는다. 설정 화면에서는 한 줄 요약일 뿐이라, 읽지 못해도 다른 설정은 보여 주도록 null로 둔다.
+     * 내 프로필(식사 시각, 집사 이름)은 서버에서 읽는다. 설정 화면에서는 한 줄 요약일 뿐이라, 읽지 못해도 다른 설정은 보여 주도록 null로 둔다.
      * 로그인 만료만 안내한다. 화면에 돌아올 때마다 다시 읽으므로 다른 오류까지 다이얼로그로 띄우지 않는다.
      */
-    private suspend fun getMealTimesOrNull(): MealTimesVO? = try {
-        repository.getMealTimes()
+    private suspend fun getProfileOrNull(): MyProfileVO? = try {
+        repository.getMyProfile()
     } catch (e: CancellationException) {
         throw e
     } catch (e: HttpResponseException) {

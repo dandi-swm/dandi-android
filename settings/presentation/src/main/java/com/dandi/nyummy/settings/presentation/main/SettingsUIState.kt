@@ -16,6 +16,7 @@ import com.dandi.nyummy.settings.entity.NotificationSettingsVO
  * @property notificationDetail "자세히 보기" 시트로 보여 줄 알림 묶음. 닫혀 있으면 null.
  * @property isFontCreditVisible "글꼴 출처" 시트가 열려 있다.
  * @property mealTimes 평소 식사 시각. 서버에서 읽기 전이거나 한 번도 읽지 못했으면 null이고, 요약 줄을 비운다.
+ * @property nickname 집사 이름. 맨 위 마이페이지 줄의 제목이다. 읽기 전이거나 한 번도 읽지 못했으면 null이다.
  * @property isLoggingOut 로그아웃 요청 중. 다이얼로그 버튼을 막는다.
  * @property isWithdrawing 탈퇴 요청 중. 다이얼로그 버튼을 막는다.
  */
@@ -23,6 +24,7 @@ data class SettingsUIState(
     val isLoaded: Boolean = false,
     val notification: NotificationSettingsVO = NotificationSettingsVO.default,
     val mealTimes: MealTimesVO? = null,
+    val nickname: String? = null,
     val isDeviceNotificationEnabled: Boolean = true,
     val isDeviceNotificationRequested: Boolean = false,
     val isDeviceSettingsDialogVisible: Boolean = false,

@@ -1,7 +1,7 @@
 package com.dandi.nyummy.onboarding.presentation
 
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
-import com.dandi.nyummy.onboarding.domain.CatNameError
+import com.dandi.nyummy.common.entity.cat.CatNameError
 import com.dandi.nyummy.common.entity.meal.Meal
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 

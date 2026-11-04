@@ -96,6 +96,8 @@ internal class FakeCatRepository : CatRepository {
 
     override suspend fun refreshWeight(): Boolean = false
 
+    override suspend fun rename(name: String) = Unit
+
     override suspend fun getAnimations(): CatAnimationSetVO {
         error?.let { throw it }
         return CatAnimationSetVO(

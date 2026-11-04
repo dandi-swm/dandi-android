@@ -1,4 +1,4 @@
-package com.dandi.nyummy.onboarding.domain
+package com.dandi.nyummy.common.entity.cat
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -20,8 +20,8 @@ class CatNameValidatorTest {
     }
 
     @Test
-    fun `이모지는 한 글자로 센다`() {
-        assertNull(CatNameValidator.validate("냐미🐱🐱🐱🐱🐱🐱"))
-        assertEquals(CatNameError.TOO_LONG, CatNameValidator.validate("냐미🐱🐱🐱🐱🐱🐱🐱"))
+    fun `이모지는 서버와 같이 두 글자로 센다`() {
+        assertNull(CatNameValidator.validate("냐미🐱🐱🐱"))
+        assertEquals(CatNameError.TOO_LONG, CatNameValidator.validate("냐미🐱🐱🐱🐱"))
     }
 }

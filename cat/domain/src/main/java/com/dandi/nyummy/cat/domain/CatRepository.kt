@@ -14,4 +14,7 @@ interface CatRepository {
      * 조회에 실패하면 그 실패를 던진다.
      */
     suspend fun refreshWeight(): Boolean
+
+    /** 내 고양이 이름을 [name]으로 바꿔 서버에 저장한다. 이름 규칙은 [com.dandi.nyummy.common.entity.cat.CatNameValidator]를 따른다. */
+    suspend fun rename(name: String)
 }

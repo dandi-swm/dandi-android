@@ -12,4 +12,6 @@ kotlin {
 
 dependencies {
     api(project(":common:entity"))
+    // 집사 성별(Gender)과 프로필 범위는 회원가입과 같은 것을 쓴다.
+    api(project(":auth:entity"))
 }

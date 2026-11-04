@@ -14,7 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import com.dandi.nyummy.auth.entity.Gender
+import com.dandi.nyummy.auth.entity.UserProfileRange
 import com.dandi.nyummy.common.entity.time.DeviceTime
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBirthDatePicker
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyInlineNotice
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyInlineNoticeTone
@@ -123,48 +125,23 @@ internal fun SignUpProfileBottom(
     )
 }
 
-/** 생년월일은 연, 월, 일을 각각 독립된 휠 피커로 나란히 둔다(간격 8). */
+/** 생년월일은 연, 월, 일을 각각 독립된 휠 피커로 나란히 둔다(마이페이지와 같은 공용 피커). */
 @Composable
 private fun BirthWheelPickers(
     uiState: SignUpUIState,
     onIntent: (SignUpIntent) -> Unit,
 ) {
     // 화면에 들어올 때 기기 타임존 기준 올해까지로 정한다. 앱이 켜진 채 해가 바뀌어도 다음 진입부터 반영된다.
-    val birthYearRange = remember { BIRTH_YEAR_FIRST..DeviceTime.today().year }
-    val years = remember(birthYearRange) { birthYearRange.map(Int::toString).toImmutableList() }
-    val months = remember { MONTH_RANGE.map(::toTwoDigits).toImmutableList() }
-    val days = remember(uiState.birthYear, uiState.birthMonth) {
-        (1..lengthOfMonth(uiState.birthYear, uiState.birthMonth)).map(::toTwoDigits).toImmutableList()
-    }
-    Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
-        NyummyWheelPicker(
-            items = years,
-            selectedIndex = uiState.birthYear - birthYearRange.first,
-            onSelectedIndexChange = { onIntent(SignUpIntent.SelectBirthYear(birthYearRange.first + it)) },
-            unit = stringResource(R.string.auth_signup_unit_year),
-            contentDescription = stringResource(R.string.auth_signup_birth_year_description),
-            compact = true,
-            modifier = Modifier.weight(1f),
-        )
-        NyummyWheelPicker(
-            items = months,
-            selectedIndex = uiState.birthMonth - MONTH_RANGE.first,
-            onSelectedIndexChange = { onIntent(SignUpIntent.SelectBirthMonth(MONTH_RANGE.first + it)) },
-            unit = stringResource(R.string.auth_signup_unit_month),
-            contentDescription = stringResource(R.string.auth_signup_birth_month_description),
-            compact = true,
-            modifier = Modifier.weight(1f),
-        )
-        NyummyWheelPicker(
-            items = days,
-            selectedIndex = uiState.birthDayOfMonth - 1,
-            onSelectedIndexChange = { onIntent(SignUpIntent.SelectBirthDay(it + 1)) },
-            unit = stringResource(R.string.auth_signup_unit_day),
-            contentDescription = stringResource(R.string.auth_signup_birth_day_description),
-            compact = true,
-            modifier = Modifier.weight(1f),
-        )
-    }
+    val birthYearRange = remember { UserProfileRange.BIRTH_YEAR_FIRST..DeviceTime.today().year }
+    NyummyBirthDatePicker(
+        year = uiState.birthYear,
+        month = uiState.birthMonth,
+        day = uiState.birthDayOfMonth,
+        years = birthYearRange,
+        onYearChange = { onIntent(SignUpIntent.SelectBirthYear(it)) },
+        onMonthChange = { onIntent(SignUpIntent.SelectBirthMonth(it)) },
+        onDayChange = { onIntent(SignUpIntent.SelectBirthDay(it)) },
+    )
 }
 
 @Composable
@@ -178,10 +155,5 @@ private fun SectionGap() {
     Spacer(Modifier.height(NyummyTheme.spacing.s24))
 }
 
-private fun toTwoDigits(value: Int): String = "%02d".format(value)
-
-private const val BIRTH_YEAR_FIRST = 1900
-private val MONTH_RANGE = 1..12
-private val HEIGHT_RANGE = 120..220
-private val WEIGHT_RANGE = 30..150
-
+private val HEIGHT_RANGE = UserProfileRange.HEIGHT_CM
+private val WEIGHT_RANGE = UserProfileRange.WEIGHT_KG
