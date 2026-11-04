@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dandi.nyummy.common.entity.richText.RichTextVO
@@ -138,7 +139,7 @@ private fun LazyListScope.sduiComponent(
             ShopHeroBanner(banners = component.banners.toImmutableList(), onAction = { onBannerAction(index, it) })
         }
         is SduiComponentVO.SectionHeader -> item(key = "header-$index") {
-            ShopSectionHeader(header = component, onAction = onAction, modifier = gutter)
+            ShopSectionHeader(header = component, onAction = onAction, isFirst = index == 0, modifier = gutter)
         }
         is SduiComponentVO.Ranking -> itemsIndexed(component.items, key = { _, item -> "rank-$index-${item.productId}" }) { rank, item ->
             ShopRankRow(rank = rank + 1, item = item, onClick = { onItemClick(index, rank, item) }, modifier = gutter.fillMaxWidth())
@@ -165,19 +166,21 @@ private fun LazyListScope.sduiComponent(
 }
 
 /**
- * 칸 제목 줄(피그마 `v2 / Section / SectionHeader`). 위 24·아래 4 간격을 이 줄이 가진다. 오른쪽 글자는 서버 값이고,
+ * 칸 제목 줄(피그마 `v2 / Section / SectionHeader`). 위 32·아래 8 간격을 이 줄이 가진다. 오른쪽 글자는 서버 값이고,
  * 액션이 있으면 누를 수 있다("전체보기 >").
+ * [isFirst]면(배너 없이 이 줄로 시작하면, 예: 첫 구매를 마친 사람) 위 간격을 빼서 배너가 있을 때처럼 탭 아래 목록 여백만 둔다.
  */
 @Composable
 private fun ShopSectionHeader(
     header: SduiComponentVO.SectionHeader,
     onAction: (ShopActionVO) -> Unit,
+    isFirst: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = NyummyTheme.spacing.s32, bottom = NyummyTheme.spacing.s8),
+            .padding(top = if (isFirst) 0.dp else NyummyTheme.spacing.s32, bottom = NyummyTheme.spacing.s8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NyummyRichText(richText = header.title, maxLines = 1, modifier = Modifier.weight(1f))
