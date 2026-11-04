@@ -1,7 +1,7 @@
 # Remote Config 코인 충전 이벤트 (가짜 결제 A/B 테스트)
 
 결제를 붙이기 전에, 가격을 본 사람 중 돈을 내고 코인을 사려는 사람이 얼마나 되는지 두 가격대(A/B)로 잰다.
-홈 공지 "코인 충전하기" → 코인 충전 화면 → 묶음 → 충전 확인 시트 → "n원 결제하기"를 누르면 **실제 결제 없이** 이번 한 번만
+홈 공지(상점 출시) → 상점 → 탭 줄 끝 "코인 · Event" 탭 → 코인 충전 화면 → 묶음 → 충전 확인 시트 → "n원 결제하기"를 누르면 **실제 결제 없이** 이번 한 번만
 선물 코인(그룹·묶음과 상관없이 3,000, 서버가 정함)을 넣어 주고 "돈은 나가지 않았어요"라고 알린다.
 
 화면은 피그마 `v2 · 40 Shop`의 섹션 `Shop · 60 코인 충전 이벤트`(`Charge · 01~15`, 명세 메모)를 본다.
@@ -33,7 +33,7 @@ A 그룹:
     "imageUrl": "https://cdn.nyummy.co.kr/notices/2026-11-shop-open.webp",
     "title": "냐미 상점이 문을 열었어요!",
     "body": "코인을 충전하고 냐미 방을 꾸밀\n가구와 배경을 골라 보세요.",
-    "cta": "코인 충전하기"
+    "cta": "상점 둘러보기"
   }
 }
 ```
@@ -53,7 +53,7 @@ B 그룹은 `"group": "B"`만 다르다. 나머지(eventId, 공지)는 A와 똑�
 |---|---|---|
 | `eventId` | O | 회차 구분값. 분석 이벤트의 `event_id`, "다시 보지 않기", 받음 기록이 이 값으로 회차를 나눈다. 다음 회차는 새 값으로 바꾼다. |
 | `group` | O | 가격 그룹 `A` 또는 `B`. 선물 코인 받기 헤더, 모든 분석 이벤트의 `ab_group`, 사용자 속성 `coin_charge_group`에 그대로 간다. |
-| `notice` | - | 홈 공지. 없거나 `title`·`cta`가 비었으면 공지 없이 충전 화면만 있다. 다른 홈 공지가 있으면 맨 앞 장에 뜬다. |
+| `notice` | - | 홈 공지(상점 출시). 버튼은 상점(`/shop`)을 연다. 없거나 `title`·`cta`가 비었으면 공지 없이 상점의 코인 탭만 있다. 다른 홈 공지가 있으면 맨 앞 장에 뜬다. |
 | `notice.imageUrl` | - | 10:9 사진(홈 새 소식 공지와 같은 규격, [remote-config-home-notice.md](remote-config-home-notice.md)). 인트로·방 준비 화면이 미리 받는다. |
 
 ## 선물 코인 받기 API
@@ -86,7 +86,7 @@ X-Coin-Package-Variant: B
 4. **목표:** 주 측정항목은 `coin_charge_pay_click`. 함께 볼 측정항목으로 `coin_charge_view`, `coin_charge_package_click`, 유지율을 더한다.
 5. **변형:** 매개변수 `android_coin_charge_event`에 기준(Baseline) = A 그룹 JSON, 변형 B = B 그룹 JSON을 넣는다. 실험에 들지 않은 사람은
    Remote Config 기본값(비어 있음)을 받아 이벤트가 없다.
-6. **시작 전 확인:** 서버의 실제 지급(아래 "남은 일")과 상점 플래그(`android_shop_enabled`, 받은 뒤 "상점 둘러보기")를 켰는지 본다.
+6. **시작 전 확인:** 서버의 실제 지급(아래 "남은 일")과 상점 플래그(`android_shop_enabled`)를 켰는지 본다. 충전 화면은 상점의 "코인" 탭으로만 들어가므로, 꺼져 있으면 공지를 닫은 뒤 하단 상점 탭이 "준비 중"이라 코인 탭에 갈 수 없다(공지 버튼의 `/shop` 링크는 플래그와 상관없이 열린다).
 
 개발 빌드는 분석 수집이 꺼져 있어(매니페스트 `firebase_analytics_collection_enabled`) 실험 결과에 잡히지 않는다. 화면 확인은 `_debug` 키
 **기본값**에 A 또는 B JSON을 직접 넣고 한다(데이터 유형 JSON, 운영 키 기본값은 `{}`). release 빌드로 특정 그룹을 확인하려면 실험의 테스트 기기(Firebase 설치 ID)를 쓴다.
@@ -107,9 +107,10 @@ adb -s emulator-5554 shell setprop debug.firebase.analytics.app com.dandi.nyummy
 | 단계 | 이벤트 | 추가 매개변수 |
 |---|---|---|
 | 홈 공지가 떴다 | `coin_charge_notice_view` | |
-| 공지 "코인 충전하기" | `coin_charge_notice_click` | |
+| 공지 버튼(상점으로) | `coin_charge_notice_click` | |
 | 공지를 버튼 없이 닫음 | `coin_charge_notice_close` | `dont_show_again` |
-| 충전 화면에 들어옴 | `coin_charge_view` | `source`(notice·link), `claimed` |
+| 상점 "코인" 탭 누름 | `coin_charge_tab_click` | `claimed`(true면 충전 화면 대신 "준비 중인 기능이에요"만 뜸) |
+| 충전 화면에 들어옴 | `coin_charge_view` | `source`(shop_tab·link), `claimed` |
 | 묶음 누름(시트) | `coin_charge_package_click` | `package_id`(묶음 번호 1~3), 숫자 `price`·`coins` |
 | 시트를 결제 없이 닫음 | `coin_charge_sheet_close` | `package_id` |
 | **"n원 결제하기" 누름** | **`coin_charge_pay_click`** | `package_id`, 숫자 `price`·`coins` |
@@ -124,13 +125,17 @@ adb -s emulator-5554 shell setprop debug.firebase.analytics.app com.dandi.nyummy
 - **GA4 맞춤 정의 등록(관리 → 맞춤 정의):** 이벤트 범위 측정기준 `event_id`, `ab_group`, `package_id`, `source`, `claimed`, `reason`,
   `action`, `stage`, `dont_show_again`, 사용자 범위 측정기준 `coin_charge_group`, 맞춤 측정항목 `price`, `coins`. 등록하지 않으면 보고서와 탐색에서 보이지 않는다.
 - **핵심 지표:** 그룹별로 `coin_charge_view` 사용자 중 `coin_charge_pay_click` 사용자 비율. 함께 볼 것은 고른 묶음(`package_id`) 분포와
-  퍼널 탐색(notice_view → notice_click → view → package_click → pay_click, 분류 `coin_charge_group`).
+  퍼널 탐색(notice_view → notice_click → tab_click → view → package_click → pay_click, 분류 `coin_charge_group`).
+  받은 뒤의 `coin_charge_tab_click`(claimed=true)은 더 사고 싶은 사람으로 본다.
 
 ## 동작 요약
 
-- 공지는 기존 새 소식 공지 다이얼로그를 그대로 쓴다. "다시 보지 않기"는 `eventId` 단위로 숨긴다. 이미 코인을 받은 기기에는 띄우지 않는다.
-- 충전 화면 경로는 `/shop/coins/charge`(앱 링크 `https://link.nyummy.co.kr/shop/coins/charge`). 공지 버튼은 `?source=notice`를 붙여 연다.
-  링크로 바로 열면 뒤로 가기가 홈이다.
+- 공지는 기존 새 소식 공지 다이얼로그를 그대로 쓰고, 버튼은 상점을 연다. "다시 보지 않기"는 `eventId` 단위로 숨긴다. 이미 코인을 받은 기기에는 띄우지 않는다.
+- 상점 탭 줄 끝에 "코인" 탭이 생긴다(이벤트가 있는 사람, 곧 실험 대상만). 이 탭은 선택되지 않는 버튼 탭이다.
+  - 선물 코인을 받기 전: "Event" 칩이 붙고, 누르면 충전 화면(`/shop/coins/charge?source=shop_tab`)으로 간다. 들어갔다 그냥 나와도 다시 들어갈 수 있다.
+  - 받은 뒤: 칩이 사라지고, 누르면 충전 화면 대신 "준비 중인 기능이에요"만 뜬다. 상점이 보일 때마다 받았는지 다시 읽는다.
+- 충전 화면 경로는 `/shop/coins/charge`(앱 링크 `https://link.nyummy.co.kr/shop/coins/charge`). 링크로 바로 열면 뒤로 가기가 홈이다.
+  받은 뒤 화면의 "홈으로"는 화면을 닫고 홈 탭을 연다(상점에서 들어왔어도 홈으로).
 - 받음 기록은 기기(app_prefs DataStore, `coin_charge_claimed_event_ids`)에 남는다. 계정이 아니라 기기 단위다. 두 번째 지급은 서버가 막는다.
 - 받은 사람이 다시 들어오면 묶음은 그대로 보이고, 누르면 시트 없이 "결제는 아직 준비 중이에요" 안내만 뜬다.
 
