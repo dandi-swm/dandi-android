@@ -27,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -35,6 +37,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.dandi.nyummy.common.presentation.R as CommonR
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyBottomSheet
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyButtonSize
@@ -56,7 +59,6 @@ import com.dandi.nyummy.shop.presentation.R
 import com.dandi.nyummy.shop.presentation.component.ShopTopBar
 import java.text.NumberFormat
 import java.util.Locale
-import com.dandi.nyummy.common.presentation.R as CommonR
 
 /**
  * 코인 충전 화면(코인 충전 이벤트, 피그마 `v2 · 40 Shop`의 `Charge · 10~15`).
@@ -280,10 +282,12 @@ private fun CoinChargeDoneScreen(grantedCoins: Int, balance: Int, onGoShop: () -
                     style = NyummyTheme.typography.displayL,
                     textAlign = TextAlign.Center,
                 )
-                Spacer(Modifier.height(NyummyTheme.spacing.s8))
+                Spacer(Modifier.height(NyummyTheme.spacing.s12))
+                GiftCoinAmount(coins = grantedCoins)
+                Spacer(Modifier.height(NyummyTheme.spacing.s12))
                 NyummyText(
-                    text = stringResource(R.string.shop_charge_done_body, number(grantedCoins)),
-                    style = NyummyTheme.typography.bodyM,
+                    text = stringResource(R.string.shop_charge_done_body),
+                    style = NyummyTheme.typography.bodyL,
                     color = NyummyTheme.colors.content.secondary,
                     textAlign = TextAlign.Center,
                 )
@@ -291,16 +295,16 @@ private fun CoinChargeDoneScreen(grantedCoins: Int, balance: Int, onGoShop: () -
                 Row(
                     modifier = Modifier
                         .background(NyummyTheme.colors.bg.actionNeutral, RoundedCornerShape(NyummyTheme.radius.full))
-                        .padding(horizontal = NyummyTheme.spacing.s12, vertical = NyummyTheme.spacing.s8),
+                        .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s10),
                     horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s6),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     NyummyText(
                         text = stringResource(R.string.shop_charge_done_balance),
-                        style = NyummyTheme.typography.labelS,
+                        style = NyummyTheme.typography.labelM,
                         color = NyummyTheme.colors.content.tertiary,
                     )
-                    CoinAmount(value = balance, iconSize = PillCoinSize)
+                    CoinAmount(value = balance, iconSize = PillCoinSize, style = NyummyTheme.typography.numberS)
                 }
             }
         }
@@ -314,6 +318,36 @@ private fun CoinChargeDoneScreen(grantedCoins: Int, balance: Int, onGoShop: () -
             onClick = onGoHome,
             tone = NyummyTextButtonTone.Neutral,
             modifier = Modifier.padding(top = NyummyTheme.spacing.s8),
+        )
+    }
+}
+
+/**
+ * 받은 선물 코인(피그마 `Charge · 12-2`의 `Gift Amount`). 연초록 바탕에 큰 코인 아이콘과 브랜드색 "+3,000 코인"을 둬
+ * 받은 코인이 화면에서 가장 먼저 눈에 띄게 한다. 읽을 때는 한 덩어리("+3,000 코인")로 읽힌다.
+ */
+@Composable
+private fun GiftCoinAmount(coins: Int) {
+    Row(
+        modifier = Modifier
+            .background(NyummyTheme.colors.bg.brandSubtle, RoundedCornerShape(NyummyTheme.radius.full))
+            .padding(horizontal = NyummyTheme.spacing.s20, vertical = NyummyTheme.spacing.s12)
+            .semantics(mergeDescendants = true) {},
+        horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(painter = painterResource(CommonR.drawable.nyummy_asset_coin), contentDescription = null, modifier = Modifier.size(GiftCoinSize))
+        NyummyText(
+            text = stringResource(R.string.shop_charge_done_amount, number(coins)),
+            style = NyummyTheme.typography.numberXl,
+            color = NyummyTheme.colors.content.brand,
+            maxLines = 1,
+        )
+        NyummyText(
+            text = stringResource(R.string.shop_charge_coin_unit),
+            style = NyummyTheme.typography.titleS,
+            color = NyummyTheme.colors.content.brand,
+            maxLines = 1,
         )
     }
 }
@@ -353,10 +387,10 @@ private fun SheetRow(label: String, value: @Composable () -> Unit) {
 }
 
 @Composable
-private fun CoinAmount(value: Int, iconSize: Dp) {
+private fun CoinAmount(value: Int, iconSize: Dp, style: TextStyle = NyummyTheme.typography.numberXs) {
     Row(horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4), verticalAlignment = Alignment.CenterVertically) {
         Image(painter = painterResource(CommonR.drawable.nyummy_asset_coin), contentDescription = null, modifier = Modifier.size(iconSize))
-        NyummyText(text = number(value), style = NyummyTheme.typography.numberXs, maxLines = 1)
+        NyummyText(text = number(value), style = style, maxLines = 1)
     }
 }
 
@@ -382,4 +416,5 @@ private val RowArtTileSize = 64.dp
 private val SheetArtTileSize = 64.dp
 private val DoneArtTileSize = 120.dp
 private val SheetCoinSize = 18.dp
-private val PillCoinSize = 22.dp
+private val PillCoinSize = 24.dp
+private val GiftCoinSize = 32.dp

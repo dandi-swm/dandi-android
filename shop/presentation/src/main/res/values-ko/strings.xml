@@ -93,7 +93,8 @@
     <string name="shop_charge_sheet_caption">충전한 코인은 바로 내 코인에 더해져요</string>
     <string name="shop_charge_sheet_pay">%1$s원 결제하기</string>
     <string name="shop_charge_done_title">이번 한 번만 무료예요!</string>
-    <string name="shop_charge_done_body">결제는 아직 준비 중이라 돈은 나가지 않았어요.\n대신 %1$s 코인을 선물로 바로 넣어 드렸어요.</string>
+    <string name="shop_charge_done_amount">+%1$s</string>
+    <string name="shop_charge_done_body">결제는 아직 준비 중이라 돈은 나가지 않았어요.\n대신 코인을 선물로 바로 넣어 드렸어요.</string>
     <string name="shop_charge_done_balance">내 코인</string>
     <string name="shop_charge_done_go_shop">상점 둘러보기</string>
     <string name="shop_charge_done_go_home">홈으로</string>
