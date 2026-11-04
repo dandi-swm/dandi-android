@@ -98,8 +98,17 @@ sealed class AnalyticsEvent(
     )
 
     /**
-     * 코인 충전 화면이 보였다(화면에 들어올 때 한 번). [source]는 notice(홈 공지 버튼) 또는 link(그 밖의 링크)이고,
-     * [claimed]는 이미 이벤트 코인을 받은 사람인지다.
+     * 상점의 "코인 · Event" 탭을 눌렀다. [claimed]가 true면 이미 선물 코인을 받은 사람이라 충전 화면 대신
+     * "준비 중인 기능이에요"만 떴다(더 사고 싶은 사람). false면 충전 화면으로 갔다.
+     */
+    class CoinChargeTabClick(eventId: String, group: String, claimed: Boolean) : AnalyticsEvent(
+        "coin_charge_tab_click",
+        coinCharge(eventId, group) + mapOf("claimed" to claimed.toString()),
+    )
+
+    /**
+     * 코인 충전 화면이 보였다(화면에 들어올 때 한 번). [source]는 shop_tab(상점 코인 탭) 또는 link(그 밖의 링크)이고,
+     * [claimed]는 이미 선물 코인을 받은 사람인지다.
      */
     class CoinChargeView(eventId: String, group: String, source: String, claimed: Boolean) : AnalyticsEvent(
         "coin_charge_view",

@@ -28,6 +28,9 @@ class CoinChargeTracker @Inject constructor(
     fun noticeClose(event: CoinChargeEventVO, dontShowAgain: Boolean) =
         log(AnalyticsEvent.CoinChargeNoticeClose(event.eventId, event.group, dontShowAgain))
 
+    fun tabClick(event: CoinChargeEventVO, claimed: Boolean) =
+        log(AnalyticsEvent.CoinChargeTabClick(event.eventId, event.group, claimed))
+
     fun view(event: CoinChargeEventVO, source: String, claimed: Boolean) =
         log(AnalyticsEvent.CoinChargeView(event.eventId, event.group, source, claimed))
 

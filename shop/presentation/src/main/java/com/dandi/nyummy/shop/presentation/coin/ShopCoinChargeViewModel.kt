@@ -6,6 +6,7 @@ import com.dandi.nyummy.common.presentation.mvi.MviIntent
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
 import com.dandi.nyummy.common.presentation.mvi.UiState
+import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.shop.domain.ClaimCoinChargeUseCase
 import com.dandi.nyummy.shop.domain.CoinChargeClaimResult
 import com.dandi.nyummy.shop.domain.CoinChargeTracker
@@ -137,7 +138,11 @@ class ShopCoinChargeViewModel @Inject constructor(
                 navigationHelper.navigateToBack()
                 navigationHelper.navigateTo(ShopPage)
             }
-            ShopCoinChargeIntent.ClickGoHome -> leaveResult(CoinChargeTracker.Values.ACTION_HOME)
+            // 상점 코인 탭으로 들어왔으면 뒤로 가기는 상점이라, 화면을 닫은 뒤 홈 탭을 연다.
+            ShopCoinChargeIntent.ClickGoHome -> {
+                leaveResult(CoinChargeTracker.Values.ACTION_HOME)
+                navigationHelper.navigateTo(HomePage)
+            }
         }
     }
 
@@ -152,7 +157,7 @@ class ShopCoinChargeViewModel @Inject constructor(
             if (offer != null) {
                 tracker.view(
                     event = offer.event,
-                    source = if (source == ShopCoinChargeRoute.SOURCE_NOTICE) source else ShopCoinChargeRoute.SOURCE_LINK,
+                    source = if (source == ShopCoinChargeRoute.SOURCE_SHOP_TAB) source else ShopCoinChargeRoute.SOURCE_LINK,
                     claimed = offer.isClaimed,
                 )
             }
@@ -198,7 +203,7 @@ class ShopCoinChargeViewModel @Inject constructor(
         }
     }
 
-    /** 받은 뒤 화면을 떠난다. 들어온 곳(홈)으로 돌아가고, 고른 행동을 남긴다. */
+    /** 받은 뒤 화면을 닫고(들어온 곳으로 돌아감), 고른 행동을 남긴다. */
     private fun leaveResult(action: String) {
         event?.let { tracker.resultAction(it, action) }
         navigationHelper.navigateToBack()
