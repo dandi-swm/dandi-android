@@ -103,6 +103,7 @@ class HomeViewModelTest {
             messageHelper = SilentMessageHelper,
             getHomeSummary = GetHomeSummaryUseCase(
                 repository = homeRepository,
+                widgetHelper = NoOpWidgetHelper,
                 resourceHelper = FakeResourceHelper,
                 messageHelper = SilentMessageHelper,
                 navigationHelper = navigationHelper,

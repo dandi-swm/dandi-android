@@ -21,6 +21,7 @@ class SignUpUseCaseSocialTest {
         repository = repository,
         socialSignUpSession = session,
         analyticsHelper = RecordingAnalyticsHelper(),
+        widgetHelper = NoOpWidgetHelper,
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,

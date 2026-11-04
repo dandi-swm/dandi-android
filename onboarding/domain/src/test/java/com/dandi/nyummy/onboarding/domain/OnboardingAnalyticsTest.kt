@@ -14,6 +14,7 @@ class OnboardingAnalyticsTest {
     private val useCase = FinishOnboardingUseCase(
         repository = repository,
         analyticsHelper = analytics,
+        widgetHelper = NoOpWidgetHelper,
         resourceHelper = FakeResourceHelper(),
         messageHelper = RecordingMessageHelper(),
         navigationHelper = RecordingNavigationHelper(),

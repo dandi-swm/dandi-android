@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  냐미 위젯: 홈 화면 4x2.
+  상태는 앱이 남긴 값과 기기 시계로 계산하고, 바뀌는 시각에 알람으로 다시 그린다.
+  주기 갱신(1시간)은 알람이 사라졌을 때를 위한 안전망이다.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_description"
+    android:initialLayout="@layout/widget_nyummy"
+    android:previewLayout="@layout/widget_nyummy"
+    android:previewImage="@drawable/widget_nyummy_wait_b"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="3600000"
+    android:widgetCategory="home_screen" />

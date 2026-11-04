@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 위젯 루트의 모서리 깎기용 모양(보이지 않음). 냐미 그림이 모서리 밖으로 삐져나오지 않게 한다. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="24dp" />
+    <solid android:color="#00000000" />
+</shape>

@@ -654,6 +654,7 @@ class MealRecordViewModelTest {
         submitMeal = SubmitMealUseCase(
             repository = mealRepository,
             analyticsHelper = RecordingAnalyticsHelper(),
+            widgetHelper = NoOpWidgetHelper,
             resourceHelper = FakeResourceHelper(),
             messageHelper = messageHelper,
             navigationHelper = navigationHelper,

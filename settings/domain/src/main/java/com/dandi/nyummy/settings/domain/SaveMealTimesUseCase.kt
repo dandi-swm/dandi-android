@@ -5,6 +5,7 @@ import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.tti.TTIHelper
@@ -14,9 +15,11 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  * 평소 식사 시각을 서버에 저장한다. 서버는 이 시각으로 식사 알림을 보낸다.
  * 실패하면 안내하고 [Result.failure]를 돌려준다. 다시 시도는 [onRetry]로 화면에 맡긴다.
+ * 저장되면 기기 홈 화면 위젯에도 새 시각을 넘긴다.
  */
 class SaveMealTimesUseCase @Inject constructor(
     private val repository: SettingsRepository,
+    private val widgetHelper: WidgetHelper,
     resourceHelper: ResourceHelper,
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
@@ -30,7 +33,9 @@ class SaveMealTimesUseCase @Inject constructor(
             return Result.failure(IllegalArgumentException(DUPLICATE_MEAL_TIMES_MESSAGE))
         }
         return try {
-            Result.success(repository.saveMealTimes(mealTimes))
+            repository.saveMealTimes(mealTimes)
+            widgetHelper.onMealTimesSaved(mealTimes)
+            Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
         } catch (e: HttpResponseException) {

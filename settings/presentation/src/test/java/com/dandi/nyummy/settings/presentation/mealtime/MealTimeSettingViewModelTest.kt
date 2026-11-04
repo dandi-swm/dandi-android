@@ -8,6 +8,7 @@ import com.dandi.nyummy.settings.domain.SaveMealTimesUseCase
 import com.dandi.nyummy.settings.presentation.FakeResourceHelper
 import com.dandi.nyummy.settings.presentation.FakeSettingsRepository
 import com.dandi.nyummy.settings.presentation.FakeTTIHelper
+import com.dandi.nyummy.settings.presentation.NoOpWidgetHelper
 import com.dandi.nyummy.settings.presentation.RecordingMessageHelper
 import com.dandi.nyummy.settings.presentation.RecordingNavigationHelper
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +37,7 @@ class MealTimeSettingViewModelTest {
     private val viewModel by lazy {
         MealTimeSettingViewModel(
             getMealTimes = GetMealTimesUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
-            saveMealTimes = SaveMealTimesUseCase(repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
+            saveMealTimes = SaveMealTimesUseCase(repository, NoOpWidgetHelper, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
             navigationHelper = navigationHelper,
         )
     }

@@ -20,9 +20,10 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyFontFamily
  * 이 글꼴은 한글 11,172자를 모두 문자표에 올려 두고 2,350자에만 모양을 넣었다. 그래서 문자표만 보는
  * `Paint.hasGlyph`는 늘 "있다"고 답하고, 빠진 글자는 기기 글꼴로 대신 그려지지도 않아 빈칸이 된다.
  * 한글은 모양이 실제로 찍히는지로 판정하고, 영문 대소문자 말고 다른 문자는 이 글꼴에 없다고 본다.
- * 글자마다 한 번만 확인하고 기억한다. 컴포지션(메인 스레드)에서만 쓴다.
+ * 글자마다 한 번만 확인하고 기억한다. 화면(컴포지션)과 기기 홈 화면 위젯(백그라운드에서 문구를 그림)이 함께 쓰므로
+ * 판정은 한 번에 한 스레드만 한다.
  */
-internal class AccentGlyphCoverage(typeface: Typeface) {
+class AccentGlyphCoverage(typeface: Typeface) {
 
     private val paint = Paint().apply { this.typeface = typeface }
     private val bounds = Rect()
@@ -32,6 +33,7 @@ internal class AccentGlyphCoverage(typeface: Typeface) {
      * [text]의 글자를 모두 이 글꼴로 그릴 수 있는지. 글자(한글, 영문 등)만 본다.
      * 숫자와 문장 부호는 글꼴에 들어 있고, 이모지는 어느 글꼴이든 기기 글꼴로 그려지므로 보지 않는다.
      */
+    @Synchronized
     fun covers(text: CharSequence): Boolean {
         var index = 0
         while (index < text.length) {

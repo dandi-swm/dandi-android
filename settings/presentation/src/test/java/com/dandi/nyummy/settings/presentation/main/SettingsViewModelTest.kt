@@ -19,6 +19,7 @@ import com.dandi.nyummy.settings.presentation.FakeResourceHelper
 import com.dandi.nyummy.settings.presentation.FakeSettingsRepository
 import com.dandi.nyummy.settings.presentation.FakeTTIHelper
 import com.dandi.nyummy.settings.presentation.FakeTutorialHelper
+import com.dandi.nyummy.settings.presentation.NoOpWidgetHelper
 import com.dandi.nyummy.settings.presentation.RecordingMessageHelper
 import com.dandi.nyummy.settings.presentation.RecordingNavigationHelper
 import java.io.IOException
@@ -57,12 +58,13 @@ class SettingsViewModelTest {
                 navigationHelper,
                 FakeTTIHelper,
             ),
-            logout = LogoutUseCase(FakeAuthRepository, FakePushTokenHelper, FakeCompanionMemoryHelper, FakeTutorialHelper, navigationHelper),
+            logout = LogoutUseCase(FakeAuthRepository, FakePushTokenHelper, FakeCompanionMemoryHelper, FakeTutorialHelper, NoOpWidgetHelper, navigationHelper),
             withdraw = WithdrawUseCase(
                 repository,
                 FakePushTokenHelper,
                 FakeCompanionMemoryHelper,
                 FakeTutorialHelper,
+                NoOpWidgetHelper,
                 FakeResourceHelper,
                 messageHelper,
                 navigationHelper,

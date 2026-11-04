@@ -31,9 +31,12 @@ class SubmitMealUseCaseTest {
     private val messageHelper = RecordingMessageHelper()
     private val analytics = RecordingAnalyticsHelper()
 
-    private fun useCase(createMealError: Exception, issueUrlError: Exception? = null) = SubmitMealUseCase(
+    private val widgetHelper = RecordingWidgetHelper()
+
+    private fun useCase(createMealError: Exception?, issueUrlError: Exception? = null) = SubmitMealUseCase(
         repository = FakeMealRecordRepository(createMealError, issueUrlError),
         analyticsHelper = analytics,
+        widgetHelper = widgetHelper,
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = FakeNavigationHelper(),
@@ -108,6 +111,27 @@ class SubmitMealUseCaseTest {
         assertEquals("잠시 후 다시 시도해 주세요.", messageHelper.dialogs.single())
     }
 
+    @Test
+    fun `식사가 접수되면 위젯에 마지막 기록을 넘긴다`() = runBlocking {
+        val result = useCase(createMealError = null)(PHOTO_PATH, MealPhotoSource.CAMERA)
+
+        assertTrue(result.isSuccess)
+        assertEquals(listOf<WidgetCall>(WidgetCall.MealRecorded), widgetHelper.calls)
+    }
+
+    @Test
+    fun `접수하지 못했거나 결과를 모르면 위젯에 넘기지 않는다`() = runBlocking {
+        useCase(httpException(409, MealErrorType.DAILY_COUNT_EXCEEDED.type))(PHOTO_PATH, MealPhotoSource.CAMERA)
+        useCase(httpException(500))(PHOTO_PATH, MealPhotoSource.CAMERA)
+        useCase(java.io.IOException("timeout"))(PHOTO_PATH, MealPhotoSource.CAMERA)
+        useCase(
+            createMealError = null,
+            issueUrlError = httpException(409, "api.meal.dailyCountExceeded"),
+        )(PHOTO_PATH, MealPhotoSource.CAMERA)
+
+        assertTrue(widgetHelper.calls.isEmpty())
+    }
+
     /** 서버 에러 바디의 `code` 를 cause 로 담는 실제 변환(BaseRemoteDataSource)과 같은 형태로 만든다. */
     private fun httpException(code: Int, errorCode: String? = null) = HttpResponseException(
         status = HttpResponseStatus.create(code),
@@ -118,7 +142,7 @@ class SubmitMealUseCaseTest {
     )
 
     private class FakeMealRecordRepository(
-        private val createMealError: Exception,
+        private val createMealError: Exception?,
         private val issueUrlError: Exception? = null,
     ) : MealRecordRepository {
         override suspend fun readGalleryPhotoTakenAt(photoUri: String): LocalDateTime? = null
@@ -127,7 +151,8 @@ class SubmitMealUseCaseTest {
         override suspend fun issueImageUploadUrl(photoPath: String): MealImageUploadVO =
             issueUrlError?.let { throw it } ?: MealImageUploadVO()
         override suspend fun uploadImage(uploadTarget: MealImageUploadVO, photoPath: String) = Unit
-        override suspend fun createMeal(imageKey: String): CreatedMealVO = throw createMealError
+        override suspend fun createMeal(imageKey: String): CreatedMealVO =
+            createMealError?.let { throw it } ?: CreatedMealVO(mealId = 1L)
         override suspend fun createTutorialMeal() = Unit
     }
 

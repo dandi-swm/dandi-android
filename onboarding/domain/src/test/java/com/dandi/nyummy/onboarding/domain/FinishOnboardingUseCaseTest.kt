@@ -15,9 +15,11 @@ class FinishOnboardingUseCaseTest {
     private val repository = FakeOnboardingRepository()
     private val navigationHelper = RecordingNavigationHelper()
     private val messageHelper = RecordingMessageHelper()
+    private val widgetHelper = RecordingWidgetHelper()
     private val useCase = FinishOnboardingUseCase(
         repository = repository,
         analyticsHelper = RecordingAnalyticsHelper(),
+        widgetHelper = widgetHelper,
         resourceHelper = FakeResourceHelper(),
         messageHelper = messageHelper,
         navigationHelper = navigationHelper,
@@ -35,6 +37,7 @@ class FinishOnboardingUseCaseTest {
         assertEquals(1, repository.onboardingCompleteCount)
         assertEquals(listOf(HomePreparePage), navigationHelper.rootPages)
         assertTrue(messageHelper.dialogs.isEmpty())
+        assertEquals(listOf<WidgetCall>(WidgetCall.MealTimesSaved(mealTimes)), widgetHelper.calls)
     }
 
     @Test
@@ -47,6 +50,8 @@ class FinishOnboardingUseCaseTest {
         assertEquals(1, repository.onboardingCompleteCount)
         assertEquals(listOf(HomePreparePage), navigationHelper.rootPages)
         assertTrue(messageHelper.dialogs.isEmpty())
+        // 서버에는 예전 시각이 남아 있으므로 이번 입력을 위젯에 넘기지 않는다.
+        assertTrue(widgetHelper.calls.isEmpty())
     }
 
     @Test
@@ -96,5 +101,16 @@ class FinishOnboardingUseCaseTest {
         assertEquals(1, messageHelper.dialogs.size)
         assertEquals(0, repository.onboardingCompleteCount)
         assertTrue(navigationHelper.rootPages.isEmpty())
+    }
+
+    @Test
+    fun `고양이를 만들지 못하면 끼니 시각을 위젯에 넘기지 않는다`() = runBlocking {
+        useCase("냐미", MealTimesVO.default.with(Meal.DINNER, MealTimeVO(hour = 12)))
+        repository.error = httpException(400, OnboardingErrorType.INVALID_INPUT.type)
+        useCase("냐미", MealTimesVO.default)
+        repository.error = IOException("offline")
+        useCase("냐미", MealTimesVO.default)
+
+        assertTrue(widgetHelper.calls.isEmpty())
     }
 }

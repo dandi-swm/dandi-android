@@ -46,14 +46,16 @@ class LogoutUseCaseTest {
             override suspend fun isMealTutorialRequired(): Boolean = false
             override suspend fun setMealTutorialRequired(required: Boolean) = Unit
         },
+        widgetHelper = RecordingWidgetHelper(onCall = { calls += "widget:${navigationHelper.initialCount}" }),
         navigationHelper = navigationHelper,
     )
 
     @Test
-    fun `로그아웃하면 튜토리얼 진행 상태까지 지운 뒤 첫 화면으로 간다`() = runBlocking {
+    fun `로그아웃하면 튜토리얼 진행 상태와 위젯 기록까지 지운 뒤 첫 화면으로 간다`() = runBlocking {
         useCase()
 
-        assertEquals(listOf("pushToken", "companion", "tutorial"), calls)
+        // widget:0 — 위젯 기록을 지울 때는 아직 첫 화면으로 가지 않았다.
+        assertEquals(listOf("pushToken", "companion", "tutorial", "widget:0"), calls)
         assertEquals(1, navigationHelper.initialCount)
     }
 }

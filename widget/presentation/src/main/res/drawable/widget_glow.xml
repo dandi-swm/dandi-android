@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 냐미 뒤 원형 빛. 피그마 `Widget / Card`의 Glow(흰색 20% → 14% → 0%, 지름 300). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <gradient
+        android:type="radial"
+        android:gradientRadius="50%"
+        android:startColor="#33FFFFFF"
+        android:centerColor="#24FFFFFF"
+        android:endColor="#00FFFFFF" />
+</shape>

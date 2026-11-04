@@ -239,6 +239,11 @@ dependencies {
     implementation(project(":onboarding:data"))
     implementation(project(":onboarding:entity"))
 
+    implementation(project(":widget:presentation"))
+    implementation(project(":widget:domain"))
+    implementation(project(":widget:data"))
+    implementation(project(":widget:entity"))
+
     // 서버 푸시(FCM) 수신
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
