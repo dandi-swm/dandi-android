@@ -79,15 +79,29 @@ class ShopViewModelTest {
     }
 
     @Test
-    fun `링크 인자로 시작 탭과 정렬을 정하고 다시 들어와도 고른 탭을 덮지 않는다`() = runTest(testDispatcher) {
+    fun `상점이 띄운 화면에서 돌아오면 고른 탭을 덮지 않는다`() = runTest(testDispatcher) {
         val viewModel = createViewModel()
 
         viewModel.onIntent(ShopIntent.Enter(tab = "interior", sort = "POPULAR"))
         viewModel.onIntent(ShopIntent.SelectTab(ShopTab.BACKGROUND))
+        viewModel.onIntent(ShopIntent.ClickCart)
         viewModel.onIntent(ShopIntent.Enter(tab = "interior", sort = "POPULAR"))
 
         assertEquals(ShopTab.BACKGROUND, viewModel.uiState.value.selectedTab)
+        assertEquals(0, viewModel.uiState.value.conditionResetId)
         assertEquals(ShopSortRequest(ShopTab.INTERIOR, ProductSort.POPULAR, id = 1), viewModel.uiState.value.sortRequest)
+    }
+
+    @Test
+    fun `바깥에서 다시 들어오면 추천 탭으로 돌아가고 칩과 정렬을 되돌리게 한다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+
+        viewModel.onIntent(ShopIntent.Enter(tab = null, sort = null))
+        viewModel.onIntent(ShopIntent.SelectTab(ShopTab.BACKGROUND))
+        viewModel.onIntent(ShopIntent.Enter(tab = null, sort = null))
+
+        assertEquals(ShopTab.RECOMMEND, viewModel.uiState.value.selectedTab)
+        assertEquals(1, viewModel.uiState.value.conditionResetId)
     }
 
     @Test
