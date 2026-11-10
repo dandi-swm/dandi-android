@@ -7,7 +7,7 @@ import com.dandi.nyummy.shop.entity.ShopTab
 
 /** 상점 화면에서 발생하는 사용자 입력. */
 sealed interface ShopIntent : MviIntent {
-    /** 화면에 들어왔다. [tab]·[sort]는 링크·라우트 인자(`tab`·`sort`) 그대로다. 한 번만 반영한다. */
+    /** 화면에 들어왔다. [tab]·[sort]는 링크·라우트 인자(`tab`·`sort`) 그대로다. 바깥에서 다시 들어올 때마다 반영한다. */
     data class Enter(val tab: String?, val sort: String?) : ShopIntent
 
     /** 화면이 다시 보였다. 상단 바 값을 새로 읽는다. */

@@ -45,6 +45,9 @@ class ShopViewModel @Inject constructor(
 
     private var entered = false
 
+    /** 상점이 직접 띄운 화면(장바구니·코인 내역·충전·링크)으로 나갔는지. 거기서 돌아오면 보던 탭을 그대로 둔다. */
+    private var leftToChild = false
+
     /** 지금 기기의 코인 충전 이벤트. 없으면 "코인" 탭이 없다. */
     private var coinChargeOffer: CoinChargeOfferVO? = null
 
@@ -63,8 +66,8 @@ class ShopViewModel @Inject constructor(
             }
             ShopIntent.ClickCoinChargeTab -> clickCoinChargeTab()
             is ShopIntent.SelectTab -> dispatch(ShopReducerEvent.TabSelected(intent.tab))
-            ShopIntent.ClickCart -> navigationHelper.navigateTo(ShopCartPage)
-            ShopIntent.ClickCoins -> navigationHelper.navigateTo(ShopCoinHistoryPage)
+            ShopIntent.ClickCart -> openChild { navigationHelper.navigateTo(ShopCartPage) }
+            ShopIntent.ClickCoins -> openChild { navigationHelper.navigateTo(ShopCoinHistoryPage) }
             is ShopIntent.ClickAction -> handleAction(intent.action)
             is ShopIntent.ClickItem -> dispatch(ShopReducerEvent.DetailOpened(intent.item))
             ShopIntent.DismissDetail -> dispatch(ShopReducerEvent.DetailClosed)
@@ -72,15 +75,21 @@ class ShopViewModel @Inject constructor(
         }
     }
 
-    /** 라우트 인자로 처음 탭·정렬을 정한다. 화면을 다시 그려도 사용자가 고른 탭을 덮지 않게 한 번만 한다. */
+    /**
+     * 라우트 인자로 탭·정렬을 정한다(인자가 없으면 추천 탭). 하단 탭 등 바깥에서 다시 들어오면 처음 탭으로 되돌리고
+     * 인테리어·방 배경 탭의 칩·정렬도 처음으로 되돌린다. 상점이 띄운 화면에서 돌아올 때는 사용자가 고른 것을 덮지 않는다.
+     */
     private fun enter(tab: String?, sort: String?) {
-        if (entered) return
+        val returnedFromChild = leftToChild
+        leftToChild = false
+        if (entered && returnedFromChild) return
+        if (entered) dispatch(ShopReducerEvent.ConditionResetRequested)
         entered = true
         val args = buildMap {
             tab?.let { put(ShopPage.ARG_TAB, it) }
             sort?.let { put(ShopPage.ARG_SORT, it) }
         }
-        ShopTabLink.parse(NavRoute(ShopPage.PATH, args))?.let(::openTab)
+        openTab(ShopTabLink.parse(NavRoute(ShopPage.PATH, args)) ?: ShopTabLink.Target(tab = ShopTab.RECOMMEND, sort = null))
     }
 
     /**
@@ -90,7 +99,8 @@ class ShopViewModel @Inject constructor(
     private fun handleAction(action: ShopActionVO) {
         when (action) {
             is ShopActionVO.Navigate ->
-                ShopTabLink.parseLink(action.link)?.let(::openTab) ?: navigationHelper.navigateToAppLink(action.link)
+                ShopTabLink.parseLink(action.link)?.let(::openTab)
+                    ?: openChild { navigationHelper.navigateToAppLink(action.link) }
             is ShopActionVO.ShowToast -> messageHelper.showToast(action.message)
         }
     }
@@ -101,6 +111,11 @@ class ShopViewModel @Inject constructor(
         if (sort != null && target.tab != ShopTab.RECOMMEND) {
             dispatch(ShopReducerEvent.SortRequested(target.tab, sort))
         }
+    }
+
+    private inline fun openChild(navigate: () -> Unit) {
+        leftToChild = true
+        navigate()
     }
 
     private fun refreshCoinChargeTab() {
@@ -117,7 +132,7 @@ class ShopViewModel @Inject constructor(
         if (offer.isClaimed) {
             messageHelper.showToast(CommonR.string.nyummy_not_ready)
         } else {
-            navigationHelper.navigateTo(ShopCoinChargePage.fromShopTab)
+            openChild { navigationHelper.navigateTo(ShopCoinChargePage.fromShopTab) }
         }
     }
 
@@ -139,6 +154,7 @@ class ShopViewModel @Inject constructor(
         is ShopReducerEvent.SortRequested -> state.copy(
             sortRequest = ShopSortRequest(event.tab, event.sort, id = (state.sortRequest?.id ?: 0) + 1),
         )
+        ShopReducerEvent.ConditionResetRequested -> state.copy(conditionResetId = state.conditionResetId + 1)
         is ShopReducerEvent.DetailOpened -> state.copy(detailItem = event.item)
         ShopReducerEvent.DetailClosed -> state.copy(detailItem = null)
         is ShopReducerEvent.AddStarted -> state.copy(addingProductIds = (state.addingProductIds + event.productId).toPersistentSet())

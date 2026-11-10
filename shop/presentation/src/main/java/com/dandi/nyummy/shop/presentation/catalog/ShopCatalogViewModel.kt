@@ -59,6 +59,9 @@ sealed interface ShopCatalogIntent : MviIntent {
 
     /** 링크로 받은 정렬(`/shop/interior?sort=POPULAR`). 같은 요청은 한 번만 반영한다. */
     data class ApplySortRequest(val request: ShopSortRequest) : ShopCatalogIntent
+
+    /** 칩·정렬을 처음으로 되돌린다(바깥에서 상점에 다시 들어옴). 같은 [id]는 한 번만 반영한다. */
+    data class ResetConditions(val id: Int) : ShopCatalogIntent
     data object ToggleHideOwned : ShopCatalogIntent
     data object LoadMore : ShopCatalogIntent
     data object Retry : ShopCatalogIntent
@@ -95,6 +98,7 @@ class ShopCatalogViewModel @Inject constructor(
     private var generation = 0
     private var loadJob: Job? = null
     private var lastSortRequestId = 0
+    private var lastConditionResetId = 0
 
     init {
         viewModelScope.launch {
@@ -113,6 +117,7 @@ class ShopCatalogViewModel @Inject constructor(
                 changeCondition(currentState.category, intent.sort)
             }
             is ShopCatalogIntent.ApplySortRequest -> applySortRequest(intent.request)
+            is ShopCatalogIntent.ResetConditions -> resetConditions(intent.id)
             ShopCatalogIntent.ToggleHideOwned -> toggleHideOwned()
             ShopCatalogIntent.LoadMore -> loadMore()
             ShopCatalogIntent.Retry -> reload()
@@ -131,6 +136,13 @@ class ShopCatalogViewModel @Inject constructor(
         lastSortRequestId = request.id
         if (request.tab != currentState.tab) return
         changeCondition(currentState.category, request.sort, force = true)
+    }
+
+    /** 칩·정렬이 이미 처음 그대로면 받아 둔 목록을 둔다. */
+    private fun resetConditions(id: Int) {
+        if (id == lastConditionResetId) return
+        lastConditionResetId = id
+        changeCondition(category = null, sort = ProductSort.Default)
     }
 
     private fun changeCondition(category: ShopCategory?, sort: ProductSort, force: Boolean = false) {

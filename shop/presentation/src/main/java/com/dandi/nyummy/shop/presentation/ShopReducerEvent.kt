@@ -11,6 +11,9 @@ sealed interface ShopReducerEvent : ReducerEvent {
     data class SummaryChanged(val summary: ShopSummaryVO) : ShopReducerEvent
     data class TabSelected(val tab: ShopTab) : ShopReducerEvent
     data class SortRequested(val tab: ShopTab, val sort: ProductSort) : ShopReducerEvent
+
+    /** 바깥에서 상점에 다시 들어왔다. 인테리어·방 배경 탭의 칩·정렬을 처음으로 되돌리게 한다. */
+    data object ConditionResetRequested : ShopReducerEvent
     data class DetailOpened(val item: ShopItemVO) : ShopReducerEvent
     data object DetailClosed : ShopReducerEvent
     data class AddStarted(val productId: Long) : ShopReducerEvent
