@@ -93,7 +93,7 @@ class HistoryUseCasesTest {
         val result = useCase(2026, 8)
 
         val dialog = messageHelper.oneButtonDialogs.single()
-        assertEquals("로그인이 만료됐어요. 다시 로그인해 주세요.", dialog.descText)
+        assertEquals(StringResource.SESSION_EXPIRED_MESSAGE.name, dialog.descText)
         dialog.onClickButton?.invoke()
         assertEquals(1, navigationHelper.initialCount)
         assertTrue(result.isFailure)
@@ -196,7 +196,7 @@ class HistoryUseCasesTest {
 
         val result = useCase(1L)
 
-        assertEquals("잠시 문제가 생겼어요", messageHelper.oneButtonDialogs.single().titleText)
+        assertEquals(StringResource.TEMPORARY_ERROR_TITLE.name, messageHelper.oneButtonDialogs.single().titleText)
         assertTrue(result.isFailure)
     }
 
@@ -230,7 +230,7 @@ class HistoryUseCasesTest {
 
         val snackBar = messageHelper.snackBars.single()
         assertEquals(IconType.ERROR, snackBar.iconType)
-        assertEquals("다시 분석하지 못했어요", snackBar.messageText)
+        assertEquals(StringResource.HISTORY_REANALYZE_FAILED.name, snackBar.messageText)
         assertTrue(result.isFailure)
         assertFalse(result.exceptionOrNull() is OutdatedMealException)
     }
@@ -247,7 +247,7 @@ class HistoryUseCasesTest {
 
         val result = useCase(1L)
 
-        assertEquals("이미 지워진 기록이에요", messageHelper.snackBars.single().messageText)
+        assertEquals(StringResource.HISTORY_MEAL_ALREADY_DELETED.name, messageHelper.snackBars.single().messageText)
         assertTrue(messageHelper.oneButtonDialogs.isEmpty())
         assertEquals(0, navigationHelper.backCount)
         assertTrue(result.isFailure)
@@ -266,7 +266,7 @@ class HistoryUseCasesTest {
         useCase(1L)
 
         val dialog = messageHelper.oneButtonDialogs.single()
-        assertEquals("준비 중인 기능이에요.", dialog.descText)
+        assertEquals(StringResource.NOT_READY_MESSAGE.name, dialog.descText)
         dialog.onClickButton?.invoke()
         assertEquals(1, navigationHelper.backCount)
     }
@@ -300,7 +300,7 @@ class HistoryUseCasesTest {
 
         val result = useCase(1L)
 
-        assertEquals("이미 다시 분석한 기록이에요", messageHelper.snackBars.single().messageText)
+        assertEquals(StringResource.HISTORY_ALREADY_REANALYZED.name, messageHelper.snackBars.single().messageText)
         assertTrue(result.exceptionOrNull() is OutdatedMealException)
     }
 
@@ -316,7 +316,7 @@ class HistoryUseCasesTest {
 
         val result = useCase(1L)
 
-        assertEquals("이미 지워진 기록이에요", messageHelper.snackBars.single().messageText)
+        assertEquals(StringResource.HISTORY_MEAL_ALREADY_DELETED.name, messageHelper.snackBars.single().messageText)
         assertTrue(messageHelper.oneButtonDialogs.isEmpty())
         assertTrue(result.exceptionOrNull() is OutdatedMealException)
     }
@@ -350,7 +350,7 @@ class HistoryUseCasesTest {
 
         val result = useCase(7L, "김치찌개")
 
-        assertEquals("이름 수정에 실패했어요", messageHelper.snackBars.single().messageText)
+        assertEquals(StringResource.HISTORY_RENAME_FAILED.name, messageHelper.snackBars.single().messageText)
         assertTrue(result.isFailure)
     }
 
@@ -366,7 +366,7 @@ class HistoryUseCasesTest {
 
         val result = useCase(7L)
 
-        assertEquals("다시 분석하지 못했어요", messageHelper.snackBars.single().messageText)
+        assertEquals(StringResource.HISTORY_REANALYZE_FAILED.name, messageHelper.snackBars.single().messageText)
         assertTrue(result.isFailure)
     }
 
@@ -382,7 +382,7 @@ class HistoryUseCasesTest {
 
         val result = useCase(7L)
 
-        assertEquals("삭제에 실패했어요", messageHelper.snackBars.single().messageText)
+        assertEquals(StringResource.HISTORY_DELETE_FAILED.name, messageHelper.snackBars.single().messageText)
         assertTrue(result.isFailure)
     }
 
@@ -451,7 +451,7 @@ class HistoryUseCasesTest {
         useCase(1L)
 
         val dialog = messageHelper.oneButtonDialogs.single()
-        assertEquals("잠시 후 다시 시도해 주세요.", dialog.descText)
+        assertEquals(StringResource.TRY_AGAIN_LATER.name, dialog.descText)
         assertTrue("500" !in dialog.descText && "api." !in dialog.descText)
     }
 
@@ -499,7 +499,7 @@ class HistoryUseCasesTest {
         assertTrue(result.isFailure)
         val snackBar = messageHelper.snackBars.single()
         assertEquals(IconType.ERROR, snackBar.iconType)
-        assertEquals("분석이 끝난 식사만 평가할 수 있어요", snackBar.messageText)
+        assertEquals(StringResource.HISTORY_RATING_NOT_READY.name, snackBar.messageText)
     }
 
     @Test
@@ -509,7 +509,7 @@ class HistoryUseCasesTest {
         val result = useCase(7L, ratingHalfSteps = 6, reason = null, comment = "")
 
         assertTrue(result.isFailure)
-        assertEquals("평가를 보내지 못했어요. 잠시 후 다시 시도해 주세요.", messageHelper.snackBars.single().messageText)
+        assertEquals(StringResource.HISTORY_FEEDBACK_SUBMIT_FAILED.name, messageHelper.snackBars.single().messageText)
     }
 
     @Test
@@ -523,7 +523,7 @@ class HistoryUseCasesTest {
         }
 
         assertTrue(repository.feedbackRequests.isEmpty())
-        assertEquals(listOf("별점을 다시 골라 주세요", "별점을 다시 골라 주세요"), messageHelper.snackBars.map { it.messageText })
+        assertEquals(listOf(StringResource.HISTORY_INVALID_RATING.name, StringResource.HISTORY_INVALID_RATING.name), messageHelper.snackBars.map { it.messageText })
     }
 
     @Test
@@ -737,7 +737,12 @@ class HistoryUseCasesTest {
     }
 
     private class FakeResourceHelper : ResourceHelper {
-        override fun getString(resource: StringResource): String = ""
+        // 고양이 이름이 들어가는 문구는 한국어 원문으로 돌려줘 이름·조사 채우기까지 확인한다.
+        override fun getString(resource: StringResource): String = when (resource) {
+            StringResource.HISTORY_FEEDBACK_THANKS -> "고마워요! {name}(이)가 더 잘 알아볼게요"
+            StringResource.CAT_DEFAULT_NAME -> "냐미"
+            else -> resource.name
+        }
     }
 
     private class RecordingMessageHelper : MessageHelper {

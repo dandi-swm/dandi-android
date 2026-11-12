@@ -6,7 +6,7 @@ import com.dandi.nyummy.shop.domain.GetCartUseCase
 import com.dandi.nyummy.shop.domain.GetShopProductsUseCase
 import com.dandi.nyummy.shop.domain.PurchaseUseCase
 import com.dandi.nyummy.shop.domain.ShopErrorType
-import com.dandi.nyummy.shop.domain.ShopMessages
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.shop.domain.UpdateCartQuantityUseCase
 import com.dandi.nyummy.shop.domain.UpdateCartSelectionUseCase
@@ -141,7 +141,7 @@ class ShopCartViewModelTest {
         assertEquals(2, viewModel.uiState.value.items.single().quantity)
         advanceUntilIdle()
 
-        assertEquals(listOf(ShopMessages.CANNOT_ADD_MORE), messageHelper.toasts)
+        assertEquals(listOf(StringResource.SHOP_CANNOT_ADD_MORE.name), messageHelper.toasts)
         assertEquals(listOf(CartCall.Get, CartCall.Quantity(1, 2), CartCall.Get), repository.cartCalls)
         assertEquals(1, viewModel.uiState.value.items.single().quantity)
     }
@@ -324,7 +324,7 @@ class ShopCartViewModelTest {
         advanceUntilIdle()
 
         assertEquals(null, viewModel.uiState.value.detailItem)
-        assertEquals(listOf(ShopMessages.CANNOT_ADD_MORE), messageHelper.toasts)
+        assertEquals(listOf(StringResource.SHOP_CANNOT_ADD_MORE.name), messageHelper.toasts)
     }
 
     @Test

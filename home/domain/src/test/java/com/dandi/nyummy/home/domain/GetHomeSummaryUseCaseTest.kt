@@ -95,7 +95,7 @@ class GetHomeSummaryUseCaseTest {
     fun `공통 처리 대상이 아닌 오류는 스낵바로 알린다`() = runBlocking {
         val result = useCase(FakeHomeRepository { throw httpException(400) })()
 
-        assertEquals(listOf(IconType.ERROR to "홈 정보를 불러오지 못했어요"), messageHelper.snackBars)
+        assertEquals(listOf(IconType.ERROR to StringResource.HOME_LOAD_FAILED.name), messageHelper.snackBars)
         assertTrue(messageHelper.dialogs.isEmpty())
         assertTrue(result.isFailure)
     }
@@ -104,7 +104,7 @@ class GetHomeSummaryUseCaseTest {
     fun `네트워크 오류도 앱이 죽지 않고 스낵바로 알린다`() = runBlocking {
         val result = useCase(FakeHomeRepository { throw IOException("offline") })()
 
-        assertEquals(listOf(IconType.ERROR to "홈 정보를 불러오지 못했어요"), messageHelper.snackBars)
+        assertEquals(listOf(IconType.ERROR to StringResource.HOME_LOAD_FAILED.name), messageHelper.snackBars)
         assertTrue(result.isFailure)
     }
 
@@ -216,7 +216,7 @@ class GetHomeSummaryUseCaseTest {
     }
 
     private object FakeResourceHelper : ResourceHelper {
-        override fun getString(resource: StringResource): String = ""
+        override fun getString(resource: StringResource): String = resource.name
     }
 
     /** 타임라인 시작과 끝을 부른 순서대로 기록한다. */

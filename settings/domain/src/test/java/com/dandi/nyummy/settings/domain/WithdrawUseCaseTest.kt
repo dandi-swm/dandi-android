@@ -1,5 +1,6 @@
 package com.dandi.nyummy.settings.domain
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.PushTokenHelper
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
@@ -90,7 +91,7 @@ class WithdrawUseCaseTest {
         assertEquals(1, navigationHelper.initialCount)
         val snackBar = messageHelper.snackBars.single()
         assertEquals(IconType.SUCCESS, snackBar.iconType)
-        assertEquals(WithdrawUseCase.WITHDRAWN_MESSAGE, snackBar.messageText)
+        assertEquals(StringResource.SETTINGS_WITHDRAWN.name, snackBar.messageText)
     }
 
     @Test
@@ -105,7 +106,7 @@ class WithdrawUseCaseTest {
         assertEquals(0, navigationHelper.initialCount)
         val snackBar = messageHelper.snackBars.single()
         assertEquals(IconType.ERROR, snackBar.iconType)
-        assertEquals(WithdrawUseCase.WITHDRAW_FAILED_MESSAGE, snackBar.messageText)
+        assertEquals(StringResource.SETTINGS_WITHDRAW_FAILED.name, snackBar.messageText)
     }
 
     @Test
@@ -115,7 +116,7 @@ class WithdrawUseCaseTest {
         val result = useCase()
 
         assertTrue(result.isFailure)
-        assertEquals(SettingsErrorType.USER_NOT_FOUND.errorMsg, messageHelper.snackBars.single().messageText)
+        assertEquals(SettingsErrorType.USER_NOT_FOUND.errorMsg.name, messageHelper.snackBars.single().messageText)
         assertTrue(pushTokenHelper.initialCountsAtDelete.isEmpty())
     }
 

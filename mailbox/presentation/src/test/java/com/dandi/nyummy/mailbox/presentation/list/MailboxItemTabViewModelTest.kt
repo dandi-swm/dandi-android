@@ -14,6 +14,7 @@ import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
+import com.dandi.nyummy.common.presentation.helper.StringProvider
 import com.dandi.nyummy.mailbox.domain.ClaimAllMailsUseCase
 import com.dandi.nyummy.mailbox.domain.ClaimMailUseCase
 import com.dandi.nyummy.mailbox.domain.DeleteMailUseCase
@@ -27,6 +28,7 @@ import com.dandi.nyummy.mailbox.entity.RewardBoxVO
 import com.dandi.nyummy.mailbox.entity.RewardCoinVO
 import com.dandi.nyummy.mailbox.entity.RewardItemVO
 import com.dandi.nyummy.mailbox.entity.RewardVO
+import com.dandi.nyummy.mailbox.presentation.R
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TTIPage
@@ -162,7 +164,7 @@ class MailboxItemTabViewModelTest {
         viewModel.onIntent(MailboxIntent.ClaimMail(1))
         advanceUntilIdle()
 
-        assertEquals("이미 받았거나 기한이 지난 우편이에요", messageHelper.snackBars.single().messageText)
+        assertEquals(R.string.mailbox_already_gone, messageHelper.snackBars.single().messageRes)
         assertEquals(requestsBefore + 1, repository.mailRequests.size)
         assertTrue(viewModel.uiState.value.items.claimingMailIds.isEmpty())
     }
@@ -266,7 +268,7 @@ class MailboxItemTabViewModelTest {
         advanceUntilIdle()
 
         assertNull(viewModel.uiState.value.boxOpening)
-        assertEquals("이미 받았거나 기한이 지난 우편이에요", messageHelper.snackBars.single().messageText)
+        assertEquals(R.string.mailbox_already_gone, messageHelper.snackBars.single().messageRes)
         assertEquals(requestsBefore + 1, repository.mailRequests.size)
     }
 
@@ -337,7 +339,7 @@ class MailboxItemTabViewModelTest {
 
         assertEquals(listOf(2L), viewModel.uiState.value.items.mails.map { it.mailId })
         val snackBar = messageHelper.snackBars.single()
-        assertEquals("되돌리기", snackBar.callToActionText)
+        assertEquals(TestMailboxStrings.get(R.string.mailbox_undo), snackBar.callToActionText)
 
         snackBar.onClickCTA?.invoke()
         advanceUntilIdle()
@@ -444,7 +446,7 @@ class MailboxItemTabViewModelTest {
         advanceUntilIdle()
 
         assertNull(viewModel.uiState.value.boxOpening)
-        assertEquals("이미 받았거나 기한이 지난 우편이에요", messageHelper.snackBars.single().messageText)
+        assertEquals(R.string.mailbox_already_gone, messageHelper.snackBars.single().messageRes)
         assertEquals(requestsBefore + 1, repository.mailRequests.size)
         assertFalse(viewModel.uiState.value.items.mails.single().isClaimed)
     }
@@ -604,6 +606,7 @@ class MailboxItemTabViewModelTest {
             navigationHelper = navigationHelper,
             messageHelper = messageHelper,
             tutorialHelper = tutorialHelper,
+            strings = TestMailboxStrings,
             ioScope = this,
         )
     }
@@ -672,12 +675,16 @@ private fun httpException(code: Int, errorCode: String? = null): HttpResponseExc
     cause = errorCode?.let(::Throwable),
 )
 
+/** 문구 id를 그대로 드러내는 대역. 기기 언어와 상관없이 어떤 문구를 골랐는지만 본다. */
+private val TestMailboxStrings = StringProvider { id, _ -> "string:$id" }
+
 private class RecordingMessageHelper : MessageHelper {
     data class SnackBarCall(
         val iconType: IconType,
-        val messageText: String,
+        val messageText: String?,
         val callToActionText: String?,
         val onClickCTA: (() -> Unit)?,
+        val messageRes: Int? = null,
     )
 
     data class DialogCall(val descText: String, val cantIgnore: Boolean, val onClickButton: (() -> Unit)?)
@@ -702,7 +709,9 @@ private class RecordingMessageHelper : MessageHelper {
         messageRes: Int,
         callToActionText: String?,
         onClickCTA: (() -> Unit)?,
-    ) = Unit
+    ) {
+        snackBars += SnackBarCall(iconType, null, callToActionText, onClickCTA, messageRes)
+    }
 
     override fun showOneButtonDialog(
         titleText: String?,
