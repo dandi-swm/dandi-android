@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="legal_terms_title">利用規約</string>
+    <string name="legal_privacy_title">プライバシーポリシー</string>
+    <string name="legal_loading">読み込み中</string>
+    <string name="legal_error_voice">あれ、開けませんでした</string>
+    <string name="legal_error_message">インターネット接続を確認して、もう一度お試しください。</string>
+    <string name="legal_retry">もう一度試す</string>
+    <string name="legal_account_deletion_title">アカウント削除のご案内</string>
+</resources>

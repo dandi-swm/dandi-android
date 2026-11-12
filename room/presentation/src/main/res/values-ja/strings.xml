@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="my_room_title">マイルーム</string>
+    <string name="my_room_character_description">部屋にいる%1$s</string>
+    <string name="my_room_save">保存</string>
+    <string name="my_room_undo">元に戻す</string>
+    <string name="my_room_category_background">背景</string>
+    <string name="my_room_category_bed">ベッド</string>
+    <string name="my_room_category_etc">その他</string>
+    <string name="my_room_item_placed">配置中</string>
+    <string name="my_room_background_in_use">使用中</string>
+    <string name="my_room_more_in_shop">ショップでもっと探す</string>
+    <string name="my_room_empty">まだアイテムを持っていません</string>
+    <string name="my_room_go_shop">ショップを見る</string>
+    <string name="my_room_load_failed">持ち物を読み込めませんでした</string>
+    <string name="my_room_retry">再読み込み</string>
+    <string name="my_room_loading">読み込み中</string>
+    <string name="my_room_drag_hint">好きな場所に置いてください</string>
+    <string name="my_room_bring_to_front">いちばん前へ</string>
+    <string name="my_room_put_away">持ち物にしまう</string>
+    <string name="my_room_sheet_expand">持ち物を開く</string>
+    <string name="my_room_sheet_collapse">持ち物を閉じる</string>
+
+    <string name="my_room_tutorial_intro_title">ここは%1$sの部屋だよ</string>
+    <string name="my_room_tutorial_intro_body">持ち物のアイテムをタップして、部屋を飾れるよ</string>
+    <string name="my_room_tutorial_box_title">アイテムはごほうびボックスから出てくるよ</string>
+    <string name="my_room_tutorial_box_body">ごはんを記録して、ボックスを開けて集めよう</string>
+    <string name="my_room_tutorial_place_title">これを部屋に置いてみる？</string>
+    <string name="my_room_tutorial_place_body">タップすると部屋の真ん中に置かれるよ</string>
+    <string name="my_room_tutorial_save_title">自由に動かして、気に入ったら保存してね！</string>
+    <string name="my_room_tutorial_save_body">アイテムはドラッグで動かせて、2本指で大きさを変えられるよ</string>
+
+    <!-- 놓아보기: 장바구니에 담은 아이템을 사기 전에 내 방에 놓아 본다 -->
+    <string name="room_try_on_title">置いてみる</string>
+    <string name="room_try_on_header">カートのアイテム %1$s</string>
+    <string name="room_try_on_header_count">%1$d個</string>
+    <string name="room_try_on_not_saved">置いてみた様子は保存されません</string>
+    <string name="room_try_on_price_description">%1$sコイン</string>
+    <string name="room_try_on_unavailable">購入できません</string>
+    <string name="room_try_on_put_away">外す</string>
+    <string name="room_try_on_load_failed">部屋を読み込めませんでした</string>
+    <string name="room_try_on_sheet_expand">カートのアイテムを開く</string>
+    <string name="room_try_on_sheet_collapse">カートのアイテムを閉じる</string>
+
+    <!-- 마이룸 저장 안내(다이얼로그·스낵바) -->
+    <string name="my_room_save_confirm_message">飾った部屋を保存しますか？</string>
+    <string name="my_room_save_confirm_discard">保存しない</string>
+    <string name="my_room_save_confirm_save">保存する</string>
+    <string name="my_room_saved">部屋を保存しました</string>
+    <string name="my_room_save_failed">部屋を保存できませんでした。しばらくしてからもう一度お試しください。</string>
+    <string name="my_room_item_gone">持っていないアイテムがあったため、部屋を読み込み直しました</string>
+</resources>
