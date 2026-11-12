@@ -6,6 +6,7 @@ import com.dandi.nyummy.common.domain.error.registeredErrorType
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.shop.entity.AddedCartItemVO
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
@@ -29,18 +30,18 @@ class AddToCartUseCase @Inject constructor(
 
     suspend operator fun invoke(productId: Long, source: String): Result<AddedCartItemVO> = try {
         val added = repository.addToCart(productId, QUANTITY)
-        messageHelper.showToast(ShopMessages.ADDED_TO_CART)
+        messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_ADDED_TO_CART))
         tracker.addToCart(source, productId)
         Result.success(added)
     } catch (e: HttpResponseException) {
         if (e.rawCode == HTTP_NOT_FOUND && e.registeredErrorType<ShopErrorType>() == null) {
             // 코드 없는 404도 상품이 사라진 경우로 본다. 공통 처리("준비 중" 다이얼로그 뒤 뒤로 가기)로 보내지 않는다.
-            messageHelper.showToast(ShopMessages.CANNOT_ADD_MORE)
+            messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_CANNOT_ADD_MORE))
         } else {
             handleHttpError<ShopErrorType>(
                 e,
                 onDomainError = { messageHelper.showToast(rejectionMessageOf(it)) },
-                onUnknownError = { messageHelper.showToast(ShopMessages.CANNOT_ADD_MORE) },
+                onUnknownError = { messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_CANNOT_ADD_MORE)) },
             )
         }
         Result.failure(e)
@@ -48,12 +49,13 @@ class AddToCartUseCase @Inject constructor(
         throw e
     } catch (e: Exception) {
         // 네트워크 끊김 등 응답 전 실패. 담겼는지 모르니 다시 해 보라고만 알린다.
-        messageHelper.showToast(ShopMessages.ADD_FAILED)
+        messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_ADD_FAILED))
         Result.failure(e)
     }
 
-    private fun rejectionMessageOf(error: ShopErrorType): String =
-        if (error == ShopErrorType.CART_FULL) ShopMessages.CART_FULL else ShopMessages.CANNOT_ADD_MORE
+    private fun rejectionMessageOf(error: ShopErrorType): String = resourceHelper.getString(
+        if (error == ShopErrorType.CART_FULL) StringResource.SHOP_CART_FULL else StringResource.SHOP_CANNOT_ADD_MORE,
+    )
 
     private companion object {
         /** 담기는 늘 1개다. */

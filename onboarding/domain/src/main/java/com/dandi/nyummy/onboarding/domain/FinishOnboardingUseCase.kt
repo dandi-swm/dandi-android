@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
@@ -40,8 +41,8 @@ class FinishOnboardingUseCase @Inject constructor(
     suspend operator fun invoke(catName: String, mealTimes: MealTimesVO): Result<Unit> {
         // 서버가 거절하기 전에 막는다. 같은 시각이면 식사 알림이 한 끼니만 나간다.
         if (mealTimes.hasDuplicateHours) {
-            messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = DUPLICATE_MEAL_TIMES_MESSAGE)
-            return Result.failure(IllegalArgumentException(DUPLICATE_MEAL_TIMES_MESSAGE))
+            messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(StringResource.DUPLICATE_MEAL_TIMES))
+            return Result.failure(IllegalArgumentException(resourceHelper.getString(StringResource.DUPLICATE_MEAL_TIMES)))
         }
         val created = createCat(catName.trim(), mealTimes).getOrElse { return Result.failure(it) }
         if (created) widgetHelper.onMealTimesSaved(mealTimes)
@@ -66,14 +67,14 @@ class FinishOnboardingUseCase @Inject constructor(
             onDomainError = {
                 when (it) {
                     OnboardingErrorType.CAT_ALREADY_EXISTS -> alreadyExists = true
-                    OnboardingErrorType.INVALID_INPUT -> messageHelper.showOneButtonDialog(descText = it.errorMsg)
+                    OnboardingErrorType.INVALID_INPUT -> messageHelper.showOneButtonDialog(descText = resourceHelper.getString(it.errorMsg))
                 }
             },
-            onUnknownError = { messageHelper.showOneButtonDialog(descText = TEMPORARY_ERROR_MESSAGE) },
+            onUnknownError = { messageHelper.showOneButtonDialog(descText = resourceHelper.getString(StringResource.TEMPORARY_ERROR)) },
         )
         if (alreadyExists) Result.success(false) else Result.failure(e)
     } catch (e: Exception) {
-        messageHelper.showOneButtonDialog(descText = TEMPORARY_ERROR_MESSAGE)
+        messageHelper.showOneButtonDialog(descText = resourceHelper.getString(StringResource.TEMPORARY_ERROR))
         Result.failure(e)
     }
 
@@ -85,10 +86,5 @@ class FinishOnboardingUseCase @Inject constructor(
         } catch (_: Exception) {
             Unit
         }
-    }
-
-    private companion object {
-        const val DUPLICATE_MEAL_TIMES_MESSAGE = "끼니마다 다른 시각을 골라주세요."
-        const val TEMPORARY_ERROR_MESSAGE = "일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요."
     }
 }

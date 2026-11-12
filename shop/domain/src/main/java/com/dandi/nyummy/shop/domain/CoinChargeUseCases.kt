@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.domain.helper.ImagePrefetchHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.shop.entity.CoinChargeEventVO
 import com.dandi.nyummy.shop.entity.CoinChargeGrantVO
 import com.dandi.nyummy.shop.entity.CoinChargeOfferVO
@@ -107,11 +108,11 @@ class ClaimCoinChargeUseCase @Inject constructor(
                 e,
                 onDomainError = {
                     reason = CoinChargeTracker.Values.REASON_PACKAGE_NOT_FOUND
-                    messageHelper.showToast(ShopMessages.COIN_CHARGE_FAILED)
+                    messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_COIN_CHARGE_FAILED))
                 },
                 onUnknownError = {
                     reason = CoinChargeTracker.Values.REASON_INVALID_REQUEST
-                    messageHelper.showToast(ShopMessages.COIN_CHARGE_FAILED)
+                    messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_COIN_CHARGE_FAILED))
                 },
             )
             tracker.grantFailed(event, pack, reason)
@@ -120,7 +121,7 @@ class ClaimCoinChargeUseCase @Inject constructor(
             throw e
         } catch (_: Exception) {
             tracker.grantFailed(event, pack, CoinChargeTracker.Values.REASON_NETWORK_OR_UNKNOWN)
-            messageHelper.showToast(ShopMessages.COIN_CHARGE_FAILED)
+            messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_COIN_CHARGE_FAILED))
             CoinChargeClaimResult.Failed
         }
     }

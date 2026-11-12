@@ -1,6 +1,7 @@
 package com.dandi.nyummy.auth.domain
 
 import com.dandi.nyummy.common.domain.error.HttpErrorType
+import com.dandi.nyummy.common.domain.helper.StringResource
 
 /**
  * 인증 API 도메인 에러.
@@ -14,74 +15,73 @@ import com.dandi.nyummy.common.domain.error.HttpErrorType
  */
 enum class AuthErrorType(
     override val type: String,
-    override val errorMsg: String,
+    override val errorMsg: StringResource,
     override val isHandledOnDomain: Boolean = true,
 ) : HttpErrorType {
     INVALID_CREDENTIALS(
         type = "api.auth.invalidCredentials",
-        errorMsg = "올바른 이메일과 비밀번호를 입력해주세요.",
+        errorMsg = StringResource.AUTH_INVALID_CREDENTIALS,
     ),
     EMAIL_SEND_RATE_LIMITED(
         type = "api.auth.emailSendRateLimited",
-        errorMsg = "인증 코드를 보낸 지 얼마 되지 않았어요. 잠시 후 다시 보내 주세요.",
+        errorMsg = StringResource.AUTH_EMAIL_SEND_RATE_LIMITED,
     ),
     EMAIL_SEND_FAILED(
         type = "api.email.sendFailed",
-        errorMsg = "인증 메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.",
+        errorMsg = StringResource.AUTH_EMAIL_SEND_FAILED,
     ),
 
     INCORRECT_EMAIL(
         type = "api.auth.incorrectEmail",
-        errorMsg = "이 이메일로 보낸 인증 코드가 없어요. 코드를 다시 받아 주세요.",
+        errorMsg = StringResource.AUTH_INCORRECT_EMAIL,
     ),
     EMAIL_CODE_ATTEMPT_EXCEEDED(
         type = "api.auth.emailCodeAttemptExceeded",
-        errorMsg = "인증 코드를 여러 번 틀렸어요. 코드를 다시 받아 주세요.",
+        errorMsg = StringResource.AUTH_EMAIL_CODE_ATTEMPT_EXCEEDED,
     ),
     EMAIL_CODE_MISMATCH(
         type = "api.auth.emailCodeMismatch",
-        errorMsg = "인증 코드가 일치하지 않습니다.",
+        errorMsg = StringResource.AUTH_EMAIL_CODE_MISMATCH,
     ),
     EMAIL_CODE_EXPIRED(
         type = "api.auth.emailCodeExpired",
-        errorMsg = "인증 코드 유효 시간이 지났습니다. 코드를 재발송 받으세요.",
+        errorMsg = StringResource.AUTH_EMAIL_CODE_EXPIRED,
     ),
     VERIFICATION_EXPIRED(
         type = "api.auth.verificationExpired",
-        errorMsg = VERIFICATION_RESTART_MESSAGE,
+        errorMsg = StringResource.AUTH_VERIFICATION_RESTART,
     ),
 
     /** 인증 코드 확인 때 받은 challenge 토큰이 무효하다(HTTP 401). 코드를 다시 받아야 한다. */
     INVALID_EMAIL_CHALLENGE_TOKEN(
         type = "api.auth.invalidEmailChallengeToken",
-        errorMsg = "인증 요청이 올바르지 않아요. 인증 코드를 다시 받아 주세요.",
+        errorMsg = StringResource.AUTH_INVALID_EMAIL_CHALLENGE,
     ),
 
     /** 가입·비밀번호 찾기에 쓰는 인증 완료 토큰이 무효하다(HTTP 401). 이메일 인증을 처음부터 다시 해야 한다. */
     INVALID_VERIFIED_TOKEN(
         type = "api.auth.invalidVerifiedToken",
-        errorMsg = VERIFICATION_RESTART_MESSAGE,
+        errorMsg = StringResource.AUTH_VERIFICATION_RESTART,
     ),
     EMAIL_ALREADY_EXISTS(
         type = "api.auth.emailAlreadyExists",
-        errorMsg = "이미 가입된 이메일이에요. 로그인해 주세요.",
+        errorMsg = StringResource.AUTH_EMAIL_ALREADY_EXISTS,
     ),
     EMAIL_NOT_FOUND(
         type = "api.auth.emailNotFound",
-        errorMsg = "가입되지 않은 이메일이에요.",
+        errorMsg = StringResource.AUTH_EMAIL_NOT_REGISTERED,
     ),
     OAUTH_ACCOUNT_ALREADY_EXISTS(
         type = "api.auth.oauthAccountAlreadyExists",
-        errorMsg = "이미 가입된 계정이에요. 다시 로그인해주세요.",
+        errorMsg = StringResource.AUTH_ACCOUNT_ALREADY_EXISTS,
     ),
     INVALID_OAUTH_TOKEN(
         type = "api.auth.invalidOAuthToken",
-        errorMsg = "소셜 로그인에 실패했어요. 다시 시도해주세요.",
+        errorMsg = StringResource.AUTH_SOCIAL_LOGIN_FAILED,
     ),
     OAUTH_PROVIDER_UNAVAILABLE(
         type = "api.auth.oauthProviderUnavailable",
-        errorMsg = "소셜 로그인 서버에 연결할 수 없어요. 잠시 후 다시 시도해주세요.",
+        errorMsg = StringResource.AUTH_SOCIAL_SERVER_UNAVAILABLE,
     ),
 }
 
-private const val VERIFICATION_RESTART_MESSAGE = "인증이 만료됐어요. 처음부터 다시 인증해 주세요."

@@ -6,6 +6,7 @@ import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.cat.CatNameValidator
 import com.dandi.nyummy.tti.TTIHelper
@@ -43,7 +44,7 @@ class RenameCatUseCase @Inject constructor(
         } catch (e: HttpResponseException) {
             handleHttpError<CatErrorType>(
                 e,
-                onDomainError = { messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = it.errorMsg) },
+                onDomainError = { messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(it.errorMsg, CatNameValidator.MAX_LENGTH)) },
                 onUnknownError = { showRenameFailed(onRetry) },
             )
             Result.failure(e)
@@ -57,14 +58,9 @@ class RenameCatUseCase @Inject constructor(
     private fun showRenameFailed(onRetry: () -> Unit) {
         messageHelper.showSnackBar(
             iconType = IconType.ERROR,
-            messageText = RENAME_FAILED_MESSAGE,
-            callToActionText = RETRY_LABEL,
+            messageText = resourceHelper.getString(StringResource.CAT_RENAME_FAILED),
+            callToActionText = resourceHelper.getString(StringResource.RETRY),
             onClickCTA = onRetry,
         )
-    }
-
-    private companion object {
-        const val RENAME_FAILED_MESSAGE = "고양이 이름을 바꾸지 못했어요"
-        const val RETRY_LABEL = "다시 시도"
     }
 }

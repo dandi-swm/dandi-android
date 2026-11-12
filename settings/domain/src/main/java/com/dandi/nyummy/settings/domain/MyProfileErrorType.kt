@@ -1,6 +1,7 @@
 package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.domain.error.HttpErrorType
+import com.dandi.nyummy.common.domain.helper.StringResource
 
 /**
  * 마이페이지(내 프로필 조회·수정) 도메인 에러.
@@ -10,18 +11,18 @@ import com.dandi.nyummy.common.domain.error.HttpErrorType
  */
 enum class MyProfileErrorType(
     override val type: String,
-    override val errorMsg: String,
+    override val errorMsg: StringResource,
     override val isHandledOnDomain: Boolean = true,
 ) : HttpErrorType {
     /** 서버 규칙에 맞지 않는 값(400). 앱이 고를 수 있는 값만 보내므로 보통은 오지 않는다. */
     INVALID_INPUT(
         type = "api.common.invalidInputValue",
-        errorMsg = "입력한 값을 다시 확인해 주세요.",
+        errorMsg = StringResource.SETTINGS_PROFILE_INVALID_INPUT,
     ),
 
     /** 회원이 없다(404). 공통 404 안내("준비 중인 기능")가 맞지 않아 따로 둔다. */
     USER_NOT_FOUND(
         type = "api.user.notFound",
-        errorMsg = "회원 정보를 찾지 못했어요. 다시 로그인해 주세요.",
+        errorMsg = StringResource.SETTINGS_USER_NOT_FOUND,
     ),
 }

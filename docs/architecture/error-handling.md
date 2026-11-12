@@ -5,6 +5,8 @@
 - HTTP 에러를 **data가 던지고 domain이 처리**하도록 고정하면, "어디서 다이얼로그를 띄울지"가 feature마다 흔들리지 않는다.
 - 서버 에러 코드(`cause.message`)를 feature별 enum(`HttpErrorType`)으로 매핑해, 공통 처리(401/404/5xx)와 feature 고유 처리를 기계적으로 분리한다.
 - 서버가 주는 `message`와 HTTP 상태 문자열은 **디버그용**이다. 사용자에게는 앱이 정한 문구(`errorMsg`, 공통 문구)만 보여 준다.
+- 도메인은 순수 Kotlin이라 문구를 한국어로 적지 않는다. `errorMsg`와 UseCase 안내 문구는 `StringResource` enum으로 고르고 `resourceHelper.getString(...)`으로 꺼낸다. 문구 자체는 `common/presentation/src/main/res/values*/domain_messages.xml`(영어 기본·한국어·일본어)에 있고 `ResourceHelperImpl`이 enum을 리소스로 바꾼다.
+- ViewModel이 스낵바·다이얼로그에 넘길 문구는 feature 문자열 리소스에 두고 `messageRes` 오버로드나 `StringProvider`(common:presentation)로 읽는다.
 
 ## 전파 체인
 
@@ -28,7 +30,7 @@ class HttpResponseException(
     cause: Throwable? = null,         // errorBody — 서버 에러 type 문자열이 여기 담김
 ) : Exception(msg, cause)
 
-interface HttpErrorType { val type: String; val errorMsg: String; val isHandledOnDomain: Boolean }
+interface HttpErrorType { val type: String; val errorMsg: StringResource?; val isHandledOnDomain: Boolean }
 
 val HttpResponseException.serverErrorCode: String?            // 에러 바디의 code. 없으면 null
 fun HttpResponseException.isSessionExpired(): Boolean         // 401 && (code 없음 || "api.auth.unauthorized" || "api.auth.tokenExpired")
@@ -62,7 +64,7 @@ class DeleteMealUseCase @Inject constructor(
         } else {
             handleHttpError<HistoryErrorType>(
                 e,
-                onDomainError = { showError(it.errorMsg) },                       // ① 서버 code
+                onDomainError = { showError(resourceHelper.getString(it.errorMsg)) }, // ① 서버 code
                 // ② 맞는 code가 없으면 BaseUseCase가 공통 오류(401, 404, 5xx)로 안내한다.
                 onUnknownError = { showError(DELETE_ERROR_MESSAGE) },             // ③ 화면 기본 안내
             )
