@@ -12,7 +12,7 @@ import com.dandi.nyummy.shop.domain.ShopCartPage
 import com.dandi.nyummy.shop.domain.ShopCoinChargePage
 import com.dandi.nyummy.shop.domain.ShopCoinHistoryPage
 import com.dandi.nyummy.shop.domain.ShopErrorType
-import com.dandi.nyummy.shop.domain.ShopMessages
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.shop.entity.CoinChargeEventVO
 import com.dandi.nyummy.shop.entity.CoinChargeGrantVO
 import com.dandi.nyummy.shop.entity.ProductSort
@@ -188,7 +188,7 @@ class ShopViewModelTest {
 
         assertEquals(listOf(7L, 7L), repository.addRequests)
         assertTrue(viewModel.uiState.value.addingProductIds.isEmpty())
-        assertEquals(listOf(ShopMessages.ADDED_TO_CART, ShopMessages.ADDED_TO_CART), messageHelper.toasts)
+        assertEquals(listOf(StringResource.SHOP_ADDED_TO_CART.name, StringResource.SHOP_ADDED_TO_CART.name), messageHelper.toasts)
     }
 
     @Test
@@ -227,7 +227,7 @@ class ShopViewModelTest {
         advanceUntilIdle()
 
         assertNull(viewModel.uiState.value.detailItem)
-        assertEquals(listOf(ShopMessages.CANNOT_ADD_MORE), messageHelper.toasts)
+        assertEquals(listOf(StringResource.SHOP_CANNOT_ADD_MORE.name), messageHelper.toasts)
     }
 
     @Test

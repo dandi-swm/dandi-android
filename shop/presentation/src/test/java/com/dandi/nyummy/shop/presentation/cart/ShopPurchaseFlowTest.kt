@@ -1,5 +1,6 @@
 package com.dandi.nyummy.shop.presentation.cart
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.mailbox.domain.MailboxPage
 import com.dandi.nyummy.meal.domain.MealRecordPage
 import com.dandi.nyummy.shop.domain.AddToCartUseCase
@@ -175,7 +176,7 @@ class ShopPurchaseFlowTest {
         viewModel.onIntent(ShopCartIntent.ConfirmPurchase)
         advanceUntilIdle()
 
-        assertEquals(listOf("장바구니를 다시 불러와 바뀐 가격을 보여 드릴게요."), messageHelper.dialogs)
+        assertEquals(listOf(StringResource.SHOP_PRICE_CHANGED_BODY.name), messageHelper.dialogs)
         assertEquals(listOf(CartCall.Get, CartCall.Get), repository.cartCalls)
         assertNull(viewModel.uiState.value.sheet)
         assertNull(viewModel.uiState.value.completion)

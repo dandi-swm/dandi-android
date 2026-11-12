@@ -65,7 +65,7 @@ class SubmitMealUseCaseTest {
         val result = useCase(httpException(400, MealErrorType.STALE_IMAGE.type))(PHOTO_PATH, MealPhotoSource.CAMERA)
 
         assertTrue(result.isFailure)
-        assertEquals(MealErrorType.STALE_IMAGE.errorMsg, messageHelper.snackBars.single().messageText)
+        assertEquals(MealErrorType.STALE_IMAGE.errorMsg.name, messageHelper.snackBars.single().messageText)
         assertTrue(messageHelper.dialogs.isEmpty())
     }
 
@@ -73,14 +73,14 @@ class SubmitMealUseCaseTest {
     fun `S3 용량 초과 code 도 사진 문구로 안내한다`() = runBlocking {
         useCase(httpException(400, "api.s3.fileSizeExceeded"))(PHOTO_PATH, MealPhotoSource.CAMERA)
 
-        assertEquals("사진 용량이 너무 커요. 다시 찍어주세요", messageHelper.snackBars.single().messageText)
+        assertEquals(StringResource.MEAL_FILE_TOO_LARGE.name, messageHelper.snackBars.single().messageText)
     }
 
     @Test
     fun `모르는 code 의 400 은 기록 실패 문구로 안내한다`() = runBlocking {
         useCase(httpException(400, "api.s3.invalidKey"))(PHOTO_PATH, MealPhotoSource.CAMERA)
 
-        assertEquals("식사를 기록하지 못했어요. 다시 시도해주세요", messageHelper.snackBars.single().messageText)
+        assertEquals(StringResource.MEAL_SUBMIT_FAILED.name, messageHelper.snackBars.single().messageText)
     }
 
     @Test
@@ -88,7 +88,7 @@ class SubmitMealUseCaseTest {
         val result = useCase(httpException(409, "api.meal.dailyCountExceeded"))(PHOTO_PATH, MealPhotoSource.CAMERA)
 
         assertTrue(result.isFailure)
-        assertEquals("오늘은 더 기록할 수 없어요. 내일 다시 기록해주세요", messageHelper.snackBars.single().messageText)
+        assertEquals(StringResource.MEAL_DAILY_LIMIT.name, messageHelper.snackBars.single().messageText)
         assertTrue(messageHelper.dialogs.isEmpty())
     }
 
@@ -100,7 +100,7 @@ class SubmitMealUseCaseTest {
         )(PHOTO_PATH, MealPhotoSource.CAMERA)
 
         assertTrue(result.isFailure)
-        assertEquals("오늘은 더 기록할 수 없어요. 내일 다시 기록해주세요", messageHelper.snackBars.single().messageText)
+        assertEquals(StringResource.MEAL_DAILY_LIMIT.name, messageHelper.snackBars.single().messageText)
     }
 
     @Test
@@ -108,7 +108,7 @@ class SubmitMealUseCaseTest {
         useCase(httpException(500))(PHOTO_PATH, MealPhotoSource.CAMERA)
 
         assertTrue(messageHelper.snackBars.isEmpty())
-        assertEquals("잠시 후 다시 시도해 주세요.", messageHelper.dialogs.single())
+        assertEquals(StringResource.TRY_AGAIN_LATER.name, messageHelper.dialogs.single())
     }
 
     @Test

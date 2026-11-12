@@ -244,7 +244,7 @@ class MyRoomViewModelTest {
         assertEquals(20f, saved[2].y, 0.01f)
         assertEquals(RoomItemCategory.BACKGROUND, saved.first().category)
         assertEquals(1, navigationHelper.backCount)
-        assertEquals("방을 저장했어요", messageHelper.snackBars.single().messageText)
+        assertEquals(R.string.my_room_saved, messageHelper.snackBars.single().messageRes)
         assertFalse(viewModel.uiState.value.hasChanges)
     }
 
@@ -287,7 +287,7 @@ class MyRoomViewModelTest {
         viewModel.onIntent(MyRoomIntent.ClickBack)
 
         val dialog = messageHelper.twoButtonDialogs.single()
-        assertEquals("꾸민 방을 저장할까요?", dialog.descText)
+        assertEquals(TestRoomStrings.get(R.string.my_room_save_confirm_message), dialog.descText)
         assertEquals(0, navigationHelper.backCount)
         dialog.onClickLeft?.invoke()
         assertEquals(1, navigationHelper.backCount)
@@ -635,6 +635,7 @@ class MyRoomViewModelTest {
             navigationHelper = navigationHelper,
             messageHelper = messageHelper,
             tutorialHelper = tutorialHelper,
+            strings = TestRoomStrings,
         )
     }
 

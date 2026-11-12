@@ -7,7 +7,7 @@ import com.dandi.nyummy.shop.domain.ObserveShopSummaryUseCase
 import com.dandi.nyummy.shop.domain.RefreshShopSummaryUseCase
 import com.dandi.nyummy.shop.domain.ShopCartPage
 import com.dandi.nyummy.shop.domain.ShopErrorType
-import com.dandi.nyummy.shop.domain.ShopMessages
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.shop.domain.ShopPage
 import com.dandi.nyummy.shop.entity.ShopBannerVO
 import com.dandi.nyummy.shop.entity.ShopPromotionPageVO
@@ -204,7 +204,7 @@ class ShopPromotionViewModelTest {
         advanceUntilIdle()
 
         assertNull(viewModel.uiState.value.detailItem)
-        assertEquals(listOf(ShopMessages.CANNOT_ADD_MORE), messageHelper.toasts)
+        assertEquals(listOf(StringResource.SHOP_CANNOT_ADD_MORE.name), messageHelper.toasts)
     }
 
     @Test

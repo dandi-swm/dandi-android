@@ -8,6 +8,7 @@ import com.dandi.nyummy.auth.entity.SocialCredentialVO
 import com.dandi.nyummy.auth.entity.SocialLoginType
 import com.dandi.nyummy.auth.entity.SocialLoginVO
 import com.dandi.nyummy.auth.presentation.social.SocialLoginResult
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.legal.domain.LegalPage
@@ -202,7 +203,7 @@ class LoginViewModelTest {
         viewModel.onIntent(LoginIntent.SocialLoginResultReceived(viewModel.awaiting(), SocialLoginResult.Failed))
 
         assertIdle(viewModel)
-        assertEquals("카카오 로그인에 실패했어요. 다시 시도해주세요.", messageHelper.dialogs.single())
+        assertEquals(StringResource.AUTH_PROVIDER_FAILED.name, messageHelper.dialogs.single())
     }
 
     @Test
@@ -214,7 +215,7 @@ class LoginViewModelTest {
         viewModel.onIntent(LoginIntent.SocialLoginResultReceived(viewModel.awaiting(), SocialLoginResult.Unavailable))
 
         assertIdle(viewModel)
-        assertEquals(listOf("구글 로그인은 준비 중이에요."), messageHelper.toasts)
+        assertEquals(listOf(StringResource.AUTH_PROVIDER_NOT_READY.name), messageHelper.toasts)
     }
 
     private fun launchedKakao(): LoginViewModel = createViewModel().apply {

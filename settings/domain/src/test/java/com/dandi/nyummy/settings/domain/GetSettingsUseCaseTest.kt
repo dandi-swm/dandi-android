@@ -1,5 +1,6 @@
 package com.dandi.nyummy.settings.domain
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.settings.entity.MyProfileVO
@@ -89,8 +90,8 @@ class GetSettingsUseCaseTest {
 
         assertTrue(result.isFailure)
         val snackBar = messageHelper.snackBars.single()
-        assertEquals("설정을 불러오지 못했어요", snackBar.messageText)
-        assertEquals("다시 시도", snackBar.callToActionText)
+        assertEquals(StringResource.SETTINGS_LOAD_FAILED.name, snackBar.messageText)
+        assertEquals(StringResource.RETRY.name, snackBar.callToActionText)
         snackBar.onClickCTA?.invoke()
         assertEquals(1, retryCount)
     }

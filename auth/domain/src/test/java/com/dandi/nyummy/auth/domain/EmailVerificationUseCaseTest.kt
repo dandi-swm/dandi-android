@@ -1,5 +1,6 @@
 package com.dandi.nyummy.auth.domain
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -29,7 +30,7 @@ class EmailVerificationUseCaseTest {
         val result = sendCode()
 
         assertTrue(result.isFailure)
-        assertEquals("인증 메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.AUTH_EMAIL_SEND_FAILED.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -38,7 +39,7 @@ class EmailVerificationUseCaseTest {
 
         sendCode()
 
-        assertEquals("이미 가입된 이메일이에요. 로그인해 주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.AUTH_EMAIL_ALREADY_EXISTS.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -47,7 +48,7 @@ class EmailVerificationUseCaseTest {
 
         sendCode()
 
-        assertEquals("잠시 후 다시 시도해 주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.TRY_AGAIN_LATER.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -57,7 +58,7 @@ class EmailVerificationUseCaseTest {
         val result = sendCode()
 
         assertTrue(result.isFailure)
-        assertEquals("네트워크 연결을 확인한 뒤 다시 시도해주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.NETWORK_ERROR.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -68,7 +69,7 @@ class EmailVerificationUseCaseTest {
 
         val error = result.exceptionOrNull()
         assertTrue(error is CodeVerificationFailedException)
-        assertEquals(AuthErrorType.EMAIL_CODE_EXPIRED.errorMsg, error?.message)
+        assertEquals(AuthErrorType.EMAIL_CODE_EXPIRED.errorMsg.name, error?.message)
         assertTrue(messageHelper.dialogs.isEmpty())
         assertEquals(0, navigationHelper.initialCount)
     }
@@ -79,7 +80,7 @@ class EmailVerificationUseCaseTest {
 
         val result = useCase.confirmCode(authCode = "123456", emailChallengeToken = "challenge")
 
-        assertEquals("인증 코드를 여러 번 틀렸어요. 코드를 다시 받아 주세요.", result.exceptionOrNull()?.message)
+        assertEquals(StringResource.AUTH_EMAIL_CODE_ATTEMPT_EXCEEDED.name, result.exceptionOrNull()?.message)
     }
 
     @Test
@@ -91,7 +92,7 @@ class EmailVerificationUseCaseTest {
 
         val error = result.exceptionOrNull()
         assertTrue(error is CodeVerificationFailedException)
-        assertEquals("인증 요청이 올바르지 않아요. 인증 코드를 다시 받아 주세요.", error?.message)
+        assertEquals(StringResource.AUTH_INVALID_EMAIL_CHALLENGE.name, error?.message)
         assertTrue(messageHelper.dialogs.isEmpty())
         assertEquals(0, navigationHelper.initialCount)
     }
@@ -103,7 +104,7 @@ class EmailVerificationUseCaseTest {
         val result = useCase.confirmCode(authCode = "123456", emailChallengeToken = "challenge")
 
         assertTrue(result.exceptionOrNull() is CodeVerificationFailedException)
-        assertEquals("알 수 없는 오류가 발생했습니다.", result.exceptionOrNull()?.message)
+        assertEquals(StringResource.AUTH_CODE_CONFIRM_FAILED.name, result.exceptionOrNull()?.message)
         assertTrue(messageHelper.dialogs.isEmpty())
         assertEquals(0, navigationHelper.initialCount)
     }

@@ -1,5 +1,6 @@
 package com.dandi.nyummy.auth.domain
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
@@ -67,7 +68,7 @@ class SignUpUseCaseSocialTest {
 
         assertNull(session.pendingToken)
         val dialog = messageHelper.dialogs.single()
-        assertEquals("가입 유효 시간이 지났어요. 다시 로그인해주세요.", dialog.descText)
+        assertEquals(StringResource.AUTH_SOCIAL_SIGN_UP_EXPIRED.name, dialog.descText)
         dialog.onClickButton?.invoke()
         assertEquals(1, navigationHelper.initialCount)
     }
@@ -80,7 +81,7 @@ class SignUpUseCaseSocialTest {
         signUpWithSocial()
 
         assertNull(session.pendingToken)
-        assertEquals("이미 가입된 계정이에요. 다시 로그인해주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.AUTH_ACCOUNT_ALREADY_EXISTS.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -93,7 +94,7 @@ class SignUpUseCaseSocialTest {
 
         assertEquals("social-verified", session.pendingToken)
         assertEquals(
-            listOf("입력한 정보를 확인한 뒤 다시 시도해주세요.", "네트워크 연결을 확인한 뒤 다시 시도해주세요."),
+            listOf(StringResource.AUTH_INVALID_PROFILE.name, StringResource.NETWORK_ERROR.name),
             messageHelper.dialogs.map { it.descText },
         )
         assertTrue(navigationHelper.rootPages.isEmpty())
@@ -140,7 +141,7 @@ class SignUpUseCaseSocialTest {
             nickname = "단디",
         )
 
-        assertEquals("이미 가입된 이메일이에요. 로그인해주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.AUTH_EMAIL_ALREADY_EXISTS.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -151,7 +152,7 @@ class SignUpUseCaseSocialTest {
 
         assertTrue(result.exceptionOrNull() is EmailVerificationRestartRequiredException)
         val dialog = messageHelper.dialogs.single()
-        assertEquals("인증이 만료됐어요. 처음부터 다시 인증해 주세요.", dialog.descText)
+        assertEquals(StringResource.AUTH_VERIFICATION_RESTART.name, dialog.descText)
         dialog.onClickButton?.invoke()
         assertEquals(0, navigationHelper.initialCount)
     }
@@ -173,7 +174,7 @@ class SignUpUseCaseSocialTest {
         val result = signUpWithEmail()
 
         assertTrue(result.exceptionOrNull() is HttpResponseException)
-        assertEquals(AuthErrorType.EMAIL_ALREADY_EXISTS.errorMsg, messageHelper.dialogs.single().descText)
+        assertEquals(AuthErrorType.EMAIL_ALREADY_EXISTS.errorMsg.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -185,7 +186,7 @@ class SignUpUseCaseSocialTest {
 
         assertNull(session.pendingToken)
         val dialog = messageHelper.dialogs.single()
-        assertEquals("가입 유효 시간이 지났어요. 다시 로그인해주세요.", dialog.descText)
+        assertEquals(StringResource.AUTH_SOCIAL_SIGN_UP_EXPIRED.name, dialog.descText)
         dialog.onClickButton?.invoke()
         assertEquals(1, navigationHelper.initialCount)
     }

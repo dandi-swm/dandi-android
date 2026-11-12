@@ -1,5 +1,6 @@
 package com.dandi.nyummy.shop.domain
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.shop.entity.CartVO
 import com.dandi.nyummy.shop.entity.PurchaseProductVO
 import com.dandi.nyummy.shop.entity.PurchaseResultVO
@@ -87,19 +88,19 @@ class PurchaseUseCaseTest {
     @Test
     fun `막힘 이유별로 피그마 다이얼로그를 띄우고 막힘 결과를 돌려준다`() {
         val cases = listOf(
-            ShopErrorType.PRICE_CHANGED to Triple("가격이 바뀌었어요", "장바구니를 다시 불러와 바뀐 가격을 보여 드릴게요.", "장바구니 다시 보기"),
-            ShopErrorType.CART_MISMATCH to Triple("가격이 바뀌었어요", "장바구니를 다시 불러와 바뀐 가격을 보여 드릴게요.", "장바구니 다시 보기"),
-            ShopErrorType.PRODUCT_NOT_FOR_SALE to Triple("판매가 끝난 상품이 있어요", "장바구니를 다시 불러와 살 수 없는 상품을 표시해 드릴게요.", "확인"),
-            ShopErrorType.PRODUCT_NOT_FOUND to Triple("판매가 끝난 상품이 있어요", "장바구니를 다시 불러와 살 수 없는 상품을 표시해 드릴게요.", "확인"),
+            ShopErrorType.PRICE_CHANGED to Triple(StringResource.SHOP_PRICE_CHANGED_TITLE.name, StringResource.SHOP_PRICE_CHANGED_BODY.name, StringResource.SHOP_RELOAD_CART.name),
+            ShopErrorType.CART_MISMATCH to Triple(StringResource.SHOP_PRICE_CHANGED_TITLE.name, StringResource.SHOP_PRICE_CHANGED_BODY.name, StringResource.SHOP_RELOAD_CART.name),
+            ShopErrorType.PRODUCT_NOT_FOR_SALE to Triple(StringResource.SHOP_NOT_FOR_SALE_TITLE.name, StringResource.SHOP_NOT_FOR_SALE_BODY.name, StringResource.CONFIRM.name),
+            ShopErrorType.PRODUCT_NOT_FOUND to Triple(StringResource.SHOP_NOT_FOR_SALE_TITLE.name, StringResource.SHOP_NOT_FOR_SALE_BODY.name, StringResource.CONFIRM.name),
             ShopErrorType.ALREADY_OWNED to Triple(
-                "이미 가진 방 배경이에요",
-                "방 배경은 하나만 가질 수 있어요. 장바구니를 다시 불러와 표시해 드릴게요.",
-                "확인",
+                StringResource.SHOP_ALREADY_OWNED_TITLE.name,
+                StringResource.SHOP_ALREADY_OWNED_BODY.name,
+                StringResource.CONFIRM.name,
             ),
             ShopErrorType.PURCHASE_LIMIT_EXCEEDED to Triple(
-                "구매 한도를 넘은 상품이 있어요",
-                "한 사람이 살 수 있는 개수가 정해진 상품이에요. 장바구니를 다시 불러와 보여 드릴게요.",
-                "장바구니 다시 보기",
+                StringResource.SHOP_PURCHASE_LIMIT_TITLE.name,
+                StringResource.SHOP_PURCHASE_LIMIT_BODY.name,
+                StringResource.SHOP_RELOAD_CART.name,
             ),
         )
         for ((error, dialog) in cases) {
@@ -162,7 +163,7 @@ class PurchaseUseCaseTest {
             )
 
             assertEquals(PurchaseOutcome.Unknown, runBlocking { useCase(products) })
-            assertEquals("잠시 문제가 생겼어요", messages.dialogs.single().titleText)
+            assertEquals(StringResource.TEMPORARY_ERROR_TITLE.name, messages.dialogs.single().titleText)
         }
     }
 
@@ -180,7 +181,7 @@ class PurchaseUseCaseTest {
         val result = updateQuantity(1L, 11)
 
         assertTrue(result.isFailure)
-        assertEquals(listOf(ShopMessages.CANNOT_ADD_MORE), messageHelper.toasts)
+        assertEquals(listOf(StringResource.SHOP_CANNOT_ADD_MORE.name), messageHelper.toasts)
     }
 
     @Test

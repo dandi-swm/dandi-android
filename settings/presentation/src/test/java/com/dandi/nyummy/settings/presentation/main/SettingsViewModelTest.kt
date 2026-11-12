@@ -1,9 +1,11 @@
 package com.dandi.nyummy.settings.presentation.main
 
 import com.dandi.nyummy.auth.domain.LogoutUseCase
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.common.entity.time.DeviceTime
+import com.dandi.nyummy.common.presentation.helper.StringProvider
 import com.dandi.nyummy.legal.domain.LegalPage
 import com.dandi.nyummy.legal.entity.LegalDocument
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
@@ -22,8 +24,10 @@ import com.dandi.nyummy.settings.presentation.FakeSettingsRepository
 import com.dandi.nyummy.settings.presentation.FakeTTIHelper
 import com.dandi.nyummy.settings.presentation.FakeTutorialHelper
 import com.dandi.nyummy.settings.presentation.NoOpWidgetHelper
+import com.dandi.nyummy.settings.presentation.R
 import com.dandi.nyummy.settings.presentation.RecordingMessageHelper
 import com.dandi.nyummy.settings.presentation.RecordingNavigationHelper
+import com.dandi.nyummy.settings.presentation.resText
 import java.io.IOException
 import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
@@ -74,6 +78,7 @@ class SettingsViewModelTest {
             ),
             navigationHelper = navigationHelper,
             messageHelper = messageHelper,
+            strings = TestStrings,
         )
     }
 
@@ -294,7 +299,7 @@ class SettingsViewModelTest {
         marketingSave.complete(Unit)
         advanceUntilIdle()
         assertEquals(NotificationSettingsVO(isServiceEnabled = true, isMarketingEnabled = true), state.notification)
-        val retry = messageHelper.snackBars.single { it.messageText == "설정을 저장하지 못했어요" }
+        val retry = messageHelper.snackBars.single { it.messageText == resText(R.string.settings_save_failed) }
         retry.onClickCTA?.invoke()
         advanceUntilIdle()
         assertEquals(NotificationSettingsVO(isServiceEnabled = false, isMarketingEnabled = true), state.notification)
@@ -318,7 +323,7 @@ class SettingsViewModelTest {
         assertFalse(state.isLoaded)
 
         repository.getNotificationSettingsError = null
-        messageHelper.snackBars.single { it.messageText == "설정을 불러오지 못했어요" }.onClickCTA?.invoke()
+        messageHelper.snackBars.single { it.messageText == StringResource.SETTINGS_LOAD_FAILED.name }.onClickCTA?.invoke()
         advanceUntilIdle()
 
         assertTrue(state.isLoaded)
@@ -362,7 +367,7 @@ class SettingsViewModelTest {
 
         assertFalse(state.isWithdrawing)
         assertFalse(state.isWithdrawDialogVisible)
-        assertEquals(WithdrawUseCase.WITHDRAW_FAILED_MESSAGE, messageHelper.snackBars.single().messageText)
+        assertEquals(StringResource.SETTINGS_WITHDRAW_FAILED.name, messageHelper.snackBars.single().messageText)
     }
 
     @Test
@@ -449,5 +454,15 @@ class SettingsViewModelTest {
         viewModel.onIntent(SettingsIntent.ClickLegal(LegalDocument.PRIVACY))
 
         assertEquals(listOf(LegalPage(LegalDocument.TERMS), LegalPage(LegalDocument.PRIVACY)), navigationHelper.pages)
+    }
+}
+
+/** 날짜 형식과 마케팅 동의 문구는 한국어 원문으로 돌려줘 문장 조립까지 확인한다. */
+private val TestStrings = StringProvider { id, args ->
+    when (id) {
+        R.string.settings_consent_date_pattern -> "yyyy년 M월 d일"
+        R.string.settings_marketing_agreed -> "%1${'$'}s 마케팅 알림 수신에 동의했어요".format(*args)
+        R.string.settings_marketing_withdrawn -> "%1${'$'}s 마케팅 알림 수신 동의를 철회했어요".format(*args)
+        else -> "string:$id"
     }
 }

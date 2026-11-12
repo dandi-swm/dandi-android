@@ -1,5 +1,6 @@
 package com.dandi.nyummy.shop.domain
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.shop.entity.CoinChargeEventVO
@@ -112,7 +113,7 @@ class CoinChargeUseCasesTest {
         repository.claimError = httpException(404, ShopErrorType.COIN_PACKAGE_NOT_FOUND.type)
 
         assertEquals(CoinChargeClaimResult.Failed, claim()(event, pack))
-        assertEquals(listOf(ShopMessages.COIN_CHARGE_FAILED), messageHelper.toasts)
+        assertEquals(listOf(StringResource.SHOP_COIN_CHARGE_FAILED.name), messageHelper.toasts)
         assertTrue(messageHelper.dialogs.isEmpty())
         assertTrue(repository.claimed.isEmpty())
         assertEquals("package_not_found", analytics.events.single().params["reason"])
@@ -123,7 +124,7 @@ class CoinChargeUseCasesTest {
         repository.claimError = httpException(400, "api.common.invalidInputValue")
 
         assertEquals(CoinChargeClaimResult.Failed, claim()(event, pack))
-        assertEquals(listOf(ShopMessages.COIN_CHARGE_FAILED), messageHelper.toasts)
+        assertEquals(listOf(StringResource.SHOP_COIN_CHARGE_FAILED.name), messageHelper.toasts)
         assertEquals("invalid_request", analytics.events.single().params["reason"])
     }
 
@@ -132,7 +133,7 @@ class CoinChargeUseCasesTest {
         repository.claimError = java.io.IOException("offline")
 
         assertEquals(CoinChargeClaimResult.Failed, claim()(event, pack))
-        assertEquals(listOf(ShopMessages.COIN_CHARGE_FAILED), messageHelper.toasts)
+        assertEquals(listOf(StringResource.SHOP_COIN_CHARGE_FAILED.name), messageHelper.toasts)
         assertTrue(repository.claimed.isEmpty())
         assertEquals("network_or_unknown", analytics.events.single().params["reason"])
     }

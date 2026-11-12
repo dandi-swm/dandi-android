@@ -1,5 +1,6 @@
 package com.dandi.nyummy.shop.domain
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.shop.entity.AddedCartItemVO
 import com.dandi.nyummy.shop.entity.ProductSort
 import com.dandi.nyummy.shop.entity.ShopCategory
@@ -30,7 +31,7 @@ class ShopBrowseUseCasesTest {
 
         assertEquals(listOf(7L to 1), repository.addRequests)
         assertEquals(AddedCartItemVO(productId = 7L, quantity = 2, cartItemCount = 3), result.getOrNull())
-        assertEquals(listOf(ShopMessages.ADDED_TO_CART), messageHelper.toasts)
+        assertEquals(listOf(StringResource.SHOP_ADDED_TO_CART.name), messageHelper.toasts)
     }
 
     @Test
@@ -40,7 +41,7 @@ class ShopBrowseUseCasesTest {
         val result = addToCart(7L, ShopTracker.Source.of(ShopTab.RECOMMEND))
 
         assertTrue(result.isFailure)
-        assertEquals(listOf(ShopMessages.CART_FULL), messageHelper.toasts)
+        assertEquals(listOf(StringResource.SHOP_CART_FULL.name), messageHelper.toasts)
     }
 
     @Test
@@ -65,7 +66,7 @@ class ShopBrowseUseCasesTest {
 
             runBlocking { useCase(7L, ShopTracker.Source.of(ShopTab.RECOMMEND)) }
 
-            assertEquals("$error", listOf(ShopMessages.CANNOT_ADD_MORE), messages.toasts)
+            assertEquals("$error", listOf(StringResource.SHOP_CANNOT_ADD_MORE.name), messages.toasts)
             assertTrue("$error", messages.dialogs.isEmpty())
         }
     }
@@ -76,7 +77,7 @@ class ShopBrowseUseCasesTest {
 
         addToCart(7L, ShopTracker.Source.of(ShopTab.RECOMMEND))
 
-        assertEquals(listOf(ShopMessages.CANNOT_ADD_MORE), messageHelper.toasts)
+        assertEquals(listOf(StringResource.SHOP_CANNOT_ADD_MORE.name), messageHelper.toasts)
     }
 
     @Test
@@ -85,7 +86,7 @@ class ShopBrowseUseCasesTest {
 
         addToCart(7L, ShopTracker.Source.of(ShopTab.RECOMMEND))
 
-        assertEquals(listOf(ShopMessages.CANNOT_ADD_MORE), messageHelper.toasts)
+        assertEquals(listOf(StringResource.SHOP_CANNOT_ADD_MORE.name), messageHelper.toasts)
         assertTrue(messageHelper.dialogs.isEmpty())
     }
 
@@ -96,7 +97,7 @@ class ShopBrowseUseCasesTest {
         val result = addToCart(7L, ShopTracker.Source.of(ShopTab.RECOMMEND))
 
         assertTrue(result.isFailure)
-        assertEquals(listOf(ShopMessages.ADD_FAILED), messageHelper.toasts)
+        assertEquals(listOf(StringResource.SHOP_ADD_FAILED.name), messageHelper.toasts)
     }
 
     @Test

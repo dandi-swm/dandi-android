@@ -1,5 +1,6 @@
 package com.dandi.nyummy.settings.domain
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import kotlinx.coroutines.runBlocking
@@ -44,8 +45,8 @@ class GetMealTimesUseCaseTest {
 
         assertTrue(result.isFailure)
         val snackBar = messageHelper.snackBars.single()
-        assertEquals("식사 시간을 불러오지 못했어요", snackBar.messageText)
-        assertEquals("다시 시도", snackBar.callToActionText)
+        assertEquals(StringResource.SETTINGS_MEAL_TIMES_LOAD_FAILED.name, snackBar.messageText)
+        assertEquals(StringResource.RETRY.name, snackBar.callToActionText)
         snackBar.onClickCTA?.invoke()
         assertEquals(1, retryCount)
     }
@@ -58,7 +59,7 @@ class GetMealTimesUseCaseTest {
 
         assertTrue(result.isFailure)
         val snackBar = messageHelper.snackBars.single()
-        assertEquals("회원 정보를 찾지 못했어요. 다시 로그인해 주세요.", snackBar.messageText)
+        assertEquals(StringResource.SETTINGS_USER_NOT_FOUND.name, snackBar.messageText)
         assertNull(snackBar.callToActionText)
         assertTrue(messageHelper.dialogs.isEmpty())
         assertEquals(0, navigationHelper.backCount)

@@ -98,6 +98,7 @@ class SignUpStepAnalyticsTest {
             FakeTTIHelper,
         ),
         messageHelper = messageHelper,
+        strings = { id, _ -> "string:$id" },
         navigationHelper = navigationHelper,
         analyticsHelper = analytics,
     )
