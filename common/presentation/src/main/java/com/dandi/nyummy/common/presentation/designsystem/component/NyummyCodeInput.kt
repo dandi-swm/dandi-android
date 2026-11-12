@@ -19,12 +19,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpSize
+import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.foundation.NyummyComponentDimens
 import com.dandi.nyummy.common.presentation.designsystem.foundation.rememberNyummyInteractionSource
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -45,8 +47,9 @@ fun NyummyCodeInput(
     isError: Boolean = false,
     errorMessage: String? = null,
     enabled: Boolean = true,
-    contentDescription: String = DefaultContentDescription,
+    contentDescription: String = stringResource(R.string.nyummy_code_input_description),
 ) {
+    val defaultErrorDescription = stringResource(R.string.nyummy_code_input_error_description)
     val interactionSource = rememberNyummyInteractionSource()
     val focused by interactionSource.collectIsFocusedAsState()
 
@@ -55,7 +58,7 @@ fun NyummyCodeInput(
         onValueChange = { input -> onValueChange(input.filter(Char::isDigit).take(length)) },
         modifier = modifier.semantics {
             this.contentDescription = contentDescription
-            if (isError) error(errorMessage ?: DefaultErrorDescription)
+            if (isError) error(errorMessage ?: defaultErrorDescription)
         },
         enabled = enabled,
         singleLine = true,
@@ -116,8 +119,6 @@ private fun CodeCell(digit: Char?, active: Boolean, isError: Boolean, enabled: B
 }
 
 private const val DefaultCodeLength = 6
-private const val DefaultContentDescription = "인증 코드 입력"
-private const val DefaultErrorDescription = "인증 코드를 다시 확인해 주세요"
 
 @Preview(showBackground = true, widthDp = 390)
 @Composable

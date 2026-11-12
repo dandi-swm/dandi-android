@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mailbox_title">우편함</string>
+
+    <string name="mailbox_item_claim">받기</string>
+    <string name="mailbox_item_open">열기</string>
+    <string name="mailbox_item_claimed">이미 받았어요</string>
+    <string name="mailbox_item_remaining_days">%1$d일 남았어요</string>
+    <string name="mailbox_item_retention_notice">아이템은 도착하고 30일 동안 보관돼요</string>
+    <string name="mailbox_item_claim_all">보상 모두 받기</string>
+    <string name="mailbox_item_empty_title">도착한 아이템이 없어요</string>
+    <string name="mailbox_item_empty_body">보상이나 답장이 오면 여기로 와요</string>
+
+    <string name="mailbox_box_open_title">보상을 받았어요!</string>
+    <string name="mailbox_box_open_continue">계속하기</string>
+    <string name="mailbox_box_content_description">보상 상자</string>
+    <string name="mailbox_box_reward_coin">+%1$,d</string>
+    <string name="mailbox_box_reward_item_count">%1$s %2$d개</string>
+    <string name="mailbox_box_reward_more_count">+%1$d</string>
+    <string name="mailbox_box_reward_more">더 받았어요</string>
+
+    <string name="mailbox_tutorial_open_title">열기를 눌러 볼까?</string>
+    <string name="mailbox_tutorial_open_body">상자 안에 뭐가 들었을까</string>
+    <string name="mailbox_tutorial_intro_title">여긴 우편함이야</string>
+    <string name="mailbox_tutorial_intro_body">보상은 여기서 30일 동안 집사를 기다려</string>
+    <string name="mailbox_tutorial_back_title">보상을 받았어!</string>
+    <string name="mailbox_tutorial_back_body">이제 뒤로 가서 마이룸을 꾸며 보자</string>
+
+    <!-- 스낵바 -->
+    <string name="mailbox_already_gone">이미 받았거나 기한이 지난 우편이에요</string>
+    <string name="mailbox_claim_failed">보상을 받지 못했어요. 잠시 후 다시 시도해 주세요.</string>
+    <string name="mailbox_deleted">우편을 지웠어요</string>
+    <string name="mailbox_undo">되돌리기</string>
+    <string name="mailbox_delete_failed">우편을 지우지 못했어요. 잠시 후 다시 시도해 주세요.</string>
+    <string name="mailbox_restore_failed">우편을 되돌리지 못했어요. 잠시 후 다시 시도해 주세요.</string>
+</resources>

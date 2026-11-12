@@ -32,6 +32,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.settings.entity.InquiryCategory
 import com.dandi.nyummy.settings.presentation.R
+import com.dandi.nyummy.settings.presentation.inquiry.inquiryDetailTimeLabel
 import com.dandi.nyummy.settings.presentation.inquiry.labelRes
 
 /**
@@ -96,7 +97,7 @@ private fun MyInquiry(inquiry: InquiryDetailUiModel) {
     Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
         MetaRow(
             label = stringResource(inquiry.category.labelRes),
-            time = inquiry.createdAtLabel,
+            time = inquiryDetailTimeLabel(inquiry.createdAtMillis),
             isLabelEmphasized = false,
         )
         if (inquiry.title.isNotBlank()) {
@@ -144,7 +145,7 @@ private fun ReplyCard(answer: InquiryAnswerUiModel?) {
         if (answer != null) {
             MetaRow(
                 label = stringResource(R.string.inquiry_detail_reply_from),
-                time = answer.answeredAtLabel,
+                time = inquiryDetailTimeLabel(answer.answeredAtMillis),
                 isLabelEmphasized = true,
             )
             NyummyText(
@@ -203,10 +204,10 @@ private fun InquiryDetailAnsweredPreview() {
                     title = "사진을 찍은 뒤 기록이 사라졌어요",
                     content = "사진을 찍은 뒤 기록이 사라졌어요. 다시 찍어도 같은 문제가 있어요.",
                     imageUrl = null,
-                    createdAtLabel = "10월 4일 오후 9:12",
+                    createdAtMillis = 1_791_115_920_000L,
                     answer = InquiryAnswerUiModel(
                         content = "안녕하세요, 냐미 팀이에요.\n\n사진을 찍은 뒤 기록이 사라지는 문제를 확인했어요.\n\n알려 줘서 정말 고마워요.",
-                        answeredAtLabel = "10월 5일 오후 12:42",
+                        answeredAtMillis = 1_791_171_720_000L,
                     ),
                 ),
             ),
@@ -226,7 +227,7 @@ private fun InquiryDetailWaitingPreview() {
                     title = "히스토리에서 사진을 크게 보고 싶어요",
                     content = "히스토리에서 사진을 크게 보고 싶어요. 식사 사진을 눌렀을 때 화면 가득 보여 주면 좋겠어요.",
                     imageUrl = null,
-                    createdAtLabel = "9월 28일 오후 7:05",
+                    createdAtMillis = 1_790_589_900_000L,
                     answer = null,
                 ),
             ),

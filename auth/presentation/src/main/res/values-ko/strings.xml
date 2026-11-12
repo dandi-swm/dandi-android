@@ -70,4 +70,9 @@
     <string name="auth_password_reset_done_title">임시 비밀번호를 보냈어요</string>
     <string name="auth_password_reset_done_subtitle">%1$s(으)로 보낸 임시 비밀번호로 로그인해 주세요.</string>
     <string name="auth_password_reset_done_cta">로그인하기</string>
+    <!-- 인증 코드 다시 보내기 확인 다이얼로그 (MessageHelper가 리소스 ID를 받게 되면 ViewModel에서 연결) -->
+    <string name="auth_signup_resend_confirm_message">인증 코드를 다시 전송하시겠습니까?</string>
+    <string name="auth_password_reset_resend_confirm_message">인증 코드를 다시 보낼까요?</string>
+    <string name="auth_resend_confirm_cancel">취소</string>
+    <string name="auth_resend_confirm_ok">전송</string>
 </resources>

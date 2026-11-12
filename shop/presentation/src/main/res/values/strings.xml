@@ -74,6 +74,7 @@
     <string name="shop_purchase_more_shopping">Keep shopping</string>
     <string name="shop_coin_title">Coin history</string>
     <string name="shop_coin_date_pattern">MMM d</string>
+    <string name="shop_coin_time_pattern">h:mm a</string>
     <string name="shop_coin_balance_after">%1$s coins left</string>
     <string name="shop_coin_empty_title">No coin history yet</string>
     <string name="shop_coin_empty_body">Record meals to get coins from reward boxes</string>

@@ -20,6 +20,7 @@ data class InquiryDetailUIState(
  * 상세에 보여 줄 문의.
  *
  * @property imageUrl 첨부한 사진의 조회 URL. 사진이 없으면 null.
+ * @property createdAtMillis 보낸 시각(epoch millis). 화면이 기기 언어와 타임존에 맞춰 적는다.
  * @property answer 답장. 아직 답장이 없으면 null이고, 화면은 내가 보낸 문의만 보여 준다.
  */
 @Immutable
@@ -28,12 +29,12 @@ data class InquiryDetailUiModel(
     val title: String,
     val content: String,
     val imageUrl: String?,
-    val createdAtLabel: String,
+    val createdAtMillis: Long,
     val answer: InquiryAnswerUiModel?,
 )
 
 @Immutable
 data class InquiryAnswerUiModel(
     val content: String,
-    val answeredAtLabel: String,
+    val answeredAtMillis: Long,
 )

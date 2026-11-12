@@ -3,110 +3,112 @@
   기기 홈 화면 위젯 문구. 피그마 `Widget · 20 사용 시안 · 상태별`을 따른다.
   %1$s 자리에는 끼니 이름(아침·점심·저녁)이 들어간다. 세 이름 모두 받침으로 끝나서 조사는 "을", "이에요"로 고정한다.
   일 단위 설명(_rest)은 날수를 알면 widget_away_days_prefix로 "N일째 "를 붙이고, 모르면 그대로 쓴다.
+  영어·일본어 문구는 조사 가정 없이 끼니 이름(소문자 영어 / 일본어 명사)이 문장 중간에 들어가도 자연스럽게 쓴다.
+  위젯 문구는 줄바꿈을 직접 넣은 곳(\n)에서만 줄이 바뀌므로, 한 줄을 한국어 시안 폭 안으로 짧게 쓴다.
 -->
 <resources>
-    <string name="widget_label">냐미</string>
-    <string name="widget_description">냐미가 집사를 기다려요</string>
+    <string name="widget_label">Nyummy</string>
+    <string name="widget_description">Nyummy is waiting for you</string>
 
-    <string name="widget_meal_breakfast">아침</string>
-    <string name="widget_meal_lunch">점심</string>
-    <string name="widget_meal_dinner">저녁</string>
+    <string name="widget_meal_breakfast">breakfast</string>
+    <string name="widget_meal_lunch">lunch</string>
+    <string name="widget_meal_dinner">dinner</string>
 
-    <string name="widget_streak_days">%1$d일</string>
-    <string name="widget_away_days_prefix">%1$d일째 %2$s</string>
+    <string name="widget_streak_days">Day %1$d</string>
+    <string name="widget_away_days_prefix">Day %1$d · %2$s</string>
 
     <!-- 밤: 자정 ~ 첫 끼니 기다림 전 -->
-    <string name="widget_night_a_title">야식 참는 중</string>
-    <string name="widget_night_a_sub">%1$s까지 버틴다</string>
-    <string name="widget_night_b_title">%1$s 알람\n맞췄어요</string>
-    <string name="widget_night_b_sub">집사 깨우러 갈게요</string>
-    <string name="widget_night_c_title">쿨쿨 냠냠</string>
-    <string name="widget_night_c_sub">꿈에서 %1$s 먹는 중</string>
+    <string name="widget_night_a_title">No midnight\nsnacking</string>
+    <string name="widget_night_a_sub">Holding out for %1$s</string>
+    <string name="widget_night_b_title">Alarm set\nfor %1$s</string>
+    <string name="widget_night_b_sub">I\'ll wake you up</string>
+    <string name="widget_night_c_title">Zzz…\nnom nom</string>
+    <string name="widget_night_c_sub">Dreaming of %1$s</string>
 
     <!-- 기다림: 끼니 시각 1시간 전 ~ 마감 -->
-    <string name="widget_wait_a_title">%1$s 뭐\n먹어요?</string>
-    <string name="widget_wait_a_sub">포크 들고 대기</string>
-    <string name="widget_wait_b_title">곧 %1$s!</string>
-    <string name="widget_wait_b_sub">밥그릇 들고 대기</string>
-    <string name="widget_wait_c_title">몇 시야?</string>
-    <string name="widget_wait_c_sub">%1$s까지 1시간</string>
-    <string name="widget_wait_c_sub_after">%1$s 시간이에요</string>
-    <string name="widget_wait_d_title">밥! 밥! 밥!</string>
-    <string name="widget_wait_d_sub">곧 %1$s이에요</string>
+    <string name="widget_wait_a_title">What\'s for\n%1$s?</string>
+    <string name="widget_wait_a_sub">Waiting, fork in paw</string>
+    <string name="widget_wait_b_title">It\'s almost\n%1$s!</string>
+    <string name="widget_wait_b_sub">Waiting, bowl in paw</string>
+    <string name="widget_wait_c_title">What time\nis it?</string>
+    <string name="widget_wait_c_sub">1 hour till %1$s</string>
+    <string name="widget_wait_c_sub_after">It\'s %1$s time</string>
+    <string name="widget_wait_d_title">Food! Food!\nFood!</string>
+    <string name="widget_wait_d_sub">It\'s almost %1$s</string>
 
     <!-- 배빵빵: 기록한 뒤 ~ 다음 기다림 -->
-    <string name="widget_full_a_title">배 빵빵!</string>
-    <string name="widget_full_a_sub">뒹굴뒹굴 소화 중</string>
-    <string name="widget_full_b_title">잘 먹었다!</string>
-    <string name="widget_full_b_sub">배 두드리는 중</string>
-    <string name="widget_full_c_title">식곤증</string>
-    <string name="widget_full_c_sub">먹자마자 기절</string>
-    <string name="widget_full_d_title">든든해!</string>
-    <string name="widget_full_d_sub">배가 빵빵해요</string>
+    <string name="widget_full_a_title">So full!</string>
+    <string name="widget_full_a_sub">Rolling to digest</string>
+    <string name="widget_full_b_title">That was\ngood!</string>
+    <string name="widget_full_b_sub">Patting my tummy</string>
+    <string name="widget_full_c_title">Food coma</string>
+    <string name="widget_full_c_sub">Ate, then passed out</string>
+    <string name="widget_full_d_title">Nice and\nfull!</string>
+    <string name="widget_full_d_sub">My tummy is so full</string>
 
     <!-- 한 끼 놓침 -->
-    <string name="widget_miss1_a_title">흥, 삐졌어</string>
-    <string name="widget_miss1_a_sub">집사가 %1$s을\n까먹었어요</string>
-    <string name="widget_miss1_b_title">흥, 삐졌어</string>
-    <string name="widget_miss1_b_sub">단단히 삐졌어요</string>
-    <string name="widget_miss1_c_title">1인 시위 중</string>
-    <string name="widget_miss1_c_sub">%1$s을 돌려줘요</string>
-    <string name="widget_miss1_e_title">밥그릇이 비어서</string>
-    <string name="widget_miss1_e_sub">제가 녹았어요</string>
-    <string name="widget_miss1_f_title">식빵 굽는 중</string>
-    <string name="widget_miss1_f_sub">배고파서 구워짐</string>
-    <string name="widget_miss1_g_title">오늘의 식단</string>
-    <string name="widget_miss1_g_sub">#공기 #그릇 #끝</string>
+    <string name="widget_miss1_a_title">Hmph.\nI\'m sulking</string>
+    <string name="widget_miss1_a_sub">You forgot\n%1$s</string>
+    <string name="widget_miss1_b_title">Hmph.\nI\'m sulking</string>
+    <string name="widget_miss1_b_sub">Seriously sulking</string>
+    <string name="widget_miss1_c_title">One-cat\nprotest</string>
+    <string name="widget_miss1_c_sub">Return my %1$s!</string>
+    <string name="widget_miss1_e_title">My bowl was\nempty, so…</string>
+    <string name="widget_miss1_e_sub">I melted</string>
+    <string name="widget_miss1_f_title">Loafing\naround</string>
+    <string name="widget_miss1_f_sub">Too hungry to move</string>
+    <string name="widget_miss1_g_title">Today\'s menu</string>
+    <string name="widget_miss1_g_sub">#air #bowl #that\'s_it</string>
 
     <!-- 두 끼 놓침 -->
-    <string name="widget_miss2_a_title">집사?</string>
-    <string name="widget_miss2_a_sub">두 끼째 찾는 중</string>
-    <string name="widget_miss2_b_title">집사\n어딨어?</string>
-    <string name="widget_miss2_b_sub">두 끼째 찾는 중</string>
-    <string name="widget_miss2_c_title">직접 갈게</string>
-    <string name="widget_miss2_c_sub">집사한테 배송 중</string>
-    <string name="widget_miss2_d_title">수사 착수</string>
-    <string name="widget_miss2_d_sub">집사 행방 추적</string>
-    <string name="widget_miss2_e_title">1이\n안 없어져요</string>
-    <string name="widget_miss2_e_sub">집사 읽씹 중</string>
+    <string name="widget_miss2_a_title">Human?</string>
+    <string name="widget_miss2_a_sub">2 meals of searching</string>
+    <string name="widget_miss2_b_title">Where did\nyou go?</string>
+    <string name="widget_miss2_b_sub">2 meals of searching</string>
+    <string name="widget_miss2_c_title">I\'m coming\nto you</string>
+    <string name="widget_miss2_c_sub">Mailing myself to you</string>
+    <string name="widget_miss2_d_title">Case\nopened</string>
+    <string name="widget_miss2_d_sub">Tracking you down</string>
+    <string name="widget_miss2_e_title">Still\nunread</string>
+    <string name="widget_miss2_e_sub">You\'re ghosting me</string>
 
     <!-- 집사를 찾습니다: 오늘 먹는 끼니를 모두 놓침 -->
-    <string name="widget_missall_a_title">집사를\n찾습니다</string>
-    <string name="widget_missall_a_sub">하루 종일 기다림</string>
-    <string name="widget_missall_b_title">집사야~!</string>
-    <string name="widget_missall_b_sub">하루 종일 부름</string>
-    <string name="widget_missall_c_title">집사를\n찾습니다</string>
-    <string name="widget_missall_c_sub">사례금: 츄르</string>
-    <string name="widget_missall_d_title">집사를\n찾습니다</string>
-    <string name="widget_missall_d_sub">하루 종일 기다림</string>
+    <string name="widget_missall_a_title">Missing:\nmy human</string>
+    <string name="widget_missall_a_sub">Waited all day</string>
+    <string name="widget_missall_b_title">Huuuman~!</string>
+    <string name="widget_missall_b_sub">Calling you all day</string>
+    <string name="widget_missall_c_title">Missing:\nmy human</string>
+    <string name="widget_missall_c_sub">Reward: churu treats</string>
+    <string name="widget_missall_d_title">Missing:\nmy human</string>
+    <string name="widget_missall_d_sub">Waited all day</string>
 
     <!-- 일 단위: 하루 이상 통째로 거름 -->
-    <string name="widget_away1_title">현관 지킴이</string>
-    <string name="widget_away1_rest">문 앞이에요</string>
-    <string name="widget_away2_title">부재중 37통</string>
-    <string name="widget_away2_rest">집사 폰 꺼짐?</string>
-    <string name="widget_away3_title">집사 냄새</string>
-    <string name="widget_away3_rest">후드티 속</string>
-    <string name="widget_away4_title">알림 99+</string>
-    <string name="widget_away4_rest">두드리는 중</string>
-    <string name="widget_away5_a_title">편지 썼어요</string>
-    <string name="widget_away5_a_rest">답장 대기</string>
-    <string name="widget_away5_b_title">집사 소환 중</string>
-    <string name="widget_away5_b_rest">츄르 바침</string>
-    <string name="widget_away6_a_title">비 와도\n기다려요</string>
-    <string name="widget_away6_a_rest">창가에서</string>
-    <string name="widget_away6_b_title">현수막\n걸었어요</string>
-    <string name="widget_away6_b_rest">보고 있죠?</string>
-    <string name="widget_away6_c_title">먼지 쌓임</string>
-    <string name="widget_away6_c_rest">문 앞 대기</string>
-    <string name="widget_away7_title">기다리다가\n돌 됐어요</string>
-    <string name="widget_away7_rest">머리에 참새 입주함</string>
+    <string name="widget_away1_title">Door guard</string>
+    <string name="widget_away1_rest">At the door</string>
+    <string name="widget_away2_title">37 missed\ncalls</string>
+    <string name="widget_away2_rest">Is your phone off?</string>
+    <string name="widget_away3_title">Your scent</string>
+    <string name="widget_away3_rest">In your hoodie</string>
+    <string name="widget_away4_title">Alerts: 99+</string>
+    <string name="widget_away4_rest">Still tapping</string>
+    <string name="widget_away5_a_title">I wrote you\na letter</string>
+    <string name="widget_away5_a_rest">Awaiting reply</string>
+    <string name="widget_away5_b_title">Summoning\nmy human</string>
+    <string name="widget_away5_b_rest">Churu offered</string>
+    <string name="widget_away6_a_title">Waiting even\nin the rain</string>
+    <string name="widget_away6_a_rest">By the window</string>
+    <string name="widget_away6_b_title">I hung up\na banner</string>
+    <string name="widget_away6_b_rest">You see it, right?</string>
+    <string name="widget_away6_c_title">Gathering\ndust</string>
+    <string name="widget_away6_c_rest">Door duty</string>
+    <string name="widget_away7_title">Turned to\nstone waiting</string>
+    <string name="widget_away7_rest">Birds nest on my head</string>
 
     <!-- 재회: 날수는 말하지 않는다 -->
-    <string name="widget_reunion_title">왔다!!!</string>
-    <string name="widget_reunion_sub">집사다, 집사!</string>
+    <string name="widget_reunion_title">You\'re back!!!</string>
+    <string name="widget_reunion_sub">It\'s my human!</string>
 
     <!-- 로그아웃 -->
-    <string name="widget_logout_title">로그아웃</string>
-    <string name="widget_logout_sub">기다리다 잠듦</string>
+    <string name="widget_logout_title">Logged out</string>
+    <string name="widget_logout_sub">Fell asleep waiting</string>
 </resources>
