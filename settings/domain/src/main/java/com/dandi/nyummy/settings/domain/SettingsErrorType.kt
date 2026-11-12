@@ -1,6 +1,7 @@
 package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.domain.error.HttpErrorType
+import com.dandi.nyummy.common.domain.helper.StringResource
 
 /**
  * 설정 API(내 프로필, 식사 시각) 도메인 에러.
@@ -10,7 +11,7 @@ import com.dandi.nyummy.common.domain.error.HttpErrorType
  */
 enum class SettingsErrorType(
     override val type: String,
-    override val errorMsg: String,
+    override val errorMsg: StringResource,
     override val isHandledOnDomain: Boolean = true,
 ) : HttpErrorType {
     /**
@@ -19,15 +20,14 @@ enum class SettingsErrorType(
      */
     INVALID_INPUT(
         type = "api.common.invalidInputValue",
-        errorMsg = DUPLICATE_MEAL_TIMES_MESSAGE,
+        errorMsg = StringResource.DUPLICATE_MEAL_TIMES,
     ),
 
     /** 회원이 없다(404). 공통 404 안내("준비 중인 기능")가 맞지 않아 따로 둔다. */
     USER_NOT_FOUND(
         type = "api.user.notFound",
-        errorMsg = "회원 정보를 찾지 못했어요. 다시 로그인해 주세요.",
+        errorMsg = StringResource.SETTINGS_USER_NOT_FOUND,
     ),
 }
 
 /** 끼니끼리 같은 시각을 골랐을 때의 안내. 온보딩과 같은 문구다. */
-internal const val DUPLICATE_MEAL_TIMES_MESSAGE = "끼니마다 다른 시각을 골라주세요."

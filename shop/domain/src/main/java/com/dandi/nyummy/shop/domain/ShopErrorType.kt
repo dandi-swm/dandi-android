@@ -1,6 +1,7 @@
 package com.dandi.nyummy.shop.domain
 
 import com.dandi.nyummy.common.domain.error.HttpErrorType
+import com.dandi.nyummy.common.domain.helper.StringResource
 
 /**
  * 상점·장바구니·구매 API 도메인 에러. `type`은 서버 에러 바디의 `code`와 철자까지 같아야 한다.
@@ -8,7 +9,7 @@ import com.dandi.nyummy.common.domain.error.HttpErrorType
  */
 enum class ShopErrorType(
     override val type: String,
-    override val errorMsg: String = "",
+    override val errorMsg: StringResource? = null,
     override val isHandledOnDomain: Boolean = true,
 ) : HttpErrorType {
     /** 판매 중인 상품에 없는 productId(404). */

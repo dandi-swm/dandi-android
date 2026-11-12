@@ -63,6 +63,12 @@ android {
         }
     }
 
+    // 앱이 지원하는 언어(영어 기본·한국어·일본어)를 리소스 폴더에서 모아 locale_config를 만든다.
+    // Android 13+ 기기 설정의 "앱 언어"에서 냐미 언어를 따로 고를 수 있다. 기본 폴더 언어는 res/resources.properties.
+    androidResources {
+        generateLocaleConfig = true
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true

@@ -22,11 +22,12 @@ interface MessageHelper {
         onClickCTA: (() -> Unit)? = null,
     )
 
+    /** 버튼 글자를 비워 두면(기본값) 기기 언어의 "확인"·"취소"를 쓴다. */
     fun showOneButtonDialog(
         titleText: String? = null,
         descText: String,
         cantIgnore: Boolean = false,
-        buttonText: String = "확인",
+        buttonText: String = "",
         onClickButton: (() -> Unit)? = null,
     )
 
@@ -34,9 +35,9 @@ interface MessageHelper {
         titleText: String? = null,
         descText: String,
         cantIgnore: Boolean = false,
-        leftButtonText: String = "취소",
+        leftButtonText: String = "",
         onClickLeftButton: (() -> Unit)? = null,
-        rightButtonText: String = "확인",
+        rightButtonText: String = "",
         onClickRightButton: (() -> Unit)? = null,
     )
 }

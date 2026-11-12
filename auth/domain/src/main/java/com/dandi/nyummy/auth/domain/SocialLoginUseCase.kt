@@ -10,6 +10,7 @@ import com.dandi.nyummy.common.domain.error.handlingErrorOnUseCase
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.tti.TTIHelper
 import java.io.IOException
@@ -65,10 +66,10 @@ class SocialLoginUseCase @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: IOException) {
-            showError(NETWORK_ERROR_MESSAGE)
+            showError(resourceHelper.getString(StringResource.NETWORK_ERROR))
             Result.failure(e)
         } catch (e: Exception) {
-            showError(TEMPORARY_ERROR_MESSAGE)
+            showError(resourceHelper.getString(StringResource.TEMPORARY_ERROR))
             Result.failure(e)
         }
     }
@@ -80,7 +81,7 @@ class SocialLoginUseCase @Inject constructor(
 
     /** 아직 연동되지 않았거나 앱 키 없이 빌드돼 쓸 수 없는 제공자를 눌렀을 때 안내한다. */
     fun onProviderUnavailable(type: SocialLoginType) {
-        messageHelper.showToast("${type.displayName} 로그인은 준비 중이에요.")
+        messageHelper.showToast(resourceHelper.getString(StringResource.AUTH_PROVIDER_NOT_READY, displayName(type)))
     }
 
     /** 서버 code로 먼저 구분하고, code가 없을 때만 상태 코드로 판단한다. 문구에 제공자 이름을 넣는다. */
@@ -89,35 +90,29 @@ class SocialLoginUseCase @Inject constructor(
             AuthErrorType.INVALID_OAUTH_TOKEN -> providerFailedMessage(type)
             AuthErrorType.OAUTH_PROVIDER_UNAVAILABLE -> providerUnavailableMessage(type)
             else -> when (e.rawCode) {
-                400 -> BAD_REQUEST_MESSAGE
+                400 -> resourceHelper.getString(StringResource.AUTH_BAD_REQUEST)
                 401 -> providerFailedMessage(type)
                 503 -> providerUnavailableMessage(type)
-                else -> TEMPORARY_ERROR_MESSAGE
+                else -> resourceHelper.getString(StringResource.TEMPORARY_ERROR)
             }
         }
 
     private fun providerUnavailableMessage(type: SocialLoginType): String =
-        "${type.displayName} 서버에 연결할 수 없어요. 잠시 후 다시 시도해주세요."
+        resourceHelper.getString(StringResource.AUTH_PROVIDER_UNAVAILABLE, displayName(type))
 
     private fun providerFailedMessage(type: SocialLoginType): String =
-        "${type.displayName} 로그인에 실패했어요. 다시 시도해주세요."
+        resourceHelper.getString(StringResource.AUTH_PROVIDER_FAILED, displayName(type))
+
+    /** 사용자 안내 문구에 쓰는 제공자 이름. */
+    private fun displayName(type: SocialLoginType): String = resourceHelper.getString(
+        when (type) {
+            SocialLoginType.KAKAO -> StringResource.AUTH_PROVIDER_KAKAO
+            SocialLoginType.GOOGLE -> StringResource.AUTH_PROVIDER_GOOGLE
+            SocialLoginType.NAVER -> StringResource.AUTH_PROVIDER_NAVER
+        },
+    )
 
     private fun showError(message: String) {
-        messageHelper.showOneButtonDialog(descText = message, buttonText = CONFIRM_BUTTON_TEXT)
-    }
-
-    private companion object {
-        const val BAD_REQUEST_MESSAGE = "로그인 요청이 올바르지 않아요. 앱을 최신 버전으로 업데이트한 뒤 다시 시도해주세요."
-        const val NETWORK_ERROR_MESSAGE = "네트워크 연결을 확인한 뒤 다시 시도해주세요."
-        const val TEMPORARY_ERROR_MESSAGE = "일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요."
-        const val CONFIRM_BUTTON_TEXT = "확인"
+        messageHelper.showOneButtonDialog(descText = message)
     }
 }
-
-/** 사용자 안내 문구에 쓰는 제공자 이름. */
-internal val SocialLoginType.displayName: String
-    get() = when (this) {
-        SocialLoginType.KAKAO -> "카카오"
-        SocialLoginType.GOOGLE -> "구글"
-        SocialLoginType.NAVER -> "네이버"
-    }

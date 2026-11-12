@@ -8,6 +8,7 @@ import com.dandi.nyummy.common.domain.error.registeredErrorType
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.tti.TTIHelper
 
 open class BaseUseCase(
@@ -52,8 +53,8 @@ open class BaseUseCase(
             e.isSessionExpired() -> {
                 messageHelper.showOneButtonDialog(
                     cantIgnore = true,
-                    descText = SESSION_EXPIRED_MESSAGE,
-                    buttonText = SESSION_EXPIRED_BUTTON,
+                    descText = resourceHelper.getString(StringResource.SESSION_EXPIRED_MESSAGE),
+                    buttonText = resourceHelper.getString(StringResource.SIGN_IN_AGAIN),
                     onClickButton = {
                         // 목적지(로그인 화면)를 직접 지정하지 않는다.
                         // common:domain 이 feature 의 Page 를 참조하면 순환 의존이 되므로
@@ -66,8 +67,8 @@ open class BaseUseCase(
             e.rawCode == 404 -> {
                 messageHelper.showOneButtonDialog(
                     cantIgnore = true,
-                    descText = NOT_READY_MESSAGE,
-                    buttonText = NOT_READY_BUTTON,
+                    descText = resourceHelper.getString(StringResource.NOT_READY_MESSAGE),
+                    buttonText = resourceHelper.getString(StringResource.GO_BACK),
                     onClickButton = {
                         navigationHelper.navigateToBack()
                     }
@@ -76,19 +77,10 @@ open class BaseUseCase(
 
             else -> {
                 messageHelper.showOneButtonDialog(
-                    titleText = TEMPORARY_ERROR_TITLE,
-                    descText = TEMPORARY_ERROR_MESSAGE,
+                    titleText = resourceHelper.getString(StringResource.TEMPORARY_ERROR_TITLE),
+                    descText = resourceHelper.getString(StringResource.TRY_AGAIN_LATER),
                 )
             }
         }
-    }
-
-    private companion object {
-        const val SESSION_EXPIRED_MESSAGE = "로그인이 만료됐어요. 다시 로그인해 주세요."
-        const val SESSION_EXPIRED_BUTTON = "로그인하기"
-        const val NOT_READY_MESSAGE = "준비 중인 기능이에요."
-        const val NOT_READY_BUTTON = "돌아가기"
-        const val TEMPORARY_ERROR_TITLE = "잠시 문제가 생겼어요"
-        const val TEMPORARY_ERROR_MESSAGE = "잠시 후 다시 시도해 주세요."
     }
 }

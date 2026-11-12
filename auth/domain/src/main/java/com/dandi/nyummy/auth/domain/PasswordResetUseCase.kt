@@ -5,6 +5,7 @@ import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.tti.TTIHelper
 import java.io.IOException
 import javax.inject.Inject
@@ -35,10 +36,10 @@ class PasswordResetUseCase @Inject constructor(
     } catch (e: CancellationException) {
         throw e
     } catch (e: IOException) {
-        showError(NETWORK_ERROR_MESSAGE)
+        showError(resourceHelper.getString(StringResource.NETWORK_ERROR))
         Result.failure(e)
     } catch (e: Exception) {
-        showError(RESET_FAILED_MESSAGE)
+        showError(resourceHelper.getString(StringResource.AUTH_PASSWORD_RESET_FAILED))
         Result.failure(e)
     }
 
@@ -48,10 +49,10 @@ class PasswordResetUseCase @Inject constructor(
             e,
             onDomainError = { errorType ->
                 // 공통 문구는 인증 메일 기준이라, 임시 비밀번호 메일을 못 보낸 경우는 따로 안내한다.
-                showError(if (errorType == AuthErrorType.EMAIL_SEND_FAILED) MAIL_SEND_FAILED_MESSAGE else errorType.errorMsg)
+                showError(if (errorType == AuthErrorType.EMAIL_SEND_FAILED) resourceHelper.getString(StringResource.AUTH_TEMP_PASSWORD_MAIL_FAILED) else resourceHelper.getString(errorType.errorMsg))
                 if (errorType in RESTART_ERRORS) failure = EmailVerificationRestartRequiredException()
             },
-            onUnknownError = { showError(RESET_FAILED_MESSAGE) },
+            onUnknownError = { showError(resourceHelper.getString(StringResource.AUTH_PASSWORD_RESET_FAILED)) },
         )
         return failure
     }
@@ -67,9 +68,5 @@ class PasswordResetUseCase @Inject constructor(
             AuthErrorType.INVALID_VERIFIED_TOKEN,
             AuthErrorType.EMAIL_NOT_FOUND,
         )
-
-        const val MAIL_SEND_FAILED_MESSAGE = "임시 비밀번호 메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요."
-        const val RESET_FAILED_MESSAGE = "비밀번호를 재설정하지 못했어요. 잠시 후 다시 시도해 주세요."
-        const val NETWORK_ERROR_MESSAGE = "네트워크 연결을 확인한 뒤 다시 시도해주세요."
     }
 }

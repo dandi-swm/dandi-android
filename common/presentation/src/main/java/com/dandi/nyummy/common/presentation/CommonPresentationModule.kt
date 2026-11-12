@@ -10,6 +10,7 @@ import com.dandi.nyummy.common.presentation.helper.ImagePrefetchHelperImpl
 import com.dandi.nyummy.common.presentation.helper.MessageHelperImpl
 import com.dandi.nyummy.common.presentation.helper.NavigationHelperImpl
 import com.dandi.nyummy.common.presentation.helper.ResourceHelperImpl
+import com.dandi.nyummy.common.presentation.helper.StringProvider
 import com.dandi.nyummy.tti.DebugTTILogger
 import com.dandi.nyummy.tti.RemoteTTILogger
 import com.dandi.nyummy.tti.TTIHelper
@@ -43,6 +44,11 @@ object CommonPresentationModule {
     @Singleton
     fun provideResourceHelper(@ApplicationContext context: Context): ResourceHelper =
         ResourceHelperImpl(context)
+
+    @Provides
+    @Singleton
+    fun provideStringProvider(@ApplicationContext context: Context): StringProvider =
+        StringProvider { id, formatArgs -> context.getString(id, *formatArgs) }
 
     @Provides
     @Singleton

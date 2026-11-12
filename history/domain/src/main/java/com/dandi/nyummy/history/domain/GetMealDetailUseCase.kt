@@ -25,7 +25,7 @@ class GetMealDetailUseCase @Inject constructor(
     } catch (e: HttpResponseException) {
         handleHttpError<HistoryErrorType>(
             e,
-            onDomainError = { messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = it.errorMsg) },
+            onDomainError = { messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(it.errorMsg)) },
         )
         Result.failure(e)
     } catch (e: CancellationException) {

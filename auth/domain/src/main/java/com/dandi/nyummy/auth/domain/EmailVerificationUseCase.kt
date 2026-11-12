@@ -6,6 +6,7 @@ import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.tti.TTIHelper
 import java.io.IOException
 import javax.inject.Inject
@@ -31,18 +32,18 @@ class EmailVerificationUseCase @Inject constructor(
     } catch (e: HttpResponseException) {
         handleHttpError<AuthErrorType>(
             e,
-            onDomainError = { showError(it.errorMsg) },
-            onUnknownError = { showError(SEND_FAILED_MESSAGE) },
+            onDomainError = { showError(resourceHelper.getString(it.errorMsg)) },
+            onUnknownError = { showError(resourceHelper.getString(StringResource.AUTH_EMAIL_SEND_FAILED)) },
         )
         Result.failure(e)
     } catch (e: CancellationException) {
         throw e
     } catch (e: IOException) {
-        showError(NETWORK_ERROR_MESSAGE)
+        showError(resourceHelper.getString(StringResource.NETWORK_ERROR))
         Result.failure(e)
     } catch (e: Exception) {
         // 응답을 읽지 못한 경우(본문 없는 200 등)에도 앱이 죽지 않게 기본 안내를 한다.
-        showError(SEND_FAILED_MESSAGE)
+        showError(resourceHelper.getString(StringResource.AUTH_EMAIL_SEND_FAILED))
         Result.failure(e)
     }
 
@@ -62,26 +63,20 @@ class EmailVerificationUseCase @Inject constructor(
         var inlineMessage: String? = null
         handleHttpError<AuthErrorType>(
             e,
-            onDomainError = { inlineMessage = it.errorMsg },
-            onUnknownError = { inlineMessage = CONFIRM_FAILED_MESSAGE },
+            onDomainError = { inlineMessage = resourceHelper.getString(it.errorMsg) },
+            onUnknownError = { inlineMessage = resourceHelper.getString(StringResource.AUTH_CODE_CONFIRM_FAILED) },
         )
         Result.failure(inlineMessage?.let(::CodeVerificationFailedException) ?: e)
     } catch (e: CancellationException) {
         throw e
     } catch (e: IOException) {
-        Result.failure(CodeVerificationFailedException(NETWORK_ERROR_MESSAGE))
+        Result.failure(CodeVerificationFailedException(resourceHelper.getString(StringResource.NETWORK_ERROR)))
     } catch (e: Exception) {
-        Result.failure(CodeVerificationFailedException(CONFIRM_FAILED_MESSAGE))
+        Result.failure(CodeVerificationFailedException(resourceHelper.getString(StringResource.AUTH_CODE_CONFIRM_FAILED)))
     }
 
     private fun showError(message: String) {
         messageHelper.showOneButtonDialog(descText = message)
-    }
-
-    private companion object {
-        const val SEND_FAILED_MESSAGE = "인증 메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요."
-        const val NETWORK_ERROR_MESSAGE = "네트워크 연결을 확인한 뒤 다시 시도해주세요."
-        const val CONFIRM_FAILED_MESSAGE = "알 수 없는 오류가 발생했습니다."
     }
 }
 

@@ -6,6 +6,7 @@ import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.home.entity.HomeSummaryVO
@@ -44,17 +45,13 @@ class GetHomeSummaryUseCase @Inject constructor(
         if (e.isCommonErrorHandling()) {
             executeCommonErrorHanding(e)
         } else {
-            messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = LOAD_ERROR_MESSAGE)
+            messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(StringResource.HOME_LOAD_FAILED))
         }
         Result.failure(e)
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = LOAD_ERROR_MESSAGE)
+        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(StringResource.HOME_LOAD_FAILED))
         Result.failure(e)
-    }
-
-    private companion object {
-        const val LOAD_ERROR_MESSAGE = "홈 정보를 불러오지 못했어요"
     }
 }
