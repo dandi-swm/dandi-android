@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 리마인드 알림 채널 -->
+    <string name="nyummy_reminder_channel_name">ニャミのリマインド</string>
+    <string name="nyummy_reminder_channel_description">食事の記録を忘れないようにニャミが送る通知</string>
+</resources>

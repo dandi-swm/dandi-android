@@ -1,0 +1,4 @@
+<resources>
+    <string name="quest_title">クエスト</string>
+    <string name="quest_coming_title">クエストを準備しています</string>
+</resources>

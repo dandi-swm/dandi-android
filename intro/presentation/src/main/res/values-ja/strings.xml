@@ -1,0 +1,18 @@
+<resources>
+    <string name="intro_splash_logo_description">ニャミ</string>
+    <string name="intro_splash_headline_line1">おいしい記録を</string>
+    <string name="intro_splash_headline_line2">集めてるところ！</string>
+    <string name="intro_splash_bubble">食べものアイコンを集めています</string>
+    <string name="intro_splash_progress_label">アイコンを集めています…</string>
+    <string name="intro_splash_progress_complete">準備完了！まもなく始まります</string>
+    <string name="intro_splash_progress_percent">%1$d%%</string>
+    <string name="intro_splash_tip">毎日記録すると%1$sがもっと元気になります</string>
+    <string name="intro_permission_title">ニャミでは次のアプリ権限を使います</string>
+    <string name="intro_permission_camera">カメラ</string>
+    <string name="intro_permission_camera_desc">食事の写真を撮るときに使います</string>
+    <string name="intro_permission_notification">通知</string>
+    <string name="intro_permission_notification_desc">食事記録のリマインド通知に使います</string>
+    <string name="intro_permission_optional">任意</string>
+    <string name="intro_permission_notice">許可しなくてもサービスはご利用いただけます。\n権限は端末の設定 &gt; アプリ &gt; ニャミ &gt; 権限からいつでも変更できます。</string>
+    <string name="intro_permission_confirm">確認</string>
+</resources>

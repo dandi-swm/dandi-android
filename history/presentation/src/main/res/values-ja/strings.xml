@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="history_title">食事記録</string>
+    <string name="history_subtitle">コツコツたまっていく、わたしの食習慣</string>
+
+    <string name="history_go_today">今日へ移動</string>
+    <string-array name="history_weekdays">
+        <item>日</item>
+        <item>月</item>
+        <item>火</item>
+        <item>水</item>
+        <item>木</item>
+        <item>金</item>
+        <item>土</item>
+    </string-array>
+    <string name="history_calendar_recorded_this_month">今月は%1$d日記録しました</string>
+    <string name="history_calendar_recorded_days">%1$d日</string>
+    <string name="history_calendar_no_record_this_month">今月はまだ記録がありません</string>
+    <string name="history_calendar_recorded_month">%1$d月は%2$d日記録しました</string>
+    <string name="history_calendar_no_record_month">%1$d月は記録がありません</string>
+    <string name="history_calendar_description">%1$sのカレンダー。左右にスワイプすると他の月を見られます</string>
+    <string name="history_calendar_previous_month">前の月を見る</string>
+    <string name="history_calendar_next_month">次の月を見る</string>
+    <string name="history_calendar_day_today">今日</string>
+    <string name="history_calendar_day_recorded">記録あり</string>
+
+    <string name="history_day_summary">%1$d回記録しました</string>
+
+    <string name="history_nutrition_title">1日の栄養</string>
+    <string name="history_nutrition_kcal">%1$s kcal</string>
+    <string name="history_nutrition_collapse">閉じる</string>
+    <string name="history_nutrition_expand">開く</string>
+
+    <string name="history_empty_past_title">この日はお休みしました</string>
+    <string name="history_empty_past_body">記録がない日があっても大丈夫です</string>
+    <string name="history_empty_today_title">今日の記録はまだありません</string>
+    <string name="history_empty_today_body">%1$sがごはんを待っています</string>
+    <string name="history_empty_today_action">今すぐ記録する</string>
+
+    <string name="history_load_failed_title">記録を読み込めませんでした</string>
+    <string name="history_load_failed_body">しばらくしてからもう一度お試しください。</string>
+    <string name="history_load_retry">再読み込み</string>
+    <string name="history_loading">読み込み中です</string>
+
+    <string name="history_meal_meta">%1$s %2$s</string>
+    <string name="history_analysis_failed_title">食べ物が見つかりませんでした</string>
+    <string name="history_analysis_failed_body">もう一度分析するか、記録を削除できます</string>
+    <string name="history_analysis_failed_description">分析失敗</string>
+    <string name="history_analysis_retry">もう一度分析する</string>
+    <string name="history_analysis_delete">記録を削除</string>
+    <string name="history_analysis_pending_title">%1$sが味見しています</string>
+    <string name="history_analysis_pending_body">終わったらすぐここに表示します</string>
+    <string name="history_analysis_unknown_meal">分析できなかった記録</string>
+
+    <string name="history_kcal_unit">kcal</string>
+
+    <string name="history_detail_edit_name">名前を変更</string>
+    <string name="history_detail_delete">記録を削除</string>
+    <string name="history_detail_nutrition_title">この食事の栄養</string>
+    <string name="history_detail_cat_comment_title">%1$sのひとこと</string>
+    <string name="history_detail_meta_with_order">%1$s · %2$s</string>
+    <string name="history_detail_cat_comment_empty">おいしかった？次の食事も%1$sと一緒に記録しよう！</string>
+
+    <string name="history_edit_dialog_title">食べ物の名前を変更しますか？</string>
+    <string name="history_edit_dialog_field_label">食べ物の名前</string>
+    <string name="history_edit_dialog_empty">食べ物の名前を入力してください</string>
+    <string name="history_edit_dialog_confirm">保存する</string>
+
+    <string name="history_delete_dialog_title">%1$sの記録を削除しますか？</string>
+    <string name="history_delete_dialog_title_unnamed">この記録を削除しますか？</string>
+    <string name="history_delete_dialog_body">削除すると1日の栄養からも除かれ、元に戻せません。</string>
+    <string name="history_delete_dialog_confirm">削除する</string>
+    <string name="history_feedback_title">%1$sの分析は正確でしたか？</string>
+    <string name="history_feedback_subtitle">評価をもらえると、%1$sがもっと上手に見分けられるようになります</string>
+    <string name="history_feedback_dismiss">評価を閉じる</string>
+    <string name="history_feedback_rating_description">分析の評価</string>
+    <string name="history_feedback_reasons_label">気になった点はどこですか？（任意）</string>
+    <string name="history_feedback_reason_wrong_food">食べ物を間違えていました</string>
+    <string name="history_feedback_reason_wrong_portion">量が違っていました</string>
+    <string name="history_feedback_reason_wrong_nutrition">カロリー・栄養がおかしいです</string>
+    <string name="history_feedback_reason_missing_food">抜けている食べ物があります</string>
+    <string name="history_feedback_comment_label">ほかに伝えたいこと（任意）</string>
+    <string name="history_feedback_comment_placeholder">例：ごはんの量が実際より少なく出ました</string>
+    <string name="history_feedback_submit">送信</string>
+
+    <!-- 날짜·시각 형식(java.time DateTimeFormatter 패턴). 요일·오전/오후는 기기 언어로 나온다. -->
+    <string name="history_month_label_pattern">yyyy年M月</string>
+    <string name="history_day_label_pattern">M月d日</string>
+    <string name="history_day_title_pattern">M月d日 EEEE</string>
+    <string name="history_day_short_title_pattern">M/d（E）</string>
+    <string name="history_meal_time_pattern">H:mm</string>
+    <!-- 하루 안의 끼니 순서. 1번째부터 차례로 쓰고, 그 뒤는 history_meal_order_numbered 로 쓴다. -->
+    <string-array name="history_meal_order_labels">
+        <item>1食目</item>
+        <item>2食目</item>
+        <item>3食目</item>
+        <item>4食目</item>
+        <item>5食目</item>
+        <item>6食目</item>
+        <item>7食目</item>
+        <item>8食目</item>
+        <item>9食目</item>
+        <item>10食目</item>
+    </string-array>
+    <string name="history_meal_order_numbered">%1$d食目</string>
+</resources>
