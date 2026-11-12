@@ -1,6 +1,7 @@
 package com.dandi.nyummy.common.presentation.designsystem.component
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -149,14 +150,14 @@ private const val TopBarTitle = "title"
 /** 하단 내비 탭 하나. [icon]은 단색 채움 아이콘(nyummy_nav_*)이고 켜짐·꺼짐 색으로 칠한다. [label]은 접근성 설명도 겸한다. */
 @Immutable
 data class NyummyBottomNavItem(
-    val label: String,
+    @StringRes val label: Int,
     @DrawableRes val icon: Int,
 )
 
 /** 하단 내비 가운데 동작 버튼. 탭이 아니라서 선택 상태가 없고, 누르면 바로 그 동작을 한다. [label]은 접근성 설명이다. */
 @Immutable
 data class NyummyBottomNavAction(
-    val label: String,
+    @StringRes val label: Int,
     @DrawableRes val icon: Int,
 )
 
@@ -241,12 +242,13 @@ private fun BottomNavCenterAction(
     val interactionSource = rememberNyummyInteractionSource()
     val pressed by interactionSource.collectIsPressedAsState()
     val shape = RoundedCornerShape(NyummyTheme.radius.m)
+    val label = stringResource(action.label)
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Box(
             modifier = Modifier
                 .then(buttonModifier)
                 .nyummyClickable(onClick = onClick, interactionSource = interactionSource)
-                .semantics { contentDescription = action.label }
+                .semantics { contentDescription = label }
                 .size(dimens.BottomNavActionSize)
                 .nyummyShadow(shape, NyummyComponentShadows.BottomNavAction)
                 .background(
@@ -292,7 +294,7 @@ private fun BottomNavTab(
             tint = color,
             modifier = Modifier.size(NyummyTheme.size.iconL),
         )
-        NyummyText(text = item.label, style = NyummyTheme.typography.labelS, color = color, maxLines = 1)
+        NyummyText(text = stringResource(item.label), style = NyummyTheme.typography.labelS, color = color, maxLines = 1)
     }
 }
 
@@ -421,14 +423,14 @@ fun NyummyStepIndicator(
  * 가운데 식사 기록 버튼([NyummyMealRecordAction])은 기록 탭 앞에 둔다.
  */
 val NyummyMainTabs: ImmutableList<NyummyBottomNavItem> = persistentListOf(
-    NyummyBottomNavItem(label = "홈", icon = R.drawable.nyummy_nav_home),
-    NyummyBottomNavItem(label = "마이룸", icon = R.drawable.nyummy_nav_my_room),
-    NyummyBottomNavItem(label = "기록", icon = R.drawable.nyummy_nav_record),
-    NyummyBottomNavItem(label = "상점", icon = R.drawable.nyummy_nav_shop),
+    NyummyBottomNavItem(label = R.string.nyummy_nav_home, icon = R.drawable.nyummy_nav_home),
+    NyummyBottomNavItem(label = R.string.nyummy_nav_my_room, icon = R.drawable.nyummy_nav_my_room),
+    NyummyBottomNavItem(label = R.string.nyummy_nav_record, icon = R.drawable.nyummy_nav_record),
+    NyummyBottomNavItem(label = R.string.nyummy_nav_shop, icon = R.drawable.nyummy_nav_shop),
 )
 
 /** 하단 내비 가운데 식사 기록 버튼. */
-val NyummyMealRecordAction = NyummyBottomNavAction(label = "식사 기록", icon = R.drawable.nyummy_nav_camera)
+val NyummyMealRecordAction = NyummyBottomNavAction(label = R.string.nyummy_nav_meal_record, icon = R.drawable.nyummy_nav_camera)
 
 @Preview(showBackground = true, widthDp = 390)
 @Composable

@@ -5,6 +5,7 @@ import com.dandi.nyummy.common.domain.coroutine.IoScope
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.presentation.helper.StringProvider
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.common.presentation.time.listTimeLabel
 import com.dandi.nyummy.settings.domain.DeleteInquiryUseCase
@@ -13,14 +14,15 @@ import com.dandi.nyummy.settings.domain.InquiryDetailPage
 import com.dandi.nyummy.settings.domain.InquiryWritePage
 import com.dandi.nyummy.settings.domain.RestoreInquiryUseCase
 import com.dandi.nyummy.settings.entity.InquiryVO
+import com.dandi.nyummy.settings.presentation.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class InquiryListViewModel @Inject constructor(
@@ -29,6 +31,7 @@ class InquiryListViewModel @Inject constructor(
     private val restoreInquiry: RestoreInquiryUseCase,
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
+    private val strings: StringProvider,
     @IoScope private val ioScope: CoroutineScope,
 ) : MviViewModel<InquiryListIntent, InquiryListUIState, InquiryListReducerEvent>(InquiryListUIState.empty) {
 
@@ -122,14 +125,14 @@ class InquiryListViewModel @Inject constructor(
             deleteInquiry(inquiryId)
                 .onSuccess {
                     messageHelper.showSnackBar(
-                        messageText = DELETED_MESSAGE,
-                        callToActionText = UNDO_LABEL,
+                        messageRes = R.string.inquiry_deleted,
+                        callToActionText = strings.get(R.string.inquiry_undo),
                         onClickCTA = { onIntent(InquiryListIntent.UndoDelete(row, index)) },
                     )
                 }
                 .onFailure {
                     dispatch(InquiryListReducerEvent.InquiryRestored(row, index))
-                    messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = DELETE_FAILED_MESSAGE)
+                    messageHelper.showSnackBar(iconType = IconType.ERROR, messageRes = R.string.inquiry_delete_failed)
                 }
         }
     }
@@ -143,16 +146,9 @@ class InquiryListViewModel @Inject constructor(
         ioScope.launch {
             restoreInquiry(row.inquiryId).onFailure {
                 dispatch(InquiryListReducerEvent.InquiryRemoved(row.inquiryId))
-                messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = RESTORE_FAILED_MESSAGE)
+                messageHelper.showSnackBar(iconType = IconType.ERROR, messageRes = R.string.inquiry_restore_failed)
             }
         }
-    }
-
-    private companion object {
-        const val DELETED_MESSAGE = "문의를 지웠어요"
-        const val UNDO_LABEL = "되돌리기"
-        const val DELETE_FAILED_MESSAGE = "문의를 지우지 못했어요. 잠시 후 다시 시도해 주세요."
-        const val RESTORE_FAILED_MESSAGE = "문의를 되돌리지 못했어요. 잠시 후 다시 시도해 주세요."
     }
 }
 

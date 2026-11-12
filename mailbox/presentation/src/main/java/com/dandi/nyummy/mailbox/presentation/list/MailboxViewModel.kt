@@ -8,6 +8,7 @@ import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
+import com.dandi.nyummy.common.presentation.helper.StringProvider
 import com.dandi.nyummy.common.presentation.image.NyummyCdn
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.common.presentation.time.listTimeLabel
@@ -19,9 +20,11 @@ import com.dandi.nyummy.mailbox.domain.RestoreMailUseCase
 import com.dandi.nyummy.mailbox.entity.MailCategory
 import com.dandi.nyummy.mailbox.entity.MailVO
 import com.dandi.nyummy.mailbox.entity.RewardVO
+import com.dandi.nyummy.mailbox.presentation.R
 import com.dandi.nyummy.mailbox.presentation.model.mailImageUrl
 import com.dandi.nyummy.mailbox.presentation.model.mailRemainingDays
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
@@ -29,7 +32,6 @@ import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class MailboxViewModel @Inject constructor(
@@ -41,6 +43,7 @@ class MailboxViewModel @Inject constructor(
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
     private val tutorialHelper: TutorialHelper,
+    private val strings: StringProvider,
     @IoScope private val ioScope: CoroutineScope,
 ) : MviViewModel<MailboxIntent, MailboxUIState, MailboxReducerEvent>(MailboxUIState.empty) {
 
@@ -250,7 +253,7 @@ class MailboxViewModel @Inject constructor(
                         if (opensBox) {
                             dispatch(MailboxReducerEvent.BoxOpeningFailed(BoxOpeningFailure.AlreadyGone))
                         } else {
-                            messageHelper.showSnackBar(messageText = ALREADY_GONE_MESSAGE)
+                            messageHelper.showSnackBar(messageRes = R.string.mailbox_already_gone)
                             loadMails()
                         }
                     } else {
@@ -274,7 +277,7 @@ class MailboxViewModel @Inject constructor(
                     if (opensBox) {
                         dispatch(MailboxReducerEvent.BoxOpeningFailed(BoxOpeningFailure.Error))
                     } else {
-                        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = CLAIM_FAILED_MESSAGE)
+                        messageHelper.showSnackBar(iconType = IconType.ERROR, messageRes = R.string.mailbox_claim_failed)
                     }
                 }
         }
@@ -287,13 +290,13 @@ class MailboxViewModel @Inject constructor(
         dispatch(MailboxReducerEvent.BoxOpeningEnded)
         when (opening.failure) {
             BoxOpeningFailure.AlreadyGone -> {
-                messageHelper.showSnackBar(messageText = ALREADY_GONE_MESSAGE)
+                messageHelper.showSnackBar(messageRes = R.string.mailbox_already_gone)
                 // 안내하던 상자가 사라졌다. 목록을 다시 받은 뒤 새로 고른다.
                 if (currentState.tutorial?.isWaitingForBox == true) dispatch(MailboxReducerEvent.TutorialChanged(null))
                 loadMails()
             }
             else -> {
-                messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = CLAIM_FAILED_MESSAGE)
+                messageHelper.showSnackBar(iconType = IconType.ERROR, messageRes = R.string.mailbox_claim_failed)
                 // 받지 못했으니 같은 상자의 열기를 다시 가리킨다.
                 currentState.tutorial?.takeIf { it.isWaitingForBox }?.let {
                     dispatch(MailboxReducerEvent.TutorialChanged(it.copy(isWaitingForBox = false)))
@@ -364,14 +367,14 @@ class MailboxViewModel @Inject constructor(
             deleteMail(mailId)
                 .onSuccess {
                     messageHelper.showSnackBar(
-                        messageText = DELETED_MESSAGE,
-                        callToActionText = UNDO_LABEL,
+                        messageRes = R.string.mailbox_deleted,
+                        callToActionText = strings.get(R.string.mailbox_undo),
                         onClickCTA = { onIntent(MailboxIntent.UndoDeleteMail(row, index)) },
                     )
                 }
                 .onFailure {
                     dispatch(MailboxReducerEvent.MailRestored(row, index))
-                    messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = DELETE_FAILED_MESSAGE)
+                    messageHelper.showSnackBar(iconType = IconType.ERROR, messageRes = R.string.mailbox_delete_failed)
                 }
         }
     }
@@ -382,7 +385,7 @@ class MailboxViewModel @Inject constructor(
         ioScope.launch {
             restoreMail(row.mailId).onFailure {
                 dispatch(MailboxReducerEvent.MailRemoved(row.mailId))
-                messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = RESTORE_FAILED_MESSAGE)
+                messageHelper.showSnackBar(iconType = IconType.ERROR, messageRes = R.string.mailbox_restore_failed)
             }
         }
     }
@@ -390,12 +393,6 @@ class MailboxViewModel @Inject constructor(
     private companion object {
         /** 모두 받기 연출의 [BoxOpeningUiState.mailId]. 서버 우편 id는 양수라 겹치지 않는다. */
         const val CLAIM_ALL_OPENING_ID = -1L
-        const val ALREADY_GONE_MESSAGE = "이미 받았거나 기한이 지난 우편이에요"
-        const val CLAIM_FAILED_MESSAGE = "보상을 받지 못했어요. 잠시 후 다시 시도해 주세요."
-        const val DELETED_MESSAGE = "우편을 지웠어요"
-        const val UNDO_LABEL = "되돌리기"
-        const val DELETE_FAILED_MESSAGE = "우편을 지우지 못했어요. 잠시 후 다시 시도해 주세요."
-        const val RESTORE_FAILED_MESSAGE = "우편을 되돌리지 못했어요. 잠시 후 다시 시도해 주세요."
     }
 }
 

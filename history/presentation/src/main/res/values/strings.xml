@@ -1,85 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="history_title">식사 기록</string>
-    <string name="history_subtitle">차곡차곡 쌓이는 나의 식습관</string>
+    <string name="history_title">Meal Records</string>
+    <string name="history_subtitle">Your eating habits, one meal at a time</string>
 
-    <string name="history_go_today">오늘로 이동</string>
+    <string name="history_go_today">Go to today</string>
     <string-array name="history_weekdays">
-        <item>일</item>
-        <item>월</item>
-        <item>화</item>
-        <item>수</item>
-        <item>목</item>
-        <item>금</item>
-        <item>토</item>
+        <item>Sun</item>
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+        <item>Sat</item>
     </string-array>
-    <string name="history_calendar_recorded_this_month">이번 달 %1$d일 기록했어요</string>
-    <string name="history_calendar_recorded_days">%1$d일</string>
-    <string name="history_calendar_no_record_this_month">이번 달은 아직 기록이 없어요</string>
-    <string name="history_calendar_recorded_month">%1$d월에 %2$d일 기록했어요</string>
-    <string name="history_calendar_no_record_month">%1$d월에는 기록이 없어요</string>
-    <string name="history_calendar_description">%1$s 달력, 좌우로 넘겨 다른 달을 볼 수 있어요</string>
-    <string name="history_calendar_previous_month">지난달 보기</string>
-    <string name="history_calendar_next_month">다음 달 보기</string>
-    <string name="history_calendar_day_today">오늘</string>
-    <string name="history_calendar_day_recorded">기록 있음</string>
+    <string name="history_calendar_recorded_this_month">Days logged this month: %1$d</string>
+    <string name="history_calendar_recorded_days">%1$d</string>
+    <string name="history_calendar_no_record_this_month">No records this month yet</string>
+    <string name="history_calendar_recorded_month">Days logged: %2$d (month %1$d)</string>
+    <string name="history_calendar_no_record_month">No records in month %1$d</string>
+    <string name="history_calendar_description">%1$s calendar. Swipe left or right to see other months</string>
+    <string name="history_calendar_previous_month">Previous month</string>
+    <string name="history_calendar_next_month">Next month</string>
+    <string name="history_calendar_day_today">Today</string>
+    <string name="history_calendar_day_recorded">Logged</string>
 
-    <string name="history_day_summary">%1$d번 기록했어요</string>
+    <string name="history_day_summary">Meals logged: %1$d</string>
 
-    <string name="history_nutrition_title">하루 영양</string>
+    <string name="history_nutrition_title">Daily nutrition</string>
     <string name="history_nutrition_kcal">%1$s kcal</string>
-    <string name="history_nutrition_collapse">접기</string>
-    <string name="history_nutrition_expand">펼치기</string>
+    <string name="history_nutrition_collapse">Collapse</string>
+    <string name="history_nutrition_expand">Expand</string>
 
-    <string name="history_empty_past_title">이날은 쉬어 갔어요</string>
-    <string name="history_empty_past_body">기록이 없는 날도 괜찮아요</string>
-    <string name="history_empty_today_title">아직 오늘 기록이 없어요</string>
-    <string name="history_empty_today_body">%1$s(이)가 밥을 기다리고 있어요</string>
-    <string name="history_empty_today_action">지금 기록하기</string>
+    <string name="history_empty_past_title">You took a break this day</string>
+    <string name="history_empty_past_body">It\'s okay to have days without records</string>
+    <string name="history_empty_today_title">No records today yet</string>
+    <string name="history_empty_today_body">%1$s is waiting for a meal</string>
+    <string name="history_empty_today_action">Log a meal now</string>
 
-    <string name="history_load_failed_title">기록을 불러오지 못했어요</string>
-    <string name="history_load_failed_body">잠시 후 다시 시도해 주세요.</string>
-    <string name="history_load_retry">다시 불러오기</string>
-    <string name="history_loading">불러오는 중이에요</string>
+    <string name="history_load_failed_title">Couldn\'t load your records</string>
+    <string name="history_load_failed_body">Please try again in a moment.</string>
+    <string name="history_load_retry">Reload</string>
+    <string name="history_loading">Loading…</string>
 
     <string name="history_meal_meta">%1$s %2$s</string>
-    <string name="history_analysis_failed_title">음식을 찾지 못했어요</string>
-    <string name="history_analysis_failed_body">다시 분석하거나 기록을 지울 수 있어요</string>
-    <string name="history_analysis_failed_description">분석 실패</string>
-    <string name="history_analysis_retry">다시 분석하기</string>
-    <string name="history_analysis_delete">기록 삭제</string>
-    <string name="history_analysis_pending_title">%1$s(이)가 맛보는 중이에요</string>
-    <string name="history_analysis_pending_body">다 되면 여기에 바로 보여 줄게요</string>
-    <string name="history_analysis_unknown_meal">분석하지 못한 기록</string>
+    <string name="history_analysis_failed_title">Couldn\'t find any food</string>
+    <string name="history_analysis_failed_body">You can analyze it again or delete the record</string>
+    <string name="history_analysis_failed_description">Analysis failed</string>
+    <string name="history_analysis_retry">Analyze again</string>
+    <string name="history_analysis_delete">Delete record</string>
+    <string name="history_analysis_pending_title">%1$s is tasting it</string>
+    <string name="history_analysis_pending_body">It\'ll show up here as soon as it\'s ready</string>
+    <string name="history_analysis_unknown_meal">Unanalyzed record</string>
 
     <string name="history_kcal_unit">kcal</string>
 
-    <string name="history_detail_edit_name">이름 수정</string>
-    <string name="history_detail_delete">기록 삭제</string>
-    <string name="history_detail_nutrition_title">이 식사 영양</string>
-    <string name="history_detail_cat_comment_title">%1$s의 한마디</string>
+    <string name="history_detail_edit_name">Edit name</string>
+    <string name="history_detail_delete">Delete record</string>
+    <string name="history_detail_nutrition_title">Meal nutrition</string>
+    <string name="history_detail_cat_comment_title">A word from %1$s</string>
     <string name="history_detail_meta_with_order">%1$s · %2$s</string>
-    <string name="history_detail_cat_comment_empty">맛있게 먹었어? 다음 끼니도 %1$s(이)랑 같이 기록하자!</string>
+    <string name="history_detail_cat_comment_empty">Was it tasty? Let\'s log your next meal with %1$s too!</string>
 
-    <string name="history_edit_dialog_title">음식 이름을 바꿀까요?</string>
-    <string name="history_edit_dialog_field_label">음식 이름</string>
-    <string name="history_edit_dialog_empty">음식 이름을 적어 주세요</string>
-    <string name="history_edit_dialog_confirm">저장하기</string>
+    <string name="history_edit_dialog_title">Rename this food?</string>
+    <string name="history_edit_dialog_field_label">Food name</string>
+    <string name="history_edit_dialog_empty">Please enter a food name</string>
+    <string name="history_edit_dialog_confirm">Save</string>
 
-    <string name="history_delete_dialog_title">%1$s 기록을 삭제할까요?</string>
-    <string name="history_delete_dialog_title_unnamed">이 기록을 삭제할까요?</string>
-    <string name="history_delete_dialog_body">삭제하면 하루 영양에서도 빠지고 되돌릴 수 없어요.</string>
-    <string name="history_delete_dialog_confirm">삭제하기</string>
-    <string name="history_feedback_title">%1$s의 분석, 정확했나요?</string>
-    <string name="history_feedback_subtitle">별점을 남겨 주면 %1$s(이)가 더 잘 알아볼게요</string>
-    <string name="history_feedback_dismiss">평가 닫기</string>
-    <string name="history_feedback_rating_description">분석 별점</string>
-    <string name="history_feedback_reasons_label">어떤 점이 아쉬웠나요? (선택)</string>
-    <string name="history_feedback_reason_wrong_food">음식을 잘못 알아봤어요</string>
-    <string name="history_feedback_reason_wrong_portion">양을 다르게 봤어요</string>
-    <string name="history_feedback_reason_wrong_nutrition">칼로리·영양이 이상해요</string>
-    <string name="history_feedback_reason_missing_food">빠진 음식이 있어요</string>
-    <string name="history_feedback_comment_label">더 알려 주고 싶은 점 (선택)</string>
-    <string name="history_feedback_comment_placeholder">예: 밥 양이 실제보다 적게 나왔어요</string>
-    <string name="history_feedback_submit">보내기</string>
+    <string name="history_delete_dialog_title">Delete the record for %1$s?</string>
+    <string name="history_delete_dialog_title_unnamed">Delete this record?</string>
+    <string name="history_delete_dialog_body">It will also be removed from your daily nutrition and can\'t be undone.</string>
+    <string name="history_delete_dialog_confirm">Delete</string>
+    <string name="history_feedback_title">Was %1$s\'s analysis accurate?</string>
+    <string name="history_feedback_subtitle">Leave a rating and %1$s will get better at it</string>
+    <string name="history_feedback_dismiss">Close rating</string>
+    <string name="history_feedback_rating_description">Analysis rating</string>
+    <string name="history_feedback_reasons_label">What could be better? (optional)</string>
+    <string name="history_feedback_reason_wrong_food">Recognized the wrong food</string>
+    <string name="history_feedback_reason_wrong_portion">Got the portion wrong</string>
+    <string name="history_feedback_reason_wrong_nutrition">Calories or nutrition look off</string>
+    <string name="history_feedback_reason_missing_food">Some food is missing</string>
+    <string name="history_feedback_comment_label">Anything else to tell us? (optional)</string>
+    <string name="history_feedback_comment_placeholder">e.g. The rice portion came out smaller than it was</string>
+    <string name="history_feedback_submit">Send</string>
+
+    <!-- 날짜·시각 형식(java.time DateTimeFormatter 패턴). 요일·오전/오후는 기기 언어로 나온다. -->
+    <string name="history_month_label_pattern">MMMM yyyy</string>
+    <string name="history_day_label_pattern">MMM d</string>
+    <string name="history_day_title_pattern">EEEE, MMMM d</string>
+    <string name="history_day_short_title_pattern">EEE, MMM d</string>
+    <string name="history_meal_time_pattern">h:mm a</string>
+    <!-- 하루 안의 끼니 순서. 1번째부터 차례로 쓰고, 그 뒤는 history_meal_order_numbered 로 쓴다. -->
+    <string-array name="history_meal_order_labels">
+        <item>1st meal</item>
+        <item>2nd meal</item>
+        <item>3rd meal</item>
+        <item>4th meal</item>
+        <item>5th meal</item>
+        <item>6th meal</item>
+        <item>7th meal</item>
+        <item>8th meal</item>
+        <item>9th meal</item>
+        <item>10th meal</item>
+    </string-array>
+    <string name="history_meal_order_numbered">Meal %1$d</string>
 </resources>

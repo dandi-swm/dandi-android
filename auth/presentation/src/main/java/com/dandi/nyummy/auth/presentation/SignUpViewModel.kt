@@ -13,6 +13,7 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.designsystem.component.isBirthAfter
+import com.dandi.nyummy.common.presentation.helper.StringProvider
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -35,6 +36,7 @@ class SignUpViewModel @AssistedInject constructor(
     private val emailVerificationUseCase: EmailVerificationUseCase,
     private val signUpUseCase: SignUpUseCase,
     private val messageHelper: MessageHelper,
+    private val strings: StringProvider,
     private val navigationHelper: NavigationHelper,
     private val analyticsHelper: AnalyticsHelper,
 ) : MviViewModel<SignUpIntent, SignUpUIState, SignUpReducerEvent>(SignUpUIState.initial(isSocialSignUp)) {
@@ -212,9 +214,9 @@ class SignUpViewModel @AssistedInject constructor(
     private fun resendCode() {
         if (currentState.isLoading) return
         messageHelper.showTwoButtonDialog(
-            descText = RESEND_CONFIRM_MESSAGE,
-            leftButtonText = RESEND_CONFIRM_CANCEL,
-            rightButtonText = RESEND_CONFIRM_OK,
+            descText = strings.get(R.string.auth_signup_resend_confirm_message),
+            leftButtonText = strings.get(R.string.auth_resend_confirm_cancel),
+            rightButtonText = strings.get(R.string.auth_resend_confirm_ok),
             onClickRightButton = ::executeResend,
         )
     }
@@ -313,8 +315,5 @@ class SignUpViewModel @AssistedInject constructor(
     companion object {
         private const val RESEND_COOLDOWN_SECONDS = 5 * 60
         private const val TIMER_TICK_MILLIS = 1_000L
-        private const val RESEND_CONFIRM_MESSAGE = "인증 코드를 다시 전송하시겠습니까?"
-        private const val RESEND_CONFIRM_CANCEL = "취소"
-        private const val RESEND_CONFIRM_OK = "전송"
     }
 }

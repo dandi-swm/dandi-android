@@ -8,6 +8,7 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.time.DeviceTime
+import com.dandi.nyummy.common.presentation.helper.StringProvider
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.legal.domain.LegalPage
 import com.dandi.nyummy.settings.domain.GetSettingsUseCase
@@ -18,10 +19,13 @@ import com.dandi.nyummy.settings.domain.UpdateNotificationSettingsUseCase
 import com.dandi.nyummy.settings.domain.WithdrawUseCase
 import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
+import com.dandi.nyummy.settings.presentation.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -31,6 +35,7 @@ class SettingsViewModel @Inject constructor(
     private val withdraw: WithdrawUseCase,
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
+    private val strings: StringProvider,
 ) : MviViewModel<SettingsIntent, SettingsUIState, SettingsReducerEvent>(SettingsUIState.empty) {
 
     // 알림 묶음별로 저장 요청을 하나씩만 보낸다. 보내는 중에 또 바꾸면 마지막 값만 기억했다가 앞 요청이 끝난 뒤 보낸다.
@@ -188,19 +193,17 @@ class SettingsViewModel @Inject constructor(
 
     /** 마케팅 알림 수신 동의나 철회가 처리된 날짜를 알린다. 광고성 정보 수신 동의 결과는 처리 날짜와 함께 알려야 한다. */
     private fun showMarketingConsentResult(agreed: Boolean) {
-        val today = DeviceTime.today()
-        val date = "${today.year}년 ${today.monthValue}월 ${today.dayOfMonth}일"
-        messageHelper.showSnackBar(
-            iconType = IconType.SUCCESS,
-            messageText = if (agreed) "$date $MARKETING_AGREED_MESSAGE" else "$date $MARKETING_WITHDRAWN_MESSAGE",
-        )
+        val pattern = strings.get(R.string.settings_consent_date_pattern)
+        val date = DeviceTime.today().format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
+        val message = if (agreed) R.string.settings_marketing_agreed else R.string.settings_marketing_withdrawn
+        messageHelper.showSnackBar(iconType = IconType.SUCCESS, messageText = strings.get(message, date))
     }
 
     private fun showSaveFailed(retry: () -> Unit) {
         messageHelper.showSnackBar(
             iconType = IconType.ERROR,
-            messageText = SAVE_FAILED_MESSAGE,
-            callToActionText = RETRY_LABEL,
+            messageRes = R.string.settings_save_failed,
+            callToActionText = strings.get(R.string.settings_retry),
             onClickCTA = retry,
         )
     }
@@ -218,12 +221,5 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             withdraw().onFailure { dispatch(SettingsReducerEvent.WithdrawFailed) }
         }
-    }
-
-    private companion object {
-        const val SAVE_FAILED_MESSAGE = "설정을 저장하지 못했어요"
-        const val RETRY_LABEL = "다시 시도"
-        const val MARKETING_AGREED_MESSAGE = "마케팅 알림 수신에 동의했어요"
-        const val MARKETING_WITHDRAWN_MESSAGE = "마케팅 알림 수신 동의를 철회했어요"
     }
 }
