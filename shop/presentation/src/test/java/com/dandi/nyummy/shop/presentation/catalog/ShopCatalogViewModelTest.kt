@@ -251,6 +251,28 @@ class ShopCatalogViewModelTest {
     }
 
     @Test
+    fun `되돌리기 요청은 칩과 정렬을 처음으로 돌려 다시 읽고 이미 처음이면 읽지 않는다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+        viewModel.onIntent(ShopCatalogIntent.Enter(ShopTab.INTERIOR))
+        viewModel.onIntent(ShopCatalogIntent.SelectSort(ProductSort.POPULAR))
+        advanceUntilIdle()
+
+        viewModel.onIntent(ShopCatalogIntent.ResetConditions(id = 1))
+        advanceUntilIdle()
+        viewModel.onIntent(ShopCatalogIntent.ResetConditions(id = 1))
+        viewModel.onIntent(ShopCatalogIntent.ResetConditions(id = 2))
+        advanceUntilIdle()
+
+        assertEquals(ProductSort.Default, viewModel.uiState.value.sort)
+        assertEquals(null, viewModel.uiState.value.category)
+        assertEquals(ProductSort.Default, repository.productRequests.last().sort)
+        val requestsAfterReset = repository.productRequests.size
+        viewModel.onIntent(ShopCatalogIntent.ResetConditions(id = 3))
+        advanceUntilIdle()
+        assertEquals(requestsAfterReset, repository.productRequests.size)
+    }
+
+    @Test
     fun `같은 정렬 링크를 다시 눌러도 처음부터 다시 읽는다`() = runTest(testDispatcher) {
         val viewModel = createViewModel()
         viewModel.onIntent(ShopCatalogIntent.Enter(ShopTab.INTERIOR))

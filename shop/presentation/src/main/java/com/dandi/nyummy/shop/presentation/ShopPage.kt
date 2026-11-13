@@ -42,13 +42,25 @@ fun ShopPage(
         onPauseOrDispose { }
     }
     ShopScreen(uiState = uiState, onIntent = viewModel::onIntent) { tab, tabModifier ->
-        ShopTabContent(tab = tab, sortRequest = uiState.sortRequest, onIntent = viewModel::onIntent, modifier = tabModifier)
+        ShopTabContent(
+            tab = tab,
+            sortRequest = uiState.sortRequest,
+            conditionResetId = uiState.conditionResetId,
+            onIntent = viewModel::onIntent,
+            modifier = tabModifier,
+        )
     }
 }
 
 /** 탭 하나의 내용. 탭마다 자기 ViewModel을 쓰므로 미리보기에서는 [ShopScreen]에 다른 내용을 넣는다. */
 @Composable
-private fun ShopTabContent(tab: ShopTab, sortRequest: ShopSortRequest?, onIntent: (ShopIntent) -> Unit, modifier: Modifier) {
+private fun ShopTabContent(
+    tab: ShopTab,
+    sortRequest: ShopSortRequest?,
+    conditionResetId: Int,
+    onIntent: (ShopIntent) -> Unit,
+    modifier: Modifier,
+) {
     when (tab) {
         ShopTab.RECOMMEND -> ShopRecommendTab(
             onItemClick = { onIntent(ShopIntent.ClickItem(it)) },
@@ -59,6 +71,7 @@ private fun ShopTabContent(tab: ShopTab, sortRequest: ShopSortRequest?, onIntent
         ShopTab.INTERIOR, ShopTab.BACKGROUND -> ShopCatalogTab(
             tab = tab,
             sortRequest = sortRequest,
+            conditionResetId = conditionResetId,
             onItemClick = { onIntent(ShopIntent.ClickItem(it)) },
             onAdd = { onIntent(ShopIntent.AddToCart(it)) },
             modifier = modifier,

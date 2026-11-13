@@ -61,11 +61,13 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  * 카드의 담기 버튼은 1개를 바로 담고, 카드를 누르면 상세 시트가 열린다(둘 다 상점 화면이 처리한다).
  *
  * @param sortRequest 링크로 받은 정렬. 이 탭 것이면 정렬을 바꿔 처음부터 다시 읽는다
+ * @param conditionResetId 칩·정렬을 처음으로 되돌리라는 요청 번호. 바뀐 뒤 이 탭이 처음 보일 때 되돌린다
  */
 @Composable
 fun ShopCatalogTab(
     tab: ShopTab,
     sortRequest: ShopSortRequest?,
+    conditionResetId: Int,
     onItemClick: (ShopItemVO) -> Unit,
     onAdd: (ShopItemVO) -> Unit,
     modifier: Modifier = Modifier,
@@ -73,6 +75,8 @@ fun ShopCatalogTab(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(tab) { viewModel.onIntent(ShopCatalogIntent.Enter(tab)) }
+    // 되돌리기가 링크 정렬보다 먼저다. 다시 들어오면서 링크 정렬도 받았으면 그 정렬이 남는다.
+    LaunchedEffect(conditionResetId) { viewModel.onIntent(ShopCatalogIntent.ResetConditions(conditionResetId)) }
     LaunchedEffect(sortRequest) { sortRequest?.let { viewModel.onIntent(ShopCatalogIntent.ApplySortRequest(it)) } }
     val listState = rememberLazyListState()
     JankScrollWatcher(listState)
