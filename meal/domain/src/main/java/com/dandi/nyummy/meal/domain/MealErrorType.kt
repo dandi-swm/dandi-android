@@ -1,6 +1,7 @@
 package com.dandi.nyummy.meal.domain
 
 import com.dandi.nyummy.common.domain.error.HttpErrorType
+import com.dandi.nyummy.common.domain.helper.StringResource
 
 /**
  * 식사 기록(사진 업로드, 식사 생성) API 도메인 에러.
@@ -12,16 +13,16 @@ import com.dandi.nyummy.common.domain.error.HttpErrorType
  */
 enum class MealErrorType(
     override val type: String,
-    override val errorMsg: String,
+    override val errorMsg: StringResource,
     override val isHandledOnDomain: Boolean = true,
 ) : HttpErrorType {
     STALE_IMAGE(
         type = "api.meal.staleImage",
-        errorMsg = "찍은 지 오래된 사진은 기록할 수 없어요. 다시 찍어주세요",
+        errorMsg = StringResource.MEAL_STALE_IMAGE,
     ),
     DUPLICATE_IMAGE_KEY(
         type = "api.meal.duplicateImageKey",
-        errorMsg = "이미 기록한 사진이에요",
+        errorMsg = StringResource.MEAL_DUPLICATE_IMAGE,
     ),
     /**
      * 오늘 기록할 수 있는 횟수를 다 썼다(409). 지우거나 분석에 실패한 기록도 횟수에 들어간다.
@@ -29,19 +30,19 @@ enum class MealErrorType(
      */
     DAILY_COUNT_EXCEEDED(
         type = "api.meal.dailyCountExceeded",
-        errorMsg = "오늘은 더 기록할 수 없어요. 내일 다시 기록해주세요",
+        errorMsg = StringResource.MEAL_DAILY_LIMIT,
     ),
     UNSUPPORTED_CONTENT_TYPE(
         type = "api.s3.unsupportedContentType",
-        errorMsg = "기록할 수 없는 사진 형식이에요. 다시 찍어주세요",
+        errorMsg = StringResource.MEAL_UNSUPPORTED_TYPE,
     ),
     FILE_SIZE_EXCEEDED(
         type = "api.s3.fileSizeExceeded",
-        errorMsg = "사진 용량이 너무 커요. 다시 찍어주세요",
+        errorMsg = StringResource.MEAL_FILE_TOO_LARGE,
     ),
     /** 튜토리얼 식사를 이미 했다(409). 다른 기기에서 먼저 마친 경우라 안내하지 않고 마친 것으로 본다. */
     TUTORIAL_ALREADY_COMPLETED(
         type = "api.meal.tutorialAlreadyCompleted",
-        errorMsg = "이미 튜토리얼을 마쳤어요",
+        errorMsg = StringResource.MEAL_TUTORIAL_DONE,
     ),
 }

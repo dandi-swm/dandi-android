@@ -6,27 +6,28 @@ import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.helper.AppPermission
 import com.dandi.nyummy.common.domain.helper.DeviceHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
-import com.dandi.nyummy.common.domain.helper.PermissionHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.helper.PermissionHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.entity.remoteconfig.VersionCheckVO
 import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.home.domain.PrefetchHomeNoticesUseCase
-import com.dandi.nyummy.shop.domain.PrefetchCoinChargeNoticeUseCase
 import com.dandi.nyummy.home.domain.PrefetchHomeSummaryUseCase
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
+import com.dandi.nyummy.shop.domain.PrefetchCoinChargeNoticeUseCase
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
 import com.dandi.nyummy.tti.TimelineCategory
+import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
-import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 class GetIntroUseCase @Inject constructor(
     private val repository: IntroRepository,
@@ -157,8 +158,8 @@ class GetIntroUseCase @Inject constructor(
     private fun showForceUpdateDialog(version: VersionCheckVO) {
         messageHelper.showOneButtonDialog(
             cantIgnore = true,
-            descText = version.minimumVersionReleaseNote.ifBlank { DEFAULT_FORCE_UPDATE_MSG },
-            buttonText = "스토어로 이동",
+            descText = version.minimumVersionReleaseNote.ifBlank { resourceHelper.getString(StringResource.INTRO_FORCE_UPDATE) },
+            buttonText = resourceHelper.getString(StringResource.INTRO_GO_TO_STORE),
             onClickButton = { navigationHelper.navigateToExternalLink(version.latestVersionUpdateLink) },
         )
     }
@@ -166,17 +167,13 @@ class GetIntroUseCase @Inject constructor(
     private fun showIntroErrorDialog(onRetry: () -> Unit) {
         messageHelper.showOneButtonDialog(
             cantIgnore = true,
-            descText = INTRO_ERROR_MSG,
-            buttonText = "재시도",
+            descText = resourceHelper.getString(StringResource.INTRO_ERROR),
+            buttonText = resourceHelper.getString(StringResource.RETRY),
             onClickButton = onRetry,
         )
     }
 
     companion object {
-        private const val DEFAULT_FORCE_UPDATE_MSG =
-            "현재 앱이 최소 요구 버전을 만족하지 않습니다.\n최신 버전으로 업데이트 해주세요."
-        private const val INTRO_ERROR_MSG =
-            "일시적인 오류가 발생했습니다.\n잠시 후 다시 시도해주세요."
 
         /** 앱 시작 시 접근권한 안내에 올리는 권한. 하나라도 미허용이면 안내를 노출한다. */
         private val STARTUP_PERMISSIONS = listOf(AppPermission.CAMERA, AppPermission.NOTIFICATION)

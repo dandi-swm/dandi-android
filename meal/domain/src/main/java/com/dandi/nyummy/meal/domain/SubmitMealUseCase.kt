@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.meal.entity.CreatedMealVO
@@ -42,7 +43,7 @@ class SubmitMealUseCase @Inject constructor(
         Result.success(created)
     } catch (e: MealPhotoInvalidException) {
         logBlocked("invalid_photo")
-        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = e.message)
+        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(e.reason))
         Result.failure(e)
     } catch (e: HttpResponseException) {
         var reason = "server_error"
@@ -50,9 +51,9 @@ class SubmitMealUseCase @Inject constructor(
             e,
             onDomainError = {
                 reason = it.analyticsReason
-                showError(it.errorMsg)
+                showError(resourceHelper.getString(it.errorMsg))
             },
-            onUnknownError = { showError(SUBMIT_ERROR_MESSAGE) },
+            onUnknownError = { showError(resourceHelper.getString(StringResource.MEAL_SUBMIT_FAILED)) },
         )
         logBlocked(reason)
         Result.failure(e)
@@ -60,7 +61,7 @@ class SubmitMealUseCase @Inject constructor(
         throw e
     } catch (e: Exception) {
         logBlocked("network_or_unknown")
-        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = SUBMIT_ERROR_MESSAGE)
+        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(StringResource.MEAL_SUBMIT_FAILED))
         Result.failure(e)
     }
 
@@ -71,10 +72,6 @@ class SubmitMealUseCase @Inject constructor(
 
     private fun showError(message: String) {
         messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = message)
-    }
-
-    private companion object {
-        const val SUBMIT_ERROR_MESSAGE = "식사를 기록하지 못했어요. 다시 시도해주세요"
     }
 }
 
@@ -89,5 +86,5 @@ private val MealErrorType.analyticsReason: String
         MealErrorType.TUTORIAL_ALREADY_COMPLETED -> "tutorial_already_completed"
     }
 
-/** 제출 전 촬영본 검증·압축 실패. [message] 는 사용자에게 그대로 노출할 안내 문구다. */
-class MealPhotoInvalidException(override val message: String) : IllegalStateException(message)
+/** 제출 전 촬영본 검증·압축 실패. [reason] 은 사용자에게 보여 줄 안내 문구다. */
+class MealPhotoInvalidException(val reason: StringResource) : IllegalStateException(reason.name)

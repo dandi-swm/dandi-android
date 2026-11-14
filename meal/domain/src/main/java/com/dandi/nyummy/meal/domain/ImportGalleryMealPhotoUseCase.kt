@@ -54,7 +54,7 @@ class ImportGalleryMealPhotoUseCase @Inject constructor(
         analyticsHelper.logEvent(AnalyticsEvent.MealRecordBlocked(stage = "gallery", reason = reason))
         val message = resourceHelper.getString(resource)
         messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = message)
-        return Result.failure(cause ?: MealPhotoInvalidException(message))
+        return Result.failure(cause ?: MealPhotoInvalidException(resource))
     }
 }
 

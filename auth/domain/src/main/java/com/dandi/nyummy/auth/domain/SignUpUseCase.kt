@@ -10,6 +10,7 @@ import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.tti.TTIHelper
@@ -122,9 +123,8 @@ class SignUpUseCase @Inject constructor(
     /** 가입 대기 토큰 없이 소셜 가입 화면에 들어왔을 때 안내하고 이전 화면으로 돌려보낸다. */
     fun leaveSocialSignUpWithoutSession() {
         messageHelper.showOneButtonDialog(
-            descText = SOCIAL_SESSION_MISSING_MESSAGE,
+            descText = resourceHelper.getString(StringResource.AUTH_SOCIAL_SESSION_MISSING),
             cantIgnore = true,
-            buttonText = CONFIRM_BUTTON_TEXT,
             onClickButton = { navigationHelper.navigateToBack() },
         )
     }
@@ -144,11 +144,12 @@ class SignUpUseCase @Inject constructor(
         handleHttpError<AuthErrorType>(
             e,
             onDomainError = { errorType ->
-                showError(errorType.errorMsg)
+                showError(resourceHelper.getString(errorType.errorMsg))
                 if (errorType in VERIFICATION_RESTART_ERRORS) failure = EmailVerificationRestartRequiredException()
             },
             onUnknownError = {
-                showError(if (e.rawCode == HTTP_CONFLICT) ALREADY_REGISTERED_EMAIL_MESSAGE else SIGN_UP_FAILED_MESSAGE)
+                val message = if (e.rawCode == HTTP_CONFLICT) StringResource.AUTH_EMAIL_ALREADY_EXISTS else StringResource.AUTH_SIGN_UP_FAILED
+                showError(resourceHelper.getString(message))
             },
         )
         return failure
@@ -164,15 +165,15 @@ class SignUpUseCase @Inject constructor(
     private fun handleSocialSignUpError(e: HttpResponseException) {
         val errorType = e.handlingErrorOnUseCase<AuthErrorType>()
         when {
-            errorType in VERIFICATION_RESTART_ERRORS -> restartSocialLogin(SOCIAL_SIGN_UP_EXPIRED_MESSAGE)
+            errorType in VERIFICATION_RESTART_ERRORS -> restartSocialLogin(resourceHelper.getString(StringResource.AUTH_SOCIAL_SIGN_UP_EXPIRED))
             errorType == AuthErrorType.OAUTH_ACCOUNT_ALREADY_EXISTS ||
-                errorType == AuthErrorType.EMAIL_ALREADY_EXISTS -> restartSocialLogin(ALREADY_REGISTERED_ACCOUNT_MESSAGE)
-            errorType != null -> showError(errorType.errorMsg)
-            e.rawCode == HTTP_UNAUTHORIZED -> restartSocialLogin(SOCIAL_SIGN_UP_EXPIRED_MESSAGE)
-            e.rawCode == HTTP_CONFLICT -> restartSocialLogin(ALREADY_REGISTERED_ACCOUNT_MESSAGE)
+                errorType == AuthErrorType.EMAIL_ALREADY_EXISTS -> restartSocialLogin(resourceHelper.getString(StringResource.AUTH_ACCOUNT_ALREADY_EXISTS))
+            errorType != null -> showError(resourceHelper.getString(errorType.errorMsg))
+            e.rawCode == HTTP_UNAUTHORIZED -> restartSocialLogin(resourceHelper.getString(StringResource.AUTH_SOCIAL_SIGN_UP_EXPIRED))
+            e.rawCode == HTTP_CONFLICT -> restartSocialLogin(resourceHelper.getString(StringResource.AUTH_ACCOUNT_ALREADY_EXISTS))
             e.isCommonErrorHandling() -> executeCommonErrorHanding(e)
-            e.rawCode == HTTP_BAD_REQUEST -> showError(INVALID_PROFILE_MESSAGE)
-            else -> showError(TEMPORARY_ERROR_MESSAGE)
+            e.rawCode == HTTP_BAD_REQUEST -> showError(resourceHelper.getString(StringResource.AUTH_INVALID_PROFILE))
+            else -> showError(resourceHelper.getString(StringResource.TEMPORARY_ERROR))
         }
     }
 
@@ -181,17 +182,16 @@ class SignUpUseCase @Inject constructor(
         messageHelper.showOneButtonDialog(
             descText = message,
             cantIgnore = true,
-            buttonText = CONFIRM_BUTTON_TEXT,
             onClickButton = { navigationHelper.navigateToInitial() },
         )
     }
 
     private fun showError(message: String) {
-        messageHelper.showOneButtonDialog(descText = message, buttonText = CONFIRM_BUTTON_TEXT)
+        messageHelper.showOneButtonDialog(descText = message)
     }
 
     private fun Exception.toUserMessage(): String =
-        if (this is IOException) NETWORK_ERROR_MESSAGE else TEMPORARY_ERROR_MESSAGE
+        resourceHelper.getString(if (this is IOException) StringResource.NETWORK_ERROR else StringResource.TEMPORARY_ERROR)
 
     private companion object {
         /** 인증 완료 토큰을 다시 받아야 하는 오류. 만료(`verificationExpired`)와 무효(`invalidVerifiedToken`). */
@@ -200,16 +200,6 @@ class SignUpUseCase @Inject constructor(
         const val HTTP_BAD_REQUEST = 400
         const val HTTP_UNAUTHORIZED = 401
         const val HTTP_CONFLICT = 409
-
-        const val SOCIAL_SESSION_MISSING_MESSAGE = "가입 정보가 만료됐어요. 다시 로그인해주세요."
-        const val SOCIAL_SIGN_UP_EXPIRED_MESSAGE = "가입 유효 시간이 지났어요. 다시 로그인해주세요."
-        const val ALREADY_REGISTERED_ACCOUNT_MESSAGE = "이미 가입된 계정이에요. 다시 로그인해주세요."
-        const val ALREADY_REGISTERED_EMAIL_MESSAGE = "이미 가입된 이메일이에요. 로그인해주세요."
-        const val INVALID_PROFILE_MESSAGE = "입력한 정보를 확인한 뒤 다시 시도해주세요."
-        const val SIGN_UP_FAILED_MESSAGE = "회원가입에 실패했어요. 다시 시도해주세요."
-        const val NETWORK_ERROR_MESSAGE = "네트워크 연결을 확인한 뒤 다시 시도해주세요."
-        const val TEMPORARY_ERROR_MESSAGE = "일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요."
-        const val CONFIRM_BUTTON_TEXT = "확인"
     }
 }
 

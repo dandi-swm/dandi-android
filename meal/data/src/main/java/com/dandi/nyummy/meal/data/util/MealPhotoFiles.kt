@@ -8,6 +8,7 @@ import androidx.exifinterface.media.ExifInterface
 import com.dandi.nyummy.common.data.image.decodeSampledBitmap
 import com.dandi.nyummy.common.data.image.onWhiteBackground
 import com.dandi.nyummy.common.data.image.transformed
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.meal.domain.MealPhotoInvalidException
 import com.dandi.nyummy.meal.entity.MealPhotoSource
@@ -105,7 +106,7 @@ internal fun prepareMealPhotoFile(
 ) {
     val file = File(photoPath)
     if (!file.isFile || file.length() == 0L) {
-        throw MealPhotoInvalidException("촬영한 사진을 찾지 못했어요. 다시 촬영해주세요")
+        throw MealPhotoInvalidException(StringResource.MEAL_PHOTO_NOT_FOUND)
     }
     if (source == MealPhotoSource.CAMERA) ensureCaptureExif(file)
     logExifMetadata(file)
@@ -175,7 +176,7 @@ private fun ensureCaptureExif(file: File) {
         Log.d(TAG, "EXIF filled (takenAt=$dateTime, offset=$utcOffset): ${file.name}")
     }.getOrElse {
         Log.w(TAG, "EXIF fill failed: ${file.name}", it)
-        throw MealPhotoInvalidException("사진 촬영 정보를 저장하지 못했어요. 다시 촬영해주세요")
+        throw MealPhotoInvalidException(StringResource.MEAL_PHOTO_INFO_SAVE_FAILED)
     }
 }
 
@@ -229,7 +230,7 @@ private fun compressIntoLimit(file: File, maxBytes: Long) {
 
 private fun compressKeepingExifSegment(file: File, maxBytes: Long, exifSegment: ByteArray) {
     val bitmap = decodeMealPhoto(file)
-        ?: throw MealPhotoInvalidException("사진을 읽지 못했어요. 다시 촬영해주세요")
+        ?: throw MealPhotoInvalidException(StringResource.MEAL_PHOTO_READ_FAILED)
     val original = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         .also { BitmapFactory.decodeFile(file.absolutePath, it) }
     val (bytes, encoded) = encodeIntoLimit(bitmap, maxBytes - exifSegment.size)
@@ -252,7 +253,7 @@ private fun compressCopyingExifTags(file: File, maxBytes: Long) {
     }.orEmpty()
 
     val decoded = decodeMealPhoto(file)
-        ?: throw MealPhotoInvalidException("사진을 읽지 못했어요. 다시 촬영해주세요")
+        ?: throw MealPhotoInvalidException(StringResource.MEAL_PHOTO_READ_FAILED)
     val rotated = decoded.transformed(rotationDegrees = rotationDegrees).onWhiteBackground()
 
     // EXIF 복원분이 더해져도 상한을 넘지 않도록 여유분을 뺀 크기를 목표로 압축한다.
@@ -285,7 +286,7 @@ private fun encodeIntoLimit(bitmap: Bitmap, targetBytes: Long): Pair<ByteArray, 
             bytes = current.toJpegBytes(MIN_JPEG_QUALITY)
         }
         if (bytes.size > targetBytes) {
-            throw MealPhotoInvalidException("사진 용량을 줄이지 못했어요. 다시 촬영해주세요")
+            throw MealPhotoInvalidException(StringResource.MEAL_PHOTO_COMPRESS_FAILED)
         }
         return bytes to current
     } catch (e: Throwable) {

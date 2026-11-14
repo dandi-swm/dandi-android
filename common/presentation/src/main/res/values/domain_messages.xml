@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  도메인(UseCase·ErrorType)이 StringResource 이름으로 고르는 안내 문구. ResourceHelperImpl이 이름을 이 리소스로 바꾼다.
+  항목을 더하거나 지울 때는 StringResource enum, ResourceHelperImpl 매핑, values·values-ko·values-ja 세 파일을 함께 고친다.
+-->
+<resources>
+    <!-- 공통 -->
+    <string name="msg_confirm">OK</string>
+    <string name="msg_cancel">Cancel</string>
+    <string name="msg_retry">Retry</string>
+    <string name="msg_sign_in_again">Sign in</string>
+    <string name="msg_go_back">Go back</string>
+    <string name="msg_session_expired_message">Your session has expired. Please sign in again.</string>
+    <string name="msg_not_ready_message">This feature is coming soon.</string>
+    <string name="msg_temporary_error_title">Something went wrong</string>
+    <string name="msg_try_again_later">Please try again in a moment.</string>
+    <string name="msg_network_error">Check your network connection and try again.</string>
+    <string name="msg_temporary_error">A temporary error occurred. Please try again in a moment.</string>
+    <string name="msg_duplicate_meal_times">Please pick a different time for each meal.</string>
+
+    <!-- 인증 -->
+    <string name="msg_auth_invalid_credentials">Please enter a valid email and password.</string>
+    <string name="msg_auth_email_send_rate_limited">We just sent you a code. Please wait a moment before requesting another.</string>
+    <string name="msg_auth_email_send_failed">We couldn\'t send the verification email. Please try again in a moment.</string>
+    <string name="msg_auth_incorrect_email">No code was sent to this email. Please request a new code.</string>
+    <string name="msg_auth_email_code_attempt_exceeded">Too many incorrect attempts. Please request a new code.</string>
+    <string name="msg_auth_email_code_mismatch">The verification code doesn\'t match.</string>
+    <string name="msg_auth_email_code_expired">The verification code has expired. Please request a new one.</string>
+    <string name="msg_auth_verification_restart">Your verification has expired. Please verify again from the start.</string>
+    <string name="msg_auth_invalid_email_challenge">The verification request is invalid. Please request a new code.</string>
+    <string name="msg_auth_email_already_exists">This email is already registered. Please sign in.</string>
+    <string name="msg_auth_email_not_registered">This email isn\'t registered.</string>
+    <string name="msg_auth_account_already_exists">This account is already registered. Please sign in again.</string>
+    <string name="msg_auth_social_login_failed">Social sign-in failed. Please try again.</string>
+    <string name="msg_auth_social_server_unavailable">Can\'t reach the social sign-in server. Please try again in a moment.</string>
+    <string name="msg_auth_code_confirm_failed">An unknown error occurred.</string>
+    <string name="msg_auth_temp_password_mail_failed">We couldn\'t send the temporary password email. Please try again in a moment.</string>
+    <string name="msg_auth_password_reset_failed">We couldn\'t reset your password. Please try again in a moment.</string>
+    <string name="msg_auth_social_session_missing">Your sign-up info has expired. Please sign in again.</string>
+    <string name="msg_auth_social_sign_up_expired">Sign-up time has run out. Please sign in again.</string>
+    <string name="msg_auth_invalid_profile">Please check what you entered and try again.</string>
+    <string name="msg_auth_sign_up_failed">Sign-up failed. Please try again.</string>
+    <string name="msg_auth_login_failed">We couldn\'t sign you in. Please try again in a moment.</string>
+    <string name="msg_auth_bad_request">The sign-in request is invalid. Please update the app and try again.</string>
+    <string name="msg_auth_provider_not_ready">%1$s sign-in is coming soon.</string>
+    <string name="msg_auth_provider_unavailable">Can\'t reach %1$s. Please try again in a moment.</string>
+    <string name="msg_auth_provider_failed">%1$s sign-in failed. Please try again.</string>
+    <string name="msg_auth_provider_kakao">Kakao</string>
+    <string name="msg_auth_provider_google">Google</string>
+    <string name="msg_auth_provider_naver">Naver</string>
+
+    <!-- 인트로 -->
+    <string name="msg_intro_force_update">This version of the app is no longer supported.\nPlease update to the latest version.</string>
+    <string name="msg_intro_go_to_store">Go to store</string>
+    <string name="msg_intro_error">A temporary error occurred.\nPlease try again in a moment.</string>
+
+    <!-- 온보딩 -->
+    <string name="msg_onboarding_invalid_input">Please check the name or meal times again.</string>
+    <string name="msg_onboarding_cat_already_exists">You already have a cat.</string>
+
+    <!-- 고양이 -->
+    <string name="msg_cat_name_too_long">Names can be up to %1$d characters</string>
+    <string name="msg_cat_invalid_name">Please check the name again</string>
+    <string name="msg_cat_not_found">We couldn\'t find your cat\'s info</string>
+    <string name="msg_cat_rename_failed">Couldn\'t change your cat\'s name</string>
+
+    <!-- 홈 -->
+    <string name="msg_home_load_failed">Couldn\'t load home</string>
+
+    <!-- 식사 기록 -->
+    <string name="msg_meal_submit_failed">Couldn\'t record your meal. Please try again</string>
+    <string name="msg_meal_tutorial_retry">The network seems unstable. Please try again in a moment</string>
+    <string name="msg_meal_stale_image">Photos taken a while ago can\'t be recorded. Please take a new one</string>
+    <string name="msg_meal_duplicate_image">This photo is already recorded</string>
+    <string name="msg_meal_daily_limit">You can\'t record any more today. Please try again tomorrow</string>
+    <string name="msg_meal_unsupported_type">This photo format isn\'t supported. Please take a new one</string>
+    <string name="msg_meal_file_too_large">The photo is too large. Please take a new one</string>
+    <string name="msg_meal_tutorial_done">You\'ve already finished the tutorial</string>
+    <string name="msg_meal_photo_not_found">We couldn\'t find the photo. Please take it again</string>
+    <string name="msg_meal_photo_info_save_failed">Couldn\'t save the photo details. Please take it again</string>
+    <string name="msg_meal_photo_read_failed">Couldn\'t read the photo. Please take it again</string>
+    <string name="msg_meal_photo_compress_failed">Couldn\'t reduce the photo size. Please take it again</string>
+
+    <!-- 기록 -->
+    <string name="msg_history_meal_already_deleted">This record has already been deleted</string>
+    <string name="msg_history_already_reanalyzed">This record has already been re-analyzed</string>
+    <string name="msg_history_invalid_rating">Please choose a rating again</string>
+    <string name="msg_history_already_rated">You\'ve already rated this meal</string>
+    <string name="msg_history_rating_not_ready">You can only rate meals that have been analyzed</string>
+    <string name="msg_history_feedback_submit_failed">Couldn\'t send your rating. Please try again in a moment.</string>
+    <string name="msg_history_feedback_thanks">Thanks! {name} will learn to see better</string>
+    <string name="msg_history_reanalyze_failed">Couldn\'t re-analyze</string>
+    <string name="msg_history_rename_failed">Couldn\'t rename it</string>
+    <string name="msg_history_delete_failed">Couldn\'t delete it</string>
+
+    <!-- 상점 -->
+    <string name="msg_shop_added_to_cart">Added to cart</string>
+    <string name="msg_shop_cannot_add_more">You can\'t add any more</string>
+    <string name="msg_shop_cart_full">Your cart is full</string>
+    <string name="msg_shop_add_failed">Couldn\'t add it. Please try again in a moment</string>
+    <string name="msg_shop_coin_charge_failed">Couldn\'t add coins. Please tap again in a moment</string>
+    <string name="msg_shop_price_changed_title">The price has changed</string>
+    <string name="msg_shop_price_changed_body">We\'ll reload your cart to show the new price.</string>
+    <string name="msg_shop_not_for_sale_title">Some items are no longer for sale</string>
+    <string name="msg_shop_not_for_sale_body">We\'ll reload your cart and mark the items you can\'t buy.</string>
+    <string name="msg_shop_already_owned_title">You already own this room background</string>
+    <string name="msg_shop_already_owned_body">You can own each room background only once. We\'ll reload your cart and mark it.</string>
+    <string name="msg_shop_purchase_limit_title">Some items are over the purchase limit</string>
+    <string name="msg_shop_purchase_limit_body">These items have a per-person limit. We\'ll reload your cart to show them.</string>
+    <string name="msg_shop_reload_cart">View cart</string>
+
+    <!-- 설정 -->
+    <string name="msg_settings_user_not_found">We couldn\'t find your account. Please sign in again.</string>
+    <string name="msg_settings_profile_invalid_input">Please check the values you entered.</string>
+    <string name="msg_settings_withdrawn">Your account has been deleted. Thanks for being with us. See you again!</string>
+    <string name="msg_settings_withdraw_failed">We couldn\'t delete your account. Please try again in a moment.</string>
+    <string name="msg_settings_profile_save_failed">Couldn\'t save your info</string>
+    <string name="msg_settings_profile_load_failed">Couldn\'t load your info</string>
+    <string name="msg_settings_meal_times_save_failed">Couldn\'t save meal times</string>
+    <string name="msg_settings_meal_times_load_failed">Couldn\'t load meal times</string>
+    <string name="msg_settings_load_failed">Couldn\'t load settings</string>
+</resources>

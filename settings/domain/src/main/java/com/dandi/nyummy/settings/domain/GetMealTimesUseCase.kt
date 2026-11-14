@@ -5,6 +5,7 @@ import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.tti.TTIHelper
@@ -30,7 +31,7 @@ class GetMealTimesUseCase @Inject constructor(
     } catch (e: HttpResponseException) {
         handleHttpError<SettingsErrorType>(
             e,
-            onDomainError = { messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = it.errorMsg) },
+            onDomainError = { messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(it.errorMsg)) },
             onUnknownError = { showLoadFailed(onRetry) },
         )
         Result.failure(e)
@@ -43,14 +44,9 @@ class GetMealTimesUseCase @Inject constructor(
     private fun showLoadFailed(onRetry: () -> Unit) {
         messageHelper.showSnackBar(
             iconType = IconType.ERROR,
-            messageText = LOAD_FAILED_MESSAGE,
-            callToActionText = RETRY_LABEL,
+            messageText = resourceHelper.getString(StringResource.SETTINGS_MEAL_TIMES_LOAD_FAILED),
+            callToActionText = resourceHelper.getString(StringResource.RETRY),
             onClickCTA = onRetry,
         )
-    }
-
-    private companion object {
-        const val LOAD_FAILED_MESSAGE = "식사 시간을 불러오지 못했어요"
-        const val RETRY_LABEL = "다시 시도"
     }
 }

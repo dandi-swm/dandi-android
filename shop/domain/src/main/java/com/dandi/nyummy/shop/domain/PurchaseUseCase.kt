@@ -5,6 +5,7 @@ import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.shop.entity.PurchaseProductVO
 import com.dandi.nyummy.shop.entity.PurchaseResultVO
 import com.dandi.nyummy.tti.TTIHelper
@@ -81,9 +82,9 @@ class PurchaseUseCase @Inject constructor(
                     ShopErrorType.INSUFFICIENT_BALANCE -> PurchaseOutcome.InsufficientBalance
                     else -> PurchaseBlockedDialog.of(error)?.let { dialog ->
                         messageHelper.showOneButtonDialog(
-                            titleText = dialog.title,
-                            descText = dialog.body,
-                            buttonText = dialog.button,
+                            titleText = resourceHelper.getString(dialog.title),
+                            descText = resourceHelper.getString(dialog.body),
+                            buttonText = resourceHelper.getString(dialog.button),
                         )
                         PurchaseOutcome.Blocked
                     } ?: PurchaseOutcome.Unknown
@@ -97,19 +98,11 @@ class PurchaseUseCase @Inject constructor(
 }
 
 /** 구매가 막혔을 때의 다이얼로그(피그마 `Shop · 21c`~`21f`). */
-internal enum class PurchaseBlockedDialog(val title: String, val body: String, val button: String) {
-    PRICE_CHANGED("가격이 바뀌었어요", "장바구니를 다시 불러와 바뀐 가격을 보여 드릴게요.", RELOAD_CART),
-    NOT_FOR_SALE("판매가 끝난 상품이 있어요", "장바구니를 다시 불러와 살 수 없는 상품을 표시해 드릴게요.", CONFIRM),
-    ALREADY_OWNED(
-        "이미 가진 방 배경이에요",
-        "방 배경은 하나만 가질 수 있어요. 장바구니를 다시 불러와 표시해 드릴게요.",
-        CONFIRM,
-    ),
-    PURCHASE_LIMIT(
-        "구매 한도를 넘은 상품이 있어요",
-        "한 사람이 살 수 있는 개수가 정해진 상품이에요. 장바구니를 다시 불러와 보여 드릴게요.",
-        RELOAD_CART,
-    ),
+internal enum class PurchaseBlockedDialog(val title: StringResource, val body: StringResource, val button: StringResource) {
+    PRICE_CHANGED(StringResource.SHOP_PRICE_CHANGED_TITLE, StringResource.SHOP_PRICE_CHANGED_BODY, StringResource.SHOP_RELOAD_CART),
+    NOT_FOR_SALE(StringResource.SHOP_NOT_FOR_SALE_TITLE, StringResource.SHOP_NOT_FOR_SALE_BODY, StringResource.CONFIRM),
+    ALREADY_OWNED(StringResource.SHOP_ALREADY_OWNED_TITLE, StringResource.SHOP_ALREADY_OWNED_BODY, StringResource.CONFIRM),
+    PURCHASE_LIMIT(StringResource.SHOP_PURCHASE_LIMIT_TITLE, StringResource.SHOP_PURCHASE_LIMIT_BODY, StringResource.SHOP_RELOAD_CART),
     ;
 
     companion object {
@@ -123,6 +116,3 @@ internal enum class PurchaseBlockedDialog(val title: String, val body: String, v
         }
     }
 }
-
-private const val RELOAD_CART = "장바구니 다시 보기"
-private const val CONFIRM = "확인"

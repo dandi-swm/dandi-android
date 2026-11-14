@@ -6,6 +6,7 @@ import com.dandi.nyummy.common.domain.error.handlingErrorOnUseCase
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
@@ -29,8 +30,8 @@ class DeleteMealUseCase @Inject constructor(
         } else {
             handleHttpError<HistoryErrorType>(
                 e,
-                onDomainError = { showError(it.errorMsg) },
-                onUnknownError = { showError(DELETE_ERROR_MESSAGE) },
+                onDomainError = { showError(resourceHelper.getString(it.errorMsg)) },
+                onUnknownError = { showError(resourceHelper.getString(StringResource.HISTORY_DELETE_FAILED)) },
             )
             Result.failure(e)
         }
@@ -38,15 +39,11 @@ class DeleteMealUseCase @Inject constructor(
         throw e
     } catch (e: Exception) {
         // 네트워크 끊김 등 HTTP 응답 전 실패도 앱이 죽지 않게 실패로 돌려준다.
-        showError(DELETE_ERROR_MESSAGE)
+        showError(resourceHelper.getString(StringResource.HISTORY_DELETE_FAILED))
         Result.failure(e)
     }
 
     private fun showError(message: String) {
         messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = message)
-    }
-
-    private companion object {
-        const val DELETE_ERROR_MESSAGE = "삭제에 실패했어요"
     }
 }

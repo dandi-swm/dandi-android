@@ -5,6 +5,7 @@ import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.settings.entity.MyProfileVO
 import com.dandi.nyummy.tti.TTIHelper
@@ -34,13 +35,13 @@ class GetMyProfileUseCase @Inject constructor(
             onDomainError = { error ->
                 if (error == MyProfileErrorType.USER_NOT_FOUND) {
                     messageHelper.showOneButtonDialog(
-                        descText = error.errorMsg,
+                        descText = resourceHelper.getString(error.errorMsg),
                         cantIgnore = true,
-                        buttonText = SIGN_IN_AGAIN_LABEL,
+                        buttonText = resourceHelper.getString(StringResource.SIGN_IN_AGAIN),
                         onClickButton = onSignOut,
                     )
                 } else {
-                    messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = error.errorMsg)
+                    messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(error.errorMsg))
                 }
             },
             onUnknownError = { showLoadFailed(onRetry) },
@@ -55,15 +56,9 @@ class GetMyProfileUseCase @Inject constructor(
     private fun showLoadFailed(onRetry: () -> Unit) {
         messageHelper.showSnackBar(
             iconType = IconType.ERROR,
-            messageText = LOAD_FAILED_MESSAGE,
-            callToActionText = RETRY_LABEL,
+            messageText = resourceHelper.getString(StringResource.SETTINGS_PROFILE_LOAD_FAILED),
+            callToActionText = resourceHelper.getString(StringResource.RETRY),
             onClickCTA = onRetry,
         )
-    }
-
-    private companion object {
-        const val LOAD_FAILED_MESSAGE = "내 정보를 불러오지 못했어요"
-        const val RETRY_LABEL = "다시 시도"
-        const val SIGN_IN_AGAIN_LABEL = "로그인하기"
     }
 }
