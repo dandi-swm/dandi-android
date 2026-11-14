@@ -110,10 +110,11 @@ internal fun HistoryDaySection(
         verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2)) {
+            val dayTitle = dayTitleOf(date)
             NyummyText(
                 text = dayShortTitleOf(date),
                 style = NyummyTheme.typography.titleM,
-                modifier = Modifier.semantics { contentDescription = dayTitleOf(date) },
+                modifier = Modifier.semantics { contentDescription = dayTitle },
             )
             if (showSummary) {
                 NyummyText(

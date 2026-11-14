@@ -59,4 +59,16 @@
     <string name="nyummy_health_gauge_chubby">Chubby</string>
     <string name="nyummy_health_gauge_plump">Plump</string>
     <string name="nyummy_notice_dont_show_again">Don\'t show again</string>
+    <!-- 하단 내비 -->
+    <string name="nyummy_nav_home">Home</string>
+    <string name="nyummy_nav_my_room">My Room</string>
+    <string name="nyummy_nav_record">Records</string>
+    <string name="nyummy_nav_shop">Shop</string>
+    <string name="nyummy_nav_meal_record">Log a meal</string>
+    <!-- 인증 코드 입력 접근성 기본값 -->
+    <string name="nyummy_code_input_description">Verification code input</string>
+    <string name="nyummy_code_input_error_description">Please check the verification code again</string>
+    <!-- 냐미 코멘트 카드 펼치기/접기 -->
+    <string name="nyummy_expand">More</string>
+    <string name="nyummy_collapse">Less</string>
 </resources>

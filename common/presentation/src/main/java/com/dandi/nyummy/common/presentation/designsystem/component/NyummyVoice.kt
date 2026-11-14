@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -187,7 +188,7 @@ fun NyummyCoachCard(
                             interactionSource = rememberNyummyInteractionSource(),
                             indication = null,
                             role = Role.Button,
-                            onClickLabel = if (expanded) "접기" else "더보기",
+                            onClickLabel = stringResource(if (expanded) R.string.nyummy_collapse else R.string.nyummy_expand),
                             onClick = { expanded = !expanded },
                         )
                     } else {
@@ -235,7 +236,7 @@ private fun CoachToggleLabel(expanded: Boolean) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NyummyText(
-            text = if (expanded) "접기" else "더보기",
+            text = stringResource(if (expanded) R.string.nyummy_collapse else R.string.nyummy_expand),
             style = NyummyTheme.typography.labelS,
             color = NyummyTheme.colors.content.brand,
         )

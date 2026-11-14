@@ -55,6 +55,7 @@ import com.dandi.nyummy.history.presentation.model.HistoryCalendarDayUiModel
 import com.dandi.nyummy.history.presentation.model.HistoryMonth
 import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
 import com.dandi.nyummy.history.presentation.model.dayLabelOf
+import com.dandi.nyummy.history.presentation.model.monthLabelOf
 import com.dandi.nyummy.history.presentation.util.DAYS_IN_WEEK
 import com.dandi.nyummy.history.presentation.util.HISTORY_MONTH_PAGE_COUNT
 import com.dandi.nyummy.history.presentation.util.historyMonthAt
@@ -112,7 +113,7 @@ internal fun HistoryCalendar(
     }
 
     val scope = rememberCoroutineScope()
-    val calendarDescription = stringResource(R.string.history_calendar_description, visibleMonth.label)
+    val calendarDescription = stringResource(R.string.history_calendar_description, monthLabelOf(visibleMonth))
     val previousLabel = stringResource(R.string.history_calendar_previous_month)
     val nextLabel = stringResource(R.string.history_calendar_next_month)
 
@@ -202,10 +203,11 @@ private fun CalendarHeader(
                 enabled = canGoPrevious,
                 onClick = onPrevious,
             )
+            val monthLabel = monthLabelOf(month)
             NyummyText(
                 text = month.shortLabel,
                 style = NyummyTheme.typography.titleL,
-                modifier = Modifier.clearAndSetSemantics { contentDescription = month.label },
+                modifier = Modifier.clearAndSetSemantics { contentDescription = monthLabel },
             )
             MonthArrow(
                 icon = CommonR.drawable.nyummy_ic_chevron_right,

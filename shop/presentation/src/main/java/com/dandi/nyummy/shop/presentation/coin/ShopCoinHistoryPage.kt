@@ -127,7 +127,8 @@ private fun HistoryList(
     val locale = LocalConfiguration.current.locales[0]
     val datePattern = stringResource(R.string.shop_coin_date_pattern)
     val dateFormatter = remember(datePattern, locale) { DateTimeFormatter.ofPattern(datePattern, locale) }
-    val timeFormatter = remember(locale) { DateTimeFormatter.ofPattern(TimePattern, locale) }
+    val timePattern = stringResource(R.string.shop_coin_time_pattern)
+    val timeFormatter = remember(timePattern, locale) { DateTimeFormatter.ofPattern(timePattern, locale) }
     LazyColumn(
         state = listState,
         modifier = modifier,
@@ -254,5 +255,4 @@ private fun signedCoins(value: Int): String = when {
     else -> coins(0)
 }
 
-private const val TimePattern = "a h:mm"
 private val BalanceCoinSize = 28.dp

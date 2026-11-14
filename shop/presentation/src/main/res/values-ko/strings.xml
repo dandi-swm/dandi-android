@@ -74,6 +74,7 @@
     <string name="shop_purchase_more_shopping">상점 더 둘러보기</string>
     <string name="shop_coin_title">코인 내역</string>
     <string name="shop_coin_date_pattern">M월 d일</string>
+    <string name="shop_coin_time_pattern">a h:mm</string>
     <string name="shop_coin_balance_after">남은 코인 %1$s</string>
     <string name="shop_coin_empty_title">아직 코인 내역이 없어요</string>
     <string name="shop_coin_empty_body">식사를 기록하면 보상 상자에서 코인이 나와요</string>
