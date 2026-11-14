@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -54,9 +55,12 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextBut
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.image.NyummyCdn
+import com.dandi.nyummy.shop.domain.CoinChargePackages
+import com.dandi.nyummy.shop.entity.CoinChargeCurrency
 import com.dandi.nyummy.shop.entity.CoinChargePackageVO
 import com.dandi.nyummy.shop.presentation.R
 import com.dandi.nyummy.shop.presentation.component.ShopTopBar
+import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -194,7 +198,7 @@ private fun CoinPackageRow(pack: CoinChargePackageVO, onClick: () -> Unit) {
             )
         }
         NyummyButton(
-            text = stringResource(R.string.shop_charge_price, number(pack.price)),
+            text = chargePrice(pack),
             onClick = onClick,
             style = NyummyButtonStyle.Tonal,
             size = NyummyButtonSize.S,
@@ -202,7 +206,7 @@ private fun CoinPackageRow(pack: CoinChargePackageVO, onClick: () -> Unit) {
     }
 }
 
-/** 충전 확인 시트(피그마 `Charge · 11`). 결제할 금액, 충전 후 내 코인, 취소·"n원 결제하기". 실제 결제는 하지 않는다. */
+/** 충전 확인 시트(피그마 `Charge · 11`). 결제할 금액, 충전 후 내 코인, 취소·"(가격) 결제하기". 실제 결제는 하지 않는다. */
 @Composable
 private fun CoinChargeConfirmSheet(
     pack: CoinChargePackageVO,
@@ -222,7 +226,7 @@ private fun CoinChargeConfirmSheet(
             CoinPackArt(imageId = pack.imageId, coins = pack.coins, tileSize = SheetArtTileSize)
             Column(verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12)) {
                 SheetRow(label = stringResource(R.string.shop_charge_sheet_price)) {
-                    NyummyText(text = stringResource(R.string.shop_charge_price, number(pack.price)), style = NyummyTheme.typography.numberXs)
+                    NyummyText(text = chargePrice(pack), style = NyummyTheme.typography.numberXs)
                 }
                 SheetRow(label = stringResource(R.string.shop_charge_sheet_balance_after)) {
                     CoinAmount(value = balance + pack.coins, iconSize = SheetCoinSize)
@@ -243,7 +247,7 @@ private fun CoinChargeConfirmSheet(
                 modifier = Modifier.weight(CancelWeight),
             )
             NyummyButton(
-                text = stringResource(R.string.shop_charge_sheet_pay, number(pack.price)),
+                text = stringResource(R.string.shop_charge_sheet_pay, chargePrice(pack)),
                 onClick = onPay,
                 enabled = !isPaying,
                 modifier = Modifier.weight(PayWeight),
@@ -406,6 +410,27 @@ private val UpperThird = object : Arrangement.Vertical {
 }
 
 private fun number(value: Int): String = NumberFormat.getNumberInstance(Locale.KOREA).format(value)
+
+/**
+ * 묶음 가격을 기기 지역 통화로 보인다. 원화 기준 가격을 고정 환율 표로 바꾼 값이다([CoinChargePackages.priceOf]).
+ * 실제 결제 전 A/B 테스트라 환율을 따라가지 않는다.
+ */
+@Composable
+private fun chargePrice(pack: CoinChargePackageVO): String {
+    val locale = LocalConfiguration.current.locales[0]
+    val price = CoinChargePackages.priceOf(pack, CoinChargePackages.currencyOf(locale.country, locale.language))
+    val digits = price.currency.fractionDigits
+    val amount = NumberFormat.getNumberInstance(locale).apply {
+        minimumFractionDigits = digits
+        maximumFractionDigits = digits
+    }.format(BigDecimal.valueOf(price.amount, digits))
+    val format = when (price.currency) {
+        CoinChargeCurrency.KRW -> R.string.shop_charge_price_krw
+        CoinChargeCurrency.JPY -> R.string.shop_charge_price_jpy
+        CoinChargeCurrency.USD -> R.string.shop_charge_price_usd
+    }
+    return stringResource(format, amount)
+}
 
 /** 받은 뒤 화면 그림. 이벤트 코인은 묶음과 상관없이 같아서 가장 큰 묶음 그림(바구니)을 쓴다. */
 private const val DoneArtImageId = 3L

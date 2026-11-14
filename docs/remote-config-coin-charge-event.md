@@ -1,7 +1,7 @@
 # Remote Config 코인 충전 이벤트 (가짜 결제 A/B 테스트)
 
 결제를 붙이기 전에, 가격을 본 사람 중 돈을 내고 코인을 사려는 사람이 얼마나 되는지 두 가격대(A/B)로 잰다.
-홈 공지(상점 출시) → 상점 → 탭 줄 끝 "코인 · Event" 탭 → 코인 충전 화면 → 묶음 → 충전 확인 시트 → "n원 결제하기"를 누르면 **실제 결제 없이** 이번 한 번만
+홈 공지(상점 출시) → 상점 → 탭 줄 끝 "코인 · Event" 탭 → 코인 충전 화면 → 묶음 → 충전 확인 시트 → "(가격) 결제하기"를 누르면 **실제 결제 없이** 이번 한 번만
 선물 코인(그룹·묶음과 상관없이 3,000, 서버가 정함)을 넣어 주고 "돈은 나가지 않았어요"라고 알린다.
 
 화면은 피그마 `v2 · 40 Shop`의 섹션 `Shop · 60 코인 충전 이벤트`(`Charge · 01~15`, 명세 메모)를 본다.
@@ -49,6 +49,16 @@ B 그룹은 `"group": "B"`만 다르다. 나머지(eventId, 공지)는 A와 똑�
 | 2 | 1,500 | 5,000원 | 7,500원 | `coins/2.png` 주머니 |
 | 3 | 3,000 | 10,000원 | 15,000원 | `coins/3.png` 바구니 |
 
+화면 가격은 기기 지역 통화로 보인다(`CoinChargePackages.currencyOf`/`priceOf`). 지역이 한국이면 원, 일본이면 엔, 그 밖은 달러이고,
+지역이 비어 있으면 언어(ko·ja)로 고른다. 실제 결제 전이라 2026-11-14 환율(1달러 ≈ 1,332원, 100엔 ≈ 833원)로 바꾼 뒤
+깔끔한 숫자로 맞춰 고정했다. 분석 이벤트의 `price`는 통화와 상관없이 위 원화 가격이다(그룹끼리 같은 단위로 비교).
+
+| 묶음 번호 | A 엔 | A 달러 | B 엔 | B 달러 |
+|---|---|---|---|---|
+| 1 | ¥120 | $0.79 | ¥180 | $1.19 |
+| 2 | ¥600 | $3.99 | ¥900 | $5.99 |
+| 3 | ¥1,200 | $7.99 | ¥1,800 | $11.99 |
+
 | 필드 | 필수 | 설명 |
 |---|---|---|
 | `eventId` | O | 회차 구분값. 분석 이벤트의 `event_id`, "다시 보지 않기", 받음 기록이 이 값으로 회차를 나눈다. 다음 회차는 새 값으로 바꾼다. |
@@ -58,7 +68,7 @@ B 그룹은 `"group": "B"`만 다르다. 나머지(eventId, 공지)는 A와 똑�
 
 ## 선물 코인 받기 API
 
-"n원 결제하기"를 누르면 `POST /api/v1/coins/gifts`를 부른다.
+"(가격) 결제하기"를 누르면 `POST /api/v1/coins/gifts`를 부른다.
 
 ```http
 POST /api/v1/coins/gifts
@@ -112,9 +122,9 @@ adb -s emulator-5554 shell setprop debug.firebase.analytics.app com.dandi.nyummy
 | 공지를 버튼 없이 닫음 | `coin_charge_notice_close` | `dont_show_again` |
 | 상점 "코인" 탭 누름 | `coin_charge_tab_click` | `claimed`(true면 충전 화면 대신 "준비 중인 기능이에요"만 뜸) |
 | 충전 화면에 들어옴 | `coin_charge_view` | `source`(shop_tab·link), `claimed` |
-| 묶음 누름(시트) | `coin_charge_package_click` | `package_id`(묶음 번호 1~3), 숫자 `price`·`coins` |
+| 묶음 누름(시트) | `coin_charge_package_click` | `package_id`(묶음 번호 1~3), 숫자 `price`(원화 기준)·`coins` |
 | 시트를 결제 없이 닫음 | `coin_charge_sheet_close` | `package_id` |
-| **"n원 결제하기" 누름** | **`coin_charge_pay_click`** | `package_id`, 숫자 `price`·`coins` |
+| **"(가격) 결제하기" 누름** | **`coin_charge_pay_click`** | `package_id`, 숫자 `price`·`coins` |
 | 선물 코인 받음 | `coin_charge_granted` | `package_id`, 숫자 `coins`(서버 `coinQuantity`) |
 | 받지 못함 | `coin_charge_grant_failed` | `package_id`, `reason`(already_claimed·already_claimed_server·package_not_found·invalid_request·server_error·network_or_unknown). already_claimed_server는 기기 기록 없이 서버가 이미 받았다고 한 경우(다시 설치한 사람 등) |
 | 받은 사람이 다시 누름 | `coin_charge_repeat_click` | `package_id`, 숫자 `price` |
