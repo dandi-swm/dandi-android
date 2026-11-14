@@ -196,10 +196,10 @@ class NyummyWidgetCatalogTest {
     }
 
     private companion object {
-        /** 이 모듈의 strings.xml. 이름 → 문구(`\n` 등은 풀어 둔다). */
+        /** 이 모듈의 한국어 strings.xml(values-ko, 시안 원문). 이름 → 문구(`\n` 등은 풀어 둔다). */
         val strings: Map<String, String> by lazy {
             val document = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-                .parse(projectFile("widget/presentation/src/main/res/values/strings.xml"))
+                .parse(projectFile("widget/presentation/src/main/res/values-ko/strings.xml"))
             val nodes = document.getElementsByTagName("string")
             (0 until nodes.length).map { nodes.item(it) as Element }.associate { element ->
                 element.getAttribute("name") to element.textContent

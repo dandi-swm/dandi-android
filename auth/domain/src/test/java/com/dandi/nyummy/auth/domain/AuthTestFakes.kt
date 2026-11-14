@@ -205,7 +205,7 @@ internal class RecordingMessageHelper : MessageHelper {
 }
 
 internal class FakeResourceHelper : ResourceHelper {
-    override fun getString(resource: StringResource): String = ""
+    override fun getString(resource: StringResource): String = resource.name
 }
 
 internal class FakeTTIHelper : TTIHelper {

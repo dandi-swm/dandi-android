@@ -76,6 +76,7 @@ class SignUpProfileInputTest {
             FakeTTIHelper,
         ),
         messageHelper = messageHelper,
+        strings = { id, _ -> "string:$id" },
         navigationHelper = navigationHelper,
         analyticsHelper = RecordingAnalyticsHelper(),
     )

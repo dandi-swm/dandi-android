@@ -1,5 +1,6 @@
 package com.dandi.nyummy.auth.domain
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.auth.entity.AuthTokenVO
 import com.dandi.nyummy.auth.entity.SocialCredentialVO
 import com.dandi.nyummy.auth.entity.SocialLoginType
@@ -94,7 +95,7 @@ class SocialLoginUseCaseTest {
         assertTrue(result.isFailure)
         assertTrue(navigationHelper.rootPages.isEmpty())
         assertTrue(navigationHelper.pages.isEmpty())
-        assertEquals("일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.TEMPORARY_ERROR.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -105,7 +106,7 @@ class SocialLoginUseCaseTest {
 
         assertTrue(result.isFailure)
         val dialog = messageHelper.dialogs.single()
-        assertEquals("카카오 로그인에 실패했어요. 다시 시도해주세요.", dialog.descText)
+        assertEquals(StringResource.AUTH_PROVIDER_FAILED.name, dialog.descText)
         dialog.onClickButton?.invoke()
         assertEquals(0, navigationHelper.initialCount)
         assertEquals(0, navigationHelper.backCount)
@@ -117,7 +118,7 @@ class SocialLoginUseCaseTest {
 
         useCase.login(credential)
 
-        assertEquals("카카오 서버에 연결할 수 없어요. 잠시 후 다시 시도해주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.AUTH_PROVIDER_UNAVAILABLE.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -127,7 +128,7 @@ class SocialLoginUseCaseTest {
         useCase.login(credential)
 
         val dialog = messageHelper.dialogs.single()
-        assertEquals("일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.", dialog.descText)
+        assertEquals(StringResource.TEMPORARY_ERROR.name, dialog.descText)
         dialog.onClickButton?.invoke()
         assertEquals(0, navigationHelper.backCount)
     }
@@ -139,7 +140,7 @@ class SocialLoginUseCaseTest {
         val result = useCase.login(credential)
 
         assertTrue(result.isFailure)
-        assertEquals("네트워크 연결을 확인한 뒤 다시 시도해주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.NETWORK_ERROR.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -157,7 +158,7 @@ class SocialLoginUseCaseTest {
         useCase.onProviderFailed(SocialLoginType.KAKAO)
         useCase.onProviderUnavailable(SocialLoginType.NAVER)
 
-        assertEquals("카카오 로그인에 실패했어요. 다시 시도해주세요.", messageHelper.dialogs.single().descText)
-        assertEquals(listOf("네이버 로그인은 준비 중이에요."), messageHelper.toasts)
+        assertEquals(StringResource.AUTH_PROVIDER_FAILED.name, messageHelper.dialogs.single().descText)
+        assertEquals(listOf(StringResource.AUTH_PROVIDER_NOT_READY.name), messageHelper.toasts)
     }
 }

@@ -49,6 +49,7 @@ class PasswordResetViewModelTest {
             repository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper,
         ),
         messageHelper = messageHelper,
+        strings = { id, _ -> "string:$id" },
         navigationHelper = navigationHelper,
     )
 
@@ -110,7 +111,7 @@ class PasswordResetViewModelTest {
 
         assertTrue(repository.resetPasswordCalls.isEmpty())
         assertEquals(PasswordResetStep.CODE, viewModel.uiState.value.step)
-        assertEquals(AuthErrorType.EMAIL_CODE_MISMATCH.errorMsg, viewModel.uiState.value.codeError)
+        assertEquals(AuthErrorType.EMAIL_CODE_MISMATCH.errorMsg.name, viewModel.uiState.value.codeError)
     }
 
     @Test
@@ -126,7 +127,7 @@ class PasswordResetViewModelTest {
         assertEquals("nyummy@cat.com", state.email)
         assertEquals("", state.emailChallengeToken)
         assertEquals("", state.emailVerifiedToken)
-        assertEquals(AuthErrorType.VERIFICATION_EXPIRED.errorMsg, messageHelper.dialogs.single())
+        assertEquals(AuthErrorType.VERIFICATION_EXPIRED.errorMsg.name, messageHelper.dialogs.single())
     }
 
     @Test

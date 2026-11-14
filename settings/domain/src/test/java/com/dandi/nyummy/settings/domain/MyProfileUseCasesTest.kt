@@ -1,5 +1,6 @@
 package com.dandi.nyummy.settings.domain
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.settings.entity.MyProfileChange
 import com.dandi.nyummy.settings.entity.MyProfileVO
@@ -55,7 +56,7 @@ class MyProfileUseCasesTest {
 
         assertTrue(result.isFailure)
         val snackBar = messageHelper.snackBars.single()
-        assertEquals("내 정보를 불러오지 못했어요", snackBar.messageText)
+        assertEquals(StringResource.SETTINGS_PROFILE_LOAD_FAILED.name, snackBar.messageText)
         snackBar.onClickCTA?.invoke()
         assertEquals(1, retryCount)
     }
@@ -69,7 +70,7 @@ class MyProfileUseCasesTest {
         assertTrue(result.isFailure)
         assertTrue(messageHelper.snackBars.isEmpty())
         val dialog = messageHelper.dialogs.single()
-        assertEquals("회원 정보를 찾지 못했어요. 다시 로그인해 주세요.", dialog.descText)
+        assertEquals(StringResource.SETTINGS_USER_NOT_FOUND.name, dialog.descText)
         assertTrue(dialog.cantIgnore)
         assertEquals(0, signOutCount)
         dialog.onClickButton?.invoke()
@@ -102,8 +103,8 @@ class MyProfileUseCasesTest {
 
         assertTrue(result.isFailure)
         val snackBar = messageHelper.snackBars.single()
-        assertEquals("내 정보를 저장하지 못했어요", snackBar.messageText)
-        assertEquals("다시 시도", snackBar.callToActionText)
+        assertEquals(StringResource.SETTINGS_PROFILE_SAVE_FAILED.name, snackBar.messageText)
+        assertEquals(StringResource.RETRY.name, snackBar.callToActionText)
         snackBar.onClickCTA?.invoke()
         assertEquals(1, retryCount)
     }
@@ -115,7 +116,7 @@ class MyProfileUseCasesTest {
         update(MyProfileChange(heightCm = 163))
 
         val snackBar = messageHelper.snackBars.single()
-        assertEquals("입력한 값을 다시 확인해 주세요.", snackBar.messageText)
+        assertEquals(StringResource.SETTINGS_PROFILE_INVALID_INPUT.name, snackBar.messageText)
         assertNull(snackBar.callToActionText)
     }
 

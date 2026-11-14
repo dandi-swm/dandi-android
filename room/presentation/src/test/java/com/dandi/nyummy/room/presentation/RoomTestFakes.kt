@@ -20,6 +20,7 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
+import com.dandi.nyummy.common.presentation.helper.StringProvider
 import com.dandi.nyummy.room.domain.RoomRepository
 import com.dandi.nyummy.room.entity.OwnedRoomItemPageVO
 import com.dandi.nyummy.room.entity.RoomItemCategory
@@ -124,12 +125,16 @@ internal fun httpException(code: Int, errorCode: String? = null): HttpResponseEx
     cause = errorCode?.let(::Throwable),
 )
 
+/** 문구 id를 그대로 드러내는 대역. 기기 언어와 상관없이 어떤 문구를 골랐는지만 본다. */
+internal val TestRoomStrings = StringProvider { id, _ -> "string:$id" }
+
 internal class RecordingMessageHelper : MessageHelper {
     data class SnackBarCall(
         val iconType: IconType,
-        val messageText: String,
+        val messageText: String?,
         val callToActionText: String?,
         val onClickCTA: (() -> Unit)?,
+        val messageRes: Int? = null,
     )
 
     data class DialogCall(val descText: String, val cantIgnore: Boolean, val onClickButton: (() -> Unit)?)
@@ -163,7 +168,9 @@ internal class RecordingMessageHelper : MessageHelper {
         messageRes: Int,
         callToActionText: String?,
         onClickCTA: (() -> Unit)?,
-    ) = Unit
+    ) {
+        snackBars += SnackBarCall(iconType, null, callToActionText, onClickCTA, messageRes)
+    }
 
     override fun showOneButtonDialog(
         titleText: String?,

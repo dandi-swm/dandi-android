@@ -716,7 +716,7 @@ class GetIntroUseCaseTest {
     }
 
     private class FakeResourceHelper : ResourceHelper {
-        override fun getString(resource: StringResource): String = ""
+        override fun getString(resource: StringResource): String = resource.name
     }
 
     private class RecordingMessageHelper : MessageHelper {

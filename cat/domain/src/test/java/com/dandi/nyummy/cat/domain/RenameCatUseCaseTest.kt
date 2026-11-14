@@ -1,5 +1,6 @@
 package com.dandi.nyummy.cat.domain
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.HttpResponseStatus
@@ -72,7 +73,7 @@ class RenameCatUseCaseTest {
 
         assertTrue(result.isFailure)
         assertNull(memory.catName)
-        assertEquals(IconType.ERROR to "고양이 이름을 바꾸지 못했어요", messageHelper.snackBars.single())
+        assertEquals(IconType.ERROR to StringResource.CAT_RENAME_FAILED.name, messageHelper.snackBars.single())
         messageHelper.snackBarActions.single()?.invoke()
         assertEquals(1, retryCount)
     }
@@ -85,7 +86,7 @@ class RenameCatUseCaseTest {
 
         assertTrue(result.isFailure)
         assertNull(memory.catName)
-        assertEquals(IconType.ERROR to "이름은 8자까지 지을 수 있어요", messageHelper.snackBars.single())
+        assertEquals(IconType.ERROR to StringResource.CAT_NAME_TOO_LONG.name, messageHelper.snackBars.single())
         assertNull(messageHelper.snackBarActions.single())
     }
 
@@ -95,7 +96,7 @@ class RenameCatUseCaseTest {
 
         rename("달봉이")
 
-        assertEquals(IconType.ERROR to "고양이 정보를 찾지 못했어요", messageHelper.snackBars.single())
+        assertEquals(IconType.ERROR to StringResource.CAT_NOT_FOUND.name, messageHelper.snackBars.single())
         assertTrue(messageHelper.dialogs.isEmpty())
     }
 

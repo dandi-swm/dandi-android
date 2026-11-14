@@ -135,7 +135,7 @@ internal class RecordingNavigationHelper : NavigationHelper {
 }
 
 internal object FakeResourceHelper : ResourceHelper {
-    override fun getString(resource: StringResource): String = ""
+    override fun getString(resource: StringResource): String = resource.name
 }
 
 internal object FakeTTIHelper : TTIHelper {

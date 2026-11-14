@@ -1,5 +1,6 @@
 package com.dandi.nyummy.auth.domain
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.auth.entity.AuthTokenVO
 import com.dandi.nyummy.home.domain.HomePreparePage
 import kotlinx.coroutines.runBlocking
@@ -54,7 +55,7 @@ class LoginUseCaseTest {
 
         assertTrue(result.isFailure)
         assertTrue(navigationHelper.rootPages.isEmpty())
-        assertEquals(AuthErrorType.INVALID_CREDENTIALS.errorMsg, messageHelper.dialogs.single().descText)
+        assertEquals(AuthErrorType.INVALID_CREDENTIALS.errorMsg.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -63,7 +64,7 @@ class LoginUseCaseTest {
 
         useCase.login("test@dandi.app", "pw1234")
 
-        assertEquals("로그인하지 못했어요. 잠시 후 다시 시도해 주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.AUTH_LOGIN_FAILED.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -73,6 +74,6 @@ class LoginUseCaseTest {
         val result = useCase.login("test@dandi.app", "pw1234")
 
         assertTrue(result.isFailure)
-        assertEquals("네트워크 연결을 확인한 뒤 다시 시도해주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.NETWORK_ERROR.name, messageHelper.dialogs.single().descText)
     }
 }

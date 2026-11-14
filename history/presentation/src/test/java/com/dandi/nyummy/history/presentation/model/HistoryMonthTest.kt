@@ -5,6 +5,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.LocalDate
+import java.util.Locale
 
 class HistoryMonthTest {
 
@@ -28,6 +30,6 @@ class HistoryMonthTest {
 
         assertTrue(october.contains(HistoryDateVO(2026, 10, 31)))
         assertFalse(october.contains(HistoryDateVO(2026, 11, 1)))
-        assertEquals("2026년 10월", october.label)
+        assertEquals("2026년 10월", formatDateLabel(LocalDate.of(october.year, october.month, 1), "yyyy년 M월", Locale.KOREAN))
     }
 }

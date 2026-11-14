@@ -47,7 +47,7 @@ internal class RecordingMessageHelper : MessageHelper {
     val dialogs = mutableListOf<DialogCall>()
     val snackBars = mutableListOf<Pair<IconType, String>>()
 
-    /** 스낵바마다 붙은 "다시 시도" 같은 동작. [snackBars]와 순서가 같다. */
+    /** 스낵바마다 붙은 StringResource.RETRY.name 같은 동작. [snackBars]와 순서가 같다. */
     val snackBarActions = mutableListOf<(() -> Unit)?>()
 
     override val effect: Flow<MessageEffect> = emptyFlow()
@@ -92,7 +92,7 @@ internal class RecordingMessageHelper : MessageHelper {
 }
 
 internal object FakeResourceHelper : ResourceHelper {
-    override fun getString(resource: StringResource): String = ""
+    override fun getString(resource: StringResource): String = resource.name
 }
 
 internal object FakeTTIHelper : TTIHelper {
