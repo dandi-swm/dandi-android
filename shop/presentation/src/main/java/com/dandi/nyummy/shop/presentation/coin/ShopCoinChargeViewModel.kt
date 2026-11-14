@@ -63,7 +63,7 @@ sealed interface ShopCoinChargeIntent : MviIntent {
     /** 충전 확인 시트의 취소, 바깥 누름, 뒤로 가기. */
     data object DismissSheet : ShopCoinChargeIntent
 
-    /** 충전 확인 시트의 "n원 결제하기". */
+    /** 충전 확인 시트의 "(가격) 결제하기". */
     data object ClickPay : ShopCoinChargeIntent
 
     data object DismissClaimedDialog : ShopCoinChargeIntent
