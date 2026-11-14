@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mailbox_title">受信箱</string>
+
+    <string name="mailbox_item_claim">受け取る</string>
+    <string name="mailbox_item_open">開ける</string>
+    <string name="mailbox_item_claimed">受け取り済み</string>
+    <string name="mailbox_item_remaining_days">残り%1$d日</string>
+    <string name="mailbox_item_retention_notice">アイテムは届いてから30日間保管されます</string>
+    <string name="mailbox_item_claim_all">ごほうびをすべて受け取る</string>
+    <string name="mailbox_item_empty_title">届いたアイテムはありません</string>
+    <string name="mailbox_item_empty_body">ごほうびや返信が届くとここに表示されます</string>
+
+    <string name="mailbox_box_open_title">ごほうびを受け取りました！</string>
+    <string name="mailbox_box_open_continue">続ける</string>
+    <string name="mailbox_box_content_description">ごほうびボックス</string>
+    <string name="mailbox_box_reward_coin">+%1$,d</string>
+    <string name="mailbox_box_reward_item_count">%1$s %2$d個</string>
+    <string name="mailbox_box_reward_more_count">+%1$d</string>
+    <string name="mailbox_box_reward_more">さらにゲット</string>
+
+    <string name="mailbox_tutorial_open_title">「開ける」を押してみる？</string>
+    <string name="mailbox_tutorial_open_body">箱の中には何が入ってるかな</string>
+    <string name="mailbox_tutorial_intro_title">ここは受信箱だよ</string>
+    <string name="mailbox_tutorial_intro_body">ごほうびはここで30日間ご主人を待ってるよ</string>
+    <string name="mailbox_tutorial_back_title">ごほうびをもらったよ！</string>
+    <string name="mailbox_tutorial_back_body">さあ、戻ってマイルームを飾ってみよう</string>
+
+    <!-- 스낵바 -->
+    <string name="mailbox_already_gone">すでに受け取ったか、期限が切れたお届け物です</string>
+    <string name="mailbox_claim_failed">ごほうびを受け取れませんでした。しばらくしてからもう一度お試しください。</string>
+    <string name="mailbox_deleted">お届け物を削除しました</string>
+    <string name="mailbox_undo">元に戻す</string>
+    <string name="mailbox_delete_failed">お届け物を削除できませんでした。しばらくしてからもう一度お試しください。</string>
+    <string name="mailbox_restore_failed">お届け物を元に戻せませんでした。しばらくしてからもう一度お試しください。</string>
+</resources>

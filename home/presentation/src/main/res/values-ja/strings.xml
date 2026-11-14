@@ -1,0 +1,46 @@
+<resources>
+    <string name="home_wallet_label">所持コイン</string>
+    <string name="home_wallet_description">所持コイン %1$s枚</string>
+    <string name="home_action_mail">受信箱</string>
+    <string name="home_action_notice">お知らせ</string>
+    <string name="home_action_settings">設定</string>
+    <string name="home_streak_days">%1$d日目</string>
+    <string name="home_streak_message">%1$sにごはんをあげました！</string>
+    <string name="home_character_description">%1$s</string>
+    <string name="home_speech_waiting">すやすや… 最初のごはんを待ってるよ</string>
+    <string name="home_speech_recorded">もぐもぐ！今日も用意してくれてありがとう</string>
+    <!-- %1$s: 오전/오후, %2$d: 시(1~12), %3$02d: 분 -->
+    <string name="home_hide_ui">%1$sだけ見る</string>
+    <string name="home_show_ui">画面をもう一度表示</string>
+    <!-- 로그인 직후 냐미 방 준비 화면 -->
+    <string name="home_prepare_headline_line1">%1$sがお部屋を</string>
+    <string name="home_prepare_headline_line2">片づけ中だよ！</string>
+    <string name="home_prepare_subtitle">ご主人を迎える準備をしています</string>
+    <string name="home_prepare_progress_label">お部屋を飾りつけ中…</string>
+    <string name="home_prepare_progress_complete">準備完了！お部屋に入ります</string>
+    <string name="home_prepare_progress_percent">%1$d%%</string>
+    <string name="home_prepare_tip">%1$sをタップすると、新しいお話を聞かせてくれます</string>
+    <string name="home_tutorial_hello_title">こんにちは、ご主人！わたしは%1$sだよ</string>
+    <string name="home_tutorial_hello_body">ご主人がごはんを記録すると、わたしも一緒に食べられるんだ</string>
+    <string name="home_tutorial_reward_title">ごはんを記録するとごほうびボックスももらえるよ</string>
+    <string name="home_tutorial_reward_body">ボックスは受信箱に届くよ</string>
+    <string name="home_tutorial_camera_title">ここをタップして、最初の記録をしてみよう！</string>
+    <string name="home_tutorial_camera_body">ごはんのたびに写真を1枚撮るだけで記録完了だよ</string>
+    <string name="home_tutorial_mail_title">ごほうびボックスが届いたよ！</string>
+    <string name="home_tutorial_mail_body">受信箱で一緒に開けてみよう</string>
+    <string name="home_tutorial_room_title">もらったアイテムでお部屋を飾ってみよう！</string>
+    <string name="home_tutorial_room_body">マイルームに行ってみる？</string>
+    <string name="home_tutorial_room_saved_title">お部屋がかわいく保存できたよ！</string>
+    <string name="home_tutorial_room_saved_body">飾ったお部屋はホームでもこうして見られるよ</string>
+    <string name="home_health_steady_title">コツコツ記録すれば\nふたりとも元気！</string>
+    <string name="home_health_steady_body">ご主人が食事を記録するたびに、わたしも一緒に食べるよ。\nちゃんと食べてくれたら、今みたいにちょうどいい体型だよ。</string>
+    <string name="home_health_starving_title">食事を抜くと\nわたしがやせちゃう</string>
+    <string name="home_health_starving_body">ご主人がごはんを抜くと、わたしも一緒にごはん抜きで\nどんどんやせちゃう。また食べてくれたらすぐ戻るよ！</string>
+    <string name="home_health_overeating_title">食べすぎると\nぽっちゃりにゃんこになっちゃう</string>
+    <string name="home_health_overeating_body">ご主人が食べすぎると、わたしもたくさん食べて\nまんまるになっちゃう。ほどよく食べるのがふたりにいちばん。</string>
+    <string name="home_health_next">次へ</string>
+    <string name="home_health_done">わかった！</string>
+    <string name="home_tutorial_finish_title">これで準備完了！\n次のごはんを待ってるね</string>
+    <string name="home_tutorial_finish_body">ごはんを食べるときは、真ん中のカメラボタンを押すだけ。\n記録するたびに、ごほうびボックスが受信箱に届くよ。</string>
+    <string name="home_tutorial_finish_start">はじめる</string>
+</resources>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  기기 홈 화면 위젯 문구. 피그마 `Widget · 20 사용 시안 · 상태별`을 따른다.
+  %1$s 자리에는 끼니 이름(아침·점심·저녁)이 들어간다. 세 이름 모두 받침으로 끝나서 조사는 "을", "이에요"로 고정한다.
+  일 단위 설명(_rest)은 날수를 알면 widget_away_days_prefix로 "N일째 "를 붙이고, 모르면 그대로 쓴다.
+  영어·일본어 문구는 조사 가정 없이 끼니 이름(소문자 영어 / 일본어 명사)이 문장 중간에 들어가도 자연스럽게 쓴다.
+  위젯 문구는 줄바꿈을 직접 넣은 곳(\n)에서만 줄이 바뀌므로, 한 줄을 한국어 시안 폭 안으로 짧게 쓴다.
+  일본어 글자는 까투리에 없어 시스템 글꼴로 그려진다.
+-->
+<resources>
+    <string name="widget_label">ニャミ</string>
+    <string name="widget_description">ニャミがご主人を待っています</string>
+
+    <string name="widget_meal_breakfast">朝ごはん</string>
+    <string name="widget_meal_lunch">昼ごはん</string>
+    <string name="widget_meal_dinner">晩ごはん</string>
+
+    <string name="widget_streak_days">%1$d日</string>
+    <string name="widget_away_days_prefix">%1$d日目 %2$s</string>
+
+    <!-- 밤: 자정 ~ 첫 끼니 기다림 전 -->
+    <string name="widget_night_a_title">夜食\nガマン中</string>
+    <string name="widget_night_a_sub">%1$sまでがんばる</string>
+    <string name="widget_night_b_title">%1$sの\nアラームかけた</string>
+    <string name="widget_night_b_sub">ご主人を起こしに行く</string>
+    <string name="widget_night_c_title">すやすや\nもぐもぐ</string>
+    <string name="widget_night_c_sub">夢の中で%1$s</string>
+
+    <!-- 기다림: 끼니 시각 1시간 전 ~ 마감 -->
+    <string name="widget_wait_a_title">%1$s\n何食べる？</string>
+    <string name="widget_wait_a_sub">フォーク持って待機中</string>
+    <string name="widget_wait_b_title">もうすぐ\n%1$s！</string>
+    <string name="widget_wait_b_sub">お皿を持って待機中</string>
+    <string name="widget_wait_c_title">いま何時？</string>
+    <string name="widget_wait_c_sub">%1$sまであと1時間</string>
+    <string name="widget_wait_c_sub_after">%1$sの時間だよ</string>
+    <string name="widget_wait_d_title">ごはん！\nごはん！</string>
+    <string name="widget_wait_d_sub">もうすぐ%1$sだよ</string>
+
+    <!-- 배빵빵: 기록한 뒤 ~ 다음 기다림 -->
+    <string name="widget_full_a_title">おなか\nパンパン！</string>
+    <string name="widget_full_a_sub">ごろごろ消化中</string>
+    <string name="widget_full_b_title">ごちそうさま！</string>
+    <string name="widget_full_b_sub">おなかポンポン中</string>
+    <string name="widget_full_c_title">満腹で\nおねむ</string>
+    <string name="widget_full_c_sub">食べてすぐ寝落ち</string>
+    <string name="widget_full_d_title">大満足！</string>
+    <string name="widget_full_d_sub">おなかいっぱいだよ</string>
+
+    <!-- 한 끼 놓침 -->
+    <string name="widget_miss1_a_title">ふん、すねた</string>
+    <string name="widget_miss1_a_sub">ご主人が%1$sを\n忘れてた</string>
+    <string name="widget_miss1_b_title">ふん、すねた</string>
+    <string name="widget_miss1_b_sub">本気ですねてるもん</string>
+    <string name="widget_miss1_c_title">ひとりデモ中</string>
+    <string name="widget_miss1_c_sub">%1$sを返して</string>
+    <string name="widget_miss1_e_title">お皿が空っぽで</string>
+    <string name="widget_miss1_e_sub">とけちゃった…</string>
+    <string name="widget_miss1_f_title">香箱座り中</string>
+    <string name="widget_miss1_f_sub">おなかすいて固まった</string>
+    <string name="widget_miss1_g_title">今日の献立</string>
+    <string name="widget_miss1_g_sub">#空気 #お皿 #以上</string>
+
+    <!-- 두 끼 놓침 -->
+    <string name="widget_miss2_a_title">ご主人？</string>
+    <string name="widget_miss2_a_sub">2食ぶん探してる</string>
+    <string name="widget_miss2_b_title">ご主人\nどこ？</string>
+    <string name="widget_miss2_b_sub">2食ぶん探してる</string>
+    <string name="widget_miss2_c_title">自分で行く</string>
+    <string name="widget_miss2_c_sub">ご主人のもとへ配送中</string>
+    <string name="widget_miss2_d_title">捜査開始</string>
+    <string name="widget_miss2_d_sub">ご主人の行方を追跡中</string>
+    <string name="widget_miss2_e_title">既読が\nつかない</string>
+    <string name="widget_miss2_e_sub">ご主人、未読スルー中</string>
+
+    <!-- 집사를 찾습니다: 오늘 먹는 끼니를 모두 놓침 -->
+    <string name="widget_missall_a_title">ご主人を\nさがしてます</string>
+    <string name="widget_missall_a_sub">一日中待ってた</string>
+    <string name="widget_missall_b_title">ご主人〜！</string>
+    <string name="widget_missall_b_sub">一日中呼んでる</string>
+    <string name="widget_missall_c_title">ご主人を\nさがしてます</string>
+    <string name="widget_missall_c_sub">お礼：ちゅ〜る</string>
+    <string name="widget_missall_d_title">ご主人を\nさがしてます</string>
+    <string name="widget_missall_d_sub">一日中待ってた</string>
+
+    <!-- 일 단위: 하루 이상 통째로 거름 -->
+    <string name="widget_away1_title">玄関の番人</string>
+    <string name="widget_away1_rest">ドアの前</string>
+    <string name="widget_away2_title">不在着信37件</string>
+    <string name="widget_away2_rest">ご主人、電源オフ？</string>
+    <string name="widget_away3_title">ご主人のにおい</string>
+    <string name="widget_away3_rest">パーカーの中</string>
+    <string name="widget_away4_title">通知99+</string>
+    <string name="widget_away4_rest">トントン中</string>
+    <string name="widget_away5_a_title">手紙を書いたよ</string>
+    <string name="widget_away5_a_rest">返事待ち</string>
+    <string name="widget_away5_b_title">ご主人召喚中</string>
+    <string name="widget_away5_b_rest">ちゅ〜る献上</string>
+    <string name="widget_away6_a_title">雨でも\n待ってるよ</string>
+    <string name="widget_away6_a_rest">窓辺で</string>
+    <string name="widget_away6_b_title">横断幕\nかけたよ</string>
+    <string name="widget_away6_b_rest">見てるよね？</string>
+    <string name="widget_away6_c_title">ホコリまみれ</string>
+    <string name="widget_away6_c_rest">ドアの前で待機</string>
+    <string name="widget_away7_title">待ちすぎて\n石になった</string>
+    <string name="widget_away7_rest">頭にスズメが入居</string>
+
+    <!-- 재회: 날수는 말하지 않는다 -->
+    <string name="widget_reunion_title">来た！！！</string>
+    <string name="widget_reunion_sub">ご主人だ、ご主人！</string>
+
+    <!-- 로그아웃 -->
+    <string name="widget_logout_title">ログアウト</string>
+    <string name="widget_logout_sub">待ちくたびれて寝た</string>
+</resources>
