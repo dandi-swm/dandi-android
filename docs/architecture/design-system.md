@@ -107,7 +107,7 @@ Modifier
 - 재분석 중 표시는 UI 파생 상태(`HistoryUIState.isReanalyzing`)이지 새로운 서버 enum이 아니다.
 - 히스토리는 분석 중/실패 식사를 목록에서 제거하지 않는다.
 - 캘린더는 영양 평가를 그리지 않고, 그날 기록이 있으면 기록 점(`colors.data.recordMarker`)만 찍는다(`HistoryCalendar`의 `hasRecord`).
-- 캘린더와 목록은 실제 사진 대신 `foodIconIds`로 앱에 든 음식 픽셀 아이콘(`drawable-nodpi/nyummy_food_icon_{iconId}.webp`, 무손실 WebP)을 그린다. 서버 iconId와 리소스 번호가 정확히 같아야 하고(서버와 함께 지키는 약속), 매핑은 `NyummyFoodIcons` 한 곳이다. 네트워크로 받지 않으며, 서버가 아이콘을 추가하면 같은 번호로 리소스를 넣고 `NyummyFoodIcons`에 이어 붙인다. 아이콘은 분석이 끝난 식사에만 쓴다(서버는 분석 전이거나 실패한 식사에도 기본 iconId 1을 준다). iconId가 비어 있거나 앱에 없는 번호면 기본은 아무것도 그리지 않고, 자리를 채워야 하는 곳은 `NyummyFoodIcon`의 `placeholder` 슬롯을 넘긴다.
+- 캘린더와 목록은 실제 사진 대신 `foodIconIds`로 앱에 든 음식 픽셀 아이콘(`drawable-nodpi/nyummy_food_icon_{iconId}.webp`, 무손실 WebP)을 그린다. 서버 iconId와 리소스 번호가 정확히 같아야 하고(서버와 함께 지키는 약속), 매핑은 `NyummyFoodIcons` 한 곳이다. 네트워크로 받지 않으며, 서버가 아이콘을 추가하면 같은 번호로 리소스를 넣고 `NyummyFoodIcons`에 이어 붙인다. 아이콘은 분석이 끝난 식사에만 쓴다(서버는 분석 전이거나 실패한 식사에도 기본 iconId 1을 준다). iconId가 비어 있거나 앱에 없는 번호면 기본은 아무것도 그리지 않고, 자리를 채워야 하는 곳은 `NyummyFoodIcon`의 `placeholder` 슬롯을 넘긴다. 캘린더 칸은 앱에 없는 번호면 흰쌀밥 아이콘(`NyummyFoodIcons.RiceIconId`, iconId 5)을 placeholder로 그린다.
 
 ## 변경 절차
 

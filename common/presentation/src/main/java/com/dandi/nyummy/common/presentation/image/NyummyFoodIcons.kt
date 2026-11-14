@@ -12,6 +12,9 @@ object NyummyFoodIcons {
     /** 앱에 든 가장 큰 iconId. 1부터 빈 번호 없이 이어진다. */
     const val MaxIconId: Int = 210
 
+    /** 흰쌀밥 아이콘 iconId. 캘린더 칸이 아이콘을 보여 줄 수 없을 때 대신 그린다. */
+    const val RiceIconId: String = "5"
+
     /** iconId에 해당하는 리소스. 숫자가 아니거나 앱에 없는 번호면 null이다. */
     @DrawableRes
     fun drawableOf(iconId: String): Int? {
