@@ -181,7 +181,7 @@ private fun previewUiState(): HistoryUIState {
         MealHistoryVO(
             id = "1",
             name = "치킨 샐러드",
-            foodIconId = "salad",
+            foodIconId = "1",
             recordedAt = "08:10",
             calorieKcal = 412,
             carbohydrateGram = 18,
@@ -191,8 +191,8 @@ private fun previewUiState(): HistoryUIState {
         ),
         MealHistoryVO(
             id = "2",
-            name = "연어 덮밥",
-            foodIconId = "rice",
+            name = "토마토 스파게티",
+            foodIconId = "12",
             recordedAt = "12:30",
             calorieKcal = 545,
             carbohydrateGram = 78,
@@ -205,7 +205,7 @@ private fun previewUiState(): HistoryUIState {
         selectedDate to HistoryCalendarDayVO(
             date = selectedDate,
             evaluation = DailyNutritionEvaluation.POSITIVE,
-            foodIconIds = listOf("salad", "rice"),
+            foodIconIds = listOf("1", "12"),
             mealCount = 2,
         ),
         HistoryDateVO(2026, 7, 10) to HistoryCalendarDayVO(

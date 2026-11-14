@@ -47,6 +47,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextBut
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTextButtonTone
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.common.presentation.image.NyummyFoodIcons
 import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.presentation.R
@@ -343,7 +344,11 @@ private fun CalendarDay(
             Row {
                 day.foodIconIds.forEach { iconId ->
                     Box(modifier = Modifier.size(FoodIconSize), contentAlignment = Alignment.Center) {
-                        NyummyFoodIcon(foodIconId = iconId)
+                        // 앱에 없는 번호면 칸이 비지 않게 밥 아이콘으로 채운다.
+                        NyummyFoodIcon(
+                            foodIconId = iconId,
+                            placeholder = { NyummyFoodIcon(foodIconId = NyummyFoodIcons.RiceIconId) },
+                        )
                     }
                 }
             }
