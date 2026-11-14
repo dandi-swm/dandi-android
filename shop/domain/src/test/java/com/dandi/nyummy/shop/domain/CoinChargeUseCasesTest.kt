@@ -3,9 +3,12 @@ package com.dandi.nyummy.shop.domain
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
+import com.dandi.nyummy.shop.entity.CoinChargeCurrency
 import com.dandi.nyummy.shop.entity.CoinChargeEventVO
 import com.dandi.nyummy.shop.entity.CoinChargeGrantVO
 import com.dandi.nyummy.shop.entity.CoinChargeNoticeVO
+import com.dandi.nyummy.shop.entity.CoinChargePackageVO
+import com.dandi.nyummy.shop.entity.CoinChargePriceVO
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -225,5 +228,35 @@ class CoinChargePackagesTest {
     @Test
     fun `그룹은 A·B만 받고 공백과 대소문자는 맞춘다`() {
         assertEquals(listOf("A", "B", null, null), listOf("A", " b", "C", null).map(CoinChargePackages::groupOf))
+    }
+
+    @Test
+    fun `통화는 지역으로 고르고, 지역이 없으면 언어로, 그 밖은 달러다`() {
+        assertEquals(CoinChargeCurrency.KRW, CoinChargePackages.currencyOf("KR", "en"))
+        assertEquals(CoinChargeCurrency.JPY, CoinChargePackages.currencyOf("jp", "ko"))
+        assertEquals(CoinChargeCurrency.USD, CoinChargePackages.currencyOf("US", "ja"))
+        assertEquals(CoinChargeCurrency.KRW, CoinChargePackages.currencyOf("", "ko"))
+        assertEquals(CoinChargeCurrency.JPY, CoinChargePackages.currencyOf("", "ja"))
+        assertEquals(CoinChargeCurrency.USD, CoinChargePackages.currencyOf("", "en"))
+    }
+
+    @Test
+    fun `묶음 가격은 원화 기준 고정 표로 바꾸고, 그룹끼리 비율을 지킨다`() {
+        fun prices(group: String, currency: CoinChargeCurrency) =
+            CoinChargePackages.of(group).map { CoinChargePackages.priceOf(it, currency) }
+
+        assertEquals(listOf(1000L, 5000L, 10000L), prices("A", CoinChargeCurrency.KRW).map { it.amount })
+        assertEquals(listOf(120L, 600L, 1200L), prices("A", CoinChargeCurrency.JPY).map { it.amount })
+        assertEquals(listOf(180L, 900L, 1800L), prices("B", CoinChargeCurrency.JPY).map { it.amount })
+        assertEquals(listOf(79L, 399L, 799L), prices("A", CoinChargeCurrency.USD).map { it.amount })
+        assertEquals(listOf(119L, 599L, 1199L), prices("B", CoinChargeCurrency.USD).map { it.amount })
+        assertTrue(prices("B", CoinChargeCurrency.USD).all { it.currency == CoinChargeCurrency.USD })
+    }
+
+    @Test
+    fun `표에 없는 원화 가격은 원화 그대로 보인다`() {
+        val price = CoinChargePackages.priceOf(CoinChargePackageVO(price = 2000), CoinChargeCurrency.USD)
+
+        assertEquals(CoinChargePriceVO(CoinChargeCurrency.KRW, 2000L), price)
     }
 }
