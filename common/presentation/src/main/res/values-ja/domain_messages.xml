@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  도메인(UseCase·ErrorType)이 StringResource 이름으로 고르는 안내 문구. ResourceHelperImpl이 이름을 이 리소스로 바꾼다.
+  항목을 더하거나 지울 때는 StringResource enum, ResourceHelperImpl 매핑, values·values-ko·values-ja 세 파일을 함께 고친다.
+-->
+<resources>
+    <!-- 공통 -->
+    <string name="msg_confirm">OK</string>
+    <string name="msg_cancel">キャンセル</string>
+    <string name="msg_retry">再試行</string>
+    <string name="msg_sign_in_again">ログインする</string>
+    <string name="msg_go_back">戻る</string>
+    <string name="msg_session_expired_message">ログインの有効期限が切れました。もう一度ログインしてください。</string>
+    <string name="msg_not_ready_message">この機能は準備中です。</string>
+    <string name="msg_temporary_error_title">一時的な問題が発生しました</string>
+    <string name="msg_try_again_later">しばらくしてからもう一度お試しください。</string>
+    <string name="msg_network_error">ネットワーク接続を確認して、もう一度お試しください。</string>
+    <string name="msg_temporary_error">一時的なエラーが発生しました。しばらくしてからもう一度お試しください。</string>
+    <string name="msg_duplicate_meal_times">食事ごとに違う時刻を選んでください。</string>
+
+    <!-- 인증 -->
+    <string name="msg_auth_invalid_credentials">正しいメールアドレスとパスワードを入力してください。</string>
+    <string name="msg_auth_email_send_rate_limited">認証コードを送ったばかりです。少し待ってから再送してください。</string>
+    <string name="msg_auth_email_send_failed">認証メールを送信できませんでした。しばらくしてからもう一度お試しください。</string>
+    <string name="msg_auth_incorrect_email">このメールアドレスに送った認証コードがありません。コードを再送してください。</string>
+    <string name="msg_auth_email_code_attempt_exceeded">認証コードを何度も間違えました。コードを再送してください。</string>
+    <string name="msg_auth_email_code_mismatch">認証コードが一致しません。</string>
+    <string name="msg_auth_email_code_expired">認証コードの有効期限が切れました。コードを再送してください。</string>
+    <string name="msg_auth_verification_restart">認証の有効期限が切れました。最初からもう一度認証してください。</string>
+    <string name="msg_auth_invalid_email_challenge">認証リクエストが正しくありません。認証コードを再送してください。</string>
+    <string name="msg_auth_email_already_exists">このメールアドレスはすでに登録されています。ログインしてください。</string>
+    <string name="msg_auth_email_not_registered">登録されていないメールアドレスです。</string>
+    <string name="msg_auth_account_already_exists">すでに登録されているアカウントです。もう一度ログインしてください。</string>
+    <string name="msg_auth_social_login_failed">ソーシャルログインに失敗しました。もう一度お試しください。</string>
+    <string name="msg_auth_social_server_unavailable">ソーシャルログインのサーバーに接続できません。しばらくしてからもう一度お試しください。</string>
+    <string name="msg_auth_code_confirm_failed">不明なエラーが発生しました。</string>
+    <string name="msg_auth_temp_password_mail_failed">仮パスワードのメールを送信できませんでした。しばらくしてからもう一度お試しください。</string>
+    <string name="msg_auth_password_reset_failed">パスワードを再設定できませんでした。しばらくしてからもう一度お試しください。</string>
+    <string name="msg_auth_social_session_missing">登録情報の有効期限が切れました。もう一度ログインしてください。</string>
+    <string name="msg_auth_social_sign_up_expired">登録の有効時間が過ぎました。もう一度ログインしてください。</string>
+    <string name="msg_auth_invalid_profile">入力した内容を確認して、もう一度お試しください。</string>
+    <string name="msg_auth_sign_up_failed">会員登録に失敗しました。もう一度お試しください。</string>
+    <string name="msg_auth_login_failed">ログインできませんでした。しばらくしてからもう一度お試しください。</string>
+    <string name="msg_auth_bad_request">ログインリクエストが正しくありません。アプリを最新バージョンに更新してから、もう一度お試しください。</string>
+    <string name="msg_auth_provider_not_ready">%1$sログインは準備中です。</string>
+    <string name="msg_auth_provider_unavailable">%1$sのサーバーに接続できません。しばらくしてからもう一度お試しください。</string>
+    <string name="msg_auth_provider_failed">%1$sログインに失敗しました。もう一度お試しください。</string>
+    <string name="msg_auth_provider_kakao">カカオ</string>
+    <string name="msg_auth_provider_google">Google</string>
+    <string name="msg_auth_provider_naver">NAVER</string>
+
+    <!-- 인트로 -->
+    <string name="msg_intro_force_update">このバージョンのアプリはご利用いただけません。\n最新バージョンにアップデートしてください。</string>
+    <string name="msg_intro_go_to_store">ストアへ移動</string>
+    <string name="msg_intro_error">一時的なエラーが発生しました。\nしばらくしてからもう一度お試しください。</string>
+
+    <!-- 온보딩 -->
+    <string name="msg_onboarding_invalid_input">名前や食事の時刻をもう一度確認してください。</string>
+    <string name="msg_onboarding_cat_already_exists">すでに一緒に暮らしている猫がいます。</string>
+
+    <!-- 고양이 -->
+    <string name="msg_cat_name_too_long">名前は%1$d文字までです</string>
+    <string name="msg_cat_invalid_name">名前をもう一度確認してください</string>
+    <string name="msg_cat_not_found">猫の情報が見つかりませんでした</string>
+    <string name="msg_cat_rename_failed">猫の名前を変更できませんでした</string>
+
+    <!-- 홈 -->
+    <string name="msg_home_load_failed">ホームの情報を読み込めませんでした</string>
+
+    <!-- 식사 기록 -->
+    <string name="msg_meal_submit_failed">食事を記録できませんでした。もう一度お試しください</string>
+    <string name="msg_meal_tutorial_retry">ネットワークが不安定です。しばらくしてからもう一度お試しください</string>
+    <string name="msg_meal_stale_image">撮影してから時間が経った写真は記録できません。撮り直してください</string>
+    <string name="msg_meal_duplicate_image">すでに記録した写真です</string>
+    <string name="msg_meal_daily_limit">今日はこれ以上記録できません。明日また記録してください</string>
+    <string name="msg_meal_unsupported_type">記録できない写真形式です。撮り直してください</string>
+    <string name="msg_meal_file_too_large">写真のサイズが大きすぎます。撮り直してください</string>
+    <string name="msg_meal_tutorial_done">チュートリアルはすでに完了しています</string>
+    <string name="msg_meal_photo_not_found">撮影した写真が見つかりませんでした。もう一度撮影してください</string>
+    <string name="msg_meal_photo_info_save_failed">写真の撮影情報を保存できませんでした。もう一度撮影してください</string>
+    <string name="msg_meal_photo_read_failed">写真を読み込めませんでした。もう一度撮影してください</string>
+    <string name="msg_meal_photo_compress_failed">写真のサイズを小さくできませんでした。もう一度撮影してください</string>
+
+    <!-- 기록 -->
+    <string name="msg_history_meal_already_deleted">すでに削除された記録です</string>
+    <string name="msg_history_already_reanalyzed">すでに再分析した記録です</string>
+    <string name="msg_history_invalid_rating">評価をもう一度選んでください</string>
+    <string name="msg_history_already_rated">すでに評価した食事です</string>
+    <string name="msg_history_rating_not_ready">分析が終わった食事だけ評価できます</string>
+    <string name="msg_history_feedback_submit_failed">評価を送信できませんでした。しばらくしてからもう一度お試しください。</string>
+    <string name="msg_history_feedback_thanks">ありがとう！{name}がもっとよく見分けられるようにがんばるね</string>
+    <string name="msg_history_reanalyze_failed">再分析できませんでした</string>
+    <string name="msg_history_rename_failed">名前を変更できませんでした</string>
+    <string name="msg_history_delete_failed">削除できませんでした</string>
+
+    <!-- 상점 -->
+    <string name="msg_shop_added_to_cart">カートに入れました</string>
+    <string name="msg_shop_cannot_add_more">これ以上入れられません</string>
+    <string name="msg_shop_cart_full">カートがいっぱいです</string>
+    <string name="msg_shop_add_failed">カートに入れられませんでした。しばらくしてからもう一度お試しください</string>
+    <string name="msg_shop_coin_charge_failed">コインを追加できませんでした。しばらくしてからもう一度タップしてください</string>
+    <string name="msg_shop_price_changed_title">価格が変わりました</string>
+    <string name="msg_shop_price_changed_body">カートを読み込み直して、新しい価格をお見せします。</string>
+    <string name="msg_shop_not_for_sale_title">販売が終了した商品があります</string>
+    <string name="msg_shop_not_for_sale_body">カートを読み込み直して、購入できない商品をお知らせします。</string>
+    <string name="msg_shop_already_owned_title">すでに持っている部屋の背景です</string>
+    <string name="msg_shop_already_owned_body">部屋の背景はひとつしか持てません。カートを読み込み直してお知らせします。</string>
+    <string name="msg_shop_purchase_limit_title">購入上限を超えた商品があります</string>
+    <string name="msg_shop_purchase_limit_body">1人が購入できる数が決まっている商品です。カートを読み込み直してお見せします。</string>
+    <string name="msg_shop_reload_cart">カートを見直す</string>
+
+    <!-- 설정 -->
+    <string name="msg_settings_user_not_found">会員情報が見つかりませんでした。もう一度ログインしてください。</string>
+    <string name="msg_settings_profile_invalid_input">入力した値をもう一度確認してください。</string>
+    <string name="msg_settings_withdrawn">退会しました。今までありがとう。また会おうね！</string>
+    <string name="msg_settings_withdraw_failed">退会できませんでした。しばらくしてからもう一度お試しください。</string>
+    <string name="msg_settings_profile_save_failed">マイ情報を保存できませんでした</string>
+    <string name="msg_settings_profile_load_failed">マイ情報を読み込めませんでした</string>
+    <string name="msg_settings_meal_times_save_failed">食事の時間を保存できませんでした</string>
+    <string name="msg_settings_meal_times_load_failed">食事の時間を読み込めませんでした</string>
+    <string name="msg_settings_load_failed">設定を読み込めませんでした</string>
+</resources>

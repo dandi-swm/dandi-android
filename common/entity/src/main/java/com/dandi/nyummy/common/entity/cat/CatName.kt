@@ -5,12 +5,10 @@ package com.dandi.nyummy.common.entity.cat
  *
  * 이름 자리는 문자열 리소스면 `%1$s`, 대사 은행처럼 리소스가 아닌 문장이면 [NAME_TOKEN]으로 쓴다.
  * 이름 뒤 조사는 받침이 있을 때 쓰는 글자를 괄호에 넣어 `%1$s(이)가`처럼 쓰고, [resolveParticles]가
- * 이름의 마지막 글자를 보고 `달봉이`·`냐미가`처럼 고른다.
+ * 이름의 마지막 글자를 보고 `달봉이`·`냐미가`처럼 고른다. 영어·일본어 문장에는 조사 표기가 없어 그대로 둔다.
+ * 이름을 아직 모를 때의 기본 이름은 기기 언어를 따르는 문자열 리소스 `nyummy_cat_default_name`이다.
  */
 object CatName {
-
-    /** 이름을 아직 모를 때 쓰는 기본 이름. */
-    const val DEFAULT = "냐미"
 
     /** 리소스가 아닌 문장의 이름 자리. */
     const val NAME_TOKEN = "{name}"

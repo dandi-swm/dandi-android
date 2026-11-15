@@ -20,12 +20,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import java.io.File
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.meal.presentation.R
 
 /**
  * 후면 카메라 실시간 프리뷰와 정지사진 촬영을 담당하는 뷰입니다.
@@ -57,7 +59,7 @@ fun MealCameraPreview(
             modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
-            NyummyText(text = "카메라를 사용할 수 없는 기기입니다.", style = NyummyTheme.typography.bodyM)
+            NyummyText(text = stringResource(R.string.meal_record_camera_unavailable), style = NyummyTheme.typography.bodyM)
         }
         return
     }

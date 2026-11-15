@@ -5,6 +5,7 @@ import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.settings.entity.MyProfileChange
 import com.dandi.nyummy.tti.TTIHelper
@@ -36,7 +37,7 @@ class UpdateMyProfileUseCase @Inject constructor(
         } catch (e: HttpResponseException) {
             handleHttpError<MyProfileErrorType>(
                 e,
-                onDomainError = { messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = it.errorMsg) },
+                onDomainError = { messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(it.errorMsg)) },
                 onUnknownError = { showSaveFailed(onRetry) },
             )
             Result.failure(e)
@@ -50,14 +51,9 @@ class UpdateMyProfileUseCase @Inject constructor(
     private fun showSaveFailed(onRetry: () -> Unit) {
         messageHelper.showSnackBar(
             iconType = IconType.ERROR,
-            messageText = SAVE_FAILED_MESSAGE,
-            callToActionText = RETRY_LABEL,
+            messageText = resourceHelper.getString(StringResource.SETTINGS_PROFILE_SAVE_FAILED),
+            callToActionText = resourceHelper.getString(StringResource.RETRY),
             onClickCTA = onRetry,
         )
-    }
-
-    private companion object {
-        const val SAVE_FAILED_MESSAGE = "내 정보를 저장하지 못했어요"
-        const val RETRY_LABEL = "다시 시도"
     }
 }

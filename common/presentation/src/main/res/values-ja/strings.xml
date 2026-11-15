@@ -1,0 +1,75 @@
+<resources>
+    <string name="app_name">Nyummy</string>
+    <string name="nav_back_button">前へ戻る</string>
+    <string name="meal_gallery_not_taken_today">今日撮った写真だけアップロードできます</string>
+    <string name="meal_gallery_load_failed">写真を読み込めませんでした。もう一度選んでください</string>
+    <string name="meal_gallery_import_failed">写真を読み込めませんでした。もう一度お試しください</string>
+    <string name="nyummy_scrim_dismiss_label">閉じる</string>
+    <string name="nyummy_password_show_description">パスワードを表示</string>
+    <string name="nyummy_password_hide_description">パスワードを隠す</string>
+    <string name="nyummy_swipe_delete">削除</string>
+    <string name="nyummy_back_description">戻る</string>
+    <string name="nyummy_coming_soon_body">もう少しお待ちください</string>
+    <string name="nyummy_snackbar_dismiss_description">通知を閉じる</string>
+    <string name="nyummy_dialog_dismiss">閉じる</string>
+    <string name="nyummy_streak_unit">日目</string>
+    <string name="nyummy_coin_description">コイン%1$s</string>
+    <string name="nyummy_streak_description">連続記録%1$d日目</string>
+    <string name="nyummy_nutrient_carb">炭水化物</string>
+    <string name="nyummy_nutrient_protein">たんぱく質</string>
+    <string name="nyummy_nutrient_fat">脂質</string>
+    <string name="nyummy_nutrient_grams">%1$dg</string>
+    <!-- 평소 식사 시각. %1$s: 오전/오후, %2$d: 시(1~12) -->
+    <string name="nyummy_meal_breakfast">朝ごはん</string>
+    <string name="nyummy_meal_lunch">昼ごはん</string>
+    <string name="nyummy_meal_dinner">晩ごはん</string>
+    <string name="nyummy_meal_am">午前</string>
+    <string name="nyummy_meal_pm">午後</string>
+    <string name="nyummy_meal_time_format">%1$s%2$d時</string>
+    <string name="nyummy_meal_skipped">食べません</string>
+    <string name="nyummy_meal_sheet_title">%1$sの時間</string>
+    <string name="nyummy_meal_sheet_skip">%1$sは食べません</string>
+    <string name="nyummy_meal_sheet_confirm">確認</string>
+    <string name="nyummy_meal_unit_hour">時</string>
+    <string name="nyummy_birth_unit_year">年</string>
+    <string name="nyummy_birth_unit_month">月</string>
+    <string name="nyummy_birth_unit_day">日</string>
+    <string name="nyummy_birth_year_description">生まれた年</string>
+    <string name="nyummy_birth_month_description">生まれた月</string>
+    <string name="nyummy_birth_day_description">生まれた日</string>
+    <string name="nyummy_meal_period_description">午前または午後</string>
+    <string name="nyummy_meal_hour_description">時</string>
+    <string name="nyummy_star_rating_state">5点満点中%1$s点</string>
+    <string name="nyummy_not_ready">準備中の機能です。</string>
+    <string name="nyummy_cat_default_name">ニャミ</string>
+    <string name="nyummy_tutorial_hint">タップして続ける ›</string>
+    <string name="nyummy_tutorial_skip">スキップ</string>
+    <string name="nyummy_tutorial_skip_title">本当にスキップしますか？</string>
+    <string name="nyummy_tutorial_skip_body">%1$sのお世話のしかたは、1分ですべてお伝えします。\n今のうちに覚えておくと、%1$sをずっと上手に育てられます。</string>
+    <string name="nyummy_tutorial_skip_remaining">残りの案内</string>
+    <string name="nyummy_tutorial_skip_continue">続けて覚える</string>
+    <string name="nyummy_tutorial_skip_anyway">それでもスキップする</string>
+    <string name="nyummy_tutorial_lesson_record">写真1枚で食事を記録する</string>
+    <string name="nyummy_tutorial_lesson_box">ごほうびボックスを開けてアイテムをもらう</string>
+    <string name="nyummy_tutorial_lesson_room">マイルームにアイテムを置いて飾る</string>
+    <string name="nyummy_tutorial_lesson_health">%1$sを元気に保つコツ</string>
+    <string name="nyummy_health_story_chip">%1$sの健康のお話 %2$d/%3$d</string>
+    <string name="nyummy_health_gauge_lean">ほっそり</string>
+    <string name="nyummy_health_gauge_slim">スリム</string>
+    <string name="nyummy_health_gauge_normal">ちょうどいい</string>
+    <string name="nyummy_health_gauge_chubby">ぽっちゃり</string>
+    <string name="nyummy_health_gauge_plump">まんまる</string>
+    <string name="nyummy_notice_dont_show_again">今後表示しない</string>
+    <!-- 하단 내비 -->
+    <string name="nyummy_nav_home">ホーム</string>
+    <string name="nyummy_nav_my_room">マイルーム</string>
+    <string name="nyummy_nav_record">記録</string>
+    <string name="nyummy_nav_shop">ショップ</string>
+    <string name="nyummy_nav_meal_record">食事記録</string>
+    <!-- 인증 코드 입력 접근성 기본값 -->
+    <string name="nyummy_code_input_description">認証コード入力</string>
+    <string name="nyummy_code_input_error_description">認証コードをもう一度ご確認ください</string>
+    <!-- 냐미 코멘트 카드 펼치기/접기 -->
+    <string name="nyummy_expand">もっと見る</string>
+    <string name="nyummy_collapse">閉じる</string>
+</resources>

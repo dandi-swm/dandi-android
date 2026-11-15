@@ -6,6 +6,7 @@ import androidx.compose.runtime.compositionLocalOf
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.domain.message.MessageEffect
+import com.dandi.nyummy.common.presentation.R
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -52,7 +53,7 @@ class MessageHelperImpl(val context: Context) : MessageHelper {
                 titleText = titleText,
                 descText = descText,
                 cantIgnore = cantIgnore,
-                buttonText = buttonText,
+                buttonText = buttonText.ifEmpty { context.getString(R.string.msg_confirm) },
                 onClickButton = onClickButton,
             )
         )
@@ -72,9 +73,9 @@ class MessageHelperImpl(val context: Context) : MessageHelper {
                 titleText = titleText,
                 descText = descText,
                 cantIgnore = cantIgnore,
-                leftButtonText = leftButtonText,
+                leftButtonText = leftButtonText.ifEmpty { context.getString(R.string.msg_cancel) },
                 onClickLeftButton = onClickLeftButton,
-                rightButtonText = rightButtonText,
+                rightButtonText = rightButtonText.ifEmpty { context.getString(R.string.msg_confirm) },
                 onClickRightButton = onClickRightButton,
             )
         )

@@ -5,7 +5,6 @@ import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.settings.domain.GetInquiryDetailUseCase
 import com.dandi.nyummy.settings.entity.InquiryVO
-import com.dandi.nyummy.settings.presentation.inquiry.inquiryDetailTimeLabel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -56,11 +55,11 @@ private fun InquiryVO.toDetailUiModel() = InquiryDetailUiModel(
     title = title,
     content = content,
     imageUrl = imageUrl.ifBlank { null },
-    createdAtLabel = inquiryDetailTimeLabel(createdAtMillis),
+    createdAtMillis = createdAtMillis,
     answer = if (isAnswered) {
         InquiryAnswerUiModel(
             content = answer.content,
-            answeredAtLabel = inquiryDetailTimeLabel(answer.answeredAtMillis),
+            answeredAtMillis = answer.answeredAtMillis,
         )
     } else {
         null

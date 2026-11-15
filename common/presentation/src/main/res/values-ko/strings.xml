@@ -60,4 +60,16 @@
     <string name="nyummy_health_gauge_chubby">통통</string>
     <string name="nyummy_health_gauge_plump">뚱뚱</string>
     <string name="nyummy_notice_dont_show_again">다시 보지 않기</string>
+    <!-- 하단 내비 -->
+    <string name="nyummy_nav_home">홈</string>
+    <string name="nyummy_nav_my_room">마이룸</string>
+    <string name="nyummy_nav_record">기록</string>
+    <string name="nyummy_nav_shop">상점</string>
+    <string name="nyummy_nav_meal_record">식사 기록</string>
+    <!-- 인증 코드 입력 접근성 기본값 -->
+    <string name="nyummy_code_input_description">인증 코드 입력</string>
+    <string name="nyummy_code_input_error_description">인증 코드를 다시 확인해 주세요</string>
+    <!-- 냐미 코멘트 카드 펼치기/접기 -->
+    <string name="nyummy_expand">더보기</string>
+    <string name="nyummy_collapse">접기</string>
 </resources>

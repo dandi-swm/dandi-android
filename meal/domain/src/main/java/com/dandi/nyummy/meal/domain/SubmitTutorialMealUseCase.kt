@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.domain.error.registeredErrorType
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.meal.entity.CreatedMealVO
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
@@ -81,12 +82,11 @@ class SubmitTutorialMealUseCase @Inject constructor(
     }
 
     private fun showRetryNotice() {
-        messageHelper.showOneButtonDialog(descText = RETRY_MESSAGE)
+        messageHelper.showOneButtonDialog(descText = resourceHelper.getString(StringResource.MEAL_TUTORIAL_RETRY))
     }
 
     private companion object {
         /** 튜토리얼 식사 연출 값. 응답 본문이 없고 상자는 늘 골드다. */
         val TutorialMeal = CreatedMealVO(rewardBoxGrade = RewardBoxGrade.GOLD)
-        const val RETRY_MESSAGE = "잠시 네트워크 환경이 불안정합니다. 잠시 후 다시 시도해주세요"
     }
 }

@@ -7,12 +7,13 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.PushTokenHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.tti.TTIHelper
-import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 
 /**
  * 회원 탈퇴하고 첫 화면으로 돌아간다. 되돌릴 수 없다.
@@ -42,30 +43,25 @@ class WithdrawUseCase @Inject constructor(
         } catch (e: HttpResponseException) {
             handleHttpError<SettingsErrorType>(
                 e,
-                onDomainError = { type -> showError(type.errorMsg) },
-                onUnknownError = { showError(WITHDRAW_FAILED_MESSAGE) },
+                onDomainError = { type -> showError(resourceHelper.getString(type.errorMsg)) },
+                onUnknownError = { showError(resourceHelper.getString(StringResource.SETTINGS_WITHDRAW_FAILED)) },
             )
             return Result.failure(e)
         } catch (e: Exception) {
             // 네트워크 끊김 등 HTTP 응답 전 실패.
-            showError(WITHDRAW_FAILED_MESSAGE)
+            showError(resourceHelper.getString(StringResource.SETTINGS_WITHDRAW_FAILED))
             return Result.failure(e)
         }
         pushTokenHelper.deleteToken()
         companionMemory.clear()
         tutorialHelper.clear()
         widgetHelper.clear()
-        messageHelper.showSnackBar(iconType = IconType.SUCCESS, messageText = WITHDRAWN_MESSAGE)
+        messageHelper.showSnackBar(iconType = IconType.SUCCESS, messageText = resourceHelper.getString(StringResource.SETTINGS_WITHDRAWN))
         navigationHelper.navigateToInitial()
         return Result.success(Unit)
     }
 
     private fun showError(message: String) {
         messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = message)
-    }
-
-    companion object {
-        const val WITHDRAWN_MESSAGE = "탈퇴했어요. 그동안 함께해 줘서 고마워요. 또 봐요!"
-        const val WITHDRAW_FAILED_MESSAGE = "탈퇴하지 못했어요. 잠시 후 다시 시도해 주세요."
     }
 }

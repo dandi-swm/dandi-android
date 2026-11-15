@@ -5,6 +5,7 @@ import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.shop.entity.CartVO
 import com.dandi.nyummy.tti.TTIHelper
 import kotlinx.coroutines.CancellationException
@@ -51,8 +52,8 @@ class UpdateCartQuantityUseCase @Inject constructor(
     } catch (e: HttpResponseException) {
         handleHttpError<ShopErrorType>(
             e,
-            onDomainError = { messageHelper.showToast(ShopMessages.CANNOT_ADD_MORE) },
-            onUnknownError = { messageHelper.showToast(ShopMessages.CANNOT_ADD_MORE) },
+            onDomainError = { messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_CANNOT_ADD_MORE)) },
+            onUnknownError = { messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_CANNOT_ADD_MORE)) },
         )
         Result.failure(e)
     } catch (e: CancellationException) {

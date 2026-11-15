@@ -7,11 +7,7 @@ import com.dandi.nyummy.history.entity.HistoryDateVO
 @Immutable
 data class HistoryMonth(val year: Int, val month: Int) : Comparable<HistoryMonth> {
 
-    /** "2026년 10월" 형태의 라벨입니다. */
-    val label: String
-        get() = monthLabelOf(year, month)
-
-    /** 캘린더 머리에 쓰는 "2026. 10" 형태의 짧은 라벨입니다. 읽어 줄 때는 [label]을 씁니다. */
+    /** 캘린더 머리에 쓰는 "2026. 10" 형태의 짧은 라벨입니다. 읽어 줄 때는 기기 언어의 [monthLabelOf]를 씁니다. */
     val shortLabel: String
         get() = "$year. ${month.toString().padStart(2, '0')}"
 

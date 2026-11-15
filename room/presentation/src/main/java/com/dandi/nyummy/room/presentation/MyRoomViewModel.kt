@@ -11,6 +11,7 @@ import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
+import com.dandi.nyummy.common.presentation.helper.StringProvider
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.common.presentation.room.RoomCardLayout
 import com.dandi.nyummy.room.domain.GetOwnedRoomItemsUseCase
@@ -32,11 +33,11 @@ import com.dandi.nyummy.room.presentation.model.withItemPlaced
 import com.dandi.nyummy.room.presentation.model.withItemRemoved
 import com.dandi.nyummy.shop.domain.ShopPage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class MyRoomViewModel @Inject constructor(
@@ -48,6 +49,7 @@ class MyRoomViewModel @Inject constructor(
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
     private val tutorialHelper: TutorialHelper,
+    private val strings: StringProvider,
 ) : MviViewModel<MyRoomIntent, MyRoomUIState, MyRoomReducerEvent>(MyRoomUIState()) {
 
     /** 방에서 쓰는 냐미 애니메이션(마이룸 꾸미기 상태). 받지 못했으면 null이고 냐미를 그리지 않는다. */
@@ -284,10 +286,10 @@ class MyRoomViewModel @Inject constructor(
             return
         }
         messageHelper.showTwoButtonDialog(
-            descText = SAVE_CONFIRM_MESSAGE,
-            leftButtonText = SAVE_CONFIRM_DISCARD,
+            descText = strings.get(R.string.my_room_save_confirm_message),
+            leftButtonText = strings.get(R.string.my_room_save_confirm_discard),
             onClickLeftButton = exit,
-            rightButtonText = SAVE_CONFIRM_SAVE,
+            rightButtonText = strings.get(R.string.my_room_save_confirm_save),
             onClickRightButton = { save(exit) },
         )
     }
@@ -313,15 +315,15 @@ class MyRoomViewModel @Inject constructor(
                         tutorialHelper.complete(TutorialStep.ROOM)
                     }
                     exit()
-                    messageHelper.showSnackBar(iconType = IconType.SUCCESS, messageText = SAVED_MESSAGE)
+                    messageHelper.showSnackBar(iconType = IconType.SUCCESS, messageRes = R.string.my_room_saved)
                 }
                 .onFailure { e ->
                     dispatch(MyRoomReducerEvent.SaveFinished(isSaved = false))
                     if (e is RoomItemGoneException) {
-                        messageHelper.showSnackBar(iconType = IconType.WARNING, messageText = ITEM_GONE_MESSAGE)
+                        messageHelper.showSnackBar(iconType = IconType.WARNING, messageRes = R.string.my_room_item_gone)
                         load()
                     } else {
-                        messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = SAVE_FAILED_MESSAGE)
+                        messageHelper.showSnackBar(iconType = IconType.ERROR, messageRes = R.string.my_room_save_failed)
                         // 저장하지 못했으니 저장을 다시 가리킨다.
                         if (currentState.tutorial?.phase == MyRoomTutorialPhase.Saving) {
                             changeTutorial(MyRoomTutorialUiState(MyRoomTutorialPhase.Save))
@@ -334,13 +336,6 @@ class MyRoomViewModel @Inject constructor(
     private companion object {
         /** 되돌리기로 기억하는 최대 단계. */
         const val MAX_UNDO = 50
-
-        const val SAVE_CONFIRM_MESSAGE = "꾸민 방을 저장할까요?"
-        const val SAVE_CONFIRM_DISCARD = "저장 안 함"
-        const val SAVE_CONFIRM_SAVE = "저장하기"
-        const val SAVED_MESSAGE = "방을 저장했어요"
-        const val SAVE_FAILED_MESSAGE = "방을 저장하지 못했어요. 잠시 후 다시 시도해 주세요."
-        const val ITEM_GONE_MESSAGE = "가지고 있지 않은 아이템이 있어 방을 다시 불러왔어요"
     }
 }
 

@@ -507,7 +507,8 @@ private fun LegalSection(onIntent: (SettingsIntent) -> Unit) {
 private fun mealTimesSummary(mealTimes: MealTimesVO): String {
     val times = Meal.entries.map { mealTimes[it] }.filterNot { it.isSkipped }
     if (times.isEmpty()) return stringResource(R.string.settings_meal_time_none)
-    return times.map { nyummyMealTimeText(it) }.joinToString(", ")
+    val separator = stringResource(R.string.settings_meal_time_separator)
+    return times.map { nyummyMealTimeText(it) }.joinToString(separator)
 }
 
 private val ContentMaxWidth = 480.dp

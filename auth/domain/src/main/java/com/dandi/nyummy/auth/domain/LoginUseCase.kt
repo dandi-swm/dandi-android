@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.tti.TTIHelper
 import java.io.IOException
@@ -38,27 +39,22 @@ class LoginUseCase @Inject constructor(
     } catch (e: HttpResponseException) {
         handleHttpError<AuthErrorType>(
             e,
-            onDomainError = { showError(it.errorMsg) },
-            onUnknownError = { showError(LOGIN_FAILED_MESSAGE) },
+            onDomainError = { showError(resourceHelper.getString(it.errorMsg)) },
+            onUnknownError = { showError(resourceHelper.getString(StringResource.AUTH_LOGIN_FAILED)) },
         )
         Result.failure(e)
     } catch (e: CancellationException) {
         throw e
     } catch (e: IOException) {
-        showError(NETWORK_ERROR_MESSAGE)
+        showError(resourceHelper.getString(StringResource.NETWORK_ERROR))
         Result.failure(e)
     } catch (e: Exception) {
         // 응답을 읽지 못한 경우(본문 없는 200 등)에도 앱이 죽지 않게 기본 안내를 한다.
-        showError(LOGIN_FAILED_MESSAGE)
+        showError(resourceHelper.getString(StringResource.AUTH_LOGIN_FAILED))
         Result.failure(e)
     }
 
     private fun showError(message: String) {
         messageHelper.showOneButtonDialog(descText = message)
-    }
-
-    private companion object {
-        const val LOGIN_FAILED_MESSAGE = "로그인하지 못했어요. 잠시 후 다시 시도해 주세요."
-        const val NETWORK_ERROR_MESSAGE = "네트워크 연결을 확인한 뒤 다시 시도해주세요."
     }
 }

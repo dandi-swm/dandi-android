@@ -1,8 +1,15 @@
 package com.dandi.nyummy.common.domain.error
 
+import com.dandi.nyummy.common.domain.helper.StringResource
+
 interface HttpErrorType {
     val type: String
-    val errorMsg: String
+
+    /**
+     * 화면에 보여 줄 안내. 기기 언어에 맞는 문구는 [com.dandi.nyummy.common.domain.helper.ResourceHelper]로 꺼낸다.
+     * null이면 UseCase·화면이 상황에 맞는 문구를 따로 고른다.
+     */
+    val errorMsg: StringResource?
     val isHandledOnDomain: Boolean
 }
 

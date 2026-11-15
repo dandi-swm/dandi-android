@@ -9,6 +9,7 @@ import com.dandi.nyummy.auth.domain.PasswordResetUseCase
 import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.presentation.helper.StringProvider
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -25,6 +26,7 @@ class PasswordResetViewModel @Inject constructor(
     private val emailVerificationUseCase: EmailVerificationUseCase,
     private val passwordResetUseCase: PasswordResetUseCase,
     private val messageHelper: MessageHelper,
+    private val strings: StringProvider,
     private val navigationHelper: NavigationHelper,
 ) : MviViewModel<PasswordResetIntent, PasswordResetUIState, PasswordResetReducerEvent>(PasswordResetUIState.empty) {
 
@@ -160,9 +162,9 @@ class PasswordResetViewModel @Inject constructor(
     private fun resendCode() {
         if (currentState.isLoading) return
         messageHelper.showTwoButtonDialog(
-            descText = RESEND_CONFIRM_MESSAGE,
-            leftButtonText = RESEND_CONFIRM_CANCEL,
-            rightButtonText = RESEND_CONFIRM_OK,
+            descText = strings.get(R.string.auth_password_reset_resend_confirm_message),
+            leftButtonText = strings.get(R.string.auth_resend_confirm_cancel),
+            rightButtonText = strings.get(R.string.auth_resend_confirm_ok),
             onClickRightButton = ::executeResend,
         )
     }
@@ -196,8 +198,5 @@ class PasswordResetViewModel @Inject constructor(
     companion object {
         private const val RESEND_COOLDOWN_SECONDS = 5 * 60
         private const val TIMER_TICK_MILLIS = 1_000L
-        private const val RESEND_CONFIRM_MESSAGE = "인증 코드를 다시 보낼까요?"
-        private const val RESEND_CONFIRM_CANCEL = "취소"
-        private const val RESEND_CONFIRM_OK = "보내기"
     }
 }
