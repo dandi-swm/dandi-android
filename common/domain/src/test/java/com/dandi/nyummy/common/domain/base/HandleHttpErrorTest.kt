@@ -1,5 +1,6 @@
 package com.dandi.nyummy.common.domain.base
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.SESSION_UNAUTHORIZED_CODE
 import com.dandi.nyummy.common.domain.error.TestErrorType
@@ -59,7 +60,7 @@ class HandleHttpErrorTest {
             useCase.handle(e)
 
             val dialog = messageHelper.dialogs.single()
-            assertEquals("로그인이 만료됐어요. 다시 로그인해 주세요.", dialog.descText)
+            assertEquals(StringResource.SESSION_EXPIRED_MESSAGE.name, dialog.descText)
             assertTrue(dialog.cantIgnore)
             dialog.onClickButton?.invoke()
         }
@@ -70,14 +71,14 @@ class HandleHttpErrorTest {
     fun `등록하지 않은 code 의 404 는 준비 중인 기능으로 안내한다`() {
         useCase.handle(httpException(404, "api.unknown.notFound"))
 
-        assertEquals("준비 중인 기능이에요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.NOT_READY_MESSAGE.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
     fun `공통 처리를 직접 불러도 다른 code 의 401 은 로그인 만료로 안내하지 않는다`() {
         useCase.executeCommonErrorHanding(httpException(401, "api.auth.invalidEmailChallengeToken"))
 
-        assertEquals("잠시 후 다시 시도해 주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.TRY_AGAIN_LATER.name, messageHelper.dialogs.single().descText)
         assertEquals(0, navigationHelper.initialCount)
     }
 }
@@ -85,7 +86,7 @@ class HandleHttpErrorTest {
 private class TestUseCase(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
-) : BaseUseCase(noOp(), messageHelper, navigationHelper, noOp()) {
+) : BaseUseCase(NameResourceHelper, messageHelper, navigationHelper, noOp()) {
 
     /** 어느 갈래로 처리됐는지 돌려준다. */
     fun handle(e: HttpResponseException): String {
@@ -99,7 +100,12 @@ private class TestUseCase(
     }
 }
 
-/** 테스트에서 쓰지 않는 의존성(ResourceHelper, TTIHelper)의 빈 구현. */
+/** 문구 대신 [StringResource] 이름을 돌려준다. 어떤 안내를 골랐는지 이름으로 확인한다. */
+private object NameResourceHelper : ResourceHelper {
+    override fun getString(resource: StringResource): String = resource.name
+}
+
+/** 테스트에서 쓰지 않는 의존성(TTIHelper)의 빈 구현. */
 private inline fun <reified T : Any> noOp(): T =
     Proxy.newProxyInstance(T::class.java.classLoader, arrayOf(T::class.java)) { _, _, _ -> null } as T
 

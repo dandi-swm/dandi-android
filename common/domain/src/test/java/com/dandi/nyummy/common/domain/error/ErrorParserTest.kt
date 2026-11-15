@@ -1,5 +1,6 @@
 package com.dandi.nyummy.common.domain.error
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -81,11 +82,11 @@ class ErrorParserTest {
 
 internal enum class TestErrorType(
     override val type: String,
-    override val errorMsg: String,
+    override val errorMsg: StringResource,
     override val isHandledOnDomain: Boolean = true,
 ) : HttpErrorType {
-    DOMAIN(type = "api.test.domain", errorMsg = "도메인에서 안내"),
-    PRESENTATION_ONLY(type = "api.test.presentationOnly", errorMsg = "화면에서 안내", isHandledOnDomain = false),
+    DOMAIN(type = "api.test.domain", errorMsg = StringResource.TEMPORARY_ERROR),
+    PRESENTATION_ONLY(type = "api.test.presentationOnly", errorMsg = StringResource.TEMPORARY_ERROR, isHandledOnDomain = false),
 }
 
 /** 서버 에러 바디의 `code`만 cause로 담는 실제 변환(BaseRemoteDataSource)과 같은 형태로 만든다. */

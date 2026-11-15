@@ -1,5 +1,6 @@
 package com.dandi.nyummy.auth.domain
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.auth.entity.EmailVerificationPurpose
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -47,7 +48,7 @@ class PasswordResetUseCaseTest {
             assertTrue(result.exceptionOrNull() is EmailVerificationRestartRequiredException)
         }
         assertEquals(
-            listOf(AuthErrorType.VERIFICATION_EXPIRED.errorMsg, AuthErrorType.INVALID_VERIFIED_TOKEN.errorMsg),
+            listOf(AuthErrorType.VERIFICATION_EXPIRED.errorMsg.name, AuthErrorType.INVALID_VERIFIED_TOKEN.errorMsg.name),
             messageHelper.dialogs.map { it.descText },
         )
         assertEquals(0, navigationHelper.initialCount)
@@ -60,7 +61,7 @@ class PasswordResetUseCaseTest {
         val result = useCase.resetPassword("verified")
 
         assertTrue(result.exceptionOrNull() is EmailVerificationRestartRequiredException)
-        assertEquals("가입되지 않은 이메일이에요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.AUTH_EMAIL_NOT_REGISTERED.name, messageHelper.dialogs.single().descText)
         assertEquals(0, navigationHelper.backCount)
     }
 
@@ -71,7 +72,7 @@ class PasswordResetUseCaseTest {
         val result = useCase.resetPassword("verified")
 
         assertFalse(result.exceptionOrNull() is EmailVerificationRestartRequiredException)
-        assertEquals("임시 비밀번호 메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.AUTH_TEMP_PASSWORD_MAIL_FAILED.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -80,7 +81,7 @@ class PasswordResetUseCaseTest {
 
         useCase.resetPassword("verified")
 
-        assertEquals("비밀번호를 재설정하지 못했어요. 잠시 후 다시 시도해 주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.AUTH_PASSWORD_RESET_FAILED.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -90,7 +91,7 @@ class PasswordResetUseCaseTest {
         val result = useCase.resetPassword("verified")
 
         assertTrue(result.isFailure)
-        assertEquals("네트워크 연결을 확인한 뒤 다시 시도해주세요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.NETWORK_ERROR.name, messageHelper.dialogs.single().descText)
     }
 
     @Test
@@ -100,7 +101,7 @@ class PasswordResetUseCaseTest {
         val result = emailVerificationUseCase.sendCode("nobody@nyummy.com", EmailVerificationPurpose.RESET_PASSWORD)
 
         assertTrue(result.isFailure)
-        assertEquals("가입되지 않은 이메일이에요.", messageHelper.dialogs.single().descText)
+        assertEquals(StringResource.AUTH_EMAIL_NOT_REGISTERED.name, messageHelper.dialogs.single().descText)
         assertEquals(0, navigationHelper.backCount)
     }
 }

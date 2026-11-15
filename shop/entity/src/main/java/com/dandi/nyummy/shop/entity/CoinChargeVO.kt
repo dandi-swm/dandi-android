@@ -38,7 +38,7 @@ data class CoinChargeNoticeVO(
  *
  * @property coinPackageId 화면의 묶음 번호(1~3). 선물 코인 받기 요청과 분석 이벤트의 package_id다.
  * @property coins 묶음의 코인 수(화면 표시용. 실제로 받는 코인은 서버가 정한다)
- * @property price 원 단위 가격
+ * @property price 원 단위 기준 가격. 분석 이벤트에 그대로 남기고, 화면 가격은 이 값을 나라 통화로 바꿔 보인다([CoinChargePriceVO]).
  * @property imageId 묶음 그림 CDN 번호(`coins/{imageId}.png`, 1 동전 · 2 주머니 · 3 바구니)
  */
 data class CoinChargePackageVO(
@@ -46,6 +46,29 @@ data class CoinChargePackageVO(
     val coins: Int = 0,
     val price: Int = 0,
     val imageId: Long = 1,
+)
+
+/**
+ * 충전 화면 가격의 통화. 실제 결제 전 가짜 결제 A/B 테스트라 원화 묶음 가격을 고정 환율로 바꾼 표만 둔다.
+ *
+ * @property code ISO 4217 통화 코드
+ * @property fractionDigits 소수 자리 수. [CoinChargePriceVO.amount]가 이 자리만큼 작은 단위(센트)다.
+ */
+enum class CoinChargeCurrency(val code: String, val fractionDigits: Int) {
+    KRW("KRW", 0),
+    JPY("JPY", 0),
+    USD("USD", 2),
+}
+
+/**
+ * 화면에 보일 묶음 가격 하나.
+ *
+ * @property currency 통화
+ * @property amount 통화의 가장 작은 단위 금액(원·엔은 그대로, 달러는 센트)
+ */
+data class CoinChargePriceVO(
+    val currency: CoinChargeCurrency = CoinChargeCurrency.KRW,
+    val amount: Long = 0L,
 )
 
 /**

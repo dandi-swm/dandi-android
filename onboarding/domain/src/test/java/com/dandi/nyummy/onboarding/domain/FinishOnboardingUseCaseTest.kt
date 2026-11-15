@@ -74,7 +74,7 @@ class FinishOnboardingUseCaseTest {
         val result = useCase("냐미", MealTimesVO.default)
 
         assertTrue(result.isFailure)
-        assertEquals(listOf(OnboardingErrorType.INVALID_INPUT.errorMsg), messageHelper.dialogs)
+        assertEquals(listOf(OnboardingErrorType.INVALID_INPUT.errorMsg.name), messageHelper.dialogs)
         assertEquals(0, repository.onboardingCompleteCount)
         assertTrue(navigationHelper.rootPages.isEmpty())
     }

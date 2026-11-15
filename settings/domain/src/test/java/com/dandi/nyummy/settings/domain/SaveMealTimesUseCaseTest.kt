@@ -1,5 +1,6 @@
 package com.dandi.nyummy.settings.domain
 
+import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.entity.meal.MealTimeVO
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import kotlinx.coroutines.runBlocking
@@ -60,7 +61,7 @@ class SaveMealTimesUseCaseTest {
         assertTrue(result.isFailure)
         assertTrue(repository.savedMealTimes.isEmpty())
         val snackBar = messageHelper.snackBars.single()
-        assertEquals("끼니마다 다른 시각을 골라주세요.", snackBar.messageText)
+        assertEquals(StringResource.DUPLICATE_MEAL_TIMES.name, snackBar.messageText)
         assertNull(snackBar.callToActionText)
     }
 
@@ -82,7 +83,7 @@ class SaveMealTimesUseCaseTest {
 
         assertTrue(result.isFailure)
         val snackBar = messageHelper.snackBars.single()
-        assertEquals("끼니마다 다른 시각을 골라주세요.", snackBar.messageText)
+        assertEquals(StringResource.DUPLICATE_MEAL_TIMES.name, snackBar.messageText)
         assertNull(snackBar.callToActionText)
     }
 
@@ -94,8 +95,8 @@ class SaveMealTimesUseCaseTest {
 
         assertTrue(result.isFailure)
         val snackBar = messageHelper.snackBars.single()
-        assertEquals("식사 시간을 저장하지 못했어요", snackBar.messageText)
-        assertEquals("다시 시도", snackBar.callToActionText)
+        assertEquals(StringResource.SETTINGS_MEAL_TIMES_SAVE_FAILED.name, snackBar.messageText)
+        assertEquals(StringResource.RETRY.name, snackBar.callToActionText)
         snackBar.onClickCTA?.invoke()
         assertEquals(1, retryCount)
     }
@@ -107,8 +108,8 @@ class SaveMealTimesUseCaseTest {
         save(MealTimesVO.default)
 
         val snackBar = messageHelper.snackBars.single()
-        assertEquals("식사 시간을 저장하지 못했어요", snackBar.messageText)
-        assertEquals("다시 시도", snackBar.callToActionText)
+        assertEquals(StringResource.SETTINGS_MEAL_TIMES_SAVE_FAILED.name, snackBar.messageText)
+        assertEquals(StringResource.RETRY.name, snackBar.callToActionText)
         snackBar.onClickCTA?.invoke()
         assertEquals(1, retryCount)
     }

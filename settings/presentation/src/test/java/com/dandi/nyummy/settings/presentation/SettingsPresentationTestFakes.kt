@@ -103,6 +103,9 @@ internal class FakeSettingsRepository : SettingsRepository {
     }
 }
 
+/** 리소스 id로 띄운 문구는 `res:<id>`로 기록한다. */
+internal fun resText(messageRes: Int): String = "res:$messageRes"
+
 internal class RecordingMessageHelper : MessageHelper {
     data class SnackBarCall(val messageText: String, val onClickCTA: (() -> Unit)?)
 
@@ -125,7 +128,9 @@ internal class RecordingMessageHelper : MessageHelper {
         messageRes: Int,
         callToActionText: String?,
         onClickCTA: (() -> Unit)?,
-    ) = Unit
+    ) {
+        snackBars += SnackBarCall(resText(messageRes), onClickCTA)
+    }
 
     /** 띄운 한 버튼 창의 버튼 동작. */
     val oneButtonDialogClicks = mutableListOf<(() -> Unit)?>()
@@ -177,7 +182,7 @@ internal class RecordingNavigationHelper : NavigationHelper {
 }
 
 internal object FakeResourceHelper : ResourceHelper {
-    override fun getString(resource: StringResource): String = ""
+    override fun getString(resource: StringResource): String = resource.name
 }
 
 internal object FakeTTIHelper : TTIHelper {

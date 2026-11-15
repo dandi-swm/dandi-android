@@ -1,5 +1,6 @@
 package com.dandi.nyummy.main.presentation.navigation
 
+import com.dandi.nyummy.common.presentation.R
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyMainTabs
 import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.home.domain.HomePage
@@ -15,10 +16,10 @@ class MainTabsTest {
     @Test
     fun `탭 화면은 내비 아이콘 순서와 같다`() {
         val expectedTabs = listOf(
-            "홈" to HomePage.PATH,
-            "마이룸" to MyRoomPage.PATH,
-            "기록" to HistoryPage.PATH,
-            "상점" to ShopPage.PATH,
+            R.string.nyummy_nav_home to HomePage.PATH,
+            R.string.nyummy_nav_my_room to MyRoomPage.PATH,
+            R.string.nyummy_nav_record to HistoryPage.PATH,
+            R.string.nyummy_nav_shop to ShopPage.PATH,
         )
         assertEquals(expectedTabs.map { it.first }, NyummyMainTabs.map { it.label })
         assertEquals(expectedTabs.map { it.second }, mainTabPages.map { it.toRoute().path })
