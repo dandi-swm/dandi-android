@@ -1,6 +1,7 @@
 package com.dandi.nyummy.history.data.dto
 
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
+import com.dandi.nyummy.history.entity.MealAnalysisVersion
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -71,6 +72,8 @@ class DailyMealsDTOTest {
         assertEquals(MealAnalysisStatus.COMPLETED, statusOf("COMPLETED"))
         assertEquals(MealAnalysisStatus.FAILED, statusOf("FAILED"))
         assertEquals(MealAnalysisStatus.WAITING, statusOf("WAITING"))
+        assertEquals(MealAnalysisStatus.RECOGNIZING, statusOf("RECOGNIZING"))
+        assertEquals(MealAnalysisStatus.CONFIRMING, statusOf("CONFIRMING"))
         // 이름과 열량이 있어도 완료로 추측하지 않는다.
         assertEquals(MealAnalysisStatus.UNKNOWN, statusOf(null))
         assertEquals(MealAnalysisStatus.UNKNOWN, statusOf("RETRYING"))
@@ -101,4 +104,56 @@ class DailyMealsDTOTest {
         assertEquals("", iconOf(null, 1))
         assertEquals("", iconOf("COMPLETED", null))
     }
+
+    @Test
+    fun `분석 버전을 옮기고 없거나 모르는 값은 V1으로 둔다`() {
+        fun versionOf(version: String?) =
+            DailyMealsDTO(meals = listOf(DailyMealDTO(mealId = 1, analysisVersion = version)))
+                .toVO().meals.single().analysisVersion
+
+        assertEquals(MealAnalysisVersion.V2, versionOf("V2"))
+        assertEquals(MealAnalysisVersion.V1, versionOf("V1"))
+        // 기존 상세 화면이 가장 안전하므로 판단할 수 없으면 V1으로 연다.
+        assertEquals(MealAnalysisVersion.V1, versionOf(null))
+        assertEquals(MealAnalysisVersion.V1, versionOf("V3"))
+    }
+
+    @Test
+    fun `음식을 인식 중인 식사는 분석 중이고 실패가 아니다`() {
+        val meal = mealOf("RECOGNIZING")
+
+        assertTrue(meal.isAnalyzing)
+        assertFalse(meal.isAnalysisFailed)
+        assertFalse(meal.needsFoodConfirm)
+        assertFalse(meal.isAnalysisCompleted)
+    }
+
+    @Test
+    fun `확인 대기 식사는 분석 중도 완료도 실패도 아니다`() {
+        val meal = mealOf("CONFIRMING")
+
+        assertTrue(meal.needsFoodConfirm)
+        assertFalse(meal.isAnalyzing)
+        assertFalse(meal.isAnalysisCompleted)
+        assertFalse(meal.isAnalysisFailed)
+        assertFalse(meal.canRetryAnalysis)
+    }
+
+    @Test
+    fun `모르는 상태는 실패로 보지만 다시 분석할 수 없다`() {
+        val meal = mealOf("RETRYING")
+
+        assertTrue(meal.isAnalysisFailed)
+        assertFalse(meal.canRetryAnalysis)
+        assertFalse(meal.needsFoodConfirm)
+    }
+
+    @Test
+    fun `인식 중이거나 확인 대기인 식사는 음식 아이콘을 쓰지 않는다`() {
+        assertEquals("", mealOf("RECOGNIZING", iconId = 1).foodIconId)
+        assertEquals("", mealOf("CONFIRMING", iconId = 1).foodIconId)
+    }
+
+    private fun mealOf(status: String, iconId: Long? = null) =
+        DailyMealsDTO(meals = listOf(DailyMealDTO(mealId = 1, status = status, iconId = iconId))).toVO().meals.single()
 }

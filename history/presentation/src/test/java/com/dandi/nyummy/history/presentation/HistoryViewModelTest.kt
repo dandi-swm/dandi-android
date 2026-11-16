@@ -17,6 +17,7 @@ import com.dandi.nyummy.history.domain.GetMonthWithDayMealsUseCase
 import com.dandi.nyummy.history.domain.GetMonthlyMealsUseCase
 import com.dandi.nyummy.history.domain.HistoryRepository
 import com.dandi.nyummy.history.domain.MealDetailPage
+import com.dandi.nyummy.meal.domain.MealFoodPickPage
 import com.dandi.nyummy.history.domain.ReanalyzeMealUseCase
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
 import com.dandi.nyummy.history.entity.DailyNutritionVO
@@ -24,6 +25,7 @@ import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
+import com.dandi.nyummy.history.entity.MealAnalysisVersion
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.history.presentation.model.HistoryMonth
 import com.dandi.nyummy.history.presentation.util.previousMonthOf
@@ -526,7 +528,71 @@ class HistoryViewModelTest {
 
         viewModel.onIntent(HistoryIntent.ClickMeal("1"))
 
-        assertEquals(listOf<Page>(MealDetailPage(1L)), navigationHelper.pages)
+        assertEquals(listOf<Page>(MealDetailPage(1L, MealAnalysisVersion.V1)), navigationHelper.pages)
+    }
+
+    @Test
+    fun `음식 목록 방식으로 기록한 식사를 누르면 V2 상세로 간다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ ->
+            DailyMealHistoryVO(
+                meals = listOf(
+                    MealHistoryVO(id = "1", name = "한정식", orderIndex = 1, analysisVersion = MealAnalysisVersion.V2),
+                    MealHistoryVO(id = "2", name = "김밥", orderIndex = 2, analysisVersion = MealAnalysisVersion.V1),
+                ),
+            )
+        }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ClickMeal("1"))
+        viewModel.onIntent(HistoryIntent.ClickMeal("2"))
+
+        assertEquals(
+            listOf<Page>(MealDetailPage(1L, MealAnalysisVersion.V2), MealDetailPage(2L, MealAnalysisVersion.V1)),
+            navigationHelper.pages,
+        )
+    }
+
+    @Test
+    fun `인식 중이거나 계산 중이거나 확인 대기인 식사는 눌러도 상세로 가지 않는다`() = runTest(testDispatcher) {
+        listOf(
+            MealAnalysisStatus.RECOGNIZING,
+            MealAnalysisStatus.WAITING,
+            MealAnalysisStatus.ANALYZING,
+            MealAnalysisStatus.CONFIRMING,
+        ).forEach { status ->
+            repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal(status) }
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.onIntent(HistoryIntent.ClickMeal("2"))
+            advanceUntilIdle()
+
+            assertTrue("$status", navigationHelper.pages.isEmpty())
+        }
+    }
+
+    @Test
+    fun `확인 대기 식사를 누르면 찾은 음식 고르기 화면으로 간다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal(MealAnalysisStatus.CONFIRMING) }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ClickConfirmFoods("2"))
+
+        assertEquals(listOf<Page>(MealFoodPickPage(2L)), navigationHelper.pages)
+    }
+
+    @Test
+    fun `확인 대기가 아닌 식사는 음식 확인으로 눌러도 아무 화면도 열지 않는다`() = runTest(testDispatcher) {
+        repository.dailyOverride = { _, _, _ -> dailyWithFailedMeal(MealAnalysisStatus.ANALYZING) }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(HistoryIntent.ClickConfirmFoods("2"))
+        advanceUntilIdle()
+
+        assertTrue(navigationHelper.pages.isEmpty())
     }
 
     @Test

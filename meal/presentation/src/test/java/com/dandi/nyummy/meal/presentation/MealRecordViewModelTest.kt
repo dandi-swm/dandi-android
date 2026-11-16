@@ -21,11 +21,16 @@ import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
+import com.dandi.nyummy.meal.domain.CancelMealUseCase
 import com.dandi.nyummy.meal.domain.ImportGalleryMealPhotoUseCase
+import com.dandi.nyummy.meal.domain.MealErrorType
+import com.dandi.nyummy.meal.domain.SubmitMealFoodsUseCase
 import com.dandi.nyummy.meal.domain.MealRecordRepository
 import com.dandi.nyummy.meal.domain.SubmitMealUseCase
 import com.dandi.nyummy.meal.domain.SubmitTutorialMealUseCase
 import com.dandi.nyummy.meal.entity.CreatedMealVO
+import com.dandi.nyummy.meal.entity.FoundFoodVO
+import com.dandi.nyummy.meal.entity.MealRecognition
 import com.dandi.nyummy.meal.entity.MealImageUploadVO
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
@@ -72,6 +77,7 @@ class MealRecordViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val mealRepository = FakeMealRecordRepository()
+    private val foodRepository = FakeMealFoodRepository()
     private val navigationHelper = RecordingNavigationHelper()
     private val messageHelper = RecordingMessageHelper()
     private val roomRepository = FakeRoomRepository()
@@ -90,7 +96,7 @@ class MealRecordViewModelTest {
 
     @Test
     fun `기록이 접수되면 상자 등급이 연출 상태에 실린다`() = runTest(testDispatcher) {
-        mealRepository.created = CreatedMealVO(mealId = 1, status = "ANALYZING", rewardBoxGrade = RewardBoxGrade.GOLD)
+        mealRepository.created = foundMeal(RewardBoxGrade.GOLD)
         val viewModel = createViewModel()
 
         submit(viewModel)
@@ -151,21 +157,25 @@ class MealRecordViewModelTest {
     }
 
     @Test
-    fun `사진 카드가 올라오는 동안 접수되면 그 장면이 끝난 뒤 띠욧으로 넘어간다`() = runTest(testDispatcher) {
+    fun `음식을 찾으면 찾은 음식을 모두 체크한 고르기 화면으로 간다`() = runTest(testDispatcher) {
+        mealRepository.created = foundMeal(RewardBoxGrade.SILVER)
         val viewModel = createViewModel()
-        submit(viewModel)
-        assertEquals(MealCeremonyStage.Serving, viewModel.ceremony().stage)
 
-        viewModel.finishStage(MealCeremonyStage.Serving)
+        submitPhoto(viewModel)
 
-        assertEquals(MealCeremonyStage.Reaction, viewModel.ceremony().stage)
+        val pick = viewModel.foodPick()
+        assertEquals(MEAL_ID, pick.mealId)
+        assertEquals(RewardBoxGrade.SILVER, pick.rewardBoxGrade)
+        assertEquals(listOf("밥", "된장찌개", "배추김치"), pick.draft.lines.map { it.name })
+        assertEquals(3, pick.draft.checkedCount)
+        assertFalse(viewModel.uiState.value.isSubmitSucceeded)
     }
 
     @Test
-    fun `응답을 기다리는 중에 접수되면 곧장 띠욧으로 넘어간다`() = runTest(testDispatcher) {
+    fun `응답을 기다리는 장면에서 음식을 찾으면 고르기 화면으로 간다`() = runTest(testDispatcher) {
         val gate = CompletableDeferred<Unit>().also { mealRepository.createGate = it }
         val viewModel = createViewModel()
-        submit(viewModel)
+        submitPhoto(viewModel)
 
         viewModel.finishStage(MealCeremonyStage.Serving)
         assertEquals(MealCeremonyStage.Waiting, viewModel.ceremony().stage)
@@ -173,12 +183,268 @@ class MealRecordViewModelTest {
         gate.complete(Unit)
         advanceUntilIdle()
 
+        assertTrue(viewModel.uiState.value.phase is MealCameraPhase.FoodPick)
+    }
+
+    @Test
+    fun `응답이 빨리 와도 3초를 기다린 뒤 인식 결과를 반영한다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+        capture(viewModel)
+
+        viewModel.onIntent(MealRecordIntent.ClickSubmit)
+        advanceTimeBy(2_900L)
+
+        assertEquals(MealSubmitStatus.Uploading, viewModel.ceremony().submit)
+
+        advanceTimeBy(200L)
+
+        assertTrue(viewModel.uiState.value.phase is MealCameraPhase.FoodPick)
+    }
+
+    @Test
+    fun `음식을 가져가면 체크한 음식만 보내고 띠욧부터 연출을 잇는다`() = runTest(testDispatcher) {
+        mealRepository.created = foundMeal(RewardBoxGrade.GOLD)
+        val viewModel = createViewModel()
+        submitPhoto(viewModel)
+        viewModel.onIntent(MealRecordIntent.ToggleFood(3))
+
+        viewModel.onIntent(MealRecordIntent.ClickTakeFoods)
+        advanceUntilIdle()
+
+        assertEquals(listOf(MEAL_ID to FoundFoods.take(2)), foodRepository.submitted)
+        val ceremony = viewModel.ceremony()
+        // 사진 카드가 올라오고 기다리는 장면은 이미 봤다.
+        assertEquals(MealCeremonyStage.Reaction, ceremony.stage)
+        assertEquals(MealSubmitStatus.Accepted(RewardBoxGrade.GOLD), ceremony.submit)
+        assertTrue(viewModel.uiState.value.isSubmitSucceeded)
+        assertTrue(navigationHelper.calls.isEmpty())
+    }
+
+    @Test
+    fun `이름으로 추가한 음식도 같이 가져간다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+        submitPhoto(viewModel)
+        viewModel.onIntent(MealRecordIntent.OpenFoodNameInput)
+        viewModel.onIntent(MealRecordIntent.ChangeFoodNameInput("김밥"))
+        viewModel.onIntent(MealRecordIntent.ConfirmFoodNameInput)
+
+        viewModel.onIntent(MealRecordIntent.ClickTakeFoods)
+        advanceUntilIdle()
+
+        assertEquals(FoundFoods + FoundFoodVO(name = "김밥"), foodRepository.submitted.single().second)
+    }
+
+    @Test
+    fun `가져간 뒤에는 띠욧, 먹었어요, 상자 순서로 이어지고 끝나면 홈으로 간다`() = runTest(testDispatcher) {
+        mealRepository.created = foundMeal(RewardBoxGrade.SILVER)
+        val viewModel = createViewModel()
+        submit(viewModel)
+
+        viewModel.finishStage(MealCeremonyStage.Reaction)
+        assertEquals(MealCeremonyStage.Ate, viewModel.ceremony().stage)
+        viewModel.finishStage(MealCeremonyStage.Ate)
+        assertEquals(MealCeremonyStage.BoxReveal, viewModel.ceremony().stage)
+        viewModel.finishStage(MealCeremonyStage.BoxReveal)
+        viewModel.finishStage(MealCeremonyStage.BoxSend)
+
+        assertEquals(listOf("back"), navigationHelper.calls)
+    }
+
+    @Test
+    fun `하나도 고르지 않으면 가져갈 수 없다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+        submitPhoto(viewModel)
+        (1..3).forEach { viewModel.onIntent(MealRecordIntent.ToggleFood(it)) }
+
+        viewModel.onIntent(MealRecordIntent.ClickTakeFoods)
+        advanceUntilIdle()
+
+        assertTrue(foodRepository.submitted.isEmpty())
+        assertTrue(viewModel.uiState.value.phase is MealCameraPhase.FoodPick)
+    }
+
+    @Test
+    fun `가져가는 사이 서버가 계산을 시작했으면 연출 없이 홈으로 간다`() = runTest(testDispatcher) {
+        foodRepository.submitError = httpException(409, MealErrorType.MEAL_FOODS_NOT_UPDATABLE.type)
+        val viewModel = createViewModel()
+        submitPhoto(viewModel)
+
+        viewModel.onIntent(MealRecordIntent.ClickTakeFoods)
+        advanceUntilIdle()
+
+        assertEquals(listOf("back"), navigationHelper.calls)
+        assertTrue(viewModel.uiState.value.phase is MealCameraPhase.FoodPick)
+    }
+
+    @Test
+    fun `음식을 보내지 못하면 고르기 화면에 머물고 다시 가져갈 수 있다`() = runTest(testDispatcher) {
+        foodRepository.submitError = IOException("network")
+        val viewModel = createViewModel()
+        submitPhoto(viewModel)
+
+        viewModel.onIntent(MealRecordIntent.ClickTakeFoods)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.foodPick().isBusy)
+        assertTrue(navigationHelper.calls.isEmpty())
+
+        foodRepository.submitError = null
+        viewModel.onIntent(MealRecordIntent.ClickTakeFoods)
+        advanceUntilIdle()
+
         assertEquals(MealCeremonyStage.Reaction, viewModel.ceremony().stage)
     }
 
     @Test
+    fun `음식을 보내는 중에는 고치거나 다시 보내거나 닫을 수 없다`() = runTest(testDispatcher) {
+        foodRepository.submitGate = CompletableDeferred()
+        val viewModel = createViewModel()
+        submitPhoto(viewModel)
+        viewModel.onIntent(MealRecordIntent.ClickTakeFoods)
+        advanceUntilIdle()
+
+        viewModel.onIntent(MealRecordIntent.ToggleFood(1))
+        viewModel.onIntent(MealRecordIntent.ClickTakeFoods)
+        viewModel.onIntent(MealRecordIntent.ClickClose)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.foodPick().isBusy)
+        assertEquals(3, viewModel.foodPick().draft.checkedCount)
+        assertTrue(foodRepository.canceled.isEmpty())
+        assertTrue(navigationHelper.calls.isEmpty())
+    }
+
+    @Test
+    fun `고르기 화면에서 닫으면 기록을 취소하고 연출 없이 홈으로 간다`() = runTest(testDispatcher) {
+        val photo = tempFolder.newFile("meal.jpeg")
+        val viewModel = createViewModel()
+        capture(viewModel, photo.absolutePath)
+        viewModel.onIntent(MealRecordIntent.ClickSubmit)
+        advanceUntilIdle()
+
+        viewModel.onIntent(MealRecordIntent.ClickClose)
+        advanceUntilIdle()
+
+        assertEquals(listOf(MEAL_ID), foodRepository.canceled)
+        assertEquals(listOf("back"), navigationHelper.calls)
+        assertTrue(foodRepository.submitted.isEmpty())
+        assertFalse(photo.exists())
+    }
+
+    @Test
+    fun `기록을 취소하지 못해도 홈으로 간다`() = runTest(testDispatcher) {
+        foodRepository.cancelError = IOException("network")
+        val viewModel = createViewModel()
+        submitPhoto(viewModel)
+
+        viewModel.onIntent(MealRecordIntent.ClickClose)
+        advanceUntilIdle()
+
+        assertEquals(listOf("back"), navigationHelper.calls)
+    }
+
+    @Test
+    fun `음식이 아니면 연출 없이 음식 아님 화면으로 간다`() = runTest(testDispatcher) {
+        mealRepository.created = CreatedMealVO(mealId = MEAL_ID, recognition = MealRecognition.NOT_FOOD, rewardBoxGrade = RewardBoxGrade.BRONZE)
+        val viewModel = createViewModel()
+
+        submitPhoto(viewModel)
+
+        assertTrue(viewModel.uiState.value.phase is MealCameraPhase.NotFood)
+        assertFalse(viewModel.uiState.value.isSubmitSucceeded)
+        assertTrue(navigationHelper.calls.isEmpty())
+    }
+
+    @Test
+    fun `음식 아님 화면에서 다시 찍기를 누르면 사진을 버리고 촬영으로 돌아간다`() = runTest(testDispatcher) {
+        mealRepository.created = CreatedMealVO(mealId = MEAL_ID, recognition = MealRecognition.NOT_FOOD)
+        val photo = tempFolder.newFile("meal.jpeg")
+        val viewModel = createViewModel()
+        capture(viewModel, photo.absolutePath)
+        viewModel.onIntent(MealRecordIntent.ClickSubmit)
+        advanceUntilIdle()
+
+        viewModel.onIntent(MealRecordIntent.ClickRetakeNotFood)
+
+        assertEquals(MealCameraPhase.Preview, viewModel.uiState.value.phase)
+        assertFalse(photo.exists())
+        assertTrue(navigationHelper.calls.isEmpty())
+        // 실패한 기록은 지우지 않는다. 기록 탭에 실패 카드로 남는다.
+        assertTrue(foodRepository.canceled.isEmpty())
+    }
+
+    @Test
+    fun `음식 아님 화면에서 홈으로나 닫기를 누르면 홈으로 간다`() = runTest(testDispatcher) {
+        mealRepository.created = CreatedMealVO(mealId = MEAL_ID, recognition = MealRecognition.NOT_FOOD)
+        val viewModel = createViewModel()
+        submitPhoto(viewModel)
+
+        viewModel.onIntent(MealRecordIntent.ClickGoHome)
+        viewModel.onIntent(MealRecordIntent.ClickClose)
+
+        assertEquals(listOf("back"), navigationHelper.calls)
+    }
+
+    @Test
+    fun `인식이 늦어지면 홈에서 기다리라는 안내로 가고 홈으로를 누르면 홈으로 간다`() = runTest(testDispatcher) {
+        mealRepository.created = CreatedMealVO(mealId = MEAL_ID, recognition = MealRecognition.RECOGNIZING, rewardBoxGrade = RewardBoxGrade.GOLD)
+        val viewModel = createViewModel()
+
+        submitPhoto(viewModel)
+
+        assertTrue(viewModel.uiState.value.phase is MealCameraPhase.SlowNotice)
+
+        viewModel.onIntent(MealRecordIntent.ClickGoHome)
+
+        assertEquals(listOf("back"), navigationHelper.calls)
+    }
+
+    @Test
+    fun `음식을 찾았다면서 목록이 비었으면 홈에서 기다리게 한다`() = runTest(testDispatcher) {
+        mealRepository.created = CreatedMealVO(mealId = MEAL_ID, recognition = MealRecognition.CONFIRMING)
+        val viewModel = createViewModel()
+
+        submitPhoto(viewModel)
+
+        assertTrue(viewModel.uiState.value.phase is MealCameraPhase.SlowNotice)
+    }
+
+    @Test
+    fun `고르기 화면에서 앱이 종료됐다 돌아오면 되살리지 않고 기록됐다고 알린 뒤 홈으로 간다`() = runTest(testDispatcher) {
+        val photo = tempFolder.newFile("meal.jpeg")
+        val savedState = SavedStateHandle()
+        val beforeKill = createViewModel(savedState = savedState)
+        capture(beforeKill, photo.absolutePath)
+        beforeKill.onIntent(MealRecordIntent.ClickSubmit)
+        advanceUntilIdle()
+        assertTrue(beforeKill.uiState.value.phase is MealCameraPhase.FoodPick)
+
+        createViewModel(savedState = savedState.afterProcessDeath())
+
+        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(listOf(R.string.meal_record_recorded_check_history), messageHelper.snackBarRes)
+        assertFalse(photo.exists())
+        assertEquals(1, mealRepository.createCount)
+        // 고르던 기록을 취소하지 않는다. 서버가 찾은 음식 전부로 계산한다.
+        assertTrue(foodRepository.canceled.isEmpty())
+    }
+
+    @Test
+    fun `음식 아님 화면에서 앱이 종료됐다 돌아와도 다시 기록하지 않고 홈으로 간다`() = runTest(testDispatcher) {
+        mealRepository.created = CreatedMealVO(mealId = MEAL_ID, recognition = MealRecognition.NOT_FOOD)
+        val savedState = SavedStateHandle()
+        submitPhoto(createViewModel(savedState = savedState))
+
+        createViewModel(savedState = savedState.afterProcessDeath())
+
+        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(listOf(R.string.meal_record_recorded_check_history), messageHelper.snackBarRes)
+        assertEquals(1, mealRepository.createCount)
+    }
+
+    @Test
     fun `상자가 없는 기록은 먹었어요에서 끝 장면으로 가고 완료를 기다린다`() = runTest(testDispatcher) {
-        mealRepository.created = CreatedMealVO(mealId = 1, rewardBoxGrade = RewardBoxGrade.NONE)
+        mealRepository.created = foundMeal(RewardBoxGrade.NONE)
         val viewModel = createViewModel()
         submit(viewModel)
 
@@ -193,7 +459,7 @@ class MealRecordViewModelTest {
 
     @Test
     fun `상자를 보내면 상자가 우편함에 들어간 뒤 곧장 홈으로 간다`() = runTest(testDispatcher) {
-        mealRepository.created = CreatedMealVO(mealId = 1, rewardBoxGrade = RewardBoxGrade.SILVER)
+        mealRepository.created = foundMeal(RewardBoxGrade.SILVER)
         val viewModel = createViewModel()
         submit(viewModel)
 
@@ -238,7 +504,7 @@ class MealRecordViewModelTest {
 
     @Test
     fun `상자를 보내는 기록은 건너뛰어도 상자 연출은 그대로 보여 준다`() = runTest(testDispatcher) {
-        mealRepository.created = CreatedMealVO(mealId = 1, rewardBoxGrade = RewardBoxGrade.BRONZE)
+        mealRepository.created = foundMeal(RewardBoxGrade.BRONZE)
         val viewModel = createViewModel()
         submit(viewModel)
         viewModel.finishStage(MealCeremonyStage.Serving)
@@ -320,7 +586,7 @@ class MealRecordViewModelTest {
 
     @Test
     fun `접수된 뒤 앱이 종료됐다 돌아오면 다시 기록하지 않고 연출 끝 장면을 보여 준다`() = runTest(testDispatcher) {
-        mealRepository.created = CreatedMealVO(mealId = 1, rewardBoxGrade = RewardBoxGrade.SILVER)
+        mealRepository.created = foundMeal(RewardBoxGrade.SILVER)
         val savedState = SavedStateHandle()
         submit(createViewModel(savedState = savedState))
 
@@ -492,22 +758,6 @@ class MealRecordViewModelTest {
     }
 
     @Test
-    fun `평소 기록도 응답이 빨리 오면 3초를 기다린 뒤 접수 결과를 반영한다`() = runTest(testDispatcher) {
-        mealRepository.created = CreatedMealVO(mealId = 1, rewardBoxGrade = RewardBoxGrade.SILVER)
-        val viewModel = createViewModel()
-        capture(viewModel)
-
-        viewModel.onIntent(MealRecordIntent.ClickSubmit)
-        advanceTimeBy(2_900L)
-
-        assertEquals(MealSubmitStatus.Uploading, viewModel.ceremony().submit)
-
-        advanceTimeBy(200L)
-
-        assertEquals(MealSubmitStatus.Accepted(RewardBoxGrade.SILVER), viewModel.ceremony().submit)
-    }
-
-    @Test
     fun `이미 튜토리얼 식사를 했다고 하면 연출 없이 홈으로 간다`() = runTest(testDispatcher) {
         tutorialHelper.mealRequired = true
         mealRepository.tutorialError = HttpResponseException(
@@ -610,6 +860,17 @@ class MealRecordViewModelTest {
     private fun MealRecordViewModel.ceremony(): MealCameraPhase.Ceremony =
         uiState.value.phase as MealCameraPhase.Ceremony
 
+    private fun MealRecordViewModel.foodPick(): MealCameraPhase.FoodPick =
+        uiState.value.phase as MealCameraPhase.FoodPick
+
+    private fun httpException(code: Int, errorCode: String? = null) = HttpResponseException(
+        status = HttpResponseStatus.create(code),
+        rawCode = code,
+        errorRequestUrl = "https://test/api/v2/meals/1/foods",
+        msg = "Http Request Failed ($code)",
+        cause = errorCode?.let(::Throwable),
+    )
+
     private fun MealRecordViewModel.finishStage(stage: MealCeremonyStage) {
         onIntent(MealRecordIntent.CeremonyStageFinished(stage))
     }
@@ -638,7 +899,17 @@ class MealRecordViewModelTest {
         viewModel.onIntent(MealRecordIntent.PhotoCaptured(photoPath))
     }
 
+    /** 찍은 사진을 주고, 서버가 찾은 음식을 그대로 가져가 연출까지 간다. */
     private fun TestScope.submit(viewModel: MealRecordViewModel) {
+        submitPhoto(viewModel)
+        if (viewModel.uiState.value.phase is MealCameraPhase.FoodPick) {
+            viewModel.onIntent(MealRecordIntent.ClickTakeFoods)
+            advanceUntilIdle()
+        }
+    }
+
+    /** 찍은 사진을 주고 서버의 음식 인식 결과가 반영될 때까지 간다. */
+    private fun TestScope.submitPhoto(viewModel: MealRecordViewModel) {
         capture(viewModel)
         viewModel.onIntent(MealRecordIntent.ClickSubmit)
         advanceUntilIdle()
@@ -656,6 +927,8 @@ class MealRecordViewModelTest {
             navigationHelper = navigationHelper,
             ttiHelper = FakeTTIHelper(),
         ),
+        submitMealFoods = SubmitMealFoodsUseCase(foodRepository, FakeResourceHelper(), messageHelper, navigationHelper, FakeTTIHelper()),
+        cancelMeal = CancelMealUseCase(foodRepository, FakeResourceHelper(), messageHelper, navigationHelper, FakeTTIHelper()),
         importGalleryMealPhoto = ImportGalleryMealPhotoUseCase(
             repository = mealRepository,
             analyticsHelper = RecordingAnalyticsHelper(),
@@ -710,7 +983,7 @@ class MealRecordViewModelTest {
     }
 
     private class FakeMealRecordRepository : MealRecordRepository {
-        var created: CreatedMealVO = CreatedMealVO(mealId = 1, status = "WAITING")
+        var created: CreatedMealVO = foundMeal()
         var createError: Exception? = null
 
         /** 값이 있으면 이 값이 채워질 때까지 접수 응답을 미룬다. */
@@ -738,80 +1011,20 @@ class MealRecordViewModelTest {
         }
     }
 
-    private class RecordingNavigationHelper : NavigationHelper {
-        val calls = mutableListOf<String>()
-
-        override val navigationFlow: Flow<NavSignal> = emptyFlow()
-        override fun navigateByRoute(route: NavRoute) = Unit
-        override fun navigateTo(page: Page) {
-            calls += "to:${page.toRoute().path}"
-        }
-        override fun navigateToAppLink(link: String, asRoot: Boolean) = Unit
-        override fun navigateToBack() {
-            calls += "back"
-        }
-        override fun navigateToAsRoot(page: Page) = Unit
-        override fun navigateToInitial() = Unit
-        override fun navigateToExternalLink(url: String) = Unit
-    }
-
-    private class FakeResourceHelper : ResourceHelper {
-        override fun getString(resource: StringResource): String = resource.name
-    }
-
-    /** 리소스로 띄운 스낵바만 모아 둔다. */
-    private class RecordingMessageHelper : MessageHelper {
-        val snackBarRes = mutableListOf<Int>()
-
-        override val effect: Flow<MessageEffect> = emptyFlow()
-        override fun showToast(toastMsg: String) = Unit
-        override fun showToast(messageRes: Int) = Unit
-        override fun showSnackBar(
-            iconType: IconType,
-            messageText: String,
-            callToActionText: String?,
-            onClickCTA: (() -> Unit)?,
-        ) = Unit
-
-        override fun showSnackBar(
-            iconType: IconType,
-            messageRes: Int,
-            callToActionText: String?,
-            onClickCTA: (() -> Unit)?,
-        ) {
-            snackBarRes += messageRes
-        }
-
-        override fun showOneButtonDialog(
-            titleText: String?,
-            descText: String,
-            cantIgnore: Boolean,
-            buttonText: String,
-            onClickButton: (() -> Unit)?,
-        ) = Unit
-
-        override fun showTwoButtonDialog(
-            titleText: String?,
-            descText: String,
-            cantIgnore: Boolean,
-            leftButtonText: String,
-            onClickLeftButton: (() -> Unit)?,
-            rightButtonText: String,
-            onClickRightButton: (() -> Unit)?,
-        ) = Unit
-    }
-
-    private class FakeTTIHelper : TTIHelper {
-        override fun startTTITracking(page: TTIPage) = Unit
-        override fun startTTITimeline(category: TimelineCategory) = Unit
-        override fun endTTITimeline(category: TimelineCategory) = Unit
-        override fun endTTITracking() = Unit
-        override fun shotTTILogging() = Unit
-        override fun addTTIMetaData(metadata: TTIMetaData, value: Any?) = Unit
-    }
-
     private companion object {
         const val PHOTO_PATH = "/cache/meal_ceremony_test.jpg"
+        const val MEAL_ID = 1L
+
+        val FoundFoods = listOf(FoundFoodVO(11, "밥"), FoundFoodVO(12, "된장찌개"), FoundFoodVO(13, "배추김치"))
+
+        /** 서버가 사진에서 음식을 찾은 기록. */
+        fun foundMeal(rewardBoxGrade: RewardBoxGrade = RewardBoxGrade.NONE) = CreatedMealVO(
+            mealId = MEAL_ID,
+            recognition = MealRecognition.CONFIRMING,
+            rewardBoxGrade = rewardBoxGrade,
+            name = "한정식",
+            foods = FoundFoods,
+        )
     }
 }
 

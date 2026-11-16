@@ -188,6 +188,24 @@ class HistoryScreenTest {
     }
 
     @Test
+    fun 인식_중인_식사는_분석_중_카드로_확인_대기_식사는_확인_문구_카드로_보여_준다() {
+        val intents = mutableListOf<HistoryIntent>()
+        val meals = listOf(
+            MealHistoryVO(id = "1", recordedAt = "08:10", status = MealAnalysisStatus.RECOGNIZING),
+            MealHistoryVO(id = "2", recordedAt = "12:30", status = MealAnalysisStatus.CONFIRMING),
+        )
+        setScreen(state(meals = meals)) { intents += it }
+
+        // 인식 중은 실패 카드가 아니라 분석 중 카드다.
+        composeRule.onNodeWithText(catText(R.string.history_analysis_pending_title)).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.history_analysis_failed_title)).assertDoesNotExist()
+        composeRule.onNodeWithText(catText(R.string.history_analysis_pending_title)).performClick()
+        composeRule.onNodeWithText(text(R.string.history_analysis_confirm_title)).performScrollTo().performClick()
+
+        assertEquals(listOf<HistoryIntent>(HistoryIntent.ClickConfirmFoods("2")), intents)
+    }
+
+    @Test
     fun 식사_줄은_완료_분석_중_분석_실패를_다르게_보여_준다() {
         val intents = mutableListOf<HistoryIntent>()
         val meals = listOf(
