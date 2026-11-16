@@ -14,6 +14,7 @@
     <string name="meal_record_capture_failed">Couldn\'t take the photo. Please try again.</string>
     <string name="meal_record_camera_unavailable">Camera isn\'t available on this device.</string>
     <string name="meal_record_submit_interrupted">We couldn\'t confirm your meal was saved. Please check your history.</string>
+    <string name="meal_record_recorded_check_history">Recorded. Check it in the History tab.</string>
     <string name="meal_record_captured_photo_content_description">Captured food photo</string>
     <string name="meal_record_cat_content_description">%1$s</string>
     <string name="meal_record_done_title">%1$s loved the meal!</string>
@@ -131,4 +132,24 @@
     <string name="meal_cutscene_word_lucky">Luck\'s here, meow!!</string>
     <string name="meal_cutscene_word_me_too">Me too!</string>
     <string name="meal_cutscene_word_one_two">One, two…</string>
+    <!-- 찾은 음식 고르기 -->
+    <string name="meal_food_pick_title">Here\'s what %1$s found</string>
+    <string name="meal_food_pick_body">Pick only what you ate</string>
+    <string name="meal_food_pick_add">Add food</string>
+    <string name="meal_food_pick_add_confirm">Add</string>
+    <string name="meal_food_pick_add_hint">Type a food name and it gets analyzed too</string>
+    <string name="meal_food_pick_submit">Take %1$d</string>
+    <string name="meal_food_pick_checked">Selected</string>
+    <string name="meal_food_pick_unchecked">Not selected</string>
+    <string name="meal_food_pick_load_failed">Couldn\'t load the food list</string>
+    <string name="meal_food_pick_load_retry">Try again</string>
+    <!-- 음식 아님, 인식 지연 -->
+    <string name="meal_not_food_title">I don\'t think I can eat this?</string>
+    <string name="meal_not_food_body">Retake it so the food shows</string>
+    <string name="meal_record_go_home">Home</string>
+    <string name="meal_slow_notice_title">Finding the food is taking a while</string>
+    <string name="meal_slow_notice_body">Wait at home. I\'ll record everything I find and let you know when it\'s done.</string>
+    <string name="meal_slow_notice_notification_off">Notifications are off</string>
+    <string name="meal_slow_notice_notification_hint">Turn them on to hear when analysis is done</string>
+    <string name="meal_slow_notice_notification_enable">Turn on</string>
 </resources>

@@ -14,6 +14,7 @@
     <string name="meal_record_capture_failed">写真を撮れませんでした。もう一度お試しください。</string>
     <string name="meal_record_camera_unavailable">この端末ではカメラを使用できません。</string>
     <string name="meal_record_submit_interrupted">記録されたか確認できませんでした。記録タブで確認してください。</string>
+    <string name="meal_record_recorded_check_history">記録しました。記録タブで確認してください。</string>
     <string name="meal_record_captured_photo_content_description">撮影した食べ物の写真</string>
     <string name="meal_record_cat_content_description">%1$s</string>
     <string name="meal_record_done_title">%1$sがおいしく食べました！</string>
@@ -131,4 +132,24 @@
     <string name="meal_cutscene_word_lucky">福が来たにゃ！！</string>
     <string name="meal_cutscene_word_me_too">わたしも、わたしも！</string>
     <string name="meal_cutscene_word_one_two">いち、に…</string>
+    <!-- 찾은 음식 고르기 -->
+    <string name="meal_food_pick_title">%1$sが見つけた食べ物です</string>
+    <string name="meal_food_pick_body">食べたものだけ選んで持っていってね</string>
+    <string name="meal_food_pick_add">食べ物を追加</string>
+    <string name="meal_food_pick_add_confirm">追加</string>
+    <string name="meal_food_pick_add_hint">食べ物の名前を書くと栄養も一緒に分析します</string>
+    <string name="meal_food_pick_submit">%1$d個持っていく</string>
+    <string name="meal_food_pick_checked">選択中</string>
+    <string name="meal_food_pick_unchecked">未選択</string>
+    <string name="meal_food_pick_load_failed">食べ物リストを読み込めませんでした</string>
+    <string name="meal_food_pick_load_retry">再読み込み</string>
+    <!-- 음식 아님, 인식 지연 -->
+    <string name="meal_not_food_title">これは食べられないみたい？</string>
+    <string name="meal_not_food_body">食べ物が見えるように撮り直してね</string>
+    <string name="meal_record_go_home">ホームへ</string>
+    <string name="meal_slow_notice_title">食べ物を探すのに時間がかかっています</string>
+    <string name="meal_slow_notice_body">ホームで待っていてね。見つけた食べ物はすべて記録して、終わったらお知らせします。</string>
+    <string name="meal_slow_notice_notification_off">通知がオフになっています</string>
+    <string name="meal_slow_notice_notification_hint">オンにすると分析が終わったときにお知らせします</string>
+    <string name="meal_slow_notice_notification_enable">通知をオン</string>
 </resources>

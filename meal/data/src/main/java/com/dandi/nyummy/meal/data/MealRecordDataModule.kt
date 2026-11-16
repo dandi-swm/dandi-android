@@ -2,6 +2,7 @@ package com.dandi.nyummy.meal.data
 
 import android.content.Context
 import com.dandi.nyummy.common.data.image.ImageUploadDataSource
+import com.dandi.nyummy.meal.domain.MealFoodRepository
 import com.dandi.nyummy.meal.domain.MealRecordRepository
 import dagger.Module
 import dagger.Provides
@@ -39,4 +40,9 @@ object MealRecordDataModule {
         imageUploadDataSource: ImageUploadDataSource,
         galleryPhotoDataSource: MealGalleryPhotoDataSource,
     ): MealRecordRepository = MealRecordRepositoryImpl(dataSource, imageUploadDataSource, galleryPhotoDataSource)
+
+    @Provides
+    @Singleton
+    fun provideMealFoodRepository(dataSource: MealRecordDataSource): MealFoodRepository =
+        MealFoodRepositoryImpl(dataSource)
 }

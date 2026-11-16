@@ -50,6 +50,8 @@
     <string name="history_analysis_delete">기록 삭제</string>
     <string name="history_analysis_pending_title">%1$s(이)가 맛보는 중이에요</string>
     <string name="history_analysis_pending_body">다 되면 여기에 바로 보여 줄게요</string>
+    <string name="history_analysis_confirm_title">음식을 확인해 주세요</string>
+    <string name="history_analysis_confirm_body">먹은 음식만 고르면 바로 분석해요</string>
     <string name="history_analysis_unknown_meal">분석하지 못한 기록</string>
 
     <string name="history_kcal_unit">kcal</string>
@@ -103,4 +105,51 @@
         <item>열 번째 끼니</item>
     </string-array>
     <string name="history_meal_order_numbered">%1$d번째 끼니</string>
+    <!-- 음식 목록 방식(V2) 식사 상세, 음식 고치기 시트 -->
+    <string name="history_detail_v2_foods_title">사진 속 음식</string>
+    <string name="history_detail_v2_foods_hint">맨 위로 끌어 올린 음식이 대표 음식이 돼요</string>
+    <string name="history_detail_v2_main_badge">대표</string>
+    <string name="history_detail_v2_portion">%1$s인분</string>
+    <string name="history_detail_v2_macro_carb">탄</string>
+    <string name="history_detail_v2_macro_protein">단</string>
+    <string name="history_detail_v2_macro_fat">지</string>
+    <string name="history_detail_v2_gram">%1$dg</string>
+    <string name="history_detail_v2_food_pending">영양 계산 중</string>
+    <string name="history_detail_v2_add_food">음식 추가</string>
+    <string name="history_detail_v2_add_confirm">추가</string>
+    <string name="history_detail_v2_add_hint">음식 이름을 적으면 %1$s(이)가 영양을 같이 분석해요</string>
+    <string name="history_detail_v2_edit_food_description">%1$s 고치기</string>
+    <string name="history_detail_v2_drag_description">%1$s 순서 바꾸기</string>
+    <string name="history_detail_v2_edit_name_description">식사 이름 고치기</string>
+    <string name="history_detail_v2_calculating">%1$s(이)가 영양을 다시 계산하고 있어요</string>
+    <string name="history_detail_v2_calculation_failed">영양을 계산하지 못했어요. 기록 탭에서 다시 분석해 주세요.</string>
+    <string name="history_detail_v2_calculation_slow">계산이 오래 걸리고 있어요. 조금 뒤에 다시 확인해 주세요.</string>
+    <string name="history_food_sheet_title">음식 고치기</string>
+    <string name="history_food_sheet_icon">아이콘</string>
+    <string name="history_food_sheet_category_all">전체</string>
+    <string name="history_food_sheet_category_main">주식</string>
+    <string name="history_food_sheet_category_side">반찬</string>
+    <string name="history_food_sheet_category_fruit">과일</string>
+    <string name="history_food_sheet_category_snack">간식, 디저트</string>
+    <string name="history_food_sheet_category_drink">음료</string>
+    <string name="history_food_sheet_name">음식 이름</string>
+    <string name="history_food_sheet_name_empty">음식 이름을 적어 주세요</string>
+    <string name="history_food_sheet_portion">인분</string>
+    <string name="history_food_sheet_portion_hint">0.5 단위로 0.5~5인분까지 고를 수 있어요</string>
+    <string name="history_food_sheet_portion_decrease">인분 줄이기</string>
+    <string name="history_food_sheet_portion_increase">인분 늘리기</string>
+    <string name="history_food_sheet_nutrition">영양</string>
+    <string name="history_food_sheet_manual">직접 설정하기</string>
+    <string name="history_food_sheet_manual_off_hint">직접 설정하기를 체크하면 영양을 바꿀 수 있어요</string>
+    <string name="history_food_sheet_manual_on_hint">영양을 바꾸면 이 식사 합계도 같이 바뀌어요</string>
+    <string name="history_food_sheet_calorie">칼로리</string>
+    <string name="history_food_sheet_carb">탄수화물</string>
+    <string name="history_food_sheet_protein">단백질</string>
+    <string name="history_food_sheet_fat">지방</string>
+    <string name="history_food_sheet_unit_kcal">kcal</string>
+    <string name="history_food_sheet_unit_gram">g</string>
+    <string name="history_food_sheet_delete">이 음식 지우기</string>
+    <string name="history_food_sheet_cancel">취소</string>
+    <string name="history_food_sheet_save">저장하기</string>
+    <string name="history_food_sheet_icon_description">음식 아이콘 %1$s</string>
 </resources>

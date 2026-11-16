@@ -1,6 +1,7 @@
 package com.dandi.nyummy.history.data
 
 import com.dandi.nyummy.history.domain.HistoryRepository
+import com.dandi.nyummy.history.domain.MealV2Repository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,4 +27,9 @@ object HistoryDataModule {
     @Singleton
     fun provideHistoryRepository(dataSource: HistoryDataSource): HistoryRepository =
         HistoryRepositoryImpl(dataSource)
+
+    @Provides
+    @Singleton
+    fun provideMealV2Repository(dataSource: HistoryDataSource): MealV2Repository =
+        MealV2RepositoryImpl(dataSource)
 }

@@ -20,4 +20,16 @@ class MealStatusDTOTest {
     fun `status가 없으면 UNKNOWN이다`() {
         assertEquals(MealAnalysisStatus.UNKNOWN, MealStatusDTO(id = 7).toVO())
     }
+
+    @Test
+    fun `음식 목록 방식 식사를 다시 분석하면 음식 인식부터 다시 한다`() {
+        val dto = Json.decodeFromString<MealStatusDTO>("""{"id":7,"status":"RECOGNIZING"}""")
+
+        assertEquals(MealAnalysisStatus.RECOGNIZING, dto.toVO())
+    }
+
+    @Test
+    fun `확인 대기 상태를 옮긴다`() {
+        assertEquals(MealAnalysisStatus.CONFIRMING, MealStatusDTO(id = 7, status = "CONFIRMING").toVO())
+    }
 }

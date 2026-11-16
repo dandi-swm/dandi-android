@@ -34,6 +34,9 @@ sealed interface HistoryIntent : MviIntent {
     /** 식사 목록에서 기록 하나를 눌렀습니다. */
     data class ClickMeal(val mealId: String) : HistoryIntent
 
+    /** 찾은 음식을 확인해 달라는 카드를 눌렀습니다. */
+    data class ClickConfirmFoods(val mealId: String) : HistoryIntent
+
     /** 분석 실패 카드의 `다시 분석하기` 를 눌렀습니다. */
     data class ClickRetryAnalysis(val mealId: String) : HistoryIntent
 

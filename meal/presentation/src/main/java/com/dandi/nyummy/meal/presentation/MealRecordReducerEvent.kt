@@ -2,6 +2,7 @@ package com.dandi.nyummy.meal.presentation
 
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
+import com.dandi.nyummy.meal.entity.FoundFoodVO
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
 import kotlinx.collections.immutable.ImmutableList
 
@@ -37,6 +38,40 @@ sealed interface MealRecordReducerEvent : ReducerEvent {
 
     /** 기록이 접수되어 연출이 맛 리액션으로 넘어갑니다. */
     data class SubmitSucceeded(val rewardBoxGrade: RewardBoxGrade, val cutscene: MealCutscene) : MealRecordReducerEvent
+
+    /** 서버가 사진에서 음식을 찾았습니다. 찾은 음식 고르기로 넘어갑니다. */
+    data class FoodsFound(
+        val mealId: Long,
+        val rewardBoxGrade: RewardBoxGrade,
+        val foods: List<FoundFoodVO>,
+    ) : MealRecordReducerEvent
+
+    /** 서버가 사진이 음식이 아니라고 했습니다. */
+    data object NotFoodJudged : MealRecordReducerEvent
+
+    /** 서버가 기한 안에 음식을 찾지 못했습니다. */
+    data object RecognitionDelayed : MealRecordReducerEvent
+
+    /** 찾은 음식 줄의 체크가 바뀌었습니다. */
+    data class FoodToggled(val key: Int) : MealRecordReducerEvent
+
+    /** 음식 이름 입력 줄이 열렸습니다. */
+    data object FoodNameInputOpened : MealRecordReducerEvent
+
+    /** 추가할 음식 이름이 바뀌었습니다. */
+    data class FoodNameInputChanged(val text: String) : MealRecordReducerEvent
+
+    /** 입력한 이름이 목록에 추가됐습니다. */
+    data object FoodNameInputConfirmed : MealRecordReducerEvent
+
+    /** 고른 목록을 보내거나 기록을 취소하기 시작했습니다. 끝날 때까지 고르기 화면의 입력을 막습니다. */
+    data object FoodPickBusy : MealRecordReducerEvent
+
+    /** 고른 목록을 보내지 못했습니다. 고르기 화면에 머뭅니다. */
+    data object FoodsSubmitFailed : MealRecordReducerEvent
+
+    /** 서버가 고른 목록을 받았습니다. 맛 리액션부터 연출을 잇습니다. */
+    data class FoodsTaken(val cutscene: MealCutscene) : MealRecordReducerEvent
 
     /** 제출이 실패했습니다. 안내 후 곧장 홈으로 돌아갑니다. */
     data object SubmitFailed : MealRecordReducerEvent

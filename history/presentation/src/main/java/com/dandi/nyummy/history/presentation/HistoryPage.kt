@@ -148,6 +148,7 @@ internal fun HistoryScreen(
                 onRetryLoad = { onIntent(HistoryIntent.RetryLoad) },
                 onRecordMeal = { onIntent(HistoryIntent.ClickRecordMeal) },
                 onClickMeal = { onIntent(HistoryIntent.ClickMeal(it)) },
+                onConfirmFoods = { onIntent(HistoryIntent.ClickConfirmFoods(it)) },
                 onRetryAnalysis = { onIntent(HistoryIntent.ClickRetryAnalysis(it)) },
                 onDeleteFailedMeal = { onIntent(HistoryIntent.ClickDeleteFailedMeal(it)) },
                 modifier = Modifier.padding(

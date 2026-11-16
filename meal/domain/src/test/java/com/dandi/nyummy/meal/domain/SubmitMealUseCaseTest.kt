@@ -12,6 +12,8 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.meal.entity.CreatedMealVO
+import com.dandi.nyummy.meal.entity.FoundFoodVO
+import com.dandi.nyummy.meal.entity.MealRecognition
 import com.dandi.nyummy.meal.entity.MealImageUploadVO
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.tti.TTIHelper
@@ -120,6 +122,14 @@ class SubmitMealUseCaseTest {
     }
 
     @Test
+    fun `접수되면 서버의 음식 인식 결과를 그대로 돌려주고 위젯에 넘긴다`() = runBlocking {
+        val result = useCase(createMealError = null)(PHOTO_PATH, MealPhotoSource.CAMERA)
+
+        assertEquals(Result.success(CreatedMeal), result)
+        assertEquals(1, widgetHelper.calls.size)
+    }
+
+    @Test
     fun `접수하지 못했거나 결과를 모르면 위젯에 넘기지 않는다`() = runBlocking {
         useCase(httpException(409, MealErrorType.DAILY_COUNT_EXCEEDED.type))(PHOTO_PATH, MealPhotoSource.CAMERA)
         useCase(httpException(500))(PHOTO_PATH, MealPhotoSource.CAMERA)
@@ -152,7 +162,7 @@ class SubmitMealUseCaseTest {
             issueUrlError?.let { throw it } ?: MealImageUploadVO()
         override suspend fun uploadImage(uploadTarget: MealImageUploadVO, photoPath: String) = Unit
         override suspend fun createMeal(imageKey: String): CreatedMealVO =
-            createMealError?.let { throw it } ?: CreatedMealVO(mealId = 1L)
+            createMealError?.let { throw it } ?: CreatedMeal
         override suspend fun createTutorialMeal() = Unit
     }
 
@@ -228,5 +238,12 @@ class SubmitMealUseCaseTest {
 
     private companion object {
         const val PHOTO_PATH = "/cache/meal_1.jpeg"
+
+        val CreatedMeal = CreatedMealVO(
+            mealId = 1L,
+            recognition = MealRecognition.CONFIRMING,
+            name = "한정식",
+            foods = listOf(FoundFoodVO(11, "밥")),
+        )
     }
 }

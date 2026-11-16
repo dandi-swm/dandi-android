@@ -26,6 +26,8 @@ val MealCameraPhase.isTutorial: Boolean
         MealCameraPhase.Preview -> false
         is MealCameraPhase.Captured -> photoPath == TUTORIAL_PHOTO_PATH
         is MealCameraPhase.Ceremony -> photoPath == TUTORIAL_PHOTO_PATH
+        // 튜토리얼 식사는 음식을 고르지 않는다.
+        is MealCameraPhase.FoodPick, is MealCameraPhase.NotFood, is MealCameraPhase.SlowNotice -> false
     }
 
 /** 사진 경로를 그리는 모델로 바꾼다. 튜토리얼이면 예시 사진 리소스, 아니면 캐시 파일. */

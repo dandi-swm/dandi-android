@@ -11,12 +11,18 @@ import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
+import com.dandi.nyummy.meal.domain.CancelMealUseCase
 import com.dandi.nyummy.meal.domain.ImportGalleryMealPhotoUseCase
+import com.dandi.nyummy.meal.domain.SubmitMealFoodsResult
+import com.dandi.nyummy.meal.domain.SubmitMealFoodsUseCase
 import com.dandi.nyummy.meal.domain.SubmitMealUseCase
 import com.dandi.nyummy.meal.domain.SubmitTutorialMealUseCase
 import com.dandi.nyummy.meal.domain.TutorialMealResult
+import com.dandi.nyummy.meal.entity.CreatedMealVO
 import com.dandi.nyummy.meal.entity.MealPhotoSource
+import com.dandi.nyummy.meal.entity.MealRecognition
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
+import com.dandi.nyummy.meal.presentation.model.FoodPickDraft
 import com.dandi.nyummy.room.domain.GetRoomBackgroundUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
@@ -33,6 +39,8 @@ import kotlin.time.TimeSource
 @HiltViewModel
 class MealRecordViewModel @Inject constructor(
     private val submitMeal: SubmitMealUseCase,
+    private val submitMealFoods: SubmitMealFoodsUseCase,
+    private val cancelMeal: CancelMealUseCase,
     private val submitTutorialMeal: SubmitTutorialMealUseCase,
     private val tutorialHelper: TutorialHelper,
     private val importGalleryMealPhoto: ImportGalleryMealPhotoUseCase,
@@ -55,6 +63,10 @@ class MealRecordViewModel @Inject constructor(
 
     /** 앱이 종료됐다 되살아난 화면인지. 진입은 종료 전에 이미 기록했다. */
     private val isRestored = MealRecordSnapshot.readFrom(savedStateHandle) != null
+
+    /** 종료되기 전에 서버가 기록을 받았지만 연출까지 가지 못했는지(음식을 고르던 중 등). 되살리지 않고 홈으로 보낸다. */
+    private val wasRecordedWithoutCeremony =
+        MealRecordSnapshot.readFrom(savedStateHandle)?.isRecordedWithoutCeremony == true
 
     init {
         if (!isRestored) analyticsHelper.logEvent(AnalyticsEvent.MealRecordOpen)
@@ -128,6 +140,25 @@ class MealRecordViewModel @Inject constructor(
 
             MealRecordIntent.ClickSubmit -> if (currentState.phase.isTutorial) submitTutorial() else submitCapturedMeal()
 
+            is MealRecordIntent.ToggleFood -> whenFoodPickIdle { dispatch(MealRecordReducerEvent.FoodToggled(intent.key)) }
+
+            MealRecordIntent.OpenFoodNameInput -> whenFoodPickIdle { dispatch(MealRecordReducerEvent.FoodNameInputOpened) }
+
+            is MealRecordIntent.ChangeFoodNameInput ->
+                whenFoodPickIdle { dispatch(MealRecordReducerEvent.FoodNameInputChanged(intent.text)) }
+
+            MealRecordIntent.ConfirmFoodNameInput ->
+                whenFoodPickIdle { dispatch(MealRecordReducerEvent.FoodNameInputConfirmed) }
+
+            MealRecordIntent.ClickTakeFoods -> takeFoods()
+
+            MealRecordIntent.ClickRetakeNotFood -> retakeAfterNotFood()
+
+            MealRecordIntent.ClickGoHome -> when (currentState.phase) {
+                is MealCameraPhase.NotFood, is MealCameraPhase.SlowNotice -> finishRecord()
+                else -> Unit
+            }
+
             MealRecordIntent.ClickDone -> if (currentState.isSubmitSucceeded) finishRecord()
 
             is MealRecordIntent.CeremonyStageFinished -> advanceCeremony(intent.stage)
@@ -147,6 +178,11 @@ class MealRecordViewModel @Inject constructor(
             MealRecordIntent.ClickClose -> when (currentState.phase) {
                 // 업로드 진행 중 이탈은 차단하고, 접수된 뒤에는 연출을 건너뛰고 곧장 마무리한다.
                 is MealCameraPhase.Ceremony -> if (currentState.isSubmitSucceeded) finishRecord()
+
+                // 기록 직후의 고르기에서 닫으면 이 기록을 취소한다.
+                is MealCameraPhase.FoodPick -> cancelRecordedMeal()
+
+                is MealCameraPhase.NotFood, is MealCameraPhase.SlowNotice -> finishRecord()
 
                 else -> {
                     deleteCapturedFile()
@@ -190,6 +226,53 @@ class MealRecordViewModel @Inject constructor(
             MealRecordReducerEvent.SubmitFailed ->
                 state.updateCeremony { it.copy(submit = MealSubmitStatus.Failed) }
 
+            is MealRecordReducerEvent.FoodsFound -> (state.phase as? MealCameraPhase.Ceremony)?.let { ceremony ->
+                state.copy(
+                    phase = MealCameraPhase.FoodPick(
+                        photoPath = ceremony.photoPath,
+                        source = ceremony.source,
+                        mealId = event.mealId,
+                        rewardBoxGrade = event.rewardBoxGrade,
+                        draft = FoodPickDraft.of(event.foods),
+                    ),
+                )
+            } ?: state
+
+            MealRecordReducerEvent.NotFoodJudged -> (state.phase as? MealCameraPhase.Ceremony)?.let {
+                state.copy(phase = MealCameraPhase.NotFood(it.photoPath, it.source))
+            } ?: state
+
+            MealRecordReducerEvent.RecognitionDelayed -> (state.phase as? MealCameraPhase.Ceremony)?.let {
+                state.copy(phase = MealCameraPhase.SlowNotice(it.photoPath, it.source))
+            } ?: state
+
+            is MealRecordReducerEvent.FoodToggled -> state.updateFoodPick { it.copy(draft = it.draft.toggle(event.key)) }
+
+            MealRecordReducerEvent.FoodNameInputOpened -> state.updateFoodPick { it.copy(draft = it.draft.openNameInput()) }
+
+            is MealRecordReducerEvent.FoodNameInputChanged ->
+                state.updateFoodPick { it.copy(draft = it.draft.changeNameInput(event.text)) }
+
+            MealRecordReducerEvent.FoodNameInputConfirmed ->
+                state.updateFoodPick { it.copy(draft = it.draft.confirmNameInput()) }
+
+            MealRecordReducerEvent.FoodPickBusy -> state.updateFoodPick { it.copy(isBusy = true) }
+
+            MealRecordReducerEvent.FoodsSubmitFailed -> state.updateFoodPick { it.copy(isBusy = false) }
+
+            // 사진 카드가 올라오고 기다리는 장면은 음식을 찾는 동안 이미 봤으니 맛 리액션부터 잇는다.
+            is MealRecordReducerEvent.FoodsTaken -> (state.phase as? MealCameraPhase.FoodPick)?.let { pick ->
+                state.copy(
+                    phase = MealCameraPhase.Ceremony(
+                        photoPath = pick.photoPath,
+                        source = pick.source,
+                        submit = MealSubmitStatus.Accepted(pick.rewardBoxGrade),
+                        stage = MealCeremonyStage.Reaction,
+                        cutscene = event.cutscene,
+                    ),
+                )
+            } ?: state
+
             is MealRecordReducerEvent.CeremonyStageChanged ->
                 state.updateCeremony { it.copy(stage = event.stage) }
 
@@ -216,6 +299,17 @@ class MealRecordViewModel @Inject constructor(
         block: (MealCameraPhase.Ceremony) -> MealCameraPhase.Ceremony,
     ): MealRecordUIState = (phase as? MealCameraPhase.Ceremony)?.let { copy(phase = block(it)) } ?: this
 
+    /** 찾은 음식 고르기 단계일 때만 [block] 으로 그 상태를 바꾼다. */
+    private inline fun MealRecordUIState.updateFoodPick(
+        block: (MealCameraPhase.FoodPick) -> MealCameraPhase.FoodPick,
+    ): MealRecordUIState = (phase as? MealCameraPhase.FoodPick)?.let { copy(phase = block(it)) } ?: this
+
+    /** 찾은 음식 고르기에서 보내거나 취소하는 중이 아닐 때만 [block] 을 한다. */
+    private inline fun whenFoodPickIdle(block: () -> Unit) {
+        val pick = currentState.phase as? MealCameraPhase.FoodPick ?: return
+        if (!pick.isBusy && !currentState.isFinishing) block()
+    }
+
     /**
      * 갤러리에서 고른 사진을 검증해 확인 단계로 가져온다.
      * 선택을 취소했거나, 선택기가 열린 사이 촬영이 진행됐거나, 이미 다른 사진을 가져오는 중이면 무시한다.
@@ -240,11 +334,12 @@ class MealRecordViewModel @Inject constructor(
     }
 
     /**
-     * 촬영본을 업로드해 식사를 생성한다. 성공 알림은 연출 화면이 담당한다.
+     * 촬영본을 업로드해 식사를 생성한다. 서버는 응답 전에 사진에서 음식을 찾고, 그 결과가 다음 화면을 정한다.
      *
-     * 응답이 오면 기록이 접수된 것이라 연출이 맛 리액션으로 넘어간다. 영양 분석은 접수 뒤에 진행되므로 기다리지 않는다.
-     * 응답이 빨라도 접수 결과는 [MIN_WAIT_MILLIS]가 지난 뒤에 반영해, 냐미가 숟가락을 들고 기다리는 장면을 보여 준다.
-     * 서버가 기록을 비동기로 받아 바로 응답하게 바뀌어도 이 장면이 줄지 않는다.
+     * - 음식을 찾았으면 찾은 음식 고르기로 간다. 가져가면 맛 리액션부터 연출이 이어진다.
+     * - 음식이 아니면 다시 찍기를 권하는 화면으로, 기한 안에 찾지 못했으면 홈에서 기다리라는 안내로 간다.
+     *
+     * 응답이 빨라도 결과는 [MIN_WAIT_MILLIS]가 지난 뒤에 반영해, 냐미가 숟가락을 들고 기다리는 장면을 보여 준다.
      * 기록하지 못하면 UseCase 가 안내 스낵바를 띄우고, 연출을 멈추고 곧장 홈으로 간다.
      */
     private fun submitCapturedMeal() {
@@ -261,13 +356,70 @@ class MealRecordViewModel @Inject constructor(
                         AnalyticsEvent.MealSubmitSuccess(source = source, durationSec = openedAt.elapsedNow().inWholeSeconds),
                     )
                     waitMinimum(startedAt)
-                    dispatch(submitSucceeded(created.rewardBoxGrade))
+                    dispatch(recognitionEventOf(created))
                 }
                 .onFailure {
                     dispatch(MealRecordReducerEvent.SubmitFailed)
                     finishRecord()
                 }
         }
+    }
+
+    /** 서버의 음식 인식 결과를 다음 화면으로 옮긴다. 음식을 찾았다면서 목록이 비었으면 고를 것이 없으므로 홈에서 기다리게 한다. */
+    private fun recognitionEventOf(created: CreatedMealVO): MealRecordReducerEvent = when (created.recognition) {
+        MealRecognition.CONFIRMING ->
+            if (created.foods.isEmpty()) {
+                MealRecordReducerEvent.RecognitionDelayed
+            } else {
+                MealRecordReducerEvent.FoodsFound(created.mealId, created.rewardBoxGrade, created.foods)
+            }
+        MealRecognition.NOT_FOOD -> MealRecordReducerEvent.NotFoodJudged
+        MealRecognition.RECOGNIZING -> MealRecordReducerEvent.RecognitionDelayed
+    }
+
+    /**
+     * 고른 음식을 보낸다. 서버가 받으면 맛 리액션부터 연출을 잇고, 영양 계산이 끝나기를 기다리지 않는다.
+     * 고르는 사이 서버가 계산을 시작했거나 식사가 지워졌으면 UseCase 가 안내하고 홈으로 간다.
+     * 그 밖의 실패는 UseCase 가 안내하고 고르기 화면에 머문다.
+     */
+    private fun takeFoods() {
+        val pick = currentState.phase as? MealCameraPhase.FoodPick ?: return
+        if (pick.isBusy || currentState.isFinishing || !pick.draft.canSubmit) return
+        dispatch(MealRecordReducerEvent.FoodPickBusy)
+        viewModelScope.launch {
+            submitMealFoods(pick.mealId, pick.draft.toFoods())
+                .onSuccess { result ->
+                    when (result) {
+                        SubmitMealFoodsResult.ACCEPTED ->
+                            dispatch(MealRecordReducerEvent.FoodsTaken(pickMealCutscene(DeviceTime.now().hour)))
+                        SubmitMealFoodsResult.CLOSED -> finishRecord()
+                    }
+                }
+                .onFailure { dispatch(MealRecordReducerEvent.FoodsSubmitFailed) }
+        }
+    }
+
+    /**
+     * 기록 직후의 고르기에서 닫았다. 이 기록을 취소하고 홈으로 간다. 컷신과 상자 연출은 하지 않는다.
+     * 취소하지 못해도 홈으로 간다(서버가 5분 뒤 찾은 음식 전부로 계산하고, 기록 탭에서 지울 수 있다).
+     * 화면을 떠나면 요청이 끊기므로 응답을 받은 뒤에 떠난다.
+     */
+    private fun cancelRecordedMeal() {
+        val pick = currentState.phase as? MealCameraPhase.FoodPick ?: return
+        if (pick.isBusy || currentState.isFinishing) return
+        dispatch(MealRecordReducerEvent.FoodPickBusy)
+        viewModelScope.launch {
+            cancelMeal(pick.mealId)
+            finishRecord()
+        }
+    }
+
+    /** 음식이 아니라는 화면에서 다시 찍는다. 실패한 기록은 지우지 않고(기록 탭에 실패 카드로 남는다) 사진만 버린다. */
+    private fun retakeAfterNotFood() {
+        val phase = currentState.phase as? MealCameraPhase.NotFood ?: return
+        if (currentState.isFinishing) return
+        deletePhotoFile(phase.photoPath)
+        dispatch(MealRecordReducerEvent.ReturnedToPreview)
     }
 
     /** 홈이 옮겨 둔 서버 값으로 식사 기록 튜토리얼인지 정한다. 읽지 못하면 평소처럼 찍는다. */
@@ -339,13 +491,21 @@ class MealRecordViewModel @Inject constructor(
     }
 
     /**
-     * 업로드를 시작했지만 접수 결과를 받기 전에 앱이 종료됐다 돌아왔으면 홈으로 보낸다.
-     * 서버에는 기록됐을 수 있어 다시 보내지 않고(다시 보내면 같은 끼니가 두 번 기록될 수 있다) 기록 탭에서 확인하도록 안내한다.
+     * 업로드를 시작했지만 연출까지 가지 못한 채 앱이 종료됐다 돌아왔으면 홈으로 보낸다.
+     * - 접수 결과를 받기 전이었으면 서버에는 기록됐을 수 있어 다시 보내지 않고(다시 보내면 같은 끼니가 두 번 기록될 수 있다)
+     *   기록 탭에서 확인하도록 안내한다.
+     * - 기록은 받았고 음식을 고르던 중이었으면(또는 음식 아님·인식 지연 화면이었으면) 고르던 화면을 되살리지 않고,
+     *   기록됐다고 알린다.
      */
     private fun leaveIfSubmitInterrupted() {
         val phase = currentState.phase as? MealCameraPhase.Ceremony ?: return
         if (phase.submit != MealSubmitStatus.Uploading) return
-        messageHelper.showSnackBar(iconType = IconType.WARNING, messageRes = R.string.meal_record_submit_interrupted)
+        if (wasRecordedWithoutCeremony) {
+            // 기록은 됐다. 음식을 고르던 중이었으면 서버가 5분 뒤 찾은 음식 전부로 계산한다.
+            messageHelper.showSnackBar(iconType = IconType.SUCCESS, messageRes = R.string.meal_record_recorded_check_history)
+        } else {
+            messageHelper.showSnackBar(iconType = IconType.WARNING, messageRes = R.string.meal_record_submit_interrupted)
+        }
         finishRecord()
     }
 
@@ -355,7 +515,7 @@ class MealRecordViewModel @Inject constructor(
      */
     private fun finishRecord() {
         if (currentState.isFinishing) return
-        (currentState.phase as? MealCameraPhase.Ceremony)?.let { deletePhotoFile(it.photoPath) }
+        currentState.phase.submittedPhotoPath?.let(::deletePhotoFile)
         dispatch(MealRecordReducerEvent.FinishStarted)
         navigationHelper.navigateToBack()
     }
@@ -401,7 +561,7 @@ class MealRecordViewModel @Inject constructor(
 
     override fun onCleared() {
         // 닫기, 시스템 뒤로가기, 실패 뒤 홈으로 가기 모두 여기를 지난다. 저장하지 못하고 떠났으면 떠난 단계를 남긴다.
-        if (!currentState.isSubmitSucceeded) {
+        if (!currentState.phase.isRecorded) {
             analyticsHelper.logEvent(AnalyticsEvent.MealRecordExit(currentState.analyticsStage))
         }
         super.onCleared()
@@ -418,6 +578,9 @@ private val MealRecordUIState.analyticsStage: String
         MealCameraPhase.Preview -> "camera"
         is MealCameraPhase.Captured -> "confirm"
         is MealCameraPhase.Ceremony -> if (phase.submit == MealSubmitStatus.Failed) "failed" else "uploading"
+        is MealCameraPhase.FoodPick -> "food_pick"
+        is MealCameraPhase.NotFood -> "not_food"
+        is MealCameraPhase.SlowNotice -> "slow_recognition"
     }
 
 /**

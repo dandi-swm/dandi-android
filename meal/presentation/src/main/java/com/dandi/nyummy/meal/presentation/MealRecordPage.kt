@@ -83,6 +83,10 @@ import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.meal.presentation.component.MealCameraOverlay
 import com.dandi.nyummy.meal.presentation.component.MealCameraPreview
 import com.dandi.nyummy.meal.presentation.component.ceremony.MealCeremony
+import com.dandi.nyummy.meal.presentation.component.ceremony.MealSlowNoticeSheet
+import com.dandi.nyummy.meal.presentation.component.ceremony.MealNotFood
+import com.dandi.nyummy.meal.presentation.component.FoodPickContent
+import com.dandi.nyummy.meal.entity.RewardBoxGrade
 
 /**
  * 식사 기록(카메라) 화면입니다.
@@ -175,6 +179,9 @@ private fun MealRecordScreen(
             is MealCameraPhase.Captured ->
                 onIntent(if (uiState.phase.isTutorial) MealRecordIntent.ClickClose else MealRecordIntent.ClickRetake)
             is MealCameraPhase.Ceremony -> onIntent(MealRecordIntent.ClickClose)
+            // 고르기에서 뒤로 가면 닫기와 같이 이 기록을 취소하고, 음식 아님과 인식 지연에서는 홈으로 간다.
+            is MealCameraPhase.FoodPick, is MealCameraPhase.NotFood, is MealCameraPhase.SlowNotice ->
+                onIntent(MealRecordIntent.ClickClose)
             MealCameraPhase.Preview -> Unit
         }
     }
@@ -197,6 +204,54 @@ private fun MealRecordScreen(
             onDoneClick = { onIntent(MealRecordIntent.ClickDone) },
             modifier = modifier,
         )
+        return
+    }
+    if (phase is MealCameraPhase.FoodPick) {
+        FoodPickContent(
+            draft = phase.draft,
+            isSubmitting = phase.isBusy,
+            onClose = { onIntent(MealRecordIntent.ClickClose) },
+            onToggle = { onIntent(MealRecordIntent.ToggleFood(it)) },
+            onOpenNameInput = { onIntent(MealRecordIntent.OpenFoodNameInput) },
+            onNameInputChange = { onIntent(MealRecordIntent.ChangeFoodNameInput(it)) },
+            onConfirmNameInput = { onIntent(MealRecordIntent.ConfirmFoodNameInput) },
+            onSubmit = { onIntent(MealRecordIntent.ClickTakeFoods) },
+            modifier = modifier,
+        )
+        return
+    }
+    if (phase is MealCameraPhase.NotFood) {
+        MealNotFood(
+            photoPath = phase.photoPath,
+            onHomeClick = { onIntent(MealRecordIntent.ClickGoHome) },
+            onRetakeClick = { onIntent(MealRecordIntent.ClickRetakeNotFood) },
+            modifier = modifier,
+        )
+        return
+    }
+    if (phase is MealCameraPhase.SlowNotice) {
+        // 기다리던 냐미 장면을 그대로 두고 그 위에 안내 시트를 올린다.
+        Box(modifier = modifier.fillMaxSize()) {
+            MealCeremony(
+                photoPath = phase.photoPath,
+                stage = MealCeremonyStage.Waiting,
+                cutscene = MealCutscene.Tiyot,
+                rewardBoxGrade = RewardBoxGrade.NONE,
+                sendsRewardBox = false,
+                roomBackgroundUrl = uiState.roomBackgroundItemId?.let(NyummyCdn::itemUrl),
+                notificationsOff = false,
+                onStageFinished = {},
+                onNotificationSettingsClick = {},
+                onSkipClick = {},
+                onCloseClick = {},
+                onDoneClick = {},
+            )
+            MealSlowNoticeSheet(
+                notificationsOff = !uiState.isDeviceNotificationEnabled,
+                onEnableNotificationClick = onOpenNotificationSettings,
+                onHomeClick = { onIntent(MealRecordIntent.ClickGoHome) },
+            )
+        }
         return
     }
 
@@ -253,7 +308,12 @@ private fun MealRecordScreen(
                     contentScale = ContentScale.Crop,
                 )
 
-                is MealCameraPhase.Ceremony -> Unit
+                // 연출과 그 뒤 단계는 위에서 따로 그렸다.
+                is MealCameraPhase.Ceremony,
+                is MealCameraPhase.FoodPick,
+                is MealCameraPhase.NotFood,
+                is MealCameraPhase.SlowNotice,
+                -> Unit
             }
             // 권한이 거부된 안내 화면에서는 장식 오버레이(브래킷)를 숨긴다.
             if (uiState.cameraPermission != MealCameraPermission.Denied &&
@@ -288,7 +348,11 @@ private fun MealRecordScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                is MealCameraPhase.Ceremony -> Unit
+                is MealCameraPhase.Ceremony,
+                is MealCameraPhase.FoodPick,
+                is MealCameraPhase.NotFood,
+                is MealCameraPhase.SlowNotice,
+                -> Unit
             }
         }
         }

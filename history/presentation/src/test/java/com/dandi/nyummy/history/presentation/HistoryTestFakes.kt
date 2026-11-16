@@ -13,6 +13,7 @@ import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.history.domain.HistoryRepository
+import com.dandi.nyummy.history.domain.MealV2Repository
 import com.dandi.nyummy.history.entity.AnalysisFeedbackReason
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
 import com.dandi.nyummy.history.entity.DailyNutritionVO
@@ -20,6 +21,9 @@ import com.dandi.nyummy.history.entity.HistoryCalendarDayVO
 import com.dandi.nyummy.history.entity.HistoryCalendarVO
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
+import com.dandi.nyummy.history.entity.MealDetailV2VO
+import com.dandi.nyummy.history.entity.MealFoodChangeVO
+import com.dandi.nyummy.history.entity.MealFoodLineVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
 import com.dandi.nyummy.tti.TTIHelper
 import com.dandi.nyummy.tti.TTIMetaData
@@ -124,12 +128,17 @@ internal class FakeMessageHelper : MessageHelper {
         onClickCTA: (() -> Unit)?,
     ) = Unit
 
+    /** 리소스 번호로 띄운 스낵바. */
+    val snackBarResources = mutableListOf<Int>()
+
     override fun showSnackBar(
         iconType: IconType,
         messageRes: Int,
         callToActionText: String?,
         onClickCTA: (() -> Unit)?,
-    ) = Unit
+    ) {
+        snackBarResources += messageRes
+    }
 
     override fun showOneButtonDialog(
         titleText: String?,
@@ -157,4 +166,59 @@ internal class FakeTTIHelper : TTIHelper {
     override fun endTTITracking() = Unit
     override fun shotTTILogging() = Unit
     override fun addTTIMetaData(metadata: TTIMetaData, value: Any?) = Unit
+}
+
+/**
+ * 음식 목록 방식(V2) 식사 저장소. [detail]을 서버에 있는 식사로 보고, 수정 요청은 기록만 한다
+ * (서버가 바꾼 결과는 테스트가 [detail]을 바꿔 흉내 낸다).
+ */
+internal class FakeMealV2Repository(var detail: MealDetailV2VO = MealDetailV2VO.empty) : MealV2Repository {
+    var getRequests = 0
+    var getOverride: (suspend () -> MealDetailV2VO)? = null
+    val renameRequests = mutableListOf<String>()
+    var renameOverride: suspend (String) -> Unit = { }
+    val deleteMealRequests = mutableListOf<Long>()
+    val submittedFoods = mutableListOf<List<MealFoodLineVO>>()
+    var submitOverride: suspend (List<MealFoodLineVO>) -> MealAnalysisStatus = { MealAnalysisStatus.COMPLETED }
+    val foodChanges = mutableListOf<Pair<Long, MealFoodChangeVO>>()
+    var updateFoodOverride: suspend () -> Unit = { }
+    val deletedFoods = mutableListOf<Long>()
+
+    /** 분석 상태 조회가 차례로 돌려줄 값. 다 쓰면 COMPLETED다. */
+    val statuses = ArrayDeque<MealAnalysisStatus>()
+    var statusRequests = 0
+
+    override suspend fun getMeal(mealId: Long): MealDetailV2VO {
+        getRequests++
+        return getOverride?.invoke() ?: detail
+    }
+
+    override suspend fun updateMealName(mealId: Long, name: String): MealDetailV2VO {
+        renameOverride(name)
+        renameRequests += name
+        return detail
+    }
+
+    override suspend fun deleteMeal(mealId: Long) {
+        deleteMealRequests += mealId
+    }
+
+    override suspend fun submitFoods(mealId: Long, foods: List<MealFoodLineVO>): MealAnalysisStatus {
+        submittedFoods += foods
+        return submitOverride(foods)
+    }
+
+    override suspend fun updateFood(mealId: Long, mealFoodId: Long, change: MealFoodChangeVO) {
+        updateFoodOverride()
+        foodChanges += mealFoodId to change
+    }
+
+    override suspend fun deleteFood(mealId: Long, mealFoodId: Long) {
+        deletedFoods += mealFoodId
+    }
+
+    override suspend fun getAnalysisStatus(mealId: Long): MealAnalysisStatus {
+        statusRequests++
+        return statuses.removeFirstOrNull() ?: MealAnalysisStatus.COMPLETED
+    }
 }

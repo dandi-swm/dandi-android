@@ -8,6 +8,8 @@ import com.dandi.nyummy.history.entity.MealAnalysisStatus
  */
 internal fun String?.toMealAnalysisStatus(): MealAnalysisStatus =
     when (this?.trim()?.uppercase()) {
+        "RECOGNIZING" -> MealAnalysisStatus.RECOGNIZING
+        "CONFIRMING" -> MealAnalysisStatus.CONFIRMING
         "WAITING" -> MealAnalysisStatus.WAITING
         "ANALYZING" -> MealAnalysisStatus.ANALYZING
         "COMPLETED" -> MealAnalysisStatus.COMPLETED

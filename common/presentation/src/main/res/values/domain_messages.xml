@@ -80,6 +80,10 @@
     <string name="msg_meal_photo_info_save_failed">Couldn\'t save the photo details. Please take it again</string>
     <string name="msg_meal_photo_read_failed">Couldn\'t read the photo. Please take it again</string>
     <string name="msg_meal_photo_compress_failed">Couldn\'t reduce the photo size. Please take it again</string>
+    <string name="msg_meal_foods_already_analyzing">Analysis has already started</string>
+    <string name="msg_meal_foods_meal_gone">This meal record is gone</string>
+    <string name="msg_meal_foods_submit_failed">Couldn\'t send the food list. Please try again</string>
+    <string name="msg_meal_foods_load_failed">Couldn\'t load the food list. Please try again</string>
 
     <!-- 기록 -->
     <string name="msg_history_meal_already_deleted">This record has already been deleted</string>
@@ -92,6 +96,11 @@
     <string name="msg_history_reanalyze_failed">Couldn\'t re-analyze</string>
     <string name="msg_history_rename_failed">Couldn\'t rename it</string>
     <string name="msg_history_delete_failed">Couldn\'t delete it</string>
+    <string name="msg_history_food_already_deleted">That food was already removed</string>
+    <string name="msg_history_foods_not_updatable">This meal can\'t be edited right now</string>
+    <string name="msg_history_last_food_not_deletable">A meal needs at least one food</string>
+    <string name="msg_history_food_edit_failed">Couldn\'t save the change. Please try again</string>
+    <string name="msg_history_meal_load_failed">Couldn\'t load the meal. Please try again</string>
 
     <!-- 상점 -->
     <string name="msg_shop_added_to_cart">Added to cart</string>

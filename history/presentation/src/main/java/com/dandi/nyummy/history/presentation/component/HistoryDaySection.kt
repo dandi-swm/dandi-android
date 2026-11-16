@@ -100,6 +100,7 @@ internal fun HistoryDaySection(
     onRetryLoad: () -> Unit,
     onRecordMeal: () -> Unit,
     onClickMeal: (String) -> Unit,
+    onConfirmFoods: (String) -> Unit,
     onRetryAnalysis: (String) -> Unit,
     onDeleteFailedMeal: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -149,6 +150,7 @@ internal fun HistoryDaySection(
                 meals.forEach { meal ->
                     when {
                         meal.isAnalyzing || meal.id in reanalyzingMealIds -> AnalyzingMealCard(meal)
+                        meal.needsFoodConfirm -> ConfirmMealCard(meal = meal, onClick = { onConfirmFoods(meal.id) })
                         meal.isAnalysisFailed -> FailedMealCard(
                             meal = meal,
                             onRetry = if (meal.canRetryAnalysis) ({ onRetryAnalysis(meal.id) }) else null,
@@ -285,6 +287,30 @@ private fun AnalyzingMealCard(meal: MealHistoryVO) {
             time = meridiemTimeOf(meal.recordedAt),
             title = catNameStringResource(R.string.history_analysis_pending_title),
             body = stringResource(R.string.history_analysis_pending_body),
+        )
+    }
+}
+
+/** 냐미가 음식을 찾았고 사용자의 확인을 기다리는 식사. 연초록 카드에 화살표. 누르면 찾은 음식 고르기 화면으로 간다. */
+@Composable
+private fun ConfirmMealCard(meal: MealHistoryVO, onClick: () -> Unit) {
+    MealCardFrame(
+        container = NyummyTheme.colors.bg.brandSubtle,
+        modifier = Modifier.nyummyClickable(onClick = onClick, pressedScale = 1f),
+        leading = { NyummyPoseImage(pose = NyummyPose.Taste, size = ThumbnailSize) },
+        trailing = {
+            Icon(
+                painter = painterResource(CommonR.drawable.nyummy_ic_chevron_right),
+                contentDescription = null,
+                tint = NyummyTheme.colors.content.brand,
+                modifier = Modifier.size(ChevronSize),
+            )
+        },
+    ) {
+        StatusTexts(
+            time = meridiemTimeOf(meal.recordedAt),
+            title = stringResource(R.string.history_analysis_confirm_title),
+            body = stringResource(R.string.history_analysis_confirm_body),
         )
     }
 }
@@ -456,6 +482,7 @@ private val previewMeals = persistentListOf(
     MealHistoryVO(id = "2", name = "클럽 샌드위치", recordedAt = "12:40", calorieKcal = 612, orderIndex = 2),
     MealHistoryVO(id = "3", recordedAt = "19:05", status = MealAnalysisStatus.ANALYZING),
     MealHistoryVO(id = "4", recordedAt = "21:20", status = MealAnalysisStatus.FAILED),
+    MealHistoryVO(id = "5", recordedAt = "21:40", status = MealAnalysisStatus.CONFIRMING),
 )
 
 @Composable
@@ -485,6 +512,7 @@ private fun PreviewSection(
             onRetryLoad = {},
             onRecordMeal = {},
             onClickMeal = {},
+            onConfirmFoods = {},
             onRetryAnalysis = {},
             onDeleteFailedMeal = {},
             modifier = Modifier.padding(horizontal = PreviewGutter),

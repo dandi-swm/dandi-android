@@ -82,6 +82,10 @@ class ResourceHelperImpl(private val context: Context) : ResourceHelper {
         StringResource.MEAL_PHOTO_INFO_SAVE_FAILED -> R.string.msg_meal_photo_info_save_failed
         StringResource.MEAL_PHOTO_READ_FAILED -> R.string.msg_meal_photo_read_failed
         StringResource.MEAL_PHOTO_COMPRESS_FAILED -> R.string.msg_meal_photo_compress_failed
+        StringResource.MEAL_FOODS_ALREADY_ANALYZING -> R.string.msg_meal_foods_already_analyzing
+        StringResource.MEAL_FOODS_MEAL_GONE -> R.string.msg_meal_foods_meal_gone
+        StringResource.MEAL_FOODS_SUBMIT_FAILED -> R.string.msg_meal_foods_submit_failed
+        StringResource.MEAL_FOODS_LOAD_FAILED -> R.string.msg_meal_foods_load_failed
         StringResource.HISTORY_MEAL_ALREADY_DELETED -> R.string.msg_history_meal_already_deleted
         StringResource.HISTORY_ALREADY_REANALYZED -> R.string.msg_history_already_reanalyzed
         StringResource.HISTORY_INVALID_RATING -> R.string.msg_history_invalid_rating
@@ -92,6 +96,11 @@ class ResourceHelperImpl(private val context: Context) : ResourceHelper {
         StringResource.HISTORY_REANALYZE_FAILED -> R.string.msg_history_reanalyze_failed
         StringResource.HISTORY_RENAME_FAILED -> R.string.msg_history_rename_failed
         StringResource.HISTORY_DELETE_FAILED -> R.string.msg_history_delete_failed
+        StringResource.HISTORY_FOOD_ALREADY_DELETED -> R.string.msg_history_food_already_deleted
+        StringResource.HISTORY_FOODS_NOT_UPDATABLE -> R.string.msg_history_foods_not_updatable
+        StringResource.HISTORY_LAST_FOOD_NOT_DELETABLE -> R.string.msg_history_last_food_not_deletable
+        StringResource.HISTORY_FOOD_EDIT_FAILED -> R.string.msg_history_food_edit_failed
+        StringResource.HISTORY_MEAL_LOAD_FAILED -> R.string.msg_history_meal_load_failed
         StringResource.SHOP_ADDED_TO_CART -> R.string.msg_shop_added_to_cart
         StringResource.SHOP_CANNOT_ADD_MORE -> R.string.msg_shop_cannot_add_more
         StringResource.SHOP_CART_FULL -> R.string.msg_shop_cart_full

@@ -4,6 +4,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutoria
 import com.dandi.nyummy.common.presentation.mvi.UiState
 import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
+import com.dandi.nyummy.meal.presentation.model.FoodPickDraft
 import kotlinx.collections.immutable.ImmutableList
 
 /** 카메라 화면의 진행 단계입니다. */
@@ -33,7 +34,49 @@ sealed interface MealCameraPhase {
         /** 접수되면 틀 맛보기 컷신. 접수될 때 정해 두어, 화면이 다시 만들어져도 같은 컷신을 이어 튼다. */
         val cutscene: MealCutscene = MealCutscene.Tiyot,
     ) : MealCameraPhase
+
+    /**
+     * 서버가 사진에서 음식을 찾았습니다. 사용자가 먹은 음식을 골라 가져가면 맛 리액션부터 연출이 이어집니다.
+     * 닫으면 이 기록을 취소합니다.
+     *
+     * @property mealId 방금 기록한 식사 ID
+     * @property rewardBoxGrade 이번 기록으로 생긴 보상 상자 등급. 가져간 뒤의 상자 연출에 씁니다.
+     * @property draft 사용자가 고치는 음식 목록
+     * @property isBusy 고른 목록을 보내거나 기록을 취소하는 중인지. 그동안 고치기·가져가기·닫기를 막습니다.
+     */
+    data class FoodPick(
+        val photoPath: String,
+        val source: MealPhotoSource,
+        val mealId: Long,
+        val rewardBoxGrade: RewardBoxGrade,
+        val draft: FoodPickDraft,
+        val isBusy: Boolean = false,
+    ) : MealCameraPhase
+
+    /** 서버가 사진이 음식이 아니라고 했습니다. 다시 찍거나 홈으로 갑니다. 상자 연출은 하지 않습니다. */
+    data class NotFood(val photoPath: String, val source: MealPhotoSource) : MealCameraPhase
+
+    /** 서버가 기한 안에 음식을 찾지 못했습니다. 홈에서 기다리라고 안내합니다. */
+    data class SlowNotice(val photoPath: String, val source: MealPhotoSource) : MealCameraPhase
 }
+
+/** 서버가 받은 기록의 사진 경로. 제출 전 단계면 null입니다. 화면을 닫을 때 이 파일을 지웁니다. */
+val MealCameraPhase.submittedPhotoPath: String?
+    get() = when (this) {
+        MealCameraPhase.Preview, is MealCameraPhase.Captured -> null
+        is MealCameraPhase.Ceremony -> photoPath
+        is MealCameraPhase.FoodPick -> photoPath
+        is MealCameraPhase.NotFood -> photoPath
+        is MealCameraPhase.SlowNotice -> photoPath
+    }
+
+/** 서버가 이번 기록을 받았는지. 음식이 아니라고 판정됐거나 인식이 늦어져도 기록은 받은 것입니다. */
+val MealCameraPhase.isRecorded: Boolean
+    get() = when (this) {
+        MealCameraPhase.Preview, is MealCameraPhase.Captured -> false
+        is MealCameraPhase.Ceremony -> isAccepted
+        is MealCameraPhase.FoodPick, is MealCameraPhase.NotFood, is MealCameraPhase.SlowNotice -> true
+    }
 
 /** 연출 중 기록 접수 상태입니다. */
 sealed interface MealSubmitStatus {

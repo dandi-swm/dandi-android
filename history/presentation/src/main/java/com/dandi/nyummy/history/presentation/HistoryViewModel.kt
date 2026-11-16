@@ -18,6 +18,7 @@ import com.dandi.nyummy.history.presentation.model.buildCalendarDayUiModels
 import com.dandi.nyummy.history.presentation.util.isAfter
 import com.dandi.nyummy.history.presentation.util.lastDayOf
 import com.dandi.nyummy.history.presentation.util.todayDate
+import com.dandi.nyummy.meal.domain.MealFoodPickPage
 import com.dandi.nyummy.meal.domain.MealRecordPage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.persistentListOf
@@ -73,6 +74,8 @@ class HistoryViewModel @Inject constructor(
                 dispatch(HistoryReducerEvent.NutritionSummaryToggled)
 
             is HistoryIntent.ClickMeal -> openMealDetail(intent.mealId)
+
+            is HistoryIntent.ClickConfirmFoods -> openFoodConfirm(intent.mealId)
 
             is HistoryIntent.ClickRetryAnalysis -> requestReanalysis(intent.mealId)
 
@@ -268,12 +271,20 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
-    /** 분석이 끝난 식사를 누르면 상세 페이지로 간다. 실패/분석 중 기록은 카드 안의 동작만 있다. */
+    /** 분석이 끝난 식사를 누르면 그 식사의 분석 버전에 맞는 상세 페이지로 간다. 실패/분석 중 기록은 카드 안의 동작만 있다. */
     private fun openMealDetail(mealId: String) {
         val meal = currentState.selectedDayMeals.firstOrNull { it.id == mealId } ?: return
         if (!meal.isAnalysisCompleted) return
         val id = mealId.toLongOrNull() ?: return
-        navigationHelper.navigateTo(MealDetailPage(id))
+        navigationHelper.navigateTo(MealDetailPage(mealId = id, analysisVersion = meal.analysisVersion))
+    }
+
+    /** 확인 대기 식사를 누르면 찾은 음식 고르기 화면으로 간다. 그 사이 상태가 바뀐 식사는 받지 않는다. */
+    private fun openFoodConfirm(mealId: String) {
+        val meal = currentState.selectedDayMeals.firstOrNull { it.id == mealId } ?: return
+        if (!meal.needsFoodConfirm) return
+        val id = mealId.toLongOrNull() ?: return
+        navigationHelper.navigateTo(MealFoodPickPage(id))
     }
 
     /**

@@ -14,6 +14,7 @@
     <string name="meal_record_capture_failed">사진을 찍지 못했어요. 다시 시도해주세요.</string>
     <string name="meal_record_camera_unavailable">카메라를 사용할 수 없는 기기입니다.</string>
     <string name="meal_record_submit_interrupted">기록됐는지 확인하지 못했어요. 기록 탭에서 확인해 주세요.</string>
+    <string name="meal_record_recorded_check_history">기록했어요. 기록 탭에서 확인해 주세요.</string>
     <string name="meal_record_captured_photo_content_description">촬영한 음식 사진</string>
     <string name="meal_record_cat_content_description">%1$s</string>
     <string name="meal_record_done_title">%1$s(이)가 맛있게 먹었어요!</string>
@@ -131,4 +132,24 @@
     <string name="meal_cutscene_word_lucky">복 들어왔다냥!!</string>
     <string name="meal_cutscene_word_me_too">나도 나도!</string>
     <string name="meal_cutscene_word_one_two">하나, 둘…</string>
+    <!-- 찾은 음식 고르기 -->
+    <string name="meal_food_pick_title">%1$s(이)가 찾은 음식이에요</string>
+    <string name="meal_food_pick_body">먹은 음식만 골라서 가져가 줘</string>
+    <string name="meal_food_pick_add">음식 추가</string>
+    <string name="meal_food_pick_add_confirm">추가</string>
+    <string name="meal_food_pick_add_hint">음식 이름을 적으면 냐미가 영양을 같이 분석해요</string>
+    <string name="meal_food_pick_submit">%1$d개 가져가기</string>
+    <string name="meal_food_pick_checked">선택됨</string>
+    <string name="meal_food_pick_unchecked">선택 안 됨</string>
+    <string name="meal_food_pick_load_failed">음식 목록을 불러오지 못했어요</string>
+    <string name="meal_food_pick_load_retry">다시 불러오기</string>
+    <!-- 음식 아님, 인식 지연 -->
+    <string name="meal_not_food_title">이건 못 먹는 거 같은데?</string>
+    <string name="meal_not_food_body">음식이 보이게 다시 찍어 줘</string>
+    <string name="meal_record_go_home">홈으로</string>
+    <string name="meal_slow_notice_title">음식을 찾는 데 오래 걸리고 있어요</string>
+    <string name="meal_slow_notice_body">홈에서 기다려 줘. 찾은 음식은 모두 기록해 두고, 다 되면 알려줄게요.</string>
+    <string name="meal_slow_notice_notification_off">알림이 꺼져 있어요</string>
+    <string name="meal_slow_notice_notification_hint">켜 두면 분석이 끝났을 때 알려줄게요</string>
+    <string name="meal_slow_notice_notification_enable">알림 켜기</string>
 </resources>

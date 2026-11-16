@@ -5,7 +5,7 @@ import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import kotlinx.serialization.Serializable
 
 /**
- * POST /api/v1/meals/{mealId}/analysis 응답 (재분석 요청 뒤의 분석 상태).
+ * POST /api/v2/meals/{mealId}/analysis 응답 (재분석 요청 뒤의 분석 상태). 음식 목록 방식(V2) 식사는 음식 인식부터 다시 해 RECOGNIZING이 온다.
  *
  * @property id 식사 기록 식별자
  * @property status 영양 분석 상태

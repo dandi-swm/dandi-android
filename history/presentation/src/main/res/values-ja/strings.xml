@@ -50,6 +50,8 @@
     <string name="history_analysis_delete">記録を削除</string>
     <string name="history_analysis_pending_title">%1$sが味見しています</string>
     <string name="history_analysis_pending_body">終わったらすぐここに表示します</string>
+    <string name="history_analysis_confirm_title">食べ物を確認してください</string>
+    <string name="history_analysis_confirm_body">食べたものだけ選ぶとすぐ分析します</string>
     <string name="history_analysis_unknown_meal">分析できなかった記録</string>
 
     <string name="history_kcal_unit">kcal</string>
@@ -103,4 +105,51 @@
         <item>10食目</item>
     </string-array>
     <string name="history_meal_order_numbered">%1$d食目</string>
+    <!-- 음식 목록 방식(V2) 식사 상세, 음식 고치기 시트 -->
+    <string name="history_detail_v2_foods_title">写真の食べ物</string>
+    <string name="history_detail_v2_foods_hint">一番上に動かした食べ物が代表になります</string>
+    <string name="history_detail_v2_main_badge">代表</string>
+    <string name="history_detail_v2_portion">%1$s人前</string>
+    <string name="history_detail_v2_macro_carb">炭</string>
+    <string name="history_detail_v2_macro_protein">た</string>
+    <string name="history_detail_v2_macro_fat">脂</string>
+    <string name="history_detail_v2_gram">%1$dg</string>
+    <string name="history_detail_v2_food_pending">栄養を計算中</string>
+    <string name="history_detail_v2_add_food">食べ物を追加</string>
+    <string name="history_detail_v2_add_confirm">追加</string>
+    <string name="history_detail_v2_add_hint">食べ物の名前を書くと%1$sが栄養も一緒に分析します</string>
+    <string name="history_detail_v2_edit_food_description">%1$sを編集</string>
+    <string name="history_detail_v2_drag_description">%1$sの順番を変える</string>
+    <string name="history_detail_v2_edit_name_description">食事の名前を編集</string>
+    <string name="history_detail_v2_calculating">%1$sが栄養を計算し直しています</string>
+    <string name="history_detail_v2_calculation_failed">栄養を計算できませんでした。記録タブでもう一度分析してください。</string>
+    <string name="history_detail_v2_calculation_slow">計算に時間がかかっています。少し後でもう一度確認してください。</string>
+    <string name="history_food_sheet_title">食べ物を編集</string>
+    <string name="history_food_sheet_icon">アイコン</string>
+    <string name="history_food_sheet_category_all">すべて</string>
+    <string name="history_food_sheet_category_main">主食</string>
+    <string name="history_food_sheet_category_side">おかず</string>
+    <string name="history_food_sheet_category_fruit">果物</string>
+    <string name="history_food_sheet_category_snack">おやつ、デザート</string>
+    <string name="history_food_sheet_category_drink">飲み物</string>
+    <string name="history_food_sheet_name">食べ物の名前</string>
+    <string name="history_food_sheet_name_empty">食べ物の名前を入力してください</string>
+    <string name="history_food_sheet_portion">人前</string>
+    <string name="history_food_sheet_portion_hint">0.5刻みで0.5〜5人前まで選べます</string>
+    <string name="history_food_sheet_portion_decrease">人前を減らす</string>
+    <string name="history_food_sheet_portion_increase">人前を増やす</string>
+    <string name="history_food_sheet_nutrition">栄養</string>
+    <string name="history_food_sheet_manual">自分で設定する</string>
+    <string name="history_food_sheet_manual_off_hint">「自分で設定する」をチェックすると栄養を変更できます</string>
+    <string name="history_food_sheet_manual_on_hint">栄養を変えるとこの食事の合計も変わります</string>
+    <string name="history_food_sheet_calorie">カロリー</string>
+    <string name="history_food_sheet_carb">炭水化物</string>
+    <string name="history_food_sheet_protein">たんぱく質</string>
+    <string name="history_food_sheet_fat">脂質</string>
+    <string name="history_food_sheet_unit_kcal">kcal</string>
+    <string name="history_food_sheet_unit_gram">g</string>
+    <string name="history_food_sheet_delete">この食べ物を削除</string>
+    <string name="history_food_sheet_cancel">キャンセル</string>
+    <string name="history_food_sheet_save">保存する</string>
+    <string name="history_food_sheet_icon_description">食べ物アイコン %1$s</string>
 </resources>
