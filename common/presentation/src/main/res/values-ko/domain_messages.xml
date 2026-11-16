@@ -80,6 +80,10 @@
     <string name="msg_meal_photo_info_save_failed">사진 촬영 정보를 저장하지 못했어요. 다시 촬영해주세요</string>
     <string name="msg_meal_photo_read_failed">사진을 읽지 못했어요. 다시 촬영해주세요</string>
     <string name="msg_meal_photo_compress_failed">사진 용량을 줄이지 못했어요. 다시 촬영해주세요</string>
+    <string name="msg_meal_foods_already_analyzing">이미 분석을 시작했어요</string>
+    <string name="msg_meal_foods_meal_gone">지워진 식사 기록이에요</string>
+    <string name="msg_meal_foods_submit_failed">음식을 가져가지 못했어요. 다시 시도해주세요</string>
+    <string name="msg_meal_foods_load_failed">음식 목록을 불러오지 못했어요. 다시 시도해주세요</string>
 
     <!-- 기록 -->
     <string name="msg_history_meal_already_deleted">이미 지워진 기록이에요</string>
@@ -92,6 +96,11 @@
     <string name="msg_history_reanalyze_failed">다시 분석하지 못했어요</string>
     <string name="msg_history_rename_failed">이름 수정에 실패했어요</string>
     <string name="msg_history_delete_failed">삭제에 실패했어요</string>
+    <string name="msg_history_food_already_deleted">이미 지워진 음식이에요</string>
+    <string name="msg_history_foods_not_updatable">지금은 음식을 고칠 수 없어요</string>
+    <string name="msg_history_last_food_not_deletable">음식은 하나 이상 있어야 해요</string>
+    <string name="msg_history_food_edit_failed">고치지 못했어요. 다시 시도해주세요</string>
+    <string name="msg_history_meal_load_failed">식사를 불러오지 못했어요. 다시 시도해주세요</string>
 
     <!-- 상점 -->
     <string name="msg_shop_added_to_cart">장바구니에 담았어요</string>

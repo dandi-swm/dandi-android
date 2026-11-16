@@ -40,6 +40,21 @@ enum class MealErrorType(
         type = "api.s3.fileSizeExceeded",
         errorMsg = StringResource.MEAL_FILE_TOO_LARGE,
     ),
+    /**
+     * 음식 목록을 고칠 수 없는 식사다(409). 사용자가 고르는 사이 5분이 지나 서버가 영양 계산을 시작한 경우다.
+     * 안내만 하고 고르기 화면을 닫는다.
+     */
+    MEAL_FOODS_NOT_UPDATABLE(
+        type = "api.meal.mealFoodsNotUpdatable",
+        errorMsg = StringResource.MEAL_FOODS_ALREADY_ANALYZING,
+    ),
+
+    /** 식사가 없다(404). 다른 기기에서 지운 경우다. */
+    MEAL_NOT_FOUND(
+        type = "api.meal.notFound",
+        errorMsg = StringResource.MEAL_FOODS_MEAL_GONE,
+    ),
+
     /** 튜토리얼 식사를 이미 했다(409). 다른 기기에서 먼저 마친 경우라 안내하지 않고 마친 것으로 본다. */
     TUTORIAL_ALREADY_COMPLETED(
         type = "api.meal.tutorialAlreadyCompleted",

@@ -33,6 +33,27 @@ sealed interface MealRecordIntent : MviIntent {
     /** 촬영본 확인 중 `냐미에게 주기` 버튼을 눌렀습니다. */
     data object ClickSubmit : MealRecordIntent
 
+    /** 찾은 음식 고르기에서 음식 줄을 눌러 체크를 바꿨습니다. */
+    data class ToggleFood(val key: Int) : MealRecordIntent
+
+    /** 찾은 음식 고르기에서 `음식 추가`를 눌렀습니다. */
+    data object OpenFoodNameInput : MealRecordIntent
+
+    /** 추가할 음식 이름을 고쳤습니다. */
+    data class ChangeFoodNameInput(val text: String) : MealRecordIntent
+
+    /** 이름 입력 줄의 `추가`를 눌렀습니다. */
+    data object ConfirmFoodNameInput : MealRecordIntent
+
+    /** 찾은 음식 고르기에서 `N개 가져가기`를 눌렀습니다. */
+    data object ClickTakeFoods : MealRecordIntent
+
+    /** 음식이 아니라는 화면에서 `다시 찍기`를 눌렀습니다. */
+    data object ClickRetakeNotFood : MealRecordIntent
+
+    /** 음식이 아니라는 화면이나 인식이 오래 걸린다는 안내에서 `홈으로`를 눌렀습니다. */
+    data object ClickGoHome : MealRecordIntent
+
     /** 연출이 끝난 뒤 `완료` 버튼을 눌러 화면을 마무리합니다. */
     data object ClickDone : MealRecordIntent
 

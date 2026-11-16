@@ -19,9 +19,9 @@ import javax.inject.Inject
  * 촬영한 식사 사진을 제출한다.
  *
  * 촬영본 준비(검증·상한 초과 시 재압축) → presigned URL 발급 → 스토리지 업로드 →
- * 식사 생성(분석 시작)을 순서대로 수행하며, 어느 단계에서 실패해도 실패 안내 후
- * [Result.failure] 를 돌려준다. 식사 생성 응답이 오면 기록이 접수된 것이고, 기록하지 못한 경우는
- * 에러 코드로 와서 [MealErrorType] 으로 안내한다.
+ * 식사 생성(음식 인식)을 순서대로 수행하며, 어느 단계에서 실패해도 실패 안내 후
+ * [Result.failure] 를 돌려준다. 식사 생성 응답이 오면 기록이 접수된 것이고(음식이 아니라고 판정돼도 접수다),
+ * 응답의 인식 결과가 다음 화면을 정한다. 기록하지 못한 경우는 에러 코드로 와서 [MealErrorType] 으로 안내한다.
  * 접수되면 그 순간을 마지막 기록으로 기기 홈 화면 위젯에 넘긴다(튜토리얼 식사는 [SubmitTutorialMealUseCase]라 넘기지 않는다).
  */
 class SubmitMealUseCase @Inject constructor(
@@ -84,6 +84,8 @@ private val MealErrorType.analyticsReason: String
         MealErrorType.UNSUPPORTED_CONTENT_TYPE -> "unsupported_type"
         MealErrorType.FILE_SIZE_EXCEEDED -> "file_too_large"
         MealErrorType.TUTORIAL_ALREADY_COMPLETED -> "tutorial_already_completed"
+        MealErrorType.MEAL_FOODS_NOT_UPDATABLE -> "foods_not_updatable"
+        MealErrorType.MEAL_NOT_FOUND -> "meal_not_found"
     }
 
 /** 제출 전 촬영본 검증·압축 실패. [reason] 은 사용자에게 보여 줄 안내 문구다. */

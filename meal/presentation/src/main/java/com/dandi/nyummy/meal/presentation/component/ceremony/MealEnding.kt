@@ -13,6 +13,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -258,6 +261,114 @@ internal fun MealEnding(
 }
 
 /**
+ * 사진이 음식이 아닐 때의 화면(식사 기록 06b)입니다. 마무리 장면과 같은 만화 마지막 페이지에 방금 찍은 사진과
+ * 갸웃하는 냐미를 놓고, 다시 찍기를 권합니다.
+ *
+ * 먹지 못했으므로 발도장과 "맛있게 먹었어요"가 없고, 컷신과 상자 연출도 없습니다. 움직임 없이 바로 그립니다.
+ */
+@Composable
+internal fun MealNotFood(
+    photoPath: String,
+    onHomeClick: () -> Unit,
+    onRetakeClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val density = LocalDensity.current
+    val paper = CutsceneBackdrop.Paper.color()
+    CutsceneStage(backdrop = { paper }, modifier = modifier) { frame ->
+        val photoCorners = remember(frame) { frame.corners(PhotoShape) }
+        val catCorners = remember(frame) { frame.corners(EpilogueShape) }
+        val requests = remember(frame) {
+            listOf(CutsceneImageRequest(R.drawable.meal_not_food_cat, catCorners.bounds().size))
+        }
+        val images = rememberCutsceneImages(requests)
+        // 사진은 칸 크기로만 읽는다. 원본 크기로 읽으면 카메라 사진 한 장이 수십 MB 다.
+        val context = LocalContext.current
+        val photoWindow = remember(photoCorners) { photoCorners.bounds() }
+        val photoRequest = remember(context, photoPath, photoWindow) {
+            ImageRequest.Builder(context)
+                .data(mealPhotoModel(photoPath))
+                .size(photoWindow.width.roundToInt(), photoWindow.height.roundToInt())
+                .build()
+        }
+        val photo = rememberAsyncImagePainter(photoRequest)
+        val ink = NyummyTheme.colors.content.primary
+        val photoPathShape = remember(photoCorners) { photoCorners.toPath() }
+
+        // 위 칸: 방금 찍은 사진.
+        Canvas(Modifier.fillMaxSize()) {
+            val photoSize = photo.intrinsicSize
+            clipPath(photoPathShape) {
+                if (photoSize.isSpecified && photoSize.width > 0f) {
+                    drawPainterIn(photo, coverRect(photoSize, photoWindow, CenterFocus))
+                }
+            }
+            drawPath(photoPathShape, ink, style = Stroke(width = frame.inkPx, join = StrokeJoin.Miter))
+        }
+
+        // 아래 칸: 빈 그릇 앞에서 갸웃하는 냐미.
+        images[0]?.let { image ->
+            CutscenePanelView(corners = catCorners, inkPx = frame.inkPx, appear = { 1f }, drift = false) { bounds, zoom ->
+                drawImageIn(image, coverRect(image.sizeF, bounds, NotFoodCatFocus, zoom))
+            }
+        }
+
+        CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 1f)) {
+            EndingCaption(
+                text = stringResource(R.string.meal_not_food_title),
+                frame = frame,
+                anchor = Offset(CaptionX, CaptionY),
+                alignEnd = false,
+                tiltDegrees = CaptionTiltDegrees,
+                textScale = NotFoodTextScale,
+                appear = { 1f },
+            )
+            EndingCaption(
+                text = stringResource(R.string.meal_not_food_body),
+                frame = frame,
+                anchor = Offset(NoteEndX, NoteY),
+                alignEnd = true,
+                tiltDegrees = NoteTiltDegrees,
+                textScale = NotFoodTextScale,
+                appear = { 1f },
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = NyummyTheme.spacing.s20, vertical = NyummyTheme.spacing.s24),
+            horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
+        ) {
+            // 종이 바탕 위라 회색 보조 버튼 대신 흰 바탕으로 둔다.
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(NyummyTheme.size.buttonL)
+                    .background(NyummyTheme.colors.bg.surface, RoundedCornerShape(NyummyTheme.radius.m))
+                    .nyummyClickable(onClick = onHomeClick),
+                contentAlignment = Alignment.Center,
+            ) {
+                NyummyText(
+                    text = stringResource(R.string.meal_record_go_home),
+                    style = NyummyTheme.typography.labelL,
+                    color = NyummyTheme.colors.content.secondary,
+                )
+            }
+            NyummyButton(
+                text = stringResource(R.string.meal_record_retake),
+                onClick = onRetakeClick,
+                modifier = Modifier.weight(1f),
+                style = NyummyButtonStyle.Primary,
+                size = NyummyButtonSize.L,
+            )
+        }
+    }
+}
+
+/**
  * 만화 내레이션 상자. 흰 바탕에 먹선을 두르고 살짝 기울여 칸 경계에 걸쳐 박힌다.
  *
  * @param anchor 상자 윗변의 기준 자리(캔버스 단위). [alignEnd] 면 오른쪽 끝, 아니면 왼쪽 끝이 여기에 온다.
@@ -381,6 +492,12 @@ private val PhotoShape = CutscenePage.row(CutscenePage.Top, PhotoBottom)
 private val EpilogueShape = CutscenePage.row(PhotoBottom, Seam(566f, 582f))
 private val EpilogueFocus = Offset(0.6f, 0.5f)
 private val CenterFocus = Offset(0.5f, 0.5f)
+
+/** 음식 아님 화면의 냐미 그림에서 칸에 맞출 중심. 냐미 얼굴과 빈 그릇이 같이 들어온다. */
+private val NotFoodCatFocus = Offset(0.5f, 0.5f)
+
+/** 음식 아님 화면의 말상자 글 크기 배율. 두 상자 모두 짧아 같은 크기로 쓴다. */
+private const val NotFoodTextScale = 0.9f
 
 /** 발도장 자리(가운데, 캔버스 단위)와 크기. 사진 칸 오른쪽 아래에 걸친다. */
 private const val StampX = 284f

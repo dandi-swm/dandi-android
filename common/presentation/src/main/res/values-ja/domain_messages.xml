@@ -80,6 +80,10 @@
     <string name="msg_meal_photo_info_save_failed">写真の撮影情報を保存できませんでした。もう一度撮影してください</string>
     <string name="msg_meal_photo_read_failed">写真を読み込めませんでした。もう一度撮影してください</string>
     <string name="msg_meal_photo_compress_failed">写真のサイズを小さくできませんでした。もう一度撮影してください</string>
+    <string name="msg_meal_foods_already_analyzing">すでに分析を始めています</string>
+    <string name="msg_meal_foods_meal_gone">削除された食事の記録です</string>
+    <string name="msg_meal_foods_submit_failed">食べ物を送れませんでした。もう一度お試しください</string>
+    <string name="msg_meal_foods_load_failed">食べ物リストを読み込めませんでした。もう一度お試しください</string>
 
     <!-- 기록 -->
     <string name="msg_history_meal_already_deleted">すでに削除された記録です</string>
@@ -92,6 +96,11 @@
     <string name="msg_history_reanalyze_failed">再分析できませんでした</string>
     <string name="msg_history_rename_failed">名前を変更できませんでした</string>
     <string name="msg_history_delete_failed">削除できませんでした</string>
+    <string name="msg_history_food_already_deleted">すでに削除された食べ物です</string>
+    <string name="msg_history_foods_not_updatable">今は食べ物を編集できません</string>
+    <string name="msg_history_last_food_not_deletable">食べ物は1つ以上必要です</string>
+    <string name="msg_history_food_edit_failed">変更できませんでした。もう一度お試しください</string>
+    <string name="msg_history_meal_load_failed">食事を読み込めませんでした。もう一度お試しください</string>
 
     <!-- 상점 -->
     <string name="msg_shop_added_to_cart">カートに入れました</string>
