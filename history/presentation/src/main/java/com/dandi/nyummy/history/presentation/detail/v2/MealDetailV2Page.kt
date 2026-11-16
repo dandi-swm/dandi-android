@@ -75,6 +75,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealDetailV2VO
 import com.dandi.nyummy.history.entity.MealFoodVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
@@ -751,6 +752,7 @@ private val previewMeal = MealHistoryVO(
     proteinGram = 24,
     fatGram = 18,
     orderIndex = 1,
+    date = HistoryDateVO(2026, 10, 5),
     catComment = "채소 가득한 비빔밥이네! 고추장은 조금만 넣었지? 계란 반숙까지 완벽해.",
 )
 
