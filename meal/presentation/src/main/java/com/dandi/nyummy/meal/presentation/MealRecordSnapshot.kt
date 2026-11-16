@@ -5,6 +5,24 @@ import com.dandi.nyummy.meal.entity.MealPhotoSource
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
 import java.io.File
 
+/** 앱이 종료될 때 식사 기록이 어디까지 갔는지. 한 번에 한 단계만 될 수 있다. */
+internal enum class MealRecordStep {
+    /** 아직 사진이 없다. */
+    PREVIEW,
+
+    /** 사진을 찍었거나 가져와 확인하는 중이다. */
+    CAPTURED,
+
+    /** 냐미에게 주기를 눌러 업로드를 시작했고, 서버가 받았는지는 아직 모른다. */
+    SUBMITTING,
+
+    /** 서버가 기록을 받았지만 연출까지 가지 못했다. 찾은 음식을 고르던 중이거나 음식 아님 화면·인식 지연 안내를 보던 중이다. */
+    RECORDED,
+
+    /** 접수되어 연출까지 이어졌다. */
+    ACCEPTED,
+}
+
 /**
  * 앱이 백그라운드에서 종료됐다가 돌아올 때 식사 기록 화면을 되살리는 데 필요한 사실만 모은 것입니다.
  * [SavedStateHandle] 에 두어 앱이 종료돼도 남습니다.
@@ -13,19 +31,16 @@ import java.io.File
  * 그사이 바뀌었을 수 있어(권한을 끄면 OS가 앱을 종료한다) 돌아온 뒤 다시 확인해야 하기 때문입니다.
  * OS는 앱이 백그라운드로 갈 때의 값을 저장하므로, 백그라운드로 간 뒤에 접수된 결과는 남지 않고 접수 전으로 되살아납니다.
  *
+ * @property step 어디까지 갔는지
  * @property photoPath 찍었거나 가져온 사진의 캐시 파일 경로
  * @property photoSource 사진을 어디서 가져왔는지
- * @property isSubmitStarted 냐미에게 주기를 눌러 업로드를 시작했는지
- * @property acceptedRewardBoxGrade 연출까지 이어졌다면 보상 상자 등급, 그 전이면 null
- * @property recordedMealId 서버가 기록을 받았다면 그 식사 ID, 응답을 받기 전이면 null. 찾은 음식을 고르던 중이거나
- * 음식이 아니라는 화면·인식이 늦다는 안내를 보던 중이었으면 값이 있습니다.
+ * @property acceptedRewardBoxGrade 보상 상자 등급. [MealRecordStep.ACCEPTED]에서만 읽습니다.
  */
 internal data class MealRecordSnapshot(
+    val step: MealRecordStep = MealRecordStep.PREVIEW,
     val photoPath: String? = null,
     val photoSource: MealPhotoSource? = null,
-    val isSubmitStarted: Boolean = false,
     val acceptedRewardBoxGrade: RewardBoxGrade? = null,
-    val recordedMealId: Long? = null,
 ) {
 
     /**
@@ -33,8 +48,7 @@ internal data class MealRecordSnapshot(
      * (서버가 5분 뒤 찾은 음식 전부로 계산하고, 기록 탭에서 확인할 수 있습니다).
      */
     val isRecordedWithoutCeremony: Boolean
-        get() = isSubmitStarted && acceptedRewardBoxGrade == null && recordedMealId != null
-
+        get() = step == MealRecordStep.RECORDED
 
     /**
      * 되살릴 시작 단계입니다.
@@ -42,73 +56,66 @@ internal data class MealRecordSnapshot(
      * - 사진 확인 중이었으면 그 사진으로 확인 단계를 되살립니다. 캐시 정리로 사진이 지워졌으면 다시 찍게 합니다.
      * - 접수까지 됐으면 연출 끝 장면으로 갑니다. 상자는 이미 우편함에 있으니 상자 장면은 다시 보여 주지 않습니다.
      * - 업로드를 시작했지만 결과를 모르거나, 기록은 받았지만 연출까지 가지 못했으면 접수 전 연출 단계로 둡니다.
-     *   ViewModel 이 이를 보고 안내 후 홈으로 보냅니다.
+     *   ViewModel 이 이를 보고 안내 후 홈으로 보냅니다. 접수됐다는데 등급을 읽지 못한 경우도 결과를 모르는 것으로 봅니다.
      */
     fun toPhase(): MealCameraPhase {
         val path = photoPath ?: return MealCameraPhase.Preview
         val source = photoSource ?: return MealCameraPhase.Preview
-        if (!isSubmitStarted) {
-            val exists = path == TUTORIAL_PHOTO_PATH || File(path).exists()
-            return if (exists) MealCameraPhase.Captured(path, source) else MealCameraPhase.Preview
+        val waiting = MealCameraPhase.Ceremony(path, source, stage = MealCeremonyStage.Waiting)
+        return when (step) {
+            MealRecordStep.PREVIEW -> MealCameraPhase.Preview
+            MealRecordStep.CAPTURED -> {
+                val exists = path == TUTORIAL_PHOTO_PATH || File(path).exists()
+                if (exists) MealCameraPhase.Captured(path, source) else MealCameraPhase.Preview
+            }
+            MealRecordStep.SUBMITTING, MealRecordStep.RECORDED -> waiting
+            MealRecordStep.ACCEPTED -> {
+                val grade = acceptedRewardBoxGrade ?: return waiting
+                MealCameraPhase.Ceremony(path, source, MealSubmitStatus.Accepted(grade), MealCeremonyStage.Finished)
+            }
         }
-        val grade = acceptedRewardBoxGrade
-            ?: return MealCameraPhase.Ceremony(path, source, stage = MealCeremonyStage.Waiting)
-        return MealCameraPhase.Ceremony(path, source, MealSubmitStatus.Accepted(grade), MealCeremonyStage.Finished)
     }
 
     fun writeTo(handle: SavedStateHandle) {
+        handle[KEY_STEP] = step.name
         handle[KEY_PHOTO_PATH] = photoPath
         handle[KEY_PHOTO_SOURCE] = photoSource?.name
-        handle[KEY_SUBMIT_STARTED] = isSubmitStarted
         handle[KEY_REWARD_BOX_GRADE] = acceptedRewardBoxGrade?.name
-        handle[KEY_RECORDED_MEAL_ID] = recordedMealId
     }
 
     companion object {
 
         fun of(phase: MealCameraPhase): MealRecordSnapshot = when (phase) {
             MealCameraPhase.Preview -> MealRecordSnapshot()
-            is MealCameraPhase.Captured -> MealRecordSnapshot(phase.photoPath, phase.source)
-            is MealCameraPhase.Ceremony -> MealRecordSnapshot(
-                photoPath = phase.photoPath,
-                photoSource = phase.source,
-                isSubmitStarted = true,
-                acceptedRewardBoxGrade = (phase.submit as? MealSubmitStatus.Accepted)?.rewardBoxGrade,
-            )
-            is MealCameraPhase.FoodPick -> recorded(phase.photoPath, phase.source, phase.mealId)
-            // 식사 ID는 되살리는 데 쓰지 않는다. 기록을 받았다는 사실만 남긴다.
-            is MealCameraPhase.NotFood -> recorded(phase.photoPath, phase.source, RECORDED_WITHOUT_ID)
-            is MealCameraPhase.SlowNotice -> recorded(phase.photoPath, phase.source, RECORDED_WITHOUT_ID)
+            is MealCameraPhase.Captured -> MealRecordSnapshot(MealRecordStep.CAPTURED, phase.photoPath, phase.source)
+            is MealCameraPhase.Ceremony -> {
+                val grade = (phase.submit as? MealSubmitStatus.Accepted)?.rewardBoxGrade
+                val step = if (grade != null) MealRecordStep.ACCEPTED else MealRecordStep.SUBMITTING
+                MealRecordSnapshot(step, phase.photoPath, phase.source, grade)
+            }
+            is MealCameraPhase.FoodPick -> MealRecordSnapshot(MealRecordStep.RECORDED, phase.photoPath, phase.source)
+            is MealCameraPhase.NotFood -> MealRecordSnapshot(MealRecordStep.RECORDED, phase.photoPath, phase.source)
+            is MealCameraPhase.SlowNotice -> MealRecordSnapshot(MealRecordStep.RECORDED, phase.photoPath, phase.source)
         }
-
-        private fun recorded(photoPath: String, source: MealPhotoSource, mealId: Long) = MealRecordSnapshot(
-            photoPath = photoPath,
-            photoSource = source,
-            isSubmitStarted = true,
-            recordedMealId = mealId,
-        )
 
         /** 저장해 둔 사실을 읽는다. 화면에 처음 들어왔으면 저장한 적이 없어 null 이다. */
         fun readFrom(handle: SavedStateHandle): MealRecordSnapshot? {
-            if (!handle.contains(KEY_PHOTO_PATH)) return null
+            if (!handle.contains(KEY_STEP)) return null
             return MealRecordSnapshot(
+                step = handle.get<String>(KEY_STEP)
+                    ?.let { name -> MealRecordStep.entries.firstOrNull { it.name == name } }
+                    ?: MealRecordStep.PREVIEW,
                 photoPath = handle[KEY_PHOTO_PATH],
                 photoSource = handle.get<String>(KEY_PHOTO_SOURCE)
                     ?.let { name -> MealPhotoSource.entries.firstOrNull { it.name == name } },
-                isSubmitStarted = handle[KEY_SUBMIT_STARTED] ?: false,
                 acceptedRewardBoxGrade = handle.get<String>(KEY_REWARD_BOX_GRADE)
                     ?.let { name -> RewardBoxGrade.entries.firstOrNull { it.name == name } },
-                recordedMealId = handle[KEY_RECORDED_MEAL_ID],
             )
         }
 
+        private const val KEY_STEP = "meal_record_step"
         private const val KEY_PHOTO_PATH = "meal_record_photo_path"
         private const val KEY_PHOTO_SOURCE = "meal_record_photo_source"
-        private const val KEY_SUBMIT_STARTED = "meal_record_submit_started"
         private const val KEY_REWARD_BOX_GRADE = "meal_record_reward_box_grade"
-        private const val KEY_RECORDED_MEAL_ID = "meal_record_recorded_meal_id"
-
-        /** 식사 ID를 화면이 들고 있지 않은 단계에서 "기록은 받았다"만 남길 때 쓰는 값. */
-        private const val RECORDED_WITHOUT_ID = 0L
     }
 }
