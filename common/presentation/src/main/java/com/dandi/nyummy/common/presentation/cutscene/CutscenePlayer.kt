@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -41,6 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
@@ -49,6 +51,7 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
@@ -170,6 +173,7 @@ fun CutscenePlayer(
                         text = stringResource(word.text),
                         ink = word.ink.color(),
                         sizeScale = word.scale * frame.canvasScale,
+                        maxWidthPx = 2f * (min(word.x, CutsceneCanvas.WIDTH - word.x) - WordMargin) * frame.unit,
                         center = { frame.point(word.x, word.y) },
                         layer = {
                             val pop = wordIn[index].value
@@ -188,6 +192,7 @@ fun CutscenePlayer(
                     text = stringResource(finale.word),
                     ink = finale.wordInk.color(),
                     sizeScale = finale.wordScale * frame.canvasScale,
+                    maxWidthPx = (CutsceneCanvas.WIDTH - 2f * FinaleWordMargin) * frame.unit / finale.wordFullScale,
                     center = {
                         val inWindow = Offset(window.center.x, window.top + FinaleWordInset * frame.unit)
                         lerp(inWindow, frame.point(CutsceneCanvas.WIDTH / 2f, finale.wordTop), expand.value)
@@ -244,28 +249,39 @@ private fun FinalePanel(
     }
 }
 
-/** 흰 글자에 색 테두리를 두른 효과음 글자. ([center]) 가 글자 가운데다. 화면 낭독기는 한 번만 읽는다. */
+/**
+ * 흰 글자에 색 테두리를 두른 효과음 글자. ([center]) 가 글자 가운데다. 화면 낭독기는 한 번만 읽는다.
+ *
+ * 글자가 [maxWidthPx] 보다 길면 잘라 내지 않고 그 폭에 맞게 줄인다. 언어마다 글자 길이가 달라도 페이지 밖으로 나가지 않는다.
+ */
 @Composable
 private fun CutsceneWordText(
     text: String,
     ink: Color,
     sizeScale: Float,
+    maxWidthPx: Float,
     center: () -> Offset,
     layer: GraphicsLayerScope.() -> Unit,
 ) {
+    var fit by remember { mutableFloatStateOf(1f) }
     val base = NyummyTheme.typography.displayL
     val style = base.copy(fontSize = base.fontSize * WordBaseScale * sizeScale)
     val strokePx = with(LocalDensity.current) { WordStroke.toPx() * sizeScale }
     Box(
         modifier = Modifier
             .layout { measurable, constraints ->
-                val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
+                val placeable = measurable.measure(Constraints())
+                fit = if (placeable.width > maxWidthPx) maxWidthPx / placeable.width else 1f
                 layout(placeable.width, placeable.height) {
                     val c = center()
                     placeable.place((c.x - placeable.width / 2f).roundToInt(), (c.y - placeable.height / 2f).roundToInt())
                 }
             }
-            .graphicsLayer(layer)
+            .graphicsLayer {
+                layer()
+                scaleX *= fit
+                scaleY *= fit
+            }
             .clearAndSetSemantics { contentDescription = text },
     ) {
         NyummyText(
@@ -314,6 +330,12 @@ private val WordStroke = 5.dp
 
 /** 마지막 칸 글자를 칸 위쪽에서 얼마나 안으로 둘지(캔버스 단위). */
 private const val FinaleWordInset = 34f
+
+/** 칸 글자가 캔버스 양옆에 남기는 여백(캔버스 dp). 캔버스가 화면 폭을 꽉 채우는 기기에서도 글자가 화면 밖으로 잘리지 않는다. */
+private const val WordMargin = 4f
+
+/** 펼쳐진 마지막 글자가 화면 양옆에 남기는 여백(캔버스 dp). */
+private const val FinaleWordMargin = 20f
 private const val FinaleWordDelayMillis = 120L
 private const val FinaleWordFadeMillis = 250L
 
