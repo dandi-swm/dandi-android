@@ -1,6 +1,8 @@
 package com.dandi.nyummy.history.presentation.detail
 
+import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.history.domain.GetMealDetailV2UseCase
+import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealAnalysisVersion
 import com.dandi.nyummy.history.entity.MealDetailV2VO
@@ -71,18 +73,18 @@ class MealDetailEntryViewModelTest {
     }
 
     @Test
-    fun `확인 대기 식사면 이 화면을 닫고 고르기 화면을 연다`() = runTest(testDispatcher) {
+    fun `확인 대기 식사면 이 화면을 닫고 기록 탭 위에 고르기 화면을 연다`() = runTest(testDispatcher) {
         repository.detail = detailOf(MealAnalysisVersion.V2, MealAnalysisStatus.CONFIRMING)
 
         val viewModel = enter()
 
         assertNull(viewModel.uiState.value.destination)
         assertEquals(1, navigationHelper.backCount)
-        assertEquals(listOf(MealFoodPickPage(7L)), navigationHelper.pages)
+        assertEquals(listOf<Page>(HistoryPage, MealFoodPickPage(7L)), navigationHelper.pages)
     }
 
     @Test
-    fun `인식 중이거나 실패한 식사면 기록 탭으로 돌아간다`() = runTest(testDispatcher) {
+    fun `인식 중이거나 실패한 식사면 이 화면을 닫고 기록 탭을 연다`() = runTest(testDispatcher) {
         assertEquals(
             MealDetailDestination.History,
             mealDetailDestinationOf(detailOf(MealAnalysisVersion.V2, MealAnalysisStatus.FAILED)),
@@ -92,7 +94,7 @@ class MealDetailEntryViewModelTest {
         enter()
 
         assertEquals(1, navigationHelper.backCount)
-        assertTrue(navigationHelper.pages.isEmpty())
+        assertEquals(listOf<Page>(HistoryPage), navigationHelper.pages)
     }
 
     @Test

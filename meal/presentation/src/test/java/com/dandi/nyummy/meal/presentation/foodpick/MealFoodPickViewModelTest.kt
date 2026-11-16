@@ -2,6 +2,7 @@ package com.dandi.nyummy.meal.presentation.foodpick
 
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.HttpResponseStatus
+import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.meal.domain.GetFoundFoodsUseCase
 import com.dandi.nyummy.meal.domain.MealErrorType
 import com.dandi.nyummy.meal.domain.SubmitMealFoodsUseCase
@@ -70,22 +71,22 @@ class MealFoodPickViewModelTest {
     }
 
     @Test
-    fun `이미 계산을 시작한 식사면 목록을 보여 주지 않고 돌아간다`() = runTest(testDispatcher) {
+    fun `이미 계산을 시작한 식사면 목록을 보여 주지 않고 기록 탭으로 간다`() = runTest(testDispatcher) {
         repository.confirm = MealFoodConfirmVO(isConfirmable = false, foods = foods)
 
         val viewModel = enter()
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HISTORY, navigationHelper.calls)
         assertTrue(viewModel.uiState.value.draft.lines.isEmpty())
     }
 
     @Test
-    fun `지워진 식사면 돌아간다`() = runTest(testDispatcher) {
+    fun `지워진 식사면 기록 탭으로 간다`() = runTest(testDispatcher) {
         repository.loadError = httpException(404, MealErrorType.MEAL_NOT_FOUND.type)
 
         enter()
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HISTORY, navigationHelper.calls)
     }
 
     @Test
@@ -105,7 +106,7 @@ class MealFoodPickViewModelTest {
     }
 
     @Test
-    fun `가져가면 체크한 음식만 보내고 연출 없이 돌아간다`() = runTest(testDispatcher) {
+    fun `가져가면 체크한 음식만 보내고 연출 없이 기록 탭으로 간다`() = runTest(testDispatcher) {
         val viewModel = enter()
         viewModel.onIntent(MealFoodPickIntent.ToggleFood(3))
 
@@ -113,7 +114,7 @@ class MealFoodPickViewModelTest {
         advanceUntilIdle()
 
         assertEquals(listOf(MEAL_ID to foods.take(2)), repository.submitted)
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HISTORY, navigationHelper.calls)
     }
 
     @Test
@@ -130,14 +131,14 @@ class MealFoodPickViewModelTest {
     }
 
     @Test
-    fun `가져가는 사이 서버가 계산을 시작했으면 돌아간다`() = runTest(testDispatcher) {
+    fun `가져가는 사이 서버가 계산을 시작했으면 기록 탭으로 간다`() = runTest(testDispatcher) {
         repository.submitError = httpException(409, MealErrorType.MEAL_FOODS_NOT_UPDATABLE.type)
         val viewModel = enter()
 
         viewModel.onIntent(MealFoodPickIntent.ClickSubmit)
         advanceUntilIdle()
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HISTORY, navigationHelper.calls)
     }
 
     @Test
@@ -155,7 +156,7 @@ class MealFoodPickViewModelTest {
         viewModel.onIntent(MealFoodPickIntent.ClickSubmit)
         advanceUntilIdle()
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HISTORY, navigationHelper.calls)
     }
 
     @Test
@@ -190,7 +191,7 @@ class MealFoodPickViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, repository.submitted.size)
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HISTORY, navigationHelper.calls)
     }
 
     @Test
@@ -226,5 +227,8 @@ class MealFoodPickViewModelTest {
 
     private companion object {
         const val MEAL_ID = 7L
+
+        /** 이 화면을 닫고 기록 탭을 여는 이동. 홈에서 링크로 들어왔어도 기록 탭에 닿는다. */
+        val BACK_TO_HISTORY = listOf("back", "to:${HistoryPage.PATH}")
     }
 }

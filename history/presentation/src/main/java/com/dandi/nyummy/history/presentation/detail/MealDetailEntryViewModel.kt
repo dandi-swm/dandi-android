@@ -7,6 +7,7 @@ import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
 import com.dandi.nyummy.common.presentation.mvi.UiState
 import com.dandi.nyummy.history.domain.GetMealDetailV2UseCase
+import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealAnalysisVersion
 import com.dandi.nyummy.history.entity.MealDetailV2VO
@@ -107,12 +108,21 @@ class MealDetailEntryViewModel @Inject constructor(
         when (destination) {
             MealDetailDestination.V1, is MealDetailDestination.V2 ->
                 dispatch(MealDetailEntryReducerEvent.Resolved(destination))
-            // 이 화면을 닫고 고르기 화면을 연다. 뒤로 가면 기록 탭이다.
+            // 이 화면을 닫고 기록 탭 위에 고르기 화면을 연다. 뒤로 가면 기록 탭이다.
             MealDetailDestination.FoodPick -> {
-                navigationHelper.navigateToBack()
+                closeToHistory()
                 navigationHelper.navigateTo(MealFoodPickPage(mealId))
             }
-            MealDetailDestination.History -> navigationHelper.navigateToBack()
+            MealDetailDestination.History -> closeToHistory()
         }
+    }
+
+    /**
+     * 이 화면을 닫고 기록 탭을 연다. 앱이 켜진 채 링크로 들어오면 아래 화면이 기록 탭이 아닐 수 있어(홈 등)
+     * 뒤로 가기만으로는 기록 탭에 닿지 않는다. 기록 탭에서 들어왔으면 뒤로 간 것과 같다.
+     */
+    private fun closeToHistory() {
+        navigationHelper.navigateToBack()
+        navigationHelper.navigateTo(HistoryPage)
     }
 }

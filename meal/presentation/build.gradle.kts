@@ -59,6 +59,8 @@ dependencies {
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
     implementation(project(":meal:domain"))
     implementation(project(":meal:entity"))
+    // 찾은 음식을 가져간 뒤 기록 탭(HistoryPage)으로 보낸다.
+    implementation(project(":history:domain"))
     implementation(project(":room:domain"))
     implementation(project(":common:presentation"))
 

@@ -3,6 +3,7 @@ package com.dandi.nyummy.meal.presentation.foodpick
 import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
+import com.dandi.nyummy.history.domain.HistoryPage
 import com.dandi.nyummy.meal.domain.GetFoundFoodsUseCase
 import com.dandi.nyummy.meal.domain.SubmitMealFoodsUseCase
 import com.dandi.nyummy.meal.presentation.model.FoodPickDraft
@@ -11,12 +12,12 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * 기록 탭의 확인 대기 식사에서 들어온 찾은 음식 고르기.
+ * 기록 탭의 확인 대기 식사나 알림 링크에서 들어온 찾은 음식 고르기.
  *
  * - 들어오면 그 식사에서 찾은 음식을 불러온다. 그 사이 서버가 영양 계산을 시작했거나 식사가 지워졌으면
  *   UseCase가 안내하고, 화면은 기록 탭으로 돌아간다.
  * - 가져가면 연출 없이 기록 탭으로 돌아간다. 기록 탭은 돌아올 때 목록을 다시 읽어 분석 중 카드로 바뀐다.
- * - 닫기와 뒤로 가기는 기록을 지우지 않는다(기록 직후의 고르기와 다르다).
+ * - 닫기와 뒤로 가기는 기록을 지우지 않는다(기록 직후의 고르기와 다르다). 들어오기 전 화면으로 돌아간다.
  */
 @HiltViewModel
 class MealFoodPickViewModel @Inject constructor(
@@ -72,7 +73,7 @@ class MealFoodPickViewModel @Inject constructor(
                     if (confirm.isConfirmable && confirm.foods.isNotEmpty()) {
                         dispatch(MealFoodPickReducerEvent.Loaded(confirm.foods))
                     } else {
-                        navigationHelper.navigateToBack()
+                        closeToHistory()
                     }
                 }
                 .onFailure { dispatch(MealFoodPickReducerEvent.LoadFailed) }
@@ -87,9 +88,18 @@ class MealFoodPickViewModel @Inject constructor(
         viewModelScope.launch {
             submitMealFoods(id, state.draft.toFoods())
                 // 받았든 더는 고를 수 없든 이 화면에서 할 일은 끝났다.
-                .onSuccess { navigationHelper.navigateToBack() }
+                .onSuccess { closeToHistory() }
                 .onFailure { dispatch(MealFoodPickReducerEvent.SubmitFailed) }
         }
+    }
+
+    /**
+     * 이 화면을 닫고 기록 탭을 연다. 앱이 켜진 채 링크로 들어오면 아래 화면이 기록 탭이 아닐 수 있어(홈 등)
+     * 뒤로 가기만으로는 바뀐 카드를 볼 수 없다. 기록 탭에서 들어왔으면 뒤로 간 것과 같다.
+     */
+    private fun closeToHistory() {
+        navigationHelper.navigateToBack()
+        navigationHelper.navigateTo(HistoryPage)
     }
 
     /** 불러오는 중이거나 보내는 중에는 목록을 고치지 않는다. */
