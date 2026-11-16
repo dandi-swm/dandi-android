@@ -50,6 +50,8 @@
     <string name="history_analysis_delete">Delete record</string>
     <string name="history_analysis_pending_title">%1$s is tasting it</string>
     <string name="history_analysis_pending_body">It\'ll show up here as soon as it\'s ready</string>
+    <string name="history_analysis_confirm_title">Check the food</string>
+    <string name="history_analysis_confirm_body">Pick what you ate and it gets analyzed right away</string>
     <string name="history_analysis_unknown_meal">Unanalyzed record</string>
 
     <string name="history_kcal_unit">kcal</string>
@@ -103,4 +105,51 @@
         <item>10th meal</item>
     </string-array>
     <string name="history_meal_order_numbered">Meal %1$d</string>
+    <!-- 음식 목록 방식(V2) 식사 상세, 음식 고치기 시트 -->
+    <string name="history_detail_v2_foods_title">Foods in the photo</string>
+    <string name="history_detail_v2_foods_hint">The food you drag to the top becomes the main one</string>
+    <string name="history_detail_v2_main_badge">Main</string>
+    <string name="history_detail_v2_portion">%1$s serving(s)</string>
+    <string name="history_detail_v2_macro_carb">C</string>
+    <string name="history_detail_v2_macro_protein">P</string>
+    <string name="history_detail_v2_macro_fat">F</string>
+    <string name="history_detail_v2_gram">%1$dg</string>
+    <string name="history_detail_v2_food_pending">Calculating nutrition</string>
+    <string name="history_detail_v2_add_food">Add food</string>
+    <string name="history_detail_v2_add_confirm">Add</string>
+    <string name="history_detail_v2_add_hint">Type a food name and %1$s analyzes it too</string>
+    <string name="history_detail_v2_edit_food_description">Edit %1$s</string>
+    <string name="history_detail_v2_drag_description">Reorder %1$s</string>
+    <string name="history_detail_v2_edit_name_description">Edit meal name</string>
+    <string name="history_detail_v2_calculating">%1$s is recalculating the nutrition</string>
+    <string name="history_detail_v2_calculation_failed">Couldn\'t calculate the nutrition. Please analyze again from the History tab.</string>
+    <string name="history_detail_v2_calculation_slow">This is taking a while. Please check again a little later.</string>
+    <string name="history_food_sheet_title">Edit food</string>
+    <string name="history_food_sheet_icon">Icon</string>
+    <string name="history_food_sheet_category_all">All</string>
+    <string name="history_food_sheet_category_main">Staple</string>
+    <string name="history_food_sheet_category_side">Side dish</string>
+    <string name="history_food_sheet_category_fruit">Fruit</string>
+    <string name="history_food_sheet_category_snack">Snack, dessert</string>
+    <string name="history_food_sheet_category_drink">Drink</string>
+    <string name="history_food_sheet_name">Food name</string>
+    <string name="history_food_sheet_name_empty">Please enter a food name</string>
+    <string name="history_food_sheet_portion">Servings</string>
+    <string name="history_food_sheet_portion_hint">Choose from 0.5 to 5 servings in steps of 0.5</string>
+    <string name="history_food_sheet_portion_decrease">Fewer servings</string>
+    <string name="history_food_sheet_portion_increase">More servings</string>
+    <string name="history_food_sheet_nutrition">Nutrition</string>
+    <string name="history_food_sheet_manual">Set manually</string>
+    <string name="history_food_sheet_manual_off_hint">Check Set manually to change the nutrition</string>
+    <string name="history_food_sheet_manual_on_hint">Changing the nutrition also changes this meal\'s total</string>
+    <string name="history_food_sheet_calorie">Calories</string>
+    <string name="history_food_sheet_carb">Carbs</string>
+    <string name="history_food_sheet_protein">Protein</string>
+    <string name="history_food_sheet_fat">Fat</string>
+    <string name="history_food_sheet_unit_kcal">kcal</string>
+    <string name="history_food_sheet_unit_gram">g</string>
+    <string name="history_food_sheet_delete">Remove this food</string>
+    <string name="history_food_sheet_cancel">Cancel</string>
+    <string name="history_food_sheet_save">Save</string>
+    <string name="history_food_sheet_icon_description">Food icon %1$s</string>
 </resources>

@@ -27,8 +27,10 @@ import com.dandi.nyummy.mailbox.domain.MailboxPage
 import com.dandi.nyummy.mailbox.presentation.list.MailboxPage
 import com.dandi.nyummy.main.domain.deeplink.LinkAlias
 import com.dandi.nyummy.main.domain.deeplink.RoutePattern
+import com.dandi.nyummy.meal.domain.MealFoodPickPage as MealFoodPickRoute
 import com.dandi.nyummy.meal.domain.MealRecordPage
 import com.dandi.nyummy.meal.presentation.MealRecordPage
+import com.dandi.nyummy.meal.presentation.foodpick.MealFoodPickPage
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.onboarding.presentation.OnboardingPage
 import com.dandi.nyummy.room.domain.MyRoomPage
@@ -166,6 +168,22 @@ val appRoutes: List<AppRoute> = listOf(
         render = { MealRecordPage() },
     ),
     AppRoute(
+        // 이미 기록한 식사에서 찾은 음식 고르기. 기록 화면의 확인 대기 식사에서 들어오고, 뒤로 가면 기록 화면이다.
+        path = MealFoodPickRoute.PATH,
+        // 화면이 시스템 바와 키보드를 직접 피한다.
+        drawsBehindSystemBars = true,
+        syntheticStack = { args ->
+            listOf(
+                GenericNavKey(HomePage.PATH),
+                GenericNavKey(HistoryPage.PATH),
+                GenericNavKey(MealFoodPickRoute.PATH, args),
+            )
+        },
+        render = { args ->
+            MealFoodPickPage(mealId = args[MealFoodPickRoute.ARG_MEAL_ID]?.toLongOrNull() ?: 0L)
+        },
+    ),
+    AppRoute(
         path = HistoryPage.PATH,
         isBottomTab = true,
         render = { HistoryPage() },
@@ -182,7 +200,10 @@ val appRoutes: List<AppRoute> = listOf(
             )
         },
         render = { args ->
-            MealDetailPage(mealId = args[MealDetailRoute.ARG_MEAL_ID]?.toLongOrNull() ?: 0L)
+            MealDetailPage(
+                mealId = args[MealDetailRoute.ARG_MEAL_ID]?.toLongOrNull() ?: 0L,
+                analysisVersion = MealDetailRoute.versionOf(args[MealDetailRoute.ARG_VERSION]),
+            )
         },
     ),
     AppRoute(

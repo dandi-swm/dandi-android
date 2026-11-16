@@ -42,6 +42,24 @@ enum class HistoryErrorType(
         errorMsg = StringResource.HISTORY_ALREADY_RATED,
     ),
 
+    /** 이 식사의 음식 줄이 아닌 줄을 고치거나 지우려 할 때(404). 다른 기기에서 먼저 지운 경우다. */
+    MEAL_FOOD_NOT_FOUND(
+        type = "api.meal.mealFoodNotFound",
+        errorMsg = StringResource.HISTORY_FOOD_ALREADY_DELETED,
+    ),
+
+    /** 음식 목록을 고칠 수 없는 식사(409). 영양을 계산하는 중이거나 실패한 식사다. 화면이 낡은 경우라 다시 읽는다. */
+    MEAL_FOODS_NOT_UPDATABLE(
+        type = "api.meal.mealFoodsNotUpdatable",
+        errorMsg = StringResource.HISTORY_FOODS_NOT_UPDATABLE,
+    ),
+
+    /** 하나 남은 음식 줄을 지우려 할 때(409). 화면이 지우기를 숨기므로 정상 흐름에서는 나오지 않는다. */
+    LAST_MEAL_FOOD_NOT_DELETABLE(
+        type = "api.meal.lastMealFoodNotDeletable",
+        errorMsg = StringResource.HISTORY_LAST_FOOD_NOT_DELETABLE,
+    ),
+
     /** 분석이 끝나지 않은 식사를 평가하려 할 때(409). */
     ANALYSIS_NOT_COMPLETED(
         type = "api.meal.analysisNotCompleted",

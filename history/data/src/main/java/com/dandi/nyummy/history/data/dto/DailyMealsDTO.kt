@@ -5,6 +5,7 @@ import com.dandi.nyummy.history.data.util.toDisplayTime
 import com.dandi.nyummy.history.data.util.toHistoryDateVO
 import com.dandi.nyummy.history.data.util.toEpochMillisOrNull
 import com.dandi.nyummy.history.data.util.toMealAnalysisStatus
+import com.dandi.nyummy.history.data.util.toMealAnalysisVersion
 import com.dandi.nyummy.history.entity.DailyMealHistoryVO
 import com.dandi.nyummy.history.entity.DailyNutritionVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
@@ -12,7 +13,7 @@ import com.dandi.nyummy.history.entity.NutrientProgressVO
 import kotlinx.serialization.Serializable
 
 /**
- * GET /api/v1/meals/daily 응답.
+ * GET /api/v2/meals/daily 응답.
  *
  * @property date 날짜 (yyyy-MM-dd)
  * @property meals 그날의 식사 목록
@@ -43,18 +44,20 @@ data class DailyMealsDTO(
  * 일일 식사 목록의 식사 1건.
  *
  * @property mealId 식사 기록 식별자
+ * @property analysisVersion 식사를 분석한 방식 (V1 / V2)
  * @property name 음식 이름
  * @property mealAt 식사 시각 (ISO date-time). data 레이어가 기기 타임존으로 환산한다.
- * @property calory 열량(kcal)
+ * @property calory 열량(kcal). 영양 계산이 끝나지 않은 식사는 0이다.
  * @property carbs 탄수화물(g)
  * @property protein 단백질(g)
  * @property fat 지방(g)
- * @property status 영양 분석 상태 (WAITING / ANALYZING / COMPLETED / FAILED / UNKNOWN)
+ * @property status 영양 분석 상태 (RECOGNIZING / CONFIRMING / WAITING / ANALYZING / COMPLETED / FAILED / UNKNOWN)
  * @property iconId 음식 픽셀 아이콘 식별자. 분석 전이거나 실패한 식사에도 서버 기본값(1)이 온다.
  */
 @Serializable
 data class DailyMealDTO(
     val mealId: Long? = null,
+    val analysisVersion: String? = null,
     val name: String? = null,
     val mealAt: String? = null,
     val calory: Int? = null,
@@ -79,6 +82,7 @@ data class DailyMealDTO(
             fatGram = fat ?: 0,
             orderIndex = orderIndex,
             status = analysisStatus,
+            analysisVersion = analysisVersion.toMealAnalysisVersion(),
         )
     }
 }

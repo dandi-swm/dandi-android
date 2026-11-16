@@ -82,6 +82,8 @@ import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClicka
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.designsystem.theme.nyummyShadow
 import com.dandi.nyummy.history.domain.SubmitAnalysisFeedbackUseCase
+import com.dandi.nyummy.history.entity.MealAnalysisVersion
+import com.dandi.nyummy.history.presentation.detail.v2.MealDetailV2Page
 import com.dandi.nyummy.history.entity.AnalysisFeedbackReason
 import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
@@ -105,6 +107,59 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  */
 @Composable
 fun MealDetailPage(
+    mealId: Long,
+    modifier: Modifier = Modifier,
+    analysisVersion: MealAnalysisVersion? = null,
+) {
+    when (analysisVersion) {
+        MealAnalysisVersion.V1 -> MealDetailV1Page(mealId = mealId, modifier = modifier)
+        MealAnalysisVersion.V2 -> MealDetailV2Page(mealId = mealId, modifier = modifier)
+        null -> MealDetailEntry(mealId = mealId, modifier = modifier)
+    }
+}
+
+/** 분석 버전을 모르는 진입(푸시, 링크). 식사를 조회해 버전에 맞는 상세를 보여 준다. */
+@Composable
+private fun MealDetailEntry(
+    mealId: Long,
+    modifier: Modifier = Modifier,
+    viewModel: MealDetailEntryViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(mealId) {
+        viewModel.onIntent(MealDetailEntryIntent.Enter(mealId))
+    }
+    when (val destination = uiState.destination) {
+        MealDetailDestination.V1 -> MealDetailV1Page(mealId = mealId, modifier = modifier)
+        is MealDetailDestination.V2 -> MealDetailV2Page(mealId = mealId, modifier = modifier, initial = destination.detail)
+        else -> Column(
+            modifier = modifier
+                .fillMaxSize()
+                .background(NyummyTheme.colors.bg.canvas)
+                .statusBarsPadding(),
+        ) {
+            NyummyTopBar(title = "", onBackClick = { viewModel.onIntent(MealDetailEntryIntent.ClickBack) })
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = NyummyTheme.spacing.gutter),
+            ) {
+                if (uiState.isLoadFailed) {
+                    LoadFailed(
+                        onRetry = { viewModel.onIntent(MealDetailEntryIntent.RetryLoad) },
+                        modifier = Modifier.align(Alignment.Center),
+                    )
+                } else {
+                    NyummySpinner(contentDescription = null, modifier = Modifier.align(Alignment.Center))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MealDetailV1Page(
     mealId: Long,
     modifier: Modifier = Modifier,
     viewModel: MealDetailViewModel = hiltViewModel(),
@@ -254,7 +309,7 @@ private fun MealDetailContent(
 
 /** "10월 5일 오전 8:10 · 첫 끼". 끼니 순번을 모르면 날짜와 시각만 쓴다. */
 @Composable
-private fun mealMetaOf(meal: MealHistoryVO): String {
+internal fun mealMetaOf(meal: MealHistoryVO): String {
     val dateTime = stringResource(R.string.history_meal_meta, dayLabelOf(meal.date), meridiemTimeOf(meal.recordedAt))
     return if (meal.orderIndex > 0) {
         stringResource(R.string.history_detail_meta_with_order, dateTime, mealOrderLabelOf(meal.orderIndex))
@@ -265,7 +320,7 @@ private fun mealMetaOf(meal: MealHistoryVO): String {
 
 /** 사진 위에 뜨는 흰 원 뒤로 버튼. */
 @Composable
-private fun FloatingBackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun FloatingBackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val description = stringResource(CommonR.string.nyummy_back_description)
     Box(
         modifier = modifier
@@ -285,9 +340,31 @@ private fun FloatingBackButton(onClick: () -> Unit, modifier: Modifier = Modifie
     }
 }
 
+/** 사진 위에 뜨는 흰 원 삭제 버튼. 음식 목록 상세가 오른쪽 위에 둔다. */
+@Composable
+internal fun FloatingDeleteButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val description = stringResource(R.string.history_detail_delete)
+    Box(
+        modifier = modifier
+            .size(FloatingBackSize)
+            .nyummyShadow(CircleShape, NyummyTheme.elevation.soft)
+            .background(NyummyTheme.colors.bg.surface, CircleShape)
+            .nyummyClickable(onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(CommonR.drawable.nyummy_ic_trash_2),
+            contentDescription = null,
+            tint = NyummyTheme.colors.content.primary,
+            modifier = Modifier.size(FloatingBackIconSize),
+        )
+    }
+}
+
 /** 화면 폭 정사각 사진. 사진이 없거나 받지 못하면 음식 아이콘을 가운데 둔다. */
 @Composable
-private fun MealPhoto(meal: MealHistoryVO, modifier: Modifier = Modifier) {
+internal fun MealPhoto(meal: MealHistoryVO, modifier: Modifier = Modifier) {
     var loadFailed by remember(meal.photoUrl) { mutableStateOf(false) }
     Box(
         modifier = modifier
@@ -315,7 +392,7 @@ private fun MealPhoto(meal: MealHistoryVO, modifier: Modifier = Modifier) {
 
 /** 연초록 "냐미의 한마디" 카드. 세 줄을 넘으면 접어 두고 "펼치기"로 부드럽게 다 보여 준다. */
 @Composable
-private fun CatCommentCard(comment: String) {
+internal fun CatCommentCard(comment: String) {
     var expanded by rememberSaveable(comment) { mutableStateOf(false) }
     var overflows by remember(comment) { mutableStateOf(false) }
     Column(
@@ -381,7 +458,7 @@ private fun CatCommentCard(comment: String) {
 
 /** "이 식사 영양 612 kcal"과 탄단지. 기록 화면의 하루 영양처럼 연초록 패널 안 흰 카드에 둔다. */
 @Composable
-private fun MealNutrition(meal: MealHistoryVO) {
+internal fun MealNutrition(meal: MealHistoryVO) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -442,7 +519,7 @@ private fun MealActions(onEditName: () -> Unit, onDelete: () -> Unit) {
 }
 
 @Composable
-private fun LoadFailed(onRetry: () -> Unit, modifier: Modifier = Modifier) {
+internal fun LoadFailed(onRetry: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
@@ -466,7 +543,7 @@ private fun LoadFailed(onRetry: () -> Unit, modifier: Modifier = Modifier) {
 
 /** AI 분석 평가 카드 자리. 카드는 애니메이션 없이 한 번에 나타나고 사라진다. */
 @Composable
-private fun AnalysisFeedbackSection(
+internal fun AnalysisFeedbackSection(
     feedback: AnalysisFeedbackUiState?,
     onIntent: (MealDetailIntent) -> Unit,
     revealBottom: suspend () -> Unit,
@@ -528,6 +605,8 @@ private fun AnalysisFeedbackCard(
             onHalfStepsChange = { onIntent(MealDetailIntent.ChangeFeedbackRating(it)) },
             contentDescription = stringResource(R.string.history_feedback_rating_description),
             enabled = !feedback.isSubmitting,
+            // 별 줄은 카드 가로 가운데에 둔다.
+            modifier = Modifier.align(Alignment.CenterHorizontally),
         )
         // 별을 누르면 아래로 생기는 부분이 화면 밖이라 모르고 지나치기 쉽다. 처음 별점을 고른 순간에만 카드 끝까지 내린다.
         RevealWhenBecomesTrue(condition = feedback.isRated, reveal = revealBottom)
@@ -598,7 +677,7 @@ private fun RevealWhenBecomesTrue(condition: Boolean, reveal: suspend () -> Unit
  * 맨 아래까지 부드럽게 스크롤한다. 사용자가 끌고 있어도 그 입력은 무시한다([MutatePriority.PreventUserInput]):
  * 스크롤이 끝날 때까지 사용자 스크롤을 막아, 자동 스크롤과 손가락이 서로 당겨 화면이 버티는 느낌이 나지 않게 한다.
  */
-private suspend fun ScrollState.scrollToBottomIgnoringUser() {
+internal suspend fun ScrollState.scrollToBottomIgnoringUser() {
     scroll(MutatePriority.PreventUserInput) {
         var scrolled = 0f
         animate(0f, (maxValue - value).toFloat(), animationSpec = tween(REVEAL_SCROLL_MILLIS)) { target, _ ->
@@ -610,7 +689,7 @@ private suspend fun ScrollState.scrollToBottomIgnoringUser() {
 }
 
 @Composable
-private fun EditNameDialog(
+internal fun EditNameDialog(
     draft: String,
     isSaving: Boolean,
     onDraftChange: (String) -> Unit,
