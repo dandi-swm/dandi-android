@@ -58,20 +58,20 @@ fun buildCalendarDayUiModels(
 fun monthLabelOf(month: HistoryMonth): String =
     formatDateLabel(LocalDate.of(month.year, month.month, 1), stringResource(R.string.history_month_label_pattern), currentLocale())
 
-/** 기기 언어의 날짜 라벨입니다(한국어 "7월 18일"). */
+/** 기기 언어의 날짜 라벨입니다(한국어 "7월 18일"). 날짜를 모르면 빈 문자열입니다. */
 @Composable
 fun dayLabelOf(date: HistoryDateVO): String =
-    formatDateLabel(date.toLocalDate(), stringResource(R.string.history_day_label_pattern), currentLocale())
+    dateLabelOf(date, stringResource(R.string.history_day_label_pattern))
 
-/** 요일까지 포함한 선택일 제목입니다(한국어 "9월 8일 화요일"). */
+/** 요일까지 포함한 선택일 제목입니다(한국어 "9월 8일 화요일"). 날짜를 모르면 빈 문자열입니다. */
 @Composable
 fun dayTitleOf(date: HistoryDateVO): String =
-    formatDateLabel(date.toLocalDate(), stringResource(R.string.history_day_title_pattern), currentLocale())
+    dateLabelOf(date, stringResource(R.string.history_day_title_pattern))
 
-/** 짧은 선택일 제목입니다(한국어 "10. 5 (월)"). */
+/** 짧은 선택일 제목입니다(한국어 "10. 5 (월)"). 날짜를 모르면 빈 문자열입니다. */
 @Composable
 fun dayShortTitleOf(date: HistoryDateVO): String =
-    formatDateLabel(date.toLocalDate(), stringResource(R.string.history_day_short_title_pattern), currentLocale())
+    dateLabelOf(date, stringResource(R.string.history_day_short_title_pattern))
 
 /** "12:30" 시각을 기기 언어의 시각 라벨로 바꿉니다(한국어 "오후 12:30"). 형식이 다르면 원문을 그대로 돌려줍니다. */
 @Composable
@@ -109,7 +109,16 @@ fun mealOrderLabel(orderIndex: Int, ordinalLabels: List<String>, numberedLabel: 
     else -> numberedLabel
 }
 
-private fun HistoryDateVO.toLocalDate(): LocalDate = LocalDate.of(year, month, day)
+@Composable
+@ReadOnlyComposable
+private fun dateLabelOf(date: HistoryDateVO, pattern: String): String =
+    date.toLocalDateOrNull()?.let { formatDateLabel(it, pattern, currentLocale()) }.orEmpty()
+
+/**
+ * 달력에 없는 날짜면 null입니다. 서버 시각을 읽지 못한 식사는 날짜가 [HistoryDateVO.empty](0월 0일)로 온다.
+ */
+internal fun HistoryDateVO.toLocalDateOrNull(): LocalDate? =
+    runCatching { LocalDate.of(year, month, day) }.getOrNull()
 
 /** 문자열 리소스를 고른 것과 같은 기기 언어. 요일·월 이름·오전/오후를 이 언어로 쓴다. */
 @Composable

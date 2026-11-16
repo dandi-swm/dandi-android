@@ -307,14 +307,17 @@ private fun MealDetailContent(
     }
 }
 
-/** "10월 5일 오전 8:10 · 첫 끼". 끼니 순번을 모르면 날짜와 시각만 쓴다. */
+/** "10월 5일 오전 8:10 · 첫 끼". 날짜·시각·끼니 순번 가운데 모르는 것은 빼고 쓴다. */
 @Composable
 internal fun mealMetaOf(meal: MealHistoryVO): String {
-    val dateTime = stringResource(R.string.history_meal_meta, dayLabelOf(meal.date), meridiemTimeOf(meal.recordedAt))
-    return if (meal.orderIndex > 0) {
-        stringResource(R.string.history_detail_meta_with_order, dateTime, mealOrderLabelOf(meal.orderIndex))
+    val day = dayLabelOf(meal.date)
+    val time = meridiemTimeOf(meal.recordedAt)
+    val dateTime = if (day.isEmpty() || time.isEmpty()) day + time else stringResource(R.string.history_meal_meta, day, time)
+    val order = if (meal.orderIndex > 0) mealOrderLabelOf(meal.orderIndex) else ""
+    return if (dateTime.isEmpty() || order.isEmpty()) {
+        dateTime + order
     } else {
-        dateTime
+        stringResource(R.string.history_detail_meta_with_order, dateTime, order)
     }
 }
 

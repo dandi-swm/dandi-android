@@ -2,6 +2,7 @@ package com.dandi.nyummy.history.presentation.detail.v2
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -30,6 +31,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -37,6 +39,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -75,6 +78,7 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTopBar
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
+import com.dandi.nyummy.history.entity.HistoryDateVO
 import com.dandi.nyummy.history.entity.MealDetailV2VO
 import com.dandi.nyummy.history.entity.MealFoodVO
 import com.dandi.nyummy.history.entity.MealHistoryVO
@@ -96,6 +100,8 @@ import com.dandi.nyummy.history.presentation.detail.scrollToBottomIgnoringUser
 import com.dandi.nyummy.history.presentation.model.numberLabelOf
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import com.dandi.nyummy.common.presentation.R as CommonR
 
@@ -393,7 +399,41 @@ private fun FoodsSection(
 }
 
 /**
- * 음식 줄 목록. 손잡이를 끌면 그 줄이 손가락을 따라가고 사이의 줄이 자리를 비켜 준다. 놓으면 옮겨진 자리를 [onMove]로 알린다.
+ * 끌기 한 번의 상태. 줄 위치를 모두 끌기 시작할 때의 순서([order]) 기준으로 계산해서,
+ * 놓은 뒤 실제 순서가 바뀌는 순간에도 줄이 보이는 자리가 이어진다.
+ *
+ * @property foodId 끌고 있는 음식 줄
+ * @property order 끌기 시작할 때의 음식 줄 순서
+ */
+@Stable
+private class FoodDrag(val foodId: Long, val order: List<Long>) {
+    val fromIndex: Int = order.indexOf(foodId)
+
+    /** 손가락이 움직인 거리(px). 목록 밖으로 나간 만큼도 그대로 센다. */
+    private var fingerOffset = 0f
+
+    /** 끄는 줄이 시작한 자리에서 움직인 거리(px). 목록의 첫 칸과 마지막 칸을 넘지 않는다. */
+    var offset by mutableFloatStateOf(0f)
+
+    /** 손을 뗐는지. 뗀 뒤에는 자리를 잡는 동안만 남아 있다. */
+    var isReleased by mutableStateOf(false)
+
+    var settleJob: Job? = null
+
+    /** 손가락을 따라 옮기되 목록 밖으로는 나가지 않는다. 밖으로 나갔던 손가락이 돌아오면 그만큼은 움직이지 않는다. */
+    fun dragBy(delta: Float, stride: Float) {
+        fingerOffset += delta
+        offset = fingerOffset.coerceIn(-fromIndex * stride, (order.lastIndex - fromIndex) * stride)
+    }
+
+    /** 끄는 줄이 지금 놓일 자리. */
+    fun targetIndex(stride: Float): Int =
+        if (stride <= 0f) fromIndex else (fromIndex + (offset / stride).roundToInt()).coerceIn(0, order.lastIndex)
+}
+
+/**
+ * 음식 줄 목록. 손잡이를 끌면 그 줄이 손가락을 따라가고(목록 안에서만) 사이의 줄이 자리를 비켜 준다.
+ * 놓으면 옮겨진 자리를 [onMove]로 알리고 끌던 줄은 놓일 자리까지 미끄러져 앉는다. 한 번에 한 줄만 끌 수 있다.
  * 줄 높이는 모두 같다고 보고(한 줄을 재서) 몇 칸 옮겼는지 계산한다.
  */
 @Composable
@@ -405,63 +445,77 @@ private fun ReorderableFoodList(
     onEdit: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var draggingIndex by remember { mutableStateOf<Int?>(null) }
-    var dragOffset by remember { mutableFloatStateOf(0f) }
+    var drag by remember { mutableStateOf<FoodDrag?>(null) }
     var rowHeightPx by remember { mutableIntStateOf(0) }
     val gapPx = with(LocalDensity.current) { NyummyTheme.spacing.s8.toPx() }
     val stride = rowHeightPx + gapPx
+    val scope = rememberCoroutineScope()
     val currentOnMove by rememberUpdatedState(onMove)
-    val lastIndex = foods.lastIndex
+    val currentStride by rememberUpdatedState(stride)
+    val currentOrder by rememberUpdatedState(foods.map { it.mealFoodId })
 
-    /** 끌고 있는 줄이 지금 놓일 자리. */
-    fun targetIndexOf(from: Int): Int =
-        if (stride <= 0f) from else (from + (dragOffset / stride).roundToInt()).coerceIn(0, lastIndex)
+    /** 손을 떼면 순서 변경을 알리고, 끌던 줄을 놓일 자리(취소면 원래 자리)까지 옮긴 뒤 끌기를 끝낸다. */
+    fun release(released: FoodDrag, isCancelled: Boolean) {
+        val to = if (isCancelled) released.fromIndex else released.targetIndex(currentStride)
+        released.isReleased = true
+        if (to != released.fromIndex && currentOrder == released.order) currentOnMove(released.fromIndex, to)
+        released.settleJob = scope.launch {
+            animate(
+                initialValue = released.offset,
+                targetValue = (to - released.fromIndex) * currentStride,
+            ) { value, _ -> released.offset = value }
+            if (drag === released) drag = null
+        }
+    }
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8)) {
         foods.forEachIndexed { index, food ->
-            key(food.mealFoodId) {
-                val dragging = draggingIndex
-                val isDragged = dragging == index
+            val foodId = food.mealFoodId
+            key(foodId) {
+                val active = drag
+                // 끌기 시작할 때 이 줄이 있던 자리. 그 뒤에 생긴 줄이면 끌기와 상관없이 제자리에 둔다.
+                val startIndex = active?.order?.indexOf(foodId) ?: -1
+                val isDragged = active?.foodId == foodId
                 // 끌고 있는 줄이 지나간 자리의 줄은 한 칸 비켜 준다.
                 val shift = when {
-                    dragging == null || isDragged -> 0f
+                    active == null || isDragged || startIndex < 0 -> 0f
                     else -> {
-                        val target = targetIndexOf(dragging)
-                        when {
-                            dragging < index && index <= target -> -stride
-                            target <= index && index < dragging -> stride
+                        val from = active.fromIndex
+                        val target = active.targetIndex(stride)
+                        when (startIndex) {
+                            in (from + 1)..target -> -stride
+                            in target..<from -> stride
                             else -> 0f
                         }
                     }
                 }
-                val animatedShift by animateFloatAsState(targetValue = shift, label = "foodRowShift")
+                // 끌기가 바뀌면 지난 끌기에서 남은 움직임을 버리고 새로 시작한다.
+                val animatedShift by key(active) { animateFloatAsState(targetValue = shift, label = "foodRowShift") }
                 FoodRow(
                     food = food,
                     isMain = index == 0,
                     canEdit = canEdit,
                     showHandle = canReorder,
-                    onEdit = { onEdit(food.mealFoodId) },
+                    onEdit = { onEdit(foodId) },
                     handleModifier = if (canEdit && canReorder) {
-                        Modifier.pointerInput(index, lastIndex) {
+                        Modifier.pointerInput(foodId) {
+                            /** 이 줄을 끌고 있는 중이면 그 끌기. 다른 줄을 끌고 있거나 이미 손을 뗐으면 null. */
+                            fun ownDrag(): FoodDrag? = drag?.takeIf { it.foodId == foodId && !it.isReleased }
                             detectDragGestures(
                                 onDragStart = {
-                                    draggingIndex = index
-                                    dragOffset = 0f
+                                    val current = drag
+                                    // 다른 줄을 끌고 있으면 새로 시작하지 않는다. 자리를 잡는 중이면 거기서 끊고 새로 끈다.
+                                    if (current == null || current.isReleased) {
+                                        current?.settleJob?.cancel()
+                                        drag = FoodDrag(foodId, currentOrder)
+                                    }
                                 },
                                 onDrag = { change, amount ->
                                     change.consume()
-                                    dragOffset += amount.y
+                                    ownDrag()?.dragBy(amount.y, currentStride)
                                 },
-                                onDragEnd = {
-                                    val to = targetIndexOf(index)
-                                    draggingIndex = null
-                                    dragOffset = 0f
-                                    if (to != index) currentOnMove(index, to)
-                                },
-                                onDragCancel = {
-                                    draggingIndex = null
-                                    dragOffset = 0f
-                                },
+                                onDragEnd = { ownDrag()?.let { release(it, isCancelled = false) } },
+                                onDragCancel = { ownDrag()?.let { release(it, isCancelled = true) } },
                             )
                         }
                     } else {
@@ -470,7 +524,14 @@ private fun ReorderableFoodList(
                     modifier = Modifier
                         .onSizeChanged { if (index == 0) rowHeightPx = it.height }
                         .zIndex(if (isDragged) 1f else 0f)
-                        .graphicsLayer { translationY = if (isDragged) dragOffset else animatedShift },
+                        .graphicsLayer {
+                            // 시작한 자리 기준의 움직임에서, 실제 순서가 바뀌어 이미 옮겨진 칸만큼을 뺀다.
+                            translationY = if (active == null || startIndex < 0) {
+                                0f
+                            } else {
+                                (if (isDragged) active.offset else animatedShift) - (index - startIndex) * stride
+                            }
+                        },
                 )
             }
         }
@@ -751,6 +812,7 @@ private val previewMeal = MealHistoryVO(
     proteinGram = 24,
     fatGram = 18,
     orderIndex = 1,
+    date = HistoryDateVO(2026, 10, 5),
     catComment = "채소 가득한 비빔밥이네! 고추장은 조금만 넣었지? 계란 반숙까지 완벽해.",
 )
 

@@ -1,6 +1,10 @@
 package com.dandi.nyummy.history.presentation.detail.v2
 
 import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -11,6 +15,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
@@ -127,6 +134,137 @@ class MealDetailV2ScreenTest {
 
         assertTrue(lastFood.bottom <= notice.top)
         assertTrue(notice.bottom <= add.top)
+    }
+
+    /** 순서를 바꾸면 ViewModel처럼 목록에 곧바로 반영하는 화면. 받은 순서 변경을 [moves]에 모은다. */
+    private fun setReorderableScreen(moves: MutableList<MealDetailV2Intent.MoveFood>) {
+        var state by mutableStateOf(MealDetailV2UIState(meal = meal, foods = foods, isLoading = false))
+        composeRule.setContent {
+            NyummyTheme {
+                MealDetailV2Screen(
+                    uiState = state,
+                    onIntent = { intent ->
+                        if (intent is MealDetailV2Intent.MoveFood) {
+                            moves += intent
+                            val moved = state.foods.toMutableList().apply { add(intent.toIndex, removeAt(intent.fromIndex)) }
+                            state = state.copy(foods = moved.toImmutableList())
+                        }
+                    },
+                )
+            }
+        }
+    }
+
+    private fun topOf(name: String): Dp = composeRule.onNodeWithText(name).getUnclippedBoundsInRoot().top
+
+    private fun handleOf(name: String) =
+        composeRule.onNodeWithContentDescription(text(R.string.history_detail_v2_drag_description, name))
+
+    @Test
+    fun 끌어_놓은_줄과_비켜_준_줄이_튀지_않고_새_자리에_앉는다() {
+        val moves = mutableListOf<MealDetailV2Intent.MoveFood>()
+        setReorderableScreen(moves)
+        val handle = handleOf("밥")
+        handle.performScrollTo()
+        composeRule.waitForIdle()
+        val firstSlot = topOf("밥")
+        val secondSlot = topOf("된장찌개")
+        val stridePx = with(composeRule.density) { (secondSlot - firstSlot).toPx() }
+
+        // 첫 줄을 한 칸 아래로 끌어 놓고, 놓은 뒤 프레임마다 두 줄이 첫 칸과 둘째 칸 사이에만 있는지 본다.
+        composeRule.mainClock.autoAdvance = false
+        handle.performTouchInput {
+            down(center)
+            repeat(10) { moveBy(Offset(0f, stridePx / 10)) }
+        }
+        // 둘째 줄이 첫 칸으로 다 비켜난 뒤에 놓는다.
+        composeRule.mainClock.advanceTimeBy(1_000)
+        assertEquals(firstSlot, topOf("된장찌개"))
+        handle.performTouchInput { up() }
+        val allowed = (firstSlot - 1.dp)..(secondSlot + 1.dp)
+        repeat(60) { frame ->
+            composeRule.mainClock.advanceTimeByFrame()
+            val dragged = topOf("밥")
+            val shifted = topOf("된장찌개")
+            assertTrue("프레임 $frame: 끌어 놓은 줄 위치 $dragged", dragged in allowed)
+            assertTrue("프레임 $frame: 비켜 준 줄 위치 $shifted", shifted in allowed)
+        }
+        composeRule.mainClock.autoAdvance = true
+        composeRule.waitForIdle()
+
+        assertEquals(listOf(MealDetailV2Intent.MoveFood(0, 1)), moves)
+        assertEquals(firstSlot, topOf("된장찌개"))
+        assertEquals(secondSlot, topOf("밥"))
+    }
+
+    @Test
+    fun 끄는_줄은_목록_밖으로_나가지_않는다() {
+        val moves = mutableListOf<MealDetailV2Intent.MoveFood>()
+        setReorderableScreen(moves)
+        val handle = handleOf("밥")
+        handle.performScrollTo()
+        composeRule.waitForIdle()
+        val firstSlot = topOf("밥")
+        val thirdSlot = topOf("불고기")
+        val stridePx = with(composeRule.density) { (topOf("된장찌개") - firstSlot).toPx() }
+
+        // 첫 줄을 위로 세 칸만큼 끌어도 첫 칸에 머문다.
+        composeRule.mainClock.autoAdvance = false
+        handle.performTouchInput {
+            down(center)
+            repeat(10) { moveBy(Offset(0f, -stridePx * 3 / 10)) }
+        }
+        composeRule.mainClock.advanceTimeBy(1_000)
+        assertEquals(firstSlot, topOf("밥"))
+
+        // 그대로 아래로 열 칸만큼 끌어도 마지막 칸에 머문다.
+        handle.performTouchInput { repeat(10) { moveBy(Offset(0f, stridePx)) } }
+        composeRule.mainClock.advanceTimeBy(1_000)
+        assertEquals(thirdSlot, topOf("밥"))
+
+        handle.performTouchInput { up() }
+        composeRule.mainClock.autoAdvance = true
+        composeRule.waitForIdle()
+        assertEquals(listOf(MealDetailV2Intent.MoveFood(0, 2)), moves)
+    }
+
+    @Test
+    fun 한_줄을_끄는_동안_다른_줄은_끌리지_않는다() {
+        val moves = mutableListOf<MealDetailV2Intent.MoveFood>()
+        setReorderableScreen(moves)
+        val handle = handleOf("밥")
+        handle.performScrollTo()
+        composeRule.waitForIdle()
+        val firstSlot = topOf("밥")
+        val secondSlot = topOf("된장찌개")
+        val thirdSlot = topOf("불고기")
+        val stridePx = with(composeRule.density) { (secondSlot - firstSlot).toPx() }
+
+        // 첫 줄을 한 칸 아래로 끈 채, 다른 손가락으로 셋째 줄 손잡이를 위로 끈다.
+        composeRule.mainClock.autoAdvance = false
+        handle.performTouchInput {
+            down(0, center)
+            repeat(10) { moveBy(0, Offset(0f, stridePx / 10)) }
+        }
+        composeRule.mainClock.advanceTimeBy(1_000)
+        val draggedTop = topOf("밥")
+        handle.performTouchInput {
+            down(1, center + Offset(0f, stridePx * 2))
+            repeat(10) { moveBy(1, Offset(0f, -stridePx / 10)) }
+        }
+        composeRule.mainClock.advanceTimeBy(1_000)
+
+        assertEquals(thirdSlot, topOf("불고기"))
+        assertEquals(draggedTop, topOf("밥"))
+        assertEquals(firstSlot, topOf("된장찌개"))
+
+        handle.performTouchInput {
+            up(1)
+            up(0)
+        }
+        composeRule.mainClock.autoAdvance = true
+        composeRule.waitForIdle()
+        assertEquals(listOf(MealDetailV2Intent.MoveFood(0, 1)), moves)
     }
 
     @Test
