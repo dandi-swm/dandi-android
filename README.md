@@ -26,9 +26,9 @@ flowchart LR
   <tr><td align="center"><b>시작하기</b></td><td align="center"><b>홈</b></td><td align="center"><b>식사 기록</b></td><td align="center"><b>마이룸</b></td></tr>
   <tr><td align="center"><img src="docs/readme/onboarding.gif" width="200" height="444" alt="시작하기"></td><td align="center"><img src="docs/readme/home.gif" width="200" height="444" alt="홈"></td><td align="center"><img src="docs/readme/meal.gif" width="200" height="444" alt="식사 기록"></td><td align="center"><img src="docs/readme/myroom.gif" width="200" height="444" alt="마이룸"></td></tr>
   <tr><td align="center"><sub>골목에서 냐미를 만나는 온보딩</sub></td><td align="center"><sub>꾸민 방에서 말을 거는 냐미</sub></td><td align="center"><sub>촬영, 냐미가 먹는 연출, 보상 상자</sub></td><td align="center"><sub>아이템을 꺼내고 옮겨 방 꾸미기</sub></td></tr>
-  <tr><td align="center"><b>우편함</b></td><td align="center"><b>기록 돌아보기</b></td><td align="center"><b>설정</b></td></tr>
-  <tr><td align="center"><img src="docs/readme/mailbox.gif" width="200" height="444" alt="우편함"></td><td align="center"><img src="docs/readme/history.gif" width="200" height="444" alt="기록 돌아보기"></td><td align="center"><img src="docs/readme/settings.gif" width="200" height="444" alt="설정"></td></tr>
-  <tr><td align="center"><sub>보상 상자 열기, 모두 받기</sub></td><td align="center"><sub>캘린더, 하루 영양, 식사 상세</sub></td><td align="center"><sub>식사 시간 알림, 문의 내역</sub></td></tr>
+  <tr><td align="center"><b>우편함</b></td><td align="center"><b>상점</b></td><td align="center"><b>기록 돌아보기</b></td><td align="center"><b>설정</b></td></tr>
+  <tr><td align="center"><img src="docs/readme/mailbox.gif" width="200" height="444" alt="우편함"></td><td align="center"><img src="docs/readme/shop.gif" width="200" height="444" alt="상점"></td><td align="center"><img src="docs/readme/history.gif" width="200" height="444" alt="기록 돌아보기"></td><td align="center"><img src="docs/readme/settings.gif" width="200" height="444" alt="설정"></td></tr>
+  <tr><td align="center"><sub>보상 상자 열기, 모두 받기</sub></td><td align="center"><sub>추천·인테리어 탭, 장바구니, 내 방에 놓아 보기</sub></td><td align="center"><sub>캘린더, 하루 영양, 식사 상세</sub></td><td align="center"><sub>식사 시간 알림, 문의 내역</sub></td></tr>
 </table>
 
 ## 기능
@@ -40,6 +40,7 @@ flowchart LR
 | 홈 | 냐미 상태와 대사, 오늘의 식사 요약 | `home` `cat` |
 | 마이룸 | 받은 아이템으로 방 꾸미기 | `room` |
 | 우편함 | 식사 보상 상자와 아이템 수령 | `mailbox` |
+| 상점 | 모은 코인으로 인테리어·방 배경 구매, 장바구니, 사기 전에 내 방에 놓아 보기 | `shop` |
 | 기록 돌아보기 | 월간 캘린더, 하루 영양 요약, 식사 이름 수정·삭제, 분석 평가 | `history` |
 | 설정 | 식사 시간 알림, 문의하기, 약관, 회원탈퇴 | `settings` `legal` |
 | 알림과 링크 | FCM 푸시, `link.nyummy.co.kr` 앱 링크로 화면 바로 열기 | `app` `main` |
