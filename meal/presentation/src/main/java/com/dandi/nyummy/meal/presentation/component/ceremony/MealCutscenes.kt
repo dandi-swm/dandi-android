@@ -65,6 +65,24 @@ internal val MealCutscene.spec: CutsceneSpec
         MealCutscene.TasteTest -> TasteTest
         MealCutscene.TakeoutBag -> TakeoutBag
         MealCutscene.RainyPajeon -> RainyPajeon
+        MealCutscene.DoubleYolk -> DoubleYolk
+        MealCutscene.MorningStretch -> MorningStretch
+        MealCutscene.WakeOwner -> WakeOwner
+        MealCutscene.SparrowGuest -> SparrowGuest
+        MealCutscene.BlenderScare -> BlenderScare
+        MealCutscene.EatBeforeYouGo -> EatBeforeYouGo
+        MealCutscene.AngelDevil -> AngelDevil
+        MealCutscene.DrumstickShare -> DrumstickShare
+        MealCutscene.FishCakeCart -> FishCakeCart
+        MealCutscene.HotteokMoon -> HotteokMoon
+        MealCutscene.OvertimeMate -> OvertimeMate
+        MealCutscene.SpicyFire -> SpicyFire
+        MealCutscene.EndlessNoodle -> EndlessNoodle
+        MealCutscene.MondayBlues -> MondayBlues
+        MealCutscene.FridayParty -> FridayParty
+        MealCutscene.WeekendBrunch -> WeekendBrunch
+        MealCutscene.RoyalFeast -> RoyalFeast
+        MealCutscene.PuddingDetective -> PuddingDetective
     }
 
 /** 띠욧 마지막 칸. 기본 띠욧과 앗뜨거가 같은 자리에 쓰고, 그림은 편마다 먹는 음식에 맞춘다. */
