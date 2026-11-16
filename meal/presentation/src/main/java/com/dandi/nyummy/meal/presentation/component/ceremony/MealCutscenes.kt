@@ -17,7 +17,7 @@ import com.dandi.nyummy.meal.presentation.MealCutscene
 import com.dandi.nyummy.meal.presentation.R
 
 /**
- * 식사 맛보기 컷신 25편의 정의. 360×780 캔버스를 [CutscenePage] 로 겹치지 않게 나눈다.
+ * 식사 맛보기 컷신의 정의. 처음 25편은 이 파일에, 네 줄 배치만 쓰는 나머지 편은 `MealCutscenesFourRow.kt` 에 있다. 360×780 캔버스를 [CutscenePage] 로 겹치지 않게 나눈다.
  *
  * 먹는 음식은 편마다 다르게 그린다. 칸 비율은 그림 비율에 가깝게 잡아 잘림을 줄인다. 3:2 그림은 한 줄 전체, 1:1 그림은 반 줄에 넣고,
  * 그래도 넘치는 쪽은 칸마다 정한 초점을 남기고 자른다. 그림은 밀도 폴더(mdpi~xxhdpi)에 WebP 로 두고 여러 편이 같이 쓴다.
@@ -49,6 +49,40 @@ internal val MealCutscene.spec: CutsceneSpec
         MealCutscene.GiantNyummy -> GiantNyummy
         MealCutscene.LuckyNyummy -> LuckyNyummy
         MealCutscene.AllStars -> AllStars
+        MealCutscene.MenuRoulette -> MenuRoulette
+        MealCutscene.LunchLine -> LunchLine
+        MealCutscene.LunchboxReveal -> LunchboxReveal
+        MealCutscene.FoodComa -> FoodComa
+        MealCutscene.SoupSplash -> SoupSplash
+        MealCutscene.GimbapEnd -> GimbapEnd
+        MealCutscene.SaladTwist -> SaladTwist
+        MealCutscene.SushiBelt -> SushiBelt
+        MealCutscene.WelcomeHome -> WelcomeHome
+        MealCutscene.GrillDay -> GrillDay
+        MealCutscene.CheesePull -> CheesePull
+        MealCutscene.MealShow -> MealShow
+        MealCutscene.LastPiece -> LastPiece
+        MealCutscene.TasteTest -> TasteTest
+        MealCutscene.TakeoutBag -> TakeoutBag
+        MealCutscene.RainyPajeon -> RainyPajeon
+        MealCutscene.DoubleYolk -> DoubleYolk
+        MealCutscene.MorningStretch -> MorningStretch
+        MealCutscene.WakeOwner -> WakeOwner
+        MealCutscene.SparrowGuest -> SparrowGuest
+        MealCutscene.BlenderScare -> BlenderScare
+        MealCutscene.EatBeforeYouGo -> EatBeforeYouGo
+        MealCutscene.AngelDevil -> AngelDevil
+        MealCutscene.DrumstickShare -> DrumstickShare
+        MealCutscene.FishCakeCart -> FishCakeCart
+        MealCutscene.HotteokMoon -> HotteokMoon
+        MealCutscene.OvertimeMate -> OvertimeMate
+        MealCutscene.SpicyFire -> SpicyFire
+        MealCutscene.EndlessNoodle -> EndlessNoodle
+        MealCutscene.MondayBlues -> MondayBlues
+        MealCutscene.FridayParty -> FridayParty
+        MealCutscene.WeekendBrunch -> WeekendBrunch
+        MealCutscene.RoyalFeast -> RoyalFeast
+        MealCutscene.PuddingDetective -> PuddingDetective
     }
 
 /** 띠욧 마지막 칸. 기본 띠욧과 앗뜨거가 같은 자리에 쓰고, 그림은 편마다 먹는 음식에 맞춘다. */
@@ -70,7 +104,7 @@ private val FourRow2Split = Split(186f, 176f)
 private val FourRow3 = Seam(590f, 572f)
 
 /** 네 줄 배치의 칸 네 개. 위에서부터 한 줄, 왼쪽 반, 오른쪽 반, 한 줄 순서다. */
-private val FourRowShapes = listOf(
+internal val FourRowShapes = listOf(
     CutscenePage.row(Top, FourRow1),
     CutscenePage.left(FourRow1, FourRow2, FourRow2Split),
     CutscenePage.right(FourRow1, FourRow2, FourRow2Split),
@@ -81,7 +115,7 @@ private val FourRowShapes = listOf(
 private val FourRowFinale = CutscenePage.row(FourRow3, Bottom)
 
 /** 네 줄 배치의 마지막 칸. 칸에 박혔다가 펼쳐지고, 글자는 위로 올라가며 커진다. */
-private fun fourRowFinale(
+internal fun fourRowFinale(
     image: Int,
     word: Int,
     atMillis: Long,

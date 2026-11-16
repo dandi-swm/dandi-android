@@ -391,7 +391,11 @@ class MealRecordViewModel @Inject constructor(
                 .onSuccess { result ->
                     when (result) {
                         SubmitMealFoodsResult.ACCEPTED ->
-                            dispatch(MealRecordReducerEvent.FoodsTaken(pickMealCutscene(DeviceTime.now().hour)))
+                            dispatch(
+                                MealRecordReducerEvent.FoodsTaken(
+                                    DeviceTime.now().let { now -> pickMealCutscene(now.hour, now.dayOfWeek) },
+                                ),
+                            )
                         SubmitMealFoodsResult.CLOSED -> finishRecord()
                     }
                 }
@@ -468,7 +472,7 @@ class MealRecordViewModel @Inject constructor(
 
     /** 접수되면 이번에 틀 컷신을 함께 정한다. 시간대는 기기 타임존 기준이다. */
     private fun submitSucceeded(rewardBoxGrade: RewardBoxGrade) =
-        MealRecordReducerEvent.SubmitSucceeded(rewardBoxGrade, pickMealCutscene(DeviceTime.now().hour))
+        MealRecordReducerEvent.SubmitSucceeded(rewardBoxGrade, DeviceTime.now().let { now -> pickMealCutscene(now.hour, now.dayOfWeek) })
 
     /**
      * 연출 장면 [finished] 의 움직임이 끝나면 다음 장면으로 넘긴다. 다음 장면이 없으면 연출을 마치고 홈으로 간다.

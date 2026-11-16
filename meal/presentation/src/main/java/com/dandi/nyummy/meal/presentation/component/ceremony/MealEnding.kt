@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -52,6 +53,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
@@ -386,19 +389,23 @@ private fun EndingCaption(
     val base = NyummyTheme.typography.displayL
     val style = base.copy(fontSize = base.fontSize * textScale * frame.canvasScale)
     val inkDp = with(LocalDensity.current) { frame.inkPx.toDp() }
+    // 글자가 길어 화면 밖으로 나가면 자르지 않고 상자째 줄인다. 기준 끝([anchor])은 그대로 두고 반대쪽 끝만 화면 안으로 들어온다.
+    var fit by remember { mutableFloatStateOf(1f) }
     Box(
         modifier = Modifier
-            .layout { measurable, constraints ->
-                val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
+            .layout { measurable, _ ->
+                val placeable = measurable.measure(Constraints())
+                val at = frame.point(anchor.x, anchor.y)
+                val room = (if (alignEnd) at.x else frame.screen.width - at.x) - CaptionScreenMargin * frame.unit
+                fit = if (placeable.width > room) (room / placeable.width).coerceAtLeast(0f) else 1f
                 layout(placeable.width, placeable.height) {
-                    val at = frame.point(anchor.x, anchor.y)
                     val x = if (alignEnd) at.x - placeable.width else at.x
                     placeable.place(x.roundToInt(), at.y.roundToInt())
                 }
             }
             .graphicsLayer {
                 val a = appear()
-                val scale = lerp(CaptionFromScale, 1f, a)
+                val scale = lerp(CaptionFromScale, 1f, a) * fit
                 scaleX = scale
                 scaleY = scale
                 rotationZ = tiltDegrees
@@ -437,7 +444,8 @@ private fun NotificationOffNotice(frame: CutsceneFrame, visible: Boolean, onClic
                 text = stringResource(R.string.meal_ending_notification_off),
                 style = style,
                 color = NyummyTheme.colors.content.danger,
-                maxLines = 1,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
             )
         }
     }
@@ -516,6 +524,9 @@ private const val CaptionY = 266f
 private const val CaptionTiltDegrees = -1.5f
 private const val CaptionTextScale = 1.1f
 private const val CaptionFromScale = 1.15f
+
+/** 글자판이 화면 끝에서 남기는 여백(캔버스 dp). */
+private const val CaptionScreenMargin = 8f
 
 /** 영양 분석 안내 상자 오른쪽 위 자리(캔버스 단위). 배부른 냐미 칸 아래 경계에 걸친다. 글이 길어 조금 작게 쓴다. */
 private const val NoteEndX = 346f
