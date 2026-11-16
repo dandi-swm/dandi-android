@@ -139,7 +139,7 @@ internal class CeremonyDebugViewModel : ViewModel() {
             ceremony = if (fails) {
                 ceremony.copy(submit = MealSubmitStatus.Failed)
             } else {
-                ceremony.accepted(grade, cutscene ?: pickMealCutscene(DeviceTime.now().hour))
+                ceremony.accepted(grade, cutscene ?: DeviceTime.now().let { now -> pickMealCutscene(now.hour, now.dayOfWeek) })
             }
         }
     }
