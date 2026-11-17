@@ -62,8 +62,8 @@ class MealDetailV2ScreenTest {
         MealFoodVO(3, "불고기", 1.5, true, 150, 6, 9, 9, foodIconId = "14"),
     )
 
-    private fun setScreen(state: MealDetailV2UIState, onIntent: (MealDetailV2Intent) -> Unit = {}) {
-        composeRule.setContent { NyummyTheme { MealDetailV2Screen(uiState = state, onIntent = onIntent) } }
+    private fun setScreen(state: MealDetailV2UIState, singleClick: Boolean = true, onIntent: (MealDetailV2Intent) -> Unit = {}) {
+        composeRule.setContent { NyummyTheme(singleClick = singleClick) { MealDetailV2Screen(uiState = state, onIntent = onIntent) } }
     }
 
     @Test
@@ -85,7 +85,7 @@ class MealDetailV2ScreenTest {
     @Test
     fun 연필과_음식_추가와_휴지통이_입력을_보낸다() {
         val intents = mutableListOf<MealDetailV2Intent>()
-        setScreen(MealDetailV2UIState(meal = meal, foods = foods, isLoading = false)) { intents += it }
+        setScreen(MealDetailV2UIState(meal = meal, foods = foods, isLoading = false), singleClick = false) { intents += it }
 
         composeRule.onNodeWithContentDescription(text(R.string.history_detail_v2_edit_food_description, "불고기"))
             .performScrollTo().performClick()

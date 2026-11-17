@@ -39,7 +39,7 @@ class AuthScreensTest {
     fun 로그인_카드의_버튼은_각_로그인_인텐트를_보낸다() {
         val intents = mutableListOf<LoginIntent>()
         composeRule.setContent {
-            NyummyTheme { LoginPageContent(uiState = LoginUIState.empty, onIntent = { intents += it }) }
+            NyummyTheme(singleClick = false) { LoginPageContent(uiState = LoginUIState.empty, onIntent = { intents += it }) }
         }
 
         composeRule.onNodeWithContentDescription(text(R.string.auth_login_kakao_description)).performClick()
@@ -88,7 +88,7 @@ class AuthScreensTest {
     fun 이메일_로그인은_입력이_없으면_로그인을_막고_뒤로_가기를_보낸다() {
         val intents = mutableListOf<EmailLoginIntent>()
         composeRule.setContent {
-            NyummyTheme { EmailLoginContent(uiState = EmailLoginUIState.empty, onIntent = { intents += it }) }
+            NyummyTheme(singleClick = false) { EmailLoginContent(uiState = EmailLoginUIState.empty, onIntent = { intents += it }) }
         }
 
         composeRule.onNodeWithText(text(R.string.auth_login_button)).assertIsNotEnabled()
@@ -122,7 +122,7 @@ class AuthScreensTest {
     fun 회원가입_첫_단계는_단계_표시와_인증_코드_버튼을_보여준다() {
         val intents = mutableListOf<SignUpIntent>()
         composeRule.setContent {
-            NyummyTheme {
+            NyummyTheme(singleClick = false) {
                 SignUpContent(
                     uiState = SignUpUIState.empty.copy(email = "a@b.co", password = "abcd1234", passwordConfirm = "abcd1234"),
                     onIntent = { intents += it },

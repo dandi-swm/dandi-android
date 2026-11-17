@@ -38,14 +38,14 @@ class MealDetailScreenTest {
         catComment = "채소가 듬뿍이라 냐미도 기분 좋아!",
     )
 
-    private fun setScreen(state: MealDetailUIState, onIntent: (MealDetailIntent) -> Unit = {}) {
-        composeRule.setContent { NyummyTheme { MealDetailScreen(uiState = state, onIntent = onIntent) } }
+    private fun setScreen(state: MealDetailUIState, singleClick: Boolean = true, onIntent: (MealDetailIntent) -> Unit = {}) {
+        composeRule.setContent { NyummyTheme(singleClick = singleClick) { MealDetailScreen(uiState = state, onIntent = onIntent) } }
     }
 
     @Test
     fun 받은_식사의_이름과_냐미_한마디를_보여_주고_수정과_삭제를_보낸다() {
         val intents = mutableListOf<MealDetailIntent>()
-        setScreen(MealDetailUIState(meal = meal, isLoading = false)) { intents += it }
+        setScreen(MealDetailUIState(meal = meal, isLoading = false), singleClick = false) { intents += it }
 
         composeRule.onNodeWithText("비빔밥").assertIsDisplayed()
         composeRule.onNodeWithText("채소가 듬뿍이라 냐미도 기분 좋아!").performScrollTo().assertIsDisplayed()

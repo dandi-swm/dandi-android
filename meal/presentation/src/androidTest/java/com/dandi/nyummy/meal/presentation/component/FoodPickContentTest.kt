@@ -37,9 +37,14 @@ class FoodPickContentTest {
         InstrumentationRegistry.getInstrumentation().targetContext.getString(id, *args)
 
     /** 화면이 보낸 동작을 그대로 반영해 실제 화면처럼 움직이게 한다. */
-    private fun setContent(initial: FoodPickDraft, isSubmitting: Boolean = false, onSubmit: (FoodPickDraft) -> Unit = {}) {
+    private fun setContent(
+        initial: FoodPickDraft,
+        isSubmitting: Boolean = false,
+        singleClick: Boolean = true,
+        onSubmit: (FoodPickDraft) -> Unit = {},
+    ) {
         composeRule.setContent {
-            NyummyTheme {
+            NyummyTheme(singleClick = singleClick) {
                 var draft by remember { mutableStateOf(initial) }
                 FoodPickContent(
                     draft = draft,
@@ -76,7 +81,7 @@ class FoodPickContentTest {
     @Test
     fun 이름을_적어_추가하면_줄이_생기고_개수가_는다() {
         var submitted: FoodPickDraft? = null
-        setContent(FoodPickDraft.of(foods)) { submitted = it }
+        setContent(FoodPickDraft.of(foods), singleClick = false) { submitted = it }
 
         composeRule.onNodeWithText(text(R.string.meal_food_pick_add)).performScrollTo().performClick()
         composeRule.onNodeWithText(text(R.string.meal_food_pick_add_confirm)).assertIsNotEnabled()

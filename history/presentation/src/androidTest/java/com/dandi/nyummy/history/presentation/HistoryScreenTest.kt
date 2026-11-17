@@ -74,8 +74,8 @@ class HistoryScreenTest {
         )
     }
 
-    private fun setScreen(state: HistoryUIState, onIntent: (HistoryIntent) -> Unit = {}) {
-        composeRule.setContent { NyummyTheme { HistoryScreen(uiState = state, onIntent = onIntent) } }
+    private fun setScreen(state: HistoryUIState, singleClick: Boolean = true, onIntent: (HistoryIntent) -> Unit = {}) {
+        composeRule.setContent { NyummyTheme(singleClick = singleClick) { HistoryScreen(uiState = state, onIntent = onIntent) } }
     }
 
     private fun calendar() = composeRule.onNode(hasContentDescription(text(R.string.history_calendar_description, "2026년 10월")))
@@ -213,7 +213,7 @@ class HistoryScreenTest {
             MealHistoryVO(id = "2", recordedAt = "19:05", status = MealAnalysisStatus.ANALYZING),
             MealHistoryVO(id = "3", recordedAt = "21:20", status = MealAnalysisStatus.FAILED),
         )
-        setScreen(state(meals = meals)) { intents += it }
+        setScreen(state(meals = meals), singleClick = false) { intents += it }
 
         composeRule.onNodeWithText(text(R.string.history_day_summary, 1)).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("첫 끼").performScrollTo().assertIsDisplayed()
