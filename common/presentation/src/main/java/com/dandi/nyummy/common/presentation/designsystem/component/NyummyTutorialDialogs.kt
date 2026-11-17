@@ -119,7 +119,7 @@ private fun TutorialSkipCard(
             Box(
                 modifier = Modifier
                     .heightIn(min = NyummyTheme.size.touchTarget)
-                    .nyummyClickable(onClick = onSkip),
+                    .nyummyClickable(singleClick = true, onClick = onSkip),
                 contentAlignment = Alignment.Center,
             ) {
                 NyummyText(

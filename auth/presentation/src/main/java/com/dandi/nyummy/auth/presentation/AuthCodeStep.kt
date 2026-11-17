@@ -110,6 +110,7 @@ internal fun AuthCodeStepBottom(
                 style = NyummyTheme.typography.labelS,
                 color = if (canResend) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.disabled,
                 modifier = Modifier.nyummyClickable(
+                    singleClick = true,
                     onClick = onResendClick,
                     enabled = canResend,
                 ),

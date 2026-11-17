@@ -60,6 +60,7 @@ fun NyummyTextButton(
                 enabled = enabled,
                 role = Role.Button,
                 onClick = onClick,
+                singleClick = true,
             )
             .padding(horizontal = NyummyTheme.spacing.s4, vertical = verticalPadding),
         horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s4),

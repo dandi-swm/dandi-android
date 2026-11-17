@@ -150,6 +150,7 @@ internal fun RoomTryOnScreen(
                 onClick = { onIntent(RoomTryOnIntent.Undo) },
                 style = NyummyIconButtonStyle.Filled,
                 enabled = uiState.canUndo,
+                singleClick = false,
                 modifier = Modifier.offset(
                     x = NyummyTheme.spacing.gutter,
                     y = sheetTop - NyummyTheme.spacing.s12 - NyummyTheme.size.touchTarget,

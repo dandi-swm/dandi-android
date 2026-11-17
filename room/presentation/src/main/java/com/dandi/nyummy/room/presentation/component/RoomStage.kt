@@ -456,11 +456,13 @@ private fun ItemToolbar(
             icon = CommonR.drawable.nyummy_ic_bring_to_front,
             contentDescription = stringResource(R.string.my_room_bring_to_front),
             onClick = onBringToFront,
+            singleClick = false,
         )
         NyummyIconButton(
             icon = CommonR.drawable.nyummy_ic_archive,
             contentDescription = stringResource(putAwayLabel),
             onClick = onPutAway,
+            singleClick = false,
         )
     }
 }

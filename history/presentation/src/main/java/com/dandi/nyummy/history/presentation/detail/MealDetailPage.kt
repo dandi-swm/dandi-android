@@ -330,7 +330,7 @@ internal fun FloatingBackButton(onClick: () -> Unit, modifier: Modifier = Modifi
             .size(FloatingBackSize)
             .nyummyShadow(CircleShape, NyummyTheme.elevation.soft)
             .background(NyummyTheme.colors.bg.surface, CircleShape)
-            .nyummyClickable(onClick = onClick)
+            .nyummyClickable(singleClick = true, onClick = onClick)
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
@@ -352,7 +352,7 @@ internal fun FloatingDeleteButton(onClick: () -> Unit, modifier: Modifier = Modi
             .size(FloatingBackSize)
             .nyummyShadow(CircleShape, NyummyTheme.elevation.soft)
             .background(NyummyTheme.colors.bg.surface, CircleShape)
-            .nyummyClickable(onClick = onClick)
+            .nyummyClickable(singleClick = true, onClick = onClick)
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
@@ -508,7 +508,7 @@ private fun MealActions(onEditName: () -> Unit, onDelete: () -> Unit) {
             modifier = Modifier
                 .weight(1f)
                 .height(ActionHeight)
-                .nyummyClickable(onClick = onDelete)
+                .nyummyClickable(singleClick = true, onClick = onDelete)
                 .background(NyummyTheme.colors.bg.actionNeutral, RoundedCornerShape(NyummyTheme.radius.m)),
             contentAlignment = Alignment.Center,
         ) {
@@ -596,6 +596,7 @@ private fun AnalysisFeedbackCard(
                 tint = NyummyTheme.colors.content.tertiary,
                 modifier = Modifier
                     .nyummyClickable(
+                        singleClick = true,
                         onClick = { onIntent(MealDetailIntent.DismissFeedback) },
                         enabled = !feedback.isSubmitting,
                     )

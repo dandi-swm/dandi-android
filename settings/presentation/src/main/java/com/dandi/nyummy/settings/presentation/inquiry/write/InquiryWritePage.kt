@@ -236,7 +236,7 @@ private fun InquiryImageField(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .size(NyummyTheme.size.touchTarget)
-                        .nyummyClickable(onClick = onRemoveClick),
+                        .nyummyClickable(singleClick = true, onClick = onRemoveClick),
                     contentAlignment = Alignment.TopEnd,
                 ) {
                     Box(
@@ -257,7 +257,7 @@ private fun InquiryImageField(
             }
             else -> Box(
                 modifier = Modifier
-                    .nyummyClickable(onClick = onAddClick)
+                    .nyummyClickable(singleClick = true, onClick = onAddClick)
                     .size(ImageTileSize)
                     .background(NyummyTheme.colors.bg.surfaceSubtle, shape),
                 contentAlignment = Alignment.Center,

@@ -44,7 +44,7 @@ fun ShopItemRow(
 ) {
     Row(
         modifier = modifier
-            .nyummyClickable(onClick = onClick)
+            .nyummyClickable(singleClick = true, onClick = onClick)
             .padding(vertical = NyummyTheme.spacing.s8),
         horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
         verticalAlignment = Alignment.CenterVertically,

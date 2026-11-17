@@ -247,7 +247,7 @@ private fun BottomNavCenterAction(
         Box(
             modifier = Modifier
                 .then(buttonModifier)
-                .nyummyClickable(onClick = onClick, interactionSource = interactionSource)
+                .nyummyClickable(singleClick = true, onClick = onClick, interactionSource = interactionSource)
                 .semantics { contentDescription = label }
                 .size(dimens.BottomNavActionSize)
                 .nyummyShadow(shape, NyummyComponentShadows.BottomNavAction)

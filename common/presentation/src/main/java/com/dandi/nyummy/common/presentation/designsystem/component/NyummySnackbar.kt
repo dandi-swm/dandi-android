@@ -76,6 +76,7 @@ fun NyummySnackbar(
                         enabled = true,
                         role = Role.Button,
                         onClick = onAction,
+                        singleClick = true,
                     )
                     .defaultMinSize(minWidth = dimens.SnackbarActionMinWidth)
                     .height(dimens.SnackbarActionHeight)

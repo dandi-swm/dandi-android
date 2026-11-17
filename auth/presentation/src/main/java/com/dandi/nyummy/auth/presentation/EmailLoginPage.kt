@@ -143,6 +143,7 @@ internal fun EmailLoginContent(
                 color = if (enabled) NyummyTheme.colors.content.brand else NyummyTheme.colors.content.disabled,
                 modifier = Modifier
                     .nyummyClickable(
+                        singleClick = true,
                         onClick = { onIntent(EmailLoginIntent.ClickForgotPassword) },
                         enabled = enabled,
                     )

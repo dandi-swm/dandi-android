@@ -69,6 +69,7 @@ enum class NyummyIconButtonSize {
  *
  * @param size 원과 아이콘 크기. 작은 크기도 누르는 영역은 48이다
  * @param badgeCount 0보다 크면 원 오른쪽 위에 빨간 수 배지를 단다(장바구니 담긴 종류 수). 수는 [contentDescription]에도 넣는다
+ * @param singleClick 따닥 누름 방지. 수량 +/−, 되돌리기, 달 넘기기처럼 연달아 누르는 버튼만 false로 준다
  */
 @Composable
 fun NyummyIconButton(
@@ -81,6 +82,7 @@ fun NyummyIconButton(
     enabled: Boolean = true,
     tint: Color = NyummyTheme.colors.content.primary,
     badgeCount: Int = 0,
+    singleClick: Boolean = true,
 ) {
     val interactionSource = rememberNyummyInteractionSource()
     val pressed by interactionSource.collectIsPressedAsState()
@@ -108,6 +110,7 @@ fun NyummyIconButton(
                 role = Role.Button,
                 onClick = onClick,
                 pressedScale = NyummyPressScale.Circle,
+                singleClick = singleClick,
             )
             .size(containerSize)
             .then(

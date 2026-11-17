@@ -137,7 +137,7 @@ internal fun MyRoomScreen(
                     .align(Alignment.CenterEnd)
                     .coachMarkTarget(RoomSaveCoachMarkKey) { onIntent(MyRoomIntent.ClickSave) }
                     .roomPill()
-                    .nyummyClickable(onClick = { onIntent(MyRoomIntent.ClickSave) }, enabled = uiState.canSave)
+                    .nyummyClickable(singleClick = true, onClick = { onIntent(MyRoomIntent.ClickSave) }, enabled = uiState.canSave)
                     .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s10),
             )
         }
@@ -149,6 +149,7 @@ internal fun MyRoomScreen(
                 onClick = { onIntent(MyRoomIntent.Undo) },
                 style = NyummyIconButtonStyle.Filled,
                 enabled = uiState.canUndo,
+                singleClick = false,
                 modifier = Modifier.offset(
                     x = NyummyTheme.spacing.gutter,
                     y = sheetTop - NyummyTheme.spacing.s12 - NyummyTheme.size.touchTarget,

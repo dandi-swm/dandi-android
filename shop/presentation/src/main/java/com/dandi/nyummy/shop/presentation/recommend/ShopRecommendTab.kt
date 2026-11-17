@@ -191,7 +191,7 @@ private fun ShopSectionHeader(
                 maxLines = 1,
                 modifier = if (action != null) {
                     Modifier
-                        .nyummyClickable(onClick = { onAction(action) })
+                        .nyummyClickable(singleClick = true, onClick = { onAction(action) })
                         .padding(NyummyTheme.spacing.s4)
                 } else {
                     Modifier

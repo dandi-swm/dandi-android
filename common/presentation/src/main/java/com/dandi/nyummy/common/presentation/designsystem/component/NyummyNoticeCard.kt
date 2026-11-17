@@ -167,7 +167,7 @@ internal fun NoticeDismissRow(
         }
         Spacer(Modifier.weight(1f))
         Box(
-            modifier = Modifier.fillMaxHeight().nyummyClickable(onClick = onClose),
+            modifier = Modifier.fillMaxHeight().nyummyClickable(singleClick = true, onClick = onClose),
             contentAlignment = Alignment.Center,
         ) {
             NyummyText(

@@ -296,6 +296,7 @@ private fun CartRow(item: CartItemVO, onIntent: (ShopCartIntent) -> Unit) {
                     icon = CommonR.drawable.nyummy_ic_x,
                     contentDescription = stringResource(R.string.shop_cart_remove),
                     onClick = { onIntent(ShopCartIntent.DeleteItem(productId)) },
+                    singleClick = false,
                     size = NyummyIconButtonSize.Inline,
                     tint = NyummyTheme.colors.content.tertiary,
                 )
@@ -343,6 +344,7 @@ private fun QuantityStepper(quantity: Int, max: Int, onChange: (Int) -> Unit) {
             onClick = { onChange(quantity - 1) },
             size = NyummyIconButtonSize.S,
             enabled = quantity > 1,
+            singleClick = false,
         )
         NyummyText(
             text = quantity.toString(),
@@ -356,6 +358,7 @@ private fun QuantityStepper(quantity: Int, max: Int, onChange: (Int) -> Unit) {
             onClick = { onChange(quantity + 1) },
             size = NyummyIconButtonSize.S,
             enabled = quantity < max,
+            singleClick = false,
         )
     }
 }

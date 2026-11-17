@@ -53,7 +53,7 @@ fun ShopItemCard(
     onAdd: (() -> Unit)? = null,
 ) {
     Column(
-        modifier = modifier.nyummyClickable(onClick = onClick),
+        modifier = modifier.nyummyClickable(singleClick = true, onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
     ) {
         Box(
@@ -102,7 +102,7 @@ fun ShopBackgroundCard(
 ) {
     val shape = RoundedCornerShape(NyummyTheme.radius.s)
     Column(
-        modifier = modifier.nyummyClickable(onClick = onClick),
+        modifier = modifier.nyummyClickable(singleClick = true, onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
     ) {
         Box(
