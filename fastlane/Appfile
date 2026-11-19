@@ -1,0 +1,4 @@
+# Play 서비스 계정 JSON 경로는 환경변수로 받는다(저장소에 키 파일을 두지 않는다).
+json_key_file(ENV["PLAY_SERVICE_ACCOUNT_JSON_PATH"])
+# app/build.gradle.kts 의 applicationId
+package_name("com.dandi.nyummy")

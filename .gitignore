@@ -50,3 +50,12 @@ Thumbs.db
 .claude/.kt-dirty
 /.claude/skills/create-pr/SKILL.md
 /.claude/skills/create-pr/scripts/upload-pr-assets.sh
+
+# fastlane / Ruby (bundle install 경로와 실행 산출물)
+vendor/bundle/
+.bundle/
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+fastlane/README.md
