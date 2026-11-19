@@ -33,7 +33,7 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.legal.entity.LegalDocument
 
 /**
- * 이용약관, 개인정보처리방침을 앱 안에서 보여 준다. 정책 페이지(GitHub Pages)를 WebView로 연다.
+ * 이용약관, 개인정보처리방침을 앱 안에서 보여 준다. 정책 페이지(www.nyummy.co.kr, 앱 언어가 일본어면 일본어판)를 WebView로 연다.
  *
  * - 정책 페이지끼리의 링크(약관 ↔ 방침)는 이 화면 안에서 열고, 메일이나 외부 사이트 링크는 앱 밖에서 연다.
  * - 뒤로가기(상단 바, 시스템)는 다른 정책 페이지로 옮겨 갔으면 이전 페이지로, 아니면 화면을 닫는다.

@@ -50,14 +50,14 @@ class LegalViewModelTest {
     @Test
     fun `다른 정책 페이지로 옮기면 제목을 그 페이지로 바꾸고 뒤로 갈 수 있다`() {
         viewModel.onIntent(
-            LegalIntent.HistoryChanged(url = "https://dandi-swm.github.io/nyummy-policy/privacy.html?inapp=1", canGoBack = true),
+            LegalIntent.HistoryChanged(url = "https://www.nyummy.co.kr/ko/policy/privacy.html?inapp=1", canGoBack = true),
         )
 
         assertEquals(PolicyPage.PRIVACY, state.shownPage)
         assertTrue(state.canGoBack)
 
         viewModel.onIntent(
-            LegalIntent.HistoryChanged(url = "https://dandi-swm.github.io/nyummy-policy/terms.html?inapp=1", canGoBack = false),
+            LegalIntent.HistoryChanged(url = "https://www.nyummy.co.kr/ko/policy/terms.html?inapp=1", canGoBack = false),
         )
         assertEquals(PolicyPage.TERMS, state.shownPage)
         assertFalse(state.canGoBack)
@@ -65,7 +65,7 @@ class LegalViewModelTest {
 
     @Test
     fun `모르는 페이지면 처음 연 문서 제목을 둔다`() {
-        viewModel.onIntent(LegalIntent.HistoryChanged(url = "https://dandi-swm.github.io/nyummy-policy/", canGoBack = true))
+        viewModel.onIntent(LegalIntent.HistoryChanged(url = "https://www.nyummy.co.kr/ko/policy/", canGoBack = true))
 
         assertNull(state.shownPage)
     }
