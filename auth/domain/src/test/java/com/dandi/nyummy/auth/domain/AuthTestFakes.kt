@@ -133,6 +133,13 @@ internal class RecordingNavigationHelper : NavigationHelper {
     override fun navigateToAppLink(link: String, asRoot: Boolean) {
         appLinks += link to asRoot
     }
+
+    /** 진입 흐름이 끝난 뒤 여는 링크(광고 트래킹 링크). 일반 앱 링크와 구분해 남긴다. */
+    val appLinksAfterEntry = mutableListOf<Pair<String, Boolean>>()
+
+    override fun navigateToAppLinkAfterEntry(link: String, waitForTabRoot: Boolean) {
+        appLinksAfterEntry += link to waitForTabRoot
+    }
     override fun navigateToBack() {
         backCount++
     }

@@ -739,6 +739,59 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `홈이 다른 화면에 가려져 있으면 공지를 띄우지 않다가 다시 보일 때 띄운다`() = runTest(testDispatcher) {
+        coinChargeEvent = coinCharge
+        homeRepository.noticeList = listOf(renewal)
+        homeRepository.next = { afterTutorialMeal }
+
+        // 홈에 들어오자마자 앱 링크가 홈 위에 열려 홈이 가려졌다.
+        viewModel.onIntent(HomeIntent.ScreenResumed)
+        viewModel.onIntent(HomeIntent.ScreenPaused)
+        advanceUntilIdle()
+
+        assertNull(state.notice)
+        assertTrue(coinChargeEvents.isEmpty())
+
+        viewModel.onIntent(HomeIntent.ScreenResumed)
+        advanceUntilIdle()
+
+        assertEquals(listOf("냐미 상점이 문을 열었어요!", "냐미가 새단장을 했어요!"), state.notice?.pages?.map { it.title })
+        assertEquals(listOf("coin_charge_notice_view"), coinChargeEvents.map { it.name })
+    }
+
+    @Test
+    fun `홈이 가려져 있는 동안에는 공지를 조회하지 않아 이번 실행에 다뤘다고 표시하지 않는다`() = runTest(testDispatcher) {
+        homeRepository.noticeList = listOf(renewal)
+        homeRepository.next = { afterTutorialMeal }
+
+        viewModel.onIntent(HomeIntent.ScreenResumed)
+        viewModel.onIntent(HomeIntent.ScreenPaused)
+        advanceUntilIdle()
+
+        assertFalse(homeRepository.noticeHandled)
+        assertNull(state.notice)
+    }
+
+    @Test
+    fun `가려진 사이 코인을 받았으면 다시 보일 때 받은 상태로 판단해 이벤트 공지를 빼고 띄운다`() = runTest(testDispatcher) {
+        coinChargeEvent = coinCharge
+        homeRepository.noticeList = listOf(renewal)
+        homeRepository.next = { afterTutorialMeal }
+
+        viewModel.onIntent(HomeIntent.ScreenResumed)
+        viewModel.onIntent(HomeIntent.ScreenPaused)
+        advanceUntilIdle()
+        // 홈 위에 열린 충전 화면에서 선물 코인을 받았다.
+        claimedCoinCharges += coinCharge.eventId
+
+        viewModel.onIntent(HomeIntent.ScreenResumed)
+        advanceUntilIdle()
+
+        assertEquals(listOf("냐미가 새단장을 했어요!"), state.notice?.pages?.map { it.title })
+        assertTrue(coinChargeEvents.isEmpty())
+    }
+
+    @Test
     fun `이벤트 장의 버튼을 누르면 공지 클릭을 남기고 상점을 연다`() = runTest(testDispatcher) {
         coinChargeEvent = coinCharge
         resumeWith(afterTutorialMeal)
@@ -941,6 +994,13 @@ class HomeViewModelTest {
 
         override fun navigateToAppLink(link: String, asRoot: Boolean) {
             appLinks += link
+        }
+
+        /** 진입 흐름이 끝난 뒤 여는 링크(광고 트래킹 링크). 일반 앱 링크와 구분해 남긴다. */
+        val appLinksAfterEntry = mutableListOf<Pair<String, Boolean>>()
+
+        override fun navigateToAppLinkAfterEntry(link: String, waitForTabRoot: Boolean) {
+            appLinksAfterEntry += link to waitForTabRoot
         }
 
         override fun navigateToBack() = Unit
