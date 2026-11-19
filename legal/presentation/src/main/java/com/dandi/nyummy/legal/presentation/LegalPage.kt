@@ -10,17 +10,20 @@ import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -62,35 +65,41 @@ private fun LegalScreen(
 
     BackHandler(enabled = uiState.canGoBack) { webView?.goBack() }
 
-    Column(
+    // WebView 는 화면을 연 첫 프레임이 지난 뒤에 붙인다. 첫 프레임에 상단 바가 반드시 그려지게 하려는 것이다.
+    var attachWebView by remember { mutableStateOf(false) }
+    // 상단 바 높이만큼 본문을 내린다. 첫 프레임에 잰 값이라 WebView 를 붙일 때는 이미 정해져 있다.
+    var topBarHeightPx by remember { mutableStateOf(0) }
+    val density = LocalDensity.current
+    LaunchedEffect(Unit) {
+        withFrameNanos { }
+        attachWebView = true
+    }
+
+    // WebView 가 처음 그려지는 동안 먼저 그린 형제를 덮어서, 상단 바를 WebView 위 층(마지막 자식)에 둔다.
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(NyummyTheme.colors.bg.canvas),
     ) {
-        NyummyTopBar(
-            title = stringResource(uiState.shownPage?.titleRes ?: document.titleRes),
-            onBackClick = {
-                val view = webView
-                if (view != null && view.canGoBack()) view.goBack() else onIntent(LegalIntent.ClickClose)
-            },
-        )
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
+                .fillMaxSize()
+                .padding(top = with(density) { topBarHeightPx.toDp() }),
         ) {
-            AndroidView(
-                factory = { context ->
-                    WebView(context).apply {
-                        configurePolicySettings()
-                        webViewClient = PolicyWebViewClient(onIntent = { currentOnIntent(it) })
-                        loadUrl(document.url)
-                        webView = this
-                    }
-                },
-                onRelease = { it.destroy() },
-                modifier = Modifier.fillMaxSize(),
-            )
+            if (attachWebView) {
+                AndroidView(
+                    factory = { context ->
+                        WebView(context).apply {
+                            configurePolicySettings()
+                            webViewClient = PolicyWebViewClient(onIntent = { currentOnIntent(it) })
+                            loadUrl(document.url)
+                            webView = this
+                        }
+                    },
+                    onRelease = { it.destroy() },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
             when (uiState.loadState) {
                 LegalLoadState.Loading -> Box(
                     modifier = Modifier
@@ -118,6 +127,14 @@ private fun LegalScreen(
                 LegalLoadState.Loaded -> Unit
             }
         }
+        NyummyTopBar(
+            title = stringResource(uiState.shownPage?.titleRes ?: document.titleRes),
+            onBackClick = {
+                val view = webView
+                if (view != null && view.canGoBack()) view.goBack() else onIntent(LegalIntent.ClickClose)
+            },
+            modifier = Modifier.onSizeChanged { topBarHeightPx = it.height },
+        )
     }
 }
 
