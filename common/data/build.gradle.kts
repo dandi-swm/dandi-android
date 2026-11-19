@@ -21,6 +21,11 @@ val PlaceholderBaseUrl = "https://example.com/"
 
 android {
     namespace = "com.dandi.nyummy.common.data"
+
+    // 단위 테스트에서 android.util.Log 같은 프레임워크 호출이 예외 대신 기본값을 돌려주게 한다(PushTokenHelperImplTest 의 실패 로그).
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
