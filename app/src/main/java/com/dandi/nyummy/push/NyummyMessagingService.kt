@@ -20,7 +20,7 @@ class NyummyMessagingService : FirebaseMessagingService() {
     lateinit var pushTokenHelper: PushTokenHelper
 
     override fun onNewToken(token: String) {
-        // 로그인한 상태일 때만 서버에 등록된다. 로그아웃 상태면 다음 로그인 때 등록한다.
+        // 새 토큰은 바로 보낸다. 로그인한 상태일 때만 서버에 등록되고, 로그아웃 상태면 다음 로그인 때 등록한다.
         pushTokenHelper.register(token)
     }
 
