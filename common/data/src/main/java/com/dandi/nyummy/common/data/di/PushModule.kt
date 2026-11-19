@@ -14,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import retrofit2.Retrofit
 import javax.inject.Singleton
 
-/** 푸시 토큰 등록, 삭제 바인딩. 앱 시작, 로그인, 토큰 갱신, 로그아웃에서 같이 쓴다. */
+/** 푸시 토큰 등록, 삭제 바인딩. 화면 열기, 로그인, 토큰 갱신, 로그아웃에서 같이 쓴다. */
 @Module
 @InstallIn(SingletonComponent::class)
 object PushModule {

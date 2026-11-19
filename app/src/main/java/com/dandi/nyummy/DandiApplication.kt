@@ -6,7 +6,6 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import com.dandi.nyummy.auth.presentation.social.initializeSocialLoginSdks
 import com.dandi.nyummy.common.data.analytics.AirbridgeSdk
-import com.dandi.nyummy.common.domain.helper.PushTokenHelper
 import com.dandi.nyummy.common.presentation.image.ImageLoadReport
 import com.dandi.nyummy.common.presentation.image.NoOpImageLoadReport
 import com.dandi.nyummy.common.presentation.image.NyummyImageLoaderFactory
@@ -19,9 +18,6 @@ class DandiApplication : Application(), SingletonImageLoader.Factory {
 
     @Inject
     lateinit var imageLoadReport: ImageLoadReport
-
-    @Inject
-    lateinit var pushTokenHelper: PushTokenHelper
 
     /**
      * AsyncImage 등 Coil 싱글턴이 쓰는 전역 ImageLoader. 캐시 설정은 [NyummyImageLoaderFactory] 참고.
@@ -46,7 +42,7 @@ class DandiApplication : Application(), SingletonImageLoader.Factory {
         // 푸시 알림 채널을 미리 등록한다. 앱이 백그라운드일 때 OS가 서버 알림을 이 채널(manifest 기본 채널)로 띄운다.
         PushNotifier.ensureChannel(this)
 
-        // 로그인한 상태면 이 기기의 푸시 토큰을 서버에 등록한다. 서버가 멱등이라 켤 때마다 보내도 된다.
-        pushTokenHelper.register()
+        // 푸시 토큰은 여기서 등록하지 않는다. 앱이 꺼져 있을 때 푸시가 오면 화면 없이 이 onCreate만 돌기 때문에,
+        // 여기서 보내면 푸시 배치 때마다 받은 기기 전부가 등록과 토큰 재발급을 부른다. 화면을 열 때(MainActivity) 보낸다.
     }
 }
