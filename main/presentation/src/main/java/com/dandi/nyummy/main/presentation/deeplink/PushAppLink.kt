@@ -15,9 +15,11 @@ const val PUSH_APP_LINK_KEY = "appLink"
 /**
  * 이 intent가 열려는 링크. App Link와 앱이 띄운 알림은 [Intent.getData]로,
  * OS가 띄운 푸시 알림은 extras의 [PUSH_APP_LINK_KEY]로 들어온다.
+ * 앱 링크 호스트가 아니면([isAppLink]) null 이다. 광고 트래킹 링크로 켜지면 인트로부터 시작하고, 목적지는
+ * 앱 셸의 Airbridge 처리가 홈에 도착한 뒤에 연다.
  */
 fun Intent.appLinkUri(): Uri? =
-    data ?: getStringExtra(PUSH_APP_LINK_KEY)?.takeIf { it.isNotBlank() }?.toUri()
+    (data ?: getStringExtra(PUSH_APP_LINK_KEY)?.takeIf { it.isNotBlank() }?.toUri())?.takeIf { it.isAppLink() }
 
 /** 이 intent를 연 알림의 식별자. 앱이 띄운 알림과 OS가 띄운 푸시 알림 모두 extras의 [LinkArgs.NOTIFICATION_ID]로 온다. */
 fun Intent.pushNotificationId(): String? =

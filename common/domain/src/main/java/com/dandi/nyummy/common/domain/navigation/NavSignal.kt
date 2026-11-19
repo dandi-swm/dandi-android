@@ -9,6 +9,9 @@ package com.dandi.nyummy.common.domain.navigation
  *   라우트를 찾고, 기존 스택은 보존한 채 대상만 최전면으로 올린다(bring-to-front).
  *   콜드 스타트의 synthetic 부모 체인과 달리 사용자의 현재 맥락을 유지하는 것이 의도된 동작이다.
  *   `asRoot`면 [ResetToPage]처럼 스택을 비우고 그 화면만 남긴다(로그인 뒤 이동).
+ * - [AppLinkAfterEntry]: 진입 흐름(인트로, 로그인, 가입, 온보딩, 방 준비)이 끝난 뒤에 여는 앱 링크(광고 트래킹 링크).
+ *   진입 흐름 화면이 백스택에 없으면 [AppLink]처럼 바로 열고, 있으면 호스트가 하나만 맡아 두었다가 모두 사라지는 순간 연다.
+ *   `waitForTabRoot`이면(설치 뒤 첫 실행에 이어받은 링크처럼 사용자가 누른 순간과 떨어져 도착한 링크) 맨 위 화면이 하단 탭 루트일 때만 연다.
  * - [Back]: 시스템/하드웨어 백 키와 동일하게 한 단계 뒤로 이동.
  * - [ResetToPage]: 백스택을 전부 비우고 대상만 루트로 남긴다. 로그인/회원가입 완료처럼
  *   이전 플로우로 되돌아가면 안 되는 전환에 사용한다.
@@ -20,6 +23,7 @@ package com.dandi.nyummy.common.domain.navigation
 sealed interface NavSignal {
     data class GoToDestPage(val route: NavRoute) : NavSignal
     data class AppLink(val link: String, val asRoot: Boolean = false) : NavSignal
+    data class AppLinkAfterEntry(val link: String, val waitForTabRoot: Boolean = false) : NavSignal
     data object Back : NavSignal
     data class ResetToPage(val route: NavRoute) : NavSignal
     data object BackToInitialPage : NavSignal

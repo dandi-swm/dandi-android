@@ -27,6 +27,10 @@ class NavigationHelperImpl : NavigationHelper {
         emit(NavSignal.AppLink(link, asRoot))
     }
 
+    override fun navigateToAppLinkAfterEntry(link: String, waitForTabRoot: Boolean) {
+        emit(NavSignal.AppLinkAfterEntry(link, waitForTabRoot))
+    }
+
     override fun navigateToBack() {
         emit(NavSignal.Back)
     }

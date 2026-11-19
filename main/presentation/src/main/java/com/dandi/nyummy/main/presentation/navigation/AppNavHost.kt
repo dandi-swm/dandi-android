@@ -9,6 +9,9 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -32,17 +35,30 @@ fun AppNavHost(
 ) {
     val navigationHelper = LocalNavigationHelper.current
     val context = LocalContext.current
+    // 맡아 둔 링크는 화면 회전, 다크 모드 같은 설정 변경으로 Activity 가 다시 만들어져도 남아야 한다.
+    // 백스택(rememberNavBackStack)처럼 저장 상태에 넣어 두고, 판단은 순수 클래스가 한다.
+    val appLinkAfterEntry = rememberSaveable(saver = AppLinkAfterEntrySaver) { AppLinkAfterEntry() }
 
     LaunchedEffect(Unit) {
         navigationHelper.navigationFlow.collect { signal ->
             when (signal) {
                 is NavSignal.GoToDestPage -> handleNavRoute(signal.route, backStack)
                 is NavSignal.AppLink -> handleAppLink(signal.link, signal.asRoot, backStack)
+                is NavSignal.AppLinkAfterEntry -> appLinkAfterEntry.offer(signal.link, signal.waitForTabRoot, backStack.toList())
+                    ?.let { handleAppLink(it, asRoot = false, backStack) }
                 NavSignal.Back -> backStack.popUnlessRoot()
                 is NavSignal.ResetToPage -> handleResetTo(signal.route, backStack)
                 NavSignal.BackToInitialPage -> navigateToInitialStack(backStack)
                 is NavSignal.GoToExternalLink -> openExternalLink(signal.url, context)
             }
+        }
+    }
+
+    // 맡아 둔 링크는 열 때가 되면(진입 흐름이 끝나면) 연다. 백스택은 스냅샷 상태 목록이라 snapshotFlow 로 바뀔 때마다 받는 게
+    // 가장 단순하다. 진입 흐름이 끝나는 길(인트로, 로그인, 방 준비 화면)이 여럿이라 각 길에 끼우는 것보다 한 곳에서 지켜본다.
+    LaunchedEffect(Unit) {
+        snapshotFlow { backStack.toList() }.collect { stack ->
+            appLinkAfterEntry.takeIfReady(stack)?.let { handleAppLink(it, asRoot = false, backStack) }
         }
     }
 
@@ -74,6 +90,20 @@ fun AppNavHost(
 }
 
 private const val TAG = "[Navigation]"
+
+/** 저장 상태에 [진입 흐름을 마쳤는지, 링크, 종류]를 넣는다. 맡아 둔 링크가 없으면 첫 값만 남는다. */
+private val AppLinkAfterEntrySaver = listSaver<AppLinkAfterEntry, String>(
+    save = { holder ->
+        listOf(holder.hasFinishedEntry.toString()) +
+            holder.pending?.let { listOf(it.link, it.waitForTabRoot.toString()) }.orEmpty()
+    },
+    restore = { saved ->
+        AppLinkAfterEntry(
+            initial = if (saved.size == 3) AppLinkAfterEntry.Pending(saved[1], saved[2].toBoolean()) else null,
+            initialHasFinishedEntry = saved.firstOrNull().toBoolean(),
+        )
+    },
+)
 
 /**
  * 외부 앱(브라우저/스토어)으로 [url] 을 연다. 앱 내 백스택과 무관한 외부 이동이다.

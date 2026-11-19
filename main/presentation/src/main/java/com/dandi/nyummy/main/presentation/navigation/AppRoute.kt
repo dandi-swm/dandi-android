@@ -12,6 +12,12 @@ data class AppRoute(
     val path: String,
     val isBottomTab: Boolean = false,
     /**
+     * true면 앱에 들어오는 길의 화면이다(인트로, 로그인, 가입, 비밀번호 찾기, 온보딩, 방 준비).
+     * 이 화면이 백스택에 있는 동안에는 광고 트래킹 링크를 열지 않고 맡아 둔다([AppLinkAfterEntry]).
+     * 진입 흐름에 새 화면을 더하면 [appRoutes]의 그 줄에 이 값을 true로 둔다.
+     */
+    val isEntryFlow: Boolean = false,
+    /**
      * true면 Scaffold가 시스템 바 인셋만큼 화면을 밀지 않는다. 배경을 상태 표시줄 뒤까지 그리는
      * 전체 화면(인트로, 로그인 등)에 쓰고, 이때 화면이 직접 인셋을 처리한다.
      */

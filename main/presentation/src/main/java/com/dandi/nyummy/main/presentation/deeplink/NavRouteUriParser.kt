@@ -70,9 +70,7 @@ fun resolveStartStack(uri: Uri?, notificationId: String? = null): List<NavKey> {
  */
 fun appLinkToRoute(link: String): NavRoute? {
     val uri = link.trim().toUri()
-    val isAppLink = (uri.scheme.equals("https", ignoreCase = true) || uri.scheme.equals("http", ignoreCase = true)) &&
-        uri.host.equals(AppLinks.HOST, ignoreCase = true)
-    if (!isAppLink) {
+    if (!uri.isAppLink()) {
         Log.w(TAG, "Not an app link: $link")
         return null
     }
@@ -81,3 +79,14 @@ fun appLinkToRoute(link: String): NavRoute? {
         null
     }
 }
+
+/**
+ * 앱 링크 호스트([AppLinks.HOST])의 http(s) 주소인지. 콜드 스타트, 웜 스타트, 앱 안 링크가 모두 이 판정 하나를 쓴다.
+ * 광고 트래킹 링크(`nyummy://`, Airbridge 도메인)도 같은 화면으로 열리지만 경로가 앱 라우트가 아니므로 여기서 거른다.
+ */
+fun Uri.isAppLink(): Boolean = isAppLinkAddress(scheme, host)
+
+/** [isAppLink]의 판정. 단위 테스트가 되게 문자열로 받는다. */
+internal fun isAppLinkAddress(scheme: String?, host: String?): Boolean =
+    (scheme.equals("https", ignoreCase = true) || scheme.equals("http", ignoreCase = true)) &&
+        host.equals(AppLinks.HOST, ignoreCase = true)

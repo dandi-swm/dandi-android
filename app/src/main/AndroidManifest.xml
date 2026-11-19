@@ -48,6 +48,37 @@
                 <data android:host="link.nyummy.co.kr" />
             </intent-filter>
 
+            <!--
+              Airbridge 트래킹 링크로 앱 열기. 환경에 따라 스킴 링크(nyummy://)나 Airbridge 도메인의 App Link 로 들어온다.
+              스킴과 도메인은 Airbridge 대시보드(트래킹 링크 > 딥링크)에 등록한 값과 같아야 한다.
+              data 를 한 intent-filter 에 섞으면 열리지 않을 수 있어 필터를 나눈다.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="nyummy" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" android:host="nyummy.abr.ge" />
+                <data android:scheme="https" android:host="nyummy.abr.ge" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" android:host="nyummy.airbridge.io" />
+                <data android:scheme="https" android:host="nyummy.airbridge.io" />
+            </intent-filter>
         </activity>
 
         <!-- 서버 푸시(FCM) 수신. 서버가 notification 블록을 함께 보내므로 앱이 켜져 있을 때만 불린다. -->
