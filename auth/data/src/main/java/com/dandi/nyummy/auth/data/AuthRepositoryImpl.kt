@@ -115,6 +115,7 @@ class AuthRepositoryImpl(
     private suspend fun saveToken(token: AuthTokenVO) {
         if (token.accessToken.isBlank() || token.refreshToken.isBlank()) return
         tokenProvider.update(access = token.accessToken, refresh = token.refreshToken)
+        // 새 계정과 이 기기의 토큰을 바로 묶는다.
         pushTokenHelper.register()
     }
 }

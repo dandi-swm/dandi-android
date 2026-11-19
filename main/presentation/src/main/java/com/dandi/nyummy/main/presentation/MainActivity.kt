@@ -16,6 +16,7 @@ import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
+import com.dandi.nyummy.common.domain.helper.PushTokenHelper
 import com.dandi.nyummy.common.presentation.cat.LocalCatName
 import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
 import com.dandi.nyummy.common.presentation.helper.LocalMessageHelper
@@ -48,10 +49,18 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var companionMemory: CompanionMemoryHelper
 
+    @Inject
+    lateinit var pushTokenHelper: PushTokenHelper
+
     private var jankStats: JankStats? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 로그인한 상태면 화면을 열 때마다 푸시 토큰을 서버에 보낸다. 서버는 사용자당 토큰 하나라 마지막에 연 기기가 푸시를 받는다.
+        // Application.onCreate가 아니라 여기서 보내는 이유: 푸시가 오면 FCM이 화면 없이 프로세스를 시작해 Application.onCreate가 돌고,
+        // 거기서 보내면 푸시 배치 때마다 받은 기기 전부가 토큰 등록과 토큰 재발급을 부른다.
+        pushTokenHelper.register()
 
         // App Link 진입 시 링크(Intent.data, 또는 OS가 띄운 푸시 알림의 extras)에서 시작 백스택을 구성한다.
         val startStack = resolveStartStack(intent?.appLinkUri(), intent?.pushNotificationId())
