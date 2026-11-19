@@ -37,6 +37,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
@@ -71,6 +73,12 @@ class HomeViewModel @Inject constructor(
 
     /** 새 소식 공지를 띄울지 정하는 일. 홈 요약을 처음 받은 뒤 한 번만 한다. */
     private var noticeJob: Job? = null
+
+    /**
+     * 홈 화면이 지금 보이는지. 홈 위에 다른 화면이 올라오면 홈 화면이 내려가며 [HomeIntent.ScreenPaused]가 온다.
+     * 앱 링크가 홈 위에 바로 열린 동안 가려진 홈에서 공지를 띄우지 않으려고 둔다.
+     */
+    private val isScreenShown = MutableStateFlow(false)
 
     /** 지금 공지 다이얼로그에 맨 앞 장으로 끼운 코인 충전 이벤트. 없으면 null이다. 공지 단계 분석 이벤트를 남기는 데 쓴다. */
     private var noticeCoinCharge: CoinChargeEventVO? = null
@@ -120,13 +128,17 @@ class HomeViewModel @Inject constructor(
     override fun onIntent(intent: HomeIntent) {
         when (intent) {
             HomeIntent.ScreenResumed -> {
+                isScreenShown.value = true
                 loadSummary()
                 loadCatAnimationsIfNeeded()
                 refreshCatWeightIfChanged()
                 lastInteractionAt = System.currentTimeMillis()
                 prepareGreeting()
             }
-            HomeIntent.ScreenPaused -> rememberLastSeen()
+            HomeIntent.ScreenPaused -> {
+                isScreenShown.value = false
+                rememberLastSeen()
+            }
             // 지갑은 코인 내역을 연다.
             HomeIntent.ClickWallet -> navigationHelper.navigateTo(ShopCoinHistoryPage)
             HomeIntent.ClickMail -> navigationHelper.navigateTo(MailboxPage)
@@ -241,6 +253,9 @@ class HomeViewModel @Inject constructor(
                 closeHomeNotice()
                 return@launch
             }
+            // 홈이 다른 화면에 가려져 있으면 다시 보일 때까지 기다린다. 공지 조회(이번 실행에 다뤘다는 표시 포함)도 그때 해서,
+            // 가려진 사이 바뀐 상태(코인을 받았는지 등)로 판단하고 떴다는 기록도 보일 때 남긴다.
+            isScreenShown.first { it }
             // 코인 충전 이벤트 공지는 맨 앞 장에 끼우고, 다른 공지와 같이 "다시 보지 않기"로 숨긴 회차는 거른다.
             val coinCharge = getCoinChargeNotice()
             val notices = getHomeNotices(leading = listOfNotNull(coinCharge?.toHomeNotice()))
