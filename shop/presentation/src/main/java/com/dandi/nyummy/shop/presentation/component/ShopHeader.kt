@@ -74,7 +74,7 @@ fun ShopHeader(
                 ShopCartButton(count = cartItemCount, onClick = onCartClick)
                 NyummyCoinPill(
                     coins = NumberFormat.getNumberInstance(Locale.KOREA).format(balance),
-                    modifier = Modifier.nyummyClickable(onClick = onCoinsClick),
+                    modifier = Modifier.nyummyClickable(singleClick = true, onClick = onCoinsClick),
                 )
             }
         }

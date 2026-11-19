@@ -102,7 +102,7 @@ private fun HomeWalletCard(
             .height(HudHeight)
             .semantics(mergeDescendants = true) { contentDescription = description }
             .nyummyShadow(shape, NyummyTheme.elevation.soft)
-            .nyummyClickable(onClick = onClick)
+            .nyummyClickable(singleClick = true, onClick = onClick)
             .background(NyummyTheme.colors.bg.surface, shape)
             .padding(horizontal = NyummyTheme.spacing.s12),
         horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s8),
@@ -149,7 +149,7 @@ private fun HomeHudAction(
         modifier = modifier
             .size(HudActionSize)
             .nyummyShadow(CircleShape, NyummyTheme.elevation.soft)
-            .nyummyClickable(onClick = onClick)
+            .nyummyClickable(singleClick = true, onClick = onClick)
             .background(NyummyTheme.colors.bg.surface, CircleShape)
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,

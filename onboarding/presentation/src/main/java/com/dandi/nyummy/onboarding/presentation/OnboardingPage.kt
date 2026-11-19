@@ -213,7 +213,7 @@ private fun SkipButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         style = NyummyTheme.typography.labelM,
         color = NyummyTheme.colors.content.secondary,
         modifier = modifier
-            .nyummyClickable(onClick = onClick)
+            .nyummyClickable(singleClick = true, onClick = onClick)
             .background(NyummyTheme.colors.bg.surface, RoundedCornerShape(NyummyTheme.radius.full))
             .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s8),
     )

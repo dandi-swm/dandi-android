@@ -53,7 +53,7 @@ fun NyummyMealTimeField(
         modifier = modifier
             .fillMaxWidth()
             .height(MealRowHeight)
-            .nyummyClickable(onClick = onClick, enabled = enabled, interactionSource = interactionSource),
+            .nyummyClickable(onClick = onClick, enabled = enabled, interactionSource = interactionSource, singleClick = true),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NyummyText(

@@ -292,6 +292,7 @@ private fun ConfirmSheetSecondaryAction(text: String, onClick: () -> Unit, destr
                 enabled = true,
                 role = Role.Button,
                 onClick = onClick,
+                singleClick = true,
             )
             .height(NyummyTheme.size.buttonL)
             .background(if (pressed) NyummyTheme.colors.bg.actionNeutral else Color.Transparent, shape),

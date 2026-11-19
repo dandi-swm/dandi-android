@@ -203,7 +203,7 @@ private fun AddFoodRow(enabled: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .nyummyClickable(enabled = enabled, onClick = onClick, pressedScale = 1f)
+            .nyummyClickable(singleClick = true, enabled = enabled, onClick = onClick, pressedScale = 1f)
             .drawBehind { drawDashedOutline(color = lineColor, cornerRadius = radius.toPx()) }
             .heightIn(min = RowMinHeight)
             .padding(vertical = NyummyTheme.spacing.s12),

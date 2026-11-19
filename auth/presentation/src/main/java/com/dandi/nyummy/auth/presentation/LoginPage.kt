@@ -297,7 +297,7 @@ private fun SocialCircle(
     Box(
         modifier = Modifier
             .semantics { contentDescription = description }
-            .nyummyClickable(onClick = onClick, enabled = enabled)
+            .nyummyClickable(singleClick = true, onClick = onClick, enabled = enabled)
             .size(SocialCircleSize)
             .clip(CircleShape)
             .then(modifier),

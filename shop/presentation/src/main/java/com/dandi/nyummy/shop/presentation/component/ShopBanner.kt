@@ -79,7 +79,7 @@ fun ShopBanner(
             .fillMaxWidth()
             .aspectRatio(BannerAspectRatio)
             .clip(shape)
-            .then(if (action != null) Modifier.nyummyClickable(onClick = { onAction(action) }) else Modifier),
+            .then(if (action != null) Modifier.nyummyClickable(singleClick = true, onClick = { onAction(action) }) else Modifier),
     ) {
         AsyncImage(
             model = banner.imageUrl,

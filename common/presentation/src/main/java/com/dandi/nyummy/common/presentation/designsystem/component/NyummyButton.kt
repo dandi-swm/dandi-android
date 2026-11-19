@@ -89,6 +89,7 @@ fun NyummyButton(
                 enabled = enabled,
                 role = Role.Button,
                 onClick = onClick,
+                singleClick = true,
             )
             .height(spec.height)
             .clip(shape)

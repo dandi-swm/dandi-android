@@ -235,7 +235,7 @@ private fun CompletedMealCard(meal: MealHistoryVO, onClick: () -> Unit) {
     MealCardFrame(
         container = NyummyTheme.colors.bg.surface,
         bordered = true,
-        modifier = Modifier.nyummyClickable(onClick = onClick, pressedScale = 1f),
+        modifier = Modifier.nyummyClickable(singleClick = true, onClick = onClick, pressedScale = 1f),
         leading = { NyummyFoodIcon(foodIconId = meal.foodIconId) },
         trailing = {
             Row(
@@ -296,7 +296,7 @@ private fun AnalyzingMealCard(meal: MealHistoryVO) {
 private fun ConfirmMealCard(meal: MealHistoryVO, onClick: () -> Unit) {
     MealCardFrame(
         container = NyummyTheme.colors.bg.brandSubtle,
-        modifier = Modifier.nyummyClickable(onClick = onClick, pressedScale = 1f),
+        modifier = Modifier.nyummyClickable(singleClick = true, onClick = onClick, pressedScale = 1f),
         leading = { NyummyPoseImage(pose = NyummyPose.Taste, size = ThumbnailSize) },
         trailing = {
             Icon(
@@ -353,7 +353,7 @@ private fun FailedMealCard(meal: MealHistoryVO, onRetry: (() -> Unit)?, onDelete
                 color = NyummyTheme.colors.content.danger,
                 modifier = Modifier
                     .height(DeleteButtonHeight)
-                    .nyummyClickable(onClick = onDelete)
+                    .nyummyClickable(singleClick = true, onClick = onDelete)
                     .background(NyummyTheme.colors.bg.surface, RoundedCornerShape(NyummyTheme.radius.xs))
                     .wrapContentHeight(Alignment.CenterVertically)
                     .padding(horizontal = NyummyTheme.spacing.s12),

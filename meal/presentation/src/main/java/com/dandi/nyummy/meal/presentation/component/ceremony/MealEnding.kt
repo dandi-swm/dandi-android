@@ -351,7 +351,7 @@ internal fun MealNotFood(
                     .weight(1f)
                     .height(NyummyTheme.size.buttonL)
                     .background(NyummyTheme.colors.bg.surface, RoundedCornerShape(NyummyTheme.radius.m))
-                    .nyummyClickable(onClick = onHomeClick),
+                    .nyummyClickable(singleClick = true, onClick = onHomeClick),
                 contentAlignment = Alignment.Center,
             ) {
                 NyummyText(
@@ -437,7 +437,7 @@ private fun NotificationOffNotice(frame: CutsceneFrame, visible: Boolean, onClic
             modifier = Modifier
                 .background(NyummyTheme.colors.bg.surface, shape)
                 .border(inkDp, NyummyTheme.colors.content.danger, shape)
-                .nyummyClickable(onClick = onClick)
+                .nyummyClickable(singleClick = true, onClick = onClick)
                 .padding(horizontal = NyummyTheme.spacing.s16 * frame.canvasScale, vertical = NyummyTheme.spacing.s8 * frame.canvasScale),
         ) {
             NyummyText(

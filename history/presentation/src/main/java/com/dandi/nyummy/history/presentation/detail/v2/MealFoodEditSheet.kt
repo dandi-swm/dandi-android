@@ -115,7 +115,7 @@ internal fun ColumnScope.MealFoodEditSheetContent(
                 Row(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
-                        .nyummyClickable(onClick = { onIntent(MealDetailV2Intent.ClickDeleteFood) }, enabled = enabled)
+                        .nyummyClickable(singleClick = true, onClick = { onIntent(MealDetailV2Intent.ClickDeleteFood) }, enabled = enabled)
                         .padding(NyummyTheme.spacing.s8),
                     horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s6),
                     verticalAlignment = Alignment.CenterVertically,

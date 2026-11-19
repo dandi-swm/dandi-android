@@ -127,7 +127,7 @@ fun NyummyTutorialSkipButton(onClick: () -> Unit, modifier: Modifier = Modifier,
         modifier = modifier
             .heightIn(min = NyummyTheme.size.touchTarget)
             // 꺼진 clickable도 탭을 받아 버리므로, 끌 때는 붙이지 않는다.
-            .then(if (enabled) Modifier.nyummyClickable(onClick = onClick) else Modifier),
+            .then(if (enabled) Modifier.nyummyClickable(singleClick = true, onClick = onClick) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         NyummyText(

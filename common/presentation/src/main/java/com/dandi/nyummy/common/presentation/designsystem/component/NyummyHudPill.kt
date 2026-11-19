@@ -50,6 +50,7 @@ fun NyummyCoinPill(
                         enabled = true,
                         role = Role.Button,
                         onClick = onAddClick,
+                        singleClick = true,
                     )
                 } else {
                     Modifier

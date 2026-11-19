@@ -51,6 +51,7 @@ fun NyummyCard(
                         enabled = true,
                         role = Role.Button,
                         onClick = onClick,
+                        singleClick = true,
                     )
                 } else {
                     Modifier

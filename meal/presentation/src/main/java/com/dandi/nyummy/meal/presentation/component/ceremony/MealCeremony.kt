@@ -282,7 +282,7 @@ internal fun MealCeremony(
                     style = NyummyTheme.typography.labelM,
                     color = NyummyTheme.colors.content.secondary,
                     modifier = Modifier
-                        .nyummyClickable(onClick = onSkipClick)
+                        .nyummyClickable(singleClick = true, onClick = onSkipClick)
                         .background(NyummyTheme.colors.bg.surface, RoundedCornerShape(NyummyTheme.radius.full))
                         .padding(horizontal = NyummyTheme.spacing.s16, vertical = NyummyTheme.spacing.s8),
                 )

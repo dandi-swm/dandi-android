@@ -301,7 +301,7 @@ private fun MealHead(meta: String, name: String, onEditName: () -> Unit) {
                 modifier = Modifier
                     .padding(start = NyummyTheme.spacing.s2)
                     .size(EditNameButtonSize)
-                    .nyummyClickable(onClick = onEditName)
+                    .nyummyClickable(singleClick = true, onClick = onEditName)
                     .semantics { contentDescription = editDescription },
                 contentAlignment = Alignment.Center,
             ) {
@@ -625,7 +625,7 @@ private fun FoodRow(
         Box(
             modifier = Modifier
                 .size(EditFoodTouchSize)
-                .nyummyClickable(onClick = onEdit, enabled = canEdit)
+                .nyummyClickable(singleClick = true, onClick = onEdit, enabled = canEdit)
                 .semantics { contentDescription = editDescription },
             contentAlignment = Alignment.Center,
         ) {
@@ -696,7 +696,7 @@ private fun AddFoodButton(enabled: Boolean, onClick: () -> Unit, modifier: Modif
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .nyummyClickable(onClick = onClick, enabled = enabled, pressedScale = 1f)
+            .nyummyClickable(singleClick = true, onClick = onClick, enabled = enabled, pressedScale = 1f)
             .drawBehind {
                 val stroke = DashStrokeWidth.toPx()
                 drawRoundRect(

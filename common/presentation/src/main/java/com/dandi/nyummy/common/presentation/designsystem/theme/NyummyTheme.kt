@@ -6,7 +6,12 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.dandi.nyummy.common.presentation.designsystem.foundation.LocalNyummySingleClick
+import com.dandi.nyummy.common.presentation.designsystem.foundation.collectNyummySingleClicks
+import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummySingleClickFlow
 
 /**
  * 냐미 디자인 시스템 진입점. 화면과 컴포넌트는 `NyummyTheme.colors.bg.canvas`처럼 여기서만 토큰을 읽는다.
@@ -37,9 +42,21 @@ object NyummyTheme {
         @Composable @ReadOnlyComposable get() = LocalNyummyElevation.current
 }
 
+/**
+ * @param singleClick 따닥 누름 방지 통로([LocalNyummySingleClick])를 내려 주고 들을지. 앱 화면은 기본값(true)을 쓴다.
+ *   서로 다른 행동 버튼을 쉬지 않고 연달아 누르는 화면 테스트만 false로 끈다. 겹친 안쪽 테마가 false면 그 아래는 꺼진다
+ */
 @Composable
-fun NyummyTheme(content: @Composable () -> Unit) {
+fun NyummyTheme(singleClick: Boolean = true, content: @Composable () -> Unit) {
+    // remember로 붙잡지 않으면 재구성 때마다 통로가 새로 생겨 듣는 곳과 어긋난다.
+    val clicks = remember { nyummySingleClickFlow() }
+    if (singleClick) {
+        // 통로 하나에 듣는 곳 하나. 겹친 테마가 둘 다 켜져 있으면 안쪽이 자기 통로와 듣는 곳을 따로 가진다.
+        LaunchedEffect(clicks) { collectNyummySingleClicks(clicks) }
+    }
     CompositionLocalProvider(
+        // 켜고 끄기를 if로 content 호출을 갈라 하지 않고 값으로만 바꿔, 아래 슬롯 구조가 바뀌지 않게 한다.
+        LocalNyummySingleClick provides (if (singleClick) clicks else null),
         LocalNyummyColors provides DefaultNyummyColors,
         LocalNyummyTypography provides DefaultNyummyTypography,
         LocalNyummySpacing provides DefaultNyummySpacing,

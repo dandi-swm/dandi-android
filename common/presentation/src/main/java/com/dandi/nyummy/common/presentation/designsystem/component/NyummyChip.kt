@@ -60,6 +60,7 @@ fun NyummyChip(
                 enabled = enabled,
                 role = Role.Tab,
                 onClick = onClick,
+                singleClick = false,
             )
             .height(NyummyComponentDimens.CompactControlHeight)
             .background(container, shape)

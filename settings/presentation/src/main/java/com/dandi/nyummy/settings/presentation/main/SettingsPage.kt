@@ -213,7 +213,7 @@ private fun MyProfileEntry(nickname: String?, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .nyummyClickable(onClick = onClick)
+            .nyummyClickable(singleClick = true, onClick = onClick)
             .padding(horizontal = NyummyTheme.spacing.gutter)
             .padding(top = NyummyTheme.spacing.s16, bottom = NyummyTheme.spacing.s20),
         horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),
@@ -314,7 +314,7 @@ private fun NotificationDetailLink(onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .padding(top = NyummyTheme.spacing.s4)
-            .nyummyClickable(onClick = onClick),
+            .nyummyClickable(singleClick = true, onClick = onClick),
         horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -340,7 +340,7 @@ private fun AccountAction(text: String, style: TextStyle, color: Color, onClick:
         style = style,
         color = color,
         modifier = Modifier
-            .nyummyClickable(onClick = onClick)
+            .nyummyClickable(singleClick = true, onClick = onClick)
             .padding(vertical = NyummyTheme.spacing.s8),
     )
 }

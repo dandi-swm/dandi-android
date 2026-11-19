@@ -33,7 +33,7 @@ class NyummyOverlaysTest {
         var confirmed = 0
         var dismissed = 0
         composeRule.setContent {
-            NyummyTheme {
+            NyummyTheme(singleClick = false) {
                 NyummyDialog(
                     title = "기록을 그만둘까요?",
                     body = "지금 나가면 사진이 사라져요.",
@@ -128,7 +128,7 @@ class NyummyOverlaysTest {
         var primary = 0
         var secondary = 0
         composeRule.setContent {
-            NyummyTheme {
+            NyummyTheme(singleClick = false) {
                 NyummyConfirmSheet(
                     title = "기록을 그만둘까요?",
                     body = "냐미가 밥을 기다리고 있어요",

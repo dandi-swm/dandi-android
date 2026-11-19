@@ -178,7 +178,7 @@ private fun CoinPackageRow(pack: CoinChargePackageVO, onClick: () -> Unit) {
             .clip(shape)
             .background(NyummyTheme.colors.bg.surface)
             .border(NyummyTheme.borderWidth.hairline, NyummyTheme.colors.border.subtle, shape)
-            .nyummyClickable(onClick = onClick)
+            .nyummyClickable(singleClick = true, onClick = onClick)
             .padding(start = NyummyTheme.spacing.s12, end = NyummyTheme.spacing.s16)
             .padding(vertical = NyummyTheme.spacing.s12),
         horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s12),

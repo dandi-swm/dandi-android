@@ -218,7 +218,7 @@ private fun CatalogMeta(
             NyummyText(text = stringResource(R.string.shop_catalog_hide_owned), style = NyummyTheme.typography.labelM, color = hideColor)
         }
         Row(
-            modifier = Modifier.nyummyClickable(onClick = onSortClick),
+            modifier = Modifier.nyummyClickable(singleClick = true, onClick = onSortClick),
             horizontalArrangement = Arrangement.spacedBy(NyummyTheme.spacing.s2),
             verticalAlignment = Alignment.CenterVertically,
         ) {

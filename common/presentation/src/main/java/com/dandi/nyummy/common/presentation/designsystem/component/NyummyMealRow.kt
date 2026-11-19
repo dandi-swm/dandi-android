@@ -43,7 +43,7 @@ fun NyummyMealRow(
     onClick: (() -> Unit)? = null,
 ) {
     val shape = RoundedCornerShape(NyummyTheme.radius.m)
-    val click = if (onClick != null) Modifier.nyummyClickable(onClick = onClick) else Modifier.semantics(mergeDescendants = true) {}
+    val click = if (onClick != null) Modifier.nyummyClickable(singleClick = true, onClick = onClick) else Modifier.semantics(mergeDescendants = true) {}
     Row(
         modifier = modifier
             .fillMaxWidth()

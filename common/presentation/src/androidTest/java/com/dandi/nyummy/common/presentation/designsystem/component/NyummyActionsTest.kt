@@ -166,7 +166,7 @@ class NyummyActionsTest {
         var primary = 0
         var secondary = 0
         composeRule.setContent {
-            NyummyTheme {
+            NyummyTheme(singleClick = false) {
                 NyummyBottomCta(
                     primaryText = "확인",
                     onPrimaryClick = { primary++ },

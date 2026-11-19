@@ -145,6 +145,7 @@ internal fun HomeScreen(
                 style = NyummyIconButtonStyle.Filled,
                 tint = NyummyTheme.colors.content.secondary,
                 modifier = Modifier.align(Alignment.End),
+                singleClick = false,
             )
             // debug 빌드에만: 냐미가 지금 어떤 기분으로 무슨 동작을 하는지 보이고, 누르면 기분을 차례로 고정한다.
             uiState.catDebugLabel?.let { label ->

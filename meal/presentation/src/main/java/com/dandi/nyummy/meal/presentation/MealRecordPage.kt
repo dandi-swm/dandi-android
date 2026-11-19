@@ -471,7 +471,7 @@ private fun PreviewActionBar(
         Box(
             modifier = Modifier
                 .size(GalleryButtonSize)
-                .nyummyClickable(onClick = onGalleryClick, enabled = galleryEnabled)
+                .nyummyClickable(singleClick = true, onClick = onGalleryClick, enabled = galleryEnabled)
                 .background(NyummyTheme.colors.bg.actionNeutral, galleryShape),
             contentAlignment = Alignment.Center,
         ) {
