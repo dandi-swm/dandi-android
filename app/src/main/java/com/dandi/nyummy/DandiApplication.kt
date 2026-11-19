@@ -5,6 +5,7 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import com.dandi.nyummy.auth.presentation.social.initializeSocialLoginSdks
+import com.dandi.nyummy.common.data.analytics.AirbridgeSdk
 import com.dandi.nyummy.common.domain.helper.PushTokenHelper
 import com.dandi.nyummy.common.presentation.image.ImageLoadReport
 import com.dandi.nyummy.common.presentation.image.NoOpImageLoadReport
@@ -35,6 +36,9 @@ class DandiApplication : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Airbridge(광고 성과 측정). 수집을 끈 빌드(debug 기본)나 토큰 없이 빌드된 앱에서는 켜지 않는다.
+        if (BuildConfig.AIRBRIDGE_ENABLED) AirbridgeSdk.initialize(this, BuildConfig.AIRBRIDGE_SDK_TOKEN)
 
         // 카카오 등 소셜 로그인 SDK. 앱 키 없이 빌드되면 건너뛴다.
         initializeSocialLoginSdks(this)

@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Airbridge SDK 가 이벤트를 보낼 때 네트워크 연결 상태를 본다. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
@@ -45,6 +47,7 @@
                 <data android:scheme="https" />
                 <data android:host="link.nyummy.co.kr" />
             </intent-filter>
+
         </activity>
 
         <!-- 서버 푸시(FCM) 수신. 서버가 notification 블록을 함께 보내므로 앱이 켜져 있을 때만 불린다. -->

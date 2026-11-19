@@ -103,6 +103,8 @@ dependencies {
     // 원격 구성(버전 확인, 기능 플래그). 인트로가 앱 시작 때 한 번 받아 둔다.
     implementation(libs.firebase.config)
     implementation(libs.firebase.analytics)
+    // Airbridge 광고 성과 측정(설치, 실행, 핵심 전환). 켜는 곳은 AirbridgeSdk, 수집은 release 에서만(app 의 AIRBRIDGE_ENABLED).
+    implementation(libs.airbridge.sdk)
     implementation(libs.kotlinx.coroutines.play.services)
 
     testImplementation(libs.junit)
