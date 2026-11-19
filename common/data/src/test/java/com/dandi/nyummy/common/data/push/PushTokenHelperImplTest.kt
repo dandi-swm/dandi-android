@@ -4,14 +4,13 @@ import com.dandi.nyummy.common.data.push.dto.DeviceTokenRequestDTO
 import com.dandi.nyummy.common.data.token.TokenProvider
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.yield
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -30,14 +29,13 @@ class PushTokenHelperImplTest {
     private val api = FakeDeviceTokenApiService()
     private val tokenProvider = FakeTokenProvider(refresh = "refresh")
     private var fetchToken: suspend () -> String = { FCM_TOKEN }
-    private val events = mutableListOf<String>()
 
     private val helper = PushTokenHelperImpl(
         dataSource = DeviceTokenDataSource(api),
         tokenProvider = tokenProvider,
         ioScope = ioScope,
         fetchToken = { fetchToken() },
-        deleteFcmToken = { synchronized(events) { events += "delete" } },
+        deleteFcmToken = {},
     )
 
     @After
@@ -97,26 +95,48 @@ class PushTokenHelperImplTest {
 
     @Test
     fun `진행 중인 등록이 끝난 뒤에 삭제한다`() = runBlocking {
+        // 등록과 삭제를 모두 runBlocking 의 한 스레드에서 돌려 순서를 정한다. 다른 디스패처나 시간 제한에 기대지 않는다.
+        val order = mutableListOf<String>()
         val fetchStarted = CompletableDeferred<Unit>()
         val release = CompletableDeferred<Unit>()
-        fetchToken = {
-            fetchStarted.complete(Unit)
-            release.await()
-            FCM_TOKEN
-        }
-        api.onRegister = { synchronized(events) { events += "register" } }
+        api.onRegister = { order += "register" }
+        val sameThreadHelper = PushTokenHelperImpl(
+            dataSource = DeviceTokenDataSource(api),
+            tokenProvider = tokenProvider,
+            ioScope = this,
+            fetchToken = {
+                fetchStarted.complete(Unit)
+                release.await()
+                FCM_TOKEN
+            },
+            deleteFcmToken = { order += "delete" },
+        )
 
-        helper.register()
-        withTimeout(1_000) { fetchStarted.await() }
-        val deleting = async(Dispatchers.IO) { helper.deleteToken() }
-        repeat(10) { yield() }
+        sameThreadHelper.register()
+        fetchStarted.await() // 등록이 잠금을 쥔 채 토큰을 기다리는 중이다.
+        // 바로 실행을 시작해, 잠금이 없다면 이 줄에서 곧장 삭제까지 끝난다.
+        val deleting = async(start = CoroutineStart.UNDISPATCHED) { sameThreadHelper.deleteToken() }
+
+        assertEquals(emptyList<String>(), order)
         assertFalse(deleting.isCompleted)
 
         release.complete(Unit)
-        withTimeout(5_000) { deleting.await() }
-        awaitLaunched()
+        deleting.await()
 
-        assertEquals(listOf("register", "delete"), events)
+        assertEquals(listOf("register", "delete"), order)
+    }
+
+    @Test
+    fun `FCM 토큰 삭제가 실패해도 예외가 밖으로 나오지 않는다`() = runBlocking {
+        val failingHelper = PushTokenHelperImpl(
+            dataSource = DeviceTokenDataSource(api),
+            tokenProvider = tokenProvider,
+            ioScope = ioScope,
+            fetchToken = { FCM_TOKEN },
+            deleteFcmToken = { error("FCM 삭제 실패") },
+        )
+
+        failingHelper.deleteToken()
     }
 
     /** 등록은 [ioScope]에서 따로 돌므로 끝날 때까지 기다린다. */
