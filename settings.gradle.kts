@@ -24,6 +24,11 @@ dependencyResolutionManagement {
             forRepository { maven("https://devrepo.kakao.com/nexus/content/groups/public/") }
             filter { includeGroup("com.kakao.sdk") }
         }
+        // Airbridge SDK 도 자체 저장소에만 배포된다.
+        exclusiveContent {
+            forRepository { maven("https://sdk-download.airbridge.io/maven") }
+            filter { includeGroup("io.airbridge") }
+        }
     }
 }
 

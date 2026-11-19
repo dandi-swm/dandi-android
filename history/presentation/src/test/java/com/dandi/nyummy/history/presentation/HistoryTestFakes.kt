@@ -93,6 +93,7 @@ internal class FakeNavigationHelper : NavigationHelper {
         pages += page
     }
     override fun navigateToAppLink(link: String, asRoot: Boolean) = Unit
+    override fun navigateToAppLinkAfterEntry(link: String, waitForTabRoot: Boolean) = Unit
     var backCount = 0
     override fun navigateToBack() {
         backCount++

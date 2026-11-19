@@ -30,6 +30,7 @@ internal class RecordingNavigationHelper : NavigationHelper {
     override fun navigateByRoute(route: NavRoute) = Unit
     override fun navigateTo(page: Page) = Unit
     override fun navigateToAppLink(link: String, asRoot: Boolean) = Unit
+    override fun navigateToAppLinkAfterEntry(link: String, waitForTabRoot: Boolean) = Unit
     override fun navigateToBack() {
         backCount++
     }

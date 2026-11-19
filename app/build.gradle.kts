@@ -34,6 +34,11 @@ val releaseSigning = listOf("RELEASE_STORE_FILE", "RELEASE_STORE_PASSWORD", "REL
 val metaAppId = localValue("META_APP_ID")
 val metaClientToken = localValue("META_CLIENT_TOKEN")
 
+// Airbridge(광고 성과 측정) SDK 토큰. 대시보드 설정 > 토큰의 "SDK 토큰"이다. 서명 정보와 같은 방식으로 읽는다.
+//   AIRBRIDGE_SDK_TOKEN
+// 없으면 SDK 를 켜지 않는다(앱은 정상 동작).
+val airbridgeSdkToken = localValue("AIRBRIDGE_SDK_TOKEN")
+
 android {
     namespace = "com.dandi.nyummy"
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -50,6 +55,8 @@ android {
         // Meta SDK 는 앱 ID 를 문자열 리소스로 받아야 한다. 매니페스트 값에 숫자를 바로 쓰면 정수로 읽혀 거부된다.
         resValue("string", "facebook_app_id", metaAppId.orEmpty())
         resValue("string", "facebook_client_token", metaClientToken.orEmpty())
+
+        buildConfigField("String", "AIRBRIDGE_SDK_TOKEN", "\"${airbridgeSdkToken.orEmpty()}\"")
     }
 
     signingConfigs {
@@ -120,6 +127,11 @@ androidComponents {
         // 분석 이벤트를 GA4 DebugView로 확인할 때만 `-Pnyummy.analyticsInDebug=true`를 붙여 debug 빌드에서도 켠다(기본은 꺼짐).
         val analyticsInDebug = providers.gradleProperty("nyummy.analyticsInDebug").orNull == "true"
         variant.manifestPlaceholders.put("firebaseAnalyticsCollectionEnabled", (isReleaseBuild || analyticsInDebug).toString())
+        // Airbridge 도 같은 조건으로만 켠다. 개발 중 설치와 이벤트가 광고 성과에 섞이지 않게 한다.
+        variant.buildConfigFields?.put(
+            "AIRBRIDGE_ENABLED",
+            BuildConfigField("boolean", (isReleaseBuild || analyticsInDebug).toString(), "Airbridge SDK 를 켤지"),
+        )
         // Meta 앱 이벤트(설치, 실행 자동 기록)와 광고 ID 수집도 release 에서만 켠다. 개발 중 설치가 광고 성과에 섞이지 않게 한다.
         variant.manifestPlaceholders.put("metaAppEventsEnabled", isReleaseBuild.toString())
         // 평문 HTTP는 debug 에서만 허용한다(로컬 서버 등). 개발·운영 서버는 모두 HTTPS 라 그 밖의 빌드는 막는다.

@@ -5,9 +5,12 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import com.dandi.nyummy.auth.presentation.social.initializeSocialLoginSdks
+import com.dandi.nyummy.common.data.analytics.AirbridgeSdk
+import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.presentation.image.ImageLoadReport
 import com.dandi.nyummy.common.presentation.image.NoOpImageLoadReport
 import com.dandi.nyummy.common.presentation.image.NyummyImageLoaderFactory
+import com.dandi.nyummy.link.AirbridgeDeeplinkCallbacks
 import com.dandi.nyummy.push.PushNotifier
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -17,6 +20,9 @@ class DandiApplication : Application(), SingletonImageLoader.Factory {
 
     @Inject
     lateinit var imageLoadReport: ImageLoadReport
+
+    @Inject
+    lateinit var navigationHelper: NavigationHelper
 
     /**
      * AsyncImage 등 Coil 싱글턴이 쓰는 전역 ImageLoader. 캐시 설정은 [NyummyImageLoaderFactory] 참고.
@@ -31,6 +37,11 @@ class DandiApplication : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Airbridge(광고 성과 측정). 수집을 끈 빌드(debug 기본)나 토큰 없이 빌드된 앱에서는 켜지 않는다.
+        if (BuildConfig.AIRBRIDGE_ENABLED) AirbridgeSdk.initialize(this, BuildConfig.AIRBRIDGE_SDK_TOKEN)
+        // 트래킹 링크로 열렸으면 목적지 화면으로 보낸다. SDK 를 켜지 않은 빌드에서는 아무것도 하지 않는다.
+        registerActivityLifecycleCallbacks(AirbridgeDeeplinkCallbacks(navigationHelper))
 
         // 카카오 등 소셜 로그인 SDK. 앱 키 없이 빌드되면 건너뛴다.
         initializeSocialLoginSdks(this)

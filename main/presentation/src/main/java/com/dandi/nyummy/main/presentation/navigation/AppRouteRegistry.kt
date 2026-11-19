@@ -67,12 +67,14 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = IntroPage.PATH,
         isBottomTab = false,
+        isEntryFlow = true,
         drawsBehindSystemBars = true,
         render = { IntroPage() },
     ),
     AppRoute(
         path = OnboardingPage.PATH,
         isBottomTab = false,
+        isEntryFlow = true,
         drawsBehindSystemBars = true,
         usesLightSystemBarIcons = true,
         render = { OnboardingPage() },
@@ -80,12 +82,14 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = LoginPage.PATH,
         isBottomTab = false,
+        isEntryFlow = true,
         drawsBehindSystemBars = true,
         render = { LoginPage() },
     ),
     AppRoute(
         path = EmailLoginPage.PATH,
         isBottomTab = false,
+        isEntryFlow = true,
         drawsBehindSystemBars = true,
         syntheticStack = { args ->
             listOf(
@@ -98,6 +102,7 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = SignUpPage.PATH,
         isBottomTab = false,
+        isEntryFlow = true,
         drawsBehindSystemBars = true,
         syntheticStack = { args ->
             listOf(
@@ -111,6 +116,7 @@ val appRoutes: List<AppRoute> = listOf(
     AppRoute(
         path = PasswordResetPage.PATH,
         isBottomTab = false,
+        isEntryFlow = true,
         drawsBehindSystemBars = true,
         syntheticStack = { args ->
             listOf(
@@ -126,6 +132,7 @@ val appRoutes: List<AppRoute> = listOf(
         // 외부 링크로 직접 열면 안내 후 로그인 화면으로 돌아간다.
         path = SocialSignUpPage.PATH,
         isBottomTab = false,
+        isEntryFlow = true,
         drawsBehindSystemBars = true,
         syntheticStack = { args ->
             listOf(
@@ -150,6 +157,7 @@ val appRoutes: List<AppRoute> = listOf(
         // 링크로 열 화면이 아니라서, 앱을 켜는 링크(콜드 스타트)는 이 화면을 건너뛰고 홈을 바로 깐다.
         path = HomePreparePage.PATH,
         isBottomTab = false,
+        isEntryFlow = true,
         drawsBehindSystemBars = true,
         syntheticStack = { listOf(GenericNavKey(HomePage.PATH)) },
         render = { HomePreparePage() },
