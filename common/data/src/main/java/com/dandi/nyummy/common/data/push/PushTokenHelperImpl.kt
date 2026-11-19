@@ -15,14 +15,18 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * FCM 토큰을 서버에 등록하고 지운다. 로그인한 상태(리프레시 토큰이 있음)일 때만 등록한다.
- * 실패는 로그만 남긴다. 서버가 멱등이라 다음 실행이나 다음 로그인 때 다시 보내면 된다.
+ * 실패는 로그만 남긴다. 서버는 같은 사용자가 다시 보내면 교체하므로 다음에 화면을 열 때나 다음 로그인 때 다시 보내면 된다.
  * 삭제는 끝날 때까지 기다리므로(로그아웃이 기다린다) 그 뒤의 로그인 등록과 순서가 섞이지 않는다.
  * [mutex]는 진행 중인 등록과 삭제가 겹치지 않게 한다.
+ *
+ * [fetchToken]과 [deleteFcmToken]은 FCM 토큰을 얻고 지운다. 테스트에서 바꿔 끼우려고 주입받는다.
  */
 class PushTokenHelperImpl(
     private val dataSource: DeviceTokenDataSource,
     private val tokenProvider: TokenProvider,
     private val ioScope: CoroutineScope,
+    private val fetchToken: suspend () -> String = { FirebaseMessaging.getInstance().token.await() },
+    private val deleteFcmToken: suspend () -> Unit = { FirebaseMessaging.getInstance().deleteToken().await() },
 ) : PushTokenHelper {
 
     private val mutex = Mutex()
@@ -34,7 +38,8 @@ class PushTokenHelperImpl(
     }
 
     override suspend fun deleteToken() {
-        // 네트워크가 안 되면 오래 걸릴 수 있어 상한을 둔다. 로그아웃 화면 이동이 이 시간만큼만 기다린다.
+        // 네트워크가 안 되면 오래 걸릴 수 있어 상한을 둔다. 진행 중인 등록이 있으면 그것이 끝난 뒤부터 3초이므로,
+        // 로그아웃 화면 이동은 그 등록 시간에 이 상한을 더한 만큼까지 기다릴 수 있다.
         mutex.withLock { withTimeoutOrNull(DELETE_TIMEOUT_MILLIS) { deleteNow() } }
     }
 
@@ -42,7 +47,7 @@ class PushTokenHelperImpl(
         // 토큰 저장소는 첫 읽기 때 디스크를 막고 읽으므로 IO 스코프 안에서 확인한다.
         if (tokenProvider.refreshToken.isNullOrBlank()) return
         try {
-            val pushToken = token ?: FirebaseMessaging.getInstance().token.await()
+            val pushToken = token ?: fetchToken()
             dataSource.register(pushToken)
             // 테스트 발송에 쓸 수 있게 디버그 빌드에서만 토큰을 남긴다.
             if (BuildConfig.DEBUG) Log.d(TAG, "푸시 토큰 등록: $pushToken")
@@ -55,7 +60,7 @@ class PushTokenHelperImpl(
 
     private suspend fun deleteNow() {
         try {
-            FirebaseMessaging.getInstance().deleteToken().await()
+            deleteFcmToken()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
