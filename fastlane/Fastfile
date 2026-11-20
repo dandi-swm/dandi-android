@@ -67,9 +67,25 @@ def missing_key_files
   end.keys
 end
 
+VERSION_NAME_PATTERN = /\A\d+\.\d+\.\d+\z/
+
+# 출시 이름 안에 버전 이름이 온전한 토큰으로 들어 있는지 본다("16 (2.2.2)" 는 2.2.2 와 일치, "2.2.20" 은 불일치).
+def release_name_matches?(release_name, version_name)
+  release_name.to_s.match?(/(?<![\d.])#{Regexp.escape(version_name)}(?![\d.])/)
+end
+
 platform :android do
   desc "release AAB 를 만들어 Play 내부 테스트 트랙에 올린다(스토어 문구, 스크린샷, 변경 사항은 올리지 않음)"
-  lane :internal do
+  lane :internal do |options|
+    version_name = options[:version_name].to_s.strip
+    version_name = ENV["NYUMMY_VERSION_NAME"].to_s.strip if version_name.empty?
+    if version_name.empty?
+      UI.user_error!("버전 이름이 없습니다. version_name:2.2.3 옵션이나 NYUMMY_VERSION_NAME 환경변수로 주세요.")
+    end
+    unless version_name.match?(VERSION_NAME_PATTERN)
+      UI.user_error!("버전 이름은 숫자.숫자.숫자 형식이어야 합니다(앞의 v 없이, 예: 2.2.3): #{version_name}")
+    end
+
     missing = missing_required_keys
     unless missing.empty?
       UI.user_error!(
@@ -87,7 +103,15 @@ platform :android do
     latest = VERSION_CODE_TRACKS.filter_map do |track|
       google_play_track_version_codes(track: track).map(&:to_i).max
     end.max
-    gradle_properties = {}
+    # Play 에 같은 버전 이름의 출시가 있으면 멈춘다. 출시 이름 문자열에 기대는 최선의 검사다.
+    # 조회 실패는 그대로 lane 실패로 둔다.
+    VERSION_CODE_TRACKS.each do |track|
+      clash = google_play_track_release_names(track: track).find { |name| release_name_matches?(name, version_name) }
+      UI.user_error!("Play #{track} 트랙에 이미 버전 이름 #{version_name} 의 출시가 있습니다: #{clash}") if clash
+    end
+
+    gradle_properties = { "nyummy.versionName" => version_name }
+    UI.message("versionName #{version_name}")
     if latest
       gradle_properties["nyummy.versionCode"] = latest + 1
       UI.message("versionCode #{latest + 1} (Play 트랙 최신 #{latest})")
@@ -106,6 +130,8 @@ platform :android do
     upload_to_play_store(
       track: "internal",
       aab: AAB_PATH,
+      # 출시 이름. 주지 않으면 supply 가 Appfile 값(없으면 nil)을 써서 Play 기본 이름이 붙는다.
+      version_name: version_name,
       skip_upload_apk: true,
       skip_upload_metadata: true,
       skip_upload_changelogs: true,

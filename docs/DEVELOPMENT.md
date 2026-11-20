@@ -100,9 +100,9 @@ Kotlin/Gradle 코드를 수정한 작업은 최소 :app:assembleDebug 성공 후
 
 release AAB는 fastlane으로 만들어 Play Console 내부 테스트 트랙에 올립니다. 스토어 문구, 스크린샷, 변경 사항은 올리지 않으므로 Console에서 직접 관리합니다.
 
-- [fastlane/Fastfile](../fastlane/Fastfile)의 `android internal` lane: internal, alpha, beta, production 트랙의 versionCode 중 최댓값을 조회해 그보다 1 큰 값을 `-Pnyummy.versionCode=<n>` Gradle 프로퍼티로 넘겨 `:app:bundleRelease`를 돌리고, `app/build/outputs/bundle/release/app-release.aab`를 internal 트랙에 올립니다. 계산한 versionCode는 lane 로그에 남고 git에는 커밋하지 않습니다. 트랙이 모두 비어 있으면 [app/build.gradle.kts](../app/build.gradle.kts)의 versionCode 기본값을 씁니다. versionName은 늘 파일 값입니다.
+- [fastlane/Fastfile](../fastlane/Fastfile)의 `android internal` lane: internal, alpha, beta, production 트랙의 versionCode 중 최댓값을 조회해 그보다 1 큰 값을 `-Pnyummy.versionCode=<n>` Gradle 프로퍼티로 넘겨 `:app:bundleRelease`를 돌리고, `app/build/outputs/bundle/release/app-release.aab`를 internal 트랙에 올립니다. 계산한 versionCode는 lane 로그에 남고 git에는 커밋하지 않습니다. 트랙이 모두 비어 있으면 [app/build.gradle.kts](../app/build.gradle.kts)의 versionCode 기본값을 씁니다. versionName은 lane 옵션 `version_name:` 또는 `NYUMMY_VERSION_NAME` 환경변수(옵션 우선)로 받아 `-Pnyummy.versionName=<이름>`으로 넘기고, Play 업로드의 출시 이름에도 같은 값을 줍니다. 값이 없거나 `숫자.숫자.숫자` 형식이 아니면(앞의 `v`도 안 됨) 빌드 전에 멈춥니다. 네 트랙의 출시 이름에 같은 버전 이름이 온전한 토큰으로 들어 있으면 이미 배포한 이름으로 보고 멈춥니다(출시 이름 문자열에 기대는 검사입니다).
 - lane은 빌드 전에 release에 필요한 키가 빌드 스크립트가 읽는 곳에 있는지 먼저 확인하고, 없으면 빠진 키 이름만 알리고 멈춥니다. 키가 가리키는 키스토어와 서비스 계정 JSON 파일이 실제로 있는지도 봅니다. 비어 있는 트랙은 계산에서 빠지고, 트랙 조회 자체가 실패하면 lane도 실패합니다.
-- [.github/workflows/release.yml](../.github/workflows/release.yml): 수동 실행(workflow_dispatch)과 `v*` 태그 push에서만 돕니다. 공개 저장소라 pull_request 트리거는 두지 않습니다. 시크릿은 저장소가 아니라 `release` environment에 등록하고, 하나라도 비어 있으면 빠진 이름을 알리고 바로 실패합니다. 수동 실행은 main에서만, 태그는 main에 들어간 커밋에서만 진행합니다. 운영 키가 든 빌드 결과가 공개 저장소의 Actions 캐시에 남지 않도록 Gradle 캐시를 끄고 빌드합니다. Ruby 버전은 저장소 루트의 `.ruby-version`을 따릅니다.
+- [.github/workflows/release.yml](../.github/workflows/release.yml): 수동 실행(workflow_dispatch, 필수 입력 `version_name`)과 `v*` 태그 push에서만 돕니다. 태그는 앞의 `v`를 뗀 값을 버전 이름으로 쓰고, 두 경우 모두 형식을 먼저 검사해 `NYUMMY_VERSION_NAME`으로 lane에 넘깁니다. 공개 저장소라 pull_request 트리거는 두지 않습니다. 시크릿은 저장소가 아니라 `release` environment에 등록하고, 하나라도 비어 있으면 빠진 이름을 알리고 바로 실패합니다. 수동 실행은 main에서만, 태그는 main에 들어간 커밋에서만 진행합니다. 운영 키가 든 빌드 결과가 공개 저장소의 Actions 캐시에 남지 않도록 Gradle 캐시를 끄고 빌드합니다. Ruby 버전은 저장소 루트의 `.ruby-version`을 따릅니다.
 
 ### 시크릿
 
@@ -151,11 +151,11 @@ done
 
 Play API는 한 번도 올라간 적 없는 앱에는 올릴 수 없으므로, 첫 번째 AAB는 Play Console에서 직접 올려야 합니다. 앱이 아직 초안(Draft) 상태이면 Play가 완료 상태 출시를 받지 않으므로 Console에서 첫 출시를 마친 뒤 이 lane을 씁니다.
 
-1. versionCode는 lane이 정하므로 손으로 올리지 않습니다. 필요할 때만 app/build.gradle.kts의 `versionName`을 바꿔 main에 머지합니다.
-2. main에서 `v2.2.3`처럼 태그를 붙여 push하거나, Actions 탭에서 "Release (Play internal)"를 수동 실행합니다.
+1. versionCode와 versionName은 모두 배포할 때 정해지므로 app/build.gradle.kts의 버전 숫자는 손으로 올리지 않습니다(파일 값은 로컬 빌드용 기본값입니다).
+2. main에서 `v2.2.3`처럼 태그를 붙여 push하면 versionName 2.2.3으로 배포합니다. Actions 탭에서 "Release (Play internal)"를 수동 실행할 때는 버전 이름(예: 2.2.3)을 입력합니다. Play에 같은 이름의 출시가 이미 있으면 lane이 거부합니다.
 3. 업로드가 끝나면 Play Console 내부 테스트에서 빌드를 확인하고, 변경 사항을 적은 뒤 프로덕션(또는 다른 트랙)으로 승격합니다.
 
-로컬에서 lane을 돌릴 때는 `.ruby-version`의 Ruby와 `Gemfile.lock`의 Bundler를 준비하고 `bundle install` 뒤 `bundle exec fastlane android internal`을 실행합니다. 키는 빌드 스크립트가 읽는 곳에 있어야 합니다.
+로컬에서 lane을 돌릴 때는 `.ruby-version`의 Ruby와 `Gemfile.lock`의 Bundler를 준비하고 `bundle install` 뒤 `bundle exec fastlane android internal version_name:2.2.3`처럼 버전 이름을 주고 실행합니다. 키는 빌드 스크립트가 읽는 곳에 있어야 합니다.
 
 - `PLAY_SERVICE_ACCOUNT_JSON_PATH`: 환경변수로만 줍니다(Appfile이 읽음).
 - `API_BASE_URL_PROD`: local.properties에 키가 있으면 빈 값이어도 환경변수를 보지 않으므로, 환경변수로 줄 때는 local.properties에서 그 줄을 지웁니다.
