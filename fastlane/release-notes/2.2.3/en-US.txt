@@ -1,0 +1,13 @@
+We polished Nyummy for a smoother, steadier experience.
+
+• No accidental double taps
+Tapping a button twice quickly no longer runs the same action twice.
+
+• Smoother food reordering
+Fixed food rows jumping when dragged to reorder in meal details.
+
+• Home notice timing
+Home notices now show only when Home is visible, not behind other screens.
+
+• Also
+Fixed a delayed top bar when opening the terms screen and improved notification stability.
