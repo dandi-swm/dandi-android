@@ -1,7 +1,6 @@
 default_platform(:android)
 
 ROOT_DIR = File.expand_path("..", __dir__)
-GRADLE_FILE = File.join(ROOT_DIR, "app/build.gradle.kts")
 AAB_PATH = File.join(ROOT_DIR, "app/build/outputs/bundle/release/app-release.aab")
 
 # versionCode 를 비교할 Play 트랙. 트랙 사이 승격으로 더 큰 versionCode 가 다른 트랙에 있을 수 있다.
@@ -11,14 +10,12 @@ VERSION_CODE_TRACKS = %w[internal alpha beta production].freeze
 #   :local_or_env      local.properties 값이 비었거나 없으면 환경변수 (app, auth/presentation)
 #   :local_key_or_env  local.properties 에 키가 있으면 빈 값이어도 그 값만, 키가 없을 때만 환경변수
 #                      (common/data 의 configValue: API_BASE_URL_PROD)
-#   :local_only        local.properties 만 (common/data 의 API_KEY)
 #   :env_only      환경변수만 (Appfile 의 Play 서비스 계정 JSON 경로)
 REQUIRED_KEYS = {
   "RELEASE_STORE_FILE" => :local_or_env,
   "RELEASE_STORE_PASSWORD" => :local_or_env,
   "RELEASE_KEY_ALIAS" => :local_or_env,
   "RELEASE_KEY_PASSWORD" => :local_or_env,
-  "API_KEY" => :local_only,
   "API_BASE_URL_PROD" => :local_key_or_env,
   "META_APP_ID" => :local_or_env,
   "META_CLIENT_TOKEN" => :local_or_env,
@@ -46,7 +43,6 @@ def missing_required_keys
   present = lambda { |value| !value.nil? && !value.strip.empty? }
   REQUIRED_KEYS.reject do |key, source|
     case source
-    when :local_only then present.call(props[key])
     when :env_only then present.call(ENV[key])
     when :local_key_or_env then props.key?(key) ? present.call(props[key]) : present.call(ENV[key])
     else present.call(props[key]) || present.call(ENV[key])
@@ -71,13 +67,6 @@ def missing_key_files
   end.keys
 end
 
-# app/build.gradle.kts 의 versionCode 를 읽는다. 자동 증가는 하지 않는다.
-def local_version_code
-  match = File.read(GRADLE_FILE).match(/^\s*versionCode\s*=\s*(\d+)/)
-  UI.user_error!("app/build.gradle.kts 에서 versionCode 를 찾지 못했습니다.") unless match
-  match[1].to_i
-end
-
 platform :android do
   desc "release AAB 를 만들어 Play 내부 테스트 트랙에 올린다(스토어 문구, 스크린샷, 변경 사항은 올리지 않음)"
   lane :internal do
@@ -85,7 +74,7 @@ platform :android do
     unless missing.empty?
       UI.user_error!(
         "release 빌드에 필요한 키가 없습니다: #{missing.join(', ')} " \
-        "(API_KEY 는 local.properties, PLAY_SERVICE_ACCOUNT_JSON_PATH 는 환경변수, 나머지는 local.properties 또는 환경변수)"
+        "(PLAY_SERVICE_ACCOUNT_JSON_PATH 는 환경변수, 나머지는 local.properties 또는 환경변수)"
       )
     end
 
@@ -94,21 +83,25 @@ platform :android do
       UI.user_error!("키가 가리키는 파일이 없습니다: #{missing_files.join(', ')}")
     end
 
-    version_code = local_version_code
-    # 비어 있는 트랙은 빈 배열로 돌아와 건너뛰어진다.
+    # 비어 있는 트랙은 빈 배열로 돌아와 건너뛰어진다. 조회 실패는 그대로 lane 실패로 둔다.
     latest = VERSION_CODE_TRACKS.filter_map do |track|
       google_play_track_version_codes(track: track).map(&:to_i).max
-    end.max || 0
-    if version_code <= latest
-      UI.user_error!(
-        "versionCode #{version_code} 가 Play 트랙(#{VERSION_CODE_TRACKS.join(', ')})의 최신 versionCode #{latest} 보다 크지 않습니다. " \
-        "app/build.gradle.kts 의 versionCode 를 #{latest + 1} 이상으로 올린 뒤 다시 실행하세요."
-      )
+    end.max
+    gradle_properties = {}
+    if latest
+      gradle_properties["nyummy.versionCode"] = latest + 1
+      UI.message("versionCode #{latest + 1} (Play 트랙 최신 #{latest})")
+    else
+      UI.message("Play 트랙이 비어 app/build.gradle.kts 기본 versionCode 사용")
     end
-    UI.message("versionCode #{version_code} (Play 트랙 최신 #{latest})")
 
     # 운영 키가 든 release 빌드 결과를 Gradle 빌드 캐시에 남기지 않는다.
-    gradle(task: ":app:bundleRelease", flags: "--no-build-cache", project_dir: ROOT_DIR)
+    gradle(
+      task: ":app:bundleRelease",
+      flags: "--no-build-cache",
+      project_dir: ROOT_DIR,
+      properties: gradle_properties
+    )
 
     upload_to_play_store(
       track: "internal",

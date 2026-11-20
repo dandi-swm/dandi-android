@@ -100,8 +100,8 @@ Kotlin/Gradle 코드를 수정한 작업은 최소 :app:assembleDebug 성공 후
 
 release AAB는 fastlane으로 만들어 Play Console 내부 테스트 트랙에 올립니다. 스토어 문구, 스크린샷, 변경 사항은 올리지 않으므로 Console에서 직접 관리합니다.
 
-- [fastlane/Fastfile](../fastlane/Fastfile)의 `android internal` lane: internal, alpha, beta, production 트랙의 versionCode 중 최댓값을 조회해 [app/build.gradle.kts](../app/build.gradle.kts)의 versionCode가 그보다 크지 않으면 실패합니다. 통과하면 `:app:bundleRelease`를 돌리고 `app/build/outputs/bundle/release/app-release.aab`를 internal 트랙에 올립니다. versionCode는 자동으로 올리지 않습니다.
-- lane은 빌드 전에 release에 필요한 키가 빌드 스크립트가 읽는 곳에 있는지 먼저 확인하고, 없으면 빠진 키 이름만 알리고 멈춥니다. 키가 가리키는 키스토어와 서비스 계정 JSON 파일이 실제로 있는지도 봅니다. 비어 있는 트랙은 비교에서 빠지고, 트랙 조회 자체가 실패하면 lane도 실패합니다.
+- [fastlane/Fastfile](../fastlane/Fastfile)의 `android internal` lane: internal, alpha, beta, production 트랙의 versionCode 중 최댓값을 조회해 그보다 1 큰 값을 `-Pnyummy.versionCode=<n>` Gradle 프로퍼티로 넘겨 `:app:bundleRelease`를 돌리고, `app/build/outputs/bundle/release/app-release.aab`를 internal 트랙에 올립니다. 계산한 versionCode는 lane 로그에 남고 git에는 커밋하지 않습니다. 트랙이 모두 비어 있으면 [app/build.gradle.kts](../app/build.gradle.kts)의 versionCode 기본값을 씁니다. versionName은 늘 파일 값입니다.
+- lane은 빌드 전에 release에 필요한 키가 빌드 스크립트가 읽는 곳에 있는지 먼저 확인하고, 없으면 빠진 키 이름만 알리고 멈춥니다. 키가 가리키는 키스토어와 서비스 계정 JSON 파일이 실제로 있는지도 봅니다. 비어 있는 트랙은 계산에서 빠지고, 트랙 조회 자체가 실패하면 lane도 실패합니다.
 - [.github/workflows/release.yml](../.github/workflows/release.yml): 수동 실행(workflow_dispatch)과 `v*` 태그 push에서만 돕니다. 공개 저장소라 pull_request 트리거는 두지 않습니다. 시크릿은 저장소가 아니라 `release` environment에 등록하고, 하나라도 비어 있으면 빠진 이름을 알리고 바로 실패합니다. 수동 실행은 main에서만, 태그는 main에 들어간 커밋에서만 진행합니다. 운영 키가 든 빌드 결과가 공개 저장소의 Actions 캐시에 남지 않도록 Gradle 캐시를 끄고 빌드합니다. Ruby 버전은 저장소 루트의 `.ruby-version`을 따릅니다.
 
 ### 시크릿
@@ -112,7 +112,6 @@ release AAB는 fastlane으로 만들어 Play Console 내부 테스트 트랙에 
 | `RELEASE_STORE_PASSWORD` | 키스토어 비밀번호 | 환경변수 |
 | `RELEASE_KEY_ALIAS` | 키 별칭 | 환경변수 |
 | `RELEASE_KEY_PASSWORD` | 키 비밀번호 | 환경변수 |
-| `API_KEY` | API 키 | common/data가 local.properties에서만 읽어서 워크플로가 local.properties를 만들어 넣음 |
 | `API_BASE_URL_PROD` | 운영 서버 주소 | 환경변수 |
 | `META_APP_ID` | Meta 앱 ID | 환경변수 |
 | `META_CLIENT_TOKEN` | Meta 클라이언트 토큰 | 환경변수 |
@@ -132,7 +131,7 @@ base64 -i app/google-services.json | gh secret set GOOGLE_SERVICES_JSON_B64 --en
 base64 -i path/to/play-service-account.json | gh secret set PLAY_SERVICE_ACCOUNT_JSON_B64 --env release
 
 # 문자열은 프롬프트에 붙여 넣는다(값을 명령에 쓰지 않는다)
-for name in RELEASE_STORE_PASSWORD RELEASE_KEY_ALIAS RELEASE_KEY_PASSWORD API_KEY API_BASE_URL_PROD \
+for name in RELEASE_STORE_PASSWORD RELEASE_KEY_ALIAS RELEASE_KEY_PASSWORD API_BASE_URL_PROD \
             META_APP_ID META_CLIENT_TOKEN KAKAO_NATIVE_APP_KEY GOOGLE_WEB_CLIENT_ID AIRBRIDGE_SDK_TOKEN; do
   gh secret set "$name" --env release
 done
@@ -152,13 +151,12 @@ done
 
 Play API는 한 번도 올라간 적 없는 앱에는 올릴 수 없으므로, 첫 번째 AAB는 Play Console에서 직접 올려야 합니다. 앱이 아직 초안(Draft) 상태이면 Play가 완료 상태 출시를 받지 않으므로 Console에서 첫 출시를 마친 뒤 이 lane을 씁니다.
 
-1. app/build.gradle.kts의 `versionCode`를 Play 모든 트랙(internal, alpha, beta, production)의 최댓값보다 크게 올리고, 필요하면 `versionName`도 바꿔 main에 머지합니다.
+1. versionCode는 lane이 정하므로 손으로 올리지 않습니다. 필요할 때만 app/build.gradle.kts의 `versionName`을 바꿔 main에 머지합니다.
 2. main에서 `v2.2.3`처럼 태그를 붙여 push하거나, Actions 탭에서 "Release (Play internal)"를 수동 실행합니다.
 3. 업로드가 끝나면 Play Console 내부 테스트에서 빌드를 확인하고, 변경 사항을 적은 뒤 프로덕션(또는 다른 트랙)으로 승격합니다.
 
 로컬에서 lane을 돌릴 때는 `.ruby-version`의 Ruby와 `Gemfile.lock`의 Bundler를 준비하고 `bundle install` 뒤 `bundle exec fastlane android internal`을 실행합니다. 키는 빌드 스크립트가 읽는 곳에 있어야 합니다.
 
-- `API_KEY`: local.properties에만 둡니다(환경변수는 읽지 않습니다).
 - `PLAY_SERVICE_ACCOUNT_JSON_PATH`: 환경변수로만 줍니다(Appfile이 읽음).
 - `API_BASE_URL_PROD`: local.properties에 키가 있으면 빈 값이어도 환경변수를 보지 않으므로, 환경변수로 줄 때는 local.properties에서 그 줄을 지웁니다.
 - 나머지(서명 4종, `META_APP_ID`, `META_CLIENT_TOKEN`, `KAKAO_NATIVE_APP_KEY`, `GOOGLE_WEB_CLIENT_ID`, `AIRBRIDGE_SDK_TOKEN`): local.properties, 없으면 환경변수.
