@@ -51,7 +51,10 @@ android {
         versionCode = providers.gradleProperty("nyummy.versionCode").orNull
             ?.let { raw -> raw.toIntOrNull()?.takeIf { it >= 1 } ?: error("nyummy.versionCode 는 1 이상의 정수여야 합니다: $raw") }
             ?: 16
-        versionName = "2.2.2"
+        // 배포 lane 이 `-Pnyummy.versionName=<x.y.z>` 로 배포할 버전 이름을 넘긴다. 없으면 아래 기본값.
+        versionName = providers.gradleProperty("nyummy.versionName").orNull
+            ?.let { raw -> raw.takeIf { Regex("""\d+\.\d+\.\d+""").matches(it) } ?: error("nyummy.versionName 은 숫자.숫자.숫자 형식이어야 합니다(예: 2.2.3): $raw") }
+            ?: "2.2.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
