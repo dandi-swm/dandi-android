@@ -1,5 +1,8 @@
 default_platform(:android)
 
+require "tmpdir"
+require_relative "release_notes"
+
 ROOT_DIR = File.expand_path("..", __dir__)
 AAB_PATH = File.join(ROOT_DIR, "app/build/outputs/bundle/release/app-release.aab")
 
@@ -75,7 +78,7 @@ def release_name_matches?(release_name, version_name)
 end
 
 platform :android do
-  desc "release AAB 를 만들어 Play 내부 테스트 트랙에 올린다(스토어 문구, 스크린샷, 변경 사항은 올리지 않음)"
+  desc "release AAB 를 만들어 Play 내부 테스트 트랙에 올린다(출시 노트는 fastlane/release-notes 에서 함께 올리고, 스토어 문구와 스크린샷은 올리지 않음)"
   lane :internal do |options|
     version_name = options[:version_name].to_s.strip
     version_name = ENV["NYUMMY_VERSION_NAME"].to_s.strip if version_name.empty?
@@ -99,6 +102,8 @@ platform :android do
       UI.user_error!("키가 가리키는 파일이 없습니다: #{missing_files.join(', ')}")
     end
 
+    release_notes = load_release_notes(version_name)
+
     # 비어 있는 트랙은 빈 배열로 돌아와 건너뛰어진다. 조회 실패는 그대로 lane 실패로 둔다.
     latest = VERSION_CODE_TRACKS.filter_map do |track|
       google_play_track_version_codes(track: track).map(&:to_i).max
@@ -112,8 +117,9 @@ platform :android do
 
     gradle_properties = { "nyummy.versionName" => version_name }
     UI.message("versionName #{version_name}")
-    if latest
-      gradle_properties["nyummy.versionCode"] = latest + 1
+    version_code = latest ? latest + 1 : nil
+    if version_code
+      gradle_properties["nyummy.versionCode"] = version_code
       UI.message("versionCode #{latest + 1} (Play 트랙 최신 #{latest})")
     else
       UI.message("Play 트랙이 비어 app/build.gradle.kts 기본 versionCode 사용")
@@ -127,16 +133,23 @@ platform :android do
       properties: gradle_properties
     )
 
-    upload_to_play_store(
-      track: "internal",
-      aab: AAB_PATH,
-      # 출시 이름. 주지 않으면 supply 가 Appfile 값(없으면 nil)을 써서 Play 기본 이름이 붙는다.
-      version_name: version_name,
-      skip_upload_apk: true,
-      skip_upload_metadata: true,
-      skip_upload_changelogs: true,
-      skip_upload_images: true,
-      skip_upload_screenshots: true
-    )
+    # supply 의 메타데이터 폴더 구조로 출시 노트만 담아 넘긴다. 블록이 끝나거나 실패해도 Dir.mktmpdir 가 지운다.
+    Dir.mktmpdir("nyummy-release-notes") do |metadata_dir|
+      write_supply_changelogs(release_notes, metadata_dir, version_code)
+      UI.message("출시 노트 로케일: #{release_notes.keys.join(', ')}")
+      upload_to_play_store(
+        track: "internal",
+        aab: AAB_PATH,
+        # 출시 이름. 주지 않으면 supply 가 Appfile 값(없으면 nil)을 써서 Play 기본 이름이 붙는다.
+        version_name: version_name,
+        metadata_path: metadata_dir,
+        skip_upload_apk: true,
+        # 아래 셋이 true 라 supply 는 언어별 등록정보를 조회만 하고 저장하지 않는다(출시 노트만 트랙에 들어간다).
+        skip_upload_metadata: true,
+        skip_upload_changelogs: false,
+        skip_upload_images: true,
+        skip_upload_screenshots: true
+      )
+    end
   end
 end
