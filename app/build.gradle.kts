@@ -47,7 +47,10 @@ android {
         applicationId = "com.dandi.nyummy"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 16
+        // 배포 lane 이 `-Pnyummy.versionCode=<n>` 으로 Play 트랙 최댓값 + 1 을 넘긴다. 없으면 아래 기본값.
+        versionCode = providers.gradleProperty("nyummy.versionCode").orNull
+            ?.let { raw -> raw.toIntOrNull()?.takeIf { it >= 1 } ?: error("nyummy.versionCode 는 1 이상의 정수여야 합니다: $raw") }
+            ?: 16
         versionName = "2.2.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

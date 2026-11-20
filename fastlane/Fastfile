@@ -1,0 +1,116 @@
+default_platform(:android)
+
+ROOT_DIR = File.expand_path("..", __dir__)
+AAB_PATH = File.join(ROOT_DIR, "app/build/outputs/bundle/release/app-release.aab")
+
+# versionCode 를 비교할 Play 트랙. 트랙 사이 승격으로 더 큰 versionCode 가 다른 트랙에 있을 수 있다.
+VERSION_CODE_TRACKS = %w[internal alpha beta production].freeze
+
+# release 빌드와 업로드에 필요한 키와, 빌드 스크립트가 실제로 읽는 곳.
+#   :local_or_env      local.properties 값이 비었거나 없으면 환경변수 (app, auth/presentation)
+#   :local_key_or_env  local.properties 에 키가 있으면 빈 값이어도 그 값만, 키가 없을 때만 환경변수
+#                      (common/data 의 configValue: API_BASE_URL_PROD)
+#   :env_only      환경변수만 (Appfile 의 Play 서비스 계정 JSON 경로)
+REQUIRED_KEYS = {
+  "RELEASE_STORE_FILE" => :local_or_env,
+  "RELEASE_STORE_PASSWORD" => :local_or_env,
+  "RELEASE_KEY_ALIAS" => :local_or_env,
+  "RELEASE_KEY_PASSWORD" => :local_or_env,
+  "API_BASE_URL_PROD" => :local_key_or_env,
+  "META_APP_ID" => :local_or_env,
+  "META_CLIENT_TOKEN" => :local_or_env,
+  "KAKAO_NATIVE_APP_KEY" => :local_or_env,
+  "GOOGLE_WEB_CLIENT_ID" => :local_or_env,
+  "AIRBRIDGE_SDK_TOKEN" => :local_or_env,
+  "PLAY_SERVICE_ACCOUNT_JSON_PATH" => :env_only
+}.freeze
+
+# local.properties 를 key=value 로만 읽는다(값은 출력하지 않는다).
+def local_properties
+  path = File.join(ROOT_DIR, "local.properties")
+  return {} unless File.exist?(path)
+
+  File.readlines(path, chomp: true).each_with_object({}) do |line, props|
+    next if line.strip.empty? || line.lstrip.start_with?("#", "!")
+
+    key, value = line.split(/\s*[=:]\s*/, 2)
+    props[key.strip] = value.to_s.strip if key
+  end
+end
+
+def missing_required_keys
+  props = local_properties
+  present = lambda { |value| !value.nil? && !value.strip.empty? }
+  REQUIRED_KEYS.reject do |key, source|
+    case source
+    when :env_only then present.call(ENV[key])
+    when :local_key_or_env then props.key?(key) ? present.call(props[key]) : present.call(ENV[key])
+    else present.call(props[key]) || present.call(ENV[key])
+    end
+  end.keys
+end
+
+# 경로로 받는 키가 실제 파일을 가리키는지 본다. 경로 값은 출력하지 않는다.
+# 상대 경로의 기준 디렉터리는 키를 읽는 쪽을 따른다.
+#   RELEASE_STORE_FILE              app 모듈 (app/build.gradle.kts 의 Gradle file())
+#   PLAY_SERVICE_ACCOUNT_JSON_PATH  저장소 루트 (fastlane 이 Appfile 경로를 푸는 작업 디렉터리)
+FILE_PATH_KEYS = {
+  "RELEASE_STORE_FILE" => File.join(ROOT_DIR, "app"),
+  "PLAY_SERVICE_ACCOUNT_JSON_PATH" => ROOT_DIR
+}.freeze
+
+def missing_key_files
+  props = local_properties
+  FILE_PATH_KEYS.reject do |key, base_dir|
+    value = key == "PLAY_SERVICE_ACCOUNT_JSON_PATH" ? ENV[key] : (props[key].to_s.strip.empty? ? ENV[key] : props[key])
+    File.file?(File.expand_path(value.to_s.strip, base_dir))
+  end.keys
+end
+
+platform :android do
+  desc "release AAB 를 만들어 Play 내부 테스트 트랙에 올린다(스토어 문구, 스크린샷, 변경 사항은 올리지 않음)"
+  lane :internal do
+    missing = missing_required_keys
+    unless missing.empty?
+      UI.user_error!(
+        "release 빌드에 필요한 키가 없습니다: #{missing.join(', ')} " \
+        "(PLAY_SERVICE_ACCOUNT_JSON_PATH 는 환경변수, 나머지는 local.properties 또는 환경변수)"
+      )
+    end
+
+    missing_files = missing_key_files
+    unless missing_files.empty?
+      UI.user_error!("키가 가리키는 파일이 없습니다: #{missing_files.join(', ')}")
+    end
+
+    # 비어 있는 트랙은 빈 배열로 돌아와 건너뛰어진다. 조회 실패는 그대로 lane 실패로 둔다.
+    latest = VERSION_CODE_TRACKS.filter_map do |track|
+      google_play_track_version_codes(track: track).map(&:to_i).max
+    end.max
+    gradle_properties = {}
+    if latest
+      gradle_properties["nyummy.versionCode"] = latest + 1
+      UI.message("versionCode #{latest + 1} (Play 트랙 최신 #{latest})")
+    else
+      UI.message("Play 트랙이 비어 app/build.gradle.kts 기본 versionCode 사용")
+    end
+
+    # 운영 키가 든 release 빌드 결과를 Gradle 빌드 캐시에 남기지 않는다.
+    gradle(
+      task: ":app:bundleRelease",
+      flags: "--no-build-cache",
+      project_dir: ROOT_DIR,
+      properties: gradle_properties
+    )
+
+    upload_to_play_store(
+      track: "internal",
+      aab: AAB_PATH,
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+end

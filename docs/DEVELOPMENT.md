@@ -95,3 +95,68 @@ Kotlin/Gradle 코드를 수정한 작업은 최소 :app:assembleDebug 성공 후
 
 현재 Baseline Profile 시나리오는 앱 콜드 스타트만 수집합니다. 핵심 사용자 흐름(로그인·홈·히스토리)이 안정화되면 시나리오와 검증 조건도 함께 확장해야 합니다.
 
+
+## 배포
+
+release AAB는 fastlane으로 만들어 Play Console 내부 테스트 트랙에 올립니다. 스토어 문구, 스크린샷, 변경 사항은 올리지 않으므로 Console에서 직접 관리합니다.
+
+- [fastlane/Fastfile](../fastlane/Fastfile)의 `android internal` lane: internal, alpha, beta, production 트랙의 versionCode 중 최댓값을 조회해 그보다 1 큰 값을 `-Pnyummy.versionCode=<n>` Gradle 프로퍼티로 넘겨 `:app:bundleRelease`를 돌리고, `app/build/outputs/bundle/release/app-release.aab`를 internal 트랙에 올립니다. 계산한 versionCode는 lane 로그에 남고 git에는 커밋하지 않습니다. 트랙이 모두 비어 있으면 [app/build.gradle.kts](../app/build.gradle.kts)의 versionCode 기본값을 씁니다. versionName은 늘 파일 값입니다.
+- lane은 빌드 전에 release에 필요한 키가 빌드 스크립트가 읽는 곳에 있는지 먼저 확인하고, 없으면 빠진 키 이름만 알리고 멈춥니다. 키가 가리키는 키스토어와 서비스 계정 JSON 파일이 실제로 있는지도 봅니다. 비어 있는 트랙은 계산에서 빠지고, 트랙 조회 자체가 실패하면 lane도 실패합니다.
+- [.github/workflows/release.yml](../.github/workflows/release.yml): 수동 실행(workflow_dispatch)과 `v*` 태그 push에서만 돕니다. 공개 저장소라 pull_request 트리거는 두지 않습니다. 시크릿은 저장소가 아니라 `release` environment에 등록하고, 하나라도 비어 있으면 빠진 이름을 알리고 바로 실패합니다. 수동 실행은 main에서만, 태그는 main에 들어간 커밋에서만 진행합니다. 운영 키가 든 빌드 결과가 공개 저장소의 Actions 캐시에 남지 않도록 Gradle 캐시를 끄고 빌드합니다. Ruby 버전은 저장소 루트의 `.ruby-version`을 따릅니다.
+
+### 시크릿
+
+| 이름 | 내용 | 빌드에 전달되는 방식 |
+|---|---|---|
+| `RELEASE_KEYSTORE_B64` | 업로드 키스토어 파일(base64) | runner 임시 경로에 풀고 `RELEASE_STORE_FILE` 환경변수로 경로 전달 |
+| `RELEASE_STORE_PASSWORD` | 키스토어 비밀번호 | 환경변수 |
+| `RELEASE_KEY_ALIAS` | 키 별칭 | 환경변수 |
+| `RELEASE_KEY_PASSWORD` | 키 비밀번호 | 환경변수 |
+| `API_BASE_URL_PROD` | 운영 서버 주소 | 환경변수 |
+| `META_APP_ID` | Meta 앱 ID | 환경변수 |
+| `META_CLIENT_TOKEN` | Meta 클라이언트 토큰 | 환경변수 |
+| `KAKAO_NATIVE_APP_KEY` | 카카오 네이티브 앱 키 | 환경변수 |
+| `GOOGLE_WEB_CLIENT_ID` | 구글 OAuth 웹 클라이언트 ID | 환경변수 |
+| `AIRBRIDGE_SDK_TOKEN` | Airbridge SDK 토큰 | 환경변수 |
+| `GOOGLE_SERVICES_JSON_B64` | app/google-services.json(base64) | `app/google-services.json`으로 복원 |
+| `PLAY_SERVICE_ACCOUNT_JSON_B64` | Play 서비스 계정 JSON 키(base64) | 임시 파일로 풀고 `PLAY_SERVICE_ACCOUNT_JSON_PATH`로 Appfile에 전달 |
+
+`GOOGLE_SERVICES_JSON_B64`는 PR 검사용 저장소 시크릿과 같은 값이지만, environment 시크릿에도 따로 등록합니다. 값을 명령줄 인자로 넘기면 셸 기록에 남으므로 아래처럼 입력 프롬프트나 파일로 넘깁니다.
+
+파일은 base64로 넣습니다. macOS는 `base64 -i <파일>`, Linux(GNU coreutils)는 `base64 -w 0 <파일>`을 씁니다(Linux의 `-i`는 다른 뜻입니다). 아래는 macOS 예시입니다.
+
+~~~bash
+base64 -i path/to/upload.jks | gh secret set RELEASE_KEYSTORE_B64 --env release
+base64 -i app/google-services.json | gh secret set GOOGLE_SERVICES_JSON_B64 --env release
+base64 -i path/to/play-service-account.json | gh secret set PLAY_SERVICE_ACCOUNT_JSON_B64 --env release
+
+# 문자열은 프롬프트에 붙여 넣는다(값을 명령에 쓰지 않는다)
+for name in RELEASE_STORE_PASSWORD RELEASE_KEY_ALIAS RELEASE_KEY_PASSWORD API_BASE_URL_PROD \
+            META_APP_ID META_CLIENT_TOKEN KAKAO_NATIVE_APP_KEY GOOGLE_WEB_CLIENT_ID AIRBRIDGE_SDK_TOKEN; do
+  gh secret set "$name" --env release
+done
+~~~
+
+`release` environment는 GitHub 저장소 Settings > Environments에서 만들고, 배포 브랜치와 태그를 `main`과 `v*`로 제한하거나 승인자를 두는 것을 권장합니다.
+
+### Play 서비스 계정 만들기
+
+1. Google Cloud Console에서 Play Console과 연결된 프로젝트를 고르고 Google Play Android Developer API를 사용 설정합니다.
+2. IAM 및 관리자 > 서비스 계정에서 서비스 계정을 만들고, 키 탭에서 JSON 키를 만들어 내려받습니다. 이 파일이 `PLAY_SERVICE_ACCOUNT_JSON_B64`의 원본이며 저장소에 두지 않습니다.
+3. Play Console > 사용자 및 권한 > 새 사용자 초대에 서비스 계정 이메일을 넣고, 앱 권한에서 냐미 앱을 추가합니다.
+4. 권한은 "앱 정보 보기(읽기 전용)", "테스트 트랙에 앱 출시", "출시 관리"처럼 업로드에 필요한 만큼만 줍니다. 초대를 적용하는 데 시간이 걸릴 수 있습니다.
+5. 로컬에서 확인할 때는 `bundle exec fastlane run validate_play_store_json_key json_key:<키 경로>`로 키가 동작하는지 봅니다.
+
+### 배포 순서
+
+Play API는 한 번도 올라간 적 없는 앱에는 올릴 수 없으므로, 첫 번째 AAB는 Play Console에서 직접 올려야 합니다. 앱이 아직 초안(Draft) 상태이면 Play가 완료 상태 출시를 받지 않으므로 Console에서 첫 출시를 마친 뒤 이 lane을 씁니다.
+
+1. versionCode는 lane이 정하므로 손으로 올리지 않습니다. 필요할 때만 app/build.gradle.kts의 `versionName`을 바꿔 main에 머지합니다.
+2. main에서 `v2.2.3`처럼 태그를 붙여 push하거나, Actions 탭에서 "Release (Play internal)"를 수동 실행합니다.
+3. 업로드가 끝나면 Play Console 내부 테스트에서 빌드를 확인하고, 변경 사항을 적은 뒤 프로덕션(또는 다른 트랙)으로 승격합니다.
+
+로컬에서 lane을 돌릴 때는 `.ruby-version`의 Ruby와 `Gemfile.lock`의 Bundler를 준비하고 `bundle install` 뒤 `bundle exec fastlane android internal`을 실행합니다. 키는 빌드 스크립트가 읽는 곳에 있어야 합니다.
+
+- `PLAY_SERVICE_ACCOUNT_JSON_PATH`: 환경변수로만 줍니다(Appfile이 읽음).
+- `API_BASE_URL_PROD`: local.properties에 키가 있으면 빈 값이어도 환경변수를 보지 않으므로, 환경변수로 줄 때는 local.properties에서 그 줄을 지웁니다.
+- 나머지(서명 4종, `META_APP_ID`, `META_CLIENT_TOKEN`, `KAKAO_NATIVE_APP_KEY`, `GOOGLE_WEB_CLIENT_ID`, `AIRBRIDGE_SDK_TOKEN`): local.properties, 없으면 환경변수.
