@@ -30,7 +30,7 @@ object CatRigTextureLoader {
             }
             for (item in character.equipped.values) {
                 listOfNotNull(item.art, item.backArt).forEach { art ->
-                    art(context, art, item.width, item.height, colors)?.let { bitmaps[art.key] = it }
+                    art(context, art, item.width, item.height, colors, item.lineColor)?.let { bitmaps[art.key] = it }
                 }
             }
             CatRigTextures(bitmaps).also {
@@ -44,9 +44,9 @@ object CatRigTextureLoader {
     private fun cacheKey(character: CatRigCharacterVO): String =
         character.bodyRig.assetDir + "|" + character.equipped.values.sortedBy { it.id }.joinToString(",") { it.id }
 
-    private fun art(context: Context, art: AttachmentArtVO, width: Float, height: Float, colors: SampleArtColors): Bitmap? =
+    private fun art(context: Context, art: AttachmentArtVO, width: Float, height: Float, colors: SampleArtColors, lineColor: Int?): Bitmap? =
         if (art.key.startsWith(SampleAttachmentArt.PREFIX)) {
-            SampleAttachmentArt.draw(art.key, width, height, colors)
+            SampleAttachmentArt.draw(art.key, width, height, colors, lineColor ?: colors.ink)
         } else {
             decode(context, art.key)
         }

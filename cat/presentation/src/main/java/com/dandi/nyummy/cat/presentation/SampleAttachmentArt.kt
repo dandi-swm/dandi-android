@@ -39,18 +39,19 @@ data class SampleArtColors(
  * 착용 슬롯 검증용 임시 아이템 그림. 팀 정책상 아이템 원화는 디자이너가 만들므로(설계서 13절 A7),
  * 여기서는 슬롯 위치, 크기, 그리는 순서, 귀 처리를 확인할 수 있는 단순 도형만 코드로 그린다.
  * 그림 좌표는 아이템 크기(u)에 [PX_PER_UNIT]를 곱한 비트맵이다.
+ * 외곽선 색은 아이템 데이터(`items.json`의 `lineColor`, 기준서 C9 공식 원화 외곽선)에서 받는다.
  */
 object SampleAttachmentArt {
     const val PREFIX = "sample:"
     private const val PX_PER_UNIT = 8f
     private const val OUTLINE_UNITS = 1.6f
 
-    fun draw(key: String, width: Float, height: Float, colors: SampleArtColors): Bitmap? {
+    fun draw(key: String, width: Float, height: Float, colors: SampleArtColors, lineColor: Int = colors.ink): Bitmap? {
         val w = (width * PX_PER_UNIT).toInt().coerceAtLeast(1)
         val h = (height * PX_PER_UNIT).toInt().coerceAtLeast(1)
         val bitmap = createBitmap(w, h)
         val canvas = Canvas(bitmap)
-        val painter = Painter(canvas, w.toFloat(), h.toFloat(), colors)
+        val painter = Painter(canvas, w.toFloat(), h.toFloat(), colors, lineColor)
         when (key.removePrefix(PREFIX)) {
             "beanie" -> painter.beanie()
             "crown" -> painter.crown(front = true)
@@ -64,14 +65,14 @@ object SampleAttachmentArt {
         return bitmap
     }
 
-    private class Painter(val canvas: Canvas, val w: Float, val h: Float, val c: SampleArtColors) {
+    private class Painter(val canvas: Canvas, val w: Float, val h: Float, val c: SampleArtColors, lineColor: Int) {
         private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
         private val line = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             strokeWidth = OUTLINE_UNITS * PX_PER_UNIT
             strokeJoin = Paint.Join.ROUND
             strokeCap = Paint.Cap.ROUND
-            color = c.ink
+            color = lineColor
         }
         private val inset = line.strokeWidth / 2f
         private val r = RectF()
