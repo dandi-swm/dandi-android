@@ -16,6 +16,8 @@ import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.cat.entity.SpriteClipVO
 import com.dandi.nyummy.cat.entity.SpriteFrameVO
 import com.dandi.nyummy.cat.entity.rig.AttachmentItemVO
+import com.dandi.nyummy.cat.entity.rig.CatBodyRigVO
+import com.dandi.nyummy.cat.entity.rig.CatCharacterSpec
 import com.dandi.nyummy.cat.entity.rig.CatRigCharacterVO
 import com.dandi.nyummy.cat.entity.rig.CatSkinId
 import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
@@ -91,6 +93,7 @@ class HomeViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val homeRepository = FakeHomeRepository()
     private val catRepository = FakeCatRepository()
+    private val rigRepository = FakeCatRigRepository()
     private val companionMemory = FakeCompanionMemory()
     private val navigationHelper = RecordingNavigationHelper()
     private val tti = RecordingTTIHelper()
@@ -143,7 +146,7 @@ class HomeViewModelTest {
                 navigationHelper = navigationHelper,
                 ttiHelper = FakeTTIHelper,
             ),
-            getCatRig = GetCatRigUseCase(MissingCatRigRepository),
+            getCatRig = GetCatRigUseCase(rigRepository),
             catBrain = CatBrain(Random(seed = 1)),
             getCatLines = GetCatLinesUseCase(repository = object : CatLineRepository {
                 override suspend fun getLines(): List<CatLineVO> = catLines
@@ -385,6 +388,49 @@ class HomeViewModelTest {
         resumeWith(HomeSummaryVO(todayRecordedCount = 0))
 
         assertEquals(2, catRepository.callCount)
+    }
+
+    @Test
+    fun `냐미는 기본으로 리그로 그린다`() = runTest(testDispatcher) {
+        resumeWith(HomeSummaryVO(todayRecordedCount = 2))
+
+        assertEquals("NORMAL", state.catRig?.character?.bodyRig?.body)
+        assertNotNull(state.catMotion)
+    }
+
+    @Test
+    fun `리그 고양이를 읽지 못하면 스프라이트로 그린다`() = runTest(testDispatcher) {
+        rigRepository.body = null
+
+        resumeWith(HomeSummaryVO(todayRecordedCount = 2))
+
+        assertNull(state.catRig)
+        assertNotNull(state.catMotion)
+    }
+
+    @Test
+    fun `리그 그림을 그리지 못하면 지금 동작 그대로 스프라이트로 되돌아간다`() = runTest(testDispatcher) {
+        resumeWith(HomeSummaryVO(todayRecordedCount = 2))
+        val motion = state.catMotion
+
+        viewModel.onIntent(HomeIntent.CatRigLoadFailed)
+        advanceUntilIdle()
+
+        assertNull(state.catRig)
+        assertEquals(motion, state.catMotion)
+    }
+
+    @Test
+    fun `체형이 바뀌면 새 체형 리그로 바꾸고 지금 동작은 끊지 않는다`() = runTest(testDispatcher) {
+        resumeWith(HomeSummaryVO(todayRecordedCount = 2))
+        val playId = state.catPlayId
+        catRepository.weightChanged = true
+        rigRepository.body = "PLUMP"
+
+        resumeWith(HomeSummaryVO(todayRecordedCount = 2))
+
+        assertEquals("PLUMP", state.catRig?.character?.bodyRig?.body)
+        assertEquals(playId, state.catPlayId)
     }
 
     @Test
@@ -1099,9 +1145,11 @@ class HomeViewModelTest {
     }
 }
 
-/** 리그 그림을 읽지 못하는 저장소. 홈은 스프라이트로 되돌아간다. */
-private object MissingCatRigRepository : CatRigRepository {
-    override suspend fun getCharacter(skin: CatSkinId, body: String?): CatRigCharacterVO? = null
+/** 리그 저장소. 지금 체형([body])의 고양이를 준다. null이면 읽지 못한 것(스프라이트로 되돌아간다). */
+private class FakeCatRigRepository : CatRigRepository {
+    var body: String? = "NORMAL"
+    override suspend fun getCharacter(skin: CatSkinId, body: String?): CatRigCharacterVO? =
+        this.body?.let { CatRigCharacterVO(CatCharacterSpec(id = skin), CatBodyRigVO(body = it)) }
     override suspend fun getItems(): List<AttachmentItemVO> = emptyList()
     override fun selectedSkin(): CatSkinId = CatSkinId.NYAMI
     override fun equippedItemIds(): List<String> = emptyList()

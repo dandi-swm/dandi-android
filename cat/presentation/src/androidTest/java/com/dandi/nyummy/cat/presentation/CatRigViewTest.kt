@@ -123,6 +123,38 @@ class CatRigViewTest {
     }
 
     @Test
+    fun 동작_중에_체형_스킨_착용이_바뀌어도_끝남을_알리고_다음_동작을_튼다() {
+        // QA R1: 고양이가 바뀌면 애니메이터를 새로 만들어 재생 중이던 동작의 끝남 알림이 영영 오지 않던 문제
+        val finished = mutableListOf<Int>()
+        var character by mutableStateOf(RigCapture.character("nyami", "NORMAL"))
+        var motion by mutableStateOf(CatRigMotion("pop", CatState.HOME_TAP, playId = 1, restMillis = 0))
+        rule.mainClock.autoAdvance = false
+        rule.setContent {
+            NyummyTheme {
+                CatRigView(
+                    character = character,
+                    motion = motion,
+                    onMotionFinished = { finished += it },
+                    modifier = Modifier.size(200.dp),
+                )
+            }
+        }
+        repeat(20) { rule.mainClock.advanceTimeBy(FRAME) } // pop(1.03초) 재생 중
+        character = RigCapture.character("mackerel", "PLUMP", listOf("sample_crown", "sample_vest"))
+        repeat(90) { rule.mainClock.advanceTimeBy(FRAME) }
+        rule.waitForIdle()
+        assertEquals("바뀌기 전에 시작한 동작도 끝까지 가서 알린다", listOf(1), finished)
+
+        // 바뀐 고양이로 다음 동작을 틀고, 또 재생 중에 착용을 바꿔도 알린다
+        motion = CatRigMotion("nod", CatState.HOME_DAY, playId = 2, restMillis = 0)
+        repeat(10) { rule.mainClock.advanceTimeBy(FRAME) }
+        character = RigCapture.character("mackerel", "PLUMP")
+        repeat(150) { rule.mainClock.advanceTimeBy(FRAME) }
+        rule.waitForIdle()
+        assertEquals(listOf(1, 2), finished)
+    }
+
+    @Test
     fun 모자를_쓰면_모자_자리에_모자_색이_그려진다() {
         show(RigCapture.character("nyami", "NORMAL", listOf("sample_beanie")), motion = null)
         rule.mainClock.advanceTimeBy(200)

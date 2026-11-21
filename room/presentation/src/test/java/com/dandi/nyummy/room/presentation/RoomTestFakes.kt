@@ -9,6 +9,8 @@ import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.cat.entity.SpriteClipVO
 import com.dandi.nyummy.cat.entity.SpriteFrameVO
 import com.dandi.nyummy.cat.entity.rig.AttachmentItemVO
+import com.dandi.nyummy.cat.entity.rig.CatBodyRigVO
+import com.dandi.nyummy.cat.entity.rig.CatCharacterSpec
 import com.dandi.nyummy.cat.entity.rig.CatRigCharacterVO
 import com.dandi.nyummy.cat.entity.rig.CatSkinId
 import com.dandi.nyummy.common.domain.error.HttpResponseException
@@ -237,9 +239,11 @@ internal object FakeTTIHelper : TTIHelper {
     override fun addTTIMetaData(metadata: TTIMetaData, value: Any?) = Unit
 }
 
-/** 리그 그림을 읽지 못하는 저장소. 마이룸은 스프라이트로 되돌아간다. */
-internal object MissingCatRigRepository : CatRigRepository {
-    override suspend fun getCharacter(skin: CatSkinId, body: String?): CatRigCharacterVO? = null
+/** 리그 저장소. 지금 체형([body])의 고양이를 준다. null이면 읽지 못한 것(마이룸은 스프라이트로 되돌아간다). */
+internal class FakeCatRigRepository : CatRigRepository {
+    var body: String? = "NORMAL"
+    override suspend fun getCharacter(skin: CatSkinId, body: String?): CatRigCharacterVO? =
+        this.body?.let { CatRigCharacterVO(CatCharacterSpec(id = skin), CatBodyRigVO(body = it)) }
     override suspend fun getItems(): List<AttachmentItemVO> = emptyList()
     override fun selectedSkin(): CatSkinId = CatSkinId.NYAMI
     override fun equippedItemIds(): List<String> = emptyList()

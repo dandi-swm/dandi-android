@@ -53,6 +53,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -65,6 +66,7 @@ class MyRoomViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val repository = FakeRoomRepository()
     private val catRepository = FakeCatRepository()
+    private val rigRepository = FakeCatRigRepository()
     private val messageHelper = RecordingMessageHelper()
     private val navigationHelper = RecordingNavigationHelper()
     private val tutorialHelper = FakeTutorialHelper()
@@ -500,6 +502,36 @@ class MyRoomViewModelTest {
     }
 
     @Test
+    fun `냐미는 기본으로 리그로 그린다`() = runTest(testDispatcher) {
+        val state = loadedViewModel().uiState.value
+
+        assertEquals("NORMAL", state.catRig?.character?.bodyRig?.body)
+        assertNotNull(state.catMotion)
+    }
+
+    @Test
+    fun `리그 고양이를 읽지 못하면 스프라이트로 그린다`() = runTest(testDispatcher) {
+        rigRepository.body = null
+
+        val state = loadedViewModel().uiState.value
+
+        assertNull(state.catRig)
+        assertNotNull(state.catMotion)
+    }
+
+    @Test
+    fun `리그 그림을 그리지 못하면 지금 동작 그대로 스프라이트로 되돌아간다`() = runTest(testDispatcher) {
+        val viewModel = loadedViewModel()
+        val motion = viewModel.uiState.value.catMotion
+
+        viewModel.onIntent(MyRoomIntent.CatRigLoadFailed)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.catRig)
+        assertEquals(motion, viewModel.uiState.value.catMotion)
+    }
+
+    @Test
     fun `냐미 애니메이션을 받지 못하면 냐미 없이 꾸민다`() = runTest(testDispatcher) {
         catRepository.error = httpException(500)
 
@@ -632,7 +664,7 @@ class MyRoomViewModelTest {
             getOwnedRoomItems = deps(::GetOwnedRoomItemsUseCase),
             saveRoom = deps(::SaveRoomUseCase),
             getCatAnimations = GetCatAnimationsUseCase(catRepository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
-            getCatRig = GetCatRigUseCase(MissingCatRigRepository),
+            getCatRig = GetCatRigUseCase(rigRepository),
             catMotionPicker = CatMotionPicker(Random(seed = 3)),
             navigationHelper = navigationHelper,
             messageHelper = messageHelper,
