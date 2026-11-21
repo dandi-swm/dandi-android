@@ -3,12 +3,16 @@ package com.dandi.nyummy.auth.domain
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.auth.entity.AuthTokenVO
 import com.dandi.nyummy.home.domain.HomePreparePage
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
+import java.lang.reflect.Proxy
 
 class LoginUseCaseTest {
 
@@ -76,4 +80,60 @@ class LoginUseCaseTest {
         assertTrue(result.isFailure)
         assertEquals(StringResource.NETWORK_ERROR.name, messageHelper.dialogs.single().descText)
     }
+
+    @Test
+    fun `로그인 전 화면이라 code 없는 401 은 로그인 만료가 아니라 로그인 실패로 안내하고 로그인 화면으로 보내지 않는다`() = runBlocking {
+        repository.loginError = httpException(401)
+
+        val result = useCase.login("test@dandi.app", "pw1234")
+
+        assertTrue(result.isFailure)
+        assertEquals(StringResource.AUTH_LOGIN_FAILED.name, messageHelper.dialogs.single().descText)
+        assertEquals(0, navigationHelper.initialCount)
+    }
+
+    @Test
+    fun `응답을 해석하지 못한 예상 밖 예외도 로그인 실패로 안내한다`() = runBlocking {
+        repository.loginError = IllegalStateException("broken body")
+
+        val result = useCase.login("test@dandi.app", "pw1234")
+
+        assertTrue(result.isFailure)
+        assertEquals(StringResource.AUTH_LOGIN_FAILED.name, messageHelper.dialogs.single().descText)
+    }
+
+    @Test
+    fun `세션 만료 뒤 다시 로그인하면 다음 세션 만료를 다시 처리할 수 있게 된다`() = runBlocking {
+        val sessionExpiry = SessionExpiryHandler(
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = RecordingMessageHelper(),
+            navigationHelper = RecordingNavigationHelper(),
+            sessionTokenHelper = noOp(),
+            pushTokenHelper = noOp(),
+            companionMemory = noOp(),
+            tutorialHelper = noOp(),
+            widgetHelper = noOp(),
+            scope = CoroutineScope(Dispatchers.Unconfined),
+        )
+        sessionExpiry.onSessionExpired()
+        assertTrue(sessionExpiry.isExpired)
+        repository.loginResult = AuthTokenVO("access", "refresh", redirectUrl = "/home")
+
+        LoginUseCase(
+            repository = repository,
+            analyticsHelper = RecordingAnalyticsHelper(),
+            widgetHelper = NoOpWidgetHelper,
+            resourceHelper = FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = FakeTTIHelper(),
+            sessionExpiryHandler = sessionExpiry,
+        ).login("test@dandi.app", "pw1234")
+
+        assertFalse(sessionExpiry.isExpired)
+    }
+
+    /** 부르면 아무것도 하지 않는 대역. suspend 함수도 바로 끝난다. */
+    private inline fun <reified T : Any> noOp(): T =
+        Proxy.newProxyInstance(T::class.java.classLoader, arrayOf(T::class.java)) { _, _, _ -> Unit } as T
 }

@@ -106,4 +106,15 @@ class GetSettingsUseCaseTest {
         assertEquals(1, messageHelper.dialogs.size)
         assertTrue(messageHelper.snackBars.isEmpty())
     }
+
+    @Test
+    fun `서버 code 가 붙은 404 는 공통 준비 중 안내보다 먼저 그 문구로 안내한다`() = runBlocking {
+        repository.getNotificationSettingsError = httpException(404, SettingsErrorType.USER_NOT_FOUND.type)
+
+        val result = useCase(onRetry = {})
+
+        assertTrue(result.isFailure)
+        assertTrue(messageHelper.dialogs.isEmpty())
+        assertEquals(SettingsErrorType.USER_NOT_FOUND.errorMsg.name, messageHelper.snackBars.single().messageText)
+    }
 }
