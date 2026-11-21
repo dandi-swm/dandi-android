@@ -67,4 +67,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    // 캡처, 렌더 테스트가 실제 리그 에셋(cat:data assets)과 해석기를 쓴다
+    androidTestImplementation(project(":cat:data"))
+    androidTestImplementation(libs.kotlinx.serialization.json)
 }
