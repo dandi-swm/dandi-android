@@ -10,7 +10,6 @@ import com.dandi.nyummy.cat.domain.CatRepository
 import com.dandi.nyummy.cat.domain.rig.CatRigRepository
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -62,7 +61,6 @@ object CatDataModule {
     fun provideCatRigRepository(
         @ApplicationContext context: Context,
         companionMemory: CompanionMemoryHelper,
-        remoteConfig: RemoteConfigHelper,
         debugStore: CatRigDebugStore,
-    ): CatRigRepository = CatRigRepositoryImpl(CatRigAssetDataSource(context), companionMemory, remoteConfig, debugStore)
+    ): CatRigRepository = CatRigRepositoryImpl(CatRigAssetDataSource(context), companionMemory, debugStore)
 }

@@ -5,8 +5,6 @@ import com.dandi.nyummy.cat.entity.rig.AttachmentItemVO
 import com.dandi.nyummy.cat.entity.rig.CatRigCharacterVO
 import com.dandi.nyummy.cat.entity.rig.CatSkinId
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
-import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 
 /**
  * 리그 고양이를 앱 에셋에서 읽는다. 체형은 스프라이트 냐미와 같이 기기에 기억한 값(없으면 NORMAL)을 쓴다.
@@ -15,11 +13,8 @@ import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
 class CatRigRepositoryImpl(
     private val dataSource: CatRigAssetDataSource,
     private val companionMemory: CompanionMemoryHelper,
-    private val remoteConfig: RemoteConfigHelper,
-    private val debugStore: CatRigDebugStore,
+    private val debugStore: CatRigDebugSettings,
 ) : CatRigRepository {
-
-    override fun isEnabled(): Boolean = debugStore.enabledOverride ?: remoteConfig.get(RemoteConfigKey.CatRigEnabled)
 
     override suspend fun getCharacter(skin: CatSkinId, body: String?): CatRigCharacterVO? {
         val spec = dataSource.getSkin(skin.value) ?: dataSource.getSkin(CatSkinId.NYAMI.value) ?: return null
