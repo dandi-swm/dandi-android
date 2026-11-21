@@ -6,11 +6,11 @@ import com.dandi.nyummy.cat.domain.CatMood
 import com.dandi.nyummy.cat.domain.CatPick
 import com.dandi.nyummy.cat.domain.CatReaction
 import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
-import com.dandi.nyummy.cat.domain.RefreshCatWeightUseCase
 import com.dandi.nyummy.cat.domain.GetCatLinesUseCase
+import com.dandi.nyummy.cat.domain.RefreshCatWeightUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatLineVO
-import com.dandi.nyummy.cat.entity.CatState
+import com.dandi.nyummy.common.domain.error.runSuspendCatching
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
@@ -499,7 +499,7 @@ class HomeViewModel @Inject constructor(
     private fun prepareGreeting() {
         viewModelScope.launch {
             if (catLines.isEmpty()) catLines = getCatLines()
-            val lastSeen = runCatching { companionMemory.lastSeenAtMillis() }.getOrNull()
+            val lastSeen = runSuspendCatching { companionMemory.lastSeenAtMillis() }.getOrNull()
                 ?.let { DeviceTime.atZone(it).toLocalDateTime() }
             if (pendingReaction == null) pendingReaction = catBrain.greetingOf(lastSeen, now())
             driveCat()
@@ -508,7 +508,7 @@ class HomeViewModel @Inject constructor(
 
     /** 홈을 떠날 때 마지막 방문 시각을 남긴다. 몇 분 만에 돌아오면 다시 인사하지 않는다. */
     private fun rememberLastSeen() {
-        viewModelScope.launch { runCatching { companionMemory.setLastSeenAtMillis(System.currentTimeMillis()) } }
+        viewModelScope.launch { runSuspendCatching { companionMemory.setLastSeenAtMillis(System.currentTimeMillis()) } }
     }
 
     /** debug 빌드에서 냐미 위에 보일 상태 표시. release 에서는 null이다. */

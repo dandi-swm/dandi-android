@@ -1,13 +1,16 @@
 package com.dandi.nyummy.shop.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
+import com.dandi.nyummy.common.domain.error.DomainFailure
 import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.registeredErrorType
+import com.dandi.nyummy.common.domain.error.runSuspendCatching
+import com.dandi.nyummy.common.domain.error.toDomainFailure
 import com.dandi.nyummy.common.domain.helper.ImagePrefetchHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.shop.entity.CoinChargeEventVO
 import com.dandi.nyummy.shop.entity.CoinChargeGrantVO
 import com.dandi.nyummy.shop.entity.CoinChargeOfferVO
@@ -82,7 +85,8 @@ class ClaimCoinChargeUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(event: CoinChargeEventVO, pack: CoinChargePackageVO): CoinChargeClaimResult {
         if (repository.isClaimedOrFalse(event.eventId)) {
@@ -95,69 +99,55 @@ class ClaimCoinChargeUseCase @Inject constructor(
             tracker.granted(event, pack, grant.grantedCoins)
             refreshBalanceQuietly()
             CoinChargeClaimResult.Granted(grant)
-        } catch (e: HttpResponseException) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            val failure = e.toDomainFailure(ShopErrorType.entries)
             // 앱을 지웠다 다시 깔면 기기 받음 기록이 없어 다시 들어올 수 있다. 서버가 이미 받았다고 하면(409) 기록을 되살려
             // 이미 받은 사람과 똑같이 안내하고, 상점 코인 탭의 Event 칩과 홈 공지도 다시 뜨지 않게 한다.
-            if (e.isCoinGiftAlreadyClaimed()) {
+            if (failure.isCoinGiftAlreadyClaimed()) {
                 markClaimedQuietly(event.eventId)
                 tracker.grantFailed(event, pack, CoinChargeTracker.Values.REASON_ALREADY_CLAIMED_ON_SERVER)
                 return CoinChargeClaimResult.AlreadyClaimed
             }
-            var reason = CoinChargeTracker.Values.REASON_SERVER_ERROR
-            handleHttpError<ShopErrorType>(
-                e,
-                onDomainError = {
-                    reason = CoinChargeTracker.Values.REASON_PACKAGE_NOT_FOUND
-                    messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_COIN_CHARGE_FAILED))
-                },
-                onUnknownError = {
-                    reason = CoinChargeTracker.Values.REASON_INVALID_REQUEST
-                    messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_COIN_CHARGE_FAILED))
-                },
-            )
-            tracker.grantFailed(event, pack, reason)
-            CoinChargeClaimResult.Failed
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            tracker.grantFailed(event, pack, CoinChargeTracker.Values.REASON_NETWORK_OR_UNKNOWN)
-            messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_COIN_CHARGE_FAILED))
+            tracker.grantFailed(event, pack, failure.trackingReason)
+            // 서버 오류(로그인 만료, 5xx)는 공통 안내, 그 밖의 실패는 다시 눌러 달라고 알린다.
+            notifyFailure(failure, onBusinessError = { showClaimFailed() }, onUnknownError = { showClaimFailed() })
             CoinChargeClaimResult.Failed
         }
     }
 
+    private fun showClaimFailed() {
+        messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_COIN_CHARGE_FAILED))
+    }
+
     /** 서버가 이 회차 코인을 이미 줬다고 했다. 받기 API의 409는 이것뿐이라 코드가 빠져도 409면 같이 본다. */
-    private fun HttpResponseException.isCoinGiftAlreadyClaimed(): Boolean =
-        registeredErrorType<ShopErrorType>() == ShopErrorType.COIN_GIFT_ALREADY_CLAIMED || rawCode == HTTP_CONFLICT
+    private fun DomainFailure<ShopErrorType>.isCoinGiftAlreadyClaimed(): Boolean =
+        (this as? DomainFailure.Business)?.type == ShopErrorType.COIN_GIFT_ALREADY_CLAIMED ||
+            (cause as? HttpResponseException)?.rawCode == HTTP_CONFLICT
+
+    /** 분석에 남기는 못 받은 까닭. */
+    private val DomainFailure<ShopErrorType>.trackingReason: String
+        get() = when (this) {
+            is DomainFailure.Business -> CoinChargeTracker.Values.REASON_PACKAGE_NOT_FOUND
+            is DomainFailure.Common -> CoinChargeTracker.Values.REASON_SERVER_ERROR
+            is DomainFailure.UnknownHttp -> CoinChargeTracker.Values.REASON_INVALID_REQUEST
+            is DomainFailure.Network, is DomainFailure.Unexpected -> CoinChargeTracker.Values.REASON_NETWORK_OR_UNKNOWN
+        }
 
     /** 기기에 쓰지 못해도 서버가 두 번째 지급을 막으므로 알리지 않는다. */
     private suspend fun markClaimedQuietly(eventId: String) {
-        try {
-            repository.markClaimed(eventId)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-        }
+        runSuspendCatching { repository.markClaimed(eventId) }
     }
 
     /** 잔액을 다시 읽지 못하면 다음에 상점이나 코인 내역이 보일 때 다시 읽는다. */
     private suspend fun refreshBalanceQuietly() {
-        try {
-            shopRepository.refreshSummary()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-        }
+        runSuspendCatching { shopRepository.refreshSummary() }
     }
 }
 
 /** 기기 저장소를 읽지 못하면 받지 않은 것으로 본다(두 번째 지급은 서버가 막는다). */
-internal suspend fun CoinChargeRepository.isClaimedOrFalse(eventId: String): Boolean = try {
-    isClaimed(eventId)
-} catch (e: CancellationException) {
-    throw e
-} catch (_: Exception) {
-    false
-}
+internal suspend fun CoinChargeRepository.isClaimedOrFalse(eventId: String): Boolean =
+    runSuspendCatching { isClaimed(eventId) }.getOrDefault(false)
 
 private const val HTTP_CONFLICT = 409

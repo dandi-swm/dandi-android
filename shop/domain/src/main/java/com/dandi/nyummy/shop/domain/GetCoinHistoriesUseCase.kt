@@ -6,6 +6,7 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.shop.entity.CoinHistoryPageVO
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.tti.TTIHelper
 import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
@@ -17,17 +18,10 @@ class GetCoinHistoriesUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
-    suspend operator fun invoke(cursor: Long? = null, size: Int = PAGE_SIZE): Result<CoinHistoryPageVO> = try {
-        Result.success(repository.getCoinHistories(cursor, size.coerceIn(1, MAX_PAGE_SIZE)))
-    } catch (e: HttpResponseException) {
-        handleHttpError<ShopErrorType>(e, onDomainError = {})
-        Result.failure(e)
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Result.failure(e)
-    }
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
+    suspend operator fun invoke(cursor: Long? = null, size: Int = PAGE_SIZE): Result<CoinHistoryPageVO> =
+        request(ShopErrorType.entries) { repository.getCoinHistories(cursor, size.coerceIn(1, MAX_PAGE_SIZE)) }
 
     companion object {
         const val PAGE_SIZE = 20

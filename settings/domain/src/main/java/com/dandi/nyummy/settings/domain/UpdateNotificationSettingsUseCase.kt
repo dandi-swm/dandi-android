@@ -2,6 +2,8 @@ package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.CommonErrorPolicy
+import com.dandi.nyummy.common.domain.error.HttpErrorType
+import com.dandi.nyummy.common.domain.error.isCommonErrorNotified
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -22,6 +24,10 @@ class UpdateNotificationSettingsUseCase @Inject constructor(
     ttiHelper: TTIHelper,
     sessionExpiryHandler: SessionExpiryHandler? = null,
 ) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
+
+    /** 실패 [error]를 이 UseCase가 이미 공통 안내(로그인 만료)로 알렸는지. 화면은 false일 때만 "다시 시도"를 띄운다. */
+    fun isNotified(error: Throwable): Boolean =
+        error.isCommonErrorNotified(emptyList<HttpErrorType>(), CommonErrorPolicy.SESSION_ONLY)
 
     // 응답을 받기 전 실패(네트워크 끊김 등)도 화면이 되돌리고 "다시 시도"를 띄우도록 실패로 돌려준다.
     suspend operator fun invoke(change: NotificationSettingsChange): Result<Unit> =

@@ -1,12 +1,14 @@
 package com.dandi.nyummy.shop.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
+import com.dandi.nyummy.common.domain.error.DomainFailure
 import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.registeredErrorType
+import com.dandi.nyummy.common.domain.error.toDomainFailure
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.shop.entity.AddedCartItemVO
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
@@ -26,30 +28,33 @@ class AddToCartUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(productId: Long, source: String): Result<AddedCartItemVO> = try {
         val added = repository.addToCart(productId, QUANTITY)
         messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_ADDED_TO_CART))
         tracker.addToCart(source, productId)
         Result.success(added)
-    } catch (e: HttpResponseException) {
-        if (e.rawCode == HTTP_NOT_FOUND && e.registeredErrorType<ShopErrorType>() == null) {
-            // 코드 없는 404도 상품이 사라진 경우로 본다. 공통 처리("준비 중" 다이얼로그 뒤 뒤로 가기)로 보내지 않는다.
-            messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_CANNOT_ADD_MORE))
-        } else {
-            handleHttpError<ShopErrorType>(
-                e,
-                onDomainError = { messageHelper.showToast(rejectionMessageOf(it)) },
-                onUnknownError = { messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_CANNOT_ADD_MORE)) },
-            )
-        }
-        Result.failure(e)
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        // 네트워크 끊김 등 응답 전 실패. 담겼는지 모르니 다시 해 보라고만 알린다.
-        messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_ADD_FAILED))
+        // 코드 없는 404를 공통 안내에서 빼야 해서 request 대신 분류를 직접 쓴다(맞는 정책이 없다).
+        val failure = e.toDomainFailure(ShopErrorType.entries)
+        if (failure is DomainFailure.Common && failure.cause.rawCode == HTTP_NOT_FOUND) {
+            // 코드 없는 404도 상품이 사라진 경우로 본다. 공통 처리("준비 중" 다이얼로그 뒤 뒤로 가기)로 보내지 않는다.
+            messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_CANNOT_ADD_MORE))
+        } else {
+            notifyFailure(
+                failure,
+                onBusinessError = { messageHelper.showToast(rejectionMessageOf(it)) },
+                onUnknownError = { cause ->
+                    // 응답 전 실패(네트워크 끊김 등)는 담겼는지 모르니 다시 해 보라고만 알린다.
+                    val message = if (cause is HttpResponseException) StringResource.SHOP_CANNOT_ADD_MORE else StringResource.SHOP_ADD_FAILED
+                    messageHelper.showToast(resourceHelper.getString(message))
+                },
+            )
+        }
         Result.failure(e)
     }
 
