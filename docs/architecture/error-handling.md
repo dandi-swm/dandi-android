@@ -105,6 +105,7 @@ class DeleteMealUseCase @Inject constructor(
 - `isHandledOnDomain = false`로 등록한 code는 `request`가 아무 안내도 하지 않고 실패로 돌려준다. 공통 안내로 새지 않는다.
 - 화면이 실패를 따로 안내해야 하면, `HttpResponseException`을 직접 열지 말고 UseCase에 `fun isNotified(error: Throwable) = error.isCommonErrorNotified(ErrorType.entries, 정책)`을 두고 ViewModel이 그것을 본다.
 - 실패해도 흐름을 이어 가는 작업(기기 저장, 장식용 조회)은 `runSuspendCatching { }`을 쓴다. suspend 호출을 `runCatching`으로 감싸지 않는다(취소를 삼킨다).
+- 튜토리얼 진행 기록(`TutorialHelper`의 쓰기)은 구현이 실패를 로그로만 남기고 던지지 않는다. 화면은 감싸지 않고 부른다. 실패하면 마친 안내가 다음에 한 번 더 뜰 수 있다.
 
 ## 세션 만료 (로그인 만료)
 
@@ -112,7 +113,7 @@ class DeleteMealUseCase @Inject constructor(
 요청 401 ─▶ TokenAuthenticator: Mutex로 재발급 1회
              ├─ 성공 → 새 토큰으로 재시도(화면은 모름)
              ├─ refresh 401(리프레시 토큰 무효) → 토큰 삭제, 원래 401 전파 ─▶ 세션 만료
-             └─ 네트워크 끊김, 5xx → IOException ─▶ 화면은 네트워크 오류, 토큰은 남음
+             └─ 네트워크 끊김, 5xx, 401 밖 4xx(403, 429 등), 토큰 없는 200 → IOException ─▶ 화면은 네트워크 오류, 토큰은 남음
 UseCase ─▶ executeCommonErrorHanding ─▶ SessionExpiryHandler.onSessionExpired()
              ├─ 처음 한 번만 통과(AtomicBoolean). 동시에 401이 여러 개 와도 정리, 다이얼로그, 이동은 한 번
              ├─ 이 기기 세션 정리: 로그인 토큰, 푸시 토큰, 냐미 기억, 튜토리얼, 위젯 (로그아웃과 같은 정리)
