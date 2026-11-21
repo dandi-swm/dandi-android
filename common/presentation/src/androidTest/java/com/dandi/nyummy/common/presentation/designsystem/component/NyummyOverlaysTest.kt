@@ -124,6 +124,43 @@ class NyummyOverlaysTest {
     }
 
     @Test
+    fun 닫을_수_없는_바텀_시트는_뒤로_가기에_닫기를_요청하지_않고_그대로_남는다() {
+        var dismissRequested = 0
+        composeRule.setContent {
+            NyummyTheme {
+                NyummyBottomSheet(onDismissRequest = { dismissRequested++ }, dismissible = false) {
+                    NyummySheetTitle("저장하는 중")
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("저장하는 중").assertIsDisplayed()
+        Espresso.pressBack()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("저장하는 중").assertIsDisplayed()
+        assertEquals(0, dismissRequested)
+    }
+
+    @Test
+    fun 바텀_시트는_뒤로_가기에_닫기를_요청한다() {
+        var dismissRequested = 0
+        composeRule.setContent {
+            NyummyTheme {
+                NyummyBottomSheet(onDismissRequest = { dismissRequested++ }) {
+                    NyummySheetTitle("오늘 식사 요약")
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("오늘 식사 요약").assertIsDisplayed()
+        Espresso.pressBack()
+        composeRule.waitForIdle()
+
+        assertEquals(1, dismissRequested)
+    }
+
+    @Test
     fun 확인_시트는_주_행동과_글자_행동을_각각_호출한다() {
         var primary = 0
         var secondary = 0
