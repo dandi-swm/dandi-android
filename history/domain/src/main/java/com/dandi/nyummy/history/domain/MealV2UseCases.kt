@@ -168,13 +168,17 @@ enum class MealAnalysisWaitResult {
 
     /** 기다리는 시간 안에 끝나지 않았다. 결과는 알림으로 온다. */
     TIMED_OUT,
+
+    /** 로그인이 만료돼 그만 기다렸다. 만료 안내와 로그인 화면 이동은 공통 처리가 하므로 화면은 따로 안내하지 않는다. */
+    SESSION_EXPIRED,
 }
 
 /**
  * 영양 계산이 끝날 때까지 분석 상태를 [POLL_INTERVAL_MILLIS]마다 조회한다.
  *
  * 일시적인 실패(네트워크 끊김, 서버 오류)는 다음 주기에 다시 조회한다. [TIMEOUT_MILLIS]가 지나도 끝나지 않으면
- * [MealAnalysisWaitResult.TIMED_OUT]을 돌려준다. 로그인이 만료되면 공통 안내를 띄우고 기다리기를 그만둔다.
+ * [MealAnalysisWaitResult.TIMED_OUT]을 돌려준다. 로그인이 만료되면 공통 안내를 띄우고 기다리기를 그만둔다
+ * ([MealAnalysisWaitResult.SESSION_EXPIRED]).
  * 화면이 사라져 코루틴이 취소되면 조회도 멈춘다. 안내는 화면이 한다.
  */
 class AwaitMealAnalysisUseCase @Inject constructor(
@@ -200,7 +204,7 @@ class AwaitMealAnalysisUseCase @Inject constructor(
                     // 로그인 만료만 공통 안내를 하고 기다리기를 그만둔다.
                     is DomainFailure.Common -> {
                         notifyFailure(failure)
-                        return MealAnalysisWaitResult.TIMED_OUT
+                        return MealAnalysisWaitResult.SESSION_EXPIRED
                     }
                     // 지워진 식사는 더 기다려도 끝나지 않는다.
                     is DomainFailure.Business -> if (failure.type == HistoryErrorType.MEAL_NOT_FOUND) return MealAnalysisWaitResult.FAILED

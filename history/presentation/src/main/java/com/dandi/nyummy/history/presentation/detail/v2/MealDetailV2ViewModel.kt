@@ -244,6 +244,8 @@ class MealDetailV2ViewModel @Inject constructor(
                 MealAnalysisWaitResult.COMPLETED -> load()
                 MealAnalysisWaitResult.FAILED -> leaveWithNotice(IconType.ERROR, R.string.history_detail_v2_calculation_failed)
                 MealAnalysisWaitResult.TIMED_OUT -> leaveWithNotice(IconType.WARNING, R.string.history_detail_v2_calculation_slow)
+                // 로그인 만료 안내가 떠 있다. 확인을 누르면 로그인 화면으로 가므로 여기서는 안내도, 이동도 하지 않는다.
+                MealAnalysisWaitResult.SESSION_EXPIRED -> Unit
             }
         }
     }
