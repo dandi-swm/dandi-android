@@ -120,14 +120,15 @@ open class BaseUseCase(
      * 백엔드 code로 구분되는 오류는 [request]가 이 함수보다 먼저 처리한다.
      *
      * 로그인 만료는 [SessionExpiryHandler]가 앱 전체에서 한 번만 세션을 정리하고 안내한다.
-     * 로그인 만료를 안내한 뒤 다시 로그인하기 전까지는 다른 공통 다이얼로그로 그 안내를 덮지 않는다.
+     * 만료 안내가 떠 있는 동안(로그인 화면으로 옮기기 전까지)은 다른 공통 다이얼로그를 띄우지 않는다.
+     * 로그인 화면에 도착한 뒤에는 로그인, 가입 요청의 404와 5xx를 평소처럼 안내한다.
      */
     fun executeCommonErrorHanding(e: HttpResponseException) {
         when {
             // code가 붙은 다른 401(인증 코드, 소셜 토큰 오류 등)은 로그인 만료가 아니라 아래 일시 오류로 안내한다.
             e.isSessionExpired() -> sessionExpiryHandler?.onSessionExpired() ?: showSessionExpiredDialog()
 
-            sessionExpiryHandler?.isExpired == true -> Unit
+            sessionExpiryHandler?.isNoticeShowing == true -> Unit
 
             e.rawCode == 404 -> {
                 messageHelper.showOneButtonDialog(
@@ -140,19 +141,26 @@ open class BaseUseCase(
                 )
             }
 
-            else -> {
-                messageHelper.showOneButtonDialog(
-                    titleText = resourceHelper.getString(StringResource.TEMPORARY_ERROR_TITLE),
-                    descText = resourceHelper.getString(StringResource.TRY_AGAIN_LATER),
-                )
-            }
+            else -> showTemporaryErrorDialog()
         }
+    }
+
+    /**
+     * "일시적인 오류" 다이얼로그. 공통 5xx 안내와 같고, 이동하지 않는다.
+     * 404를 "준비 중"으로 안내하고 뒤로 보내면 안 되는 요청(구매처럼 화면에 남아 다시 읽어야 하는 곳)이 직접 쓴다.
+     * 로그인 만료 안내가 떠 있는 동안에는 띄우지 않는다.
+     */
+    protected fun showTemporaryErrorDialog() {
+        if (sessionExpiryHandler?.isNoticeShowing == true) return
+        messageHelper.showOneButtonDialog(
+            titleText = resourceHelper.getString(StringResource.TEMPORARY_ERROR_TITLE),
+            descText = resourceHelper.getString(StringResource.TRY_AGAIN_LATER),
+        )
     }
 
     /** [sessionExpiryHandler] 없이 만든 UseCase(단위 테스트)의 로그인 만료 안내. */
     private fun showSessionExpiredDialog() {
-        messageHelper.showOneButtonDialog(
-            cantIgnore = true,
+        messageHelper.showPinnedDialog(
             descText = resourceHelper.getString(StringResource.SESSION_EXPIRED_MESSAGE),
             buttonText = resourceHelper.getString(StringResource.SIGN_IN_AGAIN),
             onClickButton = { navigationHelper.navigateToInitial() },
