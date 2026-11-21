@@ -69,6 +69,18 @@ sealed class RemoteConfigKey<T>(
         defaultValue = "",
     )
 
+    // ---- 냐미 리그(설계서 cat-character-rigging-design.md 11절) ----
+
+    /**
+     * 홈, 마이룸의 냐미를 리그(파츠 + 본 + 착용 슬롯)로 그리는지. 기본 false(스프라이트).
+     * 큰 동작 11종이 아직 근사라 디자이너 자세 원화와 실기기 성능 확인 뒤 켠다.
+     */
+    data object CatRigEnabled : RemoteConfigKey<Boolean>(
+        key = "android_cat_rig_enabled",
+        serializer = Boolean.serializer(),
+        defaultValue = false,
+    )
+
     // ---- 상점 추천 탭 배치 A/B(docs/remote-config-shop-layout-variant.md) ----
 
     /**
