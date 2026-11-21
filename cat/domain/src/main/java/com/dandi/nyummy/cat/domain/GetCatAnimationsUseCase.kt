@@ -2,12 +2,13 @@ package com.dandi.nyummy.cat.domain
 
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.common.domain.base.BaseUseCase
+import com.dandi.nyummy.common.domain.error.runSuspendCatching
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 내 고양이 체형의 상황별 애니메이션. 앱 에셋에서 읽으므로 네트워크를 기다리지 않는다.
@@ -22,14 +23,10 @@ class GetCatAnimationsUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
-    suspend operator fun invoke(): Result<CatAnimationSetVO> = try {
-        val set = repository.getAnimations()
-        if (set.animations.isEmpty()) Result.failure(IllegalStateException("앱 에셋에 냐미 애니메이션이 없다")) else Result.success(set)
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Result.failure(e)
+    suspend operator fun invoke(): Result<CatAnimationSetVO> = runSuspendCatching {
+        repository.getAnimations().also { check(it.animations.isNotEmpty()) { "앱 에셋에 냐미 애니메이션이 없다" } }
     }
 }
