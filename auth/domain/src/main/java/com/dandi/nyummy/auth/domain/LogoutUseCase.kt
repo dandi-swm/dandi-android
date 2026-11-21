@@ -30,10 +30,11 @@ class LogoutUseCase @Inject constructor(
     suspend operator fun invoke() {
         // 어떤 실패든(응답 오류, 네트워크, 예상 못 한 예외) 이 기기의 정리와 이동은 해야 한다. 취소만 다시 던진다.
         runSuspendCatching { repository.logout() }
-        pushTokenHelper.deleteToken()
-        companionMemory.clear()
-        tutorialHelper.clear()
-        widgetHelper.clear()
+        // 정리는 서로 상관없으니 하나가 실패해도(기기 저장소 쓰기 실패 등) 나머지 정리와 로그인 화면 이동은 한다.
+        runSuspendCatching { pushTokenHelper.deleteToken() }
+        runSuspendCatching { companionMemory.clear() }
+        runSuspendCatching { tutorialHelper.clear() }
+        runSuspendCatching { widgetHelper.clear() }
         navigationHelper.navigateToInitial()
     }
 }
