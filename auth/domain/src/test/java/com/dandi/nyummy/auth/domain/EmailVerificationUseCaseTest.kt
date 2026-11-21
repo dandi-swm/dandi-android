@@ -108,4 +108,27 @@ class EmailVerificationUseCaseTest {
         assertTrue(messageHelper.dialogs.isEmpty())
         assertEquals(0, navigationHelper.initialCount)
     }
+
+    @Test
+    fun `인증 코드 확인의 code 없는 401 은 로그인 만료가 아니라 입력란 아래 확인 실패로 돌려준다`() = runBlocking {
+        repository.confirmEmailVerificationError = httpException(401)
+
+        val result = useCase.confirmCode("123456", "challenge")
+
+        val failure = result.exceptionOrNull()
+        assertTrue(failure is CodeVerificationFailedException)
+        assertEquals(StringResource.AUTH_CODE_CONFIRM_FAILED.name, failure?.message)
+        assertTrue(messageHelper.dialogs.isEmpty())
+        assertEquals(0, navigationHelper.initialCount)
+    }
+
+    @Test
+    fun `인증 코드 확인의 네트워크 오류는 입력란 아래 연결 확인으로 돌려준다`() = runBlocking {
+        repository.confirmEmailVerificationError = IOException("offline")
+
+        val failure = useCase.confirmCode("123456", "challenge").exceptionOrNull()
+
+        assertTrue(failure is CodeVerificationFailedException)
+        assertEquals(StringResource.NETWORK_ERROR.name, failure?.message)
+    }
 }

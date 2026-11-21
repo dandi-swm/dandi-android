@@ -112,7 +112,12 @@ internal class FakeAuthRepository(
         resetPasswordError?.let { throw it }
     }
 
-    override suspend fun logout() = Unit
+    /** 있으면 서버 로그아웃이 이 예외를 던진다. */
+    var logoutError: Exception? = null
+
+    override suspend fun logout() {
+        logoutError?.let { throw it }
+    }
 }
 
 internal class RecordingNavigationHelper : NavigationHelper {
