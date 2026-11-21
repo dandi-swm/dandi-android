@@ -8,9 +8,11 @@ import com.dandi.nyummy.cat.domain.CatReaction
 import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
 import com.dandi.nyummy.cat.domain.RefreshCatWeightUseCase
 import com.dandi.nyummy.cat.domain.GetCatLinesUseCase
+import com.dandi.nyummy.cat.domain.rig.GetCatRigUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatLineVO
 import com.dandi.nyummy.cat.entity.CatState
+import com.dandi.nyummy.cat.presentation.CatRigUiModel
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
@@ -49,6 +51,7 @@ class HomeViewModel @Inject constructor(
     private val getHomeSummary: GetHomeSummaryUseCase,
     private val getCatAnimations: GetCatAnimationsUseCase,
     private val refreshCatWeight: RefreshCatWeightUseCase,
+    private val getCatRig: GetCatRigUseCase,
     private val catBrain: CatBrain,
     private val getCatLines: GetCatLinesUseCase,
     private val companionMemory: CompanionMemoryHelper,
@@ -151,6 +154,7 @@ class HomeViewModel @Inject constructor(
             HomeIntent.ClickCatDebug -> cycleForcedMood()
             is HomeIntent.CatMotionFinished -> if (intent.playId == currentState.catPlayId) finishCatMotion()
             HomeIntent.CatShown -> onCatShown()
+            HomeIntent.CatRigLoadFailed -> dispatch(HomeReducerEvent.CatRigChanged(null))
             HomeIntent.SummaryShown -> onSummaryShown()
             HomeIntent.TutorialAdvance -> advanceTutorial()
             HomeIntent.TutorialTargetClicked -> onTutorialTargetClicked()
@@ -198,6 +202,7 @@ class HomeViewModel @Inject constructor(
             is HomeReducerEvent.UiHiddenChanged -> state.copy(isUiHidden = event.hidden)
             HomeReducerEvent.CatAnimationsLoaded -> state.copy(isCatAnimationFailed = false)
             HomeReducerEvent.CatAnimationsLoadFailed -> state.copy(isCatAnimationFailed = true)
+            is HomeReducerEvent.CatRigChanged -> state.copy(catRig = event.rig)
             is HomeReducerEvent.CatMotionChanged -> state.copy(
                 catState = event.state,
                 catPlayId = event.playId,
@@ -372,6 +377,7 @@ class HomeViewModel @Inject constructor(
                 .onSuccess {
                     catAnimations = it
                     dispatch(HomeReducerEvent.CatAnimationsLoaded)
+                    loadCatRig()
                     driveCat()
                 }
                 .onFailure { dispatch(HomeReducerEvent.CatAnimationsLoadFailed) }
@@ -389,7 +395,13 @@ class HomeViewModel @Inject constructor(
                 catAnimations = it
                 upcoming = null
             }
+            loadCatRig()
         }
+    }
+
+    /** 리그가 켜져 있으면 지금 체형의 리그 냐미를 읽는다. 꺼져 있으면 null이라 스프라이트로 그린다. */
+    private suspend fun loadCatRig() {
+        dispatch(HomeReducerEvent.CatRigChanged(getCatRig()?.let { CatRigUiModel(it) }))
     }
 
     /**

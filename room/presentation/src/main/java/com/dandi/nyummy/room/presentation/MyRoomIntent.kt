@@ -45,6 +45,9 @@ sealed interface MyRoomIntent : MviIntent {
     /** 냐미 동작 하나가 끝났다. 같은 상태의 다른 동작을 이어 간다. */
     data class CatMotionFinished(val playId: Int) : MyRoomIntent
 
+    /** 리그 냐미 그림을 읽지 못함. 스프라이트로 되돌린다. */
+    data object CatRigLoadFailed : MyRoomIntent
+
     /** 튜토리얼 소개 카드를 눌렀다. 다음 대사로, 마지막이면 마이룸 단계를 마치고 홈으로 돌아간다. */
     data object TutorialAdvance : MyRoomIntent
 

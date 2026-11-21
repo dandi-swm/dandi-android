@@ -1,5 +1,6 @@
 package com.dandi.nyummy.room.presentation
 
+import com.dandi.nyummy.cat.presentation.CatRigUiModel
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
 import com.dandi.nyummy.room.entity.OwnedRoomItemPageVO
 import com.dandi.nyummy.room.entity.RoomItemCategory
@@ -34,6 +35,9 @@ sealed interface MyRoomReducerEvent : ReducerEvent {
     data class SaveFinished(val isSaved: Boolean) : MyRoomReducerEvent
 
     data class CatMotionChanged(val motion: RoomCatMotion) : MyRoomReducerEvent
+
+    /** 리그 냐미를 읽음(꺼져 있거나 그림을 못 읽으면 null) */
+    data class CatRigChanged(val rig: CatRigUiModel?) : MyRoomReducerEvent
 
     /** 튜토리얼을 띄우거나 바꾸거나 닫았다(null). */
     data class TutorialChanged(val tutorial: MyRoomTutorialUiState?) : MyRoomReducerEvent

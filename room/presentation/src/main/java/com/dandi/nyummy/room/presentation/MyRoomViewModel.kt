@@ -3,8 +3,10 @@ package com.dandi.nyummy.room.presentation
 import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.cat.domain.CatMotionPicker
 import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
+import com.dandi.nyummy.cat.domain.rig.GetCatRigUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationVO
 import com.dandi.nyummy.cat.entity.CatState
+import com.dandi.nyummy.cat.presentation.CatRigUiModel
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
@@ -45,6 +47,7 @@ class MyRoomViewModel @Inject constructor(
     private val getOwnedRoomItems: GetOwnedRoomItemsUseCase,
     private val saveRoom: SaveRoomUseCase,
     private val getCatAnimations: GetCatAnimationsUseCase,
+    private val getCatRig: GetCatRigUseCase,
     private val catMotionPicker: CatMotionPicker,
     private val navigationHelper: NavigationHelper,
     private val messageHelper: MessageHelper,
@@ -82,6 +85,7 @@ class MyRoomViewModel @Inject constructor(
             is MyRoomIntent.ReachInventoryEnd -> loadMoreItems(intent.category)
             MyRoomIntent.ClickShop -> leave(::openShop)
             is MyRoomIntent.CatMotionFinished -> if (intent.playId == currentState.catMotion?.playId) startCatMotion()
+            MyRoomIntent.CatRigLoadFailed -> dispatch(MyRoomReducerEvent.CatRigChanged(null))
             MyRoomIntent.TutorialAdvance -> advanceTutorial()
             MyRoomIntent.TutorialTargetClicked -> if (currentState.tutorial?.phase == MyRoomTutorialPhase.Place) {
                 changeTutorial(MyRoomTutorialUiState(MyRoomTutorialPhase.Save))
@@ -123,6 +127,7 @@ class MyRoomViewModel @Inject constructor(
                 savedRoom = if (event.isSaved) state.room else state.savedRoom,
             )
             is MyRoomReducerEvent.CatMotionChanged -> state.copy(catMotion = event.motion)
+            is MyRoomReducerEvent.CatRigChanged -> state.copy(catRig = event.rig)
             is MyRoomReducerEvent.TutorialChanged -> state.copy(tutorial = event.tutorial)
         }
 
@@ -197,6 +202,7 @@ class MyRoomViewModel @Inject constructor(
         viewModelScope.launch {
             getCatAnimations().onSuccess { set ->
                 catAnimation = set.animations[CatState.ROOM_IDLE]
+                dispatch(MyRoomReducerEvent.CatRigChanged(getCatRig()?.let { CatRigUiModel(it) }))
                 startCatMotion()
             }
         }

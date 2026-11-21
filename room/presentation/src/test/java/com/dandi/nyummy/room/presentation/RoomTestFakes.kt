@@ -1,12 +1,16 @@
 package com.dandi.nyummy.room.presentation
 
 import com.dandi.nyummy.cat.domain.CatRepository
+import com.dandi.nyummy.cat.domain.rig.CatRigRepository
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatAnimationVO
 import com.dandi.nyummy.cat.entity.CatMotionVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.cat.entity.SpriteClipVO
 import com.dandi.nyummy.cat.entity.SpriteFrameVO
+import com.dandi.nyummy.cat.entity.rig.AttachmentItemVO
+import com.dandi.nyummy.cat.entity.rig.CatRigCharacterVO
+import com.dandi.nyummy.cat.entity.rig.CatSkinId
 import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.error.HttpResponseStatus
 import com.dandi.nyummy.common.domain.helper.MessageHelper
@@ -231,4 +235,13 @@ internal object FakeTTIHelper : TTIHelper {
     override fun endTTITracking() = Unit
     override fun shotTTILogging() = Unit
     override fun addTTIMetaData(metadata: TTIMetaData, value: Any?) = Unit
+}
+
+/** 리그가 꺼진 저장소(원격 구성 기본값). 마이룸은 스프라이트로 그린다. */
+internal object DisabledCatRigRepository : CatRigRepository {
+    override fun isEnabled(): Boolean = false
+    override suspend fun getCharacter(skin: CatSkinId, body: String?): CatRigCharacterVO? = null
+    override suspend fun getItems(): List<AttachmentItemVO> = emptyList()
+    override fun selectedSkin(): CatSkinId = CatSkinId.NYAMI
+    override fun equippedItemIds(): List<String> = emptyList()
 }
