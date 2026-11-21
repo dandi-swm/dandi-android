@@ -4,6 +4,7 @@ import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
@@ -18,7 +19,8 @@ class AttachInquiryImageUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(photoUri: String): Result<String> = try {
         Result.success(repository.prepareInquiryImage(photoUri))

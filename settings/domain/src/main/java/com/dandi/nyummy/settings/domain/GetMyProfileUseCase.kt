@@ -1,16 +1,15 @@
 package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.settings.entity.MyProfileVO
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 마이페이지에 보일 내 프로필을 읽는다.
@@ -23,34 +22,28 @@ class GetMyProfileUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
-    suspend operator fun invoke(onRetry: () -> Unit, onSignOut: () -> Unit): Result<MyProfileVO> = try {
-        Result.success(repository.getMyProfile())
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: HttpResponseException) {
-        handleHttpError<MyProfileErrorType>(
-            e,
-            onDomainError = { error ->
-                if (error == MyProfileErrorType.USER_NOT_FOUND) {
-                    messageHelper.showOneButtonDialog(
-                        descText = resourceHelper.getString(error.errorMsg),
-                        cantIgnore = true,
-                        buttonText = resourceHelper.getString(StringResource.SIGN_IN_AGAIN),
-                        onClickButton = onSignOut,
-                    )
-                } else {
-                    messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(error.errorMsg))
-                }
-            },
-            onUnknownError = { showLoadFailed(onRetry) },
-        )
-        Result.failure(e)
-    } catch (e: Exception) {
-        // 네트워크 끊김 등. 던지면 화면 코루틴이 앱을 죽인다.
-        showLoadFailed(onRetry)
-        Result.failure(e)
+    suspend operator fun invoke(onRetry: () -> Unit, onSignOut: () -> Unit): Result<MyProfileVO> = request(
+        MyProfileErrorType.entries,
+        onBusinessError = { type, cause ->
+            if (type == MyProfileErrorType.USER_NOT_FOUND) {
+                messageHelper.showOneButtonDialog(
+                    descText = resourceHelper.getString(type.errorMsg),
+                    cantIgnore = true,
+                    buttonText = resourceHelper.getString(StringResource.SIGN_IN_AGAIN),
+                    onClickButton = onSignOut,
+                )
+            } else {
+                messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(type.errorMsg))
+            }
+            Result.failure(cause)
+        },
+        // 네트워크 끊김, 등록하지 않은 응답 오류, 예상 못 한 예외.
+        onUnknownError = { showLoadFailed(onRetry) },
+    ) {
+        repository.getMyProfile()
     }
 
     private fun showLoadFailed(onRetry: () -> Unit) {
