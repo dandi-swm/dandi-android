@@ -99,6 +99,30 @@ class TokenRefresherImplTest {
         assertEquals("old-refresh", tokenProvider.refreshToken)
     }
 
+    @Test
+    fun `401 이 아닌 4xx(게이트웨이의 403, 429)는 세션 만료가 아니라 IOException 으로 던지고 토큰을 남긴다`() = runBlocking {
+        for (code in listOf(403, 429, 400)) {
+            server.enqueue(MockResponse().setResponseCode(code))
+
+            assertThrowsIOException { refresher.refresh("old-refresh") }
+
+            assertEquals("$code", "old-access", tokenProvider.accessToken)
+            assertEquals("$code", "old-refresh", tokenProvider.refreshToken)
+        }
+    }
+
+    @Test
+    fun `성공 응답에 액세스 토큰이 없거나 비어 있으면 IOException 으로 던지고 토큰을 남긴다`() = runBlocking {
+        for (body in listOf("{}", """{"accessToken":"","refreshToken":"new-refresh"}""", "")) {
+            server.enqueue(MockResponse().setResponseCode(200).setBody(body))
+
+            assertThrowsIOException { refresher.refresh("old-refresh") }
+
+            assertEquals("body=$body", "old-access", tokenProvider.accessToken)
+            assertEquals("body=$body", "old-refresh", tokenProvider.refreshToken)
+        }
+    }
+
     private suspend fun assertThrowsIOException(block: suspend () -> Unit) {
         try {
             block()

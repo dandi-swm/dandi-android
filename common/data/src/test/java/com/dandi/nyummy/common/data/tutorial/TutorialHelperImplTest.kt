@@ -1,6 +1,15 @@
 package com.dandi.nyummy.common.data.tutorial
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import java.io.IOException
+import org.junit.Assert.fail
+import org.junit.Assert.assertSame
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CancellationException
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.core.DataStore
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -95,5 +104,40 @@ class TutorialHelperImplTest {
 
         assertTrue(helper.pendingSteps().isEmpty())
         assertFalse(helper.isMealTutorialRequired())
+    }
+
+    @Test
+    fun `기기 저장소 쓰기가 실패해도 기록 함수는 예외를 던지지 않는다`() = runBlocking {
+        val failing = TutorialHelperImpl(FailingWriteDataStore { IOException("No space left on device") })
+
+        // 화면이 viewModelScope.launch 에서 바로 부르는 기록 함수들. 하나라도 던지면 앱이 꺼진다.
+        failing.startAfterMeal()
+        failing.complete(TutorialStep.HOME_MAIL)
+        failing.skipToHealthStory()
+        failing.finish()
+        failing.setMealTutorialRequired(true)
+        failing.clear()
+
+        // 남지 않았으니 다음에 안내가 다시 뜰 수 있다(읽기는 그대로 된다).
+        assertTrue(failing.pendingSteps().isEmpty())
+    }
+
+    @Test
+    fun `IOException 밖의 쓰기 실패도 삼키지만 코루틴 취소는 다시 던진다`() = runBlocking {
+        TutorialHelperImpl(FailingWriteDataStore { IllegalStateException("corrupted") }).finish()
+
+        val cancel = CancellationException("screen closed")
+        try {
+            TutorialHelperImpl(FailingWriteDataStore { cancel }).complete(TutorialStep.MAILBOX)
+            fail("CancellationException 을 삼켰다")
+        } catch (e: CancellationException) {
+            assertSame(cancel, e)
+        }
+    }
+
+    /** 읽기는 빈 값, 쓰기는 [error]를 던지는 DataStore. */
+    private class FailingWriteDataStore(private val error: () -> Exception) : DataStore<Preferences> {
+        override val data: Flow<Preferences> = flowOf(emptyPreferences())
+        override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences = throw error()
     }
 }
