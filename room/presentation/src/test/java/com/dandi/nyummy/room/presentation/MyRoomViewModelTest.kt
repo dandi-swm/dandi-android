@@ -3,6 +3,7 @@ package com.dandi.nyummy.room.presentation
 import com.dandi.nyummy.cat.domain.CatMotionPicker
 import com.dandi.nyummy.cat.domain.CatRepository
 import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
+import com.dandi.nyummy.cat.domain.rig.GetCatRigUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatAnimationVO
 import com.dandi.nyummy.cat.entity.CatMotionVO
@@ -631,6 +632,7 @@ class MyRoomViewModelTest {
             getOwnedRoomItems = deps(::GetOwnedRoomItemsUseCase),
             saveRoom = deps(::SaveRoomUseCase),
             getCatAnimations = GetCatAnimationsUseCase(catRepository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
+            getCatRig = GetCatRigUseCase(DisabledCatRigRepository),
             catMotionPicker = CatMotionPicker(Random(seed = 3)),
             navigationHelper = navigationHelper,
             messageHelper = messageHelper,

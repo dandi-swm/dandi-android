@@ -40,9 +40,15 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.dandi.nyummy.cat.entity.CatState
+import com.dandi.nyummy.cat.presentation.CatRigMotion
+import com.dandi.nyummy.cat.presentation.CatRigUiModel
+import com.dandi.nyummy.cat.presentation.CatRigView
 import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButton
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpritePrefetch
@@ -82,6 +88,7 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  *
  * @param frame 무대 크기와 그 안의 방 그림 자리, 보이는 영역. 무대 크기와 같게 [modifier]로 크기를 정해 넘긴다.
  * @param cat 냐미가 지금 하는 동작. null이면 냐미를 그리지 않는다.
+ * @param catRig 리그로 그릴 냐미. 있으면 같은 동작을 리그로, 없으면 스프라이트로 그린다.
  * @param onCatMotionFinished 냐미 동작 하나가 끝났다(재생 번호를 넘긴다).
  * @param putAwayLabel 도구 모음의 빼기 버튼 설명(마이룸은 "보관함에 넣기").
  */
@@ -98,6 +105,8 @@ internal fun RoomStage(
     onBringToFront: () -> Unit,
     onPutAway: () -> Unit,
     modifier: Modifier = Modifier,
+    catRig: CatRigUiModel? = null,
+    onCatRigLoadFailed: () -> Unit = {},
     @StringRes putAwayLabel: Int = R.string.my_room_put_away,
 ) {
     Box(
@@ -161,7 +170,15 @@ internal fun RoomStage(
                     isFailed = failedUrls[liftedItem.imageUrl] == true,
                 )
             }
-            if (cat != null) {
+            if (cat != null && catRig != null) {
+                RigRoomCat(
+                    motion = cat,
+                    rig = catRig,
+                    rect = frame.catRect,
+                    onMotionFinished = onCatMotionFinished,
+                    onLoadFailed = onCatRigLoadFailed,
+                )
+            } else if (cat != null) {
                 RoomCat(
                     motion = cat,
                     rect = frame.catRect,
@@ -387,6 +404,27 @@ private fun RoomCat(
         integerScale = false,
         contentDescription = catNameStringResource(R.string.my_room_character_description),
         modifier = Modifier.placeAt(rect),
+    )
+}
+
+/** 방 가운데 바닥에 앉은 리그 냐미. 스프라이트 냐미와 같은 자리, 같은 동작 계약이다. */
+@Composable
+private fun RigRoomCat(
+    motion: RoomCatMotion,
+    rig: CatRigUiModel,
+    rect: Rect,
+    onMotionFinished: (playId: Int) -> Unit,
+    onLoadFailed: () -> Unit,
+) {
+    val description = catNameStringResource(R.string.my_room_character_description)
+    CatRigView(
+        character = rig.character,
+        motion = CatRigMotion(motion = motion.motionName, state = CatState.ROOM_IDLE, playId = motion.playId, restMillis = motion.restMillis),
+        onMotionFinished = onMotionFinished,
+        onLoadFailed = onLoadFailed,
+        modifier = Modifier
+            .placeAt(rect)
+            .semantics { contentDescription = description },
     )
 }
 

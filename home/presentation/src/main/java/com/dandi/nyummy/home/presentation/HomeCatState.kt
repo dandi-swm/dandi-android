@@ -2,6 +2,7 @@ package com.dandi.nyummy.home.presentation
 
 import androidx.compose.runtime.Immutable
 import com.dandi.nyummy.cat.domain.CatPick
+import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.cat.entity.SpriteClipVO
 import com.dandi.nyummy.cat.entity.SpriteFrameVO
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteClip
@@ -17,6 +18,8 @@ import kotlinx.collections.immutable.toImmutableList
  * @property playId 바뀌면 같은 묶음이어도 처음부터 다시 재생한다
  * @property restMillis 동작이 끝난 뒤 다음 동작까지 쉬는 시간
  * @property loopTimes 되풀이 조각을 몇 번 돌지. null이면 재생 컴포넌트의 기본값
+ * @property motionName 동작 이름. 리그 냐미가 클립을 찾는다.
+ * @property state 동작을 고른 상황. 리그 냐미가 이름으로 클립을 못 찾으면 상황 기본 클립을 쓴다.
  */
 @Immutable
 data class HomeCatMotion(
@@ -25,6 +28,8 @@ data class HomeCatMotion(
     val playId: Int,
     val restMillis: Long,
     val loopTimes: Int? = null,
+    val motionName: String = "",
+    val state: CatState? = null,
 )
 
 /**
@@ -41,6 +46,8 @@ internal fun CatPick.toHomeCatMotion(
     playId = playId,
     restMillis = restMillis,
     loopTimes = motion.loopTimes,
+    motionName = motion.name,
+    state = state,
 )
 
 private fun SpriteClipVO.toSpriteClip(frame: SpriteFrameVO, loop: Boolean) = NyummySpriteClip(

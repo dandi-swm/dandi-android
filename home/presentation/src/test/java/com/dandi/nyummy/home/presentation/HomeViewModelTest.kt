@@ -6,6 +6,8 @@ import com.dandi.nyummy.cat.domain.CatRepository
 import com.dandi.nyummy.cat.domain.GetCatAnimationsUseCase
 import com.dandi.nyummy.cat.domain.GetCatLinesUseCase
 import com.dandi.nyummy.cat.domain.RefreshCatWeightUseCase
+import com.dandi.nyummy.cat.domain.rig.CatRigRepository
+import com.dandi.nyummy.cat.domain.rig.GetCatRigUseCase
 import com.dandi.nyummy.cat.entity.CatAnimationSetVO
 import com.dandi.nyummy.cat.entity.CatAnimationVO
 import com.dandi.nyummy.cat.entity.CatLineVO
@@ -13,6 +15,9 @@ import com.dandi.nyummy.cat.entity.CatMotionVO
 import com.dandi.nyummy.cat.entity.CatState
 import com.dandi.nyummy.cat.entity.SpriteClipVO
 import com.dandi.nyummy.cat.entity.SpriteFrameVO
+import com.dandi.nyummy.cat.entity.rig.AttachmentItemVO
+import com.dandi.nyummy.cat.entity.rig.CatRigCharacterVO
+import com.dandi.nyummy.cat.entity.rig.CatSkinId
 import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
@@ -138,6 +143,7 @@ class HomeViewModelTest {
                 navigationHelper = navigationHelper,
                 ttiHelper = FakeTTIHelper,
             ),
+            getCatRig = GetCatRigUseCase(DisabledCatRigRepository),
             catBrain = CatBrain(Random(seed = 1)),
             getCatLines = GetCatLinesUseCase(repository = object : CatLineRepository {
                 override suspend fun getLines(): List<CatLineVO> = catLines
@@ -1091,4 +1097,13 @@ class HomeViewModelTest {
         const val TTI_SHOT = "shot"
         val IMAGE_END = "end:${TimelineCategory.IMAGE_LOADED_TIME.name}"
     }
+}
+
+/** 리그가 꺼진 저장소(원격 구성 기본값). 홈은 스프라이트로 그린다. */
+private object DisabledCatRigRepository : CatRigRepository {
+    override fun isEnabled(): Boolean = false
+    override suspend fun getCharacter(skin: CatSkinId, body: String?): CatRigCharacterVO? = null
+    override suspend fun getItems(): List<AttachmentItemVO> = emptyList()
+    override fun selectedSkin(): CatSkinId = CatSkinId.NYAMI
+    override fun equippedItemIds(): List<String> = emptyList()
 }

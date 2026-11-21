@@ -21,6 +21,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.dandi.nyummy.cat.presentation.CatRigMotion
+import com.dandi.nyummy.cat.presentation.CatRigUiModel
+import com.dandi.nyummy.cat.presentation.CatRigView
 import com.dandi.nyummy.common.presentation.cat.catNameStringResource
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpritePrefetch
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummySpriteSequenceView
@@ -47,6 +50,7 @@ import kotlinx.collections.immutable.persistentListOf
  *
  * @param room 꾸민 방. null이면 아이템 없이 기본 빈 방만 그린다.
  * @param catMotion 서버에서 받은 냐미 동작. 받는 중이면 null이다.
+ * @param catRig 리그로 그릴 냐미. 있으면 같은 동작을 리그로 그리고, 없으면 스프라이트로 그린다(설계서 11절 피처 플래그).
  * @param useFallbackCat 냐미 애니메이션을 받지 못해 기본 냐미(앱에 든 스프라이트)로 대신한다.
  * @param onCatShown 냐미가 처음 화면에 보인 순간(시트를 받아 그렸거나 기본 냐미를 그렸을 때). 홈 TTI 에 쓴다.
  */
@@ -64,6 +68,8 @@ internal fun HomeRoom(
     modifier: Modifier = Modifier,
     speechKey: Any = speech,
     onSpeechRevealed: () -> Unit = {},
+    catRig: CatRigUiModel? = null,
+    onCatRigLoadFailed: () -> Unit = {},
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -82,6 +88,19 @@ internal fun HomeRoom(
             .offset(y = nyummyTop)
             .size(nyummySize)
         when {
+            catMotion != null && catRig != null -> {
+                val description = catNameStringResource(R.string.home_character_description)
+                CatRigView(
+                    character = catRig.character,
+                    motion = catMotion.toRigMotion(),
+                    onMotionFinished = onCatMotionFinished,
+                    onShown = onCatShown,
+                    onLoadFailed = onCatRigLoadFailed,
+                    modifier = nyummyModifier
+                        .nyummyClickable(onClick = onCatClick)
+                        .semantics { contentDescription = description },
+                )
+            }
             catMotion != null -> HomeNyummy(
                 motion = catMotion,
                 displayWidth = nyummySize,
@@ -182,6 +201,14 @@ private fun HomeFallbackNyummy(
         )
     }
 }
+
+private fun HomeCatMotion.toRigMotion() = CatRigMotion(
+    motion = motionName,
+    state = state,
+    playId = playId,
+    restMillis = restMillis,
+    loopTimes = loopTimes ?: DefaultCatLoopTimes,
+)
 
 /** 되풀이 조각을 몇 번 돌지 따로 정하지 않은 동작의 기본값(재생 컴포넌트 기본과 같음). */
 private const val DefaultCatLoopTimes = 3

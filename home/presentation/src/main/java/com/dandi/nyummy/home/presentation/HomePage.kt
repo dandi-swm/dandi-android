@@ -94,6 +94,8 @@ internal fun HomeScreen(
             room = uiState.room,
             hasRecordedToday = uiState.hasRecordedToday,
             catMotion = uiState.catMotion,
+            catRig = uiState.catRig,
+            onCatRigLoadFailed = { onIntent(HomeIntent.CatRigLoadFailed) },
             useFallbackCat = uiState.isCatAnimationFailed,
             onCatClick = { onIntent(HomeIntent.ClickCat) },
             onCatMotionFinished = { playId -> onIntent(HomeIntent.CatMotionFinished(playId)) },
