@@ -32,6 +32,10 @@ jobs:
         with:
           persist-credentials: false
 
+      # 언어별 문자열 키·서식 인자, 일본어 리소스의 한글, 화면 코드의 한글 문자열을 검사한다(tools/i18n/check_i18n.py 맨 위 설명).
+      - name: Check translations
+        run: python3 tools/i18n/check_i18n.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
