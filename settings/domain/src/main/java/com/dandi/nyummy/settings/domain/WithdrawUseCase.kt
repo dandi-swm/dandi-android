@@ -1,6 +1,7 @@
 package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
+import com.dandi.nyummy.common.domain.error.runSuspendCatching
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
@@ -48,10 +49,12 @@ class WithdrawUseCase @Inject constructor(
             repository.withdraw()
         }
         if (withdrawn.isFailure) return withdrawn
-        pushTokenHelper.deleteToken()
-        companionMemory.clear()
-        tutorialHelper.clear()
-        widgetHelper.clear()
+        // 서버에서는 이미 탈퇴했다. 정리는 서로 상관없으니 하나가 실패해도(기기 저장소 쓰기 실패 등)
+        // 나머지 정리와 완료 안내, 첫 화면 이동은 한다.
+        runSuspendCatching { pushTokenHelper.deleteToken() }
+        runSuspendCatching { companionMemory.clear() }
+        runSuspendCatching { tutorialHelper.clear() }
+        runSuspendCatching { widgetHelper.clear() }
         messageHelper.showSnackBar(iconType = IconType.SUCCESS, messageText = resourceHelper.getString(StringResource.SETTINGS_WITHDRAWN))
         navigationHelper.navigateToInitial()
         return Result.success(Unit)
