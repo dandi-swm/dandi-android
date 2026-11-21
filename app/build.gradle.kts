@@ -199,6 +199,7 @@ dependencies {
     implementation(project(":home:data"))
     implementation(project(":home:entity"))
 
+    implementation(project(":cat:presentation"))
     implementation(project(":cat:domain"))
     implementation(project(":cat:data"))
     implementation(project(":cat:entity"))
