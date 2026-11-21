@@ -1,19 +1,17 @@
 package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
-import com.dandi.nyummy.common.domain.error.isSessionExpired
+import com.dandi.nyummy.common.domain.error.CommonErrorPolicy
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.settings.entity.MyProfileVO
 import com.dandi.nyummy.settings.entity.SettingsVO
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 
 /**
  * 설정 화면 값(알림, 식사 시각, 집사 이름)을 한 번에 읽는다.
@@ -25,27 +23,26 @@ class GetSettingsUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
-    suspend operator fun invoke(onRetry: () -> Unit): Result<SettingsVO> = try {
+    suspend operator fun invoke(onRetry: () -> Unit): Result<SettingsVO> = request(
+        SettingsErrorType.entries,
+        // 서버 code(회원 없음 등)는 공통 404 안내보다 먼저 그 문구로 안내한다.
+        onBusinessError = { type, cause ->
+            messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(type.errorMsg))
+            Result.failure(cause)
+        },
+        // 네트워크 끊김 등. 읽기 전에는 토글을 막으므로 다시 시도를 안내한다.
+        onUnknownError = { showLoadFailed(onRetry) },
+    ) {
         val notification = repository.getNotificationSettings()
         val profile = getProfileOrNull()
-        Result.success(
-            SettingsVO(
-                notification = notification,
-                mealTimes = profile?.mealTimes,
-                nickname = profile?.nickname,
-            ),
+        SettingsVO(
+            notification = notification,
+            mealTimes = profile?.mealTimes,
+            nickname = profile?.nickname,
         )
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: HttpResponseException) {
-        if (e.isCommonErrorHandling()) executeCommonErrorHanding(e) else showLoadFailed(onRetry)
-        Result.failure(e)
-    } catch (e: Exception) {
-        // 네트워크 끊김 등. 던지면 화면 코루틴이 앱을 죽인다. 읽기 전에는 토글을 막으므로 다시 시도를 안내한다.
-        showLoadFailed(onRetry)
-        Result.failure(e)
     }
 
     private fun showLoadFailed(onRetry: () -> Unit) {
@@ -61,14 +58,6 @@ class GetSettingsUseCase @Inject constructor(
      * 내 프로필(식사 시각, 집사 이름)은 서버에서 읽는다. 설정 화면에서는 한 줄 요약일 뿐이라, 읽지 못해도 다른 설정은 보여 주도록 null로 둔다.
      * 로그인 만료만 안내한다. 화면에 돌아올 때마다 다시 읽으므로 다른 오류까지 다이얼로그로 띄우지 않는다.
      */
-    private suspend fun getProfileOrNull(): MyProfileVO? = try {
-        repository.getMyProfile()
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: HttpResponseException) {
-        if (e.isSessionExpired()) executeCommonErrorHanding(e)
-        null
-    } catch (e: Exception) {
-        null
-    }
+    private suspend fun getProfileOrNull(): MyProfileVO? =
+        request(commonErrors = CommonErrorPolicy.SESSION_ONLY) { repository.getMyProfile() }.getOrNull()
 }

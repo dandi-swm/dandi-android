@@ -1,16 +1,15 @@
 package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.settings.entity.MyProfileChange
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 내 프로필에서 [MyProfileChange]가 바꾸는 항목만 서버에 저장한다. 집사 이름은 앞뒤 공백을 빼고 보낸다.
@@ -24,27 +23,23 @@ class UpdateMyProfileUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(change: MyProfileChange, onRetry: () -> Unit): Result<MyProfileChange> {
         val normalized = change.copy(nickname = change.nickname?.trim())
         if (normalized.isEmpty) return Result.success(normalized)
-        return try {
+        return request(
+            MyProfileErrorType.entries,
+            onBusinessError = { type, cause ->
+                messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(type.errorMsg))
+                Result.failure(cause)
+            },
+            // 네트워크 끊김, 등록하지 않은 응답 오류, 예상 못 한 예외.
+            onUnknownError = { showSaveFailed(onRetry) },
+        ) {
             repository.updateMyProfile(normalized)
-            Result.success(normalized)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: HttpResponseException) {
-            handleHttpError<MyProfileErrorType>(
-                e,
-                onDomainError = { messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(it.errorMsg)) },
-                onUnknownError = { showSaveFailed(onRetry) },
-            )
-            Result.failure(e)
-        } catch (e: Exception) {
-            // 네트워크 끊김 등. 던지면 화면 코루틴이 앱을 죽인다.
-            showSaveFailed(onRetry)
-            Result.failure(e)
+            normalized
         }
     }
 
