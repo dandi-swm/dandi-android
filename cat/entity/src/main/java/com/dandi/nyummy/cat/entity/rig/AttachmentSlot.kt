@@ -103,6 +103,7 @@ data class AttachmentArtVO(val key: String = "")
  * @property earLayerMode 모자일 때 귀 처리. 모자가 아니면 무시한다.
  * @property brimY OVER_EARS 모자의 챙 선(0..1, 그림 위에서). 귀는 이 선 위쪽이 잘린다.
  * @property hidesDefaultBandana 이 아이템을 끼우면 기본 반다나를 숨긴다. 목 장식은 항상 숨긴다.
+ * @property lineColor 코드로 그린 임시 그림(`sample:`)의 외곽선 색(ARGB). 없으면 그리는 쪽 기본 색이다. 원화 그림은 쓰지 않는다.
  */
 data class AttachmentItemVO(
     val id: String = "",
@@ -116,6 +117,7 @@ data class AttachmentItemVO(
     val earLayerMode: EarLayerMode = EarLayerMode.BETWEEN_EARS,
     val brimY: Float = 1f,
     val hidesDefaultBandana: Boolean = false,
+    val lineColor: Int? = null,
 ) {
     /** 기본 반다나를 숨기는지. 목 장식은 늘 대신 들어가므로 숨긴다. */
     val replacesBandana: Boolean get() = slot == AttachmentSlot.NECK_ACCESSORY || hidesDefaultBandana
