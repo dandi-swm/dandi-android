@@ -13,12 +13,12 @@ app                                  실행 가능한 Application (모든 featur
 ├─ main/{entity,domain,data,presentation}     네비게이션 셸 (AppNavHost, AppRouteRegistry, 딥링크)
 ├─ <feature>/{entity,domain,data,presentation}  기능 단위 (intro / auth / onboarding / home / meal / history /
 │                                               mailbox / room / settings / legal / collection / shop / quest / achievement)
-├─ cat/{entity,domain,data}          여러 feature가 함께 쓰는 고양이 도메인 (presentation 없음)
+├─ cat/{entity,domain,data,presentation}  여러 feature가 함께 쓰는 고양이 도메인 (presentation은 리그 렌더러만)
 ├─ tti                               TTI 계측 (순수 JVM)
 └─ baselineprofile                   Macrobenchmark / Baseline Profile 수집
 ```
 
-**공유 도메인 변형 (`cat`)**: 화면 없이 여러 feature가 같은 데이터를 쓸 때는 presentation 없이 entity·domain·data 3모듈만 둔다. 쓰는 쪽 presentation이 `:cat:domain`을 의존한다(지금은 `home`, `room`). 화면이 생기면 그 화면은 이 모듈이 아니라 쓰는 feature 쪽에 둔다.
+**공유 도메인 변형 (`cat`)**: 여러 feature가 같은 고양이 데이터를 쓴다. 쓰는 쪽 presentation이 `:cat:domain`을 의존한다(지금은 `home`, `room`). `:cat:presentation`에는 홈과 마이룸이 같이 그리는 리그 냐미 컴포넌트(`CatRigView`, 렌더러)만 두고, 화면(Page)은 두지 않는다. 화면이 생기면 그 화면은 쓰는 feature 쪽에 둔다. 자세한 구조는 [cat-rig.md](cat-rig.md).
 
 **의존 방향 (단방향, 위반 금지):**
 
