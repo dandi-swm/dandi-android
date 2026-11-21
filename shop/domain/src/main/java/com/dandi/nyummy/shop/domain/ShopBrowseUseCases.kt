@@ -2,6 +2,7 @@ package com.dandi.nyummy.shop.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
 import com.dandi.nyummy.common.domain.error.CommonErrorPolicy
+import com.dandi.nyummy.common.domain.error.isCommonErrorNotified
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
@@ -65,6 +66,9 @@ class GetShopRecommendPageUseCase @Inject constructor(
     ttiHelper: TTIHelper,
     sessionExpiryHandler: SessionExpiryHandler? = null,
 ) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
+
+    /** 실패 [error]를 이 UseCase가 이미 공통 안내로 알렸는지. 화면은 false일 때만 자기 안내를 띄운다. */
+    fun isNotified(error: Throwable): Boolean = error.isCommonErrorNotified(ShopErrorType.entries)
 
     suspend operator fun invoke(): Result<ShopRecommendPageVO> = request(ShopErrorType.entries) {
         val layoutVariant = ShopLayoutVariant.of(remoteConfigHelper.get(RemoteConfigKey.ShopLayoutVariant))

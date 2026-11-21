@@ -8,11 +8,12 @@ import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
-import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
+import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.tti.TTIHelper
 import java.time.ZoneId
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 갤러리에서 고른 사진을 식사 기록용 촬영본으로 가져온다.
@@ -45,7 +46,7 @@ class ImportGalleryMealPhotoUseCase @Inject constructor(
         }
     } catch (e: MealGalleryPhotoLoadException) {
         reject(StringResource.MEAL_GALLERY_LOAD_FAILED, reason = "gallery_load_failed", cause = e)
-    } catch (e: java.util.concurrent.CancellationException) {
+    } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
         reject(StringResource.MEAL_GALLERY_IMPORT_FAILED, reason = "gallery_import_failed", cause = e)
