@@ -7,10 +7,12 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.dandi.nyummy.common.data.preference.AppPreferenceProvider
 import com.dandi.nyummy.common.data.preference.AppPreferenceProviderImpl
 import com.dandi.nyummy.common.data.preference.CompanionMemoryHelperImpl
+import com.dandi.nyummy.common.data.token.SessionTokenHelperImpl
 import com.dandi.nyummy.common.data.token.TokenProvider
 import com.dandi.nyummy.common.data.token.TokenProviderImpl
 import com.dandi.nyummy.common.data.tutorial.TutorialHelperImpl
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
+import com.dandi.nyummy.common.domain.helper.SessionTokenHelper
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import dagger.Module
 import dagger.Provides
@@ -54,6 +56,10 @@ object LocalStorageModule {
     fun provideTokenProvider(
         @AuthTokenDataStore dataStore: DataStore<Preferences>,
     ): TokenProvider = TokenProviderImpl(dataStore)
+
+    @Provides
+    @Singleton
+    fun provideSessionTokenHelper(tokenProvider: TokenProvider): SessionTokenHelper = SessionTokenHelperImpl(tokenProvider)
 
     @Provides
     @Singleton
