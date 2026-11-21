@@ -68,14 +68,16 @@ fun CatRigView(
         value = CatRigTextureLoader.load(context, character, colors)
     }
     val model = remember(character) { CatRigModel(character) }
-    val animator = remember(model) { CatRigAnimator(model.skeleton) }
+    // 애니메이터는 고양이(체형, 스킨, 착용)가 바뀌어도 하나를 이어 쓴다. 새로 만들면 재생 중이던 동작이 사라져
+    // 끝남 알림을 영영 못 받는다. 체형이 바뀌면 프레임 루프가 새 스켈레톤만 넘긴다(포즈와 스프링은 이어 간다).
+    val animator = remember { CatRigAnimator(model.skeleton) }
     val renderer = remember { CatRigRenderer() }
     var frameTime by remember { mutableLongStateOf(0L) }
     val currentOnFinished by rememberUpdatedState(onMotionFinished)
     val currentOnShown by rememberUpdatedState(onShown)
     val currentOnFailed by rememberUpdatedState(onLoadFailed)
 
-    LaunchedEffect(motion?.playId, motion?.motion) {
+    LaunchedEffect(animator, motion?.playId, motion?.motion) {
         val m = motion ?: return@LaunchedEffect
         animator.play(m.motion, m.state, loopTimes = m.loopTimes, restMillis = m.restMillis)
         val playId = m.playId
@@ -85,6 +87,7 @@ fun CatRigView(
     }
 
     LaunchedEffect(model, animator) {
+        animator.setSkeleton(model.skeleton)
         val reduceMotion = (coroutineContext[MotionDurationScale]?.scaleFactor ?: 1f) == 0f
         var last = withFrameNanos { it }
         model.update(animator.pose, animator.time)
