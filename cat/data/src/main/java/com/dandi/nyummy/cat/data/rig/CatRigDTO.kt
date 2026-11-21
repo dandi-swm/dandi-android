@@ -175,6 +175,7 @@ data class AttachmentItemDTO(
     val earLayerMode: String? = null,
     val brimY: Float? = null,
     val hidesDefaultBandana: Boolean? = null,
+    val lineColor: List<Int>? = null,
 ) {
     /** id, 슬롯, 그림, 크기가 없으면 끼울 수 없으므로 null이다. */
     fun toVO(): AttachmentItemVO? {
@@ -195,17 +196,21 @@ data class AttachmentItemDTO(
             earLayerMode = EarLayerMode.entries.firstOrNull { it.name == earLayerMode } ?: EarLayerMode.BETWEEN_EARS,
             brimY = brimY ?: 1f,
             hidesDefaultBandana = hidesDefaultBandana ?: false,
+            lineColor = lineColor?.toArgb(),
         )
     }
+}
+
+/** [r, g, b] -> 불투명 ARGB. 세 값이 없으면 null이다. */
+private fun List<Int>.toArgb(): Int? {
+    if (size < 3) return null
+    return (0xFF shl 24) or ((this[0] and 0xFF) shl 16) or ((this[1] and 0xFF) shl 8) or (this[2] and 0xFF)
 }
 
 /** "line", "pupil", "blush" -> [r, g, b]. 없는 색은 기본 냐미 색을 쓴다. */
 private fun Map<String, List<Int>>?.toPalette(): RigPaletteVO {
     val base = RigPaletteVO()
-    fun argb(key: String, fallback: Int): Int {
-        val c = this?.get(key)?.takeIf { it.size >= 3 } ?: return fallback
-        return (0xFF shl 24) or ((c[0] and 0xFF) shl 16) or ((c[1] and 0xFF) shl 8) or (c[2] and 0xFF)
-    }
+    fun argb(key: String, fallback: Int): Int = this?.get(key)?.toArgb() ?: fallback
     return RigPaletteVO(line = argb("line", base.line), pupil = argb("pupil", base.pupil), blush = argb("blush", base.blush))
 }
 
