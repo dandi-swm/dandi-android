@@ -44,6 +44,9 @@ sealed interface HomeIntent : MviIntent {
     /** 냐미가 처음 화면에 그려졌다(받은 스프라이트든 앱에 든 기본 냐미든). 홈 TTI 끝 판단에 쓴다. */
     data object CatShown : HomeIntent
 
+    /** 리그 냐미 그림을 읽지 못함. 스프라이트로 되돌린다. */
+    data object CatRigLoadFailed : HomeIntent
+
     /** 받은 요약 숫자가 처음 화면에 그려졌다. 홈 TTI 끝 판단에 쓴다. */
     data object SummaryShown : HomeIntent
 

@@ -14,6 +14,7 @@ import kotlinx.collections.immutable.toImmutableList
  * @property sheetUrls 같은 상황의 모든 시트 주소. 다음 동작으로 넘어갈 때 멈칫하지 않게 미리 읽어 둔다.
  * @property playId 바뀌면 같은 묶음이어도 처음부터 다시 재생한다
  * @property restMillis 동작이 끝난 뒤 다음 동작까지 쉬는 시간
+ * @property motionName 동작 이름. 리그 냐미가 클립을 찾는다.
  */
 @Immutable
 data class RoomCatMotion(
@@ -22,13 +23,15 @@ data class RoomCatMotion(
     val sheetUrls: ImmutableList<String>,
     val playId: Int,
     val restMillis: Long,
+    val motionName: String = "",
 )
 
 /** [group]번째 동작을 재생할 [RoomCatMotion]으로 바꾼다. 번호가 범위를 벗어나면 첫 동작을 쓴다. */
-internal fun CatAnimationVO.toRoomCatMotion(group: Int, playId: Int, restMillis: Long): RoomCatMotion =
-    RoomCatMotion(
+internal fun CatAnimationVO.toRoomCatMotion(group: Int, playId: Int, restMillis: Long): RoomCatMotion {
+    val motion = motions.getOrNull(group) ?: motions.firstOrNull()
+    return RoomCatMotion(
         group = group,
-        clips = (motions.getOrNull(group) ?: motions.firstOrNull())?.clips.orEmpty()
+        clips = motion?.clips.orEmpty()
             .map { clip ->
                 NyummySpriteClip(
                     sheet = NyummySpriteSheet(
@@ -46,4 +49,6 @@ internal fun CatAnimationVO.toRoomCatMotion(group: Int, playId: Int, restMillis:
         sheetUrls = motions.flatMap { motion -> motion.clips.map { it.url } }.distinct().toImmutableList(),
         playId = playId,
         restMillis = restMillis,
+        motionName = motion?.name.orEmpty(),
     )
+}

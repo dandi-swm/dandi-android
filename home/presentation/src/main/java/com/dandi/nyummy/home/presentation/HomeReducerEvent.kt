@@ -2,6 +2,7 @@ package com.dandi.nyummy.home.presentation
 
 import com.dandi.nyummy.cat.domain.CatMood
 import com.dandi.nyummy.cat.entity.CatState
+import com.dandi.nyummy.cat.presentation.CatRigUiModel
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.ReducerEvent
 import com.dandi.nyummy.home.entity.HomeSummaryVO
@@ -22,6 +23,9 @@ sealed interface HomeReducerEvent : ReducerEvent {
     data object CatAnimationsLoaded : HomeReducerEvent
 
     data object CatAnimationsLoadFailed : HomeReducerEvent
+
+    /** 리그 냐미를 읽음(리그가 꺼져 있거나 그림을 못 읽으면 null) */
+    data class CatRigChanged(val rig: CatRigUiModel?) : HomeReducerEvent
 
     /** 튜토리얼 코치마크를 띄우거나, 다음 대사로 넘기거나, 내렸다(null). */
     data class TutorialChanged(val tutorial: HomeTutorialUiState?) : HomeReducerEvent

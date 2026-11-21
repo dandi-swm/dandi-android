@@ -94,6 +94,8 @@ internal fun MyRoomScreen(
             items = uiState.room.items,
             selectedItemId = uiState.selectedItemId,
             cat = uiState.catMotion,
+            catRig = uiState.catRig,
+            onCatRigLoadFailed = { onIntent(MyRoomIntent.CatRigLoadFailed) },
             onCatMotionFinished = { onIntent(MyRoomIntent.CatMotionFinished(it)) },
             onSelect = { onIntent(MyRoomIntent.SelectItem(it)) },
             onMove = { id, x, y, scale -> onIntent(MyRoomIntent.MoveItem(id, x, y, scale)) },
