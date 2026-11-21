@@ -4,18 +4,16 @@ import com.dandi.nyummy.auth.entity.Gender
 import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.base.BaseUseCase
+import com.dandi.nyummy.common.domain.error.CommonErrorPolicy
 import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.handlingErrorOnUseCase
-import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.helper.WidgetHelper
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.onboarding.domain.OnboardingPage
 import com.dandi.nyummy.tti.TTIHelper
-import java.io.IOException
-import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
 class SignUpUseCase @Inject constructor(
@@ -27,7 +25,8 @@ class SignUpUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     /**
      * 이메일 회원가입. 성공 시 로그인 상태가 되어 고양이 이름을 짓는 온보딩으로 이동한다.
@@ -48,7 +47,24 @@ class SignUpUseCase @Inject constructor(
         birth: String? = null,
         height: Int? = null,
         weight: Int? = null,
-    ): Result<Unit> = try {
+    ): Result<Unit> = request(
+        AuthErrorType.entries,
+        commonErrors = CommonErrorPolicy.SIGNED_OUT,
+        onBusinessError = { type, cause ->
+            showError(resourceHelper.getString(type.errorMsg))
+            // 인증 완료 토큰이 만료됐거나 무효하면 이메일 인증을 처음부터 다시 해야 한다.
+            Result.failure(if (type in VERIFICATION_RESTART_ERRORS) EmailVerificationRestartRequiredException() else cause)
+        },
+        onNetworkError = { showError(resourceHelper.getString(StringResource.NETWORK_ERROR)) },
+        onUnknownError = { cause ->
+            val message = when {
+                cause !is HttpResponseException -> StringResource.TEMPORARY_ERROR
+                cause.rawCode == HTTP_CONFLICT -> StringResource.AUTH_EMAIL_ALREADY_EXISTS
+                else -> StringResource.AUTH_SIGN_UP_FAILED
+            }
+            showError(resourceHelper.getString(message))
+        },
+    ) {
         repository.signUp(
             verifiedToken = emailVerifiedToken,
             password = password,
@@ -61,16 +77,9 @@ class SignUpUseCase @Inject constructor(
         )
         repository.setOnboardingIncomplete(incomplete = true)
         widgetHelper.clear()
+        sessionExpiryHandler?.onSignedIn()
         analyticsHelper.logEvent(AnalyticsEvent.SignUp(method = "email"))
         navigationHelper.navigateToAsRoot(OnboardingPage)
-        Result.success(Unit)
-    } catch (e: HttpResponseException) {
-        Result.failure(handleSignUpError(e))
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        showError(e.toUserMessage())
-        Result.failure(e)
     }
 
     /**
@@ -89,7 +98,18 @@ class SignUpUseCase @Inject constructor(
             leaveSocialSignUpWithoutSession()
             return Result.failure(IllegalStateException("No pending social sign-up"))
         }
-        return try {
+        // 가입 실패의 서버 code 처리는 아래 [handleSocialSignUpBusinessError], code 없는 실패는 [handleSocialSignUpUnknownError].
+        // 로그인 전이라 code 없는 401은 로그인 만료가 아니다. 가입 대기 토큰을 비우고 다시 로그인하게 한다.
+        return request(
+            AuthErrorType.entries,
+            commonErrors = CommonErrorPolicy.SIGNED_OUT,
+            onBusinessError = { type, cause ->
+                handleSocialSignUpBusinessError(type)
+                Result.failure(cause)
+            },
+            onNetworkError = { showError(resourceHelper.getString(StringResource.NETWORK_ERROR)) },
+            onUnknownError = ::handleSocialSignUpUnknownError,
+        ) {
             repository.signUp(
                 verifiedToken = verifiedToken,
                 password = null,
@@ -103,17 +123,9 @@ class SignUpUseCase @Inject constructor(
             repository.setOnboardingIncomplete(incomplete = true)
             socialSignUpSession.clear()
             widgetHelper.clear()
+            sessionExpiryHandler?.onSignedIn()
             analyticsHelper.logEvent(AnalyticsEvent.SignUp(method = "social"))
             navigationHelper.navigateToAsRoot(OnboardingPage)
-            Result.success(Unit)
-        } catch (e: HttpResponseException) {
-            handleSocialSignUpError(e)
-            Result.failure(e)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            showError(e.toUserMessage())
-            Result.failure(e)
         }
     }
 
@@ -135,44 +147,24 @@ class SignUpUseCase @Inject constructor(
     }
 
     /**
-     * 이메일 가입 실패를 안내하고, ViewModel에 돌려줄 실패를 고른다.
-     * 인증 완료 토큰이 만료됐거나 무효하면 이메일 인증을 처음부터 다시 해야 하므로
-     * [EmailVerificationRestartRequiredException]을 돌려준다.
+     * 소셜 가입의 서버 code 실패. 인증이 만료됐거나 이미 가입된 계정이면 다시 로그인해야 하므로
+     * 토큰을 버리고 초기(로그인) 화면으로 보낸다. 그 외에는 토큰을 남겨 다시 제출할 수 있게 한다.
      */
-    private fun handleSignUpError(e: HttpResponseException): Exception {
-        var failure: Exception = e
-        handleHttpError<AuthErrorType>(
-            e,
-            onDomainError = { errorType ->
-                showError(resourceHelper.getString(errorType.errorMsg))
-                if (errorType in VERIFICATION_RESTART_ERRORS) failure = EmailVerificationRestartRequiredException()
-            },
-            onUnknownError = {
-                val message = if (e.rawCode == HTTP_CONFLICT) StringResource.AUTH_EMAIL_ALREADY_EXISTS else StringResource.AUTH_SIGN_UP_FAILED
-                showError(resourceHelper.getString(message))
-            },
-        )
-        return failure
+    private fun handleSocialSignUpBusinessError(type: AuthErrorType) {
+        when (type) {
+            in VERIFICATION_RESTART_ERRORS -> restartSocialLogin(resourceHelper.getString(StringResource.AUTH_SOCIAL_SIGN_UP_EXPIRED))
+            AuthErrorType.OAUTH_ACCOUNT_ALREADY_EXISTS, AuthErrorType.EMAIL_ALREADY_EXISTS ->
+                restartSocialLogin(resourceHelper.getString(StringResource.AUTH_ACCOUNT_ALREADY_EXISTS))
+            else -> showError(resourceHelper.getString(type.errorMsg))
+        }
     }
 
-    /**
-     * 소셜 가입 실패. 인증이 만료됐거나 이미 가입된 계정이면 다시 로그인해야 하므로
-     * 토큰을 버리고 초기(로그인) 화면으로 보낸다. 그 외에는 토큰을 남겨 다시 제출할 수 있게 한다.
-     *
-     * 서버 code로 먼저 구분한다. code 없는 401은 공통 처리로 넘기지 않는다. 로그인 전이라
-     * "로그인 만료" 안내가 맞지 않고, 가입 대기 토큰도 비워야 하기 때문이다.
-     */
-    private fun handleSocialSignUpError(e: HttpResponseException) {
-        val errorType = e.handlingErrorOnUseCase<AuthErrorType>()
-        when {
-            errorType in VERIFICATION_RESTART_ERRORS -> restartSocialLogin(resourceHelper.getString(StringResource.AUTH_SOCIAL_SIGN_UP_EXPIRED))
-            errorType == AuthErrorType.OAUTH_ACCOUNT_ALREADY_EXISTS ||
-                errorType == AuthErrorType.EMAIL_ALREADY_EXISTS -> restartSocialLogin(resourceHelper.getString(StringResource.AUTH_ACCOUNT_ALREADY_EXISTS))
-            errorType != null -> showError(resourceHelper.getString(errorType.errorMsg))
-            e.rawCode == HTTP_UNAUTHORIZED -> restartSocialLogin(resourceHelper.getString(StringResource.AUTH_SOCIAL_SIGN_UP_EXPIRED))
-            e.rawCode == HTTP_CONFLICT -> restartSocialLogin(resourceHelper.getString(StringResource.AUTH_ACCOUNT_ALREADY_EXISTS))
-            e.isCommonErrorHandling() -> executeCommonErrorHanding(e)
-            e.rawCode == HTTP_BAD_REQUEST -> showError(resourceHelper.getString(StringResource.AUTH_INVALID_PROFILE))
+    /** 소셜 가입의 code 없는 실패. 상태 코드로 구분한다. 404와 5xx는 공통 안내가 이미 했다. */
+    private fun handleSocialSignUpUnknownError(cause: Exception) {
+        when ((cause as? HttpResponseException)?.rawCode) {
+            HTTP_UNAUTHORIZED -> restartSocialLogin(resourceHelper.getString(StringResource.AUTH_SOCIAL_SIGN_UP_EXPIRED))
+            HTTP_CONFLICT -> restartSocialLogin(resourceHelper.getString(StringResource.AUTH_ACCOUNT_ALREADY_EXISTS))
+            HTTP_BAD_REQUEST -> showError(resourceHelper.getString(StringResource.AUTH_INVALID_PROFILE))
             else -> showError(resourceHelper.getString(StringResource.TEMPORARY_ERROR))
         }
     }
@@ -189,9 +181,6 @@ class SignUpUseCase @Inject constructor(
     private fun showError(message: String) {
         messageHelper.showOneButtonDialog(descText = message)
     }
-
-    private fun Exception.toUserMessage(): String =
-        resourceHelper.getString(if (this is IOException) StringResource.NETWORK_ERROR else StringResource.TEMPORARY_ERROR)
 
     private companion object {
         /** 인증 완료 토큰을 다시 받아야 하는 오류. 만료(`verificationExpired`)와 무효(`invalidVerifiedToken`). */

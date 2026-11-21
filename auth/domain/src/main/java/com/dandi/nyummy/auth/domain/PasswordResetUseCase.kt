@@ -1,15 +1,14 @@
 package com.dandi.nyummy.auth.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
+import com.dandi.nyummy.common.domain.error.CommonErrorPolicy
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.tti.TTIHelper
-import java.io.IOException
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 비밀번호 찾기의 마지막 단계. 이메일 인증을 마친 토큰으로 비밀번호를 재설정하면
@@ -21,40 +20,28 @@ class PasswordResetUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     /**
      * 실패는 다이얼로그로 안내한다. 인증이 만료됐거나 무효하거나 가입되지 않은 이메일이면
      * 이메일 입력부터 다시 해야 하므로 [EmailVerificationRestartRequiredException]을 돌려준다.
      * 메일 발송 실패처럼 그 밖의 실패는 같은 인증 토큰으로 다시 시도할 수 있다.
+     * 로그인 전 화면이라 code 없는 401도 로그인 만료로 보지 않는다.
      */
-    suspend fun resetPassword(verifiedToken: String): Result<Unit> = try {
+    suspend fun resetPassword(verifiedToken: String): Result<Unit> = request(
+        AuthErrorType.entries,
+        commonErrors = CommonErrorPolicy.SIGNED_OUT,
+        onBusinessError = { type, cause ->
+            // 공통 문구는 인증 메일 기준이라, 임시 비밀번호 메일을 못 보낸 경우는 따로 안내한다.
+            val message = if (type == AuthErrorType.EMAIL_SEND_FAILED) StringResource.AUTH_TEMP_PASSWORD_MAIL_FAILED else type.errorMsg
+            showError(resourceHelper.getString(message))
+            Result.failure(if (type in RESTART_ERRORS) EmailVerificationRestartRequiredException() else cause)
+        },
+        onNetworkError = { showError(resourceHelper.getString(StringResource.NETWORK_ERROR)) },
+        onUnknownError = { showError(resourceHelper.getString(StringResource.AUTH_PASSWORD_RESET_FAILED)) },
+    ) {
         repository.resetPassword(verifiedToken)
-        Result.success(Unit)
-    } catch (e: HttpResponseException) {
-        Result.failure(handleResetError(e))
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: IOException) {
-        showError(resourceHelper.getString(StringResource.NETWORK_ERROR))
-        Result.failure(e)
-    } catch (e: Exception) {
-        showError(resourceHelper.getString(StringResource.AUTH_PASSWORD_RESET_FAILED))
-        Result.failure(e)
-    }
-
-    private fun handleResetError(e: HttpResponseException): Exception {
-        var failure: Exception = e
-        handleHttpError<AuthErrorType>(
-            e,
-            onDomainError = { errorType ->
-                // 공통 문구는 인증 메일 기준이라, 임시 비밀번호 메일을 못 보낸 경우는 따로 안내한다.
-                showError(if (errorType == AuthErrorType.EMAIL_SEND_FAILED) resourceHelper.getString(StringResource.AUTH_TEMP_PASSWORD_MAIL_FAILED) else resourceHelper.getString(errorType.errorMsg))
-                if (errorType in RESTART_ERRORS) failure = EmailVerificationRestartRequiredException()
-            },
-            onUnknownError = { showError(resourceHelper.getString(StringResource.AUTH_PASSWORD_RESET_FAILED)) },
-        )
-        return failure
     }
 
     private fun showError(message: String) {
