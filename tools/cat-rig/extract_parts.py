@@ -51,9 +51,11 @@ EAR_CUTS = {
 
 SCALE = 0.5          # 출력 텍스처 배율
 PAD = 6              # 레이어 여백(출력 픽셀)
-BAND_ZONE_PX = 24    # 반다나 둘레에서 몸에 섞인 초록 조각을 찾는 거리(원본 px)
+BAND_ZONE_PX = 48    # 반다나 둘레에서 몸에 섞인 초록 조각을 찾는 거리(원본 px)
 BAND_FRINGE_PX = 5   # 반다나 윤곽선 바깥 부드러운 띠 폭(원본 px)
 DOME_FADE = 0.25     # 머리 밑 어깨 돔이 가장자리에서 사라지는 폭(반지름 비율)
+DOME_WIDEN = 1.35    # 돔 가로 반지름 / 양 어깨 사이 반폭
+DOME_DROP = 0.35     # 돔 중심을 어깨 높이보다 내리는 정도(어깨~목 높이 비율)
 
 
 def load(body):
@@ -270,22 +272,29 @@ def extract(body, out_dir, debug_dir=None):
     hull = cv2.convexHull(cv2.findNonZero((bod | main_band_mask).astype(np.uint8)))
     hull_m = np.zeros((H, W), np.uint8)
     cv2.fillConvexPoly(hull_m, hull, 1)
-    body_hull = cv2.convexHull(cv2.findNonZero(bod.astype(np.uint8)))[:, 0, :]
+    body_hull_pts = cv2.convexHull(cv2.findNonZero(bod.astype(np.uint8)))
+    body_hull_m = np.zeros((H, W), np.uint8)
+    cv2.fillConvexPoly(body_hull_m, body_hull_pts, 1)
+    body_hull = body_hull_pts[:, 0, :]
     bx = (body_hull[:, 0].min() + body_hull[:, 0].max()) / 2
     left = body_hull[body_hull[:, 0] < bx]
     right = body_hull[body_hull[:, 0] >= bx]
     shoulder_l = left[np.argmin(left[:, 1])]
     shoulder_r = right[np.argmin(right[:, 1])]
     dome_cx = (shoulder_l[0] + shoulder_r[0]) / 2
-    dome_a = (shoulder_r[0] - shoulder_l[0]) / 2
-    dome_y = float(max(shoulder_l[1], shoulder_r[1]))
     ys = np.where(band.any(1))[0]
     neck_top = ys.min() - 20                     # 머리 쪽으로는 목 높이까지만
+    shoulder_y = float(max(shoulder_l[1], shoulder_r[1]))
+    # 어깨 끝(껍질 윗변이 시작하는 곳)에서도 돔이 다 덮도록 넓고 낮게 잡는다(가장자리 흐림은 그 바깥에서만)
+    dome_y = shoulder_y + (shoulder_y - neck_top) * DOME_DROP
+    dome_a = (shoulder_r[0] - shoulder_l[0]) / 2 * DOME_WIDEN
     dome_b = max(dome_y - neck_top, 1.0)
     yy, xx = np.mgrid[0:H, 0:W]
     dome_r = np.sqrt(((xx - dome_cx) / dome_a) ** 2 + ((yy - dome_y) / dome_b) ** 2)
     dome = (yy <= dome_y) & (dome_r <= 1)
-    bod_dst = (hull_m.astype(bool) | dome) & (band | head_all)
+    # 반다나 자리는 몸 실루엣(몸만의 볼록 껍질) 안쪽만 메운다. 매듭처럼 몸 밖으로 나온 반다나 자리를 메우면
+    # 반다나를 숨겼을 때 털 덩어리가 튀어나온다. 돔은 머리 밑에만 쓴다.
+    bod_dst = (hull_m.astype(bool) & body_hull_m.astype(bool) & (band | head_all)) | (dome & head_all)
     fill_dst = bod_dst | band_extra
     bod_rgb = edge_ring_fill(nearest_fill(rgb, bod_src, fill_dst, blur=12), bod | fill_dst)
     # 돔 가장자리는 부드럽게 사라진다(드러나도 선이 보이지 않게). 껍질 안은 그대로 덮는다.
