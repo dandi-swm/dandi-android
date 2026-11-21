@@ -66,6 +66,8 @@ B 그룹은 `"group": "B"`만 다르다. 나머지(eventId, 공지)는 A와 똑�
 | `notice` | - | 홈 공지(상점 출시). 버튼은 상점(`/shop`)을 연다. 없거나 `title`·`cta`가 비었으면 공지 없이 상점의 코인 탭만 있다. 다른 홈 공지가 있으면 맨 앞 장에 뜬다. |
 | `notice.imageUrl` | - | 10:9 사진(홈 새 소식 공지와 같은 규격, [remote-config-home-notice.md](remote-config-home-notice.md)). 인트로·방 준비 화면이 미리 받는다. |
 
+- 공지 장의 글자(`badge`, `title` 등)는 적은 그대로 보인다. 일본어 기기에 일본어 공지를 보이려면 기기 언어 조건부 값을 쓴다(`docs/remote-config-home-notice.md`의 "언어별 공지").
+
 ## 선물 코인 받기 API
 
 "(가격) 결제하기"를 누르면 `POST /api/v1/coins/gifts`를 부른다.

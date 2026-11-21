@@ -102,6 +102,19 @@
   - 공지는 `id`로 알아본다(`id`가 비어 있으면 제목). 새 공지는 새 `id`로 올려야 다시 보지 않기를 고른 사람에게도 뜬다.
   - 같은 공지를 고쳐 다시 보이고 싶으면 `id`를 바꾼다.
 
+## 언어별 공지
+
+공지 글자와 사진은 JSON에 적은 그대로 보인다. 앱 언어가 일본어여도 한국어 공지를 넣었으면 한국어가 뜬다. 언어별로 다른 공지를 보이려면 콘솔의 **조건부 값**을 쓴다(앱 수정 없음).
+
+1. Remote Config > 조건 추가: 이름 `언어 · 일본어`, 규칙 **기기 언어** `ja`(필요하면 `언어 · 영어`도 `en`으로).
+2. `android_home_notice`(debug는 `android_home_notice_debug`)에 그 조건의 값을 더하고 일본어 JSON을 넣는다. 기본값은 한국어 공지 그대로 둔다.
+   - `badge`, `meta`, `title`, `body`, `cta.text`를 그 언어로 쓴다. 사진 안에 글자가 있으면 언어별 사진을 따로 올리고 `imageUrl`도 바꾼다.
+   - `id`는 언어마다 달라도 된다(다시 보지 않기는 기기마다 따로 기억한다).
+   - 한국에서만 하는 이벤트처럼 다른 언어에 보이면 안 되는 공지는 그 언어 값에서 빼거나 `{"notices": []}`로 둔다.
+3. 앱 언어를 기기 설정 > 앱 > 언어에서 바꾼 경우, 언어 조건은 앱이 값을 받아 오는 순간의 언어로 정해진다. 바꾼 직후 한 번은 전 언어 공지가 남을 수 있고, 앱을 다시 열어 다음 받아 오기가 끝나면 바뀐다.
+
+같은 방법을 `android_coin_charge_event`(`docs/remote-config-coin-charge-event.md`)와 강제 업데이트 안내 `android_minimum_version_release_note`(`docs/remote-config-force-update.md`)에도 쓴다.
+
 ## 게시 순서
 
 1. `android_home_notice_debug`에 JSON을 넣고 게시한다.
