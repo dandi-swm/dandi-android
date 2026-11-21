@@ -8,6 +8,7 @@ import com.dandi.nyummy.shop.entity.ShopPromotionPageVO
 import com.dandi.nyummy.shop.entity.ShopTab
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -140,5 +141,19 @@ class ShopBrowseUseCasesTest {
             ),
             repository.productRequests,
         )
+    }
+
+    @Test
+    fun `추천 탭 화면은 UseCase 가 공통 안내를 한 실패에만 자기 안내를 생략한다`() {
+        val getRecommend = GetShopRecommendPageUseCase(
+            repository, FakeRemoteConfig(), shopTracker(), FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper,
+        )
+
+        // 코드 없는 404, 5xx 는 공통 안내가 이미 떴다.
+        assertTrue(getRecommend.isNotified(httpException(404)))
+        assertTrue(getRecommend.isNotified(httpException(500)))
+        // 서버 code 가 붙은 404 는 비즈니스 에러라 공통 안내가 뜨지 않았으니 화면이 안내해야 한다.
+        assertFalse(getRecommend.isNotified(httpException(404, ShopErrorType.PROMOTION_NOT_FOUND.type)))
+        assertFalse(getRecommend.isNotified(IOException("offline")))
     }
 }

@@ -69,6 +69,43 @@ class SubmitTutorialMealUseCaseTest {
         assertTrue(messageHelper.snackBars.isEmpty())
     }
 
+    @Test
+    fun `서버가 기록한 뒤 기기 저장이 예상 못 한 예외로 실패해도 성공으로 진행한다`() = runBlocking {
+        tutorialHelper.storageError = IllegalStateException("datastore corrupted")
+
+        val result = useCase()()
+
+        assertTrue(result.isSuccess)
+        assertTrue(messageHelper.dialogs.isEmpty())
+    }
+
+    @Test
+    fun `이미 했다는 응답을 처리하다 기기 저장이 실패해도 앱을 종료시키지 않는다`() = runBlocking {
+        tutorialHelper.storageError = IllegalStateException("datastore corrupted")
+
+        val result = useCase(httpException(409, MealErrorType.TUTORIAL_ALREADY_COMPLETED.type))()
+
+        assertEquals(TutorialMealResult.AlreadyCompleted, result.getOrThrow())
+    }
+
+    @Test
+    fun `로그인 만료만 공통 안내를 하고 다시 시도 안내는 띄우지 않는다`() = runBlocking {
+        val navigationHelper = SubmitMealUseCaseTest.FakeNavigationHelper()
+        val useCase = SubmitTutorialMealUseCase(
+            repository = FakeRepository(httpException(401)),
+            tutorialHelper = tutorialHelper,
+            resourceHelper = SubmitMealUseCaseTest.FakeResourceHelper(),
+            messageHelper = messageHelper,
+            navigationHelper = navigationHelper,
+            ttiHelper = SubmitMealUseCaseTest.FakeTTIHelper(),
+        )
+
+        val result = useCase()
+
+        assertTrue(result.isFailure)
+        assertEquals("SESSION_EXPIRED_MESSAGE", messageHelper.dialogs.single())
+    }
+
     private fun httpException(code: Int, errorCode: String? = null) = HttpResponseException(
         status = HttpResponseStatus.create(code),
         rawCode = code,
@@ -92,6 +129,9 @@ class SubmitTutorialMealUseCaseTest {
     private class RecordingTutorialHelper : TutorialHelper {
         var mealRequired = true
         var started = false
+
+        /** 있으면 기기에 튜토리얼 상태를 남길 때 이 예외를 던진다. */
+        var storageError: Exception? = null
         override suspend fun pendingSteps(): Set<TutorialStep> = emptySet()
         override suspend fun startAfterMeal() {
             started = true
@@ -102,6 +142,7 @@ class SubmitTutorialMealUseCaseTest {
         override suspend fun clear() = Unit
         override suspend fun isMealTutorialRequired(): Boolean = mealRequired
         override suspend fun setMealTutorialRequired(required: Boolean) {
+            storageError?.let { throw it }
             mealRequired = required
         }
     }
