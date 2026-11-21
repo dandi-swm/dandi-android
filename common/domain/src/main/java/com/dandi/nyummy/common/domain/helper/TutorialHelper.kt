@@ -12,6 +12,9 @@ import com.dandi.nyummy.common.entity.tutorial.TutorialStep
  * - 로그아웃·탈퇴하면 [clear]로 다른 계정이 이어 보지 않게 모두 지운다.
  *
  * 여러 기능(홈, 식사 기록, 우편함, 마이룸, 인증, 설정)이 함께 쓰는 상태라 [CompanionMemoryHelper]처럼 공통 Helper로 둔다.
+ *
+ * 기록(쓰기)은 기기 저장소가 실패해도 예외를 던지지 않는다(구현이 로그만 남긴다). 호출부는 감싸지 않고 흐름을 이어 간다.
+ * 실패하면 마친 안내가 다음에 다시 뜰 수 있다. 코루틴 취소는 그대로 전해진다.
  */
 interface TutorialHelper {
     /** 아직 마치지 않은 뒤 단계. 튜토리얼 식사 전이거나 모두 마쳤으면 비어 있다. */
