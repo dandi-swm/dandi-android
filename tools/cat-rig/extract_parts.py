@@ -51,6 +51,9 @@ EAR_CUTS = {
 
 SCALE = 0.5          # 출력 텍스처 배율
 PAD = 6              # 레이어 여백(출력 픽셀)
+BAND_ZONE_PX = 24    # 반다나 둘레에서 몸에 섞인 초록 조각을 찾는 거리(원본 px)
+BAND_FRINGE_PX = 5   # 반다나 윤곽선 바깥 부드러운 띠 폭(원본 px)
+DOME_FADE = 0.25     # 머리 밑 어깨 돔이 가장자리에서 사라지는 폭(반지름 비율)
 
 
 def load(body):
@@ -73,6 +76,10 @@ def ear_polygon(cut, side, shape):
     return list(cut) + [(b[0] - 12, -60), (w + 60, -60), (w + 60, a[1])]
 
 
+def disk(r):
+    return cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
+
+
 def nearest_fill(rgb, src_mask, dst_mask, blur=9):
     """dst_mask 영역을 src_mask의 가장 가까운 픽셀 색으로 채운다."""
     idx = ndi.distance_transform_edt(~src_mask, return_distances=False, return_indices=True)
@@ -83,6 +90,13 @@ def nearest_fill(rgb, src_mask, dst_mask, blur=9):
         sm = cv2.GaussianBlur(out, (0, 0), blur)
         out[dst_mask] = sm[dst_mask]
     return out
+
+
+def edge_ring_fill(rgb, mask, px=4):
+    """mask 바로 바깥 고리(부드러운 가장자리로 번지는 곳)를 mask 안의 가장 가까운 색으로 칠한다.
+    가장자리 알파가 바깥 픽셀 색(예: 머리 밑 반다나 초록)을 끌고 오지 않게 한다."""
+    ring = cv2.dilate(mask.astype(np.uint8), disk(px)).astype(bool) & ~mask
+    return nearest_fill(rgb, mask, ring, blur=0)
 
 
 def extract(body, out_dir, debug_dir=None):
@@ -218,8 +232,21 @@ def extract(body, out_dir, debug_dir=None):
     def add(name, color, a, z):
         layers[name] = dict(rgb=color, a=np.clip(a, 0, 1).astype(np.float32), z=z)
 
+    # 반다나 둘레에서 머리, 몸 부위로 잡힌 반다나 조각(초록 가장자리, 윤곽선 바깥 부드러운 띠)은 반다나 레이어로 옮긴다.
+    # 그대로 두면 반다나를 숨겨도(고등어 스킨, 목 장식) 머리 밑과 가슴에 초록 점과 V자 선이 남는다.
+    band = region == 3
+    band_zone = cv2.dilate(band.astype(np.uint8), disk(BAND_ZONE_PX)).astype(bool)
+    greenish = band_zone & (Hh >= 22) & (Hh <= 90) & (Ss > 20)
+    near_green = cv2.dilate(greenish.astype(np.uint8), disk(3)).astype(bool)
+    # 머리 쪽은 초록 조각과 그 바로 옆만 옮기고, 머리 갈색 윤곽선은 머리에 남긴다
+    head_green = cv2.dilate(greenish.astype(np.uint8), disk(1)).astype(bool) & (greenish | ~dark)
+    stray_green = (near_green & (region == 2)) | (head_green & (region == 1))
+    band_fringe = (region == 2) & cv2.dilate(band.astype(np.uint8), disk(BAND_FRINGE_PX)).astype(bool)
+    band_extra = stray_green | band_fringe
+    head_layer = head_all & ~stray_green
+
     # 앞 레이어들
-    add('head', head_rgb, alpha * feather(head_all) * head_feather, 60)
+    add('head', edge_ring_fill(head_rgb, head_layer), alpha * feather(head_layer) * head_feather, 60)
     for s in 'LR':
         add('ear' + s, rgb, alpha * feather(ear_ext[s]), 50)
     for name, m in face_parts.items():
@@ -227,30 +254,47 @@ def extract(body, out_dir, debug_dir=None):
         add(name, rgb, feather(grow, 1.0) * (feather(m, 1.6) > 0.02) * np.clip(feather(m, 1.2) * 1.6, 0, 1), 70)
 
     # 반다나: 머리 밑으로 위쪽 연장
-    band = region == 3
     band_src = band & ~near_dark
     k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (91, 91))
     band_dst = cv2.dilate(band.astype(np.uint8), k).astype(bool) & head_all
     band_rgb = nearest_fill(rgb, band_src, band_dst)
-    add('bandana', band_rgb, np.maximum(alpha * feather(band), inner(band_dst)), 40)
+    band_rgb[band_extra] = rgb[band_extra]       # 옮겨 온 조각은 원래 색 그대로
+    add('bandana', band_rgb, np.maximum(alpha * feather(band | band_extra), inner(band_dst)), 40)
 
     # 몸: 반다나·머리 밑으로 연장
     bod = region == 2
-    bod_src = bod & ~near_dark
-    k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (241, 241))
-    bod_dst = cv2.dilate(bod.astype(np.uint8), k).astype(bool) & (band | head_all)
-    # 머리 쪽으로는 너무 올라가지 않게(목 높이까지만)
-    ys = np.where(band.any(1))[0]
-    neck_top = ys.min() - 20
-    bod_dst[:max(neck_top, 0)] = False
+    bod_src = bod & ~near_dark & ~band_extra
+    # 연장 범위: 몸+반다나의 볼록 껍질에, 어깨가 머리 밑에서 목까지 이어지는 반타원 돔을 더한다.
+    # 껍질 윗변(어깨~매듭 직선)에서 자르면 고개를 기울일 때 그 직선이 드러난다.
     main_band_mask = lab == max(green, key=lambda c: c['area'])['k']
-    hull_pts = cv2.findNonZero((bod | main_band_mask).astype(np.uint8))
-    hull = cv2.convexHull(hull_pts)
+    hull = cv2.convexHull(cv2.findNonZero((bod | main_band_mask).astype(np.uint8)))
     hull_m = np.zeros((H, W), np.uint8)
     cv2.fillConvexPoly(hull_m, hull, 1)
-    bod_dst &= hull_m.astype(bool)
-    bod_rgb = nearest_fill(rgb, bod_src, bod_dst, blur=12)
-    add('body', bod_rgb, np.maximum(alpha * feather(bod), inner(bod_dst)), 30)
+    body_hull = cv2.convexHull(cv2.findNonZero(bod.astype(np.uint8)))[:, 0, :]
+    bx = (body_hull[:, 0].min() + body_hull[:, 0].max()) / 2
+    left = body_hull[body_hull[:, 0] < bx]
+    right = body_hull[body_hull[:, 0] >= bx]
+    shoulder_l = left[np.argmin(left[:, 1])]
+    shoulder_r = right[np.argmin(right[:, 1])]
+    dome_cx = (shoulder_l[0] + shoulder_r[0]) / 2
+    dome_a = (shoulder_r[0] - shoulder_l[0]) / 2
+    dome_y = float(max(shoulder_l[1], shoulder_r[1]))
+    ys = np.where(band.any(1))[0]
+    neck_top = ys.min() - 20                     # 머리 쪽으로는 목 높이까지만
+    dome_b = max(dome_y - neck_top, 1.0)
+    yy, xx = np.mgrid[0:H, 0:W]
+    dome_r = np.sqrt(((xx - dome_cx) / dome_a) ** 2 + ((yy - dome_y) / dome_b) ** 2)
+    dome = (yy <= dome_y) & (dome_r <= 1)
+    bod_dst = (hull_m.astype(bool) | dome) & (band | head_all)
+    fill_dst = bod_dst | band_extra
+    bod_rgb = edge_ring_fill(nearest_fill(rgb, bod_src, fill_dst, blur=12), bod | fill_dst)
+    # 돔 가장자리는 부드럽게 사라진다(드러나도 선이 보이지 않게). 껍질 안은 그대로 덮는다.
+    dome_fade = np.clip((1 - dome_r) / DOME_FADE, 0, 1)
+    dome_fade = dome_fade * dome_fade * (3 - 2 * dome_fade)
+    cover_fade = np.where(hull_m.astype(bool), 1.0, dome_fade)
+    # 몸과 연장부를 합쳐 깎는다. 연장부만 깎으면 몸과 맞닿은 안쪽(반다나 V자 둘레)에 알파 골이 생긴다
+    cover = inner(bod_dst | bod | band_extra) * cover_fade
+    add('body', bod_rgb, np.maximum(alpha * feather(bod), cover), 30)
 
     # 꼬리: 몸 밑으로 연장
     tl = region == 4
