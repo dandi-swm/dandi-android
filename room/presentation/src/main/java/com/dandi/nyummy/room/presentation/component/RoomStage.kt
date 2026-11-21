@@ -88,7 +88,7 @@ import com.dandi.nyummy.common.presentation.R as CommonR
  *
  * @param frame 무대 크기와 그 안의 방 그림 자리, 보이는 영역. 무대 크기와 같게 [modifier]로 크기를 정해 넘긴다.
  * @param cat 냐미가 지금 하는 동작. null이면 냐미를 그리지 않는다.
- * @param catRig 리그로 그릴 냐미. 있으면 같은 동작을 리그로, 없으면 스프라이트로 그린다.
+ * @param catRig 리그로 그릴 냐미. 있으면 같은 동작을 리그로, 리그 그림을 읽지 못해 없으면 스프라이트로 그린다.
  * @param onCatMotionFinished 냐미 동작 하나가 끝났다(재생 번호를 넘긴다).
  * @param putAwayLabel 도구 모음의 빼기 버튼 설명(마이룸은 "보관함에 넣기").
  */

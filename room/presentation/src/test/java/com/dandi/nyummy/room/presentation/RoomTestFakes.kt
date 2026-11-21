@@ -237,9 +237,8 @@ internal object FakeTTIHelper : TTIHelper {
     override fun addTTIMetaData(metadata: TTIMetaData, value: Any?) = Unit
 }
 
-/** 리그가 꺼진 저장소(원격 구성 기본값). 마이룸은 스프라이트로 그린다. */
-internal object DisabledCatRigRepository : CatRigRepository {
-    override fun isEnabled(): Boolean = false
+/** 리그 그림을 읽지 못하는 저장소. 마이룸은 스프라이트로 되돌아간다. */
+internal object MissingCatRigRepository : CatRigRepository {
     override suspend fun getCharacter(skin: CatSkinId, body: String?): CatRigCharacterVO? = null
     override suspend fun getItems(): List<AttachmentItemVO> = emptyList()
     override fun selectedSkin(): CatSkinId = CatSkinId.NYAMI

@@ -42,16 +42,16 @@ import kotlinx.serialization.json.Json
 
 /**
  * 리그 냐미 확인용 디버그 화면(debug 빌드에만 포함). 체형, 스킨, 착용 아이템, 상황, 동작을 골라 바로 재생해 본다.
- * "홈·마이룸에 적용"을 켜면 원격 구성과 상관없이 이 기기의 홈과 마이룸 냐미가 리그로 바뀐다(고른 스킨, 아이템 포함).
+ * "홈, 마이룸에 적용"을 누르면 이 기기의 홈과 마이룸 냐미가 고른 스킨과 아이템으로 바뀐다("기본으로"는 기본 냐미, 아이템 없음).
  *
  * 실행: adb shell am start -n com.dandi.nyummy/.debug.CatRigDebugActivity
- *   [--es body PLUMP] [--es skin mackerel] [--es outfit full_over] [--es motion pop] [--ez apply true|false]
+ *   [--es body PLUMP] [--es skin mackerel] [--es outfit full_over] [--es motion pop]
+ *   skin이나 outfit을 주면 홈, 마이룸에도 바로 적용한다.
  */
 class CatRigDebugActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val store = CatRigDebugStore(this)
-        if (intent.hasExtra(EXTRA_APPLY)) store.enabledOverride = intent.getBooleanExtra(EXTRA_APPLY, false)
         val initial = DebugChoice(
             body = intent.getStringExtra(EXTRA_BODY) ?: "NORMAL",
             skin = intent.getStringExtra(EXTRA_SKIN) ?: store.skin ?: "nyami",
@@ -74,7 +74,6 @@ class CatRigDebugActivity : ComponentActivity() {
         const val EXTRA_SKIN = "skin"
         const val EXTRA_OUTFIT = "outfit"
         const val EXTRA_MOTION = "motion"
-        const val EXTRA_APPLY = "apply"
     }
 }
 
@@ -100,7 +99,7 @@ private fun CatRigDebugScreen(initial: DebugChoice, store: CatRigDebugStore) {
     var state by remember { mutableStateOf(CatState.HOME_DAY) }
     var motion by remember { mutableStateOf(initial.motion ?: "blink") }
     var playId by remember { mutableIntStateOf(1) }
-    var applied by remember { mutableStateOf(store.enabledOverride) }
+    var applied by remember { mutableStateOf("${store.skin ?: "nyami"} / ${store.equipped.ifEmpty { listOf("아이템 없음") }.joinToString()}") }
 
     fun read(path: String) = context.assets.open(path).bufferedReader().use { it.readText() }
     val character = remember(body, skin, outfit) {
@@ -141,22 +140,18 @@ private fun CatRigDebugScreen(initial: DebugChoice, store: CatRigDebugStore) {
             motion = it
             playId++
         }
-        NyummyText("홈, 마이룸 적용: ${applied ?: "원격 구성 따름"}", style = NyummyTheme.typography.labelM)
+        NyummyText("홈, 마이룸: $applied", style = NyummyTheme.typography.labelM)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            NyummyButton("켜기", onClick = {
-                store.enabledOverride = true
+            NyummyButton("홈, 마이룸에 적용", onClick = {
                 store.skin = skin
                 store.equipped = OUTFITS.getValue(outfit)
-                applied = true
+                applied = "$skin / $outfit"
             }, size = NyummyButtonSize.M)
-            NyummyButton("끄기", onClick = {
-                store.enabledOverride = false
-                applied = false
+            NyummyButton("기본으로", onClick = {
+                store.skin = null
+                store.equipped = emptyList()
+                applied = "nyami / none"
             }, size = NyummyButtonSize.M, style = NyummyButtonStyle.Neutral)
-            NyummyButton("원격 구성", onClick = {
-                store.enabledOverride = null
-                applied = null
-            }, size = NyummyButtonSize.M, style = NyummyButtonStyle.Text)
         }
     }
 }

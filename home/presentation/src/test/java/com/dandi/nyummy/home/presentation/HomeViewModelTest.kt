@@ -143,7 +143,7 @@ class HomeViewModelTest {
                 navigationHelper = navigationHelper,
                 ttiHelper = FakeTTIHelper,
             ),
-            getCatRig = GetCatRigUseCase(DisabledCatRigRepository),
+            getCatRig = GetCatRigUseCase(MissingCatRigRepository),
             catBrain = CatBrain(Random(seed = 1)),
             getCatLines = GetCatLinesUseCase(repository = object : CatLineRepository {
                 override suspend fun getLines(): List<CatLineVO> = catLines
@@ -1099,9 +1099,8 @@ class HomeViewModelTest {
     }
 }
 
-/** 리그가 꺼진 저장소(원격 구성 기본값). 홈은 스프라이트로 그린다. */
-private object DisabledCatRigRepository : CatRigRepository {
-    override fun isEnabled(): Boolean = false
+/** 리그 그림을 읽지 못하는 저장소. 홈은 스프라이트로 되돌아간다. */
+private object MissingCatRigRepository : CatRigRepository {
     override suspend fun getCharacter(skin: CatSkinId, body: String?): CatRigCharacterVO? = null
     override suspend fun getItems(): List<AttachmentItemVO> = emptyList()
     override fun selectedSkin(): CatSkinId = CatSkinId.NYAMI

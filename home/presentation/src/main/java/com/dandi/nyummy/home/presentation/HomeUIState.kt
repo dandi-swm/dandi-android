@@ -23,7 +23,7 @@ import kotlinx.collections.immutable.ImmutableList
  * @property catLineId 대사가 바뀔 때마다 바뀐다. 말풍선은 이 값이 바뀌면 처음부터 한 글자씩 찍는다.
  * @property isCatLineRevealed 지금 대사가 끝까지 다 찍혔다. 그 뒤에 냐미를 누르면 다음 대사로 넘어간다.
  * @property catMotion 지금 재생할 냐미 동작. 애니메이션이나 상태가 아직 없으면 null이다.
- * @property catRig 리그로 그릴 냐미. 리그가 꺼져 있거나(원격 구성 기본) 읽지 못하면 null이고 스프라이트로 그린다.
+ * @property catRig 리그로 그릴 냐미(기본). 리그 그림을 읽지 못했을 때만 null이고 그때는 스프라이트로 그린다.
  * @property catMood 냐미 기분. 정하기 전에는 null
  * @property catDebugMotion 지금 동작 이름(debug 표시용)
  * @property catDebugLabel debug 빌드에서 냐미 위에 보일 기분·동작 표시. release 에서는 null

@@ -19,7 +19,7 @@ import kotlinx.collections.immutable.persistentListOf
  * @property selectedCategory 보관함에서 보고 있는 탭(아이템 종류). 방을 불러오면 있는 탭으로 맞춘다.
  * @property inventoryTabs 보관함 탭. 서버가 주는 종류마다 하나씩, 서버가 준 순서대로다. 불러오기 전에는 비어 있다.
  * @property catMotion 방에 앉은 냐미가 지금 하는 동작. 애니메이션을 받지 못했으면 null이고 냐미를 그리지 않는다.
- * @property catRig 리그로 그릴 냐미. 리그가 꺼져 있거나 읽지 못하면 null이고 스프라이트로 그린다.
+ * @property catRig 리그로 그릴 냐미(기본). 리그 그림을 읽지 못했을 때만 null이고 그때는 스프라이트로 그린다.
  * @property tutorial 첫 사용자 튜토리얼. 보여 주지 않으면 null.
  */
 @Immutable

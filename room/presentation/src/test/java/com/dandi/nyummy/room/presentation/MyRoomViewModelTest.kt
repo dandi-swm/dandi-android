@@ -632,7 +632,7 @@ class MyRoomViewModelTest {
             getOwnedRoomItems = deps(::GetOwnedRoomItemsUseCase),
             saveRoom = deps(::SaveRoomUseCase),
             getCatAnimations = GetCatAnimationsUseCase(catRepository, FakeResourceHelper, messageHelper, navigationHelper, FakeTTIHelper),
-            getCatRig = GetCatRigUseCase(DisabledCatRigRepository),
+            getCatRig = GetCatRigUseCase(MissingCatRigRepository),
             catMotionPicker = CatMotionPicker(Random(seed = 3)),
             navigationHelper = navigationHelper,
             messageHelper = messageHelper,

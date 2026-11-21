@@ -1,15 +1,13 @@
 # 냐미 리그 (파츠 + 본 + 착용 슬롯)
 
 냐미를 스프라이트 시트 대신 파츠 그림과 본(뼈대)으로 움직인다. 고양이를 늘리거나 옷, 모자를 입힐 때 그림을 프레임마다 새로 그리지 않아도 된다.
-원격 구성 `android_cat_rig_enabled`(기본 false)가 켜지면 홈과 마이룸의 냐미만 리그로 바뀌고, 동작 선택(`CatBrain`), 대사, 자리, 끝남 콜백은 스프라이트와 같다.
+홈과 마이룸의 냐미는 늘 리그로 그린다(기능 플래그 없이 업데이트에서 일괄 적용). 동작 선택(`CatBrain`), 대사, 자리, 끝남 콜백은 스프라이트 때와 같다.
+리그 그림을 못 읽으면 그 화면만 스프라이트 냐미로 되돌아간다(`GetCatRigUseCase`가 null, 화면의 `onLoadFailed`). 스프라이트 재생 코드는 이 되돌아가기용으로 남긴다(동작 이름과 상황은 리그도 스프라이트 애니메이션 정보를 그대로 쓴다).
 
-## 왜 기본값이 꺼져 있나
+## 알고 있는 한계
 
-- 정면 앉은 원화 한 장으로는 눕기, 구르기, 배 보이기 같은 큰 동작을 그릴 수 없어 11종이 근사다(`CatClipLibrary.approximateMotions`).
+- 정면 앉은 원화 한 장으로는 눕기, 구르기, 배 보이기 같은 큰 동작을 그릴 수 없어 11종이 근사다(`CatClipLibrary.approximateMotions`). 디자이너 자세 원화가 오면 바꾼다.
 - 그림체가 바뀐다(136px 픽셀풍 스프라이트 → 매끈한 원화).
-- 실기기 프레임 성능을 아직 재지 않았다.
-
-디자이너 자세 원화와 실기기 확인 뒤 원격 구성으로 일부부터 켠다. 리그 그림을 못 읽으면 화면이 스프라이트로 되돌아간다.
 
 ## 구조
 
@@ -17,7 +15,7 @@
 |---|---|
 | `cat:entity` `rig/` | 데이터 모델. `CatBone`(본 계층), `AttachmentSlot`/`CatZOrder`(착용 슬롯, 그리는 순서), `CatCharacterSpec`/`CatSkinId`(고양이 스킨), `CatBodyRigVO`(체형 파츠 묶음), `RigClip`/`RigChannel`(동작 클립) |
 | `cat:domain` `rig/` | 순수 Kotlin 엔진. `CatSkeleton`(체형별 휴지 자세), `CatPoseSolver`(채널 → 본 변환), `SkinnedGrid`/`CatWeightRules`(선형 블렌드 스키닝), `CatRigModel`(그릴 목록), `CatRigAnimator`(상태 머신, 관성 블렌딩, 스프링), `CatClipLibrary`(클립) |
-| `cat:data` `rig/` | `cats/rig/` 에셋 해석(`CatRigParser`), 플래그(`CatRigRepositoryImpl`), debug 덮어쓰기(`CatRigDebugStore`) |
+| `cat:data` `rig/` | `cats/rig/` 에셋 해석(`CatRigParser`), 저장소(`CatRigRepositoryImpl`), debug 스킨/착용 덮어쓰기(`CatRigDebugStore`) |
 | `cat:presentation` | `CatRigView`(Compose), `CatRigRenderer`(drawBitmapMesh), 텍스처 읽기, 검증용 코드 도형 아이템 |
 | `tools/cat-rig/extract_parts.py` | 공식 정면 일러스트 5체형 → 파츠 WebP + `rig.json` |
 
@@ -43,4 +41,4 @@
 - `cat:data` `CatRigSlotAndSkinTest`: 동작 전수(미재생 0), 프레임률 독립, z 순서, 귀 처리, 체형 비율, 스킨 데이터 교체
 - `cat:presentation` androidTest `CatRigViewTest`(그리기, 재생, 끝남, 모자 픽셀), `CatRigFrameCaptureTest`(연속 프레임 PNG)
 
-debug 확인: `adb shell am start -n com.dandi.nyummy/.debug.CatRigDebugActivity --es body PLUMP --es skin mackerel --es outfit full_over --ez apply true`
+debug 확인: `adb shell am start -n com.dandi.nyummy/.debug.CatRigDebugActivity --es body PLUMP --es skin mackerel --es outfit full_over`(스킨이나 착용을 주면 홈, 마이룸에도 적용)

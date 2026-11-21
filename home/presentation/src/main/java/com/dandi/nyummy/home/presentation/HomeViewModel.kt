@@ -399,7 +399,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** 리그가 켜져 있으면 지금 체형의 리그 냐미를 읽는다. 꺼져 있으면 null이라 스프라이트로 그린다. */
+    /** 지금 체형의 리그 냐미를 읽는다. 읽지 못하면 null이라 스프라이트로 그린다. */
     private suspend fun loadCatRig() {
         dispatch(HomeReducerEvent.CatRigChanged(getCatRig()?.let { CatRigUiModel(it) }))
     }

@@ -50,7 +50,7 @@ import kotlinx.collections.immutable.persistentListOf
  *
  * @param room 꾸민 방. null이면 아이템 없이 기본 빈 방만 그린다.
  * @param catMotion 서버에서 받은 냐미 동작. 받는 중이면 null이다.
- * @param catRig 리그로 그릴 냐미. 있으면 같은 동작을 리그로 그리고, 없으면 스프라이트로 그린다(설계서 11절 피처 플래그).
+ * @param catRig 리그로 그릴 냐미. 있으면 같은 동작을 리그로 그리고, 리그 그림을 읽지 못해 없으면 스프라이트로 그린다.
  * @param useFallbackCat 냐미 애니메이션을 받지 못해 기본 냐미(앱에 든 스프라이트)로 대신한다.
  * @param onCatShown 냐미가 처음 화면에 보인 순간(시트를 받아 그렸거나 기본 냐미를 그렸을 때). 홈 TTI 에 쓴다.
  */
