@@ -167,6 +167,41 @@ class ShopPurchaseFlowTest {
     }
 
     @Test
+    fun `구매 요청 중에는 확인 시트를 닫지 않고, 끝나면 완료 화면으로 바뀐다`() = runTest(testDispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        repository.purchaseHandler = {
+            gate.await()
+            PurchaseResultVO(quantity = 3, balance = 860)
+        }
+        val viewModel = enteredViewModel()
+        advanceUntilIdle()
+        viewModel.onIntent(ShopCartIntent.ClickPurchase)
+        viewModel.onIntent(ShopCartIntent.ConfirmPurchase)
+        advanceUntilIdle()
+
+        viewModel.onIntent(ShopCartIntent.DismissSheet)
+        assertEquals(ShopCartSheet.Confirm, viewModel.uiState.value.sheet)
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.sheet)
+        assertEquals(3, viewModel.uiState.value.completion?.quantity)
+    }
+
+    @Test
+    fun `구매 전에는 확인 시트를 닫을 수 있다`() = runTest(testDispatcher) {
+        val viewModel = enteredViewModel()
+        advanceUntilIdle()
+        viewModel.onIntent(ShopCartIntent.ClickPurchase)
+
+        viewModel.onIntent(ShopCartIntent.DismissSheet)
+
+        assertNull(viewModel.uiState.value.sheet)
+        assertTrue(repository.purchaseRequests.isEmpty())
+    }
+
+    @Test
     fun `막히면 다이얼로그 뒤 장바구니를 다시 읽는다`() = runTest(testDispatcher) {
         repository.purchaseHandler = { throw httpException(409, ShopErrorType.PRICE_CHANGED.type) }
         val viewModel = enteredViewModel()
