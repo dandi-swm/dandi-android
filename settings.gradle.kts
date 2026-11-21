@@ -50,6 +50,7 @@ include(":home:domain")
 include(":home:data")
 include(":home:entity")
 
+include(":cat:presentation")
 include(":cat:domain")
 include(":cat:data")
 include(":cat:entity")
