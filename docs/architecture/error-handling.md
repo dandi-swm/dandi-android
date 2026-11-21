@@ -100,6 +100,7 @@ class DeleteMealUseCase @Inject constructor(
 
 - **UseCase에 try/catch를 새로 쓰지 않는다.** `request`가 성공 감싸기, 취소 다시 던지기, 처리 순서, 실패 반환을 맡는다. 등록할 서버 code가 없으면 `request(commonErrors = ...) { }` 오버로드를 쓴다.
 - `Result`가 아닌 값을 돌려주거나(구매, 코인 받기, 분석 대기) 모든 실패에 분석 사유를 남겨야 하면 `catch (e: Exception)`에서 `e.toDomainFailure(...)`로 나누고 `notifyFailure(...)`로 안내한다. 이때도 `CancellationException`을 먼저 다시 던진다.
+- 공통 404 안내는 "준비 중" 다이얼로그 뒤 뒤로 간다. 화면에 남아야 하는 요청(구매)은 `SESSION_ONLY`로 404와 5xx를 공통 안내에서 빼고, `onUnknownError`에서 이동 없는 `showTemporaryErrorDialog()`를 쓴다.
 - **401이라고 다 로그인 만료가 아니다.** 서버는 로그인 세션(AccessToken) 실패에만 `api.auth.unauthorized`(토큰이 없거나 올바르지 않음)와 `api.auth.tokenExpired`(만료)를 주고, 회원가입·비밀번호 찾기의 인증 토큰 오류는 `api.auth.invalidEmailChallengeToken`, `api.auth.invalidVerifiedToken`처럼 따로 준다(백엔드 #103). 그래서 code가 없거나 이 두 code인 401만 로그인 만료로 본다. 로그인 전 화면은 `SIGNED_OUT` 정책으로 code 없는 401도 그 화면의 실패로 안내한다.
 - `isHandledOnDomain = false`로 등록한 code는 `request`가 아무 안내도 하지 않고 실패로 돌려준다. 공통 안내로 새지 않는다.
 - 화면이 실패를 따로 안내해야 하면, `HttpResponseException`을 직접 열지 말고 UseCase에 `fun isNotified(error: Throwable) = error.isCommonErrorNotified(ErrorType.entries, 정책)`을 두고 ViewModel이 그것을 본다.
@@ -115,10 +116,15 @@ class DeleteMealUseCase @Inject constructor(
 UseCase ─▶ executeCommonErrorHanding ─▶ SessionExpiryHandler.onSessionExpired()
              ├─ 처음 한 번만 통과(AtomicBoolean). 동시에 401이 여러 개 와도 정리, 다이얼로그, 이동은 한 번
              ├─ 이 기기 세션 정리: 로그인 토큰, 푸시 토큰, 냐미 기억, 튜토리얼, 위젯 (로그아웃과 같은 정리)
-             ├─ 닫을 수 없는 "로그인 만료" 다이얼로그. 이 동안 다른 공통 다이얼로그는 띄우지 않는다
+             ├─ 닫을 수 없고 다른 다이얼로그가 덮지 못하는 "로그인 만료" 다이얼로그(showPinnedDialog)
              └─ 확인 → 정리가 끝나기를 기다린 뒤 navigateToInitial() → NavHost가 스택을 비우고 /login
 로그인, 소셜 로그인, 가입 성공 ─▶ SessionExpiryHandler.onSignedIn() (다음 만료를 다시 처리)
 ```
+
+- 상태는 둘이다. `isExpired`(만료를 처리했고 아직 다시 로그인하지 않음)는 다시 로그인할 때까지 남아, 그 사이의 401을 다시 정리하거나 안내하지 않는다. `isNoticeShowing`(만료 안내를 띄운 뒤 로그인 화면으로 옮기기 전)인 동안만 다른 공통 안내(404, 5xx)를 띄우지 않는다. 로그인 화면에 도착하면 풀려서 로그인, 가입 요청의 404와 5xx를 평소처럼 안내한다.
+- 만료 다이얼로그는 고정 다이얼로그다. RootComposable은 다이얼로그 자리가 하나라, 고정 다이얼로그가 떠 있는 동안 오는 다른 1버튼, 2버튼 다이얼로그(화면의 비즈니스 안내 포함)를 버린다(`canShowDialogOver`). 덮이면 확인 버튼의 로그인 이동이 사라져 토큰 없는 화면에 갇힌다.
+- 결과 값을 돌려주는 UseCase는 만료를 따로 알린다. 예: 영양 계산 대기(`AwaitMealAnalysisUseCase`)는 `SESSION_EXPIRED`를 돌려주고, 화면은 지연 안내나 뒤로 가기를 하지 않는다.
+- 로그아웃, 탈퇴도 같은 정리를 하고, 정리 하나하나를 `runSuspendCatching`으로 감싸 기기 저장소 오류가 나도 로그인 화면으로 간다.
 
 - 네트워크 레이어는 이동이나 정리를 트리거하지 않는다. 세션 만료의 주체는 domain(`SessionExpiryHandler`)이다.
 - 토큰을 지운 뒤에는 Authenticator가 재발급하지 않으므로 자동 로그인이 다시 일어나지 않는다.
@@ -132,4 +138,4 @@ UseCase ─▶ executeCommonErrorHanding ─▶ SessionExpiryHandler.onSessionEx
 
 ## 사용자 노출 (MessageHelper)
 
-domain에서 직접 사용 가능한 인터페이스 ([MessageHelper.kt](../../common/domain/src/main/java/com/dandi/nyummy/common/domain/helper/MessageHelper.kt)): `showToast / showSnackBar(iconType, messageText|messageRes, CTA) / showOneButtonDialog(cantIgnore=true면 닫기 불가) / showTwoButtonDialog`. 구현은 presentation의 MessageHelperImpl — RootComposable의 SnackbarHost/ToastHost(`NyummyToastHostState`)/다이얼로그가 `effect: Flow<MessageEffect>`를 구독한다.
+domain에서 직접 사용 가능한 인터페이스 ([MessageHelper.kt](../../common/domain/src/main/java/com/dandi/nyummy/common/domain/helper/MessageHelper.kt)): `showToast / showSnackBar(iconType, messageText|messageRes, CTA) / showOneButtonDialog(cantIgnore=true면 닫기 불가) / showPinnedDialog(닫기 불가, 떠 있는 동안 다른 다이얼로그를 버림. 로그인 만료 전용) / showTwoButtonDialog`. 구현은 presentation의 MessageHelperImpl — RootComposable의 SnackbarHost/ToastHost(`NyummyToastHostState`)/다이얼로그가 `effect: Flow<MessageEffect>`를 구독한다.
