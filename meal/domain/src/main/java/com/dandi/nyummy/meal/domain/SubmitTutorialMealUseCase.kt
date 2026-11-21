@@ -1,18 +1,17 @@
 package com.dandi.nyummy.meal.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.isSessionExpired
-import com.dandi.nyummy.common.domain.error.registeredErrorType
+import com.dandi.nyummy.common.domain.error.CommonErrorPolicy
+import com.dandi.nyummy.common.domain.error.runSuspendCatching
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.meal.entity.CreatedMealVO
 import com.dandi.nyummy.meal.entity.RewardBoxGrade
 import com.dandi.nyummy.tti.TTIHelper
-import java.io.IOException
 import javax.inject.Inject
 
 /** 튜토리얼 식사 기록 결과. */
@@ -41,43 +40,37 @@ class SubmitTutorialMealUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
-    suspend operator fun invoke(): Result<TutorialMealResult> = try {
-        repository.createTutorialMeal()
-        finishMealTutorial(startAfterMeal = true)
-        Result.success(TutorialMealResult.Accepted(TutorialMeal))
-    } catch (e: HttpResponseException) {
-        when {
-            e.registeredErrorType<MealErrorType>() == MealErrorType.TUTORIAL_ALREADY_COMPLETED -> {
+    suspend operator fun invoke(): Result<TutorialMealResult> = request(
+        MealErrorType.entries,
+        // 로그인 만료만 공통 안내를 하고, 404와 5xx도 "잠시 후 다시"로 안내한다.
+        commonErrors = CommonErrorPolicy.SESSION_ONLY,
+        onBusinessError = { type, cause ->
+            if (type == MealErrorType.TUTORIAL_ALREADY_COMPLETED) {
                 finishMealTutorial(startAfterMeal = false)
                 Result.success(TutorialMealResult.AlreadyCompleted)
-            }
-            e.isSessionExpired() -> {
-                executeCommonErrorHanding(e)
-                Result.failure(e)
-            }
-            else -> {
+            } else {
                 showRetryNotice()
-                Result.failure(e)
+                Result.failure(cause)
             }
-        }
-    } catch (e: java.util.concurrent.CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        showRetryNotice()
-        Result.failure(e)
+        },
+        onUnknownError = { showRetryNotice() },
+    ) {
+        repository.createTutorialMeal()
+        finishMealTutorial(startAfterMeal = true)
+        TutorialMealResult.Accepted(TutorialMeal)
     }
 
     /**
-     * 식사 튜토리얼을 마쳤다고 남긴다. 서버는 이미 기록했으므로 기기에 남기지 못해도 실패로 보지 않는다
+     * 식사 튜토리얼을 마쳤다고 남긴다. 서버는 이미 기록했으므로 기기에 남기지 못해도(어떤 예외든) 실패로 보지 않는다
      * (다음 홈 응답이 다시 맞춘다).
      */
     private suspend fun finishMealTutorial(startAfterMeal: Boolean) {
-        try {
+        runSuspendCatching {
             tutorialHelper.setMealTutorialRequired(false)
             if (startAfterMeal) tutorialHelper.startAfterMeal()
-        } catch (_: IOException) {
         }
     }
 

@@ -1,12 +1,11 @@
 package com.dandi.nyummy.meal.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.isSessionExpired
-import com.dandi.nyummy.common.domain.error.registeredErrorType
+import com.dandi.nyummy.common.domain.error.CommonErrorPolicy
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
 
@@ -21,22 +20,14 @@ class CancelMealUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
-    suspend operator fun invoke(mealId: Long): Result<Unit> = try {
-        Result.success(repository.cancelMeal(mealId))
-    } catch (e: HttpResponseException) {
-        when {
-            e.registeredErrorType<MealErrorType>() == MealErrorType.MEAL_NOT_FOUND -> Result.success(Unit)
-            e.isSessionExpired() -> {
-                executeCommonErrorHanding(e)
-                Result.failure(e)
-            }
-            else -> Result.failure(e)
-        }
-    } catch (e: java.util.concurrent.CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Result.failure(e)
+    suspend operator fun invoke(mealId: Long): Result<Unit> = request(
+        MealErrorType.entries,
+        commonErrors = CommonErrorPolicy.SESSION_ONLY,
+        onBusinessError = { type, cause -> if (type == MealErrorType.MEAL_NOT_FOUND) Result.success(Unit) else Result.failure(cause) },
+    ) {
+        repository.cancelMeal(mealId)
     }
 }
