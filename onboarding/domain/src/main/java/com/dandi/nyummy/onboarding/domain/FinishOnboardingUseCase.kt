@@ -3,18 +3,18 @@ package com.dandi.nyummy.onboarding.domain
 import com.dandi.nyummy.common.domain.analytics.AnalyticsEvent
 import com.dandi.nyummy.common.domain.analytics.AnalyticsHelper
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
+import com.dandi.nyummy.common.domain.error.runSuspendCatching
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.home.domain.HomePreparePage
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 온보딩 마무리. 지어 준 이름과 고른 평소 식사 시각으로 고양이를 만들고, 온보딩 완료를 기록한 뒤
@@ -36,7 +36,8 @@ class FinishOnboardingUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(catName: String, mealTimes: MealTimesVO): Result<Unit> {
         // 서버가 거절하기 전에 막는다. 같은 시각이면 식사 알림이 한 끼니만 나간다.
@@ -48,43 +49,28 @@ class FinishOnboardingUseCase @Inject constructor(
         if (created) widgetHelper.onMealTimesSaved(mealTimes)
 
         // 기기 저장이 실패해도 홈으로 간다. 고양이는 이미 만들었다. 식사 시각은 고양이와 함께 서버에 저장했다.
-        runIgnoringFailure { repository.markOnboardingComplete() }
+        runSuspendCatching { repository.markOnboardingComplete() }
         analyticsHelper.logEvent(AnalyticsEvent.OnboardingComplete)
         navigationHelper.navigateToAsRoot(HomePreparePage)
         return Result.success(Unit)
     }
 
     /** 고양이를 만든다. 성공 값은 이번에 새로 만들었는지다(이미 있으면 false, 실패가 아니다). */
-    private suspend fun createCat(name: String, mealTimes: MealTimesVO): Result<Boolean> = try {
-        repository.createCat(name, mealTimes)
-        Result.success(true)
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: HttpResponseException) {
-        var alreadyExists = false
-        handleHttpError<OnboardingErrorType>(
-            e,
-            onDomainError = {
-                when (it) {
-                    OnboardingErrorType.CAT_ALREADY_EXISTS -> alreadyExists = true
-                    OnboardingErrorType.INVALID_INPUT -> messageHelper.showOneButtonDialog(descText = resourceHelper.getString(it.errorMsg))
+    private suspend fun createCat(name: String, mealTimes: MealTimesVO): Result<Boolean> = request(
+        OnboardingErrorType.entries,
+        onBusinessError = { type, cause ->
+            when (type) {
+                OnboardingErrorType.CAT_ALREADY_EXISTS -> Result.success(false)
+                OnboardingErrorType.INVALID_INPUT -> {
+                    messageHelper.showOneButtonDialog(descText = resourceHelper.getString(type.errorMsg))
+                    Result.failure(cause)
                 }
-            },
-            onUnknownError = { messageHelper.showOneButtonDialog(descText = resourceHelper.getString(StringResource.TEMPORARY_ERROR)) },
-        )
-        if (alreadyExists) Result.success(false) else Result.failure(e)
-    } catch (e: Exception) {
-        messageHelper.showOneButtonDialog(descText = resourceHelper.getString(StringResource.TEMPORARY_ERROR))
-        Result.failure(e)
-    }
-
-    private suspend fun runIgnoringFailure(block: suspend () -> Unit) {
-        try {
-            block()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            Unit
-        }
+            }
+        },
+        // 네트워크 끊김, 등록하지 않은 응답 오류, 예상 못 한 예외.
+        onUnknownError = { messageHelper.showOneButtonDialog(descText = resourceHelper.getString(StringResource.TEMPORARY_ERROR)) },
+    ) {
+        repository.createCat(name, mealTimes)
+        true
     }
 }
