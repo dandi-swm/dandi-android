@@ -17,6 +17,12 @@
             android:exported="true"
             android:label="Nyummy Sprite Debug"
             android:theme="@style/Theme.Dandi" />
+
+        <activity
+            android:name="com.dandi.nyummy.debug.CatRigDebugActivity"
+            android:exported="true"
+            android:label="Nyummy Cat Rig Debug"
+            android:theme="@style/Theme.Dandi" />
     </application>
 
 </manifest>
