@@ -213,7 +213,8 @@ class ShopCartViewModel @Inject constructor(
             ShopCartIntent.DismissDetail -> dispatch(ShopCartReducerEvent.DetailClosed)
             is ShopCartIntent.AddRecommendation -> addRecommendation(intent.item)
             ShopCartIntent.ClickPurchase -> openPurchaseSheet()
-            ShopCartIntent.DismissSheet -> dispatch(ShopCartReducerEvent.SheetChanged(null))
+            // 구매 응답을 기다리는 동안에는 확인 시트를 닫지 않는다. 결과에 따라 완료 화면이나 부족 시트로 바뀐다.
+            ShopCartIntent.DismissSheet -> if (!currentState.isPurchasing) dispatch(ShopCartReducerEvent.SheetChanged(null))
             ShopCartIntent.ConfirmPurchase -> confirmPurchase()
             ShopCartIntent.ClickRecordMeal -> {
                 dispatch(ShopCartReducerEvent.SheetChanged(null))

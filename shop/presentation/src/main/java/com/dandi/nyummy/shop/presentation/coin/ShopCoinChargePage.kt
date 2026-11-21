@@ -206,16 +206,19 @@ private fun CoinPackageRow(pack: CoinChargePackageVO, onClick: () -> Unit) {
     }
 }
 
-/** 충전 확인 시트(피그마 `Charge · 11`). 결제할 금액, 충전 후 내 코인, 취소·"(가격) 결제하기". 실제 결제는 하지 않는다. */
+/**
+ * 충전 확인 시트(피그마 `Charge · 11`). 결제할 금액, 충전 후 내 코인, 취소·"(가격) 결제하기". 실제 결제는 하지 않는다.
+ * 결제 응답을 기다리는 동안([isPaying])은 끌어내리기, 바깥 누르기, 뒤로 가기로도 닫히지 않는다.
+ */
 @Composable
-private fun CoinChargeConfirmSheet(
+internal fun CoinChargeConfirmSheet(
     pack: CoinChargePackageVO,
     balance: Int,
     isPaying: Boolean,
     onPay: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    NyummyBottomSheet(onDismissRequest = onDismiss) {
+    NyummyBottomSheet(onDismissRequest = onDismiss, dismissible = !isPaying) {
         NyummySheetTitle(text = stringResource(R.string.shop_charge_sheet_title, number(pack.coins)))
         Column(
             modifier = Modifier

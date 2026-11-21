@@ -48,7 +48,10 @@ import java.text.NumberFormat
 import java.util.Locale
 import com.dandi.nyummy.common.presentation.R as CommonR
 
-/** 구매 확인 시트(피그마 `Shop · 21`). 산 상품 그림, 결제할 코인, 구매 후 남는 코인, 취소·구매하기. */
+/**
+ * 구매 확인 시트(피그마 `Shop · 21`). 산 상품 그림, 결제할 코인, 구매 후 남는 코인, 취소·구매하기.
+ * 구매 응답을 기다리는 동안([isPurchasing])은 끌어내리기, 바깥 누르기, 뒤로 가기로도 닫히지 않고 취소도 막는다.
+ */
 @Composable
 internal fun PurchaseConfirmSheet(
     items: List<ShopItemVO>,
@@ -57,7 +60,7 @@ internal fun PurchaseConfirmSheet(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    NyummyBottomSheet(onDismissRequest = onDismiss) {
+    NyummyBottomSheet(onDismissRequest = onDismiss, dismissible = !isPurchasing) {
         NyummySheetTitle(text = stringResource(R.string.shop_purchase_confirm_title, summary.quantity))
         SheetBody {
             ItemThumbnails(items = items, tileSize = SheetTileSize)
@@ -76,6 +79,7 @@ internal fun PurchaseConfirmSheet(
                 text = stringResource(R.string.shop_purchase_cancel),
                 onClick = onDismiss,
                 style = NyummyButtonStyle.Neutral,
+                enabled = !isPurchasing,
                 modifier = Modifier.weight(CancelWeight),
             )
             NyummyButton(

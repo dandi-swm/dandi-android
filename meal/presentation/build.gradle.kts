@@ -61,6 +61,8 @@ dependencies {
     implementation(project(":meal:entity"))
     // 찾은 음식을 가져간 뒤 기록 탭(HistoryPage)으로 보낸다.
     implementation(project(":history:domain"))
+    // 기록을 마치면 홈 탭(HomePage)으로 보낸다.
+    implementation(project(":home:domain"))
     implementation(project(":room:domain"))
     implementation(project(":common:presentation"))
 

@@ -53,6 +53,7 @@ import com.dandi.nyummy.common.presentation.designsystem.theme.NyummyTheme
  *
  * [dismissible]이 false인 동안(저장 중 등)은 끌어내리기·바깥 누르기·뒤로 가기로 닫히지 않는다. 닫히지 않을 때
  * 시트만 혼자 숨어 보이지 않는 창이 터치를 막는 일이 없게, 시트 상태에서 숨김 자체를 거절한다.
+ * Material3 시트는 뒤로 가기에 숨김이 거절돼도 [onDismissRequest]를 부르므로, 그동안은 닫기 요청도 넘기지 않는다.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +65,7 @@ fun NyummyBottomSheet(
 ) {
     val canDismiss by rememberUpdatedState(dismissible)
     ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = { if (canDismiss) onDismissRequest() },
         // 시트가 상태바 밑으로 올라가지 않게 바깥에서 상태바만큼 비운다. Material3 시트는 위치에 따라 상단 시스템 바 여백을
         // 넣었다 빼는데, 그 여백이 다시 시트 높이를 바꿔 내용 높이가 화면 높이 근처면 시트가 계속 흔들린다.
         // 바깥에서 상태바 영역을 먼저 빼 두면 안쪽 여백이 위치와 상관없이 0이 되어 흔들리지 않는다.
