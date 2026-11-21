@@ -1,13 +1,12 @@
 package com.dandi.nyummy.meal.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.registeredErrorType
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.meal.entity.MealFoodConfirmVO
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
@@ -24,29 +23,25 @@ class GetFoundFoodsUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
-    suspend operator fun invoke(mealId: Long): Result<MealFoodConfirmVO> = try {
-        val confirm = repository.getFoundFoods(mealId)
-        if (!confirm.isConfirmable) showNotice(IconType.WARNING, StringResource.MEAL_FOODS_ALREADY_ANALYZING)
-        Result.success(confirm)
-    } catch (e: HttpResponseException) {
-        if (e.registeredErrorType<MealErrorType>() == MealErrorType.MEAL_NOT_FOUND) {
-            showNotice(IconType.WARNING, StringResource.MEAL_FOODS_MEAL_GONE)
-            Result.success(MealFoodConfirmVO.empty)
-        } else {
-            handleHttpError<MealErrorType>(
-                e,
-                onDomainError = { showNotice(IconType.ERROR, it.errorMsg) },
-                onUnknownError = { showNotice(IconType.ERROR, StringResource.MEAL_FOODS_LOAD_FAILED) },
-            )
-            Result.failure(e)
+    suspend operator fun invoke(mealId: Long): Result<MealFoodConfirmVO> = request(
+        MealErrorType.entries,
+        onBusinessError = { type, cause ->
+            if (type == MealErrorType.MEAL_NOT_FOUND) {
+                showNotice(IconType.WARNING, StringResource.MEAL_FOODS_MEAL_GONE)
+                Result.success(MealFoodConfirmVO.empty)
+            } else {
+                showNotice(IconType.ERROR, type.errorMsg)
+                Result.failure(cause)
+            }
+        },
+        onUnknownError = { showNotice(IconType.ERROR, StringResource.MEAL_FOODS_LOAD_FAILED) },
+    ) {
+        repository.getFoundFoods(mealId).also { confirm ->
+            if (!confirm.isConfirmable) showNotice(IconType.WARNING, StringResource.MEAL_FOODS_ALREADY_ANALYZING)
         }
-    } catch (e: java.util.concurrent.CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        showNotice(IconType.ERROR, StringResource.MEAL_FOODS_LOAD_FAILED)
-        Result.failure(e)
     }
 
     private fun showNotice(iconType: IconType, message: StringResource) {

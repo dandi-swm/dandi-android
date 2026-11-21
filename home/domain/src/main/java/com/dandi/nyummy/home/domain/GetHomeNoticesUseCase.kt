@@ -1,9 +1,9 @@
 package com.dandi.nyummy.home.domain
 
+import com.dandi.nyummy.common.domain.error.runSuspendCatching
 import com.dandi.nyummy.common.domain.helper.DeviceHelper
 import com.dandi.nyummy.home.entity.HomeNoticeVO
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 홈 첫 진입 때 띄울 새 소식 공지를 고른다. 홈이 띄우기로 한 때에만 부른다.
@@ -30,13 +30,8 @@ class GetHomeNoticesUseCase @Inject constructor(
 }
 
 /** 기기 저장소를 읽지 못하면 아무것도 숨기지 않은 것으로 본다. */
-internal suspend fun HomeRepository.hiddenNoticeKeysOrEmpty(): Set<String> = try {
-    getHiddenNoticeKeys()
-} catch (e: CancellationException) {
-    throw e
-} catch (_: Exception) {
-    emptySet()
-}
+internal suspend fun HomeRepository.hiddenNoticeKeysOrEmpty(): Set<String> =
+    runSuspendCatching { getHiddenNoticeKeys() }.getOrDefault(emptySet())
 
 /** 지금이 기간 안이고 앱 versionCode가 최소 버전 이상인지. 적지 않은 조건은 보지 않는다. */
 internal fun HomeNoticeVO.isVisibleAt(nowMillis: Long, versionCode: Long): Boolean =
