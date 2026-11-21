@@ -16,7 +16,7 @@ interface TokenRefresher {
      * 그대로 전파시켜 세션 만료(이 기기의 로그인 정보 정리)로 잇는다. 리프레시 토큰이 확정 무효(401)일 때의
      * 저장 토큰 폐기도 구현이 책임진다.
      *
-     * 일시적인 실패(네트워크 끊김, 서버 5xx)는 세션이 끝난 것이 아니므로 [java.io.IOException]을 던진다.
+     * 재발급을 끝내지 못한 그 밖의 실패(네트워크 끊김, 서버 5xx, 401이 아닌 4xx, 토큰 없는 성공 응답)는 세션이 끝난 것이 아니므로 [java.io.IOException]을 던진다.
      * Authenticator가 던진 IOException은 원래 요청의 실패가 되어 화면은 네트워크 오류로 안내하고 토큰은 남는다.
      */
     suspend fun refresh(refreshToken: String): String?

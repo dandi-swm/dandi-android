@@ -10,8 +10,10 @@ import java.io.IOException
  *
  * 세션이 끝났을 때만 null 로 알린다 — 호출자(TokenAuthenticator)는 null 이면
  * 원본 401 을 그대로 전파시켜 domain 의 공통 401 처리(세션 만료)로 잇는다.
- * 세션 만료 처리는 이 기기의 로그인 정보를 모두 지우므로, 재발급을 끝내지 못한 일시적인 실패
- * (네트워크 끊김, 서버 5xx)는 [IOException]으로 던진다. 그러면 원래 요청이 네트워크 오류로 실패하고 토큰은 남는다.
+ * 세션이 끝났다고 서버가 확정하는 응답은 401(`api.auth.invalidRefreshToken`)뿐이다(Swagger 계약).
+ * 세션 만료 처리는 이 기기의 로그인 정보를 모두 지우므로, 그 밖에 재발급을 끝내지 못한 실패
+ * (네트워크 끊김, 서버 5xx, 401이 아닌 4xx(게이트웨이의 403, 429 등), 토큰이 없는 성공 응답)는 [IOException]으로 던진다.
+ * 그러면 원래 요청이 네트워크 오류로 실패하고 토큰은 남는다.
  */
 class TokenRefresherImpl(
     private val apiService: AuthApiService,
@@ -36,11 +38,13 @@ class TokenRefresherImpl(
             return null
         }
 
-        // 5xx: 서버 사정이라 세션이 끝난 것이 아니다. 토큰 보존, 일시적인 실패로 던진다.
-        if (response.code() >= HTTP_SERVER_ERROR) throw IOException("Token refresh failed: ${response.code()}")
+        // 401 밖의 실패 응답(5xx, 게이트웨이의 403, 429 등)은 세션이 끝났다는 뜻이 아니다. 토큰 보존, 일시적인 실패로 던진다.
+        if (!response.isSuccessful) throw IOException("Token refresh failed: ${response.code()}")
 
-        val body = response.takeIf { it.isSuccessful }?.body() ?: return null
-        val newAccessToken = body.accessToken?.takeIf { it.isNotBlank() } ?: return null
+        // 성공인데 새 토큰이 없으면 재발급을 끝내지 못한 것이다. 세션 만료로 보내지 않고 토큰을 남긴다.
+        val body = response.body()
+        val newAccessToken = body?.accessToken?.takeIf { it.isNotBlank() }
+            ?: throw IOException("Token refresh failed: empty access token")
 
         tokenProvider.update(
             access = newAccessToken,
@@ -52,6 +56,5 @@ class TokenRefresherImpl(
 
     private companion object {
         const val HTTP_UNAUTHORIZED = 401
-        const val HTTP_SERVER_ERROR = 500
     }
 }
