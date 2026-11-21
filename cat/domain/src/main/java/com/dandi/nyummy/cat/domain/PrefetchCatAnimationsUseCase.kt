@@ -1,7 +1,7 @@
 package com.dandi.nyummy.cat.domain
 
+import com.dandi.nyummy.common.domain.error.runSuspendCatching
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 홈에 가기 전에 내 냐미 체형과 이름을 조회해 기억해 둔다. 애니메이션은 앱에 들어 있어 받을 것이 없고, 체형과 이름만 서버에서 읽는다.
@@ -13,12 +13,7 @@ class PrefetchCatAnimationsUseCase @Inject constructor(
 ) {
 
     suspend operator fun invoke() {
-        try {
-            repository.refreshWeight()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // 실패는 알리지 않는다. 홈이 화면에 보일 때 다시 조회한다.
-        }
+        // 실패는 로그인 만료까지 알리지 않는다. 홈이 화면에 보일 때 다시 조회하고, 그 조회가 로그인 만료를 안내한다.
+        runSuspendCatching { repository.refreshWeight() }
     }
 }
