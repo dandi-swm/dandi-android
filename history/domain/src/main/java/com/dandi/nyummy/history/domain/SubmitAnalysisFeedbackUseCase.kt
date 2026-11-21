@@ -1,19 +1,18 @@
 package com.dandi.nyummy.history.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.common.entity.cat.CatName
 import com.dandi.nyummy.history.entity.AnalysisFeedbackReason
 import com.dandi.nyummy.tti.TTIHelper
-import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.first
+import javax.inject.Inject
 
 /**
  * AI 영양 분석 평가 보내기.
@@ -29,7 +28,8 @@ class SubmitAnalysisFeedbackUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(
         mealId: Long,
@@ -42,35 +42,23 @@ class SubmitAnalysisFeedbackUseCase @Inject constructor(
             showError(resourceHelper.getString(HistoryErrorType.INVALID_RATING.errorMsg))
             return Result.failure(IllegalArgumentException("rating half steps out of range: $ratingHalfSteps"))
         }
-        return try {
+        return request(
+            HistoryErrorType.entries,
+            onBusinessError = { type, cause ->
+                if (type == HistoryErrorType.ANALYSIS_FEEDBACK_ALREADY_EXISTS) {
+                    // 다른 기기에서 먼저 평가했으면 평가는 끝난 것이다.
+                    showThanks()
+                    Result.success(Unit)
+                } else {
+                    showError(resourceHelper.getString(type.errorMsg))
+                    Result.failure(cause)
+                }
+            },
+            // 네트워크 끊김 등 응답 전 실패와 등록하지 않은 응답 오류.
+            onUnknownError = { showError(resourceHelper.getString(StringResource.HISTORY_FEEDBACK_SUBMIT_FAILED)) },
+        ) {
             repository.submitAnalysisFeedback(mealId, ratingHalfSteps, feedbackReasonOf(reason, comment))
             showThanks()
-            Result.success(Unit)
-        } catch (e: HttpResponseException) {
-            var alreadySubmitted = false
-            handleHttpError<HistoryErrorType>(
-                e,
-                onDomainError = { type ->
-                    if (type == HistoryErrorType.ANALYSIS_FEEDBACK_ALREADY_EXISTS) {
-                        alreadySubmitted = true
-                    } else {
-                        showError(resourceHelper.getString(type.errorMsg))
-                    }
-                },
-                onUnknownError = { showError(resourceHelper.getString(StringResource.HISTORY_FEEDBACK_SUBMIT_FAILED)) },
-            )
-            if (alreadySubmitted) {
-                showThanks()
-                Result.success(Unit)
-            } else {
-                Result.failure(e)
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // 네트워크 끊김 등 HTTP 응답 전 실패.
-            showError(resourceHelper.getString(StringResource.HISTORY_FEEDBACK_SUBMIT_FAILED))
-            Result.failure(e)
         }
     }
 
