@@ -22,7 +22,8 @@ internal object StringNameResourceHelper : ResourceHelper {
 
 /** 띄운 다이얼로그, 스낵바, 토스트를 기록한다. 여러 스레드에서 불러도 된다. */
 internal class FakeMessageHelper : MessageHelper {
-    data class Dialog(val descText: String, val cantIgnore: Boolean, val onClickButton: (() -> Unit)?)
+    /** [pinned]는 다른 다이얼로그가 덮지 못하는 고정 다이얼로그([MessageHelper.showPinnedDialog])인지. */
+    data class Dialog(val descText: String, val cantIgnore: Boolean, val onClickButton: (() -> Unit)?, val pinned: Boolean = false)
 
     val dialogs: MutableList<Dialog> = Collections.synchronizedList(mutableListOf())
     val snackBars: MutableList<String> = Collections.synchronizedList(mutableListOf())
@@ -43,6 +44,10 @@ internal class FakeMessageHelper : MessageHelper {
         onClickButton: (() -> Unit)?,
     ) {
         dialogs += Dialog(descText, cantIgnore, onClickButton)
+    }
+
+    override fun showPinnedDialog(descText: String, buttonText: String, onClickButton: () -> Unit) {
+        dialogs += Dialog(descText, cantIgnore = true, onClickButton = onClickButton, pinned = true)
     }
 
     override fun showTwoButtonDialog(

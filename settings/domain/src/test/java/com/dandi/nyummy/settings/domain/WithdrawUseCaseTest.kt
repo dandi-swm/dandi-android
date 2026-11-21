@@ -34,6 +34,8 @@ class WithdrawUseCaseTest {
 
     private class RecordingCompanionMemory : CompanionMemoryHelper {
         var clearCount = 0
+        /** 기기 저장소 쓰기 실패를 흉내 낸다. */
+        var clearError: Exception? = null
         override suspend fun lastSeenAtMillis(): Long? = null
         override suspend fun setLastSeenAtMillis(millis: Long) = Unit
         override suspend fun lastCatWeight(): String? = null
@@ -42,6 +44,7 @@ class WithdrawUseCaseTest {
         override suspend fun setCatName(name: String) = Unit
         override suspend fun clear() {
             clearCount++
+            clearError?.let { throw it }
         }
     }
 
@@ -92,6 +95,19 @@ class WithdrawUseCaseTest {
         val snackBar = messageHelper.snackBars.single()
         assertEquals(IconType.SUCCESS, snackBar.iconType)
         assertEquals(StringResource.SETTINGS_WITHDRAWN.name, snackBar.messageText)
+    }
+
+    @Test
+    fun `탈퇴 뒤 정리 하나가 기기 저장소 오류로 실패해도 나머지 정리와 인사와 첫 화면 이동을 한다`() = runBlocking {
+        companionMemory.clearError = IOException("disk full")
+
+        val result = useCase()
+
+        assertTrue(result.isSuccess)
+        assertEquals(1, tutorialHelper.clearCount)
+        assertEquals(listOf<WidgetCall>(WidgetCall.Clear), widgetHelper.calls)
+        assertEquals(StringResource.SETTINGS_WITHDRAWN.name, messageHelper.snackBars.single().messageText)
+        assertEquals(1, navigationHelper.initialCount)
     }
 
     @Test

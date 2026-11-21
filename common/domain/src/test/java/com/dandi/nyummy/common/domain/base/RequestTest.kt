@@ -147,7 +147,7 @@ class RequestTest {
     }
 
     @Test
-    fun `로그인 만료를 안내한 뒤 다시 로그인하기 전에는 다른 공통 다이얼로그로 덮지 않는다`() = runBlocking {
+    fun `로그인 만료 안내가 떠 있는 동안에는 다른 공통 다이얼로그로 덮지 않는다`() = runBlocking {
         val useCase = RequestUseCase(messageHelper, navigationHelper, sessionExpiryHandler(CallLog()))
 
         useCase.run { throw httpException(401) }
@@ -155,6 +155,31 @@ class RequestTest {
         useCase.run { throw httpException(404) }
 
         assertEquals(StringResource.SESSION_EXPIRED_MESSAGE.name, messageHelper.dialogs.single().descText)
+        assertTrue(messageHelper.dialogs.single().pinned)
+    }
+
+    @Test
+    fun `만료 안내를 확인해 로그인 화면으로 간 뒤에는 로그인 화면 요청의 5xx 와 404 를 다시 안내한다`() = runBlocking {
+        val log = CallLog()
+        val handler = sessionExpiryHandler(log)
+        val useCase = RequestUseCase(messageHelper, navigationHelper, handler)
+        useCase.run { throw httpException(401) }
+        messageHelper.dialogs.single().onClickButton?.invoke()
+        messageHelper.dialogs.clear()
+
+        // 로그인 화면의 이메일 로그인(SIGNED_OUT)이 서버 점검(5xx)과 404를 만난다.
+        useCase.run(policy = CommonErrorPolicy.SIGNED_OUT) { throw httpException(503) }
+        useCase.run(policy = CommonErrorPolicy.SIGNED_OUT) { throw httpException(404) }
+
+        assertEquals(
+            listOf(StringResource.TRY_AGAIN_LATER.name, StringResource.NOT_READY_MESSAGE.name),
+            messageHelper.dialogs.map { it.descText },
+        )
+        // 401 재처리 막기는 다시 로그인할 때까지 남는다. 늦게 도착한 401은 다시 정리하거나 안내하지 않는다.
+        useCase.run { throw httpException(401) }
+        assertTrue(handler.isExpired)
+        assertEquals(1, log.count("SessionTokenHelper.clearTokens"))
+        assertEquals(2, messageHelper.dialogs.size)
     }
 
     @Test

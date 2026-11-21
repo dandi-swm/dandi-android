@@ -52,6 +52,8 @@ class SessionExpiryHandlerTest {
 
         assertEquals(StringResource.SESSION_EXPIRED_MESSAGE.name, messageHelper.dialogs.single().descText)
         assertTrue(messageHelper.dialogs.single().cantIgnore)
+        // 다른 다이얼로그가 덮지 못하는 고정 다이얼로그로 띄운다.
+        assertTrue(messageHelper.dialogs.single().pinned)
         assertEquals(1, log.count("SessionTokenHelper.clearTokens"))
         assertEquals(1, navigationHelper.initialCount)
     }
@@ -116,6 +118,24 @@ class SessionExpiryHandlerTest {
         assertTrue(handler.isExpired)
         assertEquals(1, log.count("SessionTokenHelper.clearTokens"))
         assertEquals(1, messageHelper.dialogs.size)
+    }
+
+    @Test
+    fun `안내 중 상태는 로그인 화면으로 옮기면 풀리고 401 재처리 막기는 다시 로그인할 때까지 남는다`() {
+        val handler = handler()
+
+        handler.onSessionExpired()
+        assertTrue(handler.isNoticeShowing)
+
+        messageHelper.dialogs.single().onClickButton?.invoke()
+
+        assertEquals(1, navigationHelper.initialCount)
+        assertFalse(handler.isNoticeShowing)
+        assertTrue(handler.isExpired)
+
+        handler.onSessionExpired()
+        assertEquals(1, messageHelper.dialogs.size)
+        assertFalse(handler.isNoticeShowing)
     }
 
     @Test
