@@ -26,7 +26,8 @@ import com.dandi.nyummy.cat.entity.rig.RigPaletteVO
  *
  * - 메시 파츠: `drawBitmapMesh`(API 18부터 하드웨어 가속). 꼭짓점은 실수 좌표 그대로라 반올림 떨림이 없다.
  * - 강체 파츠(눈, 입, 모자, 안경): 아핀 행렬을 걸고 `drawBitmap`. 눈꺼풀은 눈 좌표의 다각형으로 자른다.
- * - 코드 도형(감은 눈 선, 벌린 입, 그림자, Zzz): 원화에서 뽑은 색([RigPaletteVO])으로 그린다.
+ * - 코드 도형(감은 눈 선, 벌린 입, 그림자, Zzz): 원화에서 뽑은 색([RigPaletteVO])으로 그린다. 선 색(입, 그림자, Zzz)은
+ *   털 색 변환([tinted])을 걸어 스킨 털 색에 맞춘다.
  * - 스킨 색: 재질별 [ColorTransformVO]를 `ColorMatrixColorFilter`로 칠한다(텍스처를 새로 만들지 않는다).
  *
  * 리그 좌표(136 x 136 u)는 [draw]의 배율로 화면 픽셀에 맞춘다. 그리는 동안 객체를 새로 만들지 않는다.
@@ -121,7 +122,7 @@ class CatRigRenderer {
                     canvas.drawPath(path, shapePaint)
                 }
                 CatShape.OPEN_MOUTH -> {
-                    fill(palette.line, op.alpha)
+                    fill(line, op.alpha)
                     rect.set(p[0] - p[2] / 2f, p[1], p[0] + p[2] / 2f, p[1] + p[3])
                     canvas.drawOval(rect, shapePaint)
                     fill(palette.blush, op.alpha)
