@@ -1,8 +1,8 @@
 package com.dandi.nyummy.room.domain
 
+import com.dandi.nyummy.common.domain.error.runSuspendCatching
 import com.dandi.nyummy.room.entity.RoomItemCategory
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 지금 방에 깔린 배경의 아이템 id. 식사 기록 연출처럼 방 그림을 장식으로만 쓰는 화면이 부른다.
@@ -12,13 +12,10 @@ class GetRoomBackgroundUseCase @Inject constructor(
     private val repository: RoomRepository,
 ) {
 
-    suspend operator fun invoke(): Long? = try {
+    // 로그인 만료도 알리지 않는다. 식사 기록 연출 중에만 부르고, 연출 뒤 홈의 조회가 로그인 만료를 안내한다.
+    suspend operator fun invoke(): Long? = runSuspendCatching {
         repository.getRoom(size = 1).placements
             .firstOrNull { it.category == RoomItemCategory.BACKGROUND }
             ?.itemId
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        null
-    }
+    }.getOrNull()
 }

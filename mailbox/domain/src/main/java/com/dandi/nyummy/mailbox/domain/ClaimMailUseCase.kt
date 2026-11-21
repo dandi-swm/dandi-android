@@ -1,14 +1,13 @@
 package com.dandi.nyummy.mailbox.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.mailbox.entity.RewardVO
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 우편 하나 받기(보상 상자 열기 포함).
@@ -22,22 +21,14 @@ class ClaimMailUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
-    suspend operator fun invoke(mailId: Long): Result<RewardVO?> = try {
-        Result.success(repository.claimMail(mailId))
-    } catch (e: HttpResponseException) {
-        var alreadyGone = false
-        handleHttpError<MailErrorType>(
-            e,
-            onDomainError = { if (it in ALREADY_GONE) alreadyGone = true },
-        )
-        if (alreadyGone) Result.success(null) else Result.failure(e)
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        // 네트워크 끊김 등 HTTP 응답 전 실패도 앱이 죽지 않게 실패로 돌려준다.
-        Result.failure(e)
+    suspend operator fun invoke(mailId: Long): Result<RewardVO?> = request(
+        MailErrorType.entries,
+        onBusinessError = { type, cause -> if (type in ALREADY_GONE) Result.success(null) else Result.failure(cause) },
+    ) {
+        repository.claimMail(mailId)
     }
 
     private companion object {
