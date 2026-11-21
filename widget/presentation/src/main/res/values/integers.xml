@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      위젯 미리보기(layout/widget_nyummy_preview)의 문구를 그림으로 보일지, 글자로 보일지. 값은 android:visibility 열거 순번이다(0 visible, 1 invisible, 2 gone). View.GONE(8)을 적으면 런처가 레이아웃을 읽다 죽는다.
+      런처는 레이아웃의 앱 글꼴을 불러오지 않아서 한국어는 까투리로 미리 그린 그림(widget_preview_copy, widget_preview_streak)을 쓴다.
+      그 그림은 한국어로만 있으니 다른 언어는 문자열 리소스를 기기 글꼴로 쓴다. 까투리에 가나가 없어 일본어 위젯 본문도 기기 글꼴로 그려지므로
+      미리보기와 실제 위젯의 글꼴이 같다. 다른 언어 그림이 오면 drawable-<언어>-xxhdpi에 넣고 values-<언어>/integers.xml에서 두 값을 바꾼다.
+    -->
+    <integer name="widget_preview_image_visibility">2</integer>
+    <integer name="widget_preview_text_visibility">0</integer>
+</resources>

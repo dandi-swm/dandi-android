@@ -112,4 +112,9 @@
     <!-- 로그아웃 -->
     <string name="widget_logout_title">ログアウト</string>
     <string name="widget_logout_sub">待ちくたびれて寝た</string>
+
+    <!-- 위젯 고르기 화면 미리보기(점심 기다림 B, 12일). 한국어는 같은 문구를 까투리로 미리 그린 그림을 쓴다. -->
+    <string name="widget_preview_title">もうすぐ\n昼ごはん！</string>
+    <string name="widget_preview_sub">お皿を持って待機中</string>
+    <string name="widget_preview_streak">12日</string>
 </resources>

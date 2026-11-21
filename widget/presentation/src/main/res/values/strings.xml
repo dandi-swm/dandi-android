@@ -111,4 +111,9 @@
     <!-- 로그아웃 -->
     <string name="widget_logout_title">Logged out</string>
     <string name="widget_logout_sub">Fell asleep waiting</string>
+
+    <!-- 위젯 고르기 화면 미리보기(점심 기다림 B, 12일). 한국어는 같은 문구를 까투리로 미리 그린 그림을 쓴다. -->
+    <string name="widget_preview_title">It\'s almost\nlunch!</string>
+    <string name="widget_preview_sub">Waiting, bowl in paw</string>
+    <string name="widget_preview_streak">Day 12</string>
 </resources>

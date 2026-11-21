@@ -71,7 +71,8 @@ class NyummyWidgetReceiver : AppWidgetProvider() {
             NyummyWidgetScheduler.cancel(context)
             return
         }
-        val card = getWidgetCard(variantCount = NyummyWidgetCatalog::variantCount)
+        val imageTextLocalized = context.resources.getBoolean(R.bool.widget_art_text_localized)
+        val card = getWidgetCard(variantCount = { plan -> NyummyWidgetCatalog.variantCount(plan, imageTextLocalized) })
         show(context, ids, card)
         NyummyWidgetScheduler.schedule(context, card.plan.nextChangeAtMillis)
     }
