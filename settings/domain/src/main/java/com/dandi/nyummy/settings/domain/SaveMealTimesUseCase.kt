@@ -1,17 +1,16 @@
 package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 평소 식사 시각을 서버에 저장한다. 서버는 이 시각으로 식사 알림을 보낸다.
@@ -25,7 +24,8 @@ class SaveMealTimesUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(mealTimes: MealTimesVO, onRetry: () -> Unit): Result<Unit> {
         // 서버가 거절하기 전에 막는다. 같은 시각이면 식사 알림이 한 끼니만 나간다.
@@ -33,23 +33,17 @@ class SaveMealTimesUseCase @Inject constructor(
             showError(resourceHelper.getString(StringResource.DUPLICATE_MEAL_TIMES))
             return Result.failure(IllegalArgumentException(resourceHelper.getString(StringResource.DUPLICATE_MEAL_TIMES)))
         }
-        return try {
+        return request(
+            SettingsErrorType.entries,
+            onBusinessError = { type, cause ->
+                showError(resourceHelper.getString(type.errorMsg))
+                Result.failure(cause)
+            },
+            // 네트워크 끊김, 등록하지 않은 응답 오류, 예상 못 한 예외.
+            onUnknownError = { showSaveFailed(onRetry) },
+        ) {
             repository.saveMealTimes(mealTimes)
             widgetHelper.onMealTimesSaved(mealTimes)
-            Result.success(Unit)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: HttpResponseException) {
-            handleHttpError<SettingsErrorType>(
-                e,
-                onDomainError = { showError(resourceHelper.getString(it.errorMsg)) },
-                onUnknownError = { showSaveFailed(onRetry) },
-            )
-            Result.failure(e)
-        } catch (e: Exception) {
-            // 네트워크 끊김 등. 던지면 화면 코루틴이 앱을 죽인다.
-            showSaveFailed(onRetry)
-            Result.failure(e)
         }
     }
 
