@@ -1,8 +1,6 @@
 package com.dandi.nyummy.shop.presentation.recommend
 
 import androidx.lifecycle.viewModelScope
-import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.presentation.mvi.MviIntent
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
@@ -126,7 +124,7 @@ class ShopRecommendViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     dispatch(ShopRecommendReducerEvent.RefreshFailed)
-                    if ((e as? HttpResponseException)?.isCommonErrorHandling() != true) {
+                    if (!getShopRecommendPage.isNotified(e)) {
                         messageHelper.showToast(R.string.shop_refresh_failed)
                     }
                 }

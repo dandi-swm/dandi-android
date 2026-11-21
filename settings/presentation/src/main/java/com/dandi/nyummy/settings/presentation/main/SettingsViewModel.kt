@@ -2,8 +2,6 @@ package com.dandi.nyummy.settings.presentation.main
 
 import androidx.lifecycle.viewModelScope
 import com.dandi.nyummy.auth.domain.LogoutUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.isSessionExpired
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
@@ -21,11 +19,11 @@ import com.dandi.nyummy.settings.entity.NotificationSettingsChange
 import com.dandi.nyummy.settings.entity.NotificationSettingsVO
 import com.dandi.nyummy.settings.presentation.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -183,7 +181,7 @@ class SettingsViewModel @Inject constructor(
                 result.isFailure -> {
                     dispatch(SettingsReducerEvent.NotificationChanged(change.revertTo(saved).applyTo(currentState.notification)))
                     // 로그인 만료는 UseCase가 이미 다이얼로그로 알렸다.
-                    if ((result.exceptionOrNull() as? HttpResponseException)?.isSessionExpired() != true) {
+                    if (result.exceptionOrNull()?.let(updateNotificationSettings::isNotified) != true) {
                         showSaveFailed { changeNotification(kind, change) }
                     }
                 }
