@@ -1,0 +1,13 @@
+{
+  "_comment": "검증용 두 번째 고양이(고등어). 새 그림 없이 냐미 파츠에 털 색 변환과 귀 피벗 오프셋만 바꿨다. 실제 원화는 디자이너 요청 에셋 A6.",
+  "id": "mackerel",
+  "partSet": "nyami",
+  "showDefaultBandana": false,
+  "materials": {
+    "FUR": { "saturation": 0.12, "multiply": [0.80, 0.84, 0.93], "add": [0.0, 0.0, 0.02] }
+  },
+  "pivotOffsets": {
+    "EAR_L": [-0.8, 0.6],
+    "EAR_R": [0.8, 0.6]
+  }
+}
