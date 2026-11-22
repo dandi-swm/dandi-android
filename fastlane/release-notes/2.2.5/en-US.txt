@@ -1,0 +1,13 @@
+We polished Nyummy for a steadier feel.
+
+• Better stability
+Fixed logouts on brief network drops, hidden expiry alerts, and crashes offline or during logout or account deletion.
+
+• Safer payment sheets
+Cart purchase sheets stay open while processing.
+
+• Return to Home
+Tapping "Home" after logging a meal goes Home from any screen.
+
+• Also
+Improved Japanese support; update alerts open our Play Store page.
