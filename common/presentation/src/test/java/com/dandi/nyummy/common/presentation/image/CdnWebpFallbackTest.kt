@@ -49,7 +49,7 @@ class CdnWebpFallbackTest {
     }
 
     @Test
-    fun `webp가 없으면 png를 받고 그 경로를 기억한다`() {
+    fun `webp가 없으면 png를 받고 webp 없음을 기억한다`() {
         val result = load(network = mapOf(webp to CdnLoadOutcome.MISSING, png to CdnLoadOutcome.SUCCESS))
 
         assertEquals(CdnLoadOutcome.SUCCESS, result.outcome)
@@ -58,12 +58,38 @@ class CdnWebpFallbackTest {
     }
 
     @Test
-    fun `webp와 png가 모두 없으면 마지막 실패를 돌려주고 기억하지 않는다`() {
+    fun `webp와 png가 모두 없으면 마지막 실패를 돌려주고 webp 없음은 기억한다`() {
         val result = load(network = mapOf(webp to CdnLoadOutcome.MISSING, png to CdnLoadOutcome.MISSING))
 
         assertEquals(Call(png, true), result.call)
         assertEquals(CdnLoadOutcome.MISSING, result.outcome)
-        assertNull(memory.at(png))
+        assertEquals(now, memory.at(png))
+    }
+
+    @Test
+    fun `webp가 없고 png가 시간 초과로 실패해도 webp 없음은 기억해 다음엔 png만 받는다`() {
+        val first = load(network = mapOf(webp to CdnLoadOutcome.MISSING, png to CdnLoadOutcome.FAILED))
+
+        assertEquals(Call(png, true), first.call)
+        assertEquals(CdnLoadOutcome.FAILED, first.outcome)
+        assertEquals(now, memory.at(png))
+
+        calls.clear()
+        val second = load(network = mapOf(webp to CdnLoadOutcome.MISSING, png to CdnLoadOutcome.SUCCESS))
+
+        assertEquals(CdnLoadOutcome.SUCCESS, second.outcome)
+        assertEquals(listOf(Call(png, true)), calls)
+    }
+
+    @Test
+    fun `기억한 경로에서 png가 시간 초과로 실패하면 webp로 가지 않고 실패를 돌려주며 기억은 둔다`() {
+        memory.store[png] = now - 1_000L
+
+        val result = load(network = mapOf(webp to CdnLoadOutcome.SUCCESS, png to CdnLoadOutcome.FAILED))
+
+        assertEquals(Call(png, true), result.call)
+        assertEquals(listOf(Call(png, true)), calls)
+        assertEquals(now - 1_000L, memory.at(png))
     }
 
     @Test
@@ -162,9 +188,9 @@ class CdnWebpFallbackTest {
 
         fun at(pngUrl: String): Long? = store[pngUrl]
 
-        override suspend fun pngRememberedAt(pngUrl: String): Long? = store[pngUrl]
+        override suspend fun webpMissingAt(pngUrl: String): Long? = store[pngUrl]
 
-        override suspend fun rememberPng(pngUrl: String, atMillis: Long) {
+        override suspend fun rememberWebpMissing(pngUrl: String, atMillis: Long) {
             store[pngUrl] = atMillis
         }
 

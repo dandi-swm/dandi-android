@@ -22,14 +22,15 @@ internal fun cdnFailureOutcomeOf(httpCode: Int?): CdnLoadOutcome =
     if (httpCode == 403 || httpCode == 404) CdnLoadOutcome.MISSING else CdnLoadOutcome.FAILED
 
 /**
- * "이 경로는 `.webp`가 없고 `.png`로 받았다"는 기억. 키는 `.png` 주소, 값은 기억한 시각(epoch millis)이다.
- * `.webp`가 있는 경로는 기본값이므로 적지 않는다.
+ * "이 경로는 서버에 `.webp`가 없다(403/404)"는 기억. 키는 `.png` 주소, 값은 확인한 시각(epoch millis)이다.
+ * `.png`를 받는 데 성공했는지와는 따로 적는다. 느린 망에서 `.png` 받기가 시간 초과로 실패해도
+ * 다시 그릴 때 `.webp` 403 왕복을 또 하지 않게 하기 위해서다. `.webp`가 있는 경로는 기본값이므로 적지 않는다.
  */
 internal interface CdnPngFallbackMemory {
-    /** [pngUrl]을 `.png`로 받았다고 적은 시각. 적은 적 없으면 null. */
-    suspend fun pngRememberedAt(pngUrl: String): Long?
+    /** [pngUrl] 경로에 `.webp`가 없다고 적은 시각. 적은 적 없으면 null. */
+    suspend fun webpMissingAt(pngUrl: String): Long?
 
-    suspend fun rememberPng(pngUrl: String, atMillis: Long)
+    suspend fun rememberWebpMissing(pngUrl: String, atMillis: Long)
 
     suspend fun forget(pngUrl: String)
 }
@@ -38,8 +39,9 @@ internal interface CdnPngFallbackMemory {
  * CDN 그림을 `.webp`로 먼저 받고, 서버에 없으면 같은 경로의 `.png`로 다시 받는다.
  * Coil에 묶이지 않은 판단만 여기 두고, 실제로 받는 일은 [CdnWebpFallbackInterceptor]가 [load]의 `attempt`로 넘긴다.
  *
- * - `.webp`가 없다(403/404, [CdnLoadOutcome.MISSING]) → `.png`를 네트워크로 받는다. 받으면 그 경로를 [memory]에 적어
+ * - `.webp`가 없다(403/404, [CdnLoadOutcome.MISSING]) → 그 자리에서 [memory]에 적고 `.png`를 네트워크로 받는다.
  *   [PNG_MEMORY_TTL_MILLIS] 동안은 `.webp`를 묻지 않고 곧장 `.png`로 간다(매번 실패 요청을 두 번 치지 않게).
+ *   `.png`가 시간 초과로 실패해도 기억은 남아, 다시 그릴 때(자동 재시도 포함) `.png`만 받는다.
  * - 그 밖의 실패(오프라인 등, [CdnLoadOutcome.FAILED]) → 파일이 없다는 근거가 아니므로 아무것도 적지 않는다.
  *   업데이트 전에 받아 둔 `.png`가 디스크 캐시에 있으면 그것만 꺼내 보여 준다(네트워크는 다시 타지 않음).
  * - 기억이 지나면 `.webp`를 다시 묻는다. 서버가 `.webp`로 바꾼 뒤에는 늦어도 이 시간 안에 새 파일로 옮겨 간다.
@@ -63,7 +65,7 @@ internal class CdnWebpFallback(
     ): R {
         val pngUrl = NyummyCdn.pngFallbackUrlOf(url) ?: return attempt(url, true)
 
-        val rememberedAt = memory.pngRememberedAt(pngUrl)
+        val rememberedAt = memory.webpMissingAt(pngUrl)
         if (rememberedAt != null && isFresh(rememberedAt)) {
             val png = attempt(pngUrl, true)
             if (outcomeOf(png) != CdnLoadOutcome.MISSING) return png
@@ -81,9 +83,9 @@ internal class CdnWebpFallback(
             }
 
             CdnLoadOutcome.MISSING -> {
-                val png = attempt(pngUrl, true)
-                if (outcomeOf(png) == CdnLoadOutcome.SUCCESS) memory.rememberPng(pngUrl, nowMillis())
-                png
+                // 403/404는 서버에 파일이 없다는 확실한 답이라 `.png` 결과를 기다리지 않고 바로 적는다.
+                memory.rememberWebpMissing(pngUrl, nowMillis())
+                attempt(pngUrl, true)
             }
 
             CdnLoadOutcome.FAILED -> {
@@ -100,7 +102,7 @@ internal class CdnWebpFallback(
     }
 
     companion object {
-        /** `.png`로 받은 경로를 기억하는 시간. 서버가 `.webp`로 바꾼 뒤 앱이 옮겨 가는 최대 지연이기도 하다. */
+        /** `.webp`가 없는 경로를 기억하는 시간. 서버가 `.webp`로 바꾼 뒤 앱이 옮겨 가는 최대 지연이기도 하다. */
         const val PNG_MEMORY_TTL_MILLIS: Long = 24L * 60L * 60L * 1000L
     }
 }

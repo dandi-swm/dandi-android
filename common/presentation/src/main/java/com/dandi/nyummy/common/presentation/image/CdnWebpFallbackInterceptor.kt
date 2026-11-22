@@ -72,10 +72,10 @@ internal class SharedPreferencesCdnPngFallbackMemory(
         }
     }
 
-    override suspend fun pngRememberedAt(pngUrl: String): Long? =
+    override suspend fun webpMissingAt(pngUrl: String): Long? =
         prefs().getLong(pngUrl, NOT_REMEMBERED).takeIf { it != NOT_REMEMBERED }
 
-    override suspend fun rememberPng(pngUrl: String, atMillis: Long) {
+    override suspend fun rememberWebpMissing(pngUrl: String, atMillis: Long) {
         prefs().edit().putLong(pngUrl, atMillis).apply()
     }
 

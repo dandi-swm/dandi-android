@@ -5,6 +5,7 @@
     <string name="shop_item_owned_price">所持中</string>
     <string name="shop_item_add">追加</string>
     <string name="shop_item_add_to_cart">カートに入れる</string>
+    <string name="shop_item_image_reload">画像を再読み込み</string>
     <string name="shop_tab_recommend">おすすめ</string>
     <string name="shop_tab_interior">インテリア</string>
     <string name="shop_tab_background">部屋の背景</string>

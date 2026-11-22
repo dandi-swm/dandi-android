@@ -29,12 +29,15 @@ object NyummyCdn {
     /** 코인 그림(`coins/{coinId}.webp`). */
     fun coinUrl(coinId: Long): String = "$BaseUrl/coins/$coinId$WEBP"
 
+    /** 냐미 CDN(`https://cdn.nyummy.co.kr/...`) 주소인지. 공용 로더가 자동 재시도할 그림을 고를 때 쓴다. */
+    fun isCdnUrl(url: String): Boolean = url.startsWith("$BaseUrl/")
+
     /**
      * 앱이 만든 CDN `.webp` 주소면 같은 경로의 `.png` 주소를, 아니면 null을 준다.
      * 쿼리나 조각(`?`, `#`)이 붙은 주소, 다른 호스트의 주소(서버가 통째로 주는 배너, 공지 그림 등)는 건드리지 않는다.
      */
     fun pngFallbackUrlOf(url: String): String? {
-        if (!url.startsWith("$BaseUrl/") || !url.endsWith(WEBP)) return null
+        if (!isCdnUrl(url) || !url.endsWith(WEBP)) return null
         if (url.contains('?') || url.contains('#')) return null
         return url.removeSuffix(WEBP) + PNG
     }
