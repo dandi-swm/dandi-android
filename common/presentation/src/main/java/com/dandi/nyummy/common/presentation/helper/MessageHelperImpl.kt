@@ -59,6 +59,19 @@ class MessageHelperImpl(val context: Context) : MessageHelper {
         )
     }
 
+    override fun showPinnedDialog(descText: String, buttonText: String, onClickButton: () -> Unit) {
+        emit(
+            MessageEffect.ShowOneButtonDialog(
+                titleText = null,
+                descText = descText,
+                cantIgnore = true,
+                buttonText = buttonText.ifEmpty { context.getString(R.string.msg_confirm) },
+                onClickButton = onClickButton,
+                pinned = true,
+            )
+        )
+    }
+
     override fun showTwoButtonDialog(
         titleText: String?,
         descText: String,

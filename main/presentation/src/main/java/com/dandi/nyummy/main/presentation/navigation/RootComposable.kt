@@ -28,6 +28,7 @@ import androidx.core.view.WindowCompat
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.dandi.nyummy.common.domain.message.MessageEffect
+import com.dandi.nyummy.common.domain.message.canShowDialogOver
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.presentation.coachmark.CoachMarkHost
 import com.dandi.nyummy.common.presentation.coachmark.CoachMarkLayer
@@ -88,11 +89,18 @@ fun RootComposable(
 
     val messageHelper = LocalMessageHelper.current
 
+    // 로그인 만료처럼 고정한 다이얼로그가 떠 있으면 다른 다이얼로그는 버린다. 덮으면 그 확인 버튼의 동작이 사라진다.
     val onShowOneButtonDialog = remember<(MessageEffect.ShowOneButtonDialog) -> Unit> {
-        { oneButtonDialogEffect = it }
+        { incoming ->
+            if (canShowDialogOver(oneButtonDialogEffect, incoming)) {
+                oneButtonDialogEffect = incoming
+                // 고정 다이얼로그 위에 다른 다이얼로그가 남아 가리지 않게 한다.
+                if (incoming.pinned) twoButtonDialogEffect = null
+            }
+        }
     }
     val onShowTwoButtonDialog = remember<(MessageEffect.ShowTwoButtonDialog) -> Unit> {
-        { twoButtonDialogEffect = it }
+        { incoming -> if (canShowDialogOver(oneButtonDialogEffect, incoming)) twoButtonDialogEffect = incoming }
     }
     MessageEffect(
         messageEffectFlow = messageHelper.effect,

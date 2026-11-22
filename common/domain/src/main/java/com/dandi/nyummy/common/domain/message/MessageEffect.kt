@@ -11,12 +11,16 @@ sealed interface MessageEffect {
         val actionLabel: String? = null,
         val onAction: (() -> Unit)? = null,
     ) : MessageEffect
+    /**
+     * 1버튼 다이얼로그. [pinned]면 떠 있는 동안 다른 다이얼로그가 덮지 못한다([canShowDialogOver]).
+     */
     data class ShowOneButtonDialog(
         val titleText: String?,
         val descText: String,
         val cantIgnore: Boolean,
         val buttonText: String,
         val onClickButton: (() -> Unit)?,
+        val pinned: Boolean = false,
     ) : MessageEffect
 
     data class ShowTwoButtonDialog(
@@ -29,3 +33,12 @@ sealed interface MessageEffect {
         val onClickRightButton: (() -> Unit)?,
     ) : MessageEffect
 }
+
+/**
+ * 지금 떠 있는 1버튼 다이얼로그 [shown] 위에 [incoming] 다이얼로그를 띄울지.
+ *
+ * 고정 다이얼로그(로그인 만료)가 떠 있으면 다른 다이얼로그는 버린다. 덮으면 그 확인 버튼의 동작(정리 뒤 로그인 화면으로 가기)이
+ * 사라져, 토큰이 지워진 화면에 갇힌다. 다이얼로그를 그리는 곳(RootComposable)이 다이얼로그를 받을 때마다 묻는다.
+ */
+fun canShowDialogOver(shown: MessageEffect.ShowOneButtonDialog?, incoming: MessageEffect): Boolean =
+    shown?.pinned != true || (incoming is MessageEffect.ShowOneButtonDialog && incoming.pinned)
