@@ -1,14 +1,15 @@
 package com.dandi.nyummy.history.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.isSessionExpired
-import com.dandi.nyummy.common.domain.error.registeredErrorType
+import com.dandi.nyummy.common.domain.error.CommonErrorPolicy
+import com.dandi.nyummy.common.domain.error.DomainFailure
+import com.dandi.nyummy.common.domain.error.toDomainFailure
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.history.entity.MealAnalysisStatus
 import com.dandi.nyummy.history.entity.MealDetailV2VO
 import com.dandi.nyummy.history.entity.MealFoodChangeVO
@@ -27,35 +28,30 @@ abstract class MealV2UseCase(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     /**
      * @param treatAsSuccess 이 code로 실패하면 이미 원하는 상태라는 뜻이라 성공으로 본다(이미 지워진 것을 지우는 경우 등).
      */
-    protected suspend fun <T> request(
+    protected suspend fun <T> requestWithFallback(
         fallback: StringResource,
         treatAsSuccess: Pair<HistoryErrorType, T>? = null,
         block: suspend () -> T,
-    ): Result<T> = try {
-        Result.success(block())
-    } catch (e: HttpResponseException) {
-        if (treatAsSuccess != null && e.registeredErrorType<HistoryErrorType>() == treatAsSuccess.first) {
-            Result.success(treatAsSuccess.second)
-        } else {
-            handleHttpError<HistoryErrorType>(
-                e,
-                onDomainError = { showError(it.errorMsg) },
-                onUnknownError = { showError(fallback) },
-            )
-            Result.failure(e)
-        }
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        // 네트워크 끊김 등 HTTP 응답 전 실패도 앱이 죽지 않게 실패로 돌려준다.
-        showError(fallback)
-        Result.failure(e)
-    }
+    ): Result<T> = request(
+        HistoryErrorType.entries,
+        onBusinessError = { type, cause ->
+            if (treatAsSuccess != null && type == treatAsSuccess.first) {
+                Result.success(treatAsSuccess.second)
+            } else {
+                showError(type.errorMsg)
+                Result.failure(cause)
+            }
+        },
+        // 네트워크 끊김 등 응답 전 실패와 등록하지 않은 응답 오류.
+        onUnknownError = { showError(fallback) },
+        block = block,
+    )
 
     private fun showError(message: StringResource) {
         messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(message))
@@ -69,10 +65,11 @@ class GetMealDetailV2UseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : MealV2UseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : MealV2UseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(mealId: Long): Result<MealDetailV2VO> =
-        request(StringResource.HISTORY_MEAL_LOAD_FAILED) { repository.getMeal(mealId) }
+        requestWithFallback(StringResource.HISTORY_MEAL_LOAD_FAILED) { repository.getMeal(mealId) }
 }
 
 /** 식사 대표 이름 수정 v2. 음식 줄과 영양은 바뀌지 않는다. */
@@ -82,10 +79,11 @@ class UpdateMealNameV2UseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : MealV2UseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : MealV2UseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(mealId: Long, name: String): Result<MealDetailV2VO> =
-        request(StringResource.HISTORY_RENAME_FAILED) { repository.updateMealName(mealId, name) }
+        requestWithFallback(StringResource.HISTORY_RENAME_FAILED) { repository.updateMealName(mealId, name) }
 }
 
 /** 식사 삭제 v2. 이미 지워진 기록이면 지운 것과 같으므로 성공이다. */
@@ -95,9 +93,10 @@ class DeleteMealV2UseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : MealV2UseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : MealV2UseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
-    suspend operator fun invoke(mealId: Long): Result<Unit> = request(
+    suspend operator fun invoke(mealId: Long): Result<Unit> = requestWithFallback(
         fallback = StringResource.HISTORY_DELETE_FAILED,
         treatAsSuccess = HistoryErrorType.MEAL_NOT_FOUND to Unit,
     ) { repository.deleteMeal(mealId) }
@@ -115,10 +114,11 @@ class SaveMealFoodListUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : MealV2UseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : MealV2UseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(mealId: Long, foods: List<MealFoodLineVO>): Result<MealAnalysisStatus> =
-        request(StringResource.HISTORY_FOOD_EDIT_FAILED) { repository.submitFoods(mealId, foods) }
+        requestWithFallback(StringResource.HISTORY_FOOD_EDIT_FAILED) { repository.submitFoods(mealId, foods) }
 }
 
 /**
@@ -131,13 +131,14 @@ class UpdateMealFoodUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : MealV2UseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : MealV2UseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(mealId: Long, mealFoodId: Long, change: MealFoodChangeVO): Result<Unit> =
         if (change.isEmpty) {
             Result.success(Unit)
         } else {
-            request(StringResource.HISTORY_FOOD_EDIT_FAILED) { repository.updateFood(mealId, mealFoodId, change) }
+            requestWithFallback(StringResource.HISTORY_FOOD_EDIT_FAILED) { repository.updateFood(mealId, mealFoodId, change) }
         }
 }
 
@@ -148,9 +149,10 @@ class DeleteMealFoodUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : MealV2UseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : MealV2UseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
-    suspend operator fun invoke(mealId: Long, mealFoodId: Long): Result<Unit> = request(
+    suspend operator fun invoke(mealId: Long, mealFoodId: Long): Result<Unit> = requestWithFallback(
         fallback = StringResource.HISTORY_FOOD_EDIT_FAILED,
         treatAsSuccess = HistoryErrorType.MEAL_FOOD_NOT_FOUND to Unit,
     ) { repository.deleteFood(mealId, mealFoodId) }
@@ -166,13 +168,17 @@ enum class MealAnalysisWaitResult {
 
     /** 기다리는 시간 안에 끝나지 않았다. 결과는 알림으로 온다. */
     TIMED_OUT,
+
+    /** 로그인이 만료돼 그만 기다렸다. 만료 안내와 로그인 화면 이동은 공통 처리가 하므로 화면은 따로 안내하지 않는다. */
+    SESSION_EXPIRED,
 }
 
 /**
  * 영양 계산이 끝날 때까지 분석 상태를 [POLL_INTERVAL_MILLIS]마다 조회한다.
  *
  * 일시적인 실패(네트워크 끊김, 서버 오류)는 다음 주기에 다시 조회한다. [TIMEOUT_MILLIS]가 지나도 끝나지 않으면
- * [MealAnalysisWaitResult.TIMED_OUT]을 돌려준다. 로그인이 만료되면 공통 안내를 띄우고 기다리기를 그만둔다.
+ * [MealAnalysisWaitResult.TIMED_OUT]을 돌려준다. 로그인이 만료되면 공통 안내를 띄우고 기다리기를 그만둔다
+ * ([MealAnalysisWaitResult.SESSION_EXPIRED]).
  * 화면이 사라져 코루틴이 취소되면 조회도 멈춘다. 안내는 화면이 한다.
  */
 class AwaitMealAnalysisUseCase @Inject constructor(
@@ -181,7 +187,8 @@ class AwaitMealAnalysisUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(mealId: Long): MealAnalysisWaitResult {
         var waited = 0L
@@ -192,17 +199,18 @@ class AwaitMealAnalysisUseCase @Inject constructor(
                 repository.getAnalysisStatus(mealId)
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: HttpResponseException) {
-                if (e.isSessionExpired()) {
-                    executeCommonErrorHanding(e)
-                    return MealAnalysisWaitResult.TIMED_OUT
+            } catch (e: Exception) {
+                when (val failure = e.toDomainFailure(HistoryErrorType.entries, CommonErrorPolicy.SESSION_ONLY)) {
+                    // 로그인 만료만 공통 안내를 하고 기다리기를 그만둔다.
+                    is DomainFailure.Common -> {
+                        notifyFailure(failure)
+                        return MealAnalysisWaitResult.SESSION_EXPIRED
+                    }
+                    // 지워진 식사는 더 기다려도 끝나지 않는다.
+                    is DomainFailure.Business -> if (failure.type == HistoryErrorType.MEAL_NOT_FOUND) return MealAnalysisWaitResult.FAILED
+                    // 일시적인 실패(네트워크 끊김, 서버 오류)는 다음 주기에 다시 조회한다.
+                    else -> Unit
                 }
-                // 지워진 식사는 더 기다려도 끝나지 않는다.
-                if (e.registeredErrorType<HistoryErrorType>() == HistoryErrorType.MEAL_NOT_FOUND) {
-                    return MealAnalysisWaitResult.FAILED
-                }
-                continue
-            } catch (_: Exception) {
                 continue
             }
             when (status) {

@@ -1,11 +1,15 @@
 package com.dandi.nyummy.shop.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
+import com.dandi.nyummy.common.domain.error.CommonErrorPolicy
+import com.dandi.nyummy.common.domain.error.DomainFailure
 import com.dandi.nyummy.common.domain.error.HttpResponseException
+import com.dandi.nyummy.common.domain.error.toDomainFailure
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.shop.entity.PurchaseProductVO
 import com.dandi.nyummy.shop.entity.PurchaseResultVO
 import com.dandi.nyummy.tti.TTIHelper
@@ -27,7 +31,7 @@ sealed interface PurchaseOutcome {
 
     /**
      * 결과를 모른다: 앞 구매가 처리 중, 구매 키가 엉킴, 다시 보내도 응답이 없음, 서버 오류.
-     * 화면은 안내 없이 장바구니와 상단 바를 다시 읽는다(서버 오류는 공통 안내가 이미 떴다).
+     * 화면은 안내 없이 장바구니와 상단 바를 다시 읽는다(응답 오류는 일시 오류 다이얼로그가 이미 떴다).
      */
     data object Unknown : PurchaseOutcome
 }
@@ -46,7 +50,8 @@ class PurchaseUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     /** [products]는 선택됐고 살 수 있는 항목의 상품 id·수량·화면에서 본 1개 결제가다. */
     suspend operator fun invoke(products: List<PurchaseProductVO>): PurchaseOutcome {
@@ -55,12 +60,11 @@ class PurchaseUseCase @Inject constructor(
             val result = purchaseWithOneRetry(idempotencyKey, products)
             tracker.purchase(result)
             PurchaseOutcome.Completed(result)
-        } catch (e: HttpResponseException) {
-            outcomeOf(e)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            PurchaseOutcome.Unknown
+            // 공통 안내는 로그인 만료만 맡긴다. 공통 404 안내("준비 중" + 뒤로 가기)는 장바구니를 떠나게 해서 쓰지 않는다.
+            outcomeOf(e.toDomainFailure(ShopErrorType.entries, CommonErrorPolicy.SESSION_ONLY))
         }
     }
 
@@ -73,11 +77,11 @@ class PurchaseUseCase @Inject constructor(
         repository.purchase(idempotencyKey, products)
     }
 
-    private fun outcomeOf(e: HttpResponseException): PurchaseOutcome {
+    private fun outcomeOf(failure: DomainFailure<ShopErrorType>): PurchaseOutcome {
         var outcome: PurchaseOutcome = PurchaseOutcome.Unknown
-        handleHttpError<ShopErrorType>(
-            e,
-            onDomainError = { error ->
+        notifyFailure(
+            failure,
+            onBusinessError = { error ->
                 outcome = when (error) {
                     ShopErrorType.INSUFFICIENT_BALANCE -> PurchaseOutcome.InsufficientBalance
                     else -> PurchaseBlockedDialog.of(error)?.let { dialog ->
@@ -90,8 +94,10 @@ class PurchaseUseCase @Inject constructor(
                     } ?: PurchaseOutcome.Unknown
                 }
             },
-            // 등록하지 않은 4xx. 사지 못했으니 일시 오류로 알리고 장바구니를 다시 읽게 한다.
-            onUnknownError = { executeCommonErrorHanding(e) },
+            // 등록하지 않은 응답 오류(code 없는 404, 등록하지 않은 code, 5xx)는 사지 못했으니 일시 오류로 알리고
+            // 장바구니에 남아 다시 읽게 한다.
+            // 다시 보내도 응답이 없으면(네트워크) 샀는지 모르니 안내 없이 다시 읽는다.
+            onUnknownError = { cause -> if (cause is HttpResponseException) showTemporaryErrorDialog() },
         )
         return outcome
     }

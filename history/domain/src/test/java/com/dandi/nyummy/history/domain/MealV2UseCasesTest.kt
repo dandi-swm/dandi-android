@@ -157,6 +157,16 @@ class MealV2UseCasesTest {
         assertEquals(MealAnalysisWaitResult.FAILED, awaitAnalysis()(7L))
     }
 
+    @Test
+    fun `기다리는 사이 로그인이 만료되면 만료 안내만 하고 시간 초과가 아닌 만료로 마친다`() = runTest {
+        repository.statusErrors[1] = httpException(401, "api.auth.tokenExpired")
+
+        assertEquals(MealAnalysisWaitResult.SESSION_EXPIRED, awaitAnalysis()(7L))
+        assertEquals(1, repository.statusRequests)
+        assertEquals(listOf(StringResource.SESSION_EXPIRED_MESSAGE.name), messageHelper.dialogs)
+        assertTrue(messageHelper.snackBars.isEmpty())
+    }
+
     private fun saveFoods() = SaveMealFoodListUseCase(repository, resourceHelper, messageHelper, navigationHelper, ttiHelper)
     private fun updateFood() = UpdateMealFoodUseCase(repository, resourceHelper, messageHelper, navigationHelper, ttiHelper)
     private fun deleteFood() = DeleteMealFoodUseCase(repository, resourceHelper, messageHelper, navigationHelper, ttiHelper)
@@ -221,6 +231,7 @@ class MealV2UseCasesTest {
 
     private class RecordingMessageHelper : MessageHelper {
         val snackBars = mutableListOf<String>()
+        val dialogs = mutableListOf<String>()
         override val effect: Flow<MessageEffect> = emptyFlow()
         override fun showToast(toastMsg: String) = Unit
         override fun showToast(messageRes: Int) = Unit
@@ -235,7 +246,9 @@ class MealV2UseCasesTest {
             cantIgnore: Boolean,
             buttonText: String,
             onClickButton: (() -> Unit)?,
-        ) = Unit
+        ) {
+            dialogs += descText
+        }
 
         override fun showTwoButtonDialog(
             titleText: String?,

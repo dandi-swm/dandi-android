@@ -1,13 +1,12 @@
 package com.dandi.nyummy.meal.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.registeredErrorType
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.meal.entity.FoundFoodVO
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
@@ -33,31 +32,27 @@ class SubmitMealFoodsUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
-    suspend operator fun invoke(mealId: Long, foods: List<FoundFoodVO>): Result<SubmitMealFoodsResult> = try {
+    suspend operator fun invoke(mealId: Long, foods: List<FoundFoodVO>): Result<SubmitMealFoodsResult> = request(
+        MealErrorType.entries,
+        onBusinessError = { type, cause ->
+            when (type) {
+                MealErrorType.MEAL_FOODS_NOT_UPDATABLE, MealErrorType.MEAL_NOT_FOUND -> {
+                    showNotice(IconType.WARNING, type.errorMsg)
+                    Result.success(SubmitMealFoodsResult.CLOSED)
+                }
+                else -> {
+                    showNotice(IconType.ERROR, type.errorMsg)
+                    Result.failure(cause)
+                }
+            }
+        },
+        onUnknownError = { showNotice(IconType.ERROR, StringResource.MEAL_FOODS_SUBMIT_FAILED) },
+    ) {
         repository.submitFoods(mealId, foods)
-        Result.success(SubmitMealFoodsResult.ACCEPTED)
-    } catch (e: HttpResponseException) {
-        when (val errorType = e.registeredErrorType<MealErrorType>()) {
-            MealErrorType.MEAL_FOODS_NOT_UPDATABLE, MealErrorType.MEAL_NOT_FOUND -> {
-                showNotice(IconType.WARNING, errorType.errorMsg)
-                Result.success(SubmitMealFoodsResult.CLOSED)
-            }
-            else -> {
-                handleHttpError<MealErrorType>(
-                    e,
-                    onDomainError = { showNotice(IconType.ERROR, it.errorMsg) },
-                    onUnknownError = { showNotice(IconType.ERROR, StringResource.MEAL_FOODS_SUBMIT_FAILED) },
-                )
-                Result.failure(e)
-            }
-        }
-    } catch (e: java.util.concurrent.CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        showNotice(IconType.ERROR, StringResource.MEAL_FOODS_SUBMIT_FAILED)
-        Result.failure(e)
+        SubmitMealFoodsResult.ACCEPTED
     }
 
     private fun showNotice(iconType: IconType, message: StringResource) {

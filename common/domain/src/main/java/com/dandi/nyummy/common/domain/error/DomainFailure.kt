@@ -90,6 +90,15 @@ fun <E : HttpErrorType> Exception.toDomainFailure(
 }
 
 /**
+ * UseCase가 돌려준 실패가 공통 안내(로그인 만료, 404, 5xx)로 이미 알려졌는지. UseCase와 같은 [errorTypes]와 [policy]로 나눠 본다.
+ * 화면이 실패를 따로 안내할지 고를 때 쓴다. 화면이 `HttpResponseException`을 직접 열어 규칙을 다시 쓰면 UseCase와 어긋난다.
+ */
+fun <E : HttpErrorType> Throwable.isCommonErrorNotified(
+    errorTypes: List<E>,
+    policy: CommonErrorPolicy = CommonErrorPolicy.ALL,
+): Boolean = this is Exception && this !is CancellationException && toDomainFailure(errorTypes, policy) is DomainFailure.Common
+
+/**
  * [runCatching]과 같지만 코루틴 취소는 다시 던진다. 실패해도 흐름을 이어 가는 작업(기기 저장, 장식용 조회)에 쓴다.
  * suspend 함수를 [runCatching]으로 감싸면 [CancellationException]까지 잡혀, 화면이 닫힌 뒤에도 다음 줄이 실행된다.
  */

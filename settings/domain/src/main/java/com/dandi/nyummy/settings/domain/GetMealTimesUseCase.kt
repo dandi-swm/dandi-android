@@ -1,16 +1,15 @@
 package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.common.entity.meal.MealTimesVO
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 서버에 저장된 평소 식사 시각을 읽는다.
@@ -22,23 +21,19 @@ class GetMealTimesUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
-    suspend operator fun invoke(onRetry: () -> Unit): Result<MealTimesVO> = try {
-        Result.success(repository.getMealTimes())
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: HttpResponseException) {
-        handleHttpError<SettingsErrorType>(
-            e,
-            onDomainError = { messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(it.errorMsg)) },
-            onUnknownError = { showLoadFailed(onRetry) },
-        )
-        Result.failure(e)
-    } catch (e: Exception) {
-        // 네트워크 끊김 등. 던지면 화면 코루틴이 앱을 죽인다.
-        showLoadFailed(onRetry)
-        Result.failure(e)
+    suspend operator fun invoke(onRetry: () -> Unit): Result<MealTimesVO> = request(
+        SettingsErrorType.entries,
+        onBusinessError = { type, cause ->
+            messageHelper.showSnackBar(iconType = IconType.ERROR, messageText = resourceHelper.getString(type.errorMsg))
+            Result.failure(cause)
+        },
+        // 네트워크 끊김, 등록하지 않은 응답 오류, 예상 못 한 예외.
+        onUnknownError = { showLoadFailed(onRetry) },
+    ) {
+        repository.getMealTimes()
     }
 
     private fun showLoadFailed(onRetry: () -> Unit) {

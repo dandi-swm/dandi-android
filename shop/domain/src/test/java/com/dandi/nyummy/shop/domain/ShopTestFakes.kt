@@ -180,13 +180,17 @@ internal class RecordingMessageHelper : MessageHelper {
 
 internal class RecordingNavigationHelper : NavigationHelper {
     var initialCount = 0
+    var backCount = 0
 
     override val navigationFlow: Flow<NavSignal> = emptyFlow()
     override fun navigateByRoute(route: NavRoute) = Unit
     override fun navigateTo(page: Page) = Unit
     override fun navigateToAppLink(link: String, asRoot: Boolean) = Unit
     override fun navigateToAppLinkAfterEntry(link: String, waitForTabRoot: Boolean) = Unit
-    override fun navigateToBack() = Unit
+    override fun navigateToBack() {
+        backCount++
+    }
+
     override fun navigateToAsRoot(page: Page) = Unit
     override fun navigateToInitial() {
         initialCount++

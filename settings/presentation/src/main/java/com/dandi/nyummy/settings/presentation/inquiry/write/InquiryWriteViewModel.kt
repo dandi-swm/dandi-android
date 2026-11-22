@@ -1,8 +1,6 @@
 package com.dandi.nyummy.settings.presentation.inquiry.write
 
 import androidx.lifecycle.viewModelScope
-import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.isCommonErrorHandling
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.message.IconType
@@ -94,7 +92,7 @@ class InquiryWriteViewModel @Inject constructor(
                 .onFailure { error ->
                     dispatch(InquiryWriteReducerEvent.SendingChanged(sending = false))
                     // 공통 오류(로그인 만료, 서버 문제)는 UseCase가 이미 다이얼로그로 알렸다.
-                    if ((error as? HttpResponseException)?.isCommonErrorHandling() != true) {
+                    if (!sendInquiry.isNotified(error)) {
                         messageHelper.showSnackBar(
                             iconType = IconType.ERROR,
                             messageRes = R.string.inquiry_write_send_failed,

@@ -1,10 +1,10 @@
 package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
 
@@ -19,14 +19,10 @@ class RestoreInquiryUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
-    suspend operator fun invoke(inquiryId: Long): Result<Unit> = try {
-        repository.restoreInquiry(inquiryId)
-        Result.success(Unit)
-    } catch (e: HttpResponseException) {
-        // 없는 문의도 404라 공통 처리에 먼저 맡기면 "준비 중인 기능" 안내 뒤 문의 내역 밖으로 나간다. code를 먼저 본다.
-        handleHttpError<InquiryErrorType>(e, onDomainError = {})
-        Result.failure(e)
-    }
+    // 없는 문의도 404라 공통 처리에 먼저 맡기면 "준비 중인 기능" 안내 뒤 문의 내역 밖으로 나간다. request가 code를 먼저 본다.
+    // 네트워크 끊김도 실패로 돌려준다(전에는 응답 오류만 잡아 앱이 종료됐다).
+    suspend operator fun invoke(inquiryId: Long): Result<Unit> = request(InquiryErrorType.entries) { repository.restoreInquiry(inquiryId) }
 }

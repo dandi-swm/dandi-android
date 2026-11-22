@@ -1,13 +1,14 @@
 package com.dandi.nyummy.shop.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
-import com.dandi.nyummy.common.domain.error.isSessionExpired
+import com.dandi.nyummy.common.domain.error.CommonErrorPolicy
+import com.dandi.nyummy.common.domain.error.isCommonErrorNotified
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigHelper
 import com.dandi.nyummy.common.domain.remoteconfig.RemoteConfigKey
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.shop.entity.ProductSort
 import com.dandi.nyummy.shop.entity.ShopCategory
 import com.dandi.nyummy.shop.entity.ShopItemPageVO
@@ -19,7 +20,6 @@ import com.dandi.nyummy.tti.TTIHelper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 /** 상단 바 값(잔액·장바구니 종류 수)을 구독한다. 담기·장바구니·구매가 바로 반영된다. */
 class ObserveShopSummaryUseCase @Inject constructor(
@@ -45,18 +45,11 @@ class RefreshShopSummaryUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
-    suspend operator fun invoke(): Result<ShopSummaryVO> = try {
-        Result.success(repository.refreshSummary())
-    } catch (e: HttpResponseException) {
-        if (e.isSessionExpired()) executeCommonErrorHanding(e)
-        Result.failure(e)
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Result.failure(e)
-    }
+    suspend operator fun invoke(): Result<ShopSummaryVO> =
+        request(commonErrors = CommonErrorPolicy.SESSION_ONLY) { repository.refreshSummary() }
 }
 
 /**
@@ -71,19 +64,16 @@ class GetShopRecommendPageUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
-    suspend operator fun invoke(): Result<ShopRecommendPageVO> = try {
+    /** 실패 [error]를 이 UseCase가 이미 공통 안내로 알렸는지. 화면은 false일 때만 자기 안내를 띄운다. */
+    fun isNotified(error: Throwable): Boolean = error.isCommonErrorNotified(ShopErrorType.entries)
+
+    suspend operator fun invoke(): Result<ShopRecommendPageVO> = request(ShopErrorType.entries) {
         val layoutVariant = ShopLayoutVariant.of(remoteConfigHelper.get(RemoteConfigKey.ShopLayoutVariant))
         tracker.rememberLayoutGroup(layoutVariant)
-        Result.success(repository.getRecommendPage(layoutVariant))
-    } catch (e: HttpResponseException) {
-        handleHttpError<ShopErrorType>(e, onDomainError = {})
-        Result.failure(e)
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Result.failure(e)
+        repository.getRecommendPage(layoutVariant)
     }
 }
 
@@ -94,7 +84,8 @@ class GetShopProductsUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(
         tab: ShopTab,
@@ -102,16 +93,9 @@ class GetShopProductsUseCase @Inject constructor(
         sort: ProductSort,
         cursor: Long? = null,
         size: Int = PAGE_SIZE,
-    ): Result<ShopItemPageVO> = try {
+    ): Result<ShopItemPageVO> = request(ShopErrorType.entries) {
         val safeCategory = if (tab == ShopTab.INTERIOR) category else null
-        Result.success(repository.getProducts(tab, safeCategory, sort, cursor, size.coerceIn(1, MAX_PAGE_SIZE)))
-    } catch (e: HttpResponseException) {
-        handleHttpError<ShopErrorType>(e, onDomainError = {})
-        Result.failure(e)
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Result.failure(e)
+        repository.getProducts(tab, safeCategory, sort, cursor, size.coerceIn(1, MAX_PAGE_SIZE))
     }
 
     companion object {
@@ -130,23 +114,17 @@ class GetShopPromotionUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(
         promotionId: Long,
         cursor: Long? = null,
         size: Int = GetShopProductsUseCase.PAGE_SIZE,
-    ): Result<ShopPromotionPageVO?> = try {
-        Result.success(
-            repository.getPromotionProducts(promotionId, cursor, size.coerceIn(1, GetShopProductsUseCase.MAX_PAGE_SIZE)),
-        )
-    } catch (e: HttpResponseException) {
-        var ended = false
-        handleHttpError<ShopErrorType>(e, onDomainError = { if (it == ShopErrorType.PROMOTION_NOT_FOUND) ended = true })
-        if (ended) Result.success(null) else Result.failure(e)
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Result.failure(e)
+    ): Result<ShopPromotionPageVO?> = request(
+        ShopErrorType.entries,
+        onBusinessError = { type, cause -> if (type == ShopErrorType.PROMOTION_NOT_FOUND) Result.success(null) else Result.failure(cause) },
+    ) {
+        repository.getPromotionProducts(promotionId, cursor, size.coerceIn(1, GetShopProductsUseCase.MAX_PAGE_SIZE))
     }
 }

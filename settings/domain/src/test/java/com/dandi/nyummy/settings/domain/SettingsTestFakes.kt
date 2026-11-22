@@ -90,8 +90,18 @@ internal class FakeInquiryRepository : InquiryRepository {
 
     data class SentInquiry(val category: InquiryCategory, val title: String, val content: String, val imageKey: String?)
 
-    override suspend fun getInquiries(cursor: Long?, size: Int): InquiryPageVO = InquiryPageVO.empty
-    override suspend fun getInquiry(inquiryId: Long): InquiryVO? = null
+    /** 있으면 문의 목록, 상세 조회와 되살리기가 이 예외를 던진다. */
+    var readError: Exception? = null
+
+    override suspend fun getInquiries(cursor: Long?, size: Int): InquiryPageVO {
+        readError?.let { throw it }
+        return InquiryPageVO.empty
+    }
+
+    override suspend fun getInquiry(inquiryId: Long): InquiryVO? {
+        readError?.let { throw it }
+        return null
+    }
     override suspend fun prepareInquiryImage(photoUri: String): String {
         preparedPhotoUris += photoUri
         imageError?.let { throw it }
@@ -109,7 +119,9 @@ internal class FakeInquiryRepository : InquiryRepository {
     }
 
     override suspend fun deleteInquiry(inquiryId: Long) = Unit
-    override suspend fun restoreInquiry(inquiryId: Long) = Unit
+    override suspend fun restoreInquiry(inquiryId: Long) {
+        readError?.let { throw it }
+    }
 }
 
 internal class RecordingMessageHelper : MessageHelper {

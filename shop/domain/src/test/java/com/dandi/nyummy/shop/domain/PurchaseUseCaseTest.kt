@@ -168,6 +168,44 @@ class PurchaseUseCaseTest {
     }
 
     @Test
+    fun `code 없는 404 와 등록하지 않은 code 의 404 는 준비 중 안내로 장바구니를 떠나지 않고 일시 오류만 알린다`() {
+        for (error in listOf(httpException(404), httpException(404, "api.shop.somethingNew"))) {
+            val messages = RecordingMessageHelper()
+            val navigation = RecordingNavigationHelper()
+            val useCase = PurchaseUseCase(
+                FakeShopRepository().apply { purchaseErrors += error },
+                shopTracker(),
+                FakeResourceHelper,
+                messages,
+                navigation,
+                FakeTTIHelper,
+            )
+
+            assertEquals(PurchaseOutcome.Unknown, runBlocking { useCase(products) })
+            val dialog = messages.dialogs.single()
+            assertEquals(StringResource.TEMPORARY_ERROR_TITLE.name, dialog.titleText)
+            assertNotEquals(StringResource.NOT_READY_MESSAGE.name, dialog.descText)
+            assertEquals(0, navigation.backCount)
+        }
+    }
+
+    @Test
+    fun `구매 중 로그인이 만료되면 만료 안내를 하고 결과 모름으로 끝낸다`() {
+        val messages = RecordingMessageHelper()
+        val useCase = PurchaseUseCase(
+            FakeShopRepository().apply { purchaseErrors += httpException(401, "api.auth.tokenExpired") },
+            shopTracker(),
+            FakeResourceHelper,
+            messages,
+            RecordingNavigationHelper(),
+            FakeTTIHelper,
+        )
+
+        assertEquals(PurchaseOutcome.Unknown, runBlocking { useCase(products) })
+        assertEquals(StringResource.SESSION_EXPIRED_MESSAGE.name, messages.dialogs.single().descText)
+    }
+
+    @Test
     fun `수량 변경이 거절되면 더 이상 담을 수 없다고 알리고 실패를 돌려준다`() = runBlocking {
         repository.error = httpException(409, ShopErrorType.CART_QUANTITY_EXCEEDED.type)
         val updateQuantity = UpdateCartQuantityUseCase(

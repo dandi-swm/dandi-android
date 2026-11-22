@@ -1,7 +1,7 @@
 package com.dandi.nyummy.home.domain
 
+import com.dandi.nyummy.common.domain.error.runSuspendCatching
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 새 소식 공지를 닫는다. 이번 실행에서는 다시 띄우지 않고, [hideKeys]의 공지("다시 보지 않기"로 닫은 공지,
@@ -15,12 +15,7 @@ class CloseHomeNoticeUseCase @Inject constructor(
     suspend operator fun invoke(hideKeys: Set<String> = emptySet()) {
         repository.markNoticeHandled()
         if (hideKeys.isEmpty()) return
-        try {
-            repository.hideNotices(hideKeys)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            // 다음 실행에 한 번 더 보일 뿐이라 알리지 않는다.
-        }
+        // 저장하지 못해도 다음 실행에 한 번 더 보일 뿐이라 알리지 않는다.
+        runSuspendCatching { repository.hideNotices(hideKeys) }
     }
 }

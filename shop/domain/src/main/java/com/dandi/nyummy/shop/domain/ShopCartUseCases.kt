@@ -6,9 +6,9 @@ import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
 import com.dandi.nyummy.common.domain.helper.ResourceHelper
 import com.dandi.nyummy.common.domain.helper.StringResource
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.shop.entity.CartVO
 import com.dandi.nyummy.tti.TTIHelper
-import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 
 /**
@@ -21,17 +21,9 @@ class GetCartUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
-    suspend operator fun invoke(): Result<CartVO> = try {
-        Result.success(repository.getCart())
-    } catch (e: HttpResponseException) {
-        handleHttpError<ShopErrorType>(e, onDomainError = {})
-        Result.failure(e)
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Result.failure(e)
-    }
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
+    suspend operator fun invoke(): Result<CartVO> = request(ShopErrorType.entries) { repository.getCart() }
 }
 
 /**
@@ -46,20 +38,22 @@ class UpdateCartQuantityUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
-    suspend operator fun invoke(productId: Long, quantity: Int): Result<CartVO> = try {
-        Result.success(repository.updateCartItemQuantity(productId, quantity))
-    } catch (e: HttpResponseException) {
-        handleHttpError<ShopErrorType>(
-            e,
-            onDomainError = { messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_CANNOT_ADD_MORE)) },
-            onUnknownError = { messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_CANNOT_ADD_MORE)) },
-        )
-        Result.failure(e)
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Result.failure(e)
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
+    suspend operator fun invoke(productId: Long, quantity: Int): Result<CartVO> = request(
+        ShopErrorType.entries,
+        onBusinessError = { _, cause ->
+            showCannotAddMore()
+            Result.failure(cause)
+        },
+        // 서버가 거절한 응답 오류만 안내한다. 응답 전에 끊기면 화면이 장바구니를 다시 읽는다.
+        onUnknownError = { cause -> if (cause is HttpResponseException) showCannotAddMore() },
+    ) {
+        repository.updateCartItemQuantity(productId, quantity)
+    }
+
+    private fun showCannotAddMore() {
+        messageHelper.showToast(resourceHelper.getString(StringResource.SHOP_CANNOT_ADD_MORE))
     }
 }
 
@@ -73,17 +67,9 @@ class UpdateCartSelectionUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
-    suspend operator fun invoke(productIds: List<Long>): Result<CartVO> = try {
-        Result.success(repository.updateCartSelection(productIds))
-    } catch (e: HttpResponseException) {
-        handleHttpError<ShopErrorType>(e, onDomainError = {})
-        Result.failure(e)
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Result.failure(e)
-    }
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
+    suspend operator fun invoke(productIds: List<Long>): Result<CartVO> = request(ShopErrorType.entries) { repository.updateCartSelection(productIds) }
 }
 
 /**
@@ -96,15 +82,7 @@ class DeleteCartItemsUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
-    suspend operator fun invoke(productIds: List<Long>): Result<CartVO> = try {
-        Result.success(repository.deleteCartItems(productIds))
-    } catch (e: HttpResponseException) {
-        handleHttpError<ShopErrorType>(e, onDomainError = {})
-        Result.failure(e)
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Result.failure(e)
-    }
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
+    suspend operator fun invoke(productIds: List<Long>): Result<CartVO> = request(ShopErrorType.entries) { repository.deleteCartItems(productIds) }
 }

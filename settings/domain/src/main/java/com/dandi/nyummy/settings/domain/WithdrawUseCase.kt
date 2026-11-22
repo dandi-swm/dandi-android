@@ -1,7 +1,7 @@
 package com.dandi.nyummy.settings.domain
 
 import com.dandi.nyummy.common.domain.base.BaseUseCase
-import com.dandi.nyummy.common.domain.error.HttpResponseException
+import com.dandi.nyummy.common.domain.error.runSuspendCatching
 import com.dandi.nyummy.common.domain.helper.CompanionMemoryHelper
 import com.dandi.nyummy.common.domain.helper.MessageHelper
 import com.dandi.nyummy.common.domain.helper.NavigationHelper
@@ -11,9 +11,9 @@ import com.dandi.nyummy.common.domain.helper.StringResource
 import com.dandi.nyummy.common.domain.helper.TutorialHelper
 import com.dandi.nyummy.common.domain.helper.WidgetHelper
 import com.dandi.nyummy.common.domain.message.IconType
+import com.dandi.nyummy.common.domain.session.SessionExpiryHandler
 import com.dandi.nyummy.tti.TTIHelper
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 
 /**
  * 회원 탈퇴하고 첫 화면으로 돌아간다. 되돌릴 수 없다.
@@ -33,29 +33,28 @@ class WithdrawUseCase @Inject constructor(
     messageHelper: MessageHelper,
     navigationHelper: NavigationHelper,
     ttiHelper: TTIHelper,
-) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper) {
+    sessionExpiryHandler: SessionExpiryHandler? = null,
+) : BaseUseCase(resourceHelper, messageHelper, navigationHelper, ttiHelper, sessionExpiryHandler) {
 
     suspend operator fun invoke(): Result<Unit> {
-        try {
+        val withdrawn = request(
+            SettingsErrorType.entries,
+            onBusinessError = { type, cause ->
+                showError(resourceHelper.getString(type.errorMsg))
+                Result.failure(cause)
+            },
+            // 네트워크 끊김 등 응답 전 실패와 등록하지 않은 응답 오류.
+            onUnknownError = { showError(resourceHelper.getString(StringResource.SETTINGS_WITHDRAW_FAILED)) },
+        ) {
             repository.withdraw()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: HttpResponseException) {
-            handleHttpError<SettingsErrorType>(
-                e,
-                onDomainError = { type -> showError(resourceHelper.getString(type.errorMsg)) },
-                onUnknownError = { showError(resourceHelper.getString(StringResource.SETTINGS_WITHDRAW_FAILED)) },
-            )
-            return Result.failure(e)
-        } catch (e: Exception) {
-            // 네트워크 끊김 등 HTTP 응답 전 실패.
-            showError(resourceHelper.getString(StringResource.SETTINGS_WITHDRAW_FAILED))
-            return Result.failure(e)
         }
-        pushTokenHelper.deleteToken()
-        companionMemory.clear()
-        tutorialHelper.clear()
-        widgetHelper.clear()
+        if (withdrawn.isFailure) return withdrawn
+        // 서버에서는 이미 탈퇴했다. 정리는 서로 상관없으니 하나가 실패해도(기기 저장소 쓰기 실패 등)
+        // 나머지 정리와 완료 안내, 첫 화면 이동은 한다.
+        runSuspendCatching { pushTokenHelper.deleteToken() }
+        runSuspendCatching { companionMemory.clear() }
+        runSuspendCatching { tutorialHelper.clear() }
+        runSuspendCatching { widgetHelper.clear() }
         messageHelper.showSnackBar(iconType = IconType.SUCCESS, messageText = resourceHelper.getString(StringResource.SETTINGS_WITHDRAWN))
         navigationHelper.navigateToInitial()
         return Result.success(Unit)

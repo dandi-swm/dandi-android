@@ -13,10 +13,14 @@ import org.junit.Test
 class LogoutUseCaseTest {
 
     private val calls = mutableListOf<String>()
+
+    /** 냐미 기억 지우기의 기기 저장소 쓰기 실패를 흉내 낸다. */
+    private var companionClearError: Exception? = null
     private val navigationHelper = RecordingNavigationHelper()
 
+    private val repository = FakeAuthRepository()
     private val useCase = LogoutUseCase(
-        repository = FakeAuthRepository(),
+        repository = repository,
         pushTokenHelper = object : PushTokenHelper {
             override fun register(token: String?) = Unit
             override suspend fun deleteToken() {
@@ -32,6 +36,7 @@ class LogoutUseCaseTest {
             override suspend fun setCatName(name: String) = Unit
             override suspend fun clear() {
                 calls += "companion"
+                companionClearError?.let { throw it }
             }
         },
         tutorialHelper = object : TutorialHelper {
@@ -56,6 +61,35 @@ class LogoutUseCaseTest {
 
         // widget:0 — 위젯 기록을 지울 때는 아직 첫 화면으로 가지 않았다.
         assertEquals(listOf("pushToken", "companion", "tutorial", "widget:0"), calls)
+        assertEquals(1, navigationHelper.initialCount)
+    }
+
+    @Test
+    fun `서버 로그아웃이 예상 못 한 예외로 실패해도 이 기기를 정리하고 첫 화면으로 간다`() = runBlocking {
+        repository.logoutError = IllegalStateException("Successful response with null body")
+
+        useCase()
+
+        assertEquals(listOf("pushToken", "companion", "tutorial", "widget:0"), calls)
+        assertEquals(1, navigationHelper.initialCount)
+    }
+
+    @Test
+    fun `정리 하나가 기기 저장소 오류로 실패해도 앱이 꺼지지 않고 나머지 정리와 첫 화면 이동을 한다`() = runBlocking {
+        companionClearError = java.io.IOException("disk full")
+
+        useCase()
+
+        assertEquals(listOf("pushToken", "companion", "tutorial", "widget:0"), calls)
+        assertEquals(1, navigationHelper.initialCount)
+    }
+
+    @Test
+    fun `서버 로그아웃이 401 이어도 로그인 만료 안내 없이 정리하고 첫 화면으로 간다`() = runBlocking {
+        repository.logoutError = httpException(401)
+
+        useCase()
+
         assertEquals(1, navigationHelper.initialCount)
     }
 }
