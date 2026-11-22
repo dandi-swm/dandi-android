@@ -1,5 +1,6 @@
 package com.dandi.nyummy.main.presentation.navigation
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -26,6 +27,9 @@ import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.common.presentation.jank.JankPageEffect
 import com.dandi.nyummy.home.domain.HomePreparePage
+import com.dandi.nyummy.main.domain.deeplink.isAppUpdateLink
+import com.dandi.nyummy.main.domain.store.PlayStoreLinks
+import com.dandi.nyummy.main.domain.store.openFirstAvailable
 import com.dandi.nyummy.main.presentation.deeplink.appLinkToRoute
 
 @Composable
@@ -38,14 +42,18 @@ fun AppNavHost(
     // 맡아 둔 링크는 화면 회전, 다크 모드 같은 설정 변경으로 Activity 가 다시 만들어져도 남아야 한다.
     // 백스택(rememberNavBackStack)처럼 저장 상태에 넣어 두고, 판단은 순수 클래스가 한다.
     val appLinkAfterEntry = rememberSaveable(saver = AppLinkAfterEntrySaver) { AppLinkAfterEntry() }
+    val openStore = { openPlayStore(context) }
 
     LaunchedEffect(Unit) {
         navigationHelper.navigationFlow.collect { signal ->
             when (signal) {
                 is NavSignal.GoToDestPage -> handleNavRoute(signal.route, backStack)
-                is NavSignal.AppLink -> handleAppLink(signal.link, signal.asRoot, backStack)
-                is NavSignal.AppLinkAfterEntry -> appLinkAfterEntry.offer(signal.link, signal.waitForTabRoot, backStack.toList())
-                    ?.let { handleAppLink(it, asRoot = false, backStack) }
+                is NavSignal.AppLink -> handleAppLink(signal.link, signal.asRoot, backStack, openStore)
+                is NavSignal.AppLinkAfterEntry ->
+                    if (!handleAppUpdateLinkAfterEntry(signal.link, signal.waitForTabRoot, openStore)) {
+                        appLinkAfterEntry.offer(signal.link, signal.waitForTabRoot, backStack.toList())
+                            ?.let { handleAppLink(it, asRoot = false, backStack, openStore) }
+                    }
                 NavSignal.Back -> backStack.popUnlessRoot()
                 is NavSignal.ResetToPage -> handleResetTo(signal.route, backStack)
                 NavSignal.BackToInitialPage -> navigateToInitialStack(backStack)
@@ -58,7 +66,7 @@ fun AppNavHost(
     // 가장 단순하다. 진입 흐름이 끝나는 길(인트로, 로그인, 방 준비 화면)이 여럿이라 각 길에 끼우는 것보다 한 곳에서 지켜본다.
     LaunchedEffect(Unit) {
         snapshotFlow { backStack.toList() }.collect { stack ->
-            appLinkAfterEntry.takeIfReady(stack)?.let { handleAppLink(it, asRoot = false, backStack) }
+            appLinkAfterEntry.takeIfReady(stack)?.let { handleAppLink(it, asRoot = false, backStack, openStore) }
         }
     }
 
@@ -112,13 +120,45 @@ private val AppLinkAfterEntrySaver = listSaver<AppLinkAfterEntry, String>(
  */
 fun openExternalLink(url: String, context: Context) {
     if (url.isBlank()) return
-    runCatching {
+    startViewActivity(url, context)
+}
+
+/**
+ * Google Play 의 냐미 앱 페이지를 연다(앱 업데이트 링크). Play 스토어 앱([PlayStoreLinks.MARKET_URL])을 먼저 열고,
+ * 스토어 앱이 없거나 열리지 않으면 웹 주소([PlayStoreLinks.WEB_URL])를 브라우저로 연다.
+ * 스토어는 새 태스크로 떠서, 뒤로 가면 보던 앱 화면으로 돌아온다. 앱 백스택은 건드리지 않는다.
+ */
+fun openPlayStore(context: Context) {
+    val opened = openFirstAvailable(PlayStoreLinks.candidates) { url ->
+        // market 주소는 다른 스토어 앱(원스토어, 갤럭시 스토어 등)이 받지 않게 Play 스토어 앱으로 못 박는다.
+        startViewActivity(url, context, targetPackage = PLAY_STORE_PACKAGE.takeIf { url == PlayStoreLinks.MARKET_URL })
+    }
+    if (opened == null) Log.w(TAG, "openPlayStore failed: no app can open the store page")
+}
+
+/** Play 스토어 앱의 패키지 이름. */
+private const val PLAY_STORE_PACKAGE = "com.android.vending"
+
+/**
+ * [url]을 외부 앱으로 연다. 열었으면 true, 처리할 앱이 없거나 열지 못했으면 false 다(로그만 남긴다).
+ * Application/Service context 에서도 안전하도록 [Intent.FLAG_ACTIVITY_NEW_TASK] 를 부여한다.
+ */
+private fun startViewActivity(url: String, context: Context, targetPackage: String? = null): Boolean =
+    try {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            targetPackage?.let(::setPackage)
         }
         context.startActivity(intent)
-    }.onFailure { Log.w(TAG, "openExternalLink failed: $url", it) }
-}
+        true
+    } catch (e: ActivityNotFoundException) {
+        Log.w(TAG, "No activity for: $url", e)
+        false
+    } catch (e: RuntimeException) {
+        // 다른 앱의 액티비티를 열 수 없는 경우(SecurityException 등)도 앱이 죽지 않게 막는다.
+        Log.w(TAG, "startActivity failed: $url", e)
+        false
+    }
 
 /**
  * NavRoute 한 건을 받아 백스택에 push(앱 내 전진 이동).
@@ -160,8 +200,17 @@ fun handleNavRoute(route: NavRoute, backStack: NavBackStack<NavKey>) {
  *
  * [asRoot]면 위 규칙 대신 스택을 비우고 그 화면만 남긴다([handleResetTo], 로그인 뒤 이동).
  * 이때 링크를 풀지 못하면 지금 화면(로그인)에 갇히므로 방 준비 화면([HomePreparePage])을 거쳐 홈으로 간다.
+ *
+ * 앱 업데이트 링크([isAppUpdateLink])는 화면이 아니라 Play 스토어를 연다([openStore]). 백스택은 그대로 두므로 스토어에서
+ * 뒤로 오면 보던 화면(인트로, 로그인, 홈 등)이 그대로 있다. 신호 한 건에 한 번만 부르므로 화면 재생성으로 다시 열리지 않는다.
+ * [asRoot]면 로그인 화면에 갇히지 않게 스토어를 연 뒤 방 준비 화면으로 간다.
  */
-fun handleAppLink(link: String, asRoot: Boolean, backStack: NavBackStack<NavKey>) {
+fun handleAppLink(link: String, asRoot: Boolean, backStack: NavBackStack<NavKey>, openStore: () -> Unit) {
+    if (isAppUpdateLink(link)) {
+        openStore()
+        if (asRoot) handleResetTo(HomePreparePage.toRoute(), backStack)
+        return
+    }
     val route = appLinkToRoute(link)
     val appRoute = route?.let { appRouteByPath[it.path] }
     if (route == null || appRoute == null) {
@@ -183,6 +232,19 @@ fun handleAppLink(link: String, asRoot: Boolean, backStack: NavBackStack<NavKey>
     if (backStack.lastOrNull() == target) return   // 이미 최전면 — no-op.
     backStack.bringToFront(target)
     Log.d(TAG, "appLink bringToFront: $target")
+}
+
+/**
+ * 진입 흐름 뒤에 여는 링크([NavSignal.AppLinkAfterEntry], 광고 트래킹 링크)가 앱 업데이트 링크면 맡아 두지 않고 처리한다.
+ * 스토어를 여는 데는 로그인이 필요 없어서, 인트로나 로그인 화면에서도 바로 연다.
+ * 설치 뒤 첫 실행에 이어받은 링크([waitForTabRoot])는 방금 스토어에서 설치하고 온 것이라 스토어를 다시 열지 않고 버린다.
+ *
+ * @return 앱 업데이트 링크라서 여기서 끝냈으면 true, 화면 링크라서 원래대로 처리해야 하면 false.
+ */
+internal fun handleAppUpdateLinkAfterEntry(link: String, waitForTabRoot: Boolean, openStore: () -> Unit): Boolean {
+    if (!isAppUpdateLink(link)) return false
+    if (!waitForTabRoot) openStore()
+    return true
 }
 
 /**

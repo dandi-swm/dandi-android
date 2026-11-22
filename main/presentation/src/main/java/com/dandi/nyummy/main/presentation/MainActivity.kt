@@ -24,8 +24,10 @@ import com.dandi.nyummy.common.presentation.helper.LocalNavigationHelper
 import com.dandi.nyummy.common.presentation.jank.JankReporter
 import com.dandi.nyummy.common.presentation.jank.LocalJankReporter
 import com.dandi.nyummy.main.presentation.deeplink.appLinkUri
+import com.dandi.nyummy.main.presentation.deeplink.isLaunchedFromHistory
 import com.dandi.nyummy.main.presentation.deeplink.pushNotificationId
 import com.dandi.nyummy.main.presentation.deeplink.resolveStartStack
+import com.dandi.nyummy.main.presentation.deeplink.shouldOpenStoreOnStart
 import com.dandi.nyummy.main.presentation.deeplink.withNotificationId
 import com.dandi.nyummy.main.presentation.navigation.RootComposable
 import dagger.hilt.android.AndroidEntryPoint
@@ -63,7 +65,17 @@ class MainActivity : ComponentActivity() {
         pushTokenHelper.register()
 
         // App Link 진입 시 링크(Intent.data, 또는 OS가 띄운 푸시 알림의 extras)에서 시작 백스택을 구성한다.
-        val startStack = resolveStartStack(intent?.appLinkUri(), intent?.pushNotificationId())
+        val startLink = intent?.appLinkUri()
+        val startStack = resolveStartStack(startLink, intent?.pushNotificationId())
+
+        // 앱 업데이트 링크(푸시, 외부 앱 링크)로 켜졌으면 Play 스토어를 연다. 앱 링크 처리 한 길(handleAppLink)로 넘기고,
+        // 백스택은 인트로 그대로라 스토어에서 돌아오면 평소 흐름이 이어진다. 화면 재생성이나 최근 앱에서 다시 연 경우는 다시 열지 않는다.
+        val startLinkText = startLink?.toString()
+        if (startLinkText != null &&
+            shouldOpenStoreOnStart(startLinkText, savedInstanceState != null, intent.isLaunchedFromHistory())
+        ) {
+            navigationHelper.navigateToAppLink(startLinkText)
+        }
 
         // JankStats 는 DecorView 가 생성된 이후에만 만들 수 있다. setContent 가 DecorView 를
         // 보장하므로 lifecycle observer 안에서 lazy 하게 생성하고, tracking on/off 와 백그라운드
@@ -114,6 +126,7 @@ class MainActivity : ComponentActivity() {
      * 링크를 그대로 NavigationHelper 의 앱 링크 플로우로 넘기고, 해석과 이동은 호스트가 맡는다
      * ([com.dandi.nyummy.main.presentation.navigation.handleAppLink]). 앱 안 링크와 같은 길이다.
      * 웜 스타트는 콜드 스타트의 synthetic 스택과 달리 기존 스택을 보존하고 대상만 최전면으로 올린다.
+     * 앱 업데이트 링크도 같은 길로 넘기면 호스트가 백스택은 그대로 두고 Play 스토어만 연다. 새 intent 마다 한 번만 불린다.
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
