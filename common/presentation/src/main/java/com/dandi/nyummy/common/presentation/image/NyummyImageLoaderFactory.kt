@@ -17,6 +17,10 @@ import okio.Path.Companion.toOkioPath
  * 기본값에 맡기지 않고 캐시를 명시하며, S3 presigned URL 의 서명 쿼리가
  * 발급마다 바뀌어 캐시가 전혀 맞지 않는 문제를 [PresignedUrlKeyer] 로 바로잡습니다.
  * 요청마다 로딩 시간과 출처(메모리 캐시, 디스크, 네트워크)를 [ImageLoadReport] 로 남깁니다.
+ * 앱이 만든 CDN `.webp` 주소는 서버에 없으면 같은 경로의 `.png` 로 다시 받습니다([CdnWebpFallbackInterceptor]).
+ *
+ * 디스크 캐시는 Coil 기본 전략이라 HTTP 캐시 헤더로 다시 확인하지 않고, 한 번 받은 주소는 밀려날 때까지 캐시를 씁니다.
+ * 그래서 CDN 그림을 바꿀 때는 같은 키에 덮어쓰지 말고 새 키(예: `.png` → `.webp`)로 올려야 기존 사용자에게도 새 그림이 보입니다.
  */
 object NyummyImageLoaderFactory {
 
@@ -42,6 +46,7 @@ object NyummyImageLoaderFactory {
                     .build()
             }
             .components {
+                add(CdnWebpFallbackInterceptor(CdnWebpFallback(SharedPreferencesCdnPngFallbackMemory(context))))
                 add(PresignedUrlKeyer())
             }
             .eventListenerFactory(ImageLoadEventListener.factory(loadReport))

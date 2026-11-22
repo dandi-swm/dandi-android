@@ -182,7 +182,7 @@ fun ShopAddButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     )
 }
 
-/** 상품 그림(`items/{itemId}.png`). 픽셀 그림이라 보간 없이 그린다. */
+/** 상품 그림(`items/{itemId}.webp`). 픽셀 그림이라 보간 없이 그린다. */
 @Composable
 fun ShopItemImage(
     itemId: Long,
