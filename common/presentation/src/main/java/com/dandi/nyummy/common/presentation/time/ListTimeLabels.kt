@@ -40,10 +40,10 @@ fun ZonedDateTime.monthDayLabel(locale: Locale = Locale.getDefault()): String =
 
 /** 언어별 목록 시각 표기. */
 private enum class ListTimeFormat(val yesterday: String) {
-    KOREAN("어제") {
-        override fun time(isAm: Boolean, clock: String) = "${if (isAm) "오전" else "오후"} $clock"
-        override fun monthDay(time: ZonedDateTime) = "${time.monthValue}월 ${time.dayOfMonth}일"
-        override fun yearMonthDay(time: ZonedDateTime) = "${time.year}년 ${monthDay(time)}"
+    KOREAN("어제") { // i18n-ignore: 언어별 표기 표
+        override fun time(isAm: Boolean, clock: String) = "${if (isAm) "오전" else "오후"} $clock" // i18n-ignore
+        override fun monthDay(time: ZonedDateTime) = "${time.monthValue}월 ${time.dayOfMonth}일" // i18n-ignore
+        override fun yearMonthDay(time: ZonedDateTime) = "${time.year}년 ${monthDay(time)}" // i18n-ignore
     },
     JAPANESE("昨日") {
         override fun time(isAm: Boolean, clock: String) = "${if (isAm) "午前" else "午後"}$clock"

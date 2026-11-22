@@ -110,9 +110,9 @@
     <string name="history_detail_v2_foods_hint">一番上に動かした食べ物が代表になります</string>
     <string name="history_detail_v2_main_badge">代表</string>
     <string name="history_detail_v2_portion">%1$s人前</string>
-    <string name="history_detail_v2_macro_carb">炭</string>
-    <string name="history_detail_v2_macro_protein">た</string>
-    <string name="history_detail_v2_macro_fat">脂</string>
+    <string name="history_detail_v2_macro_carb">C</string>
+    <string name="history_detail_v2_macro_protein">P</string>
+    <string name="history_detail_v2_macro_fat">F</string>
     <string name="history_detail_v2_gram">%1$dg</string>
     <string name="history_detail_v2_food_pending">栄養を計算中</string>
     <string name="history_detail_v2_add_food">食べ物を追加</string>

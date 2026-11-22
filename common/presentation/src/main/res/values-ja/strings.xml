@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Nyummy</string>
+    <string name="app_name">ニャミ</string>
     <string name="nav_back_button">前へ戻る</string>
     <string name="meal_gallery_not_taken_today">今日撮った写真だけアップロードできます</string>
     <string name="meal_gallery_load_failed">写真を読み込めませんでした。もう一度選んでください</string>

@@ -26,7 +26,7 @@ internal object NyummyWidgetRenderer {
 
     fun render(context: Context, card: WidgetCardVO): RemoteViews {
         val plan = card.plan
-        val spec = NyummyWidgetCatalog.cardFor(card)
+        val spec = NyummyWidgetCatalog.cardFor(card, context.resources.getBoolean(R.bool.widget_art_text_localized))
         val title = context.getString(spec.title, mealName(context, plan.meal))
         val sub = subText(context, spec, plan)
 

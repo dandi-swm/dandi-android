@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 현수막 그림의 일본어판(drawable-ja-nodpi/widget_nyummy_away6_b)이 있다. -->
+    <bool name="widget_art_text_localized">true</bool>
+</resources>

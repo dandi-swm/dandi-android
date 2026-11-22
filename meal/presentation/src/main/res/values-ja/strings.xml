@@ -130,7 +130,7 @@
     <string name="meal_cutscene_word_beckon">おいでおいで</string>
     <string name="meal_cutscene_word_jingle">ジャラジャラ</string>
     <string name="meal_cutscene_word_lucky">福が来たにゃ！！</string>
-    <string name="meal_cutscene_word_me_too">わたしも、わたしも！</string>
+    <string name="meal_cutscene_word_me_too">ぼくも、ぼくも！</string>
     <string name="meal_cutscene_word_one_two">いち、に…</string>
     <!-- 찾은 음식 고르기 -->
     <string name="meal_food_pick_title">%1$sが見つけた食べ物です</string>
@@ -252,7 +252,7 @@
     <string name="meal_cutscene_word_angel_4">…食べよ！</string>
     <string name="meal_cutscene_word_drum_1">もも肉はふたつ</string>
     <string name="meal_cutscene_word_drum_2">ひとつはご主人</string>
-    <string name="meal_cutscene_word_drum_3">ひとつはわたし</string>
+    <string name="meal_cutscene_word_drum_3">ひとつはぼく</string>
     <string name="meal_cutscene_word_drum_4">手羽は…？</string>
     <string name="meal_cutscene_word_odeng_2">ふーふー</string>
     <string name="meal_cutscene_word_odeng_4">はぁ〜</string>
@@ -293,7 +293,7 @@
     <string name="meal_cutscene_word_detective_1">消えた！</string>
     <string name="meal_cutscene_word_detective_2">手がかり発見</string>
     <string name="meal_cutscene_word_detective_3">推理中…</string>
-    <string name="meal_cutscene_word_detective_4">犯人は…わたし？！</string>
+    <string name="meal_cutscene_word_detective_4">犯人は…ぼく？！</string>
     <string name="meal_cutscene_word_detective_finale">自首してぴょーん！！</string>
     <!-- 식사 컷신 효과음 글자 (추가분 끝) -->
 </resources>

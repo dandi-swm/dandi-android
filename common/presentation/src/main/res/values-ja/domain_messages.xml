@@ -56,13 +56,13 @@
 
     <!-- 온보딩 -->
     <string name="msg_onboarding_invalid_input">名前や食事の時刻をもう一度確認してください。</string>
-    <string name="msg_onboarding_cat_already_exists">すでに一緒に暮らしている猫がいます。</string>
+    <string name="msg_onboarding_cat_already_exists">すでに一緒に暮らしているネコがいます。</string>
 
     <!-- 고양이 -->
     <string name="msg_cat_name_too_long">名前は%1$d文字までです</string>
     <string name="msg_cat_invalid_name">名前をもう一度確認してください</string>
-    <string name="msg_cat_not_found">猫の情報が見つかりませんでした</string>
-    <string name="msg_cat_rename_failed">猫の名前を変更できませんでした</string>
+    <string name="msg_cat_not_found">ネコの情報が見つかりませんでした</string>
+    <string name="msg_cat_rename_failed">ネコの名前を変更できませんでした</string>
 
     <!-- 홈 -->
     <string name="msg_home_load_failed">ホームの情報を読み込めませんでした</string>

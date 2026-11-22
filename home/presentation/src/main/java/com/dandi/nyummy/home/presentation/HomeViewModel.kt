@@ -515,12 +515,12 @@ class HomeViewModel @Inject constructor(
     private fun catDebugLabel(mood: CatMood, motion: String?): String? {
         if (!BuildConfig.DEBUG) return null
         val moodName = when (mood) {
-            CatMood.DAY -> "낮"
-            CatMood.DROWSY -> "졸림"
-            CatMood.NIGHT -> "밤"
+            CatMood.DAY -> "낮" // i18n-ignore: debug 빌드 전용 라벨
+            CatMood.DROWSY -> "졸림" // i18n-ignore
+            CatMood.NIGHT -> "밤" // i18n-ignore
         }
         val weight = catAnimations?.weight?.let { " · $it" }.orEmpty()
-        return "$moodName${if (forcedMood != null) "(고정)" else ""}$weight · ${motion ?: "-"}"
+        return "$moodName${if (forcedMood != null) "(고정)" else ""}$weight · ${motion ?: "-"}" // i18n-ignore
     }
 
     /** debug: 분위기를 자동 → 낮 → 졸림 → 밤 순서로 고정해 바로 비교한다. */

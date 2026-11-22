@@ -16,6 +16,7 @@ import com.dandi.nyummy.widget.entity.WidgetStage
  * @property sub 설명. 끼니 이름(%1$s)이 들어갈 수 있다. 일 단위는 "N일째 "를 뺀 나머지다.
  * @property subAfterMealTime 기다림 중 끼니 시각이 지나면 대신 쓰는 설명. 0이면 [sub]를 그대로 쓴다.
  * @property showsAwayDays 일 단위에서 날수를 알면 설명 앞에 "N일째 "를 붙이는지
+ * @property imageHasText 그림 안에 한국어 글자가 그려져 있는지. 앱 언어에 맞는 그림이 없으면 이 시안을 고르지 않는다
  */
 internal data class NyummyWidgetCard(
     @DrawableRes val image: Int,
@@ -24,6 +25,7 @@ internal data class NyummyWidgetCard(
     @StringRes val sub: Int,
     @StringRes val subAfterMealTime: Int = 0,
     val showsAwayDays: Boolean = false,
+    val imageHasText: Boolean = false,
 )
 
 /**
@@ -105,7 +107,14 @@ internal object NyummyWidgetCatalog {
         ),
         6 to listOf(
             NyummyWidgetCard(R.drawable.widget_nyummy_away6_a, R.color.widget_bg_taupe, R.string.widget_away6_a_title, R.string.widget_away6_a_rest, showsAwayDays = true),
-            NyummyWidgetCard(R.drawable.widget_nyummy_away6_b, R.color.widget_bg_green, R.string.widget_away6_b_title, R.string.widget_away6_b_rest),
+            // 현수막에 "집사님 돌아와요"가 그려져 있다.
+            NyummyWidgetCard(
+                R.drawable.widget_nyummy_away6_b,
+                R.color.widget_bg_green,
+                R.string.widget_away6_b_title,
+                R.string.widget_away6_b_rest,
+                imageHasText = true,
+            ),
             NyummyWidgetCard(R.drawable.widget_nyummy_away6_c, R.color.widget_bg_taupe, R.string.widget_away6_c_title, R.string.widget_away6_c_rest, showsAwayDays = true),
         ),
         7 to listOf(
@@ -122,8 +131,16 @@ internal object NyummyWidgetCatalog {
         NyummyWidgetCard(R.drawable.widget_nyummy_logout_b, R.color.widget_bg_midnight, R.string.widget_logout_title, R.string.widget_logout_sub),
     )
 
-    /** [plan] 상태의 시안들. 비어 있는 상태는 없다. */
-    fun cardsFor(plan: WidgetPlanVO): List<NyummyWidgetCard> = when (plan.stage) {
+    /**
+     * [plan] 상태의 시안들. 비어 있는 상태는 없다.
+     *
+     * @param imageTextLocalized 그림 속 글자가 앱 언어로 그려져 있는지(리소스 `widget_art_text_localized`).
+     * false면 글자가 든 그림의 시안([NyummyWidgetCard.imageHasText])을 뺀다. 그런 시안만 있는 상태는 없다.
+     */
+    fun cardsFor(plan: WidgetPlanVO, imageTextLocalized: Boolean = true): List<NyummyWidgetCard> =
+        allCardsFor(plan).filter { imageTextLocalized || !it.imageHasText }
+
+    private fun allCardsFor(plan: WidgetPlanVO): List<NyummyWidgetCard> = when (plan.stage) {
         WidgetStage.NIGHT -> night
         WidgetStage.WAITING -> waiting
         WidgetStage.FULL -> full
@@ -135,10 +152,12 @@ internal object NyummyWidgetCatalog {
         WidgetStage.LOGGED_OUT -> loggedOut
     }
 
-    fun variantCount(plan: WidgetPlanVO): Int = cardsFor(plan).size
+    fun variantCount(plan: WidgetPlanVO, imageTextLocalized: Boolean = true): Int =
+        cardsFor(plan, imageTextLocalized).size
 
-    fun cardFor(card: WidgetCardVO): NyummyWidgetCard {
-        val cards = cardsFor(card.plan)
+    /** 고른 시안 번호가 목록 밖이면(언어가 바뀌어 시안 수가 줄었을 때 등) 가장 가까운 시안을 쓴다. */
+    fun cardFor(card: WidgetCardVO, imageTextLocalized: Boolean = true): NyummyWidgetCard {
+        val cards = cardsFor(card.plan, imageTextLocalized)
         return cards[card.variant.coerceIn(0, cards.lastIndex)]
     }
 }

@@ -42,7 +42,7 @@
     <string name="settings_font_credit">フォントの出典</string>
     <string name="settings_font_credit_pretendard_label">Pretendard</string>
     <string name="settings_font_credit_pretendard">Copyright (c) 2021, Kil Hyung-jin (https://github.com/orioncactus/pretendard), with Reserved Font Name Pretendard. SIL Open Font License 1.1に基づいて使用しています。</string>
-    <string name="settings_font_credit_katuri_label">オンマカトゥリ体（엄마까투리체）</string>
+    <string name="settings_font_credit_katuri_label">オンマカトゥリ体（Eomma Katuri）</string>
     <string name="settings_font_credit_katuri">出典：安東市（韓国）。安東市が公共著作物として配布しているフォントです。</string>
     <string name="settings_logout">ログアウト</string>
     <string name="settings_logout_dialog_title">ログアウトしますか？</string>
@@ -91,7 +91,7 @@
     <string name="settings_my_profile_fallback_title">自分の情報</string>
     <string name="settings_my_profile_entry_desc">%1$sのご主人 · 自分の情報を見る</string>
     <string name="my_profile_title">マイページ</string>
-    <string name="my_profile_section_cat">ねこの情報</string>
+    <string name="my_profile_section_cat">ネコの情報</string>
     <string name="my_profile_section_owner">ご主人の情報</string>
     <string name="my_profile_cat_name">名前</string>
     <string name="my_profile_nickname">ご主人の名前</string>
@@ -107,7 +107,7 @@
     <string name="my_profile_weight_value">%1$dkg</string>
     <string name="my_profile_unset">入力してください</string>
     <string name="my_profile_calorie_caption">性別・生年月日・身長・体重から1日の推奨カロリーを計算します。変更すると推奨カロリーも計算し直します。</string>
-    <string name="my_profile_sheet_cat_name">ねこの名前</string>
+    <string name="my_profile_sheet_cat_name">ネコの名前</string>
     <string name="my_profile_sheet_name_label">名前</string>
     <string name="my_profile_sheet_cat_name_helper">%1$d文字まで入力できます</string>
     <string name="my_profile_sheet_gender_note">推奨カロリーは性別・生年月日・身長・体重から計算します</string>
