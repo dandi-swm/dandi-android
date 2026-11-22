@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 미리보기 글자 그림의 일본어판(drawable-ja-xxhdpi/widget_preview_copy, widget_preview_streak)을 쓴다. -->
+    <integer name="widget_preview_image_visibility">0</integer>
+    <integer name="widget_preview_text_visibility">2</integer>
+</resources>

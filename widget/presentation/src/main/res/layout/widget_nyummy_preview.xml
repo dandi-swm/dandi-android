@@ -2,8 +2,8 @@
 <!--
   냐미 위젯 미리보기(점심 기다림 B, 12일). 위젯 고르기 화면과, 위젯을 놓고 앱이 처음 그리기 전 잠깐 보인다.
   배치는 widget_nyummy와 같다. 문구와 스트릭 글자는 언어에 따라 둘 중 하나만 보인다(values*/integers.xml).
-  - 한국어: 까투리로 미리 그린 그림(widget_preview_copy, widget_preview_streak)
-  - 그 밖: 문자열 리소스를 기기 글꼴로. 크기·줄 높이는 NyummyWidgetTextPainter와 같다(제목 32/36, 설명 17/21, 둘 사이 4, 스트릭 15/19).
+  - 한국어·일본어: 미리 그린 글자 그림(widget_preview_copy, widget_preview_streak, 일본어판은 drawable-ja-xxhdpi)
+  - 그 밖(기본 영어): 문자열 리소스를 기기 글꼴로. 크기·줄 높이는 NyummyWidgetTextPainter와 같다(제목 32/36, 설명 17/21, 둘 사이 4, 스트릭 15/19).
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
