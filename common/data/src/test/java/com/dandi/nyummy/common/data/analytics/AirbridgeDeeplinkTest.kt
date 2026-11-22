@@ -21,6 +21,12 @@ class AirbridgeDeeplinkTest {
     }
 
     @Test
+    fun `앱 업데이트 스킴 링크는 앱 업데이트 앱 링크가 된다`() {
+        assertEquals("https://link.nyummy.co.kr/app-update", "nyummy://app-update?airbridge_referrer=abc".toAppLinkOrNull())
+        assertEquals("https://link.nyummy.co.kr/app-update", "nyummy:///app-update".toAppLinkOrNull())
+    }
+
+    @Test
     fun `경로 없는 스킴 링크는 홈으로 연다`() {
         assertEquals("https://link.nyummy.co.kr/home", "nyummy://".toAppLinkOrNull())
         assertEquals("https://link.nyummy.co.kr/home", "nyummy://?airbridge_referrer=abc".toAppLinkOrNull())
