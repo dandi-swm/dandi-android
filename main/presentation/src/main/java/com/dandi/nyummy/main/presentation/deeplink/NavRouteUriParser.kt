@@ -7,6 +7,7 @@ import androidx.navigation3.runtime.NavKey
 import com.dandi.nyummy.common.domain.navigation.AppLinks
 import com.dandi.nyummy.common.domain.navigation.NavRoute
 import com.dandi.nyummy.intro.domain.IntroPage
+import com.dandi.nyummy.main.domain.deeplink.isAppUpdateLink
 import com.dandi.nyummy.main.domain.deeplink.matchRoute
 import com.dandi.nyummy.main.presentation.navigation.GenericNavKey
 import com.dandi.nyummy.main.presentation.navigation.appLinkAliases
@@ -45,6 +46,7 @@ fun Uri.resolveRoute(): NavRoute? {
 /**
  * App Link 콜드 스타트의 시작 백스택을 구성한다.
  * - URI 없음 / 미매칭 → 인트로 단일 스택으로 fallback (인트로가 홈/로그인 분기를 담당).
+ * - 앱 업데이트 링크 → 인트로 단일 스택. 스토어는 MainActivity 가 따로 연다.
  * - 매칭 → 해당 [com.dandi.nyummy.main.presentation.navigation.AppRoute.syntheticStack]
  *   (부모 체인을 포함한 정식 스택). 계층형 path 도 동일하게 동작한다.
  *
@@ -52,6 +54,8 @@ fun Uri.resolveRoute(): NavRoute? {
  *     `[Home, ArticleList, ArticlePage(args)]` 를 선언했다면, 그 전체 스택이 깔린 채 진입한다.
  */
 fun resolveStartStack(uri: Uri?, notificationId: String? = null): List<NavKey> {
+    // 앱 업데이트 링크는 화면이 아니라 스토어를 연다(MainActivity). 그 아래 앱은 평소처럼 인트로부터 시작한다.
+    if (uri != null && isAppUpdateLink(uri.toString())) return listOf(GenericNavKey(IntroPage.PATH))
     val route = uri?.resolveRoute()?.withNotificationId(notificationId)
     if (route == null) {
         if (uri != null) Log.w(TAG, "No matching route for uri=$uri")
