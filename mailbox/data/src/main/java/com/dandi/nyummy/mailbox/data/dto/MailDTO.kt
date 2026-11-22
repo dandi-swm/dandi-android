@@ -91,7 +91,7 @@ data class TotalRewardDTO(
 /**
  * 받은 코인.
  *
- * @property imageId 코인 그림 번호. 목록과 같이 앱이 CDN 코인 경로에 붙인다(`coins/{imageId}.png`).
+ * @property imageId 코인 그림 번호. 목록과 같이 앱이 CDN 코인 경로에 붙인다(`coins/{imageId}.webp`).
  */
 @Serializable
 data class RewardCoinDTO(
@@ -104,7 +104,7 @@ data class RewardCoinDTO(
 /**
  * 받은 아이템 하나.
  *
- * @property imageId 아이템 그림 번호. 목록과 같이 앱이 CDN 아이템 경로에 붙인다(`items/{imageId}.png`).
+ * @property imageId 아이템 그림 번호. 목록과 같이 앱이 CDN 아이템 경로에 붙인다(`items/{imageId}.webp`).
  */
 @Serializable
 data class RewardItemDTO(
@@ -122,7 +122,7 @@ data class RewardItemDTO(
 /**
  * 보상 상자 그림과 열기 연출.
  *
- * @property imageId 상자 그림 번호. 목록과 같이 앱이 CDN 상자 경로에 붙인다(`reward-boxes/{imageId}.png`).
+ * @property imageId 상자 그림 번호. 목록과 같이 앱이 CDN 상자 경로에 붙인다(`reward-boxes/{imageId}.webp`).
  * @property animationUrl 열기 연출 파일 URL. 지금 서버 응답은 null이다.
  */
 @Serializable

@@ -100,7 +100,7 @@ class MailboxItemTabViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            listOf("https://cdn.nyummy.co.kr/reward-boxes/closed/3.png", "https://cdn.nyummy.co.kr/items/12.png", ""),
+            listOf("https://cdn.nyummy.co.kr/reward-boxes/closed/3.webp", "https://cdn.nyummy.co.kr/items/12.webp", ""),
             viewModel.uiState.value.items.mails.map { it.imageUrl },
         )
     }
@@ -200,8 +200,8 @@ class MailboxItemTabViewModelTest {
         // 이미 받은 골드 상자는 빼고, 받을 상자 중 가장 높은 실버 상자다.
         val waiting = viewModel.uiState.value.boxOpening!!
         assertEquals(BoxOpeningPhase.Waiting, waiting.phase)
-        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/closed/2.png", waiting.closedImageUrl)
-        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/opened/2.png", waiting.openedImageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/closed/2.webp", waiting.closedImageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/opened/2.webp", waiting.openedImageUrl)
         assertTrue(viewModel.uiState.value.items.isClaimingAll)
 
         // 다시 받기 전에 화면 상태를 보려고 목록 응답을 멈춰 둔다.
@@ -219,8 +219,8 @@ class MailboxItemTabViewModelTest {
         assertEquals(BoxOpeningPhase.Opening, opening.phase)
         assertEquals(
             listOf(
-                BoxRewardUiModel.Coin(imageUrl = "https://cdn.nyummy.co.kr/coins/1.png", quantity = 300),
-                BoxRewardUiModel.Item(imageUrl = "https://cdn.nyummy.co.kr/items/5.png", name = "가을 담요", quantity = 2),
+                BoxRewardUiModel.Coin(imageUrl = "https://cdn.nyummy.co.kr/coins/1.webp", quantity = 300),
+                BoxRewardUiModel.Item(imageUrl = "https://cdn.nyummy.co.kr/items/5.webp", name = "가을 담요", quantity = 2),
             ),
             opening.rewards,
         )
@@ -360,8 +360,8 @@ class MailboxItemTabViewModelTest {
 
         val waiting = viewModel.uiState.value.boxOpening!!
         assertEquals(BoxOpeningPhase.Waiting, waiting.phase)
-        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/closed/2.png", waiting.closedImageUrl)
-        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/opened/2.png", waiting.openedImageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/closed/2.webp", waiting.closedImageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/opened/2.webp", waiting.openedImageUrl)
         assertEquals("상자 1", waiting.mailTitle)
 
         gate.complete(
@@ -376,18 +376,18 @@ class MailboxItemTabViewModelTest {
         val opening = viewModel.uiState.value.boxOpening!!
         assertEquals(BoxOpeningPhase.Opening, opening.phase)
         // 응답의 상자 번호가 목록의 번호보다 우선이다.
-        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/closed/3.png", opening.closedImageUrl)
-        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/opened/3.png", opening.openedImageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/closed/3.webp", opening.closedImageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/opened/3.webp", opening.openedImageUrl)
         assertEquals(
             listOf(
-                BoxRewardUiModel.Coin(imageUrl = "https://cdn.nyummy.co.kr/coins/1.png", quantity = 100),
-                BoxRewardUiModel.Item(imageUrl = "https://cdn.nyummy.co.kr/items/5.png", name = "가을 담요", quantity = 2),
+                BoxRewardUiModel.Coin(imageUrl = "https://cdn.nyummy.co.kr/coins/1.webp", quantity = 100),
+                BoxRewardUiModel.Item(imageUrl = "https://cdn.nyummy.co.kr/items/5.webp", name = "가을 담요", quantity = 2),
             ),
             opening.rewards,
         )
         val row = viewModel.uiState.value.items.mails.single()
         assertTrue(row.isClaimed)
-        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/opened/2.png", row.imageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/reward-boxes/opened/2.webp", row.imageUrl)
         assertTrue(messageHelper.snackBars.isEmpty())
     }
 

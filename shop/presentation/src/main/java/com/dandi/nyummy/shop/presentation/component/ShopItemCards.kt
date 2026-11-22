@@ -14,6 +14,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
 import com.dandi.nyummy.common.entity.richText.RichTextVO
 import com.dandi.nyummy.common.entity.tag.TagTone
 import com.dandi.nyummy.common.entity.tag.TagVO
@@ -30,6 +37,8 @@ import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconBut
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonSize
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyIconButtonStyle
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyRichText
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeleton
+import com.dandi.nyummy.common.presentation.designsystem.component.NyummySkeletonShape
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTag
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyText
 import com.dandi.nyummy.common.presentation.designsystem.foundation.nyummyClickable
@@ -182,7 +191,11 @@ fun ShopAddButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     )
 }
 
-/** 상품 그림(`items/{itemId}.png`). 픽셀 그림이라 보간 없이 그린다. */
+/**
+ * 상품 그림(`items/{itemId}.webp`). 픽셀 그림이라 보간 없이 그린다.
+ * 받는 동안은 스켈레톤으로 자리를 잡고, 끝내 받지 못하면(공용 로더가 한 번 다시 받은 뒤에도) 무대색 칸에
+ * 다시 불러오기 버튼을 둔다. 빈 칸만 남지 않게 하려는 것이다. 크기는 [modifier]로 정한다.
+ */
 @Composable
 fun ShopItemImage(
     itemId: Long,
@@ -190,14 +203,51 @@ fun ShopItemImage(
     contentScale: ContentScale = ContentScale.Fit,
     contentDescription: String? = null,
 ) {
-    AsyncImage(
-        model = NyummyCdn.itemUrl(itemId),
-        contentDescription = contentDescription,
-        contentScale = contentScale,
-        alignment = if (contentScale == ContentScale.Crop) Alignment.BottomCenter else Alignment.Center,
-        filterQuality = FilterQuality.None,
-        modifier = modifier,
-    )
+    // 다시 불러오기를 누를 때마다 올려 AsyncImage를 새로 만든다(실패는 캐시에 남지 않아 새로 요청한다).
+    var reloadCount by remember(itemId) { mutableIntStateOf(0) }
+    var loadState by remember(itemId, reloadCount) { mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty) }
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        key(reloadCount) {
+            AsyncImage(
+                model = NyummyCdn.itemUrl(itemId),
+                contentDescription = contentDescription,
+                contentScale = contentScale,
+                alignment = if (contentScale == ContentScale.Crop) Alignment.BottomCenter else Alignment.Center,
+                filterQuality = FilterQuality.None,
+                onState = { loadState = it },
+                modifier = Modifier.matchParentSize(),
+            )
+        }
+        when (loadState) {
+            is AsyncImagePainter.State.Empty, is AsyncImagePainter.State.Loading ->
+                NyummySkeleton(shape = NyummySkeletonShape.Block, modifier = Modifier.matchParentSize())
+
+            is AsyncImagePainter.State.Error -> ShopItemImageFailed(
+                onReload = { reloadCount++ },
+                modifier = Modifier.matchParentSize(),
+            )
+
+            is AsyncImagePainter.State.Success -> Unit
+        }
+    }
+}
+
+/** 그림을 받지 못한 칸. 무대색 위에 다시 불러오기 버튼을 둔다. */
+@Composable
+private fun ShopItemImageFailed(onReload: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.background(NyummyTheme.colors.bg.surfaceSunken, RoundedCornerShape(NyummyTheme.radius.m)),
+        contentAlignment = Alignment.Center,
+    ) {
+        NyummyIconButton(
+            icon = CommonR.drawable.nyummy_ic_refresh_cw,
+            contentDescription = stringResource(R.string.shop_item_image_reload),
+            onClick = onReload,
+            style = NyummyIconButtonStyle.Outlined,
+            size = NyummyIconButtonSize.Xs,
+            tint = NyummyTheme.colors.content.tertiary,
+        )
+    }
 }
 
 /** 정사각 무대 안 그림 크기. 피그마에서 사방 11.11%를 띄운다. */

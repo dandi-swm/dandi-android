@@ -359,7 +359,7 @@ private fun GiftCoinAmount(coins: Int) {
     }
 }
 
-/** 묶음 그림 칸(CDN `coins/{imageId}.png`). 받지 못하면 코인 아이콘을 그린다. */
+/** 묶음 그림 칸(CDN `coins/{imageId}.webp`). 받지 못하면 코인 아이콘을 그린다. */
 @Composable
 private fun CoinPackArt(imageId: Long, coins: Int, tileSize: Dp) {
     val fallback = painterResource(CommonR.drawable.nyummy_asset_coin)

@@ -190,11 +190,11 @@ class HomeViewModelTest {
         resumeWith(HomeSummaryVO(roomPlacements = decoratedRoom))
 
         val room = viewModel.uiState.value.room!!
-        assertEquals("https://cdn.nyummy.co.kr/items/1.png", room.backgroundUrl)
+        assertEquals("https://cdn.nyummy.co.kr/items/1.webp", room.backgroundUrl)
         // 배경을 뺀 아이템을 zIndex 순서로, 저장 좌표를 그리는 좌표로 바꿔 그린다. id가 없는 아이템은 그릴 수 없어서 뺀다.
         assertEquals(listOf(104L, 101L), room.items.map { it.roomItemId })
         val bed = room.items.last()
-        assertEquals("https://cdn.nyummy.co.kr/items/2.png", bed.imageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/items/2.webp", bed.imageUrl)
         assertEquals(0.5f, bed.x, 0.001f)
         assertEquals(0.8f, bed.y, 0.001f)
         assertEquals(RoomCardLayout.MaxItemScale, bed.scale)

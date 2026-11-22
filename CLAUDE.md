@@ -54,7 +54,7 @@ python3 tools/i18n/check_i18n.py  # 다국어 검사 (CI가 빌드 전에 돌림
 6. **에러**: data는 `HttpResponseException` throw만, 처리(다이얼로그/네비게이션)는 domain UseCase에서 `BaseUseCase.request(ErrorType.entries) { }`로(서버 code → 공통 오류 → 네트워크 → 기본 안내 순서, 코루틴 취소는 다시 던짐). UseCase에 try/catch를 새로 쓰지 않는다. 세션 만료 정리와 로그인 이동은 `SessionExpiryHandler`가 한 번만 한다.
 7. **네비게이션**: 화면 이동은 `navigationHelper.navigateTo(Page)`만. 새 화면은 `AppRouteRegistry.kt`에 등록.
 8. **시간/타임존**: 서버와는 UTC 순간(ISO + 오프셋)으로 주고받고, 화면 표시·"오늘" 판정만 **기기 타임존**으로 한다. 기기 타임존은 `common/entity/.../time/DeviceTime.kt`로만 읽는다(`DeviceTime.zone()`/`today()`/`parseIsoOrNull()`) — 호출부에서 `ZoneId.systemDefault()`/`TimeZone.getDefault()`/`Calendar.getInstance()`를 직접 쓰지 않는다. 서버 시간 문자열 → 기기 타임존 변환은 data 레이어 `toVO()`에서만, VO에는 변환이 끝난 값만. 날짜 계산은 `java.time`(core library desugaring 적용, 모든 Android 모듈에 `coreLibraryDesugaring` 선언)을 쓴다. 서버는 `X-Timezone-Id` 헤더(`CommonHeaderInterceptor`)의 타임존으로 하루를 끊는다.
-9. **이미지 로딩**: Coil 의존성은 `common:presentation`에서만 `api`로 노출, ImageLoader 설정은 `common/presentation/.../image/NyummyImageLoaderFactory.kt` 한 곳(presigned URL 캐시 키 정규화 포함). feature 모듈에 coil 의존 개별 선언 금지.
+9. **이미지 로딩**: Coil 의존성은 `common:presentation`에서만 `api`로 노출, ImageLoader 설정은 `common/presentation/.../image/NyummyImageLoaderFactory.kt` 한 곳(presigned URL 캐시 키 정규화 포함). feature 모듈에 coil 의존 개별 선언 금지. 앱이 만드는 CDN 그림 주소(`NyummyCdn`)는 `.webp`이고, 서버에 없으면(403/404) 같은 경로의 `.png`로 받는 일은 로더의 `CdnWebpFallbackInterceptor`가 한 번에 한다(화면에서 확장자를 다루지 않는다).
 
 ## 네이밍
 

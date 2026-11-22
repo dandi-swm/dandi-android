@@ -39,7 +39,7 @@ data class CoinChargeNoticeVO(
  * @property coinPackageId 화면의 묶음 번호(1~3). 선물 코인 받기 요청과 분석 이벤트의 package_id다.
  * @property coins 묶음의 코인 수(화면 표시용. 실제로 받는 코인은 서버가 정한다)
  * @property price 원 단위 기준 가격. 분석 이벤트에 그대로 남기고, 화면 가격은 이 값을 나라 통화로 바꿔 보인다([CoinChargePriceVO]).
- * @property imageId 묶음 그림 CDN 번호(`coins/{imageId}.png`, 1 동전 · 2 주머니 · 3 바구니)
+ * @property imageId 묶음 그림 CDN 번호(`coins/{imageId}.webp`, 1 동전 · 2 주머니 · 3 바구니)
  */
 data class CoinChargePackageVO(
     val coinPackageId: Long = 0L,

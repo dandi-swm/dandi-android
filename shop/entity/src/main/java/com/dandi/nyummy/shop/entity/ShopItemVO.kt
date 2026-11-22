@@ -5,7 +5,7 @@ import com.dandi.nyummy.common.entity.tag.TagVO
 
 /**
  * 상점 상품 하나. 추천 탭·상품 목록·프로모션·장바구니·상세 시트가 같이 쓴다.
- * 그림은 화면이 [itemId]로 CDN 주소(`items/{itemId}.png`)를 만든다.
+ * 그림은 화면이 [itemId]로 CDN 주소(`items/{itemId}.webp`)를 만든다.
  *
  * @property productId 담기·구매에 쓰는 상품 id
  * @property itemId 대표 아이템 id. 그림 주소를 만든다

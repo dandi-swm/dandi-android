@@ -108,8 +108,8 @@ class MyRoomViewModelTest {
         assertEquals(0.8f, inRange.y, 0.001f)
         assertEquals(RoomCardLayout.MaxItemScale, outOfRange.scale)
         // 그림은 아이템 id를 CDN 아이템 경로에 붙인 주소다.
-        assertEquals("https://cdn.nyummy.co.kr/items/100.png", state.room.background?.imageUrl)
-        assertEquals("https://cdn.nyummy.co.kr/items/1.png", inRange.imageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/items/100.webp", state.room.background?.imageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/items/1.webp", inRange.imageUrl)
         // 탭은 서버가 준 종류마다 하나씩 그 순서대로이고, 각 탭에는 방과 함께 받은 첫 묶음이 들어간다.
         assertEquals(
             listOf(RoomItemCategory.BACKGROUND, RoomItemCategory("BED"), RoomItemCategory.ETC),

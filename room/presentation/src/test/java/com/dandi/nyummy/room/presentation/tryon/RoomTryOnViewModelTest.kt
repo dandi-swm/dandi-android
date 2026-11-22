@@ -72,7 +72,7 @@ class RoomTryOnViewModelTest {
 
         assertEquals(MyRoomLoadState.LOADED, state.loadState)
         assertEquals(100L, state.room.background?.roomItemId)
-        assertEquals("https://cdn.nyummy.co.kr/items/100.png", state.room.background?.imageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/items/100.webp", state.room.background?.imageUrl)
         assertEquals(100L, state.originalBackground?.roomItemId)
         assertTrue("호박 쿠션과 스크래처 타워는 보이지 않는다", state.room.items.isEmpty())
         assertFalse(state.canUndo)
@@ -91,7 +91,7 @@ class RoomTryOnViewModelTest {
         // 방 무대 id는 서버 id와 겹치지 않게 음수이고 칸마다 다르다.
         assertTrue(cells.all { it.id < 0 })
         assertEquals(5, cells.map { it.id }.toSet().size)
-        assertEquals("https://cdn.nyummy.co.kr/items/70.png", cells[1].imageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/items/70.webp", cells[1].imageUrl)
         assertTrue(cells.none { it.isPlaced })
     }
 
@@ -173,7 +173,7 @@ class RoomTryOnViewModelTest {
 
         var state = viewModel.uiState.value
         assertEquals(mint.id, state.room.background?.roomItemId)
-        assertEquals("https://cdn.nyummy.co.kr/items/90.png", state.room.background?.imageUrl)
+        assertEquals("https://cdn.nyummy.co.kr/items/90.webp", state.room.background?.imageUrl)
         assertTrue(state.cells.first { it.id == mint.id }.isPlaced)
         assertTrue(state.canUndo)
 
