@@ -21,6 +21,7 @@ import com.dandi.nyummy.common.domain.navigation.NavSignal
 import com.dandi.nyummy.common.domain.navigation.Page
 import com.dandi.nyummy.common.entity.tutorial.TutorialStep
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
+import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.meal.domain.CancelMealUseCase
 import com.dandi.nyummy.meal.domain.ImportGalleryMealPhotoUseCase
 import com.dandi.nyummy.meal.domain.MealErrorType
@@ -116,11 +117,11 @@ class MealRecordViewModelTest {
         val state = viewModel.uiState.value
         assertEquals(MealSubmitStatus.Failed, viewModel.ceremony().submit)
         assertTrue(state.isFinishing)
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
     }
 
     @Test
-    fun `실패한 뒤 닫기를 눌러도 한 번만 뒤로 간다`() = runTest(testDispatcher) {
+    fun `실패한 뒤 닫기를 눌러도 한 번만 홈으로 간다`() = runTest(testDispatcher) {
         mealRepository.createError = IOException("network")
         val viewModel = createViewModel()
         submit(viewModel)
@@ -128,7 +129,7 @@ class MealRecordViewModelTest {
         viewModel.onIntent(MealRecordIntent.ClickClose)
         viewModel.onIntent(MealRecordIntent.ClickDone)
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
     }
 
     @Test
@@ -145,7 +146,7 @@ class MealRecordViewModelTest {
     }
 
     @Test
-    fun `완료를 여러 번 눌러도 한 번만 뒤로 간다`() = runTest(testDispatcher) {
+    fun `완료를 여러 번 눌러도 한 번만 홈으로 간다`() = runTest(testDispatcher) {
         val viewModel = createViewModel()
         submit(viewModel)
 
@@ -153,6 +154,27 @@ class MealRecordViewModelTest {
         viewModel.onIntent(MealRecordIntent.ClickDone)
         viewModel.onIntent(MealRecordIntent.ClickClose)
 
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
+    }
+
+    @Test
+    fun `찍기 전에 닫으면 홈이 아니라 열었던 화면으로 돌아간다`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+
+        viewModel.onIntent(MealRecordIntent.ClickClose)
+
+        assertEquals(listOf("back"), navigationHelper.calls)
+    }
+
+    @Test
+    fun `사진을 확인하다 닫으면 사진을 지우고 열었던 화면으로 돌아간다`() = runTest(testDispatcher) {
+        val photo = tempFolder.newFile("captured.jpeg")
+        val viewModel = createViewModel()
+        capture(viewModel, photo.absolutePath)
+
+        viewModel.onIntent(MealRecordIntent.ClickClose)
+
+        assertFalse(photo.exists())
         assertEquals(listOf("back"), navigationHelper.calls)
     }
 
@@ -247,7 +269,7 @@ class MealRecordViewModelTest {
         viewModel.finishStage(MealCeremonyStage.BoxReveal)
         viewModel.finishStage(MealCeremonyStage.BoxSend)
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
     }
 
     @Test
@@ -272,7 +294,7 @@ class MealRecordViewModelTest {
         viewModel.onIntent(MealRecordIntent.ClickTakeFoods)
         advanceUntilIdle()
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
         assertTrue(viewModel.uiState.value.phase is MealCameraPhase.FoodPick)
     }
 
@@ -326,7 +348,7 @@ class MealRecordViewModelTest {
         advanceUntilIdle()
 
         assertEquals(listOf(MEAL_ID), foodRepository.canceled)
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
         assertTrue(foodRepository.submitted.isEmpty())
         assertFalse(photo.exists())
     }
@@ -340,7 +362,7 @@ class MealRecordViewModelTest {
         viewModel.onIntent(MealRecordIntent.ClickClose)
         advanceUntilIdle()
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
     }
 
     @Test
@@ -382,7 +404,7 @@ class MealRecordViewModelTest {
         viewModel.onIntent(MealRecordIntent.ClickGoHome)
         viewModel.onIntent(MealRecordIntent.ClickClose)
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
     }
 
     @Test
@@ -396,7 +418,7 @@ class MealRecordViewModelTest {
 
         viewModel.onIntent(MealRecordIntent.ClickGoHome)
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
     }
 
     @Test
@@ -421,7 +443,7 @@ class MealRecordViewModelTest {
 
         createViewModel(savedState = savedState.afterProcessDeath())
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
         assertEquals(listOf(R.string.meal_record_recorded_check_history), messageHelper.snackBarRes)
         assertFalse(photo.exists())
         assertEquals(1, mealRepository.createCount)
@@ -437,7 +459,7 @@ class MealRecordViewModelTest {
 
         createViewModel(savedState = savedState.afterProcessDeath())
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
         assertEquals(listOf(R.string.meal_record_recorded_check_history), messageHelper.snackBarRes)
         assertEquals(1, mealRepository.createCount)
     }
@@ -474,7 +496,7 @@ class MealRecordViewModelTest {
 
         viewModel.finishStage(MealCeremonyStage.BoxSend)
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
     }
 
     @Test
@@ -611,7 +633,7 @@ class MealRecordViewModelTest {
 
         createViewModel(savedState = savedState.afterProcessDeath())
 
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
         assertEquals(listOf(R.string.meal_record_submit_interrupted), messageHelper.snackBarRes)
         assertFalse(photo.exists())
         assertEquals(1, mealRepository.createCount)
@@ -773,7 +795,7 @@ class MealRecordViewModelTest {
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isSubmitSucceeded)
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
         assertFalse(tutorialHelper.mealRequired)
     }
 
@@ -827,7 +849,7 @@ class MealRecordViewModelTest {
         assertEquals(1, mealRepository.tutorialCount)
         assertTrue(tutorialHelper.skipped)
         assertTrue(viewModel.uiState.value.phase is MealCameraPhase.Captured)
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
     }
 
     @Test
@@ -842,7 +864,7 @@ class MealRecordViewModelTest {
         advanceUntilIdle()
 
         assertTrue(tutorialHelper.skipped)
-        assertEquals(listOf("back"), navigationHelper.calls)
+        assertEquals(BACK_TO_HOME, navigationHelper.calls)
     }
 
     @Test
@@ -1014,6 +1036,9 @@ class MealRecordViewModelTest {
     private companion object {
         const val PHOTO_PATH = "/cache/meal_ceremony_test.jpg"
         const val MEAL_ID = 1L
+
+        /** 이 화면을 닫고 홈 탭을 여는 이동. 장바구니, 코인 내역, 다른 탭에서 열었어도 홈에 닿는다. */
+        val BACK_TO_HOME = listOf("back", "to:${HomePage.PATH}")
 
         val FoundFoods = listOf(FoundFoodVO(11, "밥"), FoundFoodVO(12, "된장찌개"), FoundFoodVO(13, "배추김치"))
 

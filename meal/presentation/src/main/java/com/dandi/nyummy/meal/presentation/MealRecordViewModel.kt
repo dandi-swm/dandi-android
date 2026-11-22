@@ -11,6 +11,7 @@ import com.dandi.nyummy.common.domain.message.IconType
 import com.dandi.nyummy.common.entity.time.DeviceTime
 import com.dandi.nyummy.common.presentation.designsystem.component.NyummyTutorialLesson
 import com.dandi.nyummy.common.presentation.mvi.MviViewModel
+import com.dandi.nyummy.home.domain.HomePage
 import com.dandi.nyummy.meal.domain.CancelMealUseCase
 import com.dandi.nyummy.meal.domain.ImportGalleryMealPhotoUseCase
 import com.dandi.nyummy.meal.domain.SubmitMealFoodsResult
@@ -184,6 +185,7 @@ class MealRecordViewModel @Inject constructor(
 
                 is MealCameraPhase.NotFood, is MealCameraPhase.SlowNotice -> finishRecord()
 
+                // 보내기 전(촬영, 사진 확인)에 닫으면 남은 기록이 없으니 홈이 아니라 열었던 화면으로 돌아간다.
                 else -> {
                     deleteCapturedFile()
                     navigationHelper.navigateToBack()
@@ -514,14 +516,24 @@ class MealRecordViewModel @Inject constructor(
     }
 
     /**
-     * 기록 플로우를 마치고 화면을 닫는다. 연출에 쓰던 촬영 파일도 이때 지운다.
-     * 완료·닫기·백·연출 끝이 같은 프레임에 겹쳐도 뒤로가기 신호는 한 번만 나가도록 래치한다.
+     * 기록 플로우를 마치고 화면을 닫은 뒤 홈으로 간다. 연출에 쓰던 촬영 파일도 이때 지운다.
+     * 완료·닫기·백·연출 끝이 같은 프레임에 겹쳐도 이동 신호는 한 번만 나가도록 래치한다.
      */
     private fun finishRecord() {
         if (currentState.isFinishing) return
         currentState.phase.submittedPhotoPath?.let(::deletePhotoFile)
         dispatch(MealRecordReducerEvent.FinishStarted)
+        closeToHome()
+    }
+
+    /**
+     * 이 화면을 닫고 홈 탭을 연다. 기록 버튼은 하단 바(어느 탭에서든), 기록 탭, 장바구니, 코인 내역에서도 열리므로
+     * 뒤로 가기만으로는 홈에 가지 않는다. 닫지 않고 홈만 열면 이 화면이 홈 아래에 남아, 홈에서 뒤로 가면 끝난 기록 화면이 다시 뜬다.
+     * 홈에서 들어왔으면 뒤로 간 것과 같다.
+     */
+    private fun closeToHome() {
         navigationHelper.navigateToBack()
+        navigationHelper.navigateTo(HomePage)
     }
 
     /** 확인 단계에서 이탈할 때 캐시에 남은 촬영 파일을 정리한다. */
@@ -554,7 +566,7 @@ class MealRecordViewModel @Inject constructor(
                 tutorialHelper.skipToHealthStory()
             } catch (_: IOException) {
             }
-            navigationHelper.navigateToBack()
+            closeToHome()
         }
     }
 

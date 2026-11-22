@@ -138,7 +138,8 @@ class ShopCoinChargeViewModel @Inject constructor(
                 navigationHelper.navigateToBack()
                 navigationHelper.navigateTo(ShopPage)
             }
-            // 상점 코인 탭으로 들어왔으면 뒤로 가기는 상점이라, 화면을 닫은 뒤 홈 탭을 연다.
+            // 상점 코인 탭으로 들어왔으면 뒤로 가기는 상점이라, 화면을 닫은 뒤([leaveResult]가 뒤로 보냄) 홈 탭을 연다.
+            // 충전 화면이 홈 아래에 남지 않아 홈에서 뒤로 가도 충전 화면으로 돌아오지 않는다.
             ShopCoinChargeIntent.ClickGoHome -> {
                 leaveResult(CoinChargeTracker.Values.ACTION_HOME)
                 navigationHelper.navigateTo(HomePage)
