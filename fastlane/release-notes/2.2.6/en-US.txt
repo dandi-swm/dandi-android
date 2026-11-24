@@ -1,0 +1,7 @@
+Images in Nyummy now load faster and more reliably.
+
+• Faster images
+Shop and room decorating images are lighter and show up sooner.
+
+• Steadier on weak connections
+If your connection drops for a moment, images load again. Shop images show a loading state while they arrive.
