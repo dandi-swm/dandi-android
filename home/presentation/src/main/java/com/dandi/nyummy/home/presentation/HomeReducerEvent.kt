@@ -41,13 +41,11 @@ sealed interface HomeReducerEvent : ReducerEvent {
         val playId: Int,
         val line: String?,
         val motion: HomeCatMotion?,
-        val debugMotion: String? = null,
-        val debugLabel: String? = null,
     ) : HomeReducerEvent
 
     /** 말풍선이 [lineId] 대사를 끝까지 다 찍었다. */
     data class CatLineRevealed(val lineId: Int) : HomeReducerEvent
 
     /** 냐미 기분이 바뀌었다. 지금 동작은 끊지 않고 다음 동작부터 새 기분으로 고른다. */
-    data class CatMoodChanged(val mood: CatMood, val debugLabel: String?) : HomeReducerEvent
+    data class CatMoodChanged(val mood: CatMood) : HomeReducerEvent
 }

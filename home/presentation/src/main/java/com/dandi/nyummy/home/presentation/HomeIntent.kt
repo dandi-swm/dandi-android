@@ -32,9 +32,6 @@ sealed interface HomeIntent : MviIntent {
     /** 말풍선이 [lineId] 대사를 끝까지 다 찍었다. */
     data class CatLineRevealed(val lineId: Int) : HomeIntent
 
-    /** debug 상태 표시를 눌렀다. 냐미 기분을 차례로 고정해 본다. */
-    data object ClickCatDebug : HomeIntent
-
     /**
      * 냐미 동작 하나가 끝나고 쉬는 시간도 지났다.
      * 그사이 다른 동작으로 바뀌었으면 늦게 온 신호이므로 [playId]로 걸러 낸다.
