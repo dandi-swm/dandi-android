@@ -122,9 +122,6 @@ class HomeViewModel @Inject constructor(
     /** 마지막으로 홈에 들어오거나 냐미를 누른 시각. 한동안 그대로면 냐미가 졸려 한다. */
     private var lastInteractionAt = System.currentTimeMillis()
 
-    /** debug 에서 고정한 분위기. null이면 자동. */
-    private var forcedMood: CatMood? = null
-
     override fun onIntent(intent: HomeIntent) {
         when (intent) {
             HomeIntent.ScreenResumed -> {
@@ -148,7 +145,6 @@ class HomeViewModel @Inject constructor(
                 dispatch(HomeReducerEvent.UiHiddenChanged(hidden = !currentState.isUiHidden))
             HomeIntent.ClickCat -> onCatTapped()
             is HomeIntent.CatLineRevealed -> dispatch(HomeReducerEvent.CatLineRevealed(intent.lineId))
-            HomeIntent.ClickCatDebug -> cycleForcedMood()
             is HomeIntent.CatMotionFinished -> if (intent.playId == currentState.catPlayId) finishCatMotion()
             HomeIntent.CatShown -> onCatShown()
             HomeIntent.SummaryShown -> onSummaryShown()
@@ -205,12 +201,10 @@ class HomeViewModel @Inject constructor(
                 catLineId = if (event.line != state.catLine) state.catLineId + 1 else state.catLineId,
                 isCatLineRevealed = state.isCatLineRevealed && event.line == state.catLine,
                 catMotion = event.motion,
-                catDebugMotion = event.debugMotion,
-                catDebugLabel = event.debugLabel,
             )
             is HomeReducerEvent.CatLineRevealed ->
                 if (event.lineId == state.catLineId) state.copy(isCatLineRevealed = true) else state
-            is HomeReducerEvent.CatMoodChanged -> state.copy(catMood = event.mood, catDebugLabel = event.debugLabel)
+            is HomeReducerEvent.CatMoodChanged -> state.copy(catMood = event.mood)
             is HomeReducerEvent.TutorialChanged -> state.copy(tutorial = event.tutorial)
             is HomeReducerEvent.TutorialSkipConfirmChanged -> state.copy(tutorialSkipConfirm = event.remaining)
             is HomeReducerEvent.HealthStoryChanged -> state.copy(healthStory = event.story)
@@ -400,7 +394,7 @@ class HomeViewModel @Inject constructor(
     private fun driveCat() {
         val set = catAnimations ?: return
         val mood = currentMood()
-        if (mood != currentState.catMood) dispatch(HomeReducerEvent.CatMoodChanged(mood, catDebugLabel(mood, currentState.catDebugMotion)))
+        if (mood != currentState.catMood) dispatch(HomeReducerEvent.CatMoodChanged(mood))
         val reaction = pendingReaction
         when {
             reaction != null -> playReaction(reaction, set, mood)
@@ -408,9 +402,9 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** 지금 분위기. debug 로 고정했으면 그것, 아니면 기기 시각과 마지막으로 건드린 뒤 지난 시간으로 정한다. */
+    /** 지금 분위기. 기기 시각과 마지막으로 건드린 뒤 지난 시간으로 정한다. */
     private fun currentMood(): CatMood =
-        forcedMood ?: catBrain.moodOf(now(), idleMillis = System.currentTimeMillis() - lastInteractionAt)
+        catBrain.moodOf(now(), idleMillis = System.currentTimeMillis() - lastInteractionAt)
 
     private fun now(): LocalDateTime = DeviceTime.now().toLocalDateTime()
 
@@ -434,21 +428,20 @@ class HomeViewModel @Inject constructor(
         val line = if (keepLine) null else catBrain.reactionLine(reaction, now(), catLines, pick?.motion)
         if (line != null) motionsSinceLine = 0
         if (pick == null) return playMood(set, mood, newLine = false, line = line)
-        play(set, mood, pick, line ?: currentState.catLine, isReaction = true, label = reaction.name)
+        play(set, mood, pick, line ?: currentState.catLine, isReaction = true)
     }
 
     /**
      * 고른 동작을 화면에 넘긴다. 동작이 끝나면 앉은 자세로 짧게 멈췄다가 다음 동작으로 넘어간다.
      * 반응은 더 짧게 쉰다. 잠자는 동작은 고를 때 정한 만큼 조는 조각을 돈다.
      */
-    private fun play(set: CatAnimationSetVO, mood: CatMood, pick: CatPick, line: String?, isReaction: Boolean, label: String? = null) {
+    private fun play(set: CatAnimationSetVO, mood: CatMood, pick: CatPick, line: String?, isReaction: Boolean) {
         val playId = currentState.catPlayId + 1
         // 다음 일상 동작을 미리 골라 그 시트를 지금 읽어 둔다. 다음 동작이 시트를 읽느라 멈칫하지 않게 한다.
         val next = upcoming?.takeIf { it.first == mood }?.second ?: catBrain.nextMotion(mood, set)
         upcoming = next?.let { mood to it }
         val nextUrls = next?.motion?.clips?.map { it.url }.orEmpty()
         playingMood = !isReaction
-        val motionLabel = "$pick" + (label?.let { " ($it)" } ?: "")
         dispatch(
             HomeReducerEvent.CatMotionChanged(
                 state = pick.state,
@@ -459,8 +452,6 @@ class HomeViewModel @Inject constructor(
                     restMillis = if (isReaction) REACTION_REST_MILLIS else catBrain.restMillis(mood),
                     prefetchUrls = nextUrls,
                 ),
-                debugMotion = motionLabel,
-                debugLabel = catDebugLabel(mood, motionLabel),
             ),
         )
     }
@@ -509,29 +500,6 @@ class HomeViewModel @Inject constructor(
     /** 홈을 떠날 때 마지막 방문 시각을 남긴다. 몇 분 만에 돌아오면 다시 인사하지 않는다. */
     private fun rememberLastSeen() {
         viewModelScope.launch { runSuspendCatching { companionMemory.setLastSeenAtMillis(System.currentTimeMillis()) } }
-    }
-
-    /** debug 빌드에서 냐미 위에 보일 상태 표시. release 에서는 null이다. */
-    private fun catDebugLabel(mood: CatMood, motion: String?): String? {
-        if (!BuildConfig.DEBUG) return null
-        val moodName = when (mood) {
-            CatMood.DAY -> "낮" // i18n-ignore: debug 빌드 전용 라벨
-            CatMood.DROWSY -> "졸림" // i18n-ignore
-            CatMood.NIGHT -> "밤" // i18n-ignore
-        }
-        val weight = catAnimations?.weight?.let { " · $it" }.orEmpty()
-        return "$moodName${if (forcedMood != null) "(고정)" else ""}$weight · ${motion ?: "-"}" // i18n-ignore
-    }
-
-    /** debug: 분위기를 자동 → 낮 → 졸림 → 밤 순서로 고정해 바로 비교한다. */
-    private fun cycleForcedMood() {
-        if (!BuildConfig.DEBUG) return
-        val order = listOf(null, CatMood.DAY, CatMood.DROWSY, CatMood.NIGHT)
-        forcedMood = order[(order.indexOf(forcedMood) + 1) % order.size]
-        val set = catAnimations ?: return
-        val mood = currentMood()
-        dispatch(HomeReducerEvent.CatMoodChanged(mood, catDebugLabel(mood, currentState.catDebugMotion)))
-        playMood(set, mood, newLine = true)
     }
 
     private fun onCatShown() {

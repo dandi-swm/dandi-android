@@ -23,8 +23,6 @@ import kotlinx.collections.immutable.ImmutableList
  * @property isCatLineRevealed 지금 대사가 끝까지 다 찍혔다. 그 뒤에 냐미를 누르면 다음 대사로 넘어간다.
  * @property catMotion 지금 재생할 냐미 동작. 애니메이션이나 상태가 아직 없으면 null이다.
  * @property catMood 냐미 기분. 정하기 전에는 null
- * @property catDebugMotion 지금 동작 이름(debug 표시용)
- * @property catDebugLabel debug 빌드에서 냐미 위에 보일 기분·동작 표시. release 에서는 null
  * @property room 고양이방에 그릴 꾸민 방. 요약을 받기 전이면 null이고, 기본 빈 방만 그린다.
  * @property showsMailBadge 우편 버튼에 빨간 점을 단다. 받을 우편이 있을 때다.
  * @property tutorial 지금 띄울 첫 사용자 튜토리얼 코치마크. 없으면 null
@@ -44,8 +42,6 @@ data class HomeUIState(
     val isCatLineRevealed: Boolean = false,
     val catMotion: HomeCatMotion? = null,
     val catMood: CatMood? = null,
-    val catDebugMotion: String? = null,
-    val catDebugLabel: String? = null,
     val room: HomeRoomUiModel? = null,
     val showsMailBadge: Boolean = false,
     val tutorial: HomeTutorialUiState? = null,
